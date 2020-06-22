@@ -47,6 +47,8 @@ RED.sidebar.info = (function() {
 
 		table += "<tr><td>Type</td><td>&nbsp;"+node.type+"</td></tr>";
 		table += "<tr><td>ID</td><td>&nbsp;"+node.id+"</td></tr>";
+		//table += "<tr><td>inputs;outputs</td><td>&nbsp;" + node._def.inputs + ";" + node._def.outputs + "</td></tr>";
+		
 		table += '<tr class="blank"><td colspan="2">&nbsp;Properties</td></tr>';
 		for (var n in node._def.defaults) {
 			if (node._def.defaults.hasOwnProperty(n)) {
@@ -90,7 +92,10 @@ RED.sidebar.info = (function() {
 		prefix = prefix == "" ? "<h3>" + key + "</h3>" : prefix;
 		if (!server) {
 			data = $("script[data-help-name|='" + key + "']").html();
-			$("#tab-info").html(prefix + '<div class="node-help">' + data + '</div>');
+			if (data)
+				$("#tab-info").html(prefix + '<div class="node-help">' + data + '</div>');
+			else
+				$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {
 				$("#tab-info").html(prefix + '<h2>' + key + '</h2><div class="node-help">' + data + '</div>');

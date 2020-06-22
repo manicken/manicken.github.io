@@ -293,6 +293,8 @@ var RED = (function() {
 	
 	$('#btn-deploy2').click(function() { save2(); });
 
+	 
+
 	$( "#node-dialog-confirm-deploy" ).dialog({
 			title: "Confirm deploy",
 			modal: true,
@@ -327,11 +329,95 @@ var RED = (function() {
 		return(false);
 	}
 
+	function getClassNrOfInputs(nns, classUid)// Jannik add function
+	{
+		var count = 0;
+		for (var i = 0; i  < nns.length; i++)
+		{
+			var n = nns[i];
+			if (n.z == classUid)
+			{
+				if (n.type == "TabInput")
+				{
+					count++;
+					//console.log("TabInput:" + n.name);
+				}
+			}
+		}
+		return count;
+	}
+	function getClassNrOfOutputs(nns, classUid)// Jannik add function
+	{
+		var count = 0;
+		for (var i = 0; i  < nns.length; i++)
+		{
+			var n = nns[i];
+			if (n.z == classUid)
+			{
+				if (n.type == "TabOutput")
+				{
+					count++;
+					//console.log("TabOutput:" + n.name);
+				}
+			}
+		}
+		return count;
+	}
+	
+	function refreshClassNodes()// Jannik add function
+	{
+	   var nns = RED.nodes.createCompleteNodeSet();
+	   var wns = RED.nodes.getWorkspacesAsNodeSet(); // so that we can get class names
+	   nns.sort(function(a,b){ return (a.x/250 + a.y/250) - (b.x/250 + b.y/250); });
+
+	   for ( var wsi = 0; wsi < wns.length; wsi++)
+	   {
+		   var ws = wns[wsi];
+		   //console.log("ws.label:" + ws.label); // debug
+		   for ( var ni = 0; ni < nns.length; ni++)
+		   {
+			   var n = nns[ni];
+			   //console.log("n.type:" + n.type); // debug
+			   if (n.type == ws.label)
+			   {
+				   console.log("updating " + n.type);
+					var node = RED.nodes.node(n.id); // debug
+					node._def = RED.nodes.getType(n.type); // refresh type def
+					//node._def.inputs = getClassNrOfInputs(nns, ws.id);
+					node._def.outputs = getClassNrOfOutputs(nns, ws.id);
+			   }
+		   }
+	   }
+	}
+	function addClassTabsToPalette()// Jannik add function
+	{
+		var wns = RED.nodes.getWorkspacesAsNodeSet();
+		var nns = RED.nodes.createCompleteNodeSet();
+		// sort by horizontal position, plus slight vertical position,
+		// for well defined update order that follows signal flow
+		nns.sort(function(a,b){ return (a.x/250 + a.y/250) - (b.x/250 + b.y/250); });
+
+		for (var i=0; i < wns.length; i++)
+		{
+			var ws = wns[i];
+			var inputCount = getClassNrOfInputs(nns, ws.id);
+			var outputCount = getClassNrOfOutputs(nns, ws.id);
+			//var color = "#E6E0F8"; // standard
+			var color = "#ccffcc"; // new
+			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+
+			RED.nodes.registerType(ws.label, data);
+		}
+	}
+
 	function loadNodes() {
 			$(".palette-scroll").show();
 			$("#palette-search").show();
 			RED.storage.load();
+			addClassTabsToPalette();
+			refreshClassNodes();
 			RED.view.redraw();
+			
 			setTimeout(function() {
 				$("#btn-deploy").removeClass("disabled").addClass("btn-danger");
 				$("#btn-deploy2").removeClass("disabled").addClass("btn-danger");
@@ -384,6 +470,7 @@ var RED = (function() {
 			var data = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
 			var nodes = data["nodes"];
 			$.each(nodes, function (key, val) {
+				
 				RED.nodes.registerType(val["type"], val["data"]);
 			});
 			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
@@ -391,6 +478,9 @@ var RED = (function() {
 				d3.event.preventDefault();
 			});
 			loadNodes();
+			
+			
+
 			$(".palette-spinner").hide();
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){
@@ -408,8 +498,11 @@ var RED = (function() {
 				$(".palette-spinner").hide();
 			})
 		}
+		
 	});
 
 	return {
+		addClassTabsToPalette:addClassTabsToPalette,
+		refreshClassNodes:refreshClassNodes
 	};
 })();

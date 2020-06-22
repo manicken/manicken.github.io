@@ -38,7 +38,7 @@ RED.nodes = (function() {
 	function checkID(name) {
 		var i;
 		for (i=0;i<nodes.length;i++) {
-			console.log("checkID, nodes[i].id = " + nodes[i].id);
+			//console.log("checkID, nodes[i].id = " + nodes[i].id);
 			if (nodes[i].id == name) return true;
 		}
 /*
@@ -142,6 +142,8 @@ RED.nodes = (function() {
 		});
 		return hasIO;
 	}
+
+	
 
 	function getNode(id) {
 		if (id in configNodes) {
@@ -544,17 +546,29 @@ RED.nodes = (function() {
 		};
 	}
 
+	function createNewDefaultWorkspace() // Jannik Add function
+	{
+		defaultWorkspace = { type:"tab", id:getID(), label:"Main"};//, inputCount:"0", outputCount:"0" };
+		addWorkspace(defaultWorkspace);
+		RED.view.addWorkspace(defaultWorkspace);
+	}
+
 	function importNodes(newNodesObj,createNewIds) {
+		console.log("inportNodes");
 		try {
 			var i;
 			var n;
 			var newNodes;
 			if (typeof newNodesObj === "string") {
+				//console.log("typeof newNodesObj === string");
 				if (newNodesObj === "") {
+					//console.log("no default workspace");
+					createNewDefaultWorkspace();
 					return;
 				}
 				newNodes = JSON.parse(newNodesObj);
 			} else {
+				//console.log("typeof newNodesObj !== string");
 				newNodes = newNodesObj;
 			}
 
@@ -562,6 +576,7 @@ RED.nodes = (function() {
 				newNodes = [newNodes];
 			}
 			var unknownTypes = [];
+/*
 			for (i=0;i<newNodes.length;i++) {
 				n = newNodes[i];
 				// TODO: remove workspace in next release+1
@@ -580,6 +595,7 @@ RED.nodes = (function() {
 					}
 				}
 			}
+*/
 /*
 			if (unknownTypes.length > 0) {
 				var typeList = "<ul><li>"+unknownTypes.join("</li><li>")+"</li></ul>";
@@ -602,11 +618,11 @@ RED.nodes = (function() {
 					addWorkspace(n);
 					RED.view.addWorkspace(n);
 				}
+				
 			}
 			if (defaultWorkspace == null) {
-				defaultWorkspace = { type:"tab", id:getID(), label:"Sheet 1" };
-				addWorkspace(defaultWorkspace);
-				RED.view.addWorkspace(defaultWorkspace);
+				console.log("no default workspace");
+				createNewDefaultWorkspace();
 			}
 
 			var node_map = {};
@@ -704,6 +720,7 @@ RED.nodes = (function() {
 		remove: removeNode,
 		removeLink: removeLink,
 		addWorkspace: addWorkspace,
+		createNewDefaultWorkspace: createNewDefaultWorkspace,
 		removeWorkspace: removeWorkspace,
 		workspace: getWorkspace,
 		eachNode: function(cb) {

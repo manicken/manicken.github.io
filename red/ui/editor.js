@@ -416,6 +416,7 @@ RED.editor = (function() {
 	 */
 	function prepareEditDialog(node,definition,prefix) {
 		for (var d in definition.defaults) {
+			
 			if (definition.defaults.hasOwnProperty(d)) {
 				if (definition.defaults[d].type) {
 					prepareConfigNodeSelect(node,d,definition.defaults[d].type);
@@ -432,6 +433,7 @@ RED.editor = (function() {
 			for (var d in definition.defaults) {
 				if (definition.defaults.hasOwnProperty(d)) {
 					$("#"+prefix+"-"+d).change();
+					console.log("hi" + d);
 				}
 			}
 		};
@@ -443,6 +445,7 @@ RED.editor = (function() {
 			} else {
 				$.getJSON(getCredentialsURL(node.type, node.id), function (data) {
 					node.credentials = data;
+					
 					node.credentials._ = $.extend(true,{},data);
 					populateCredentialsInputs(node, definition.credentials, node.credentials, prefix);
 					completePrepare();
@@ -458,6 +461,7 @@ RED.editor = (function() {
 		RED.view.state(RED.state.EDITING);
 		//$("#dialog-form").html(RED.view.getForm(node.type));
 		RED.view.getForm("dialog-form", node.type, function (d, f) {
+			//console.log("node._def " + node.toString());
 			prepareEditDialog(node,node._def,"node-input");
 			$( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
 		});

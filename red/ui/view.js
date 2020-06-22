@@ -301,9 +301,9 @@ RED.view = (function() {
 		var tabId = RED.nodes.id();
 		do {
 			workspaceIndex += 1;
-		} while($("#workspace-tabs a[title='Sheet "+workspaceIndex+"']").size() !== 0);
+		} while($("#workspace-tabs a[title='Sheet_"+workspaceIndex+"']").size() !== 0);
 
-		var ws = {type:"tab",id:tabId,label:"Sheet "+workspaceIndex};
+		var ws = {type:"tab",id:tabId,label:"Sheet_"+workspaceIndex};//, inputCount:"0", outputCount:"0"};
 		RED.nodes.addWorkspace(ws);
 		workspace_tabs.addTab(ws);
 		workspace_tabs.activateTab(tabId);
@@ -523,7 +523,9 @@ RED.view = (function() {
 					ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy});
 				}
 				RED.history.push({t:'move',nodes:ns,dirty:dirty});
+				
 				RED.storage.update();
+				
 			}
 		}
 		if (mouse_mode == RED.state.MOVING || mouse_mode == RED.state.MOVING_ACTIVE) {
@@ -992,6 +994,10 @@ RED.view = (function() {
 	}
 
 	function redraw() {
+		//RED.addClassTabsToPalette(); // failsafe debug test
+		//RED.refreshClassNodes(); // failsafe debug test
+		//console.log("redraw");
+
 		vis.attr("transform","scale("+scaleFactor+")");
 		outer.attr("width", space_width*scaleFactor).attr("height", space_height*scaleFactor);
 
@@ -1209,7 +1215,7 @@ RED.view = (function() {
 								.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
 								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
 								.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
-								.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
+								.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 )); console.log("mouseover port: " + port);})
 								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
 						}
 					}
@@ -1261,7 +1267,7 @@ RED.view = (function() {
 							.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
 							.on("mouseup",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
 							.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
-							.on("mouseover",function(d,i) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 ));})
+							.on("mouseover",function(d,i) {  var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 )); console.log("mouseover port: " + d);})
 							.on("mouseout",function(d,i) { var port = d3.select(this); port.classed("port_hovered",false);});
 						d._ports.exit().remove();
 						if (d._ports) {
@@ -1537,6 +1543,10 @@ RED.view = (function() {
 			$("#btn-deploy").removeClass("disabled").addClass("btn-danger");
 			$("#btn-deploy2").removeClass("disabled").addClass("btn-danger");
 			RED.storage.update();
+			console.log("was dirty");
+			
+				redraw();
+			
 		} else {
 			$("#btn-deploy").addClass("disabled").removeClass("btn-danger");
 			$("#btn-deploy2").addClass("disabled").removeClass("btn-danger");

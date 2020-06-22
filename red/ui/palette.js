@@ -18,7 +18,7 @@
 RED.palette = (function() {
 
 	var exclusion = ['config','unknown','deprecated'];
-	var core = ['input', 'output', 'mixer', 'play', 'record', 'synth', 'effect', 'filter', 'analyze'];
+	var core = ['tabs', 'input', 'output', 'mixer', 'play', 'record', 'synth', 'effect', 'filter', 'analyze'];
 	
 	function createCategoryContainer(category){
 
