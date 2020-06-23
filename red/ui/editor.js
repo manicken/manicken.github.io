@@ -314,6 +314,7 @@ RED.editor = (function() {
 	function preparePropertyEditor(node,property,prefix) {
 		var input = $("#"+prefix+"-"+property);
 		if (input.attr('type') === "checkbox") {
+			
 			input.prop('checked',node[property]);
 		} else {
 			var val = node[property];
@@ -416,12 +417,15 @@ RED.editor = (function() {
 	 */
 	function prepareEditDialog(node,definition,prefix) {
 		for (var d in definition.defaults) {
+			console.log("var d in definition.defaults: " + d);
 			
 			if (definition.defaults.hasOwnProperty(d)) {
 				if (definition.defaults[d].type) {
 					prepareConfigNodeSelect(node,d,definition.defaults[d].type);
 				} else {
+
 					preparePropertyEditor(node,d,prefix);
+					console.log("prefix:" + prefix);
 				}
 				attachPropertyChangeHandler(node,definition.defaults,d,prefix);
 			}
@@ -433,7 +437,7 @@ RED.editor = (function() {
 			for (var d in definition.defaults) {
 				if (definition.defaults.hasOwnProperty(d)) {
 					$("#"+prefix+"-"+d).change();
-					console.log("hi" + d);
+					console.log("hi " + d);
 				}
 			}
 		};
@@ -460,8 +464,10 @@ RED.editor = (function() {
 		editing_node = node;
 		RED.view.state(RED.state.EDITING);
 		//$("#dialog-form").html(RED.view.getForm(node.type));
-		RED.view.getForm("dialog-form", node.type, function (d, f) {
-			//console.log("node._def " + node.toString());
+		console.log("get form for type:" + node.type);
+		//RED.view.getForm("dialog-form", node.type, function (d, f) {
+		RED.view.getForm("dialog-form", "NodesGlobalEdit", function (d, f) {
+			//console.log("node._def " + node._def.defaults);
 			prepareEditDialog(node,node._def,"node-input");
 			$( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
 		});

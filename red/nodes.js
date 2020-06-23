@@ -52,9 +52,47 @@ RED.nodes = (function() {
 		return false;
 	}
 
+	function checkName(name) {
+		var i;
+		for (i=0;i<nodes.length;i++) {
+			//console.log("checkID, nodes[i].id = " + nodes[i].id);
+			if (nodes[i].name == name) return true;
+		}
+/*
+		for (i in workspaces) {
+			if (workspaces.hasOwnProperty(i)) { }
+		}
+		for (i in configNodes) {
+			if (configNodes.hasOwnProperty(i)) { }
+		}
+*/
+		return false;
+	}
+
 	function createUniqueCppName(n) {
 		console.log("getUniqueCppName, n.type=" + n.type + ", n._def.shortName=" + n._def.shortName);
 		var basename = (n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
+
+		console.log("getUniqueCppName, using basename=" + basename);
+		var count = 1;
+		var sep = /[0-9]$/.test(basename) ? "_" : "";
+		var name;
+		while (1) {
+			name = basename + sep + count;
+			if (!checkName(name)) break;
+			count++;
+		}
+		console.log("getUniqueCppName, unique name=" + name);
+		return name;
+	}
+
+	function createUniqueCppId(n, workspaceName) {
+		//console.log("getUniqueCppName, n.type=" + n.type + ", n._def.shortName=" + n._def.shortName);
+		var basename = (n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
+		
+		if (workspaceName)
+			basename = workspaceName + "_" + basename; // Jannik added
+
 		console.log("getUniqueCppName, using basename=" + basename);
 		var count = 1;
 		var sep = /[0-9]$/.test(basename) ? "_" : "";
@@ -100,6 +138,7 @@ RED.nodes = (function() {
 			configNodes[n.id] = n;
 			RED.sidebar.config.refresh();
 		} else {
+			//console.log("addNode" + n.type);
 			n.dirty = true;
 			nodes.push(n);
 			var updatedConfigNode = false;
@@ -482,8 +521,10 @@ RED.nodes = (function() {
 		var traverseLines = function(raw) {
 			var lines = raw.split("\n");
 			for (var i = 0; i < lines.length; i++) {
-				var line = lines[i].trim();
-
+				var line = lines[i];
+				if (line.startsWith("//"))
+					line = line.substring(2);
+				line = line.trim();
 				// we reached the setup or loop part ...
 				var pattSu = new RegExp(/\s*void\s*setup\s*\(\s*\).*/);
 				var pattLo = new RegExp(/\s*void\s*loop\s*\(\s*\).*/);
@@ -548,7 +589,7 @@ RED.nodes = (function() {
 
 	function createNewDefaultWorkspace() // Jannik Add function
 	{
-		defaultWorkspace = { type:"tab", id:getID(), label:"Main"};//, inputCount:"0", outputCount:"0" };
+		defaultWorkspace = { type:"tab", id:"Main", label:"Main"};//, inputCount:"0", outputCount:"0" };
 		addWorkspace(defaultWorkspace);
 		RED.view.addWorkspace(defaultWorkspace);
 	}
@@ -677,6 +718,8 @@ RED.nodes = (function() {
 						}
 
 						node.name = getUniqueName(n);
+						//node.id = node.name;
+						//n.id = node.id;
 
 						addNode(node);
 						RED.editor.validateNode(node);
@@ -751,8 +794,10 @@ RED.nodes = (function() {
 		createCompleteNodeSet: createCompleteNodeSet,
 		id: getID,
 		cppName: createUniqueCppName,
+		cppId: createUniqueCppId,
 		hasIO: checkForIO,
 		nodes: nodes, // TODO: exposed for d3 vis
+		workspaces:workspaces,
 		links: links  // TODO: exposed for d3 vis
 	};
 })();

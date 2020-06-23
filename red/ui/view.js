@@ -569,7 +569,8 @@ RED.view = (function() {
 				var nn = {x: mousePos[0],y:mousePos[1],w:node_width,z:activeWorkspace};
 				nn.type = selected_tool;
 				nn._def = RED.nodes.getType(nn.type);
-				nn.id = RED.nodes.cppName(nn);
+				nn.id = RED.nodes.cppId(nn, RED.nodes.workspaces[activeWorkspace].label);  // jannik add/change
+				nn.name = RED.nodes.cppName(nn); // jannik add/change
 
 				nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
 				nn._def.defaults.name = { value: nn.id };
@@ -577,11 +578,11 @@ RED.view = (function() {
 				nn.outputs = nn._def.outputs;
 				nn.changed = true;
 
-				for (var d in nn._def.defaults) {
+				/*for (var d in nn._def.defaults) {  // jannik comment out
 					if (nn._def.defaults.hasOwnProperty(d)) {
 						nn[d] = nn._def.defaults[d].value;
 					}
-				}
+				}*/
 
 				if (nn._def.onadd) {
 					nn._def.onadd.call(nn);
@@ -1572,7 +1573,8 @@ RED.view = (function() {
 			}
 
 			newNodesStr = nodesJSON.data;
-			createNewIds = false;
+			//createNewIds = false;
+			
 
 			if (useStorage) {
 				RED.storage.clear();
@@ -1588,7 +1590,13 @@ RED.view = (function() {
 			if (result) {
 				var new_nodes = result[0];
 				var new_links = result[1];
-				var new_ms = new_nodes.map(function(n) { n.z = activeWorkspace; return {n:n};});
+				var new_ms = new_nodes.map(function(n)
+				{
+					n.id = RED.nodes.cppId(n, RED.nodes.workspaces[activeWorkspace].label); // jannik add
+					n.name = RED.nodes.cppName(n); // jannik add
+					n.z = activeWorkspace;
+					return {n:n};
+				});
 				var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
 				// TODO: pick a more sensible root node
@@ -1607,6 +1615,9 @@ RED.view = (function() {
 				
 				for (i=0;i<new_ms.length;i++) {
 					node = new_ms[i];
+					
+					
+					
 					node.n.selected = true;
 					node.n.changed = true;
 					node.n.x -= dx - mouse_position[0];
@@ -1622,6 +1633,8 @@ RED.view = (function() {
 					node.n.y -= minY;
 					node.dx -= minX;
 					node.dy -= minY;
+
+					
 				}
 				if (!touchImport) {
 					mouse_mode = RED.state.IMPORT_DRAGGING;

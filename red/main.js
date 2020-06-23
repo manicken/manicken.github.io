@@ -154,7 +154,96 @@ var RED = (function() {
 
 	$('#btn-deploy').click(function() { save(); });
 
+	function isClass(node)
+	{
+		var wns = RED.nodes.getWorkspacesAsNodeSet();
+
+		for (var wsi = 0; wsi < wns.length; wsi++)
+		{
+			var ws = wns[wsi];
+			if (node.type == ws.label) return true;
+			//console.log(node.type  + "!="+ ws.label);
+		}
+		return false;
+	}
+	
+	function getWorkspaceIdFromClassName(node)
+	{
+		var wns = RED.nodes.getWorkspacesAsNodeSet();
+
+		for (var wsi = 0; wsi < wns.length; wsi++)
+		{
+			var ws = wns[wsi];
+			if (node.type == ws.label)  return ws.id;
+		}
+		return "";
+	}
+
+	function getWireInputSourceNode(wsId, nId)
+	{
+		var nns = RED.nodes.createCompleteNodeSet();
+
+		console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
+		for (var ni = 0; ni < nns.length; ni++)
+		{
+			var n = nns[ni];
+			if (n.z != wsId) continue; // workspace check
+
+			if (!n.wires){/* console.log("!n.wires: "+n.type + ":" + n.name);*/ continue;}
+
+			//if (n.wires.length == 0) console.log("port.length == 0:"+n.type + ":" + n.name)
+
+			for (var pi=0; pi<n.wires.length; pi++) // pi = port index
+			{
+				var port = n.wires[pi];
+				if (!port){ /*console.log("!port(" + pi + "):" + n.type + ":" + n.name);*/ continue;}
+
+				//if (port.length == 0) console.log("portWires.length == 0:"+n.type + ":" + n.name)
+
+				for (var pwi=0; pwi<port.length; pwi++) // pwi = port wire index
+				{
+					var wire = port[pwi];
+					if (!wire){ /*console.log("!wire(" + pwi + "):" + n.type + ":" + n.name); */continue;}
+
+					var parts = wire.split(":");
+					if (parts.length != 2){/* console.log("parts.length != 2 (" + pwi + "):" + n.type + ":" + n.name);*/ continue;}
+						
+					if (parts[0] == nId)
+						{
+							console.log("we found the WireInputSourceNode:" + n.name + " , "+ n.id)
+							return n;
+						}
+					
+				}
+			}
+		}
+	}
+	function getClassOutputPort(node, index)
+	{
+		var wsId = getWorkspaceIdFromClassName(node);
+		var currIndex = 0;
+		for (var i = 0; i < RED.nodes.nodes.length; i++)
+		{
+			var n = RED.nodes.nodes[i];
+			if (n.z != wsId) continue;
+			
+			if (n.type != "TabOutput") continue;
+
+			if (currIndex == index) // we found the port
+			{
+				// then we get what is connected to that port inside the class
+				
+				return getWireInputSourceNode(wsId, n.id);
+			}
+			currIndex++; // check if we can find the port
+		}
+	}
 	function save2(force) {
+		
+		//TODO: to use this following sort, 
+		//it's more meaningfull if we first sort nodes by workspace
+		//RED.nodes.nodes.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); }); 
+
 		RED.storage.update();
 
 		//if (RED.nodes.hasIO()) {
@@ -164,6 +253,7 @@ var RED = (function() {
 			// for well defined update order that follows signal flow
 			nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
 			//console.log(JSON.stringify(nns));
+
 			var wns = RED.nodes.getWorkspacesAsNodeSet();
 
 			var cpp = "#include <Audio.h>\n#include <Wire.h>\n"
@@ -182,16 +272,27 @@ var RED = (function() {
 			for (var i=0; i<nns.length; i++) {
 				var n = nns[i];
 
-				if (n.z != wns[wsi].id) continue;
+				if (n.z != wns[wsi].id) continue; // workspace check
 
 				var node = RED.nodes.node(n.id);
 				if (node && (node.outputs > 0 || node._def.inputs > 0)) {
-					cpp += "    " + n.type + " ";
-					for (var j=n.type.length; j<24; j++) cpp += " ";
+					
+					if (n.type == "TabInput" || n.type == "TabOutput")
+						cpp += "//  "; 
+					else
+						cpp += "    "
+					cpp += n.type + " ";
+					for (var j=n.type.length; j<32; j++) cpp += " ";
 					var name = make_name(n)
 					cpp += name + "; ";
-					for (var j=n.id.length; j<14; j++) cpp += " ";
-					cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n";
+					for (var j=n.name.length; j<26; j++) cpp += " ";
+					
+					cpp += "//xy=" + n.x + "," + n.y + "," + n.z;
+
+					if (n.type == "TabInput" || n.type == "TabOutput")
+						cpp += " // placeholder\n"; 
+					else
+						cpp += "\n";
 				}
 			}
 			// generate code for all control nodes (no inputs or outputs)
@@ -203,44 +304,79 @@ var RED = (function() {
 				var node = RED.nodes.node(n.id);
 				if (node && node.outputs == 0 && node._def.inputs == 0) {
 					cpp += "    " + n.type + " ";
-					for (var j=n.type.length; j<24; j++) cpp += " ";
-					cpp += n.id + "; ";
-					for (var j=n.id.length; j<14; j++) cpp += " ";
+					for (var j=n.type.length; j<32; j++) cpp += " ";
+					var name = make_name(n)
+					cpp += name + "; ";
+					for (var j=n.name.length; j<26; j++) cpp += " ";
 					cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n";
 				}
 			}
-			cpp+= "\n    " + wns[wsi].label + " // default constructor\n    {\n";
+			cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
+			
 			// generate code for all connections (aka wires or links)
 			var cordcount = 1;
 			for (var i=0; i<nns.length; i++) {
 				var n = nns[i];
 
-				if (n.z != wns[wsi].id) continue;
+				if (n.z != wns[wsi].id) continue; // workspace check
 
-				if (n.wires) {
-					for (var j=0; j<n.wires.length; j++) {
-						var wires = n.wires[j];
-						if (!wires) continue;
-						for (var k=0; k<wires.length; k++) {
-							var wire = n.wires[j][k];
-							if (wire) {
-								var parts = wire.split(":");
-								if (parts.length == 2) {
-									cpp += "        AudioConnection          patchCord" + cordcount + "(";
-									var src = RED.nodes.node(n.id);
-									var dst = RED.nodes.node(parts[0]);
-									var src_name = make_name(src);
-									var dst_name = make_name(dst);
-									if (j == 0 && parts[1] == 0 && src && src.outputs == 1 && dst && dst._def.inputs == 1) {
-										cpp += src_name + ", " + dst_name;
-									} else {
-										cpp += src_name + ", " + j + ", " + dst_name + ", " + parts[1];
-									}
-									cpp += ");\n";
-									cordcount++;
-								}
-							}
+				if (!n.wires){ console.log("!n.wires: "+n.type + ":" + n.name); continue;}
+
+				if (n.wires.length == 0) console.log("port.length == 0:"+n.type + ":" + n.name)
+
+				for (var pi=0; pi<n.wires.length; pi++) // pi = port index
+				{
+					var port = n.wires[pi];
+					if (!port){ /*console.log("!port(" + pi + "):" + n.type + ":" + n.name);*/ continue;}
+
+					//if (port.length == 0) console.log("portWires.length == 0:"+n.type + ":" + n.name)
+
+					for (var pwi=0; pwi<port.length; pwi++) // pwi = port wire index
+					{
+						var wire = port[pwi];
+						if (!wire){ /*console.log("!wire(" + pwi + "):" + n.type + ":" + n.name);*/ continue;}
+
+						var parts = wire.split(":");
+						if (parts.length != 2){ /*console.log("parts.length != 2 (" + pwi + "):" + n.type + ":" + n.name);*/ continue;}
+
+						var src = RED.nodes.node(n.id);
+						var dst = RED.nodes.node(parts[0]);
+
+						var src_name = make_name(src);
+						var dst_name = make_name(dst);
+
+						if (isClass(n)) // if source is class
+						{
+							console.log("src is class:" + n.name);
+							var srcObj = getClassOutputPort(n, pi);
+							if (srcObj)
+								src_name += "." + make_name(srcObj);
 						}
+						//TODO: next we have to do if destination is class
+						if (isClass(dst))
+						{
+							console.log("dst is class:" + dst.name + " from:" + n.name);
+						}
+
+						if (src.type == "TabInput" || dst.type == "TabOutput")
+							cpp += "//      ";
+						else
+							cpp += "        "; 
+
+						cpp += "AudioConnection        patchCord" + cordcount + "(";
+						if (pi == 0 && parts[1] == 0 && src && src.outputs == 1 && dst && dst._def.inputs == 1)
+						{
+							cpp += src_name + ", " + dst_name;
+						}
+						else
+						{
+							cpp += src_name + ", " + pi + ", " + dst_name + ", " + parts[1];
+						}
+						if (src.type == "TabInput" || dst.type == "TabOutput")
+							cpp += "); // placeholder\n";
+						else 
+							cpp += ");\n";
+						cordcount++;
 					}
 				}
 			}
@@ -263,14 +399,15 @@ var RED = (function() {
 				});
 				}).focus();
 
-				$("#node-input-export2").val("second text").focus(function() {
+				/*$("#node-input-export2").val("second text").focus(function() { // this can be used for custom mixer code in future
 					var textarea = $(this);
 					textarea.select();
 					textarea.mouseup(function() {
 						textarea.unbind("mouseup");
 						return false;
 					});
-					}).focus();
+					}).focus();*/ 
+
 			$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
 			});
 			//RED.view.dirty(false);
@@ -293,6 +430,10 @@ var RED = (function() {
 	
 	$('#btn-deploy2').click(function() { save2(); });
 
+	function showExportDialog(cppCode)
+	{
+
+	}
 	 
 
 	$( "#node-dialog-confirm-deploy" ).dialog({
@@ -404,7 +545,8 @@ var RED = (function() {
 			var outputCount = getClassNrOfOutputs(nns, ws.id);
 			//var color = "#E6E0F8"; // standard
 			var color = "#ccffcc"; // new
-			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
 
 			RED.nodes.registerType(ws.label, data);
 		}
