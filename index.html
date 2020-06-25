@@ -61,6 +61,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li class="divider"></li>
 					 <li><a id="btn-node-status" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-info-sign"></i> Node Status</a></li>
 					<li class="divider"></li>
+					<li><a id="btn-saveTofile" tabindex="-1" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> SaveToFile</a></li>
+					<input id="file-input" tabindex="-1" type="file" style="display:none;">
+					<li><label for="file-input" tabindex="-1" ><i id="btn-icn-deploy" class="icon-download"></i> LoadFromFile</label></li>
+					
+					<li class="divider"></li>
 
 					<!--
 <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-edit"></i> Import from...</a>
@@ -100,12 +105,17 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			</div>
 			<div class="btn-group pull-left">
 				<a id="btn-deploy" class="btn action-deploy disabled" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Export</a>
-				<a id="btn-deploy2" class="btn action-deploy " href="#"><i id="btn-icn-deploy" class="icon-upload"></i>ExportAsClass</a>
+				<a id="btn-deploy2" class="btn action-deploy " href="#"><i id="btn-icn-deploy" class="icon-upload"></i>ExportAsClass(es)</a>
 				<a id="btn-import" class="btn action-import disabled" href="#"><i id="btn-icn-download" class="icon-download"></i>Import</a>
+				
+				<!--<div id="file-content"></div>-->
 			</div>
 		</div>
 	</div>
 </div>
+
+
+
 <div id="main-container" class="sidebar-closed">
 	<div id="palette">
 		<img src="img/spin.svg" class="palette-spinner"/>
@@ -350,9 +360,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script  type="text/x-red" data-container-name="NodeDefinitions">
 	{"nodes":[
-		{"type":"TabOutput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabOutput","inputs":1,"outputs":0,"category":"output-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabInput","inputs":0,"outputs":1,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"TabOutput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabOutput","inputs":1,"outputs":0,"category":"tabs-function","color":"#cce6ff","icon":"arrow-in.png"}},
+		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabInput","inputs":0,"outputs":1,"category":"tabs-function","color":"#cce6ff","icon":"arrow-in.png"}},
+		{"type":"Array","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"Array","inputs":0,"outputs":0,"category":"tabs-function","color":"#ccffcc","icon":"range.png"}},
 		{"type":"AudioMixerX","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"MixerX","inputs":1,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioMixer2","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer2","inputs":2,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioMixer16","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer16","inputs":16,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioMixer32","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer32","inputs":32,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -375,9 +389,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioOutputADAT","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"adat","inputs":8,"outputs":0,"category":"output-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioOutputUSB","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"usb","inputs":2,"outputs":0,"category":"output-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioAmplifier","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"amp","inputs":1,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioMixer2","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer2","inputs":2,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioMixer4","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioMixer32","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer32","inputs":32,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioPlayMemory","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"playMem","inputs":0,"outputs":1,"category":"play-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdWav","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"playSdWav","inputs":0,"outputs":2,"category":"play-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdRaw","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"playSdRaw","inputs":0,"outputs":1,"category":"play-function","color":"#E6E0F8","icon":"arrow-in.png"}},

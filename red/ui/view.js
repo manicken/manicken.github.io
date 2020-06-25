@@ -191,10 +191,10 @@ RED.view = (function() {
 		.attr('fill','#fff');
 
 	var gridScale = d3.scale.linear().range([0,2000]).domain([0,2000]);
-	/*
+	
 	var grid = vis.append('g');
 
-	grid.selectAll("line.horizontal").data(gridScale.ticks(100)).enter()
+	grid.selectAll("line.horizontal").data(gridScale.ticks(200)).enter()
 	    .append("line")
 	        .attr(
 	        {
@@ -208,7 +208,7 @@ RED.view = (function() {
 	            "stroke" : "#eee",
 	            "stroke-width" : "1px"
 	        });
-	grid.selectAll("line.vertical").data(gridScale.ticks(100)).enter()
+	grid.selectAll("line.vertical").data(gridScale.ticks(200)).enter()
 	     .append("line")
 	        .attr(
 	        {
@@ -222,7 +222,7 @@ RED.view = (function() {
 		        "stroke" : "#eee",
 	            "stroke-width" : "1px"
 	        });
-*/
+
 
 	var drag_line = vis.append("svg:path").attr("class", "drag_line");
 
@@ -1192,15 +1192,15 @@ RED.view = (function() {
 
 					var numInputs = d._def.inputs;
 					var inputlist = [];
-					for (var n=0; n < numInputs; n++) {
-						var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == n);});
+					for (var ni=0; ni < numInputs; ni++) {
+						var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == ni);});
 						var y = (d.h/2)-((numInputs-1)/2)*13;
-						y = (y+13*n)-5;
+						y = (y+13*ni)-5;
 						text.attr("x",38);
 						var rect = node.append("rect");
-						inputlist[n] = rect;
+						inputlist[ni] = rect;
 						rect.attr("class","port port_input").attr("rx",3).attr("ry",3)
-							.attr("y",y).attr("x",-5).attr("width",10).attr("height",10).attr("index",n);
+							.attr("y",y).attr("x",-5).attr("width",10).attr("height",10).attr("index",ni);
 						if (link && link.length > 0) {
 							// this input already has a link connected, so disallow new links
 							rect.on("mousedown",null)
@@ -1212,11 +1212,11 @@ RED.view = (function() {
 								.classed("port_hovered",false);
 						} else {
 							// allow new link on inputs without any link connected
-							rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
-								.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
-								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
-								.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
-								.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 )); console.log("mouseover port: " + port);})
+							rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
+								.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
+								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);}})(ni))
+								.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(ni))
+								.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 )); console.log("mouseover port: " + port.x );})
 								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
 						}
 					}
@@ -1583,6 +1583,12 @@ RED.view = (function() {
 				redraw();
 				return;
 			}
+		}
+		else if (mouse_mode == RED.state.IMPORT)
+		{
+			RED.storage.loadFile(newNodesStr);
+			mouse_mode = 0;
+			return;
 		}
 
 		try {

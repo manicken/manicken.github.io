@@ -752,6 +752,35 @@ RED.nodes = (function() {
 		}
 
 	}
+	/**
+		 * this function checks for !node.wires at beginning and returns if so.
+		 * @param {*} srcNode 
+		 * @param {*} cb is function pointer with following format cb(srcPortIndex,dstId,dstPortIndex);
+		 */
+	function eachwire(srcNode, cb) {
+		if (!srcNode.wires){ console.log("!node.wires: " + srcNode.type + ":" + srcNode.name); return;}
+
+		if (srcNode.wires.length == 0) console.log("port.length == 0:" + srcNode.type + ":" + srcNode.name)
+
+		for (var pi=0; pi<srcNode.wires.length; pi++) // pi = port index
+		{
+			var port = srcNode.wires[pi];
+			if (!port){ /*console.log("!port(" + pi + "):" + n.type + ":" + n.name);*/ continue;} // failsafe
+			//if (port.length == 0) console.log("portWires.length == 0:"+n.type + ":" + n.name) // debug check
+			for (var pwi=0; pwi<port.length; pwi++) // pwi = port wire index
+			{
+				var wire = port[pwi];
+				if (!wire){ /*console.log("!wire(" + pwi + "):" + n.type + ":" + n.name);*/ continue;} // failsafe
+
+				var parts = wire.split(":");
+				if (parts.length != 2){ /*console.log("parts.length != 2 (" + pwi + "):" + n.type + ":" + n.name);*/ continue;} // failsafe
+				
+				var retVal = cb(pi,parts[0],parts[1]);
+
+				if (retVal) return retVal; // only abort/return if cb returns something, and return the value
+			}
+		}
+	}
 
 	return {
 		registerType: registerType,
@@ -783,6 +812,8 @@ RED.nodes = (function() {
 				}
 			}
 		},
+		
+		eachWire: eachwire,
 		node: getNode,
 		namedNode: getNodeByName,
 		cppToJSON: cppToJSON,

@@ -23,6 +23,13 @@ RED.storage = (function() {
 				RED.nodes.createNewDefaultWorkspace();
 		}
 	}
+	function loadFile(data) {
+		console.log("loadFile:" +data);
+		localStorage.setItem("audio_library_guitool", data);
+		window.location.reload();
+		
+				
+	}
 	function clear() {
 		// TOOD: use setTimeout to limit the rate of changes?
 		if (localStorage) {
@@ -33,6 +40,7 @@ RED.storage = (function() {
 	return {
 		update: update,
 		load: load,
+		loadFile:loadFile,
 		clear: clear
 	}
 })();

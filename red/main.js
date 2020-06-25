@@ -63,6 +63,9 @@ var RED = (function() {
 			var cpp = "#include <Audio.h>\n#include <Wire.h>\n"
 				+ "#include <SPI.h>\n#include <SD.h>\n#include <SerialFlash.h>\n\n"
 				+ "// GUItool: begin automatically generated code\n";
+				+ "// JSON string:\n"
+				+ "//" + JSON.stringify(nns) + "\n";
+
 			// generate code for all audio processing nodes
 			for (var i=0; i<nns.length; i++) {
 				var n = nns[i];
@@ -179,191 +182,282 @@ var RED = (function() {
 		return "";
 	}
 
-	function getWireInputSourceNode(wsId, nId)
+	/**
+	 * This is only used to find what is connected to a TabOutput-"pin"
+	 * @param {Array} nns array of all nodes
+	 * @param {String} wsId workspace id
+	 * @param {String} nId node id
+	 * @returns {Array} as [node,portIndex]
+	 */
+	function getWireInputSourceNode(nns, wsId, nId)
 	{
-		var nns = RED.nodes.createCompleteNodeSet();
-
 		console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
 		for (var ni = 0; ni < nns.length; ni++)
 		{
 			var n = nns[ni];
 			if (n.z != wsId) continue; // workspace check
 
-			if (!n.wires){/* console.log("!n.wires: "+n.type + ":" + n.name);*/ continue;}
-
-			//if (n.wires.length == 0) console.log("port.length == 0:"+n.type + ":" + n.name)
-
-			for (var pi=0; pi<n.wires.length; pi++) // pi = port index
+			var retVal = RED.nodes.eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
 			{
-				var port = n.wires[pi];
-				if (!port){ /*console.log("!port(" + pi + "):" + n.type + ":" + n.name);*/ continue;}
-
-				//if (port.length == 0) console.log("portWires.length == 0:"+n.type + ":" + n.name)
-
-				for (var pwi=0; pwi<port.length; pwi++) // pwi = port wire index
+				if (dstId == nId)
 				{
-					var wire = port[pwi];
-					if (!wire){ /*console.log("!wire(" + pwi + "):" + n.type + ":" + n.name); */continue;}
-
-					var parts = wire.split(":");
-					if (parts.length != 2){/* console.log("parts.length != 2 (" + pwi + "):" + n.type + ":" + n.name);*/ continue;}
-						
-					if (parts[0] == nId)
-						{
-							console.log("we found the WireInputSourceNode:" + n.name + " , "+ n.id)
-							return n;
-						}
-					
+					console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
+					console.log("");
+					return [n,srcPortIndex];
 				}
-			}
+			});
+			if (retVal) return retVal;
 		}
 	}
-	function getClassOutputPort(node, index)
+	/**
+	 * 
+	 * @param {Array} nns array of all nodes
+	 * @param {String} srcName this is the input name that we add upto
+	 * @param {*} currentNode flow-node
+	 * @param {*} pi portIndex
+	 */
+	function getClassOutputPort(nns, srcName, currentNode, pi)
 	{
-		var wsId = getWorkspaceIdFromClassName(node);
+		var wsId = getWorkspaceIdFromClassName(currentNode);
 		var currIndex = 0;
-		for (var i = 0; i < RED.nodes.nodes.length; i++)
+		for (var i = 0; i < nns.length; i++)
 		{
-			var n = RED.nodes.nodes[i];
+			var n = nns[i];
 			if (n.z != wsId) continue;
 			
 			if (n.type != "TabOutput") continue;
 
-			if (currIndex == index) // we found the port
+			console.log("getClassOutputPort TabOutput:" + currentNode.name + ", " + n.name); // so that we can see the order
+
+			if (currIndex == pi) // we found the port
 			{
 				// then we get what is connected to that port inside the class
 				
-				return getWireInputSourceNode(wsId, n.id);
+				var newSrc = getWireInputSourceNode(nns, wsId, n.id); // this return a array
+
+				if (isClass(newSrc[0])) // if the new is class, then we call this function again
+				{
+					console.log("isClass(" + newSrc[0].name + ")");
+					srcName += "." + make_name(newSrc[0]);
+					srcName = getClassOutputPort(nns, srcName, newSrc[0], newSrc[1]);
+				}
+				else
+					srcName += "." + make_name(newSrc[0]) + ", " + newSrc[1];
+				return srcName; 
 			}
 			currIndex++; // check if we can find the port
 		}
 	}
-	function save2(force) {
-		
+
+	/**
+	 * 
+	 * @param {Array} nns array of all nodes
+	 * @param {String} srcName this is the input name that we add upto
+	 * @param {*} currentNode flow-node
+	 * @param {*} pi portIndex
+	 */
+	function getClassInputPort(nns, srcName, currentNode, pi)
+	{
+		var wsId = getWorkspaceIdFromClassName(currentNode);
+		var currIndex = 0;
+		console.log("try find getClassInputPort, pi:" + pi + ", currNode:" + currentNode.name);
+		console.log("getClassInputPort, nns.length:" + nns.length);
+		for (var i = 0; i < nns.length; i++)
+		{
+			var n = nns[i];
+			if (n.z != wsId) continue; // workspace filter
+			
+			if (n.type != "TabInput") continue;
+
+			console.log("getClassInputPort TabInput:" + currentNode.name + ", " + n.name); // so that we can debug the order
+
+			if (currIndex == pi) // we found the port
+			{
+				console.log("getClassInputPort found port:" + n.name);
+				// here we need to go througt all wires of that virtual port
+				var retVal = RED.nodes.eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
+				{
+					var dst = RED.nodes.node(dstId);
+					console.log("found dest:" + dst.name);
+					if (isClass(dst))
+					{
+						srcName += "." + make_name(dst);
+						srcName = getClassInputPort(nns, srcName, dst, dstPortIndex);
+					}
+					else
+						srcName += "."+ make_name(dst) + "," + dstPortIndex + "\n";
+
+					
+				});
+				return srcName;
+				/*
+				//var newSrc = 
+				if (isClass(n)) // if the new is class, then we call this function again
+				{
+					console.log("isClass(" + n.name + ")");
+					srcName += "." + make_name(n);
+					srcName = getClassInputPort(nns, srcName, n, newSrc[1]);
+				}
+				else
+					srcName += "." + make_name(newSrc[0]) + ", " + newSrc[1];
+					*/
+				return srcName; 
+			}
+			currIndex++; // check if we can find the port
+		}
+		console.log("end of getClassInputPort");
+	}
+	
+	$('#btn-deploy2').click(function() { save2(); });
+	function save2(force)
+	{
 		//TODO: to use this following sort, 
 		//it's more meaningfull if we first sort nodes by workspace
 		//RED.nodes.nodes.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); }); 
 
 		RED.storage.update();
 
-		//if (RED.nodes.hasIO()) {
-			
+		if (RED.nodes.hasIO())
+		{
 			var nns = RED.nodes.createCompleteNodeSet();
 			// sort by horizontal position, plus slight vertical position,
 			// for well defined update order that follows signal flow
 			nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
-			//console.log(JSON.stringify(nns));
+			//console.log(JSON.stringify(nns)); // debug test
 
 			var wns = RED.nodes.getWorkspacesAsNodeSet();
 
 			var cpp = "#include <Audio.h>\n#include <Wire.h>\n"
 				+ "#include <SPI.h>\n#include <SD.h>\n#include <SerialFlash.h>\n\n"
 				+ "\n// GUItool: begin automatically generated code\n"
-
+				+ "// JSON string:\n"
+				+ "//" + JSON.stringify(nns) + "\n";
+				
 			for (var wsi=0; wsi < wns.length; wsi++)
 			{
 				cpp += "\nclass " + wns[wsi].label + "\n{\n"
 				+ "  public:\n";
 
+				//console.log("class>>>" + wns[wsi].label + "<<<"); // debug test
 			
-				//cpp += wns[i].id + ":" + wns[i].label + "\n"; // test 
+				//cpp += "// " + wns[i].id + ":" + wns[i].label + "\n"; // test 
 			
-			// generate code for all audio processing nodes
-			for (var i=0; i<nns.length; i++) {
-				var n = nns[i];
+				// generate code for all array def. nodes
+				for (var i=0; i<nns.length; i++) {
+					var n = nns[i];
 
-				if (n.z != wns[wsi].id) continue; // workspace check
+					if (n.z != wns[wsi].id) continue; // workspace check
 
-				var node = RED.nodes.node(n.id);
-				if (node && (node.outputs > 0 || node._def.inputs > 0)) {
-					
-					if (n.type == "TabInput" || n.type == "TabOutput")
-						cpp += "//  "; 
-					else
+					var node = RED.nodes.node(n.id);
+					if (!node) continue;
+					if (node.type != "Array") continue;
+					var arrayNode = node.name.split(" ");
+					if (!arrayNode) continue;
+					if (arrayNode.length != 2) continue;
+
+					cpp += "    " + arrayNode[0] + " "; // type
+					for (var j=arrayNode[0].length; j<32; j++) cpp += " ";
+					cpp += arrayNode[1] + ";\n"; // name
+					//for (var j=arrayNode[1].length; j<26; j++) cpp += " ";
+
+					//cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n"; // now with JSON string at top xy not needed anymore
+				}
+				// generate code for all audio processing nodes
+				for (var i=0; i<nns.length; i++) {
+					var n = nns[i];
+
+					if (n.z != wns[wsi].id) continue; // workspace check
+
+					var node = RED.nodes.node(n.id);
+					if (!node) continue;
+					if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
+						
+					if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
+					//	cpp += "//  "; // comment out because this is just a placeholder for import
+					//else
 						cpp += "    "
+						
+					//console.log(">>>" + n.type +"<<<"); // debug test
 					cpp += n.type + " ";
 					for (var j=n.type.length; j<32; j++) cpp += " ";
 					var name = make_name(n)
-					cpp += name + "; ";
-					for (var j=n.name.length; j<26; j++) cpp += " ";
-					
-					cpp += "//xy=" + n.x + "," + n.y + "," + n.z;
+					cpp += name + ";\n";
+					//for (var j=n.name.length; j<26; j++) cpp += " ";
 
-					if (n.type == "TabInput" || n.type == "TabOutput")
-						cpp += " // placeholder\n"; 
-					else
-						cpp += "\n";
+					//cpp += "//xy=" + n.x + "," + n.y + "," + n.z; // now with JSON string at top xy not needed anymore
+
+					//if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
+					//	cpp += " // placeholder\n"; 
+					//else
 				}
-			}
-			// generate code for all control nodes (no inputs or outputs)
-			for (var i=0; i<nns.length; i++) {
-				var n = nns[i];
+				// generate code for all control nodes (no inputs or outputs)
+				for (var i=0; i<nns.length; i++) {
+					var n = nns[i];
 
-				if (n.z != wns[wsi].id) continue;
+					if (n.z != wns[wsi].id) continue;
 
-				var node = RED.nodes.node(n.id);
-				if (node && node.outputs == 0 && node._def.inputs == 0) {
-					cpp += "    " + n.type + " ";
-					for (var j=n.type.length; j<32; j++) cpp += " ";
-					var name = make_name(n)
-					cpp += name + "; ";
-					for (var j=n.name.length; j<26; j++) cpp += " ";
-					cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n";
+					var node = RED.nodes.node(n.id);
+					if (node && node.outputs == 0 && node._def.inputs == 0) {
+
+						if (n.type == "Array") continue; // skip this, it's allready added above
+
+						cpp += "    " + n.type + " ";
+						for (var j=n.type.length; j<32; j++) cpp += " ";
+						var name = make_name(n)
+						cpp += name + ";\n";
+						//for (var j=n.name.length; j<26; j++) cpp += " ";
+						//cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n"; // now with JSON string at top xy not needed anymore
+						//cpp+= "\n";
+					}
 				}
-			}
-			cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
-			
-			// generate code for all connections (aka wires or links)
-			var cordcount = 1;
-			for (var i=0; i<nns.length; i++) {
-				var n = nns[i];
-
-				if (n.z != wns[wsi].id) continue; // workspace check
-
-				if (!n.wires){ console.log("!n.wires: "+n.type + ":" + n.name); continue;}
-
-				if (n.wires.length == 0) console.log("port.length == 0:"+n.type + ":" + n.name)
-
-				for (var pi=0; pi<n.wires.length; pi++) // pi = port index
+				cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
+				
+				// generate code for all connections (aka wires or links)
+				var cordcount = 1;
+				for (var i=0; i<nns.length; i++)
 				{
-					var port = n.wires[pi];
-					if (!port){ /*console.log("!port(" + pi + "):" + n.type + ":" + n.name);*/ continue;}
+					var n = nns[i];
 
-					//if (port.length == 0) console.log("portWires.length == 0:"+n.type + ":" + n.name)
+					if (n.z != wns[wsi].id) continue; // workspace check
 
-					for (var pwi=0; pwi<port.length; pwi++) // pwi = port wire index
+					RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex)
 					{
-						var wire = port[pwi];
-						if (!wire){ /*console.log("!wire(" + pwi + "):" + n.type + ":" + n.name);*/ continue;}
-
-						var parts = wire.split(":");
-						if (parts.length != 2){ /*console.log("parts.length != 2 (" + pwi + "):" + n.type + ":" + n.name);*/ continue;}
-
 						var src = RED.nodes.node(n.id);
-						var dst = RED.nodes.node(parts[0]);
+						var dst = RED.nodes.node(dstId);//parts[0]);
+
+						if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top place-holders not needed anymore
+							
+						cpp += "        "; 
 
 						var src_name = make_name(src);
 						var dst_name = make_name(dst);
 
+						cpp += "AudioConnection        patchCord" + cordcount + "(";
+
 						if (isClass(n)) // if source is class
 						{
-							console.log("src is class:" + n.name);
-							var srcObj = getClassOutputPort(n, pi);
-							if (srcObj)
-								src_name += "." + make_name(srcObj);
+							console.log("root src is class:" + src_name);
+							cpp += getClassOutputPort(nns, src_name, n, pi);// this also returns the src port nr
 						}
-						//TODO: next we have to do if destination is class
+						else
+						{
+							cpp += src_name + ", " + pi 
+						}
+						cpp += ", ";
 						if (isClass(dst))
 						{
-							console.log("dst is class:" + dst.name + " from:" + n.name);
+							//TODO: next we have to generate code if destination is class
+							cpp += getClassInputPort(nns, dst_name, dst, dstPortIndex);
+
+							//console.log("dst is class:" + dst.name + " from:" + n.name);
+							//cpp += ", " + dst_name + ", " + dstPortIndex;//parts[1]; // this will not be here
 						}
-
-						if (src.type == "TabInput" || dst.type == "TabOutput")
-							cpp += "//      ";
 						else
-							cpp += "        "; 
-
-						cpp += "AudioConnection        patchCord" + cordcount + "(";
+						{
+							cpp += dst_name + ", " + dstPortIndex;//parts[1];
+						}
+						/* we can't use this old style when detecting classes because the class port finder
+						   returns the port numbers
 						if (pi == 0 && parts[1] == 0 && src && src.outputs == 1 && dst && dst._def.inputs == 1)
 						{
 							cpp += src_name + ", " + dst_name;
@@ -371,19 +465,18 @@ var RED = (function() {
 						else
 						{
 							cpp += src_name + ", " + pi + ", " + dst_name + ", " + parts[1];
-						}
+						}*/
+
 						if (src.type == "TabInput" || dst.type == "TabOutput")
 							cpp += "); // placeholder\n";
 						else 
 							cpp += ");\n";
 						cordcount++;
-					}
+					});
 				}
+				cpp += "    }\n";
+				cpp += "}\n";
 			}
-			cpp += "    }\n";
-			
-			cpp += "}\n";
-		}
 			cpp += "// GUItool: end automatically generated code\n";
 			//console.log(cpp);
 
@@ -411,7 +504,7 @@ var RED = (function() {
 			$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
 			});
 			//RED.view.dirty(false);
-		/*} else {
+		} else {
 			$( "#node-dialog-error-deploy" ).dialog({
 				title: "Error exporting data to Arduino IDE",
 				modal: true,
@@ -425,10 +518,54 @@ var RED = (function() {
 					}
 				}]
 			}).dialog("open");
-		}*/
+		}
+	}
+	function download(filename, text) {
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+		element.setAttribute('download', filename);
+	  
+		element.style.display = 'none';
+		document.body.appendChild(element);
+	  
+		element.click();
+	  
+		document.body.removeChild(element);
+	}
+	function readSingleFile(e) {
+		var file = e.target.files[0];
+		if (!file) {
+		  return;
+		}
+		var reader = new FileReader();
+		reader.onload = function(e) {
+		  var contents = e.target.result;
+		  // Display file content
+		  displayContents(contents);
+		};
+		reader.readAsText(file);
+	  }
+	   
+	  function displayContents(contents) {
+		//var element = document.getElementById('file-content');
+		RED.storage.loadFile(contents);
+	  }
+	   
+	  document.getElementById('file-input').addEventListener('change', readSingleFile, false);
+
+	  $('#btn-loadFromFile').click(function() { loadFromFile(); });
+	  function loadFromFile()
+	  {
+		
+	  }
+	$('#btn-saveTofile').click(function() { saveAsFile(); });
+	function saveAsFile()
+	{
+		var nns = RED.nodes.createCompleteNodeSet();
+		var jsonString  = JSON.stringify(nns, null, 4);
+		download("TeensyAudioDesign.json", jsonString);
 	}
 	
-	$('#btn-deploy2').click(function() { save2(); });
 
 	function showExportDialog(cppCode)
 	{
@@ -543,6 +680,9 @@ var RED = (function() {
 			var ws = wns[i];
 			var inputCount = getClassNrOfInputs(nns, ws.id);
 			var outputCount = getClassNrOfOutputs(nns, ws.id);
+
+			if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
+
 			//var color = "#E6E0F8"; // standard
 			var color = "#ccffcc"; // new
 			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
