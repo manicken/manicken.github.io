@@ -782,6 +782,22 @@ RED.nodes = (function() {
 		}
 	}
 
+	function workspaceNameChanged(oldName, newName)
+	{
+		var changedCount = 0;
+		for (var n=0;n<nodes.length;n++) {
+			if (nodes[n].type == oldName)
+			{
+				nodes[n].type = newName;
+				changedCount++;
+			}
+		}
+		RED.palette.remove(oldName);
+		node_defs[oldName] = undefined;
+
+		console.log("workspaceNameChanged:" + oldName + " to " + newName + " with " + changedCount + " objects changed");
+	}
+
 	return {
 		registerType: registerType,
 		getType: getType,
@@ -814,6 +830,7 @@ RED.nodes = (function() {
 		},
 		
 		eachWire: eachwire,
+		workspaceNameChanged:workspaceNameChanged,
 		node: getNode,
 		namedNode: getNodeByName,
 		cppToJSON: cppToJSON,

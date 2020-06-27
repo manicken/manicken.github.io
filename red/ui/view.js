@@ -266,6 +266,7 @@ RED.view = (function() {
 			redraw();
 		},
 		ondblclick: function(tab) {
+			console.log("showRenameWorkspaceDialog");
 			showRenameWorkspaceDialog(tab.id);
 		},
 		onadd: function(tab) {
@@ -1708,6 +1709,7 @@ RED.view = (function() {
 
 	function showRenameWorkspaceDialog(id) {
 		var ws = RED.nodes.workspace(id);
+
 		$( "#node-dialog-rename-workspace" ).dialog("option","workspace",ws);
 
 		if (workspace_tabs.count() == 1) {
@@ -1719,9 +1721,10 @@ RED.view = (function() {
 				.prop('disabled',false)
 				.removeClass("ui-state-disabled");
 		}
-
+		
 		$( "#node-input-workspace-name" ).val(ws.label);
 		$( "#node-dialog-rename-workspace" ).dialog("open");
+
 	}
 
 	function getForm(formId, key, callback) {
@@ -1775,6 +1778,7 @@ RED.view = (function() {
 					var workspace = $(this).dialog('option','workspace');
 					var label = $( "#node-input-workspace-name" ).val();
 					if (workspace.label != label) {
+						RED.nodes.workspaceNameChanged(workspace.label, label);
 						workspace.label = label;
 						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
 						link.attr("title",label);

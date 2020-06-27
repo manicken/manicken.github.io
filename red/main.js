@@ -185,13 +185,14 @@ var RED = (function() {
 	/**
 	 * This is only used to find what is connected to a TabOutput-"pin"
 	 * @param {Array} nns array of all nodes
-	 * @param {String} wsId workspace id
+	 * @param {node} classNode the node that is in the class
 	 * @param {String} nId node id
-	 * @returns {Array} as [node,portIndex]
+	 * @returns {*} as {node:n, srcPortIndex: srcPortIndex}
 	 */
-	function getWireInputSourceNode(nns, wsId, nId)
+	function getWireInputSourceNode(nns, classNode, nId)
 	{
-		console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
+		var wsId = getWorkspaceIdFromClassName(classNode);
+		console.log("try get WireInputSourceNode:" + classNode.name + ":" + nId);
 		for (var ni = 0; ni < nns.length; ni++)
 		{
 			var n = nns[ni];
@@ -203,109 +204,94 @@ var RED = (function() {
 				{
 					console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
 					console.log("");
-					return [n,srcPortIndex];
+					return {node:n, srcPortIndex: srcPortIndex};
 				}
 			});
 			if (retVal) return retVal;
 		}
 	}
 	/**
-	 * 
+	 * the name say it all
 	 * @param {Array} nns array of all nodes
-	 * @param {String} srcName this is the input name that we add upto
-	 * @param {*} currentNode flow-node
-	 * @param {*} pi portIndex
+	 * @param {node} classNode as nodeType
+	 * @param {String} portType (TabInput or TabOutput)
+	 * @param {Number} portIndex
+	 * @returns {node} the TabInput or TabOutput node
 	 */
-	function getClassOutputPort(nns, srcName, currentNode, pi)
+	function getClassPortNode(nns, classNode, portType, portIndex)
 	{
-		var wsId = getWorkspaceIdFromClassName(currentNode);
+		var wsId = getWorkspaceIdFromClassName(classNode);
 		var currIndex = 0;
+		console.log("getClassPortNode classNode:" + classNode.name + ", portType: " + portType + ", portIndex:" + portIndex);
 		for (var i = 0; i < nns.length; i++)
 		{
 			var n = nns[i];
 			if (n.z != wsId) continue;
 			
-			if (n.type != "TabOutput") continue;
+			if (n.type != portType) continue;
 
-			console.log("getClassOutputPort TabOutput:" + currentNode.name + ", " + n.name); // so that we can see the order
+			console.log("getClassPortNode current:" + n.name); // so that we can see the order
 
-			if (currIndex == pi) // we found the port
+			if (currIndex == portIndex) // we found the port
 			{
-				// then we get what is connected to that port inside the class
-				
-				var newSrc = getWireInputSourceNode(nns, wsId, n.id); // this return a array
-
-				if (isClass(newSrc[0])) // if the new is class, then we call this function again
-				{
-					console.log("isClass(" + newSrc[0].name + ")");
-					srcName += "." + make_name(newSrc[0]);
-					srcName = getClassOutputPort(nns, srcName, newSrc[0], newSrc[1]);
-				}
-				else
-					srcName += "." + make_name(newSrc[0]) + ", " + newSrc[1];
-				return srcName; 
+				console.log("getClassPortNode found port:" + n.name);
+				return n;
 			}
-			currIndex++; // check if we can find the port
+			currIndex++;
 		}
+		console.log("ERROR! could not find the class, portType:" + portType + " with portIndex:" + portIndex);
+	}
+	
+	function classOutputPortToCpp(nns, ac, classNode)
+	{
+		var outputNode = getClassPortNode(nns, classNode, "TabOutput", ac.srcPort);
+		if (!outputNode)
+		{
+			 console.log("could not getClassPortNode:" + classNode.name + ", ac.srcPort:" + ac.srcPort);
+			 return false;
+		} // abort
+
+		// if the portNode is found, next we get what is connected to that port inside the class
+		var newSrc = getWireInputSourceNode(nns, classNode, outputNode.id); // this return type {node:n, srcPortIndex: srcPortIndex};
+
+		ac.srcName += "." + make_name(newSrc.node);
+		ac.srcPort = newSrc.srcPortIndex;
+
+		if (isClass(newSrc.node))
+		{
+			console.log("isClass(" + newSrc.node.name + ")");
+
+			// call this function recursive until non class is found
+			if (!classOutputPortToCpp(nns, ac, newSrc.node))
+				return false; // failsafe
+		}
+		return true;
 	}
 
-	/**
-	 * 
-	 * @param {Array} nns array of all nodes
-	 * @param {String} srcName this is the input name that we add upto
-	 * @param {*} currentNode flow-node
-	 * @param {*} pi portIndex
-	 */
-	function getClassInputPort(nns, srcName, currentNode, pi)
+	function classInputPortToCpp(nns, currRootName, ac, classNode)
 	{
-		var wsId = getWorkspaceIdFromClassName(currentNode);
-		var currIndex = 0;
-		console.log("try find getClassInputPort, pi:" + pi + ", currNode:" + currentNode.name);
-		console.log("getClassInputPort, nns.length:" + nns.length);
-		for (var i = 0; i < nns.length; i++)
+		var inputNode = getClassPortNode(nns, classNode, "TabInput", ac.dstPort);
+		if (!inputNode) return false; // abort
+
+		// here we need to go througt all wires of that virtual port
+		var retVal = RED.nodes.eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
 		{
-			var n = nns[i];
-			if (n.z != wsId) continue; // workspace filter
-			
-			if (n.type != "TabInput") continue;
+			var dst = RED.nodes.node(dstId);
+			console.log("found dest:" + dst.name);
+			ac.dstPort = dstPortIndex;
+			ac.dstName = currRootName + "." + make_name(dst);
 
-			console.log("getClassInputPort TabInput:" + currentNode.name + ", " + n.name); // so that we can debug the order
-
-			if (currIndex == pi) // we found the port
+			if (isClass(dst))
 			{
-				console.log("getClassInputPort found port:" + n.name);
-				// here we need to go througt all wires of that virtual port
-				var retVal = RED.nodes.eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
-				{
-					var dst = RED.nodes.node(dstId);
-					console.log("found dest:" + dst.name);
-					if (isClass(dst))
-					{
-						srcName += "." + make_name(dst);
-						srcName = getClassInputPort(nns, srcName, dst, dstPortIndex);
-					}
-					else
-						srcName += "."+ make_name(dst) + "," + dstPortIndex + "\n";
-
-					
-				});
-				return srcName;
-				/*
-				//var newSrc = 
-				if (isClass(n)) // if the new is class, then we call this function again
-				{
-					console.log("isClass(" + n.name + ")");
-					srcName += "." + make_name(n);
-					srcName = getClassInputPort(nns, srcName, n, newSrc[1]);
-				}
-				else
-					srcName += "." + make_name(newSrc[0]) + ", " + newSrc[1];
-					*/
-				return srcName; 
+				// call this function recursive until non class is found
+				classInputPortToCpp(nns, ac.dstName, ac, dst);
 			}
-			currIndex++; // check if we can find the port
-		}
-		console.log("end of getClassInputPort");
+			else
+			{
+				ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
+			}					
+		});
+		return true;
 	}
 	
 	$('#btn-deploy2').click(function() { save2(); });
@@ -413,65 +399,72 @@ var RED = (function() {
 				cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
 				
 				// generate code for all connections (aka wires or links)
-				var cordcount = 1;
+				//var cordcount = 1;
+
+				
+				var ac = {
+					base: "        AudioConnection        patchCord",
+					srcName: "",
+					srcPort: 0,
+					dstName: "",
+					dstPort: 0,
+					count: 1,
+					cppCode: "",
+					appendToCppCode: function() {
+						//if ((this.srcPort == 0) && (this.dstPort == 0))
+						//	this.cppCode	+= "\n" + this.base + this.count + "(" + this.srcName + ", " + this.dstName + ");";
+						//else
+							this.cppCode	+= this.base + this.count + "(" + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
+						this.count++;
+					}
+				};
+				ac.count = 1;
+
 				for (var i=0; i<nns.length; i++)
 				{
 					var n = nns[i];
 
 					if (n.z != wns[wsi].id) continue; // workspace check
-
+					
 					RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex)
 					{
 						var src = RED.nodes.node(n.id);
-						var dst = RED.nodes.node(dstId);//parts[0]);
+						var dst = RED.nodes.node(dstId);
 
 						if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top place-holders not needed anymore
 							
-						cpp += "        "; 
-
-						var src_name = make_name(src);
-						var dst_name = make_name(dst);
-
-						cpp += "AudioConnection        patchCord" + cordcount + "(";
+						ac.cppCode = "";
+						ac.srcName = make_name(src);
+						ac.dstName = make_name(dst);
+						ac.srcPort = pi;
+						ac.dstPort = dstPortIndex;
+						
+						//cpp += "AudioConnection        patchCord" + ac.count + "(";
 
 						if (isClass(n)) // if source is class
 						{
-							console.log("root src is class:" + src_name);
-							cpp += getClassOutputPort(nns, src_name, n, pi);// this also returns the src port nr
+							console.log("root src is class:" + ac.srcName);
+
+							if (!classOutputPortToCpp(nns, ac, n))
+							{
+								cpp+= "//Error generating AudioConnection for srcName:" + src.name + ", dstName:" + dst.name;
+								return; // this only skip current node
+							}
 						}
-						else
-						{
-							cpp += src_name + ", " + pi 
-						}
-						cpp += ", ";
+						
 						if (isClass(dst))
 						{
-							//TODO: next we have to generate code if destination is class
-							cpp += getClassInputPort(nns, dst_name, dst, dstPortIndex);
-
-							//console.log("dst is class:" + dst.name + " from:" + n.name);
-							//cpp += ", " + dst_name + ", " + dstPortIndex;//parts[1]; // this will not be here
+							console.log("dst is class:" + dst.name + " from:" + n.name);
+							
+							//ac.appendToCppCode(); // debug
+							classInputPortToCpp(nns, ac.dstName , ac, dst);
 						}
 						else
 						{
-							cpp += dst_name + ", " + dstPortIndex;//parts[1];
+							ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
 						}
-						/* we can't use this old style when detecting classes because the class port finder
-						   returns the port numbers
-						if (pi == 0 && parts[1] == 0 && src && src.outputs == 1 && dst && dst._def.inputs == 1)
-						{
-							cpp += src_name + ", " + dst_name;
-						}
-						else
-						{
-							cpp += src_name + ", " + pi + ", " + dst_name + ", " + parts[1];
-						}*/
-
-						if (src.type == "TabInput" || dst.type == "TabOutput")
-							cpp += "); // placeholder\n";
-						else 
-							cpp += ");\n";
-						cordcount++;
+						cpp += ac.cppCode;
+						
 					});
 				}
 				cpp += "    }\n";
