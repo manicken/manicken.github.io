@@ -95,7 +95,14 @@ RED.sidebar.info = (function() {
 			if (data)
 				$("#tab-info").html(prefix + '<div class="node-help">' + data + '</div>');
 			else
-				$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
+			{
+				$.get( "resources/help/" + key + ".html", function( data ) {
+					$("#tab-info").html(prefix + '<h2>' + key + '</h2><div class="node-help">' + data + '</div>');
+				}).fail(function () {
+					$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
+				});
+				
+			}
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {
 				$("#tab-info").html(prefix + '<h2>' + key + '</h2><div class="node-help">' + data + '</div>');
