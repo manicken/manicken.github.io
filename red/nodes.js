@@ -760,7 +760,7 @@ RED.nodes = (function() {
 	function eachwire(srcNode, cb) {
 		if (!srcNode.wires){ console.log("!node.wires: " + srcNode.type + ":" + srcNode.name); return;}
 
-		if (srcNode.wires.length == 0) console.log("port.length == 0:" + srcNode.type + ":" + srcNode.name)
+		//if (srcNode.wires.length == 0) console.log("port.length == 0:" + srcNode.type + ":" + srcNode.name)
 
 		for (var pi=0; pi<srcNode.wires.length; pi++) // pi = port index
 		{

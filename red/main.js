@@ -192,7 +192,7 @@ var RED = (function() {
 	function getWireInputSourceNode(nns, classNode, nId)
 	{
 		var wsId = getWorkspaceIdFromClassName(classNode);
-		console.log("try get WireInputSourceNode:" + classNode.name + ":" + nId);
+		//console.log("try get WireInputSourceNode:" + classNode.name + ":" + nId);
 		for (var ni = 0; ni < nns.length; ni++)
 		{
 			var n = nns[ni];
@@ -202,8 +202,8 @@ var RED = (function() {
 			{
 				if (dstId == nId)
 				{
-					console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
-					console.log("");
+					//console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
+					//console.log("");
 					return {node:n, srcPortIndex: srcPortIndex};
 				}
 			});
@@ -222,7 +222,7 @@ var RED = (function() {
 	{
 		var wsId = getWorkspaceIdFromClassName(classNode);
 		var currIndex = 0;
-		console.log("getClassPortNode classNode:" + classNode.name + ", portType: " + portType + ", portIndex:" + portIndex);
+		//console.log("getClassPortNode classNode:" + classNode.name + ", portType: " + portType + ", portIndex:" + portIndex);
 		for (var i = 0; i < nns.length; i++)
 		{
 			var n = nns[i];
@@ -230,11 +230,11 @@ var RED = (function() {
 			
 			if (n.type != portType) continue;
 
-			console.log("getClassPortNode current:" + n.name); // so that we can see the order
+			//console.log("getClassPortNode current:" + n.name); // so that we can see the order
 
 			if (currIndex == portIndex) // we found the port
 			{
-				console.log("getClassPortNode found port:" + n.name);
+				//console.log("getClassPortNode found port:" + n.name);
 				return n;
 			}
 			currIndex++;
@@ -259,7 +259,7 @@ var RED = (function() {
 
 		if (isClass(newSrc.node))
 		{
-			console.log("isClass(" + newSrc.node.name + ")");
+			//console.log("isClass(" + newSrc.node.name + ")");
 
 			// call this function recursive until non class is found
 			if (!classOutputPortToCpp(nns, ac, newSrc.node))
@@ -277,7 +277,7 @@ var RED = (function() {
 		var retVal = RED.nodes.eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
 		{
 			var dst = RED.nodes.node(dstId);
-			console.log("found dest:" + dst.name);
+			//console.log("found dest:" + dst.name);
 			ac.dstPort = dstPortIndex;
 			ac.dstName = currRootName + "." + make_name(dst);
 
@@ -443,7 +443,7 @@ var RED = (function() {
 
 						if (isClass(n)) // if source is class
 						{
-							console.log("root src is class:" + ac.srcName);
+							//console.log("root src is class:" + ac.srcName);
 
 							if (!classOutputPortToCpp(nns, ac, n))
 							{
@@ -454,7 +454,7 @@ var RED = (function() {
 						
 						if (isClass(dst))
 						{
-							console.log("dst is class:" + dst.name + " from:" + n.name);
+							//console.log("dst is class:" + dst.name + " from:" + n.name);
 							
 							//ac.appendToCppCode(); // debug
 							classInputPortToCpp(nns, ac.dstName , ac, dst);

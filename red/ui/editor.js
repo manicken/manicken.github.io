@@ -130,7 +130,8 @@ RED.editor = (function() {
 							var changed = false;
 							var wasDirty = RED.view.dirty();
 							var d;
-
+							console.log("edit node save!");
+							
 							if (editing_node._def.oneditsave) {
 								var oldValues = {};
 								for (d in editing_node._def.defaults) {
@@ -269,6 +270,7 @@ RED.editor = (function() {
 				$( this ).dialog('option','width','500');
 				if (editing_node) {
 					RED.sidebar.info.refresh(editing_node);
+					console.log("edit node done!");
 				}
 				RED.sidebar.config.refresh();
 				editing_node = null;
