@@ -229,11 +229,11 @@ RED.view = (function() {
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: function(tab) {
-			if (tab.type == "subflow") {
+			//if (tab.type == "subflow") {
 				$("#workspace-toolbar").show();
-			} else {
-				$("#workspace-toolbar").hide();
-			}
+			//} else {
+			//	$("#workspace-toolbar").hide();
+			//}
 			var chart = $("#chart");
 			if (activeWorkspace !== 0) {
 				workspaceScrollPositions[activeWorkspace] = {
