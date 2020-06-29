@@ -212,26 +212,20 @@ var RED = (function() {
 	}
 	/**
 	 * the name say it all
-	 * @param {Array} nns array of all nodes
+	 * @param {Array} tabIOnodes array of specific ClassPort nodes
 	 * @param {node} classNode as nodeType
-	 * @param {String} portType (TabInput or TabOutput)
 	 * @param {Number} portIndex
 	 * @returns {node} the TabInput or TabOutput node
 	 */
-	function getClassPortNode(nns, classNode, portType, portIndex)
+	function getClassPortNode(tabIOnodes, classNode, portIndex)
 	{
 		var wsId = getWorkspaceIdFromClassName(classNode);
 		var currIndex = 0;
 		//console.log("getClassPortNode classNode:" + classNode.name + ", portType: " + portType + ", portIndex:" + portIndex);
-		for (var i = 0; i < nns.length; i++)
+		for (var i = 0; i < tabIOnodes.length; i++)
 		{
-			var n = nns[i];
+			var n = tabIOnodes[i];
 			if (n.z != wsId) continue;
-			
-			if (n.type != portType) continue;
-
-			//console.log("getClassPortNode current:" + n.name); // so that we can see the order
-
 			if (currIndex == portIndex) // we found the port
 			{
 				//console.log("getClassPortNode found port:" + n.name);
@@ -242,9 +236,9 @@ var RED = (function() {
 		console.log("ERROR! could not find the class, portType:" + portType + " with portIndex:" + portIndex);
 	}
 	
-	function classOutputPortToCpp(nns, ac, classNode)
+	function classOutputPortToCpp(nns, tabOutNodes, ac, classNode)
 	{
-		var outputNode = getClassPortNode(nns, classNode, "TabOutput", ac.srcPort);
+		var outputNode = getClassPortNode(tabOutNodes, classNode, ac.srcPort);
 		if (!outputNode)
 		{
 			 console.log("could not getClassPortNode:" + classNode.name + ", ac.srcPort:" + ac.srcPort);
@@ -262,15 +256,15 @@ var RED = (function() {
 			//console.log("isClass(" + newSrc.node.name + ")");
 
 			// call this function recursive until non class is found
-			if (!classOutputPortToCpp(nns, ac, newSrc.node))
+			if (!classOutputPortToCpp(nns, tabOutNodes, ac, newSrc.node))
 				return false; // failsafe
 		}
 		return true;
 	}
 
-	function classInputPortToCpp(nns, currRootName, ac, classNode)
+	function classInputPortToCpp(tabInNodes, currRootName, ac, classNode)
 	{
-		var inputNode = getClassPortNode(nns, classNode, "TabInput", ac.dstPort);
+		var inputNode = getClassPortNode(tabInNodes, classNode, ac.dstPort);
 		if (!inputNode) return false; // abort
 
 		// here we need to go througt all wires of that virtual port
@@ -284,7 +278,7 @@ var RED = (function() {
 			if (isClass(dst))
 			{
 				// call this function recursive until non class is found
-				classInputPortToCpp(nns, ac.dstName, ac, dst);
+				classInputPortToCpp(tabInNodes, ac.dstName, ac, dst);
 			}
 			else
 			{
@@ -306,6 +300,18 @@ var RED = (function() {
 		if (RED.nodes.hasIO())
 		{
 			var nns = RED.nodes.createCompleteNodeSet();
+			var tabInNodes = [];
+			var tabOutNodes = [];
+			for (var i = 0; i < nns.length; i++)
+			{
+				if (nns[i].type == "TabInput")
+					tabInNodes.push(nns[i]);
+				else if (nns[i].type == "TabOutput")
+					tabOutNodes.push(nns[i]);
+			}
+			tabInNodes.sort(function(a,b){ return (a.y - b.y); });
+			tabOutNodes.sort(function(a,b){ return (a.y - b.y); });
+
 			// sort by horizontal position, plus slight vertical position,
 			// for well defined update order that follows signal flow
 			nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
@@ -473,7 +479,7 @@ var RED = (function() {
 						{
 							//console.log("root src is class:" + ac.srcName);
 
-							if (!classOutputPortToCpp(nns, ac, n))
+							if (!classOutputPortToCpp(nns, tabOutNodes, ac, n))
 							{
 								cpp+= "//Error generating AudioConnection for srcName:" + src.name + ", dstName:" + dst.name;
 								return; // this only skip current node
@@ -485,7 +491,7 @@ var RED = (function() {
 							//console.log("dst is class:" + dst.name + " from:" + n.name);
 							
 							//ac.appendToCppCode(); // debug
-							classInputPortToCpp(nns, ac.dstName , ac, dst);
+							classInputPortToCpp(tabInNodes, ac.dstName , ac, dst);
 						}
 						else
 						{
