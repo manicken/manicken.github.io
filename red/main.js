@@ -803,6 +803,49 @@ var RED = (function() {
 		}
 		
 	});
+	function getConfirmLoadDemoText(filename)
+	{
+		return "<p> You are going to replace your current flow</p>" +
+			   "<p> with " + filename + ".</p>" +
+			   "<p>Are you sure you want to load?</p>";
+	}
+	$('#btn-demoFlowA').click(function() {
+		var data = $("script[data-container-name|='DemoFlowA']").html();
+		//console.log(data);
+		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowA"), function(okPressed) { 
+			if (okPressed)
+				RED.storage.loadFile(data);
+		});
+	});
+
+	$('#btn-demoFlowB').click(function() {
+		var data = $("script[data-container-name|='DemoFlowB']").html();
+		//console.log(data);
+		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowB"), function(okPressed) { 
+			if (okPressed)
+				RED.storage.loadFile(data);
+		});
+		
+	});
+
+	function verifyDialog(dialogTitle, textTitle, text, cb) {
+		$( "#node-dialog-verify" ).dialog({
+			modal: true,
+			autoOpen: false,
+			width: 500,
+			title: dialogTitle,
+			buttons: [
+				{ text: "Ok", click: function() { cb(true); $( this ).dialog( "close" );	} },
+				{ text: "Cancel", click: function() { cb(false); $( this ).dialog( "close" ); }	}
+			],
+			open: function(e) { RED.keyboard.disable();	},
+			close: function(e) { RED.keyboard.enable();	}
+
+		});
+		$( "#node-dialog-verify-textTitle" ).text(textTitle);
+		$( "#node-dialog-verify-text" ).html(text);
+		$( "#node-dialog-verify" ).dialog('open');
+	}
 
 	return {
 		addClassTabsToPalette:addClassTabsToPalette,

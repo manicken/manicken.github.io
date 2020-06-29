@@ -4,8 +4,8 @@
 
 RED.storage = (function() {
 	function update() {
-		RED.addClassTabsToPalette();
-		RED.refreshClassNodes();
+		RED.addClassTabsToPalette(); //Jannik
+		RED.refreshClassNodes(); //Jannik
 		// TOOD: use setTimeout to limit the rate of changes?
 		if (localStorage) {
 			var nns = RED.nodes.createCompleteNodeSet();
