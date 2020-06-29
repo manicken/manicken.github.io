@@ -807,14 +807,18 @@ var RED = (function() {
 	{
 		return "<p> You are going to replace your current flow</p>" +
 			   "<p> with " + filename + ".</p>" +
-			   "<p>Are you sure you want to load?</p>";
+			   "<p>Are you sure you want to load?</p>" +
+			   "<p>Note. your current design will be downloaded as TeensyAudioDesign.json</p>";
 	}
 	$('#btn-demoFlowA').click(function() {
 		var data = $("script[data-container-name|='DemoFlowA']").html();
 		//console.log(data);
 		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowA"), function(okPressed) { 
 			if (okPressed)
+			{
+				saveAsFile();
 				RED.storage.loadFile(data);
+			}
 		});
 	});
 
@@ -823,7 +827,10 @@ var RED = (function() {
 		//console.log(data);
 		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowB"), function(okPressed) { 
 			if (okPressed)
+			{
+				saveAsFile();
 				RED.storage.loadFile(data);
+			}
 		});
 		
 	});
