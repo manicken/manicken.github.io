@@ -58,7 +58,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-sidebar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Sidebar</a></li>
-					<li class="divider"></li>
+					<li class="divider"></li> 
+					<li><a id="btn-workspace-toolbar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Toolbar</a></li>
+					<li class="divider"></li> 
 					 <li><a id="btn-node-status" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-info-sign"></i> Node Status</a></li>
 					<li class="divider"></li>
 					<li><a id="btn-saveTofile" tabindex="-1" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> SaveToFile</a></li>
@@ -67,7 +69,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					
 					<li class="divider"></li>
 
-					<!--
+					
 <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-edit"></i> Import from...</a>
 						<ul class="dropdown-menu">
 							<li><a id="btn-import" tabindex="-1" href="#"><i class="icon-edit"></i> Clipboard...</a></li>
@@ -84,7 +86,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 						</ul>
 					</li>
 					<li class="divider"></li>
--->
+-
 					<!--
  <li><a id="btn-config-nodes" tabindex="-1" href="#"><i class="icon-th-list"></i> Configuration nodes...</a></li>
 					<li class="divider"></li>
@@ -132,9 +134,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<div id="chart"></div>
 		<div id="workspace-toolbar">
 			<div class="btn-group">
-				<a class="btn btn-small" href="#"><i class="icon-zoom-out"></i></a>
-				<a class="btn btn-small" href="#"><i class="icon-th"></i></a>
-				<a class="btn btn-small" href="#"><i class="icon-zoom-in"></i></a>
+				<a class="btn btn-small" id="btn-cut" href="#"><i class="fa fa-scissors"></i> cut</a>
+				<a class="btn btn-small" id="btn-copy" href="#"><i class="fa fa-copy"></i> copy</a>
+				<a class="btn btn-small" id="btn-paste" href="#"><i class="fa fa-paste"></i> paste</a>
 			</div>
 		</div>
 	</div>
@@ -363,11 +365,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"TabOutput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabOutput","inputs":1,"outputs":0,"category":"tabs-function","color":"#cce6ff","icon":"arrow-in.png"}},
 		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabInput","inputs":0,"outputs":1,"category":"tabs-function","color":"#cce6ff","icon":"arrow-in.png"}},
 		{"type":"Array","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"Array","inputs":0,"outputs":0,"category":"tabs-function","color":"#ccffcc","icon":"range.png"}},
-		{"type":"AudioMixerX","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"MixerX","inputs":1,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioMixer2","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer2","inputs":2,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioMixer16","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer16","inputs":16,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioMixer32","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer32","inputs":32,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		
+		{"type":"AudioMixerX","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"inputs":{"value":"1"}},"shortName":"MixerX","inputs":1,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputAnalog","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"adc","inputs":0,"outputs":1,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -389,9 +388,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioOutputADAT","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"adat","inputs":8,"outputs":0,"category":"output-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioOutputUSB","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"usb","inputs":2,"outputs":0,"category":"output-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioAmplifier","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"amp","inputs":1,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		
 		{"type":"AudioMixer4","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
-		
 		{"type":"AudioPlayMemory","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"playMem","inputs":0,"outputs":1,"category":"play-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdWav","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"playSdWav","inputs":0,"outputs":2,"category":"play-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdRaw","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"playSdRaw","inputs":0,"outputs":1,"category":"play-function","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -456,6 +453,21 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
+<script type="text/x-red" data-template-name="AudioMixerX">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
+		<input type="text" id="node-input-id" placeholder="Id">
+	</div>
+	<div class="form-row">
+		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
+		<input type="text" id="node-input-inputs" placeholder="Inputs">
+	</div>
+</script>
+
 <script type="text/x-red" data-help-name="TabInput">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
@@ -469,12 +481,6 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 	<p></p>
 	<p></p>
-</script>
-<script type="text/x-red" data-template-name="TabInput">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
-	</div>
 </script>
 
 <script type="text/x-red" data-help-name="TabOutput">
@@ -491,11 +497,20 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="TabOutput">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+
+<script type="text/x-red" data-help-name="Array">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This is used to define an array of objects that is present in current flow.</p>
+	<h3>Usage</h3>
+	<p>To autogenerate a Array-node, select the nodes (they must be of the same type),</p>
+	<p>then press the "Generate array node" button present at the right info panel </p>
 	</div>
+	<h3>Notes</h3>
+	<p>To use it manually, the name should be "[Type] [Name]"</p>
+	<p>Example-name:</p>
+	<p>AudioSynthWaveform waveforms</p>
+	<p>this is the only thing needed, the code-generator will then search for all type matching objects in current flow and use them.</p>
 </script>
 
 <script type="text/x-red" data-help-name="AudioMixerX">
@@ -535,134 +550,6 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		or when multiple signals add together to greater than 1.0.</p>
 	<p>if you need more inputs you can create own special mixer with any number of inputs
 	</p>
-</script>
-<script type="text/x-red" data-template-name="AudioMixerX">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
-	</div>
-</script>
-
-<script type="text/x-red" data-help-name="AudioMixer2">
-	<h3>Summary</h3>
-	<div class=tooltipinfo>
-	<p>Combine up to 2 audio signals together, each with adjustable gain.
-		All channels support signal attenuation or amplification.</p>
-	</div>
-	<h3>Audio Connections</h3>
-	<table class=doc align=center cellpadding=3>
-		<tr class=top><th>Port</th><th>Purpose</th></tr>
-		<tr class=odd><td align=center>In 0</td><td>Input signal #1</td></tr>
-		<tr class=odd><td align=center>In 1</td><td>Input signal #2</td></tr>
-		<tr class=odd><td align=center>Out 0</td><td>Sum of all inputs</td></tr>
-	</table>
-	<h3>Functions</h3>
-	<p class=func><span class=keyword>gain</span>(channel, level);</p>
-	<p class=desc>Adjust the amplification or attenuation.  "channel" must
-		be 0 to 1.  "level" may be any floating point number from 0 to 32767.0.
-		1.0 passes the signal through directly.  Level of 0 shuts the channel
-		off completely.  Between 0 to 1.0 attenuates the signal, and above
-		1.0 amplifies it.  Negative numbers may also be used, to invert the
-		signal.  All 2 channels have separate gain settings.
-	</p>
-	<h3>Examples</h3>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; SamplePlayer
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; Synthesis &gt; PlaySynthMusic
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; SpectrumAnalyzerBasic
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; DialTone_Serial
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; MemoryAndCpuUsage
-	</p>
-	<h3>Notes</h3>
-	<p>Signal clipping can occur when any channel has gain greater than 1.0,
-		or when multiple signals add together to greater than 1.0.</p>
-	<p>if you need more inputs you can create own special mixer with any number of inputs
-	</p>
-</script>
-<script type="text/x-red" data-template-name="AudioMixer2">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
-	</div>
-</script>
-
-<script type="text/x-red" data-help-name="AudioMixer32">
-	<h3>Summary</h3>
-	<div class=tooltipinfo>
-	<p>Combine up to 32 audio signals together, each with adjustable gain.
-		All channels support signal attenuation or amplification.</p>
-	</div>
-	<h3>Audio Connections</h3>
-	<table class=doc align=center cellpadding=3>
-		<tr class=top><th>Port</th><th>Purpose</th></tr>
-		<tr class=odd><td align=center>In 0</td><td>Input signal #1</td></tr>
-		<tr class=odd><td align=center>In 1</td><td>Input signal #2</td></tr>
-		<tr class=odd><td align=center>In 2</td><td>Input signal #3</td></tr>
-		<tr class=odd><td align=center>In 3</td><td>Input signal #4</td></tr>
-		<tr class=odd><td align=center>In 4</td><td>Input signal #5</td></tr>
-		<tr class=odd><td align=center>In 5</td><td>Input signal #6</td></tr>
-		<tr class=odd><td align=center>In 6</td><td>Input signal #7</td></tr>
-		<tr class=odd><td align=center>In 7</td><td>Input signal #8</td></tr>
-		<tr class=odd><td align=center>In 8</td><td>Input signal #9</td></tr>
-		<tr class=odd><td align=center>In 9</td><td>Input signal #10</td></tr>
-		<tr class=odd><td align=center>In 10</td><td>Input signal #11</td></tr>
-		<tr class=odd><td align=center>In 11</td><td>Input signal #12</td></tr>
-		<tr class=odd><td align=center>In 12</td><td>Input signal #13</td></tr>
-		<tr class=odd><td align=center>In 13</td><td>Input signal #14</td></tr>
-		<tr class=odd><td align=center>In 14</td><td>Input signal #15</td></tr>
-		<tr class=odd><td align=center>In 15</td><td>Input signal #16</td></tr>
-		<tr class=odd><td align=center>In 16</td><td>Input signal #17</td></tr>
-		<tr class=odd><td align=center>In 17</td><td>Input signal #18</td></tr>
-		<tr class=odd><td align=center>In 18</td><td>Input signal #19</td></tr>
-		<tr class=odd><td align=center>In 19</td><td>Input signal #20</td></tr>
-		<tr class=odd><td align=center>In 20</td><td>Input signal #21</td></tr>
-		<tr class=odd><td align=center>In 21</td><td>Input signal #22</td></tr>
-		<tr class=odd><td align=center>In 22</td><td>Input signal #23</td></tr>
-		<tr class=odd><td align=center>In 23</td><td>Input signal #24</td></tr>
-		<tr class=odd><td align=center>In 24</td><td>Input signal #25</td></tr>
-		<tr class=odd><td align=center>In 25</td><td>Input signal #26</td></tr>
-		<tr class=odd><td align=center>In 26</td><td>Input signal #27</td></tr>
-		<tr class=odd><td align=center>In 27</td><td>Input signal #28</td></tr>
-		<tr class=odd><td align=center>In 28</td><td>Input signal #29</td></tr>
-		<tr class=odd><td align=center>In 29</td><td>Input signal #30</td></tr>
-		<tr class=odd><td align=center>In 30</td><td>Input signal #31</td></tr>
-		<tr class=odd><td align=center>In 31</td><td>Input signal #32</td></tr>
-		<tr class=odd><td align=center>Out 0</td><td>Sum of all inputs</td></tr>
-	</table>
-	<h3>Functions</h3>
-	<p class=func><span class=keyword>gain</span>(channel, level);</p>
-	<p class=desc>Adjust the amplification or attenuation.  "channel" must
-		be 0 to 31.  "level" may be any floating point number from 0 to 32767.0.
-		1.0 passes the signal through directly.  Level of 0 shuts the channel
-		off completely.  Between 0 to 1.0 attenuates the signal, and above
-		1.0 amplifies it.  Negative numbers may also be used, to invert the
-		signal.  All 32 channels have separate gain settings.
-	</p>
-	<h3>Examples</h3>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; SamplePlayer
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; Synthesis &gt; PlaySynthMusic
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; SpectrumAnalyzerBasic
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; DialTone_Serial
-	</p>
-	<p class=exam>File &gt; Examples &gt; Audio &gt; MemoryAndCpuUsage
-	</p>
-	<h3>Notes</h3>
-	<p>Signal clipping can occur when any channel has gain greater than 1.0,
-		or when multiple signals add together to greater than 1.0.</p>
-	<p>
-	</p>
-</script>
-<script type="text/x-red" data-template-name="AudioMixer32">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
-	</div>
 </script>
 
 <script type="text/x-red" data-help-name="AudioInputI2S">

@@ -96,12 +96,7 @@ RED.sidebar.info = (function() {
 				$("#tab-info").html(prefix + '<div class="node-help">' + data + '</div>');
 			else
 			{
-				$.get( "resources/help/" + key + ".html", function( data ) {
-					$("#tab-info").html(prefix + '<h2>' + key + '</h2><div class="node-help">' + data + '</div>');
-				}).fail(function () {
-					$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
-				});
-				
+				$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
 			}
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {
@@ -111,9 +106,37 @@ RED.sidebar.info = (function() {
 			});
 		}
 	}
-	
+	function showSelection(items)
+	{
+		var firstType = items[0].n.type;
+		var sameType = true;
+		for (var i = 1; i < items.length; i++)
+		{
+			if (items[i].n.type != firstType)
+			{
+				sameType = false;
+				break;
+			}
+		}
+		var htmlCode = "<h3>Selection</h3>";
+		htmlCode += "<a class='btn btn-small' id='btn-export-selection' href='#'><i class='fa fa-copy'></i> Export</a>";
+		if (sameType)
+			htmlCode += "<a class='btn btn-small' id='btn-generate-array' href='#'><i class='fa fa-copy'></i> Generate array node</a>";
+		htmlCode += "<table class=doc align=center cellpadding=3>";
+		htmlCode += "<tr class=top><th>Type</th><th>Name</th><th>Id</th></tr>"
+		for (var i = 0; i < items.length; i++)
+		{
+			htmlCode += "<tr class=odd><td align=center>" + items[i].n.type + "</td><td>" + items[i].n.name + "</td><td>" + items[i].n.id + "</td></tr>"
+		}
+		htmlCode += "</table>";
+		$("#tab-info").html(htmlCode);
+		$('#btn-export-selection').click(function() { RED.view.showExportNodesDialog();	});
+		if (sameType)
+			$('#btn-generate-array').click(function() { RED.nodes.generateArrayNode(items);	});
+	}
 	return {
 		refresh:refresh,
+		showSelection: showSelection,
 		clear: function() {
 			$("#tab-info").html("");
 		},

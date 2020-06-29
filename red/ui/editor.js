@@ -130,7 +130,7 @@ RED.editor = (function() {
 							var changed = false;
 							var wasDirty = RED.view.dirty();
 							var d;
-							console.log("edit node save!");
+							
 							
 							if (editing_node._def.oneditsave) {
 								var oldValues = {};
@@ -221,6 +221,8 @@ RED.editor = (function() {
 							editing_node.dirty = true;
 							validateNode(editing_node);
 							RED.view.redraw();
+							console.log("edit node saved!");
+							
 						} else if (RED.view.state() == RED.state.EXPORT) {
 							if (/library/.test($( "#dialog" ).dialog("option","title"))) {
 								//TODO: move this to RED.library
@@ -466,9 +468,16 @@ RED.editor = (function() {
 		editing_node = node;
 		RED.view.state(RED.state.EDITING);
 		//$("#dialog-form").html(RED.view.getForm(node.type));
-		console.log("get form for type:" + node.type);
-		//RED.view.getForm("dialog-form", node.type, function (d, f) {
-		RED.view.getForm("dialog-form", "NodesGlobalEdit", function (d, f) {
+		//console.log("get form for type:" + node.type);
+
+		var editorType = "";
+		if (node.type == "AudioMixerX") // Jannik 
+			editorType = "AudioMixerX"; // other special items can be added here
+		else
+			editorType = "NodesGlobalEdit"; // Jannik
+		//RED.view.getForm("dialog-form", node.type, function (d, f) {// Jannik
+		
+		RED.view.getForm("dialog-form", editorType, function (d, f) { // Jannik
 			//console.log("node._def " + node._def.defaults);
 			prepareEditDialog(node,node._def,"node-input");
 			$( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );

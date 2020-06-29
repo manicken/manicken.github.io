@@ -229,11 +229,11 @@ RED.view = (function() {
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: function(tab) {
-			//if (tab.type == "subflow") {
+			if (RED.nodes.showWorkspaceToolbar == true) {
 				$("#workspace-toolbar").show();
-			//} else {
-			//	$("#workspace-toolbar").hide();
-			//}
+			} else {
+				$("#workspace-toolbar").hide();
+			}
 			var chart = $("#chart");
 			if (activeWorkspace !== 0) {
 				workspaceScrollPositions[activeWorkspace] = {
@@ -408,7 +408,12 @@ RED.view = (function() {
 			// update drag line
 			drag_line.attr("class", "drag_line");
 			mousePos = mouse_position;
-			var numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node._def.inputs || 1);
+
+			var numOutputs = 0;
+
+			if (mousedown_node.inputs) numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node.inputs || 1); // Jannik
+			else numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node._def.inputs || 1);
+
 			var sourcePort = mousedown_port_index;
 			var portY = -((numOutputs-1)/2)*13 +13*sourcePort;
 
@@ -665,7 +670,7 @@ RED.view = (function() {
 			RED.keyboard.remove(/* c */ 67);
 			RED.keyboard.remove(/* x */ 88);
 		} else {
-			RED.keyboard.add(/* backspace */ 8,function(){deleteSelection();d3.event.preventDefault();});
+			//RED.keyboard.add(/* backspace */ 8,function(){deleteSelection();d3.event.preventDefault();});
 			RED.keyboard.add(/* delete */ 46,function(){deleteSelection();d3.event.preventDefault();});
 			RED.keyboard.add(/* c */ 67,{ctrl:true},function(){copySelection();d3.event.preventDefault();});
 			RED.keyboard.add(/* x */ 88,{ctrl:true},function(){copySelection();deleteSelection();d3.event.preventDefault();});
@@ -684,6 +689,14 @@ RED.view = (function() {
 		if (moving_set.length == 1) {
 			RED.sidebar.info.refresh(moving_set[0].n);
 			RED.nodes.selectNode(moving_set[0].n.type);
+			if (moving_set[0].n.type == "AudioMixerX")
+			{
+				//moving_set[0].n._def.inputs = 5;
+				//redraw();
+			}
+
+		} else if (moving_set.length > 1) {
+			RED.sidebar.info.showSelection(moving_set);
 		} else {
 			RED.sidebar.info.clear();
 		}
@@ -835,7 +848,10 @@ RED.view = (function() {
 							if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
 								n.y-hh<mouse_position[1] && n.y+hh>mouse_position[1]) {
 									mouseup_node = n;
-									portType = mouseup_node._def.inputs>0?1:0;
+
+									if (mouseup_node.inputs) portType = mouseup_node.inputs>0?1:0; // Jannik
+									else portType = mouseup_node._def.inputs>0?1:0;
+
 									portIndex = 0;
 							}
 						}
@@ -892,7 +908,8 @@ RED.view = (function() {
 			d3.event.stopPropagation();
 			return;
 		}
-		portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
+		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik
+		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
 
 	function nodeMouseDown(d) {
@@ -1016,8 +1033,17 @@ RED.view = (function() {
 					//var l = d._def.label;
 					//l = (typeof l === "function" ? l.call(d) : l)||"";
 					var l = d.name ? d.name : d.id;
-					d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
-					d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
+
+					if (d.inputs) // Jannik
+					{
+						d.w = Math.max(node_width,calculateTextWidth(l)+(d.inputs>0?7:0) );
+						d.h = Math.max(node_height,(Math.max(d.outputs,d.inputs)||0) * 15);
+					}
+					else
+					{
+						d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
+						d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
+					}
 
 					if (d._def.badge) {
 						var badge = node.append("svg:g").attr("class","node_badge_group");
@@ -1190,8 +1216,13 @@ RED.view = (function() {
 						});
 
 					//node.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
+					
+					var numInputs = 0;
+					if (d.inputs) // Jannik
+						numInputs = d.inputs;
+					else
+						numInputs = d._def.inputs;
 
-					var numInputs = d._def.inputs;
 					var inputlist = [];
 					for (var ni=0; ni < numInputs; ni++) {
 						var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == ni);});
@@ -1226,9 +1257,9 @@ RED.view = (function() {
 					// never show these little status icons
 					// people try clicking on them, thinking they're buttons
 					// or some sort of user interface widget
-					node.append("path").attr("class","node_error").attr("d","M 3,-3 l 10,0 l -5,-8 z");
-					node.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
-					node.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
+					//node.append("path").attr("class","node_error").attr("d","M 3,-3 l 10,0 l -5,-8 z");
+					//node.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
+					//node.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
 			});
 
 			node.each(function(d,i) {
@@ -1238,8 +1269,18 @@ RED.view = (function() {
 							//var l = d._def.label;
 							//l = (typeof l === "function" ? l.call(d) : l)||"";
 							var l = d.name ? d.name : d.id;
-							d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
-							d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
+							if (d.inputs) // Jannik
+							{
+								d.w = Math.max(node_width,calculateTextWidth(l)+(d.inputs>0?7:0) );
+								d.h = Math.max(node_height,(Math.max(d.outputs,d.inputs)||0) * 15);
+							}
+							else
+							{
+								d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
+								d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
+							}
+							//d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
+							//d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
 						}
 						var thisNode = d3.select(this);
 						//thisNode.selectAll(".centerDot").attr({"cx":function(d) { return d.w/2;},"cy":function(d){return d.h/2}});
@@ -1311,7 +1352,12 @@ RED.view = (function() {
 
 						thisNode.selectAll(".port_input").each(function(d,i) {
 							var port = d3.select(this);
-							var numInputs = d._def.inputs;
+
+							var numInputs = 0;
+
+							if (d.inputs) numInputs = d.inputs; // Jannik
+							else numInputs = d._def.inputs;
+
 							var y = (d.h/2)-((numInputs-1)/2)*13;
 							y = (y+13*i)-5;
 							port.attr("y",y)
@@ -1423,7 +1469,11 @@ RED.view = (function() {
 				var numOutputs = d.source.outputs || 1;
 				var sourcePort = d.sourcePort || 0;
 				var ysource = -((numOutputs-1)/2)*13 +13*sourcePort;
-				var numInputs = d.target._def.inputs || 1;
+				var numInputs = 0;
+				
+				if (d.target.inputs) numInputs = d.target.inputs || 1; //Jannik
+				else numInputs = d.target._def.inputs || 1;
+
 				var targetPort = d.targetPort || 0;
 				var ytarget = -((numInputs-1)/2)*13 +13*targetPort;
 
@@ -1495,16 +1545,20 @@ RED.view = (function() {
 		var ioCtrl = [];
 
 		RED.nodes.eachNode(function (node) {
+			var numInputs = 0;
+				
+			if (node.inputs) numInputs = node.inputs; //Jannik
+			else numInputs = node._def.inputs;
 
-			if (node._def.inputs == 0 && node._def.outputs == 0) {
+			if (numInputs == 0 && node._def.outputs == 0) {
 				ioCtrl.push(node);
-			} else if (node._def.inputs == 0) {
+			} else if (numInputs == 0) {
 				ioNoIn.push(node);
 			} else if (node._def.outputs == 0) {
 				ioNoOut.push(node);
-			} else if (node._def.inputs == 1 && node._def.outputs == 1) {
+			} else if (numInputs == 1 && node._def.outputs == 1) {
 				ioInOut.push(node);
-			} else if (node._def.inputs > 1) {
+			} else if (numInputs > 1) {
 				ioMultiple.push(node);
 			}
 		});
@@ -1778,6 +1832,12 @@ RED.view = (function() {
 					var workspace = $(this).dialog('option','workspace');
 					var label = $( "#node-input-workspace-name" ).val();
 					if (workspace.label != label) {
+						if (RED.nodes.workspaceNameCheck(label))
+						{
+							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
+							return; // abort name change if name allready exist
+						} 
+
 						RED.nodes.workspaceNameChanged(workspace.label, label);
 						workspace.label = label;
 						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
@@ -1838,7 +1898,12 @@ RED.view = (function() {
 
 	});
 
+	$('#btn-cut').click(function() {copySelection();deleteSelection();});
+	$('#btn-copy').click(function() {copySelection()});
+	$('#btn-paste').click(function() {importNodes(clipboard)});
+
 	return {
+		showExportNodesDialog:showExportNodesDialog,
 		state:function(state) {
 			if (state == null) {
 				return mouse_mode

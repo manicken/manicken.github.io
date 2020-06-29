@@ -327,8 +327,8 @@ var RED = (function() {
 				//console.log("class>>>" + wns[wsi].label + "<<<"); // debug test
 			
 				//cpp += "// " + wns[i].id + ":" + wns[i].label + "\n"; // test 
-			
-				// generate code for all array def. nodes
+				var arrayNode = undefined;
+				// generate code for the array def. node, at the moment there can only be one
 				for (var i=0; i<nns.length; i++) {
 					var n = nns[i];
 
@@ -339,11 +339,19 @@ var RED = (function() {
 					if (node.type != "Array") continue;
 					var arrayNode = node.name.split(" ");
 					if (!arrayNode) continue;
-					if (arrayNode.length != 2) continue;
+					if (arrayNode.length < 2 || arrayNode.length > 3) continue;
+					// we just save the array def. to later
+					if (arrayNode.length == 2)
+						arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:"", objectCount:0, autoGenerate:true}; 
+					else // arrayNode[2] contains predefined array contents
+						arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:arrayNode[2], objectCount:arrayNode[2].split(",").length, autoGenerate:false};
 
-					cpp += "    " + arrayNode[0] + " "; // type
-					for (var j=arrayNode[0].length; j<32; j++) cpp += " ";
-					cpp += arrayNode[1] + ";\n"; // name
+					cpp += "    " + arrayNode.type + " ";
+					for (var j=arrayNode.type.length; j<32; j++) cpp += " ";
+					cpp += "*" + arrayNode.name +";\n";
+					
+					break; // only one can be defined at this beta test
+
 					//for (var j=arrayNode[1].length; j<26; j++) cpp += " ";
 
 					//cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n"; // now with JSON string at top xy not needed anymore
@@ -356,6 +364,7 @@ var RED = (function() {
 
 					var node = RED.nodes.node(n.id);
 					if (!node) continue;
+					
 					if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
 						
 					if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
@@ -364,18 +373,27 @@ var RED = (function() {
 						cpp += "    "
 						
 					//console.log(">>>" + n.type +"<<<"); // debug test
-					cpp += n.type + " ";
-					for (var j=n.type.length; j<32; j++) cpp += " ";
+					var typeLength = n.type.length;
+					if (n.type == "AudioMixerX")
+					{
+						var tmplDef = "<" + n.inputs + ">";
+						cpp += n.type + tmplDef + " ";
+						typeLength += tmplDef.length;
+					}
+					else
+						cpp += n.type + " ";
+
+					for (var j=typeLength; j<32; j++) cpp += " ";
 					var name = make_name(n)
+					if (arrayNode && arrayNode.autoGenerate && (n.type == arrayNode.type))
+					{
+						arrayNode.cppCode += name + ",";
+						arrayNode.objectCount++;
+					}
 					cpp += name + ";\n";
-					//for (var j=n.name.length; j<26; j++) cpp += " ";
-
-					//cpp += "//xy=" + n.x + "," + n.y + "," + n.z; // now with JSON string at top xy not needed anymore
-
-					//if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
-					//	cpp += " // placeholder\n"; 
-					//else
+					
 				}
+				
 				// generate code for all control nodes (no inputs or outputs)
 				for (var i=0; i<nns.length; i++) {
 					var n = nns[i];
@@ -398,6 +416,16 @@ var RED = (function() {
 				}
 				cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
 				
+				if (arrayNode) // if defined and found prev, add it now
+				{
+					cpp += "        // array workaround until we get real object-array in GUI-tool\n";
+					cpp += "        " + arrayNode.name + " = new" + arrayNode.type + "[" + arrayNode.objectCount + "]";
+					if (arrayNode.autoGenerate)
+						cpp += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "};\n\n"
+					else
+						cpp += arrayNode.cppCode + ";\n\n"
+					
+				}
 				// generate code for all connections (aka wires or links)
 				//var cordcount = 1;
 

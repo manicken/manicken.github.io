@@ -22,6 +22,19 @@ RED.nodes = (function() {
 	var links = [];
 	var defaultWorkspace;
 	var workspaces = {};
+	var showWorkspaceToolbar = true;
+
+	var btnWworkspaceToolbar = $("#btn-workspace-toolbar");
+	btnWworkspaceToolbar.toggleClass("active", showWorkspaceToolbar);
+
+	$('#btn-workspace-toolbar').click(function() {
+		showWorkspaceToolbar = !showWorkspaceToolbar;
+		if (showWorkspaceToolbar)
+			$("#workspace-toolbar").show();
+		else
+			$("#workspace-toolbar").hide();
+		btnWworkspaceToolbar.toggleClass("active", showWorkspaceToolbar);
+		});
 
 	function registerType(nt,def) {
 		node_defs[nt] = def;
@@ -133,7 +146,14 @@ RED.nodes = (function() {
 				+ window.location.host + window.location.pathname + '?info=' + name);
 		}
 	}
+
+
 	function addNode(n) {
+		if (n.type == "AudioMixerX")
+		{
+			if (!n.inputs)
+				n.inputs = n._def.inputs;
+		}
 		if (n._def.category == "config") {
 			configNodes[n.id] = n;
 			RED.sidebar.config.refresh();
@@ -747,7 +767,7 @@ RED.nodes = (function() {
 			return [new_nodes,new_links];
 		} catch(error) {
 			//TODO: get this UI thing out of here! (see above as well)
-			RED.notify("<strong>Error</strong>: "+error,"error");
+			RED.notify("<strong>import nodes Error</strong>: "+error.message + " " +  error.stack,"error");
 			return null;
 		}
 
@@ -785,10 +805,10 @@ RED.nodes = (function() {
 	function workspaceNameChanged(oldName, newName)
 	{
 		var changedCount = 0;
-		for (var n=0;n<nodes.length;n++) {
-			if (nodes[n].type == oldName)
+		for (var ni=0;ni<nodes.length;ni++) {
+			if (nodes[ni].type == oldName)
 			{
-				nodes[n].type = newName;
+				nodes[ni].type = newName;
 				changedCount++;
 			}
 		}
@@ -796,6 +816,47 @@ RED.nodes = (function() {
 		node_defs[oldName] = undefined;
 
 		console.log("workspaceNameChanged:" + oldName + " to " + newName + " with " + changedCount + " objects changed");
+	}
+	function workspaceNameCheck(newName)
+	{
+		var i;
+		for (i in workspaces) {
+			if (workspaces.hasOwnProperty(i)) {
+				if (workspaces[i].label == newName)
+					return true;
+			}
+		}
+		/*for (var wsi=0; wsi < workspaces.length; wsi++)
+		{
+			if (workspaces[wsi].label == newName)
+				return true;
+		}*/
+		return false;
+	}
+
+	/**
+	 * this autogenerate a array-node from same-type selection
+	 * caller class is tab-info
+	 * @param {*} items is of type moving_set from view
+	 */
+	function generateArrayNode(items)
+	{
+		var cppString = "{";
+		var type = items[0].n.type;
+		var name = type.toLowerCase();
+		for (var i = 0; i < items.length ; i++)
+		{
+			cppString += items[i].n.name;
+			if (i < (items.length-1)) cppString += ",";
+		}
+		cppString += "}";
+		addNode({"id":"Main_Array_"+type+"_"+name ,
+				 "type":"Array",
+				 "name":type + " " + name + " " + cppString,
+				 "x":500,"y":55,"z":items[0].n.z,
+				 "wires":[],
+				 "_def":node_defs["Array"]});
+				 RED.view.redraw();
 	}
 
 	return {
@@ -831,6 +892,7 @@ RED.nodes = (function() {
 		
 		eachWire: eachwire,
 		workspaceNameChanged:workspaceNameChanged,
+		workspaceNameCheck:workspaceNameCheck,
 		node: getNode,
 		namedNode: getNodeByName,
 		cppToJSON: cppToJSON,
@@ -844,6 +906,8 @@ RED.nodes = (function() {
 		cppName: createUniqueCppName,
 		cppId: createUniqueCppId,
 		hasIO: checkForIO,
+		generateArrayNode:generateArrayNode,
+		showWorkspaceToolbar:showWorkspaceToolbar,
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,
 		links: links  // TODO: exposed for d3 vis
