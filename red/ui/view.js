@@ -1231,25 +1231,75 @@ RED.view = (function() {
 						text.attr("x",38);
 						var rect = node.append("rect");
 						inputlist[ni] = rect;
+
 						rect.attr("class","port port_input").attr("rx",3).attr("ry",3)
 							.attr("y",y).attr("x",-5).attr("width",10).attr("height",10).attr("index",ni);
+
 						if (link && link.length > 0) {
 							// this input already has a link connected, so disallow new links
 							rect.on("mousedown",null)
 								.on("touchstart", null)
 								.on("mouseup", null)
 								.on("touchend", null)
-								.on("mouseover", null)
-								.on("mouseout", null)
+								.on("mouseover",function(ni) {
+									var port = d3.select(this);
+									
+									var data = $("script[data-help-name|='" + d.type + "']");
+									var data2 = undefined;
+									
+										data2 = $("<div/>").append(data.html()).children("table").first().html();
+									if (!data2)
+										data2 = $("<div/>").append("<p>" + "Port:" + this.getAttribute("index") + "</p></div>").html();
+
+									//console.log(data2);
+									
+									var options = {
+										placement: "right",
+										trigger: "manual",
+										html: true,
+										container:'body',
+										content : data2
+									};
+
+									$(this).popover(options).popover("show");
+									
+									port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
+									//console.log("in port hover:" + this.getAttribute("index"));
+								})
+								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false); $(this).popover("destroy");})
 								.classed("port_hovered",false);
 						} else {
 							// allow new link on inputs without any link connected
+							console.log("ni:" + ni);
 							rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
 								.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
-								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);}})(ni))
+								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);$(this).popover("destroy");}} )(ni))
 								.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(ni))
-								.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 )); console.log("mouseover port: " + port.x );})
-								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
+								.on("mouseover",function(ni) {
+									var port = d3.select(this);
+
+									var data = $("script[data-help-name|='" + d.type + "']");
+									var data2 = undefined;
+									
+										data2 = $("<div/>").append(data.html()).children("table").first().html();
+									if (!data2)
+										data2 = $("<div/>").append("<p>" + "Port:" + this.getAttribute("index") + "</p></div>").html();
+
+									//console.log(data2);
+
+									var options = {
+										placement: "right",
+										trigger: "manual",
+										html: true,
+										container:'body',
+										content : data2
+									};
+									$(this).popover(options).popover("show");
+
+									port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
+									//console.log("in port hover:" + this.getAttribute("index"));
+								})
+								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false); $(port).popover("destroy");})
 						}
 					}
 					d.inputlist = inputlist;
@@ -1305,6 +1355,7 @@ RED.view = (function() {
 						var y = (d.h/2)-((numOutputs-1)/2)*13;
 						d.ports = d.ports || d3.range(numOutputs);
 						d._ports = thisNode.selectAll(".port_output").data(d.ports);
+
 						d._ports.enter().append("rect").attr("class","port port_output").attr("rx",3).attr("ry",3).attr("width",10).attr("height",10)
 							.on("mousedown",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
 							.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )

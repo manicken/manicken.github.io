@@ -19,7 +19,7 @@ RED.nodes = (function() {
 	var node_defs = {};
 	var nodes = [];
 	var configNodes = {};
-	var links = [];
+	var links = []; // link structure {source:,sourcePort:,target:,targetPort:};
 	var defaultWorkspace;
 	var workspaces = {};
 	var showWorkspaceToolbar = true;
@@ -399,6 +399,8 @@ RED.nodes = (function() {
 	}
 	//TODO: rename this (createCompleteNodeSet)
 	function createCompleteNodeSet() {
+		
+
 		var nns = [];
 		var i;
 		for (i in workspaces) {
@@ -858,7 +860,188 @@ RED.nodes = (function() {
 				 "_def":node_defs["Array"]});
 				 RED.view.redraw();
 	}
+	/**
+	 * Gets all TabInput and TabOutputs, and then sorting them vertically top->bottom (normal view)
+	 * @param {String} wsId workspace id, if this is not passed then all nodes is returned
+	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
+	 */
+	function getClassIOportsSorted(wsId)
+	{
+		var inNodes = [];
+		var outNodes = [];
+		for (var i = 0; i < nodes.length; i++)
+		{
+			var node = nodes[i];
+			if (wsId && (node.z != wsId)) continue;
 
+			if (node.type == "TabInput") inNodes.push(convertNode(node, true));
+			else if (node.type == "TabOutput") outNodes.push(convertNode(node, true));
+		}
+		inNodes.sort(function(a,b){ return (a.y - b.y); });
+		outNodes.sort(function(a,b){ return (a.y - b.y); });
+
+		return {outputs:outNodes, inputs:inNodes};
+	}
+	function getClassComments(wsId)
+	{
+		var comment = "";
+		for (var i = 0; i < nodes.length; i++)
+		{
+			var node = nodes[i];
+			if (wsId && (node.z != wsId)) continue;
+
+			if (node.type != "ClassComment") continue;
+
+			comment += node.name;
+		}
+		return comment;
+	}
+
+	function printLinks()
+	{
+		// link structure {source:n,sourcePort:w1,target:dst,targetPort:parts[1]};
+		for (var i = 0; i < links.length; i++)
+		{
+			var link = links[i];
+			console.log("createCompleteNodeSet links["+i+"]: " + 
+				link.source.name + ":" + link.sourcePort + ", " + link.target.name + ":" + link.targetPort); // debug to see links contents
+		}
+	}
+	function isClass(type)
+	{
+		var wns = RED.nodes.getWorkspacesAsNodeSet();
+
+		for (var wsi = 0; wsi < wns.length; wsi++)
+		{
+			var ws = wns[wsi];
+			if (type == ws.label) return true;
+			//console.log(node.type  + "!="+ ws.label);
+		}
+		return false;
+	}
+	
+	function getWorkspaceIdFromClassName(type)
+	{
+		var wns = RED.nodes.getWorkspacesAsNodeSet();
+
+		for (var wsi = 0; wsi < wns.length; wsi++)
+		{
+			var ws = wns[wsi];
+			if (type == ws.label)  return ws.id;
+		}
+		return "";
+	}
+	
+	/**
+	 * This is only used to find what is connected to a TabOutput-"pin"
+	 * @param {Array} nns array of all nodes
+	 * @param {node} classNode the node that is in the class
+	 * @param {String} nId node id
+	 * @returns {*} as {node:n, srcPortIndex: srcPortIndex}
+	 */
+	function getWireInputSourceNode(nns, classNode, nId)
+	{
+		var wsId = getWorkspaceIdFromClassName(classNode.type);
+		//console.log("try get WireInputSourceNode:" + classNode.name + ":" + nId);
+		for (var ni = 0; ni < nns.length; ni++)
+		{
+			var n = nns[ni];
+			if (n.z != wsId) continue; // workspace check
+
+			var retVal = RED.nodes.eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
+			{
+				if (dstId == nId)
+				{
+					//console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
+					//console.log("");
+					return {node:n, srcPortIndex: srcPortIndex};
+				}
+			});
+			if (retVal) return retVal;
+		}
+	}
+	/**
+	 * the name say it all
+	 * @param {Array} tabIOnodes array of specific ClassPort nodes
+	 * @param {node} classNode as nodeType
+	 * @param {Number} portIndex
+	 * @returns {node} the TabInput or TabOutput node
+	 */
+	function getClassPortNode(tabIOnodes, classNode, portIndex)
+	{
+		var wsId = getWorkspaceIdFromClassName(classNode.type);
+		var currIndex = 0;
+		//console.log("getClassPortNode classNode:" + classNode.name + ", portType: " + portType + ", portIndex:" + portIndex);
+		for (var i = 0; i < tabIOnodes.length; i++)
+		{
+			var n = tabIOnodes[i];
+			if (n.z != wsId) continue;
+			if (currIndex == portIndex) // we found the port
+			{
+				//console.log("getClassPortNode found port:" + n.name);
+				return n;
+			}
+			currIndex++;
+		}
+		console.log("ERROR! could not find the class, portType:" + portType + " with portIndex:" + portIndex);
+	}
+	
+	function classOutputPortToCpp(nns, tabOutNodes, ac, classNode)
+	{
+		var outputNode = getClassPortNode(tabOutNodes, classNode, ac.srcPort);
+		if (!outputNode)
+		{
+			 console.log("could not getClassPortNode:" + classNode.name + ", ac.srcPort:" + ac.srcPort);
+			 return false;
+		} // abort
+
+		// if the portNode is found, next we get what is connected to that port inside the class
+		var newSrc = getWireInputSourceNode(nns, classNode, outputNode.id); // this return type {node:n, srcPortIndex: srcPortIndex};
+
+		ac.srcName += "." + make_name(newSrc.node);
+		ac.srcPort = newSrc.srcPortIndex;
+
+		if (isClass(newSrc.node.type))
+		{
+			//console.log("isClass(" + newSrc.node.name + ")");
+
+			// call this function recursive until non class is found
+			if (!classOutputPortToCpp(nns, tabOutNodes, ac, newSrc.node))
+				return false; // failsafe
+		}
+		return true;
+	}
+
+	function classInputPortToCpp(tabInNodes, currRootName, ac, classNode)
+	{
+		var inputNode = getClassPortNode(tabInNodes, classNode, ac.dstPort);
+		if (!inputNode) return false; // abort
+
+		// here we need to go througt all wires of that virtual port
+		var retVal = RED.nodes.eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
+		{
+			var dst = RED.nodes.node(dstId);
+			//console.log("found dest:" + dst.name);
+			ac.dstPort = dstPortIndex;
+			ac.dstName = currRootName + "." + make_name(dst);
+
+			if (isClass(dst.type))
+			{
+				// call this function recursive until non class is found
+				classInputPortToCpp(tabInNodes, ac.dstName, ac, dst);
+			}
+			else
+			{
+				ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
+			}					
+		});
+		return true;
+	}
+	function make_name(n) {
+		var name = (n.name ? n.name : n.id);
+		name = name.replace(" ", "_").replace("+", "_").replace("-", "_");
+		return name
+	}
 	return {
 		registerType: registerType,
 		getType: getType,
@@ -907,6 +1090,15 @@ RED.nodes = (function() {
 		cppId: createUniqueCppId,
 		hasIO: checkForIO,
 		generateArrayNode:generateArrayNode,
+		isClass:isClass,
+		getClassComments:getClassComments,
+		getWorkspaceIdFromClassName:getWorkspaceIdFromClassName,
+		getClassPortNode:getClassPortNode,
+		getWireInputSourceNode:getWireInputSourceNode,
+		getClassIOportsSorted:getClassIOportsSorted,
+		classOutputPortToCpp:classOutputPortToCpp,
+		classInputPortToCpp:classInputPortToCpp,
+		make_name:make_name,
 		showWorkspaceToolbar:showWorkspaceToolbar,
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,

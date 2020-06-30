@@ -96,7 +96,12 @@ RED.sidebar.info = (function() {
 				$("#tab-info").html(prefix + '<div class="node-help">' + data + '</div>');
 			else
 			{
-				$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
+				if (RED.nodes.isClass(key))
+				{
+					$("#tab-info").html(prefix + '<div class="node-help">' + getClassHelpContent(key) + '</div>');
+				}
+				else
+					$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
 			}
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {
@@ -106,6 +111,29 @@ RED.sidebar.info = (function() {
 			});
 		}
 	}
+
+	function getClassHelpContent(className)
+	{
+		var wsId = RED.nodes.getWorkspaceIdFromClassName(className);
+		var htmlCode = "<h3>Summary</h3>";
+		htmlCode += "<p>" + RED.nodes.getClassComments(wsId) + "</p>";
+		htmlCode += "<h3>Audio Connections</h3>";
+		htmlCode += "<table class=doc align=center cellpadding=3>";
+		htmlCode += "<tr class=top><th>Port</th><th>Purpose</th></tr>"
+		
+		var classIOs = RED.nodes.getClassIOportsSorted(wsId);
+		
+		for (var i = 0; i < classIOs.inputs.length; i++)
+		{
+			htmlCode += "<tr class=odd><td align=center>In" + i + "</td><td>" + classIOs.inputs[i].name + "</td></tr>";
+		}
+		for (var i = 0; i < classIOs.outputs.length; i++)
+		{
+			htmlCode += "<tr class=odd><td align=center>Out" + i + "</td><td>" + classIOs.outputs[i].name + "</td></tr>";
+		}
+		return htmlCode;
+	}
+
 	function showSelection(items)
 	{
 		var firstType = items[0].n.type;

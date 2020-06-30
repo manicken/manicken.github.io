@@ -309,10 +309,12 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-tips">
 		Select the text above and copy to the clipboard with Ctrl-A Ctrl-C.
 	</div>
-	<div class="form-row">
+	<!--
+		<div class="form-row">
 		<label for="node-input-export2" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
 		<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-export2" rows="12"></textarea>
-	</div>
+	</div> 
+-->
 </script>
 <script type="text/x-red" data-template-name="export-library-dialog">
 	<div class="form-row">
@@ -377,6 +379,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"TabInput","inputs":0,"outputs":1,"category":"tabs-function","color":"#cce6ff","icon":"arrow-in.png"}},
 		{"type":"Array","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"Array","inputs":0,"outputs":0,"category":"tabs-function","color":"#ccffcc","icon":"range.png"}},
 		{"type":"AudioMixerX","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"inputs":{"value":"1"}},"shortName":"MixerX","inputs":1,"outputs":1,"category":"mixer-function","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"ClassComment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"inputs":{"value":"1"}},"shortName":"ClassComment","inputs":0,"outputs":0,"category":"tabs-function","color":"#ccffcc","icon":"comment.png"}},
 
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-function","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -479,6 +482,17 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
+<script type="text/x-red" data-help-name="ClassComment">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This used to make a description </p>
+	</div>
+	
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+
 <script type="text/x-red" data-help-name="TabInput">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
@@ -531,7 +545,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		All channels support signal attenuation or amplification.</p>
 	</div>
 	<h3>Audio Connections</h3>
-	<table class=doc align=center cellpadding=3>
+	<table id='table-AudioMixerX' class=doc align=center cellpadding=3>
 		<tr class=top><th>Port</th><th>Purpose</th></tr>
 		<tr class=odd><td align=center>In 0</td><td>Input signals from array typed Object #1</td></tr>
 		<tr class=odd><td align=center>Out 0</td><td>Sum of all inputs</td></tr>

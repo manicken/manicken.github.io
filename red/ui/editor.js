@@ -220,7 +220,9 @@ RED.editor = (function() {
 							}
 							editing_node.dirty = true;
 							validateNode(editing_node);
+							editing_node.dirty = true;
 							RED.view.redraw();
+							
 							console.log("edit node saved!");
 							
 						} else if (RED.view.state() == RED.state.EXPORT) {
@@ -421,7 +423,7 @@ RED.editor = (function() {
 	 */
 	function prepareEditDialog(node,definition,prefix) {
 		for (var d in definition.defaults) {
-			console.log("var d in definition.defaults: " + d);
+			//console.log("var d in definition.defaults: " + d);
 			
 			if (definition.defaults.hasOwnProperty(d)) {
 				if (definition.defaults[d].type) {
@@ -543,6 +545,7 @@ RED.editor = (function() {
 							RED.view.dirty(true);
 							$( this ).dialog( "close" );
 							RED.view.redraw();
+							
 						}
 				});
 			}
