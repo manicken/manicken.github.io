@@ -182,6 +182,8 @@ var RED = (function() {
 				+ "\n// GUItool: begin automatically generated code\n"
 				+ "// JSON string:\n"
 				+ "//" + JSON.stringify(nns) + "\n";
+			
+				
 				
 			for (var wsi=0; wsi < wns.length; wsi++)
 			{
@@ -192,7 +194,11 @@ var RED = (function() {
 
 					if (n.z != wns[wsi].id) continue;
 					if (n.type == "ClassComment")
+					{
+						//if (n.name == "TestMultiline")
+						//	RED.nodes.node(n.id).name = "Test\nMultiline";
 						classComment += " * " + n.name + "\n";
+					}
 				}
 				if (classComment.length > 0)
 				{
@@ -258,7 +264,18 @@ var RED = (function() {
 					var typeLength = n.type.length;
 					if (n.type == "AudioMixerX")
 					{
-						var tmplDef = "<" + n.inputs + ">";
+						var tmplDef = "";
+						if (n.inputs == 1) // special case 
+						{
+							// check is source is a array
+							var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
+							var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
+							if (isArray) tmplDef = "<" + isArray.arrayLenght + ">";
+							console.log("special case AudioMixerX connected from array " + src.node.name + ", new AudioMixerX def:" + tmplDef);
+						}
+						else
+							tmplDef = "<" + n.inputs + ">";
+
 						cpp += n.type + tmplDef + " ";
 						typeLength += tmplDef.length;
 					}
@@ -298,40 +315,79 @@ var RED = (function() {
 						//cpp+= "\n";
 					}
 				}
-				cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
 				
-				if (arrayNode) // if defined and found prev, add it now
-				{
-					cpp += "        // array workaround until we get real object-array in GUI-tool\n";
-					cpp += "        " + arrayNode.name + " = new" + arrayNode.type + "[" + arrayNode.objectCount + "]";
-					if (arrayNode.autoGenerate)
-						cpp += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "};\n\n"
-					else
-						cpp += arrayNode.cppCode + ";\n\n"
-					
-				}
 				// generate code for all connections (aka wires or links)
 				//var cordcount = 1;
 
 				
 				var ac = {
 					base: "        AudioConnection        patchCord",
+					arrayBase: "        patchCord[pci++] = new AudioConnection(",
+					dstRootIsArray: false,
+					srcRootIsArray: false,
+					arrayLenght: 0,
 					srcName: "",
 					srcPort: 0,
 					dstName: "",
 					dstPort: 0,
 					count: 1,
+					totalCount: 0,
 					cppCode: "",
+					ifAnyIsArray: function() {
+						return (this.dstRootIsArray || this.srcRootIsArray);
+					},
 					appendToCppCode: function() {
 						//if ((this.srcPort == 0) && (this.dstPort == 0))
-						//	this.cppCode	+= "\n" + this.base + this.count + "(" + this.srcName + ", " + this.dstName + ");";
-						//else
-							this.cppCode	+= this.base + this.count + "(" + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
-						this.count++;
+						//	this.cppCode	+= "\n" + this.base + this.count + "(" + this.srcName + ", " + this.dstName + ");"; // this could be used but it's generating code that looks more blurry
+						
+
+						if (this.dstRootIsArray)
+						{
+							this.cppCode	+= "    " + this.arrayBase + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
+							this.totalCount+=this.arrayLenght;
+						}
+						else if (this.srcRootIsArray)
+						{
+							this.cppCode	+= "    " + this.arrayBase + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", i);\n";
+							this.totalCount+=this.arrayLenght;
+						}
+						else 
+						{
+							this.cppCode	+= this.arrayBase + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
+							this.count++;
+							this.totalCount++;
+						}
+						
+					},
+					checkIfDstIsArray: function() {
+						var isArray = RED.nodes.isNameDeclarationArray(this.dstName);
+						if (!isArray)
+						{
+							this.dstRootIsArray = false;
+							return false;
+						}
+						this.arrayLenght = isArray.arrayLenght;
+						this.dstName = isArray.newName;
+						this.dstRootIsArray = true;
+						return true;
+					},
+					checkIfSrcIsArray: function() {
+						
+						var isArray = RED.nodes.isNameDeclarationArray(this.srcName);
+						if (!isArray)
+						{
+							this.srcRootIsArray = false;
+							return false;
+						}
+						this.arrayLenght = isArray.arrayLenght;
+						this.srcName = isArray.newName;
+						this.srcRootIsArray = true;
+						return true;
 					}
 				};
 				ac.count = 1;
-
+				var cppPcs = "";
+				var cppArray = "";
 				for (var i=0; i<nns.length; i++)
 				{
 					var n = nns[i];
@@ -351,6 +407,10 @@ var RED = (function() {
 						ac.srcPort = pi;
 						ac.dstPort = dstPortIndex;
 
+						if (ac.checkIfSrcIsArray())
+						{
+
+						}
 						if (RED.nodes.isClass(n.type)) // if source is class
 						{
 							//console.log("root src is class:" + ac.srcName);
@@ -358,8 +418,13 @@ var RED = (function() {
 							RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
 						}
 						
+						if (ac.checkIfDstIsArray())
+						{
+
+						}
 						if (RED.nodes.isClass(dst.type))
 						{
+							
 							//console.log("dst is class:" + dst.name + " from:" + n.name);
 							//classInputPortToCpp(inNodes, ac.dstName , ac, dst); // debug;
 							RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName , ac, dst);
@@ -368,10 +433,35 @@ var RED = (function() {
 						{
 							ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
 						}
-						cpp += ac.cppCode;
+						if (ac.ifAnyIsArray())
+							cppArray += ac.cppCode;
+						else
+							cppPcs += ac.cppCode;
 						
 					});
+
 				}
+				cpp += "    // total patchCordCount: " + ac.totalCount + " including array typed ones.\n";
+				cpp += "    AudioConnection ";
+				for (var j="AudioConnection".length; j<32; j++) cpp += " ";
+				cpp += "*patchCord[" + ac.totalCount + "];\n";
+				cpp += "    int pci = 0;\n"
+				cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
+				
+				if (arrayNode) // if defined and found prev, add it now
+				{
+					cpp += "        // array workaround until we get real object-array in GUI-tool\n";
+					cpp += "        " + arrayNode.name + " = new" + arrayNode.type + "[" + arrayNode.objectCount + "]";
+					if (arrayNode.autoGenerate)
+						cpp += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "};\n\n"
+					else
+						cpp += arrayNode.cppCode + ";\n\n"
+					
+				}
+				cpp += cppPcs;
+				cpp += "        for (int i = 0; i < " + ac.arrayLenght + "; i++)\n        {\n";
+				cpp += cppArray;
+				cpp += "        }\n";
 				cpp += "    }\n";
 				cpp += "}\n";
 			}

@@ -953,16 +953,15 @@ RED.nodes = (function() {
 	}
 	
 	/**
-	 * This is only used to find what is connected to a TabOutput-"pin"
+	 * This is used to find what is connected to a input-pin
 	 * @param {Array} nns array of all nodes
-	 * @param {node} classNode the node that is in the class
+	 * @param {String} wsId workspace id
 	 * @param {String} nId node id
 	 * @returns {*} as {node:n, srcPortIndex: srcPortIndex}
 	 */
-	function getWireInputSourceNode(nns, classNode, nId)
+	function getWireInputSourceNode(nns, wsId, nId)
 	{
-		var wsId = getWorkspaceIdFromClassName(classNode.type);
-		//console.log("try get WireInputSourceNode:" + classNode.name + ":" + nId);
+		//console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
 		for (var ni = 0; ni < nns.length; ni++)
 		{
 			var n = nns[ni];
@@ -980,6 +979,7 @@ RED.nodes = (function() {
 			if (retVal) return retVal;
 		}
 	}
+	
 	/**
 	 * the name say it all
 	 * @param {Array} tabIOnodes array of specific ClassPort nodes
@@ -1016,7 +1016,7 @@ RED.nodes = (function() {
 		} // abort
 
 		// if the portNode is found, next we get what is connected to that port inside the class
-		var newSrc = getWireInputSourceNode(nns, classNode, outputNode.id); // this return type {node:n, srcPortIndex: srcPortIndex};
+		var newSrc = getWireInputSourceNode(nns, getWorkspaceIdFromClassName(classNode.type), outputNode.id); // this return type {node:n, srcPortIndex: srcPortIndex};
 
 		ac.srcName += "." + make_name(newSrc.node);
 		ac.srcPort = newSrc.srcPortIndex;
@@ -1056,6 +1056,20 @@ RED.nodes = (function() {
 			}					
 		});
 		return true;
+	}
+	function isNameDeclarationArray(name)
+	{
+		var startIndex = name.indexOf("[");
+		if (startIndex == -1) return undefined;
+		var endIndex = name.indexOf("]");
+		if (endIndex == -1){ console.log("isNameDeclarationArray: missing end ] in " + name); return undefined;}
+		var arrayDef = name.substring(startIndex,endIndex+1);
+		lenght = Number(name.substring(startIndex+1,endIndex));
+		name = name.replace(arrayDef, "[i]");
+		
+		console.log("NameDeclaration is Array:" + name);
+		
+		return {newName:name, arrayLenght:lenght};
 	}
 	function make_name(n) {
 		var name = (n.name ? n.name : n.id);
@@ -1119,6 +1133,7 @@ RED.nodes = (function() {
 		getClassIOportName:getClassIOportName, // used by node port tooltip popup
 		classOutputPortToCpp:classOutputPortToCpp,
 		classInputPortToCpp:classInputPortToCpp,
+		isNameDeclarationArray:isNameDeclarationArray,
 		make_name:make_name,
 		showWorkspaceToolbar:showWorkspaceToolbar,
 		nodes: nodes, // TODO: exposed for d3 vis
