@@ -185,6 +185,20 @@ var RED = (function() {
 				
 			for (var wsi=0; wsi < wns.length; wsi++)
 			{
+				var classComment = "";
+				
+				for (var i=0; i<nns.length; i++) {
+					var n = nns[i];
+
+					if (n.z != wns[wsi].id) continue;
+					if (n.type == "ClassComment")
+						classComment += " * " + n.name + "\n";
+				}
+				if (classComment.length > 0)
+				{
+					cpp += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
+				}
+
 				cpp += "\nclass " + wns[wsi].label + "\n{\n"
 				+ "  public:\n";
 
@@ -229,9 +243,13 @@ var RED = (function() {
 					var node = RED.nodes.node(n.id);
 					if (!node) continue;
 					
+					if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
+					if (n.type == "Array") continue;
+
 					if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
 						
-					if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
+					
+
 					//	cpp += "//  "; // comment out because this is just a placeholder for import
 					//else
 						cpp += "    "
@@ -249,6 +267,7 @@ var RED = (function() {
 
 					for (var j=typeLength; j<32; j++) cpp += " ";
 					var name = RED.nodes.make_name(n)
+
 					if (arrayNode && arrayNode.autoGenerate && (n.type == arrayNode.type))
 					{
 						arrayNode.cppCode += name + ",";
@@ -268,6 +287,7 @@ var RED = (function() {
 					if (node && node.outputs == 0 && node._def.inputs == 0) {
 
 						if (n.type == "Array") continue; // skip this, it's allready added above
+						if (n.type == "ClassComment") continue;
 
 						cpp += "    " + n.type + " ";
 						for (var j=n.type.length; j<32; j++) cpp += " ";

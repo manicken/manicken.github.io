@@ -882,6 +882,26 @@ RED.nodes = (function() {
 
 		return {outputs:outNodes, inputs:inNodes};
 	}
+	/**
+	 * Gets all TabInput or TabOutput belonging to a class, and then sorting them vertically top->bottom (normal view)
+	 * then the correct port-node based by index is returned
+	 * @param {String} wsId workspace id
+	 * @param {String} type "TabInput" or "TabOutput"
+	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
+	 */
+	function getClassIOportName(wsId, type, index) // this 
+	{
+		var retNodes = [];
+		if (!wsId) return
+		for (var i = 0; i < nodes.length; i++)
+		{
+			var node = nodes[i];
+			if (node.z != wsId) continue;
+			if (node.type == type) retNodes.push(node);
+		}
+		retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
+		return retNodes[index].name;
+	}
 	function getClassComments(wsId)
 	{
 		var comment = "";
@@ -1096,6 +1116,7 @@ RED.nodes = (function() {
 		getClassPortNode:getClassPortNode,
 		getWireInputSourceNode:getWireInputSourceNode,
 		getClassIOportsSorted:getClassIOportsSorted,
+		getClassIOportName:getClassIOportName, // used by node port tooltip popup
 		classOutputPortToCpp:classOutputPortToCpp,
 		classInputPortToCpp:classInputPortToCpp,
 		make_name:make_name,

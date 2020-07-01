@@ -1244,25 +1244,8 @@ RED.view = (function() {
 								.on("mouseover",function(ni) {
 									var port = d3.select(this);
 									
-									var data = $("script[data-help-name|='" + d.type + "']");
-									var data2 = undefined;
-									
-										data2 = $("<div/>").append(data.html()).children("table").first().html();
-									if (!data2)
-										data2 = $("<div/>").append("<p>" + "Port:" + this.getAttribute("index") + "</p></div>").html();
-
-									//console.log(data2);
-									
-									var options = {
-										placement: "right",
-										trigger: "manual",
-										html: true,
-										container:'body',
-										content : data2
-									};
-
-									$(this).popover(options).popover("show");
-									
+									showIOpinInfo(this, d, this.getAttribute("index")); // d is the node
+																		
 									port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
 									//console.log("in port hover:" + this.getAttribute("index"));
 								})
@@ -1270,7 +1253,7 @@ RED.view = (function() {
 								.classed("port_hovered",false);
 						} else {
 							// allow new link on inputs without any link connected
-							console.log("ni:" + ni);
+							//console.log("ni:" + ni); // development debug
 							rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
 								.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
 								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);$(this).popover("destroy");}} )(ni))
@@ -1278,23 +1261,7 @@ RED.view = (function() {
 								.on("mouseover",function(ni) {
 									var port = d3.select(this);
 
-									var data = $("script[data-help-name|='" + d.type + "']");
-									var data2 = undefined;
-									
-										data2 = $("<div/>").append(data.html()).children("table").first().html();
-									if (!data2)
-										data2 = $("<div/>").append("<p>" + "Port:" + this.getAttribute("index") + "</p></div>").html();
-
-									//console.log(data2);
-
-									var options = {
-										placement: "right",
-										trigger: "manual",
-										html: true,
-										container:'body',
-										content : data2
-									};
-									$(this).popover(options).popover("show");
+									showIOpinInfo(this, d, this.getAttribute("index")); // d is the node
 
 									port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
 									//console.log("in port hover:" + this.getAttribute("index"));
@@ -1361,8 +1328,13 @@ RED.view = (function() {
 							.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
 							.on("mouseup",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
 							.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
-							.on("mouseover",function(d,i) {  var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 )); console.log("mouseover port: " + d);})
-							.on("mouseout",function(d,i) { var port = d3.select(this); port.classed("port_hovered",false);});
+							.on("mouseover",function(d2,i) {
+								  var port = d3.select(this);
+								  showIOpinInfo(this, d, d2); // d is the node
+								  port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 ));
+								  //console.log("mouseover port: " + d2);
+								})
+							.on("mouseout",function(d,i) { var port = d3.select(this); port.classed("port_hovered",false);  $(port).popover("destroy");});
 						d._ports.exit().remove();
 						if (d._ports) {
 							numOutputs = d.outputs || 1;
@@ -1952,6 +1924,69 @@ RED.view = (function() {
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
 	$('#btn-paste').click(function() {importNodes(clipboard)});
+
+	function showIOpinInfo(pinRect, node, index)
+	{
+		var data = $("script[data-help-name|='" + node.type + "']");
+		var data2 = $("<div/>").append(data.html()).children("table").first().children("tbody").html();
+									
+		var classAttr = pinRect.getAttribute("class");
+		//console.log("classAttr:"+classAttr); // development debug
+		var portType;
+		if (classAttr == "port port_input")
+			portType = "In";
+		else if (classAttr == "port port_output")
+			portType = "Out";
+		
+		var portName = portType + " " + index;
+
+		if (!data2 || (data2 == null)) // shows workspace user custom class io
+		{
+			// TODO: extract portinfo from class
+			if (RED.nodes.isClass(node.type))
+			{
+				var wsId = RED.nodes.getWorkspaceIdFromClassName(node.type);
+				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, "Tab"+portType+ "put", index);
+			}
+			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
+		}
+		else if (node.type == "AudioMixerX" && portType == "In")
+		{
+			data2 = $("<div/>").append("<p>" + portName + ": Input Signal #" + (Number(index) + 1) + "</p></div>").html();
+		}
+		else // here we must extract info from Audio Connections table
+		{
+			var tableRows = data2.split("\n");
+			for (var i = 1; i < tableRows.length; i++)
+			{
+				var tableCols = tableRows[i].split("</td><td>");
+				if (tableCols.length < 2) continue;
+
+				var pin = tableCols[0];
+				var desc = tableCols[1];
+				pin = pin.substring(pin.lastIndexOf(">") + 1);
+				desc = desc.substring(0, desc.indexOf("<"));
+
+				if (pin == portName)
+				{
+					data2 = $("<div/>").append("<p>" + pin + ": " + desc + "</p></div>").html();
+					//console.log(pin + " " + desc); // development debug
+					break;
+				}
+			}
+			//console.log("table contens:\n" + data2); // development debug
+		}
+		//console.log(data2); // development debug
+
+		var options = {
+			placement: "right",
+			trigger: "manual",
+			html: true,
+			container:'body',
+			content : data2
+		};
+		$(pinRect).popover(options).popover("show");
+	}
 
 	return {
 		showExportNodesDialog:showExportNodesDialog,
