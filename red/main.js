@@ -816,6 +816,18 @@ var RED = (function() {
 		});
 		
 	});
+	$('#btn-originalFlow').click(function() {
+		var data = $("script[data-container-name|='FlowOriginal']").html();
+		console.log(data);
+		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("FlowOriginal"), function(okPressed) { 
+			if (okPressed)
+			{
+				saveAsFile();
+				RED.storage.loadFile(data);
+			}
+		});
+		
+	});
 
 	function verifyDialog(dialogTitle, textTitle, text, cb) {
 		$( "#node-dialog-verify" ).dialog({
