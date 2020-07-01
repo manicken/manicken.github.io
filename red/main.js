@@ -304,7 +304,7 @@ var RED = (function() {
 					if (node && node.outputs == 0 && node._def.inputs == 0) {
 
 						if (n.type == "Array") continue; // skip this, it's allready added above
-						if (n.type == "ClassComment") continue;
+						if (n.type == "ClassComment" || n.type == "Comment") continue;
 
 						cpp += "    " + n.type + " ";
 						for (var j=n.type.length; j<32; j++) cpp += " ";
@@ -451,7 +451,7 @@ var RED = (function() {
 				if (arrayNode) // if defined and found prev, add it now
 				{
 					cpp += "        // array workaround until we get real object-array in GUI-tool\n";
-					cpp += "        " + arrayNode.name + " = new" + arrayNode.type + "[" + arrayNode.objectCount + "]";
+					cpp += "        " + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
 					if (arrayNode.autoGenerate)
 						cpp += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "};\n\n"
 					else
@@ -459,11 +459,14 @@ var RED = (function() {
 					
 				}
 				cpp += cppPcs;
-				cpp += "        for (int i = 0; i < " + ac.arrayLenght + "; i++)\n        {\n";
-				cpp += cppArray;
-				cpp += "        }\n";
+				if (ac.arrayLenght != 0)
+				{
+					cpp += "        for (int i = 0; i < " + ac.arrayLenght + "; i++)\n        {\n";
+					cpp += cppArray;
+					cpp += "        }\n";
+				}
 				cpp += "    }\n";
-				cpp += "}\n";
+				cpp += "};\n"; // end of class
 			}
 			cpp += "// GUItool: end automatically generated code\n";
 			//console.log(cpp);
