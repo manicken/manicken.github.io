@@ -130,8 +130,7 @@ RED.editor = (function() {
 							var changed = false;
 							var wasDirty = RED.view.dirty();
 							var d;
-							
-							
+
 							if (editing_node._def.oneditsave) {
 								var oldValues = {};
 								for (d in editing_node._def.defaults) {
@@ -220,11 +219,8 @@ RED.editor = (function() {
 							}
 							editing_node.dirty = true;
 							validateNode(editing_node);
-							editing_node.dirty = true;
 							RED.view.redraw();
-							
 							console.log("edit node saved!");
-							
 						} else if (RED.view.state() == RED.state.EXPORT) {
 							if (/library/.test($( "#dialog" ).dialog("option","title"))) {
 								//TODO: move this to RED.library
@@ -318,9 +314,9 @@ RED.editor = (function() {
 	 * @param prefix - the prefix to use in the input element ids (node-input|node-config-input)
 	 */
 	function preparePropertyEditor(node,property,prefix) {
+		console.error("preparePropertyEditor:" + node.type + ":" + prefix+"-"+property);
 		var input = $("#"+prefix+"-"+property);
 		if (input.attr('type') === "checkbox") {
-			
 			input.prop('checked',node[property]);
 		} else {
 			var val = node[property];
@@ -423,15 +419,11 @@ RED.editor = (function() {
 	 */
 	function prepareEditDialog(node,definition,prefix) {
 		for (var d in definition.defaults) {
-			//console.log("var d in definition.defaults: " + d);
-			
 			if (definition.defaults.hasOwnProperty(d)) {
 				if (definition.defaults[d].type) {
 					prepareConfigNodeSelect(node,d,definition.defaults[d].type);
 				} else {
-
 					preparePropertyEditor(node,d,prefix);
-					console.log("prefix:" + prefix);
 				}
 				attachPropertyChangeHandler(node,definition.defaults,d,prefix);
 			}
@@ -443,7 +435,6 @@ RED.editor = (function() {
 			for (var d in definition.defaults) {
 				if (definition.defaults.hasOwnProperty(d)) {
 					$("#"+prefix+"-"+d).change();
-					console.log("hi " + d);
 				}
 			}
 		};
@@ -455,7 +446,6 @@ RED.editor = (function() {
 			} else {
 				$.getJSON(getCredentialsURL(node.type, node.id), function (data) {
 					node.credentials = data;
-					
 					node.credentials._ = $.extend(true,{},data);
 					populateCredentialsInputs(node, definition.credentials, node.credentials, prefix);
 					completePrepare();
@@ -471,15 +461,30 @@ RED.editor = (function() {
 		RED.view.state(RED.state.EDITING);
 		//$("#dialog-form").html(RED.view.getForm(node.type));
 		//console.log("get form for type:" + node.type);
-
 		var editorType = "";
-		if (node.type == "AudioMixerX") // Jannik 
-			editorType = "AudioMixerX"; // other special items can be added here
-		else
-			editorType = "NodesGlobalEdit"; // Jannik
-		//RED.view.getForm("dialog-form", node.type, function (d, f) {// Jannik
 		
-		RED.view.getForm("dialog-form", editorType, function (d, f) { // Jannik
+		console.log("showEditDialog"); // just to make it easier to find this function
+		
+		//if (node.type == "AudioMixerX") // Jannik add
+		//	editorType = "AudioMixerX"; // Jannik add
+		//else
+		//	editorType = "NodesGlobalEdit"; // Jannik add (this force use of global edit form, except for other defined above
+		
+		// Jannik add start
+		// (this method is better because then we can define special edit for some types)
+		// but we don't need to define for each new type we add, all those new types use
+		// global edit by default
+		var ifHaveOwnEditor = $("script[data-template-name|='" + node.type + "']");
+		//console.warn("ifHaveOwnEditor:" + Object.getOwnPropertyNames(ifHaveOwnEditor.length)); // see properties of object
+		//console.warn("ifHaveOwnEditor:" + ifHaveOwnEditor.length);
+		if (ifHaveOwnEditor.length != 0) 
+		{	editorType = node.type; console.log("use type editor:" + editorType);}
+		else
+		{	editorType = "NodesGlobalEdit"; console.log("use global editor");}
+		// Jannik add end
+		
+		//RED.view.getForm("dialog-form", node.type, function (d, f) {// Jannik remove
+		RED.view.getForm("dialog-form", editorType, function (d, f) { // Jannik add (because see above)
 			//console.log("node._def " + node._def.defaults);
 			prepareEditDialog(node,node._def,"node-input");
 			$( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
@@ -545,7 +550,6 @@ RED.editor = (function() {
 							RED.view.dirty(true);
 							$( this ).dialog( "close" );
 							RED.view.redraw();
-							
 						}
 				});
 			}

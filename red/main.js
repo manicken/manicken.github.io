@@ -16,6 +16,9 @@
  **/
 var RED = (function() {
 
+	//var classColor = "#E6E0F8"; // standard
+	var classColor = "#ccffcc"; // new
+
 	$('#btn-keyboard-shortcuts').click(function(){showHelp();});
 
 	function hideDropTarget() {
@@ -23,10 +26,13 @@ var RED = (function() {
 		RED.keyboard.remove(/* ESCAPE */ 27);
 	}
 
+// Jannik comment out, because there is no use of this function
+  //  we could maybe use for dropping new nodes
+  //  but in that case it's only dropTarget we use
 	$('#chart').on("dragenter",function(event) {
 		if ($.inArray("text/plain",event.originalEvent.dataTransfer.types) != -1) {
 			$("#dropTarget").css({display:'table'});
-			RED.keyboard.add(/* ESCAPE */ 27,hideDropTarget);
+			RED.keyboard.add( 27,hideDropTarget); // ESCAPE
 		}
 	});
 
@@ -40,12 +46,22 @@ var RED = (function() {
 	})
 	.on("drop",function(event) {
 		var data = event.originalEvent.dataTransfer.getData("text/plain");
+		
 		hideDropTarget();
+		if (data.startsWith("file")) return;
+		console.log("flow dropped:" + data);
 		RED.view.importNodes(data);
 		event.preventDefault();
 	});
-	
 
+
+	function make_name(n) {
+		var name = (n.name ? n.name : n.id);
+		name = name.replace(" ", "_").replace("+", "_").replace("-", "_");
+		return name
+	}
+	
+	$('#btn-deploy').click(function() { save(); });
 	function save(force) {
 		RED.storage.update();
 
@@ -61,7 +77,7 @@ var RED = (function() {
 				+ "// GUItool: begin automatically generated code\n";
 				+ "// JSON string:\n"
 				+ "//" + JSON.stringify(nns) + "\n";
-
+				
 			// generate code for all audio processing nodes
 			for (var i=0; i<nns.length; i++) {
 				var n = nns[i];
@@ -131,7 +147,6 @@ var RED = (function() {
 					return false;
 				});
 				}).focus();
-
 			$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
 			});
 			//RED.view.dirty(false);
@@ -151,9 +166,33 @@ var RED = (function() {
 			}).dialog("open");
 		}
 	}
-
-	$('#btn-deploy').click(function() { save(); });
-
+	/**
+	 * this take a multiline text, 
+	 * break it up into linearray, 
+	 * then each line is added to a new text + the incrementText added in front of every line
+	 * @param {*} text 
+	 * @param {*} incrementText 
+	 */
+	function incrementTextLines(text, incrementText)
+	{
+		var lines = text.split("\n");
+		var newText = "";
+		for (var i = 0; i < lines.length; i++)
+		{
+			newText += incrementText + lines[i] + "\n";
+		}
+		return newText;
+	}
+	function isSpecialNode(type)
+	{
+		if (type == "ClassComment") return true;
+		else if (type == "Comment") return true;
+		else if (type == "TabInput") return true;
+		else if (type == "TabOutput") return true;
+		else if (type == "Function") return true;
+		else if (type == "Variables") return true;
+		else return false;
+	}
 	$('#btn-deploy2').click(function() { save2(); });
 	function save2(force)
 	{
@@ -182,84 +221,74 @@ var RED = (function() {
 				+ "\n// GUItool: begin automatically generated code\n"
 				+ "// JSON string:\n"
 				+ "//" + JSON.stringify(nns) + "\n";
-			
-				
-				
-			for (var wsi=0; wsi < wns.length; wsi++)
+
+			for (var wsi=0; wsi < wns.length; wsi++) // workspaces
 			{
+				if (!wns[wsi].export) continue; // this skip export
+
+				// first go through special types
 				var classComment = "";
-				
-				for (var i=0; i<nns.length; i++) {
+				var classFunctions = "";
+				var classVars = "";
+				var arrayNode = undefined;
+				var foundArrayNode = false;
+				for (var i=0; i<nns.length; i++) { 
 					var n = nns[i];
 
-					if (n.z != wns[wsi].id) continue;
+					if (n.z != wns[wsi].id) continue; // workspace filter
 					if (n.type == "ClassComment")
 					{
 						//if (n.name == "TestMultiline")
 						//	RED.nodes.node(n.id).name = "Test\nMultiline";
 						classComment += " * " + n.name + "\n";
 					}
+					else if (n.type == "Function")
+					{
+						classFunctions += n.comment + "\n"; // we use comment field for function-data
+					}
+					else if (n.type == "Variables")
+					{
+						classVars += n.comment + "\n" // we use comment field for vars-data
+					}
+					else if (n.type == "Array" && !foundArrayNode) // this is special thingy that was before real-node, now it's obsolete, it only generates more code
+					{
+						var arrayNode = node.name.split(" ");
+						if (!arrayNode) continue;
+						if (arrayNode.length < 2 || arrayNode.length > 3) continue;
+						// we just save the array def. to later
+						if (arrayNode.length == 2)
+							arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:"", objectCount:0, autoGenerate:true}; 
+						else // arrayNode[2] contains predefined array contents
+							arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:arrayNode[2], objectCount:arrayNode[2].split(",").length, autoGenerate:false};
+
+						cpp += "    " + arrayNode.type + " ";
+						for (var j=arrayNode.type.length; j<32; j++) cpp += " ";
+						cpp += "*" + arrayNode.name +";\n";
+						
+						foundArrayNode = true; // only one can be defined at this beta test
+					}
 				}
 				if (classComment.length > 0)
 				{
 					cpp += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
 				}
+				cpp += "\nclass " + wns[wsi].label + "\n{\n public:\n";
 
-				cpp += "\nclass " + wns[wsi].label + "\n{\n"
-				+ "  public:\n";
-
-				//console.log("class>>>" + wns[wsi].label + "<<<"); // debug test
-			
 				//cpp += "// " + wns[i].id + ":" + wns[i].label + "\n"; // test 
-				var arrayNode = undefined;
-				// generate code for the array def. node, at the moment there can only be one
-				for (var i=0; i<nns.length; i++) {
-					var n = nns[i];
-
-					if (n.z != wns[wsi].id) continue; // workspace check
-
-					var node = RED.nodes.node(n.id);
-					if (!node) continue;
-					if (node.type != "Array") continue;
-					var arrayNode = node.name.split(" ");
-					if (!arrayNode) continue;
-					if (arrayNode.length < 2 || arrayNode.length > 3) continue;
-					// we just save the array def. to later
-					if (arrayNode.length == 2)
-						arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:"", objectCount:0, autoGenerate:true}; 
-					else // arrayNode[2] contains predefined array contents
-						arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:arrayNode[2], objectCount:arrayNode[2].split(",").length, autoGenerate:false};
-
-					cpp += "    " + arrayNode.type + " ";
-					for (var j=arrayNode.type.length; j<32; j++) cpp += " ";
-					cpp += "*" + arrayNode.name +";\n";
-					
-					break; // only one can be defined at this beta test
-
-					//for (var j=arrayNode[1].length; j<26; j++) cpp += " ";
-
-					//cpp += "//xy=" + n.x + "," + n.y + "," + n.z + "\n"; // now with JSON string at top xy not needed anymore
-				}
+				
 				// generate code for all audio processing nodes
 				for (var i=0; i<nns.length; i++) {
 					var n = nns[i];
 
-					if (n.z != wns[wsi].id) continue; // workspace check
+					if (n.z != wns[wsi].id) continue; // workspace filter
 
 					var node = RED.nodes.node(n.id);
 					if (!node) continue;
 					
-					if (n.type == "TabInput" || n.type == "TabOutput") continue; // now with JSON string at top place-holders not needed anymore
-					if (n.type == "Array") continue;
+					if(isSpecialNode(n.type)) continue;
 
 					if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
-						
-					
-
-					//	cpp += "//  "; // comment out because this is just a placeholder for import
-					//else
-						cpp += "    "
-						
+					cpp += "    "
 					//console.log(">>>" + n.type +"<<<"); // debug test
 					var typeLength = n.type.length;
 					if (n.type == "AudioMixerX")
@@ -267,8 +296,13 @@ var RED = (function() {
 						var tmplDef = "";
 						if (n.inputs == 1) // special case 
 						{
-							// check is source is a array
+							// check if source is a array
 							var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
+							if (!src.node.name)
+							{
+								console.error("!src.node:" + n.z + ":" + n.id); // failsafe only happens when no name is used for an node
+								continue;
+							}
 							var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
 							if (isArray) tmplDef = "<" + isArray.arrayLenght + ">";
 							console.log("special case AudioMixerX connected from array " + src.node.name + ", new AudioMixerX def:" + tmplDef);
@@ -290,7 +324,10 @@ var RED = (function() {
 						arrayNode.cppCode += name + ",";
 						arrayNode.objectCount++;
 					}
-					cpp += name + ";\n";
+					if (n.comment && (n.comment.trim().length != 0))
+						cpp += name + "; /* " + n.comment +"*/\n";
+					else
+						cpp += name + ";\n";
 					
 				}
 				
@@ -303,8 +340,7 @@ var RED = (function() {
 					var node = RED.nodes.node(n.id);
 					if (node && node.outputs == 0 && node._def.inputs == 0) {
 
-						if (n.type == "Array") continue; // skip this, it's allready added above
-						if (n.type == "ClassComment" || n.type == "Comment") continue;
+						if(isSpecialNode(n.type)) continue;
 
 						cpp += "    " + n.type + " ";
 						for (var j=n.type.length; j<32; j++) cpp += " ";
@@ -317,9 +353,6 @@ var RED = (function() {
 				}
 				
 				// generate code for all connections (aka wires or links)
-				//var cordcount = 1;
-
-				
 				var ac = {
 					base: "        AudioConnection        patchCord",
 					arrayBase: "        patchCord[pci++] = new AudioConnection(",
@@ -340,7 +373,6 @@ var RED = (function() {
 						//if ((this.srcPort == 0) && (this.dstPort == 0))
 						//	this.cppCode	+= "\n" + this.base + this.count + "(" + this.srcName + ", " + this.dstName + ");"; // this could be used but it's generating code that looks more blurry
 						
-
 						if (this.dstRootIsArray)
 						{
 							this.cppCode	+= "    " + this.arrayBase + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
@@ -407,10 +439,7 @@ var RED = (function() {
 						ac.srcPort = pi;
 						ac.dstPort = dstPortIndex;
 
-						if (ac.checkIfSrcIsArray())
-						{
-
-						}
+						ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
 						if (RED.nodes.isClass(n.type)) // if source is class
 						{
 							//console.log("root src is class:" + ac.srcName);
@@ -418,13 +447,9 @@ var RED = (function() {
 							RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
 						}
 						
-						if (ac.checkIfDstIsArray())
-						{
-
-						}
+						ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
 						if (RED.nodes.isClass(dst.type))
-						{
-							
+						{							
 							//console.log("dst is class:" + dst.name + " from:" + n.name);
 							//classInputPortToCpp(inNodes, ac.dstName , ac, dst); // debug;
 							RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName , ac, dst);
@@ -437,17 +462,16 @@ var RED = (function() {
 							cppArray += ac.cppCode;
 						else
 							cppPcs += ac.cppCode;
-						
 					});
-
 				}
-				cpp += "    // total patchCordCount: " + ac.totalCount + " including array typed ones.\n";
 				cpp += "    AudioConnection ";
 				for (var j="AudioConnection".length; j<32; j++) cpp += " ";
-				cpp += "*patchCord[" + ac.totalCount + "];\n";
-				cpp += "    int pci = 0;\n"
+				cpp += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
+				if (classVars.trim().length > 0)
+					cpp += "\n" + incrementTextLines(classVars, "    ");
 				cpp+= "\n    " + wns[wsi].label + "() // constructor (this is called when class-object is created)\n    {\n";
-				
+				cpp += "        int pci = 0; // used only for adding new patchcords\n\n"
+
 				if (arrayNode) // if defined and found prev, add it now
 				{
 					cpp += "        // array workaround until we get real object-array in GUI-tool\n";
@@ -466,24 +490,35 @@ var RED = (function() {
 					cpp += "        }\n";
 				}
 				cpp += "    }\n";
+				if (classFunctions.trim().length > 0)
+					cpp += "\n" + incrementTextLines(classFunctions, "    ");
 				cpp += "};\n"; // end of class
 			}
 			cpp += "// GUItool: end automatically generated code\n";
 			//console.log(cpp);
 
+			var box = document.querySelector('.ui-droppable');
+			function float2int (value) {
+				return value | 0;
+			}
 			RED.view.state(RED.state.EXPORT);
 			RED.view.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
 				
 				$("#node-input-export").val(cpp).focus(function() {
 				var textarea = $(this);
+				
 				textarea.select();
+				//console.error(textarea.height());
+				var textareaNewHeight = float2int((box.clientHeight-220)/20)*20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
+				textarea.height(textareaNewHeight);
+
 				textarea.mouseup(function() {
 					textarea.unbind("mouseup");
 					return false;
 				});
 				}).focus();
 
-				/*$("#node-input-export2").val("second text").focus(function() { // this can be used for custom mixer code in future
+				/*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
 					var textarea = $(this);
 					textarea.select();
 					textarea.mouseup(function() {
@@ -491,7 +526,8 @@ var RED = (function() {
 						return false;
 					});
 					}).focus();*/ 
-					var box = document.querySelector('.ui-droppable');
+					
+					console.warn(".ui-droppable.box.clientHeight:"+ box.clientHeight);
 			//$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
 				$( "#dialog" ).dialog({
 					title: "Class Export to Arduino",
@@ -518,6 +554,7 @@ var RED = (function() {
 			}).dialog("open");
 		}
 	}
+	
 	function download(filename, text) {
 		var element = document.createElement('a');
 		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -562,47 +599,6 @@ var RED = (function() {
 		var nns = RED.nodes.createCompleteNodeSet();
 		var jsonString  = JSON.stringify(nns, null, 4);
 		download("TeensyAudioDesign.json", jsonString);
-	}
-	
-
-	function showExportDialog(cppCode)
-	{
-
-	}
-	 
-
-	$( "#node-dialog-confirm-deploy" ).dialog({
-			title: "Confirm deploy",
-			modal: true,
-			autoOpen: false,
-			width: 530,
-			height: 230,
-			buttons: [
-				{
-					text: "Confirm deploy",
-					click: function() {
-						save(true);
-						$( this ).dialog( "close" );
-					}
-				},
-				{
-					text: "Cancel",
-					click: function() {
-						$( this ).dialog( "close" );
-					}
-				}
-			]
-	});
-
-	// from http://css-tricks.com/snippets/javascript/get-url-variables/
-	function getQueryVariable(variable) {
-		var query = window.location.search.substring(1);
-		var vars = query.split("&");
-		for (var i=0;i<vars.length;i++) {
-			var pair = vars[i].split("=");
-			if(pair[0] == variable){return pair[1];}
-		}
-		return(false);
 	}
 	/**
 	 * function used by addClassTabsToPalette()
@@ -664,8 +660,17 @@ var RED = (function() {
 				   console.log("updating " + n.type);
 					var node = RED.nodes.node(n.id); // debug
 					node._def = RED.nodes.getType(n.type); // refresh type def
-					//node._def.inputs = getClassNrOfInputs(nns, ws.id);
-					node._def.outputs = getClassNrOfOutputs(nns, ws.id);
+					if (!node._def)
+					{
+						console.error("@refreshClassNodes: node._def is undefined!!!")
+						continue;
+					}
+					node._def.inputs = getClassNrOfInputs(nns, ws.id);
+					
+					node._def.outputs = getClassNrOfOutputs(nns, ws.id); // this dont really work directly
+					node.outputs = node._def.outputs; // this will update current
+
+					node.resize = true; // trigger redraw of ports
 			   }
 		   }
 	   }
@@ -686,105 +691,13 @@ var RED = (function() {
 
 			if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
 
-			//var color = "#E6E0F8"; // standard
-			var color = "#ccffcc"; // new
-			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
-			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+			
+			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
+			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
 
 			RED.nodes.registerType(ws.label, data);
 		}
 	}
-
-	function loadNodes() {
-			$(".palette-scroll").show();
-			$("#palette-search").show();
-			RED.storage.load();
-			addClassTabsToPalette();
-			refreshClassNodes();
-			RED.view.redraw();
-			
-			setTimeout(function() {
-				$("#btn-deploy").removeClass("disabled").addClass("btn-danger");
-				$("#btn-deploy2").removeClass("disabled").addClass("btn-danger");
-				$("#btn-import").removeClass("disabled").addClass("btn-success");
-			}, 1500);
-			$('#btn-deploy').click(function() { save(); });
-			$('#btn-deploy2').click(function() { save2(); });
-			// if the query string has ?info=className, populate info tab
-			var info = getQueryVariable("info");
-			if (info) {
-				RED.sidebar.info.setHelpContent('', info);
-			}
-	}
-
-	$('#btn-node-status').click(function() {toggleStatus();});
-
-	var statusEnabled = false;
-	function toggleStatus() {
-		var btnStatus = $("#btn-node-status");
-		statusEnabled = btnStatus.toggleClass("active").hasClass("active");
-		RED.view.status(statusEnabled);
-	}
-	
-	function showHelp() {
-
-		var dialog = $('#node-help');
-
-		//$("#node-help").draggable({
-		//        handle: ".modal-header"
-		//});
-
-		dialog.on('show',function() {
-			RED.keyboard.disable();
-		});
-		dialog.on('hidden',function() {
-			RED.keyboard.enable();
-		});
-
-		dialog.modal();
-	}
-
-	$(function() {
-		$(".palette-spinner").show();
-
-		// server test switched off - test purposes only
-		var patt = new RegExp(/^[http|https]/);
-		var server = false && patt.test(location.protocol);
-
-		if (!server) {
-			var data = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
-			var nodes = data["nodes"];
-			$.each(nodes, function (key, val) {
-				
-				RED.nodes.registerType(val["type"], val["data"]);
-			});
-			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
-				showHelp();
-				d3.event.preventDefault();
-			});
-			loadNodes();
-			
-			
-
-			$(".palette-spinner").hide();
-		} else {
-			$.ajaxSetup({beforeSend: function(xhr){
-				if (xhr.overrideMimeType) {
-					xhr.overrideMimeType("application/json");
-				}
-			}});
-			$.getJSON( "resources/nodes_def.json", function( data ) {
-				var nodes = data["nodes"];
-				$.each(nodes, function(key, val) {
-					RED.nodes.registerType(val["type"], val["data"]);
-				});
-				RED.keyboard.add(/* ? */ 191,{shift:true},function(){showHelp();d3.event.preventDefault();});
-				loadNodes();
-				$(".palette-spinner").hide();
-			})
-		}
-		
-	});
 	function getConfirmLoadDemoText(filename)
 	{
 		return "<p> You are going to replace your current flow</p>" +
@@ -794,6 +707,7 @@ var RED = (function() {
 	}
 	$('#btn-demoFlowA').click(function() {
 		var data = $("script[data-container-name|='DemoFlowA']").html();
+		console.error("load demo A");
 		//console.log(data);
 		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowA"), function(okPressed) { 
 			if (okPressed)
@@ -806,6 +720,7 @@ var RED = (function() {
 
 	$('#btn-demoFlowB').click(function() {
 		var data = $("script[data-container-name|='DemoFlowB']").html();
+		console.error("load demo B");
 		//console.log(data);
 		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowB"), function(okPressed) { 
 			if (okPressed)
@@ -848,8 +763,134 @@ var RED = (function() {
 		$( "#node-dialog-verify" ).dialog('open');
 	}
 
+
+	$( "#node-dialog-confirm-deploy" ).dialog({
+			title: "Confirm deploy",
+			modal: true,
+			autoOpen: false,
+			width: 530,
+			height: 230,
+			buttons: [
+				{
+					text: "Confirm deploy",
+					click: function() {
+						save(true);
+						$( this ).dialog( "close" );
+					}
+				},
+				{
+					text: "Cancel",
+					click: function() {
+						$( this ).dialog( "close" );
+					}
+				}
+			]
+	});
+
+	// from http://css-tricks.com/snippets/javascript/get-url-variables/
+	function getQueryVariable(variable) {
+		var query = window.location.search.substring(1);
+		var vars = query.split("&");
+		for (var i=0;i<vars.length;i++) {
+			var pair = vars[i].split("=");
+			if(pair[0] == variable){return pair[1];}
+		}
+		return(false);
+	}
+
+	function loadNodes() {
+			$(".palette-scroll").show();
+			$("#palette-search").show();
+			RED.storage.load();
+			addClassTabsToPalette();
+			refreshClassNodes();
+			RED.view.redraw();
+			
+			setTimeout(function() {
+				$("#btn-deploy").removeClass("disabled").addClass("btn-danger");
+				$("#btn-deploy2").removeClass("disabled").addClass("btn-danger");
+				$("#btn-import").removeClass("disabled").addClass("btn-success");
+			}, 1500);
+			//$('#btn-deploy').click(function() { save(); }); // duplicate
+			//$('#btn-deploy2').click(function() { save2(); }); // duplicate
+			// if the query string has ?info=className, populate info tab
+			var info = getQueryVariable("info");
+			if (info) {
+				RED.sidebar.info.setHelpContent('', info);
+			}
+	}
+
+	$('#btn-node-status').click(function() {toggleStatus();});
+
+	var statusEnabled = false;
+	function toggleStatus() {
+		var btnStatus = $("#btn-node-status");
+		statusEnabled = btnStatus.toggleClass("active").hasClass("active");
+		RED.view.status(statusEnabled);
+	}
+	
+	function showHelp() {
+
+		var dialog = $('#node-help');
+
+		//$("#node-help").draggable({
+		//        handle: ".modal-header"
+		//});
+
+		dialog.on('show',function() {
+			RED.keyboard.disable();
+		});
+		dialog.on('hidden',function() {
+			RED.keyboard.enable();
+		});
+
+		dialog.modal();
+	}
+
+	$(function() {
+		$(".palette-spinner").show();
+
+		// server test switched off - test purposes only
+		var patt = new RegExp(/^[http|https]/);
+		var server = false && patt.test(location.protocol);
+
+		if (!server) {
+			
+			var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
+			requirements = metaData["requirements"];
+			
+			var data = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
+			var nodes = data["nodes"];
+			$.each(nodes, function (key, val) {
+				RED.nodes.registerType(val["type"], val["data"]);
+			});
+			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
+				showHelp();
+				d3.event.preventDefault();
+			});
+			loadNodes();
+			$(".palette-spinner").hide();
+		} else {
+			$.ajaxSetup({beforeSend: function(xhr){
+				if (xhr.overrideMimeType) {
+					xhr.overrideMimeType("application/json");
+				}
+			}});
+			$.getJSON( "resources/nodes_def.json", function( data ) {
+				var nodes = data["nodes"];
+				$.each(nodes, function(key, val) {
+					RED.nodes.registerType(val["type"], val["data"]);
+				});
+				RED.keyboard.add(/* ? */ 191,{shift:true},function(){showHelp();d3.event.preventDefault();});
+				loadNodes();
+				$(".palette-spinner").hide();
+			})
+		}
+	});
+
 	return {
 		addClassTabsToPalette:addClassTabsToPalette,
-		refreshClassNodes:refreshClassNodes
+		refreshClassNodes:refreshClassNodes,
+		classColor:classColor
 	};
 })();

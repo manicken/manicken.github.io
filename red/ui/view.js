@@ -23,7 +23,7 @@ RED.view = (function() {
 		scaleFactor = 1,
 		node_width = 100,
 		node_height = 30;
-	
+
 	var touchLongPressTimeout = 1000,
 		startTouchDistance = 0,
 		startTouchCenter = [],
@@ -42,7 +42,8 @@ RED.view = (function() {
 		mouse_offset = [0,0],
 		mouse_position = null,
 		mouse_mode = 0,
-		moving_set = [],
+		moving_set = [], // the data type of this is a rect
+		current_popup_rect = null,
 		dirty = false,
 		lasso = null,
 		showStatus = false,
@@ -190,50 +191,57 @@ RED.view = (function() {
 		.attr('height', space_height)
 		.attr('fill','#fff');
 
-	var gridScale = d3.scale.linear().range([0,2000]).domain([0,2000]);
+	var gridScale = d3.scale.linear().range([0,5000]).domain([0,5000]);
 	
 	var grid = vis.append('g');
 
-	grid.selectAll("line.horizontal").data(gridScale.ticks(200)).enter()
+	grid.selectAll("line.horizontal").data(gridScale.ticks(500)).enter()
 	    .append("line")
 	        .attr(
 	        {
 	            "class":"horizontal",
 	            "x1" : 0,
-	            "x2" : 2000,
+	            "x2" : 5000,
 	            "y1" : function(d){ return gridScale(d);},
 	            "y2" : function(d){ return gridScale(d);},
 	            "fill" : "none",
-	            "shape-rendering" : "crispEdges",
+	            "shape-rendering" : "optimizeSpeed",
 	            "stroke" : "#eee",
+				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 	        });
-	grid.selectAll("line.vertical").data(gridScale.ticks(200)).enter()
+	grid.selectAll("line.vertical").data(gridScale.ticks(500)).enter()
 	     .append("line")
 	        .attr(
 	        {
 	            "class":"vertical",
 	            "y1" : 0,
-	            "y2" : 2000,
+	            "y2" : 5000,
 	            "x1" : function(d){ return gridScale(d);},
 	            "x2" : function(d){ return gridScale(d);},
 	            "fill" : "none",
-	            "shape-rendering" : "crispEdges",
+	            "shape-rendering" : "optimizeSpeed",
 		        "stroke" : "#eee",
+				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 	        });
 
 
 	var drag_line = vis.append("svg:path").attr("class", "drag_line");
+	
+	$('#btn-cut').click(function() {copySelection();deleteSelection();});
+	$('#btn-copy').click(function() {copySelection()});
+	$('#btn-paste').click(function() {importNodes(clipboard)});
 
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: function(tab) {
-			if (RED.nodes.showWorkspaceToolbar == true) {
+			if (RED.nodes.showWorkspaceToolbar == true) { //(tab.type == "subflow") {
 				$("#workspace-toolbar").show();
 			} else {
 				$("#workspace-toolbar").hide();
 			}
+			console.log("workspace_tabs onchange:" + tab);
 			var chart = $("#chart");
 			if (activeWorkspace !== 0) {
 				workspaceScrollPositions[activeWorkspace] = {
@@ -266,10 +274,9 @@ RED.view = (function() {
 			redraw();
 		},
 		ondblclick: function(tab) {
-			console.log("showRenameWorkspaceDialog");
 			showRenameWorkspaceDialog(tab.id);
 		},
-		onadd: function(tab) {
+		onadd: function(tab) { // this is a callback called from tabs.js
 			var menuli = $("<li/>");
 			var menuA = $("<a/>",{tabindex:"-1",href:"#"+tab.id}).appendTo(menuli);
 			menuA.html(tab.label);
@@ -284,6 +291,12 @@ RED.view = (function() {
 			} else {
 				$('#btn-workspace-delete').parent().removeClass("disabled");
 			}
+
+			var link = $("#workspace-tabs a[href='#"+tab.id+"']");
+			if (!tab.export)
+				link.attr("style", "color:#b3b3b3;");
+			else // 
+				link.attr("style", "color:#000000;");
 		},
 		onremove: function(tab) {
 			if (workspace_tabs.count() == 1) {
@@ -304,7 +317,7 @@ RED.view = (function() {
 			workspaceIndex += 1;
 		} while($("#workspace-tabs a[title='Sheet_"+workspaceIndex+"']").size() !== 0);
 
-		var ws = {type:"tab",id:tabId,label:"Sheet_"+workspaceIndex};//, inputCount:"0", outputCount:"0"};
+		var ws = RED.nodes.createWorkspaceObject(tabId, "Sheet_"+workspaceIndex, 0, 0, true);
 		RED.nodes.addWorkspace(ws);
 		workspace_tabs.addTab(ws);
 		workspace_tabs.activateTab(tabId);
@@ -340,7 +353,7 @@ RED.view = (function() {
 				lasso.remove();
 				lasso = null;
 			}
-			
+
 			if (!touchStartTime) {
 				var point = d3.mouse(this);
 				lasso = vis.append('rect')
@@ -408,9 +421,8 @@ RED.view = (function() {
 			// update drag line
 			drag_line.attr("class", "drag_line");
 			mousePos = mouse_position;
-
+			
 			var numOutputs = 0;
-
 			if (mousedown_node.inputs) numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node.inputs || 1); // Jannik
 			else numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node._def.inputs || 1);
 
@@ -499,6 +511,7 @@ RED.view = (function() {
 			drag_line.attr("class", "drag_line_hidden");
 		}
 		if (lasso) {
+			console.warn("canvasMouseUp lasso happend");
 			var x = parseInt(lasso.attr("x"));
 			var y = parseInt(lasso.attr("y"));
 			var x2 = x+parseInt(lasso.attr("width"));
@@ -519,19 +532,19 @@ RED.view = (function() {
 			lasso.remove();
 			lasso = null;
 		} else if (mouse_mode == RED.state.DEFAULT && mousedown_link == null) {
+			console.warn("canvasMouseUp mouse_mode == RED.state.DEFAULT && mousedown_link == null) happend");
 			clearSelection();
 			updateSelection();
 		}
 		if (mouse_mode == RED.state.MOVING_ACTIVE) {
+			console.warn("canvasMouseUp mouse_mode == RED.state.MOVING_ACTIVE happend");
 			if (moving_set.length > 0) {
 				var ns = [];
 				for (var j=0;j<moving_set.length;j++) {
 					ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy});
 				}
 				RED.history.push({t:'move',nodes:ns,dirty:dirty});
-				
 				RED.storage.update();
-				
 			}
 		}
 		if (mouse_mode == RED.state.MOVING || mouse_mode == RED.state.MOVING_ACTIVE) {
@@ -566,6 +579,7 @@ RED.view = (function() {
 			drop: function( event, ui ) {
 				d3.event = event;
 				var selected_tool = ui.draggable[0].type;
+
 				var mousePos = d3.touches(this)[0]||d3.mouse(this);
 				mousePos[1] += this.scrollTop;
 				mousePos[0] += this.scrollLeft;
@@ -575,20 +589,23 @@ RED.view = (function() {
 				var nn = {x: mousePos[0],y:mousePos[1],w:node_width,z:activeWorkspace};
 				nn.type = selected_tool;
 				nn._def = RED.nodes.getType(nn.type);
+				
 				nn.id = RED.nodes.cppId(nn, RED.nodes.workspaces[activeWorkspace].label);  // jannik add/change
-				nn.name = RED.nodes.cppName(nn); // jannik add/change
+				nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
+				nn.name = RED.nodes.cppName(nn); // jannik add/change create unique name
 
 				nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
 				nn._def.defaults.name = { value: nn.id };
 
 				nn.outputs = nn._def.outputs;
 				nn.changed = true;
-
-				/*for (var d in nn._def.defaults) {  // jannik comment out
+				console.log("drop happend:" + selected_tool + ", type:" + nn.type);
+				for (var d in nn._def.defaults) {
 					if (nn._def.defaults.hasOwnProperty(d)) {
+						if (d == "name" || d == "id") continue; // jannik add (this prevent above assigment to be overwritten)
 						nn[d] = nn._def.defaults[d].value;
 					}
-				}*/
+				}
 
 				if (nn._def.onadd) {
 					nn._def.onadd.call(nn);
@@ -605,7 +622,6 @@ RED.view = (function() {
 				moving_set.push({n:nn});
 				updateSelection();
 				redraw();
-
 				if (nn._def.autoedit) {
 					RED.editor.edit(nn);
 				}
@@ -670,7 +686,7 @@ RED.view = (function() {
 			RED.keyboard.remove(/* c */ 67);
 			RED.keyboard.remove(/* x */ 88);
 		} else {
-			//RED.keyboard.add(/* backspace */ 8,function(){deleteSelection();d3.event.preventDefault();});
+			//RED.keyboard.add(/* backspace */ 8,function(){deleteSelection();d3.event.preventDefault();}); // jannik thinks this is unlogical and unnecessary
 			RED.keyboard.add(/* delete */ 46,function(){deleteSelection();d3.event.preventDefault();});
 			RED.keyboard.add(/* c */ 67,{ctrl:true},function(){copySelection();d3.event.preventDefault();});
 			RED.keyboard.add(/* x */ 88,{ctrl:true},function(){copySelection();deleteSelection();d3.event.preventDefault();});
@@ -689,12 +705,6 @@ RED.view = (function() {
 		if (moving_set.length == 1) {
 			RED.sidebar.info.refresh(moving_set[0].n);
 			RED.nodes.selectNode(moving_set[0].n.type);
-			if (moving_set[0].n.type == "AudioMixerX")
-			{
-				//moving_set[0].n._def.inputs = 5;
-				//redraw();
-			}
-
 		} else if (moving_set.length > 1) {
 			RED.sidebar.info.showSelection(moving_set);
 		} else {
@@ -714,7 +724,7 @@ RED.view = (function() {
 		var minX = 0;
 		var minY = 0;
 		var node;
-		
+
 		for (var i=0;i<moving_set.length;i++) {
 			node = moving_set[i];
 			if (node.ox == null && node.oy == null) {
@@ -742,13 +752,24 @@ RED.view = (function() {
 		var removedNodes = [];
 		var removedLinks = [];
 		var startDirty = dirty;
+		if (current_popup_rect)
+			$(current_popup_rect).popover("destroy");
 		if (moving_set.length > 0) {
 			for (var i=0;i<moving_set.length;i++) {
-				var node = moving_set[i].n;
+				var node = moving_set[i].n; // moving_set[i] is a rect
 				node.selected = false;
 				if (node.x < 0) {
 					node.x = 25
 				}
+				/*for (var ipi = 0; ipi < node.inputlist.length; ipi++)
+				{
+					$(node.inputlist[ipi]).popover("destroy"); // remove any popovers visible (otherwise they will be left behind)
+				}
+				for (var opi = 0; opi < node._ports.length; opi++)
+				{
+					$(node._ports[opi]).popover("destroy"); // remove any popovers visible (otherwise they will be left behind)
+				}*/
+				
 				var rmlinks = RED.nodes.remove(node.id);
 				for (var j=0; j < rmlinks.length; j++) {
 					var link = rmlinks[j];
@@ -762,8 +783,10 @@ RED.view = (function() {
 							.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
 							.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
 							.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-							.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
-							.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
+							.on("mouseover", nodeInput_mouseover)
+							.on("mouseout", nodePort_mouseout)
+							//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
+							//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
 					}
 				}
 				removedNodes.push(node);
@@ -780,8 +803,10 @@ RED.view = (function() {
 				.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
 				.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
 				.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-				.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
-				.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
+				.on("mouseover", nodeInput_mouseover)
+				.on("mouseout", nodePort_mouseout)
+				//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
+				//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
 			RED.nodes.removeLink(selected_link);
 			removedLinks.push(selected_link);
 			setDirty(true);
@@ -848,10 +873,10 @@ RED.view = (function() {
 							if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
 								n.y-hh<mouse_position[1] && n.y+hh>mouse_position[1]) {
 									mouseup_node = n;
-
-									if (mouseup_node.inputs) portType = mouseup_node.inputs>0?1:0; // Jannik
+									
+									if (mouseup_node.inputs) portType = mouseup_node.inputs>0?1:0; // Jannik add so that input count can be changed on the fly
 									else portType = mouseup_node._def.inputs>0?1:0;
-
+									
 									portIndex = 0;
 							}
 						}
@@ -893,8 +918,8 @@ RED.view = (function() {
 					.on("touchstart", null)
 					.on("mouseup", null)
 					.on("touchend", null)
-					.on("mouseover", null)
-					.on("mouseout", null);
+					.on("mouseover", nodeInput_mouseover)
+					.on("mouseout", nodePort_mouseout);
 			}
 			selected_link = null;
 			redraw();
@@ -908,7 +933,7 @@ RED.view = (function() {
 			d3.event.stopPropagation();
 			return;
 		}
-		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik
+		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
 		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
 
@@ -932,9 +957,9 @@ RED.view = (function() {
 
 		dblClickPrimed = (lastClickNode == mousedown_node);
 		lastClickNode = mousedown_node;
-		
+
 		var i;
-		
+
 		if (d.selected && d3.event.ctrlKey) {
 			d.selected = false;
 			for (i=0;i<moving_set.length;i+=1) {
@@ -957,7 +982,8 @@ RED.view = (function() {
 					clearSelection();
 				}
 				mousedown_node.selected = true;
-				moving_set.push({n:mousedown_node});
+				console.warn("node mouse down happend" + this);
+				moving_set.push({n:mousedown_node, rect:this});
 			}
 			selected_link = null;
 			if (d3.event.button != 2) {
@@ -984,6 +1010,7 @@ RED.view = (function() {
 	}
 
 	function nodeButtonClicked(d) {
+		console.warn("node button pressed@"+d.name); // jannik add so that we can see, just maybe for future use of button?
 		if (d._def.button.toggle) {
 			d[d._def.button.toggle] = !d[d._def.button.toggle];
 			d.dirty = true;
@@ -1007,461 +1034,354 @@ RED.view = (function() {
 		options.push({name:"edit",disabled:(moving_set.length != 1),onselect:function() { RED.editor.edit(mdn);}});
 		options.push({name:"select",onselect:function() {selectAll();}});
 		options.push({name:"undo",disabled:(RED.history.depth() === 0),onselect:function() {RED.history.pop();}});
-		
+
 		RED.touch.radialMenu.show(obj,pos,options);
 		resetMouseVars();
 	}
 
-	function redraw() {
-		//RED.addClassTabsToPalette(); // failsafe debug test
-		//RED.refreshClassNodes(); // failsafe debug test
-		//console.log("redraw");
+	
+	function checkRequirements(d) {
+		//Add requirements
+		d.requirementError = false;
+		d.conflicts = new Array();
+		d.requirements = new Array();
+		requirements.forEach(function(r) {
+			if (r.type == d.type) d.requirements.push(r);
+		});
 
-		vis.attr("transform","scale("+scaleFactor+")");
-		outer.attr("width", space_width*scaleFactor).attr("height", space_height*scaleFactor);
-
-		if (mouse_mode != RED.state.JOINING) {
-			// Don't bother redrawing nodes if we're drawing links
-
-			var node = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d) { return d.z == activeWorkspace }),function(d){return d.id});
-			node.exit().remove();
-
-			var nodeEnter = node.enter().insert("svg:g").attr("class", "node nodegroup");
-			nodeEnter.each(function(d,i) {
-					var node = d3.select(this);
-					node.attr("id",d.id);
-					//var l = d._def.label;
-					//l = (typeof l === "function" ? l.call(d) : l)||"";
-					var l = d.name ? d.name : d.id;
-
-					if (d.inputs) // Jannik
-					{
-						d.w = Math.max(node_width,calculateTextWidth(l)+(d.inputs>0?7:0) );
-						d.h = Math.max(node_height,(Math.max(d.outputs,d.inputs)||0) * 15);
-					}
-					else
-					{
-						d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
-						d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
-					}
-
-					if (d._def.badge) {
-						var badge = node.append("svg:g").attr("class","node_badge_group");
-						var badgeRect = badge.append("rect").attr("class","node_badge").attr("rx",5).attr("ry",5).attr("width",40).attr("height",15);
-						badge.append("svg:text").attr("class","node_badge_label").attr("x",35).attr("y",11).attr('text-anchor','end').text(d._def.badge());
-						if (d._def.onbadgeclick) {
-							badgeRect.attr("cursor","pointer")
-								.on("click",function(d) { d._def.onbadgeclick.call(d);d3.event.preventDefault();});
-						}
-					}
-
-					if (d._def.button) {
-						var nodeButtonGroup = node.append('svg:g')
-							.attr("transform",function(d) { return "translate("+((d._def.align == "right") ? 94 : -25)+",2)"; })
-							.attr("class",function(d) { return "node_button "+((d._def.align == "right") ? "node_right_button" : "node_left_button"); });
-						nodeButtonGroup.append('rect')
-							.attr("rx",8)
-							.attr("ry",8)
-							.attr("width",32)
-							.attr("height",node_height-4)
-							.attr("fill","#eee");//function(d) { return d._def.color;})
-						nodeButtonGroup.append('rect')
-							.attr("x",function(d) { return d._def.align == "right"? 10:5})
-							.attr("y",4)
-							.attr("rx",5)
-							.attr("ry",5)
-							.attr("width",16)
-							.attr("height",node_height-12)
-							.attr("fill",function(d) { return d._def.color;})
-							.attr("cursor","pointer")
-							.on("mousedown",function(d) {if (!lasso) { d3.select(this).attr("fill-opacity",0.2);d3.event.preventDefault(); d3.event.stopPropagation();}})
-							.on("mouseup",function(d) {if (!lasso) { d3.select(this).attr("fill-opacity",0.4);d3.event.preventDefault();d3.event.stopPropagation();}})
-							.on("mouseover",function(d) {if (!lasso) { d3.select(this).attr("fill-opacity",0.4);}})
-							.on("mouseout",function(d) {if (!lasso) {
-								var op = 1;
-								if (d._def.button.toggle) {
-									op = d[d._def.button.toggle]?1:0.2;
-								}
-								d3.select(this).attr("fill-opacity",op);
-							}})
-							.on("click",nodeButtonClicked)
-							.on("touchstart",nodeButtonClicked)
-					}
-
-					var mainRect = node.append("rect")
-						.attr("class", "node")
-						.classed("node_unknown",function(d) { return d.type == "unknown"; })
-						.attr("rx", 6)
-						.attr("ry", 6)
-						.attr("fill",function(d) { return d._def.color;})
-						.on("mouseup",nodeMouseUp)
-						.on("mousedown",nodeMouseDown)
-						.on("touchstart",function(d) {
-							var obj = d3.select(this);
-							var touch0 = d3.event.touches.item(0);
-							var pos = [touch0.pageX,touch0.pageY];
-							startTouchCenter = [touch0.pageX,touch0.pageY];
-							startTouchDistance = 0;
-							touchStartTime = setTimeout(function() {
-								showTouchMenu(obj,pos);
-							},touchLongPressTimeout);
-							nodeMouseDown.call(this,d)       
-						})
-						.on("touchend", function(d) {
-							clearTimeout(touchStartTime);
-							touchStartTime = null;
-							if  (RED.touch.radialMenu.active()) {
-								d3.event.stopPropagation();
-								return;
+		//check for conflicts with other nodes:
+		d.requirements.forEach(function(r) {
+			RED.nodes.eachNode(function (n2) {
+				if (n2 != d && n2.requirements != null ) {
+					n2.requirements.forEach(function(r2) {
+						if (r["resource"] == r2["resource"]) {
+							if (r["shareable"] == false ) {
+								var msg = "Conflict: shareable '"+r["resource"]+"'  "+d.name+" and "+n2.name;
+								console.log(msg);
+								msg = n2.name + " uses " + r["resource"] + ", too";
+								d.conflicts.push(msg);
+								d.requirementError = true;
 							}
-							nodeMouseUp.call(this,d);
-						})
-						.on("mouseover",function(d) {
-								if (mouse_mode === 0) {
-									var node = d3.select(this);
-									node.classed("node_hovered",true);
-								}
-						})
-						.on("mouseout",function(d) {
-								var node = d3.select(this);
-								node.classed("node_hovered",false);
-						});
-
-				   //node.append("rect").attr("class", "node-gradient-top").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-top)").style("pointer-events","none");
-				   //node.append("rect").attr("class", "node-gradient-bottom").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-bottom)").style("pointer-events","none");
-
-					if (d._def.icon) {
-						
-						var icon_group = node.append("g")
-							.attr("class","node_icon_group")
-							.attr("x",0).attr("y",0);
-						
-						var icon_shade = icon_group.append("rect")
-							.attr("x",0).attr("y",0)
-							.attr("class","node_icon_shade")
-							.attr("width","30")
-							.attr("stroke","none")
-							.attr("fill","#000")
-							.attr("fill-opacity","0.05")
-							.attr("height",function(d){return Math.min(50,d.h-4);});
-							
-						var icon = icon_group.append("image")
-							.attr("xlink:href","icons/"+d._def.icon)
-							.attr("class","node_icon")
-							.attr("x",0)
-							.attr("width","30")
-							.attr("height","30");
-							
-						var icon_shade_border = icon_group.append("path")
-							.attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
-							.attr("class","node_icon_shade_border")
-							.attr("stroke-opacity","0.1")
-							.attr("stroke","#000")
-							.attr("stroke-width","2");
-
-						if ("right" == d._def.align) {
-							icon_group.attr('class','node_icon_group node_icon_group_'+d._def.align);
-							icon_shade_border.attr("d",function(d) { return "M 0 1 l 0 "+(d.h-2)});
-							//icon.attr('class','node_icon node_icon_'+d._def.align);
-							//icon.attr('class','node_icon_shade node_icon_shade_'+d._def.align);
-							//icon.attr('class','node_icon_shade_border node_icon_shade_border_'+d._def.align);
+							//else
+							if (r["setting"] != r2["setting"]) {
+								var msg = "Conflict: "+ d.name + " setting['"+r["setting"]+"'] and "+n2.name+" setting['"+r2["setting"]+"']";
+								console.log(msg);
+								msg = n2.name + " has different settings: " + r["setting"] + " ./. " + r2["setting"];
+								d.conflicts.push(msg);
+								d.requirementError = true;
+							}
 						}
-						
-						//if (d._def.inputs > 0 && d._def.align == null) {
-						//    icon_shade.attr("width",35);
-						//    icon.attr("transform","translate(5,0)");
-						//    icon_shade_border.attr("transform","translate(5,0)");
-						//}
-						//if (d._def.outputs > 0 && "right" == d._def.align) {
-						//    icon_shade.attr("width",35); //icon.attr("x",5);
-						//}
-						
-						var img = new Image();
-						img.src = "icons/"+d._def.icon;
-						img.onload = function() {
-							icon.attr("width",Math.min(img.width,30));
-							icon.attr("height",Math.min(img.height,30));
-							icon.attr("x",15-Math.min(img.width,30)/2);
-							//if ("right" == d._def.align) {
-							//    icon.attr("x",function(d){return d.w-img.width-1-(d.outputs>0?5:0);});
-							//    icon_shade.attr("x",function(d){return d.w-30});
-							//    icon_shade_border.attr("d",function(d){return "M "+(d.w-30)+" 1 l 0 "+(d.h-2);});
-							//}
-						};
-						
-						//icon.style("pointer-events","none");
-						icon_group.style("pointer-events","none");
-					}
-					var text = node.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '.35em').attr('text-anchor','start');
-					if (d._def.align) {
-						text.attr('class','node_label node_label_'+d._def.align);
-						text.attr('text-anchor','end');
-					}
-
-					var status = node.append("svg:g").attr("class","node_status_group").style("display","none");
-
-					var statusRect = status.append("rect").attr("class","node_status")
-										.attr("x",6).attr("y",1).attr("width",9).attr("height",9)
-										.attr("rx",2).attr("ry",2).attr("stroke-width","3");
-
-					var statusLabel = status.append("svg:text")
-						.attr("class","node_status_label")
-						.attr('x',20).attr('y',9)
-						.style({
-								'stroke-width': 0,
-								'fill': '#888',
-								'font-size':'9pt',
-								'stroke':'#000',
-								'text-anchor':'start'
-						});
-
-					//node.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
-					
-					var numInputs = 0;
-					if (d.inputs) // Jannik
-						numInputs = d.inputs;
-					else
-						numInputs = d._def.inputs;
-
-					var inputlist = [];
-					for (var ni=0; ni < numInputs; ni++) {
-						var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == ni);});
-						var y = (d.h/2)-((numInputs-1)/2)*13;
-						y = (y+13*ni)-5;
-						text.attr("x",38);
-						var rect = node.append("rect");
-						inputlist[ni] = rect;
-
-						rect.attr("class","port port_input").attr("rx",3).attr("ry",3)
-							.attr("y",y).attr("x",-5).attr("width",10).attr("height",10).attr("index",ni);
-
-						if (link && link.length > 0) {
-							// this input already has a link connected, so disallow new links
-							rect.on("mousedown",null)
-								.on("touchstart", null)
-								.on("mouseup", null)
-								.on("touchend", null)
-								.on("mouseover",function(ni) {
-									var port = d3.select(this);
-									
-									showIOpinInfo(this, d, this.getAttribute("index")); // d is the node
-																		
-									port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
-									//console.log("in port hover:" + this.getAttribute("index"));
-								})
-								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false); $(this).popover("destroy");})
-								.classed("port_hovered",false);
-						} else {
-							// allow new link on inputs without any link connected
-							//console.log("ni:" + ni); // development debug
-							rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
-								.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(ni))
-								.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);$(this).popover("destroy");}} )(ni))
-								.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(ni))
-								.on("mouseover",function(ni) {
-									var port = d3.select(this);
-
-									showIOpinInfo(this, d, this.getAttribute("index")); // d is the node
-
-									port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
-									//console.log("in port hover:" + this.getAttribute("index"));
-								})
-								.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false); $(port).popover("destroy");})
-						}
-					}
-					d.inputlist = inputlist;
-
-					// never show these little status icons
-					// people try clicking on them, thinking they're buttons
-					// or some sort of user interface widget
-					//node.append("path").attr("class","node_error").attr("d","M 3,-3 l 10,0 l -5,-8 z");
-					//node.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
-					//node.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
+					});
+				}
 			});
+		});		
+	}
+	
+	function redraw_calcNewNodeSize(d)
+	{
+		//var l = d._def.label;
+		//l = (typeof l === "function" ? l.call(d) : l)||"";
+		var l = d.name ? d.name : d.id;
+		
+		if (d.inputs) // Jannik
+		{
+			d.w = Math.max(node_width,calculateTextWidth(l)+(d.inputs>0?7:0) );
+			d.h = Math.max(node_height, (Math.max(d.outputs,d.inputs)||0) * 13 + 8);
+		}
+		else
+		{
+			d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
+			d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 13 + 8);
+		}
+	}
+	function redraw_nodeBadge(nodeRect, d)
+	{
+		var badge = nodeRect.append("svg:g").attr("class","node_badge_group");
+		var badgeRect = badge.append("rect").attr("class","node_badge").attr("rx",5).attr("ry",5).attr("width",40).attr("height",15);
+		badge.append("svg:text").attr("class","node_badge_label").attr("x",35).attr("y",11).attr('text-anchor','end').text(d._def.badge());
+		if (d._def.onbadgeclick) {
+			badgeRect.attr("cursor","pointer")
+				.on("click",function(d) { d._def.onbadgeclick.call(d);d3.event.preventDefault();});
+		}
+	}
+	
+	function redraw_nodeButton(nodeRect, d)
+	{
+		var nodeButtonGroup = nodeRect.append('svg:g')
+			.attr("transform",function(d) { return "translate("+((d._def.align == "right") ? 94 : -25)+",2)"; })
+			.attr("class",function(d) { return "node_button "+((d._def.align == "right") ? "node_right_button" : "node_left_button"); });
+		nodeButtonGroup.append('rect')
+			.attr("rx",8)
+			.attr("ry",8)
+			.attr("width",32)
+			.attr("height",node_height-4)
+			.attr("fill","#eee");//function(d) { return d._def.color;})
+		nodeButtonGroup.append('rect')
+			.attr("x",function(d) { return d._def.align == "right"? 10:5})
+			.attr("y",4)
+			.attr("rx",5)
+			.attr("ry",5)
+			.attr("width",16)
+			.attr("height",node_height-12)
+			.attr("fill",function(d) { return d._def.color;})
+			.attr("cursor","pointer")
+			.on("mousedown",function(d) {if (!lasso) { d3.select(this).attr("fill-opacity",0.2);d3.event.preventDefault(); d3.event.stopPropagation();}})
+			.on("mouseup",function(d) {if (!lasso) { d3.select(this).attr("fill-opacity",0.4);d3.event.preventDefault();d3.event.stopPropagation();}})
+			.on("mouseover",function(d) {if (!lasso) { d3.select(this).attr("fill-opacity",0.4);}})
+			.on("mouseout",function(d) {if (!lasso) {
+				var op = 1;
+				if (d._def.button.toggle) {
+					op = d[d._def.button.toggle]?1:0.2;
+				}
+				d3.select(this).attr("fill-opacity",op);
+			}})
+			.on("click",nodeButtonClicked)
+			.on("touchstart",nodeButtonClicked)
+	}
+	function redraw_nodeMainRect(nodeRect, d)
+	{
+		var mainRect = nodeRect.append("rect")
+			.attr("class", "node")
+			.classed("node_unknown",function(d) { return d.type == "unknown"; })
+			.attr("rx", 6)
+			.attr("ry", 6)
+			.attr("fill",function(d) { return d._def.color;})
+			.on("mouseup",nodeMouseUp)
+			.on("mousedown",nodeMouseDown)
+			.on("touchstart",function(d) {
+				var obj = d3.select(this);
+				var touch0 = d3.event.touches.item(0);
+				var pos = [touch0.pageX,touch0.pageY];
+				startTouchCenter = [touch0.pageX,touch0.pageY];
+				startTouchDistance = 0;
+				touchStartTime = setTimeout(function() {
+					showTouchMenu(obj,pos);
+				},touchLongPressTimeout);
+				nodeMouseDown.call(this,d)
+			})
+			.on("touchend", function(d) {
+				clearTimeout(touchStartTime);
+				touchStartTime = null;
+				if  (RED.touch.radialMenu.active()) {
+					d3.event.stopPropagation();
+					return;
+				}
+				nodeMouseUp.call(this,d);
+			})
+			.on("mouseover",function(d) {
+				if (mouse_mode === 0) {
+					var nodeRect = d3.select(this);
+					nodeRect.classed("node_hovered",true);
+					//console.log("node mouseover:" + d.name);
+					var popoverText = "<b>" + d.type + "</b><br>";
+					if (d.comment && (d.comment.trim().length != 0))
+						popoverText+=d.comment;
 
-			node.each(function(d,i) {
-					if (d.dirty) {
-						//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
-						if (d.resize) {
-							//var l = d._def.label;
-							//l = (typeof l === "function" ? l.call(d) : l)||"";
-							var l = d.name ? d.name : d.id;
-							if (d.inputs) // Jannik
-							{
-								d.w = Math.max(node_width,calculateTextWidth(l)+(d.inputs>0?7:0) );
-								d.h = Math.max(node_height,(Math.max(d.outputs,d.inputs)||0) * 15);
-							}
-							else
-							{
-								d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
-								d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
-							}
-							//d.w = Math.max(node_width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
-							//d.h = Math.max(node_height,(Math.max(d.outputs,d._def.inputs)||0) * 15);
-						}
-						var thisNode = d3.select(this);
-						//thisNode.selectAll(".centerDot").attr({"cx":function(d) { return d.w/2;},"cy":function(d){return d.h/2}});
-						thisNode.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
-						thisNode.selectAll(".node")
-							.attr("width",function(d){return d.w})
-							.attr("height",function(d){return d.h})
-							.classed("node_selected",function(d) { return d.selected; })
-							.classed("node_highlighted",function(d) { return d.highlighted; })
-						;
-						//thisNode.selectAll(".node-gradient-top").attr("width",function(d){return d.w});
-						//thisNode.selectAll(".node-gradient-bottom").attr("width",function(d){return d.w}).attr("y",function(d){return d.h-30});
-
-						thisNode.selectAll(".node_icon_group_right").attr('transform', function(d){return "translate("+(d.w-30)+",0)"});
-						thisNode.selectAll(".node_label_right").attr('x', function(d){return d.w-38});
-						//thisNode.selectAll(".node_icon_right").attr("x",function(d){return d.w-d3.select(this).attr("width")-1-(d.outputs>0?5:0);});
-						//thisNode.selectAll(".node_icon_shade_right").attr("x",function(d){return d.w-30;});
-						//thisNode.selectAll(".node_icon_shade_border_right").attr("d",function(d){return "M "+(d.w-30)+" 1 l 0 "+(d.h-2)});
-
-						
-						var numOutputs = d.outputs;
-						var y = (d.h/2)-((numOutputs-1)/2)*13;
-						d.ports = d.ports || d3.range(numOutputs);
-						d._ports = thisNode.selectAll(".port_output").data(d.ports);
-
-						d._ports.enter().append("rect").attr("class","port port_output").attr("rx",3).attr("ry",3).attr("width",10).attr("height",10)
-							.on("mousedown",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
-							.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
-							.on("mouseup",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
-							.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
-							.on("mouseover",function(d2,i) {
-								  var port = d3.select(this);
-								  showIOpinInfo(this, d, d2); // d is the node
-								  port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 ));
-								  //console.log("mouseover port: " + d2);
-								})
-							.on("mouseout",function(d,i) { var port = d3.select(this); port.classed("port_hovered",false);  $(port).popover("destroy");});
-						d._ports.exit().remove();
-						if (d._ports) {
-							numOutputs = d.outputs || 1;
-							y = (d.h/2)-((numOutputs-1)/2)*13;
-							var x = d.w - 5;
-							d._ports.each(function(d,i) {
-									var port = d3.select(this);
-									port.attr("y",(y+13*i)-5).attr("x",x);
-							});
-						}
-						thisNode.selectAll('text.node_label').text(function(d,i){
-								/* if (d._def.label) {
-									if (typeof d._def.label == "function") {
-										return d._def.label.call(d);
-									} else {
-										return d._def.label;
-									}
-								}
-								return "n.a.";
-								 */
-								return d.name ? d.name : d.id;
-						})
-							.attr('y', function(d){return (d.h/2)-1;})
-							.attr('class',function(d){
-								return 'node_label'+
-								(d._def.align?' node_label_'+d._def.align:'')+
-								(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
-						});
-						thisNode.selectAll(".node_tools").attr("x",function(d){return d.w-35;}).attr("y",function(d){return d.h-20;});
-
-						thisNode.selectAll(".node_changed")
-							.attr("x",function(d){return d.w-10})
-							.classed("hidden",function(d) { return !d.changed; });
-
-						thisNode.selectAll(".node_error")
-							.attr("x",function(d){return d.w-10-(d.changed?13:0)})
-							.classed("hidden",function(d) { return d.valid; });
-
-						thisNode.selectAll(".port_input").each(function(d,i) {
-							var port = d3.select(this);
-
-							var numInputs = 0;
-
-							if (d.inputs) numInputs = d.inputs; // Jannik
-							else numInputs = d._def.inputs;
-
-							var y = (d.h/2)-((numInputs-1)/2)*13;
-							y = (y+13*i)-5;
-							port.attr("y",y)
-						});
-
-						thisNode.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
-						thisNode.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
-						thisNode.selectAll(".node_icon_shade_border").attr("d",function(d){ return "M "+(("right" == d._def.align) ?0:30)+" 1 l 0 "+(d.h-2)});
-
-						
-						thisNode.selectAll('.node_right_button').attr("transform",function(d){
-								var x = d.w-6;
-								if (d._def.button.toggle && !d[d._def.button.toggle]) {
-									x = x - 8;
-								}
-								return "translate("+x+",2)";
-						});
-						thisNode.selectAll('.node_right_button rect').attr("fill-opacity",function(d){
-								if (d._def.button.toggle) {
-									return d[d._def.button.toggle]?1:0.2;
-								}
-								return 1;
-						});
-
-						//thisNode.selectAll('.node_right_button').attr("transform",function(d){return "translate("+(d.w - d._def.button.width.call(d))+","+0+")";}).attr("fill",function(d) {
-						//         return typeof d._def.button.color  === "function" ? d._def.button.color.call(d):(d._def.button.color != null ? d._def.button.color : d._def.color)
-						//});
-
-						thisNode.selectAll('.node_badge_group').attr("transform",function(d){return "translate("+(d.w-40)+","+(d.h+3)+")";});
-						thisNode.selectAll('text.node_badge_label').text(function(d,i) {
-							/* if (d._def.badge) {
-								if (typeof d._def.badge == "function") {
-									return d._def.badge.call(d);
-								} else {
-									return d._def.badge;
-								}
-							}
-							return ""; */
-							return d.name ? d.name : d.id;
-						});
-						if (!showStatus || !d.status) {
-							thisNode.selectAll('.node_status_group').style("display","none");
-						} else {
-							thisNode.selectAll('.node_status_group').style("display","inline").attr("transform","translate(3,"+(d.h+3)+")");
-							var fill = status_colours[d.status.fill]; // Only allow our colours for now
-							if (d.status.shape == null && fill == null) {
-								thisNode.selectAll('.node_status').style("display","none");
-							} else {
-								var style;
-								if (d.status.shape == null || d.status.shape == "dot") {
-									style = {
-										display: "inline",
-										fill: fill,
-										stroke: fill
-									};
-								} else if (d.status.shape == "ring" ){
-									style = {
-										display: "inline",
-										fill: '#fff',
-										stroke: fill
-									}
-								}
-								thisNode.selectAll('.node_status').style(style);
-							}
-							if (d.status.text) {
-								thisNode.selectAll('.node_status_label').text(d.status.text);
-							} else {
-								thisNode.selectAll('.node_status_label').text("");
-							}
-						}
-
-						d.dirty = false;
-					}
+					$(current_popup_rect).popover("destroy"); // destroy prev
+					showPopOver(this, true, popoverText)
+				}
+			})
+			.on("mouseout",function(d) {
+				var nodeRect = d3.select(this);
+				nodeRect.classed("node_hovered",false);
+				//console.log("node mouseout:" + d.name);
+				$(current_popup_rect).popover("destroy");
 			});
+		//nodeRect.append("rect").attr("class", "node-gradient-top").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-top)").style("pointer-events","none");
+		//nodeRect.append("rect").attr("class", "node-gradient-bottom").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-bottom)").style("pointer-events","none");
+	}
+	function redraw_nodeIcon(nodeRect, d)
+	{
+		nodeRect.selectAll(".node_icon_group").remove();
+		
+		var icon_group = nodeRect.append("g")
+			.attr("class","node_icon_group")
+			.attr("x",0).attr("y",0);
 
+		var icon_shade = icon_group.append("rect")
+			.attr("x",0).attr("y",0)
+			.attr("class","node_icon_shade")
+			.attr("width","30")
+			.attr("stroke","none")
+			.attr("fill","#000")
+			.attr("fill-opacity","0.05")
+			.attr("height",function(d){return Math.min(50,d.h-4);});
+
+		var icon = icon_group.append("image")
+			.attr("xlink:href","icons/"+d._def.icon)
+			.attr("class","node_icon")
+			.attr("x",0)
+			.attr("width","30")
+			.attr("height","30");
+
+		var icon_shade_border = icon_group.append("path")
+			.attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
+			.attr("class","node_icon_shade_border")
+			.attr("stroke-opacity","0.1")
+			.attr("stroke","#000")
+			.attr("stroke-width","2");
+
+		if ("right" == d._def.align) {
+			icon_group.attr('class','node_icon_group node_icon_group_'+d._def.align);
+			icon_shade_border.attr("d",function(d) { return "M 0 1 l 0 "+(d.h-2)});
+			//icon.attr('class','node_icon node_icon_'+d._def.align);
+			//icon.attr('class','node_icon_shade node_icon_shade_'+d._def.align);
+			//icon.attr('class','node_icon_shade_border node_icon_shade_border_'+d._def.align);
 		}
 
+		//if (d._def.inputs > 0 && d._def.align == null) {
+		//    icon_shade.attr("width",35);
+		//    icon.attr("transform","translate(5,0)");
+		//    icon_shade_border.attr("transform","translate(5,0)");
+		//}
+		//if (d._def.outputs > 0 && "right" == d._def.align) {
+		//    icon_shade.attr("width",35); //icon.attr("x",5);
+		//}
+
+		var img = new Image();
+		img.src = "icons/"+d._def.icon;
+		img.onload = function() {
+			icon.attr("width",Math.min(img.width,30));
+			icon.attr("height",Math.min(img.height,30));
+			icon.attr("x",15-Math.min(img.width,30)/2);
+			//if ("right" == d._def.align) {
+			//    icon.attr("x",function(d){return d.w-img.width-1-(d.outputs>0?5:0);});
+			//    icon_shade.attr("x",function(d){return d.w-30});
+			//    icon_shade_border.attr("d",function(d){return "M "+(d.w-30)+" 1 l 0 "+(d.h-2);});
+			//}
+		};
+
+		//icon.style("pointer-events","none");
+		icon_group.style("pointer-events","none");			
+	}
+	function redraw_nodeText(nodeRect, d)
+	{
+		var text = nodeRect.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '.35em').attr('text-anchor','start');
+		if (d._def.align) {
+			text.attr('class','node_label node_label_'+d._def.align);
+			text.attr('text-anchor','end');
+		}
+	}
+	function redraw_nodeStatus(nodeRect)
+	{
+		var status = nodeRect.append("svg:g").attr("class","node_status_group").style("display","none");
+
+		var statusRect = status.append("rect").attr("class","node_status")
+			.attr("x",6).attr("y",1).attr("width",9).attr("height",9)
+			.attr("rx",2).attr("ry",2).attr("stroke-width","3");
+
+		var statusLabel = status.append("svg:text")
+			.attr("class","node_status_label")
+			.attr('x',20).attr('y',9)
+			.style({
+				'stroke-width': 0,
+				'fill': '#888',
+				'font-size':'9pt',
+				'stroke':'#000',
+				'text-anchor':'start'
+			});
+	}
+	function redraw_nodeInputs(nodeRect, d)
+	{
+		var numInputs = 0;
+		if (d.inputs) // Jannik
+			numInputs = d.inputs;
+		else
+			numInputs = d._def.inputs;
+		
+		var inputPorts = nodeRect.selectAll(".port_input");
+
+		for (var i = 0; i < inputPorts.length; i++)
+		{
+			//console.warn(inputPorts[i]); // debug
+			$(inputPorts[i]).popover("destroy");
+		}
+		inputPorts.remove();
+		
+		var inputlist = [];
+		for (var n=0; n < numInputs; n++) {
+			var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
+			
+			var y = (d.h/2)-((numInputs-1)/2)*13;
+			y = (y+13*n)-5;
+
+			var rect = nodeRect.append("rect");
+			inputlist[n] = rect;
+			rect.attr("class","port port_input").attr("rx",3).attr("ry",3)
+				.attr("y",y).attr("x",-5).attr("width",10).attr("height",10).attr("index",n);
+
+			if (link && link.length > 0) {
+				// this input already has a link connected, so disallow new links
+				rect.on("mousedown",null)
+					.on("touchstart", null)
+					.on("mouseup", null)
+					.on("touchend", null)
+					.on("mouseover", nodeInput_mouseover) // used by popOver
+					.on("mouseout", nodePort_mouseout) // used by popOver
+					.classed("port_hovered",false);
+			} else {
+				// allow new link on inputs without any link connected
+				rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
+					.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
+					.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
+					.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
+					.on("mouseover", nodeInput_mouseover)
+					.on("mouseout", nodePort_mouseout)
+					//.on("mouseover", function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
+					//.on("mouseout", function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
+					
+			}
+		}
+		d.inputlist = inputlist;
+	}
+		
+	function redraw_nodeOutputs(nodeRect, d)
+	{
+		var numOutputs = d.outputs;
+
+		var y = (d.h/2)-((numOutputs-1)/2)*13;
+
+		//if (d.type == "Mod") // debug test only
+		//{
+		//	console.error("before:" + d.ports);
+		//	console.error("d3.range(numOutputs):" + d3.range(numOutputs));
+		//}
+
+		//d.ports = d.ports || d3.range(numOutputs);
+		d.ports = d3.range(numOutputs);
+
+		//if (d.type == "Mod") // debug test only
+		//	console.error("after:" + d.ports);
+		
+			d._ports = nodeRect.selectAll(".port_output").data(d.ports);
+		d._ports.enter().append("rect")
+		    .attr("class","port port_output").attr("rx",3).attr("ry",3).attr("width",10).attr("height",10)
+			.attr("nodeType",d.type)
+			.on("mousedown",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
+			.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
+			.on("mouseup",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
+			.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
+			.on("mouseover", nodeOutput_mouseover)
+			.on("mouseout", nodePort_mouseout)
+			//.on("mouseover",function(d,i) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 ));})
+			//.on("mouseout",function(d,i) { var port = d3.select(this); port.classed("port_hovered",false);});
+		d._ports.exit().remove();
+		if (d._ports) {
+			numOutputs = d.outputs || 1;
+			y = (d.h/2)-((numOutputs-1)/2)*13;
+			var x = d.w - 5;
+			d._ports.each(function(d,i) {
+				var port = d3.select(this);
+				port.attr("y",(y+13*i)-5).attr("x",x);
+			});
+		}
+	}
+	function redraw_links()
+	{
 		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(d) { return d.source.z == activeWorkspace && d.target.z == activeWorkspace }),function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
 
 		var linkEnter = link.enter().insert("g",".node").attr("class","link");
-		
+
 		linkEnter.each(function(d,i) {
 			var l = d3.select(this);
 			l.append("svg:path").attr("class","link_background link_path")
@@ -1492,11 +1412,11 @@ RED.view = (function() {
 				var numOutputs = d.source.outputs || 1;
 				var sourcePort = d.sourcePort || 0;
 				var ysource = -((numOutputs-1)/2)*13 +13*sourcePort;
-				var numInputs = 0;
 				
+				var numInputs = 0;
 				if (d.target.inputs) numInputs = d.target.inputs || 1; //Jannik
 				else numInputs = d.target._def.inputs || 1;
-
+				
 				var targetPort = d.targetPort || 0;
 				var ytarget = -((numInputs-1)/2)*13 +13*targetPort;
 
@@ -1529,10 +1449,270 @@ RED.view = (function() {
 
 		link.classed("link_selected", function(d) { return d === selected_link || d.selected; });
 		link.classed("link_unknown",function(d) { return d.target.type == "unknown" || d.source.type == "unknown"});
+	}
+	function nodeOutput_mouseover(pi) // here d is the portindex
+	{
+		var port = d3.select(this); 
+		
+		$(this).popover("destroy"); // destroy prev
+		var data = getIOpinInfo(this, undefined, pi);
+		showPopOver(this, true, data);
+						
+		port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 0 ));
+		//console.log("nodeOutput_mouseover: " + this.getAttribute("nodeZ") + "." + this.getAttribute("nodeName") +" , port:" + pi);
+	}
+	function nodeInput_mouseover(d) // here d is the node
+	{
+		var port = d3.select(this); 
+		
+		$(this).popover("destroy"); // destroy prev
+		var data = getIOpinInfo(this, d, this.getAttribute("index")); // d is the node
+		showPopOver(this, true, data);
+						
+		port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
+		//console.log("nodeInput_mouseover: " + d.name +" , port:" + this.getAttribute("index"));
+	}
+	function nodePort_mouseout(d)
+	{
+		var port = d3.select(this); 
+		port.classed("port_hovered",false);
+		$(this).popover("destroy"); // destroy prev
+	}
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	/*********************************************************************************************************************************/
+	function redraw() {
+		//RED.addClassTabsToPalette(); // failsafe debug test that is very slow
+		//RED.refreshClassNodes(); // failsafe debug test that is very slow
+		//console.log("redraw");
+		
+		vis.attr("transform","scale("+scaleFactor+")");
+		outer.attr("width", space_width*scaleFactor).attr("height", space_height*scaleFactor);
+
+		if (mouse_mode != RED.state.JOINING) {
+			// Don't bother redrawing nodes if we're drawing links
+
+			var node = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d) { return d.z == activeWorkspace }),function(d){return d.id});
+			
+			node.exit().remove();
+
+			var nodeEnter = node.enter().insert("svg:g").attr("class", "node nodegroup");
+			nodeEnter.each(function(d,i) // this happens only when a node is added to the current workspace.
+			{
+				console.error("node added");
+				var nodeRect = d3.select(this);
+				nodeRect.attr("id",d.id);
+				redraw_calcNewNodeSize(d);
+				
+				checkRequirements(d);
+				redraw_nodeReqError(nodeRect, d);
+				redraw_paletteNodesReqError(d);
+
+				if (d._def.badge) redraw_nodeBadge(nodeRect, d);
+				if (d._def.button) redraw_nodeButton(nodeRect, d);
+				redraw_nodeMainRect(nodeRect, d);
+				if (d._def.icon) redraw_nodeIcon(nodeRect, d);
+				redraw_nodeInputs(nodeRect, d);
+				redraw_nodeOutputs(nodeRect, d);
+				redraw_nodeText(nodeRect, d);
+				//redraw_nodeStatus(nodeRect);
+
+				//nodeRect.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
+				// never show these little status icons
+				// people try clicking on them, thinking they're buttons
+				// or some sort of user interface widget
+				//nodeRect.append("path").attr("class","node_error").attr("d","M 3,-3 l 10,0 l -5,-8 z");
+				//nodeRect.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
+				//nodeRect.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
+				nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
+			});
+
+			node.each(function(d,i) {
+					var nodeRect = d3.select(this);
+					
+					checkRequirements(d); // this is needed because it will execute on previus items
+					//if (d.requirementError) console.warn("reqError on:" + d.name);
+					if (d.dirty || d.requirementError != undefined) {
+						//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
+						if (d.resize) {
+							
+							redraw_calcNewNodeSize(d);
+							redraw_nodeInputs(nodeRect, d);
+							redraw_nodeOutputs(nodeRect, d);
+							d.resize = false;
+						}
+						console.log("redraw stuff");
+						redraw_nodeReqError(nodeRect, d);
+						redraw_paletteNodesReqError(d);
+						redraw_other(nodeRect, d);
+						d.dirty = false;
+						d.requirementError = false;
+					}
+			});
+
+		}
+		redraw_links();
 
 		if (d3.event) {
 			d3.event.preventDefault();
 		}
+	}
+	function redraw_paletteNodesReqError(d)
+	{
+		var e1 = document.getElementById("palette_node_"+d.type);
+		var e2 = e1.getElementsByClassName("palette_req_error")[0]; // palette_req_error is using a style, where the position of the icon is defined
+		e2.addEventListener("click", 
+							function(){RED.notify('Conflicts:<ul><li>'+d.conflicts.join('</li><li>')+'</li></ul>',null,false, 5000);},
+							{once: true});
+		if (d.requirementError)
+			e2.classList.remove("hidden");
+		else
+			e2.classList.add("hidden");
+	}
+	function redraw_nodeReqError(nodeRect, d)
+	{
+		nodeRect.selectAll(".node_reqerror")
+			.attr("x",function(d){return d.w-25-(d.changed?13:0)})
+			.classed("hidden",function(d){ return !d.requirementError; })
+			.on("click", function(){RED.notify(
+				'Conflicts:<ul><li>'+d.conflicts.join('</li><li>')+'</li></ul>',
+				null,
+				false,
+				5000
+				)});
+	}
+	function redraw_other(nodeRect, d) // this contains the rest until they get own functions
+	{
+		//nodeRect.selectAll(".centerDot").attr({"cx":function(d) { return d.w/2;},"cy":function(d){return d.h/2}});
+		nodeRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+		nodeRect.selectAll(".node")
+			.attr("width",function(d){return d.w})
+			.attr("height",function(d){return d.h})
+			.classed("node_selected",function(d) { return d.selected; })
+			.classed("node_highlighted",function(d) { return d.highlighted; })
+		;
+		//nodeRect.selectAll(".node-gradient-top").attr("width",function(d){return d.w});
+		//nodeRect.selectAll(".node-gradient-bottom").attr("width",function(d){return d.w}).attr("y",function(d){return d.h-30});
+
+		nodeRect.selectAll(".node_icon_group_right").attr('transform', function(d){return "translate("+(d.w-30)+",0)"});
+		nodeRect.selectAll(".node_label_right").attr('x', function(d){return d.w-38});
+		//nodeRect.selectAll(".node_icon_right").attr("x",function(d){return d.w-d3.select(this).attr("width")-1-(d.outputs>0?5:0);});
+		//nodeRect.selectAll(".node_icon_shade_right").attr("x",function(d){return d.w-30;});
+		//nodeRect.selectAll(".node_icon_shade_border_right").attr("d",function(d){return "M "+(d.w-30)+" 1 l 0 "+(d.h-2)});
+		
+		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
+		nodeRect.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
+		nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d){ return "M "+(("right" == d._def.align) ?0:30)+" 1 l 0 "+(d.h-2)});
+
+
+		nodeRect.selectAll('text.node_label').text(function(d,i){
+				/* if (d._def.label) {
+					if (typeof d._def.label == "function") {
+						return d._def.label.call(d);
+					} else {
+						return d._def.label;
+					}
+				}
+				return "n.a.";
+				 */
+				return d.name ? d.name : d.id;
+		})
+			.attr('y', function(d){return (d.h/2)-1;})
+			.attr('class',function(d){
+				return 'node_label'+
+				(d._def.align?' node_label_'+d._def.align:'')+
+				(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
+		});
+		//nodeRect.selectAll(".node_tools").attr("x",function(d){return d.w-35;}).attr("y",function(d){return d.h-20;});
+
+		/*nodeRect.selectAll(".node_changed")
+			.attr("x",function(d){return d.w-10})
+			.classed("hidden",function(d) { return !d.changed; });*/ // this is disabled above
+
+		/*nodeRect.selectAll(".node_error")
+			.attr("x",function(d){return d.w-10-(d.changed?13:0)})
+			.classed("hidden",function(d) { return d.valid; });*/  // this is disabled above
+
+		nodeRect.selectAll(".port_input").each(function(d,i) {
+			var port = d3.select(this);
+			var numInputs = 0;
+			if (d.inputs) numInputs = d.inputs;
+			else numInputs = d._def.inputs;
+				
+			var y = (d.h/2)-((numInputs-1)/2)*13;
+			y = (y+13*i)-5;
+			port.attr("y",y)
+		});
+
+		
+
+		
+		/*nodeRect.selectAll('.node_right_button').attr("transform",function(d){
+				var x = d.w-6;
+				if (d._def.button.toggle && !d[d._def.button.toggle]) {
+					x = x - 8;
+				}
+				return "translate("+x+",2)";
+		});
+		nodeRect.selectAll('.node_right_button rect').attr("fill-opacity",function(d){
+				if (d._def.button.toggle) {
+					return d[d._def.button.toggle]?1:0.2;
+				}
+				return 1;
+		});*/ // maybe we don't need this
+
+		//nodeRect.selectAll('.node_right_button').attr("transform",function(d){return "translate("+(d.w - d._def.button.width.call(d))+","+0+")";}).attr("fill",function(d) {
+		//         return typeof d._def.button.color  === "function" ? d._def.button.color.call(d):(d._def.button.color != null ? d._def.button.color : d._def.color)
+		//});
+		/*
+		nodeRect.selectAll('.node_badge_group').attr("transform",function(d){return "translate("+(d.w-40)+","+(d.h+3)+")";});
+		nodeRect.selectAll('text.node_badge_label').text(function(d,i) {
+			 if (d._def.badge) {
+				if (typeof d._def.badge == "function") {
+					return d._def.badge.call(d);
+				} else {
+					return d._def.badge;
+				}
+			}
+			//return "";
+			return d.name ? d.name : d.id;
+		});*/
+		/*if (!showStatus || !d.status) {
+			nodeRect.selectAll('.node_status_group').style("display","none");
+		} else {
+			nodeRect.selectAll('.node_status_group').style("display","inline").attr("transform","translate(3,"+(d.h+3)+")");
+			var fill = status_colours[d.status.fill]; // Only allow our colours for now
+			if (d.status.shape == null && fill == null) {
+				nodeRect.selectAll('.node_status').style("display","none");
+			} else {
+				var style;
+				if (d.status.shape == null || d.status.shape == "dot") {
+					style = {
+						display: "inline",
+						fill: fill,
+						stroke: fill
+					};
+				} else if (d.status.shape == "ring" ){
+					style = {
+						display: "inline",
+						fill: '#fff',
+						stroke: fill
+					}
+				}
+				nodeRect.selectAll('.node_status').style(style);
+			}
+			if (d.status.text) {
+				nodeRect.selectAll('.node_status_label').text(d.status.text);
+			} else {
+				nodeRect.selectAll('.node_status_label').text("");
+			}
+		}*/
 	}
 
 	function doSort (arr) {
@@ -1568,20 +1748,16 @@ RED.view = (function() {
 		var ioCtrl = [];
 
 		RED.nodes.eachNode(function (node) {
-			var numInputs = 0;
-				
-			if (node.inputs) numInputs = node.inputs; //Jannik
-			else numInputs = node._def.inputs;
 
-			if (numInputs == 0 && node._def.outputs == 0) {
+			if (node._def.inputs == 0 && node._def.outputs == 0) {
 				ioCtrl.push(node);
-			} else if (numInputs == 0) {
+			} else if (node._def.inputs == 0) {
 				ioNoIn.push(node);
 			} else if (node._def.outputs == 0) {
 				ioNoOut.push(node);
-			} else if (numInputs == 1 && node._def.outputs == 1) {
+			} else if (node._def.inputs == 1 && node._def.outputs == 1) {
 				ioInOut.push(node);
-			} else if (numInputs > 1) {
+			} else if (node._def.inputs > 1) {
 				ioMultiple.push(node);
 			}
 		});
@@ -1620,15 +1796,9 @@ RED.view = (function() {
 		dirty = d;
 		if (dirty) {
 			$("#btn-deploy").removeClass("disabled").addClass("btn-danger");
-			$("#btn-deploy2").removeClass("disabled").addClass("btn-danger");
 			RED.storage.update();
-			console.log("was dirty");
-			
-				redraw();
-			
 		} else {
 			$("#btn-deploy").addClass("disabled").removeClass("btn-danger");
-			$("#btn-deploy2").addClass("disabled").removeClass("btn-danger");
 		}
 	}
 
@@ -1639,7 +1809,7 @@ RED.view = (function() {
 	 *  - attached to mouse for placing - 'IMPORT_DRAGGING'
 	 */
 	function importNodes(newNodesStr,touchImport) {
-		
+
 		var createNewIds = true;
 		var useStorage = false;
 
@@ -1651,8 +1821,7 @@ RED.view = (function() {
 			}
 
 			newNodesStr = nodesJSON.data;
-			//createNewIds = false;
-			
+			createNewIds = false;
 
 			if (useStorage) {
 				RED.storage.clear();
@@ -1662,25 +1831,13 @@ RED.view = (function() {
 				return;
 			}
 		}
-		else if (mouse_mode == RED.state.IMPORT)
-		{
-			RED.storage.loadFile(newNodesStr);
-			mouse_mode = 0;
-			return;
-		}
 
 		try {
 			var result = RED.nodes.import(newNodesStr,createNewIds);
 			if (result) {
 				var new_nodes = result[0];
 				var new_links = result[1];
-				var new_ms = new_nodes.map(function(n)
-				{
-					n.id = RED.nodes.cppId(n, RED.nodes.workspaces[activeWorkspace].label); // jannik add
-					n.name = RED.nodes.cppName(n); // jannik add
-					n.z = activeWorkspace;
-					return {n:n};
-				});
+				var new_ms = new_nodes.map(function(n) { n.z = activeWorkspace; return {n:n};});
 				var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
 				// TODO: pick a more sensible root node
@@ -1696,12 +1853,9 @@ RED.view = (function() {
 				var minY = 0;
 				var i;
 				var node;
-				
+
 				for (i=0;i<new_ms.length;i++) {
 					node = new_ms[i];
-					
-					
-					
 					node.n.selected = true;
 					node.n.changed = true;
 					node.n.x -= dx - mouse_position[0];
@@ -1717,8 +1871,6 @@ RED.view = (function() {
 					node.n.y -= minY;
 					node.dx -= minX;
 					node.dy -= minY;
-
-					
 				}
 				if (!touchImport) {
 					mouse_mode = RED.state.IMPORT_DRAGGING;
@@ -1742,6 +1894,35 @@ RED.view = (function() {
 			console.log(error);
 			RED.notify("<strong>Error</strong>: "+error,"error");
 		}
+	}
+
+	function getForm(formId, key, callback) {
+		// server test switched off - test purposes only
+		var patt = new RegExp(/^[http|https]/);
+		var server = false && patt.test(location.protocol);
+		var form = $("<h2>No form found.</h2>");
+
+		if (!server) {
+			data = $("script[data-template-name|='" + key + "']").html();
+			form = $("#" + formId);
+			$(form).empty();
+			$(form).append(data);
+			if(typeof callback == 'function') {
+				callback.call(this, form);
+			}
+		} else {
+			var frmPlugin = "resources/form/" + key + ".html";
+			$.get(frmPlugin, function(data) {
+				form = $("#" + formId);
+				$(form).empty();
+				$(form).append(data);
+				if(typeof callback == 'function') {
+					callback.call(this, form);
+				}
+			});
+		}
+
+		return form;
 	}
 
 	$('#btn-import').click(function() {showImportNodesDialog();});
@@ -1786,7 +1967,6 @@ RED.view = (function() {
 
 	function showRenameWorkspaceDialog(id) {
 		var ws = RED.nodes.workspace(id);
-
 		$( "#node-dialog-rename-workspace" ).dialog("option","workspace",ws);
 
 		if (workspace_tabs.count() == 1) {
@@ -1798,39 +1978,9 @@ RED.view = (function() {
 				.prop('disabled',false)
 				.removeClass("ui-state-disabled");
 		}
-		
+		$( "#node-input-export-workspace" ).prop('checked',  ws.export);
 		$( "#node-input-workspace-name" ).val(ws.label);
 		$( "#node-dialog-rename-workspace" ).dialog("open");
-
-	}
-
-	function getForm(formId, key, callback) {
-		// server test switched off - test purposes only
-		var patt = new RegExp(/^[http|https]/);
-		var server = false && patt.test(location.protocol);
-		var form = $("<h2>No form found.</h2>");
-
-		if (!server) {
-			data = $("script[data-template-name|='" + key + "']").html();
-			form = $("#" + formId);
-			$(form).empty();
-			$(form).append(data);
-			if(typeof callback == 'function') {
-				callback.call(this, form);
-			}
-		} else {
-			var frmPlugin = "resources/form/" + key + ".html";
-			$.get(frmPlugin, function(data) {
-				form = $("#" + formId);
-				$(form).empty();
-				$(form).append(data);
-				if(typeof callback == 'function') {
-					callback.call(this, form);
-				}
-			});
-		}
-
-		return form;
 	}
 
 	$("#node-dialog-rename-workspace form" ).submit(function(e) { e.preventDefault();});
@@ -1855,19 +2005,40 @@ RED.view = (function() {
 					var workspace = $(this).dialog('option','workspace');
 					var label = $( "#node-input-workspace-name" ).val();
 					if (workspace.label != label) {
-						if (RED.nodes.workspaceNameCheck(label))
+
+						if (RED.nodes.workspaceNameCheck(label)) // Jannik add start
 						{
 							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
 							return; // abort name change if name allready exist
 						} 
+						RED.nodes.workspaceNameChanged(workspace.label, label); // Jannik add end
 
-						RED.nodes.workspaceNameChanged(workspace.label, label);
 						workspace.label = label;
+
+						// update the tab text
 						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
 						link.attr("title",label);
 						link.text(label);
+						// update the menu item text
+						var menuItem = $("#workspace-menu-list a[href='#"+workspace.id+"']");
+						menuItem.attr("title",label);
+						menuItem.text(label);
+
 						RED.view.dirty(true);
+
 					}
+					var exportNew = $( "#node-input-export-workspace" ).prop('checked')
+					if (workspace.export != exportNew)
+					{
+						workspace.export = exportNew;
+						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
+						if (!exportNew)
+							link.attr("style", "color:#b3b3b3;");
+						else // 
+							link.attr("style", "color:#000000;");
+					}
+					console.warn("exportWorkspace:"+workspace.export);
+
 					$( this ).dialog( "close" );
 				}
 			},
@@ -1920,37 +2091,41 @@ RED.view = (function() {
 		}
 
 	});
-
-	$('#btn-cut').click(function() {copySelection();deleteSelection();});
-	$('#btn-copy').click(function() {copySelection()});
-	$('#btn-paste').click(function() {importNodes(clipboard)});
-
-	function showIOpinInfo(pinRect, node, index)
+	
+	function getIOpinInfo(pinRect, node, index)
 	{
-		var data = $("script[data-help-name|='" + node.type + "']");
-		var data2 = $("<div/>").append(data.html()).children("table").first().children("tbody").html();
-									
 		var classAttr = pinRect.getAttribute("class");
 		//console.log("classAttr:"+classAttr); // development debug
 		var portType;
+		var nodeType;
 		if (classAttr == "port port_input")
+		{
+			nodeType = node.type;
 			portType = "In";
+		}
 		else if (classAttr == "port port_output")
+		{
+			nodeType = pinRect.getAttribute("nodeType");
 			portType = "Out";
+			
+		}
+		
+		var data = $("script[data-help-name|='" + nodeType + "']");
+		var data2 = $("<div/>").append(data.html()).children("table").first().children("tbody").html();
 		
 		var portName = portType + " " + index;
 
 		if (!data2 || (data2 == null)) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
-			if (RED.nodes.isClass(node.type))
+			if (RED.nodes.isClass(nodeType))
 			{
-				var wsId = RED.nodes.getWorkspaceIdFromClassName(node.type);
+				var wsId = RED.nodes.getWorkspaceIdFromClassName(nodeType);
 				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, "Tab"+portType+ "put", index);
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}
-		else if (node.type == "AudioMixerX" && portType == "In")
+		else if (nodeType == "AudioMixerX" && portType == "In")
 		{
 			data2 = $("<div/>").append("<p>" + portName + ": Input Signal #" + (Number(index) + 1) + "</p></div>").html();
 		}
@@ -1977,19 +2152,27 @@ RED.view = (function() {
 			//console.log("table contens:\n" + data2); // development debug
 		}
 		//console.log(data2); // development debug
+		return data2;
+		
+	}
 
+	function showPopOver(rect, htmlMode, content)
+	{
+		current_popup_rect = rect;
 		var options = {
 			placement: "right",
 			trigger: "manual",
-			html: true,
+			html: htmlMode,
 			container:'body',
-			content : data2
+			content : content
 		};
-		$(pinRect).popover(options).popover("show");
+		$(rect).popover(options).popover("show");
+		//console.warn("showPopOver retVal:" + Object.getOwnPropertyNames(retVal)); // debug
+		//console.warn("showPopOver retVal.context:" + retVal.context); // debug
+		//console.warn("showPopOver retVal.length:" + retVal.length); // debug
 	}
 
 	return {
-		showExportNodesDialog:showExportNodesDialog,
 		state:function(state) {
 			if (state == null) {
 				return mouse_mode
@@ -1998,19 +2181,19 @@ RED.view = (function() {
 			}
 		},
 		addWorkspace: function(ws) {
-			workspace_tabs.addTab(ws);
-			workspace_tabs.resize();
+			workspace_tabs.addTab(ws); // see tabs.js
+			//workspace_tabs.resize(); // see tabs.js // this is not needed because workspace_tabs.addTab() does it internally
 		},
 		removeWorkspace: function(ws) {
-			workspace_tabs.removeTab(ws.id);
+			workspace_tabs.removeTab(ws.id); // see tabs.js
 		},
 		getWorkspace: function() {
 			return activeWorkspace;
 		},
 		showWorkspace: function(id) {
-			workspace_tabs.activateTab(id);
+			workspace_tabs.activateTab(id); // see tabs.js
 		},
-		redraw:redraw,
+		redraw: redraw,
 		dirty: function(d) {
 			if (d == null) {
 				return dirty;
@@ -2030,6 +2213,7 @@ RED.view = (function() {
 		},
 		getForm: getForm,
 		calculateTextWidth: calculateTextWidth,
+		showExportNodesDialog: showExportNodesDialog,
 		defaults: {
 			width: node_width,
 			height: node_height
