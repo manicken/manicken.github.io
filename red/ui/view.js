@@ -1537,8 +1537,6 @@ RED.view = (function() {
 					var nodeRect = d3.select(this);
 					
 					checkRequirements(d); // this is needed because it will execute on previus items
-					                      // but because it's allways running it takes up much cpu time
-
 					//if (d.requirementError) console.warn("reqError on:" + d.name);
 					if (d.dirty || d.requirementError != undefined) {
 						//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
