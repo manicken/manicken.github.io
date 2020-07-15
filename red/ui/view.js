@@ -590,7 +590,7 @@ RED.view = (function() {
 				nn.type = selected_tool;
 				nn._def = RED.nodes.getType(nn.type);
 				
-				nn.id = RED.nodes.cppId(nn, RED.nodes.workspaces[activeWorkspace].label);  // jannik add/change
+				nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
 				nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
 				nn.name = RED.nodes.cppName(nn); // jannik add/change create unique name
 
@@ -1537,6 +1537,8 @@ RED.view = (function() {
 					var nodeRect = d3.select(this);
 					
 					checkRequirements(d); // this is needed because it will execute on previus items
+					                      // but because it's allways running it takes up much cpu time
+
 					//if (d.requirementError) console.warn("reqError on:" + d.name);
 					if (d.dirty || d.requirementError != undefined) {
 						//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
@@ -2125,7 +2127,7 @@ RED.view = (function() {
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}
-		else if (nodeType == "AudioMixerX" && portType == "In")
+		else if (nodeType == "AudioMixer" && portType == "In")
 		{
 			data2 = $("<div/>").append("<p>" + portName + ": Input Signal #" + (Number(index) + 1) + "</p></div>").html();
 		}
