@@ -17,6 +17,14 @@
 
 
 RED.view = (function() {
+	var showGridV = true;
+	var showGridH = true;
+	var snapToGrid = true; // this is allready implemented with shift button, this locks that mode
+	var snapToGridXsize = 10;
+	var snapToGridYsize = 5;
+
+	var showWorkspaceToolbar = true;
+
 	var space_width = 5000,
 		space_height = 5000,
 		lineCurveScale = 0.75,
@@ -192,11 +200,27 @@ RED.view = (function() {
 		.attr('fill','#fff');
 
 	var gridScale = d3.scale.linear().range([0,5000]).domain([0,5000]);
+	var gridH = vis.append('g').attr({
+		"id":"grid-h",
+		"style":"display:none;"
+		});
+	var gridV1 = vis.append('g').attr({
+		"id":"grid-v1",
+		"style":"display:none;"
+		});
+	var gridV2 = vis.append('g').attr({
+		"id":"grid-v2",
+		"style":"display:none;"
+	});
 	
-	var grid = vis.append('g');
-
-	grid.selectAll("line.horizontal").data(gridScale.ticks(500)).enter()
-	    .append("line")
+	initGrid();
+	var drag_line = vis.append("svg:path").attr("class", "drag_line");
+	
+	
+	function initGrid()
+	{
+		gridH.selectAll("line.horizontal").data(gridScale.ticks(500)).enter()
+	    	.append("line")
 	        .attr(
 	        {
 	            "class":"horizontal",
@@ -210,8 +234,23 @@ RED.view = (function() {
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 	        });
-	grid.selectAll("line.vertical").data(gridScale.ticks(500)).enter()
-	     .append("line")
+		gridV1.selectAll("line.vertical").data(gridScale.ticks(50)).enter()
+	     	.append("line")
+	        .attr(
+	        {
+	            "class":"vertical",
+	            "y1" : 0,
+	            "y2" : 5000,
+	            "x1" : function(d){ return gridScale(d);},
+	            "x2" : function(d){ return gridScale(d);},
+	            "fill" : "none",
+	            "shape-rendering" : "optimizeSpeed",
+		        "stroke" : "#aaa",
+				//"stroke-dasharray":"2",
+	            "stroke-width" : "2px"
+			});
+		gridV2.selectAll("line.vertical").data(gridScale.ticks(500)).enter()
+	     	.append("line")
 	        .attr(
 	        {
 	            "class":"vertical",
@@ -224,11 +263,45 @@ RED.view = (function() {
 		        "stroke" : "#eee",
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
-	        });
+			});
+			showHideGridH(showGridH);
+			showHideGridV(showGridV);
+	}
+	function setSnapToGrid(state)
+	{
+		snapToGrid = state;
+	}
+	function showHideGrid(state)
+	{
+		showHideGridH(showGridH || state);
+		showHideGridV(showGridV || state);
+	}
 
+	function showHideGridV(state)
+	{
+		if (state == true)
+		{
+			$('#grid-v1').attr("style", "display:block;");
+			$('#grid-v2').attr("style", "display:block;");
+		}
+		else
+		{
+			$('#grid-v1').attr("style", "display:none;");
+			$('#grid-v2').attr("style", "display:none;");
+		}
+	}
+	function showHideGridH(state)
+	{
+		if (state == true)
+		{
+			$('#grid-h').attr("style", "display:block;");
+		}
+		else
+		{
+			$('#grid-h').attr("style", "display:none;");
+		}
+	}
 
-	var drag_line = vis.append("svg:path").attr("class", "drag_line");
-	
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
 	$('#btn-paste').click(function() {importNodes(clipboard)});
@@ -236,11 +309,8 @@ RED.view = (function() {
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: function(tab) {
-			if (RED.nodes.showWorkspaceToolbar == true) { //(tab.type == "subflow") {
-				$("#workspace-toolbar").show();
-			} else {
-				$("#workspace-toolbar").hide();
-			}
+			setShowWorkspaceToolbarVisible(showWorkspaceToolbar);
+						
 			console.log("workspace_tabs onchange:" + tab);
 			var chart = $("#chart");
 			if (activeWorkspace !== 0) {
@@ -378,17 +448,20 @@ RED.view = (function() {
 		//if (d3.touches(this)[0]) {
 		//    d3.event.preventDefault();
 		//}
-
+		var chart = $("#chart");
+		
 		// TODO: auto scroll the container
 		//var point = d3.mouse(this);
 		//if (point[0]-container.scrollLeft < 30 && container.scrollLeft > 0) { container.scrollLeft -= 15; }
-		//console.log(d3.mouse(this),container.offsetWidth,container.offsetHeight,container.scrollLeft,container.scrollTop);
+		//console.log(d3.mouse(this));//,container.offsetWidth,container.offsetHeight,container.scrollLeft,container.scrollTop);
 
 		if (lasso) {
+			
 			var ox = parseInt(lasso.attr("ox"));
 			var oy = parseInt(lasso.attr("oy"));
 			var x = parseInt(lasso.attr("x"));
 			var y = parseInt(lasso.attr("y"));
+			
 			var w;
 			var h;
 			if (mouse_position[0] < ox) {
@@ -486,11 +559,12 @@ RED.view = (function() {
 					node.n.y -= minY;
 				}
 			}
-			if (d3.event.shiftKey && moving_set.length > 0) {
+			// snap to grid
+			if (((snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
 				var gridOffset =  [0,0];
 				node = moving_set[0];
-				gridOffset[0] = node.n.x-(20*Math.floor((node.n.x-node.n.w/2)/20)+node.n.w/2);
-				gridOffset[1] = node.n.y-(20*Math.floor(node.n.y/20));
+				gridOffset[0] = node.n.x-(snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/snapToGridXsize)+node.n.w/2);
+				gridOffset[1] = node.n.y-(snapToGridYsize*Math.floor(node.n.y/snapToGridYsize));
 				if (gridOffset[0] !== 0 || gridOffset[1] !== 0) {
 					for (i = 0; i<moving_set.length; i++) {
 						node = moving_set[i];
@@ -629,14 +703,24 @@ RED.view = (function() {
 	});
 
 	function zoomIn() {
-		if (scaleFactor < 2) {
+		if (scaleFactor < 0.3)
+		{
+			scaleFactor += 0.05;
+			redraw();
+		}
+		else if (scaleFactor < 2) {
 			scaleFactor += 0.1;
 			redraw();
 		}
+
 	}
 	function zoomOut() {
 		if (scaleFactor > 0.3) {
 			scaleFactor -= 0.1;
+			redraw();
+		}
+		else if (scaleFactor > 0.1) {
+			scaleFactor -= 0.05;
 			redraw();
 		}
 	}
@@ -697,10 +781,10 @@ RED.view = (function() {
 			RED.keyboard.remove(/* left */ 37);
 			RED.keyboard.remove(/* right*/ 39);
 		} else {
-			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey){moveSelection(  0,-20)}else{moveSelection( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey){moveSelection(  0, 20)}else{moveSelection( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey){moveSelection(-20,  0)}else{moveSelection(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey){moveSelection( 20,  0)}else{moveSelection( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(  0,-snapToGridYsize)}else{moveSelection( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(  0, snapToGridYsize)}else{moveSelection( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(-snapToGridXsize,  0)}else{moveSelection(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection( snapToGridXsize,  0)}else{moveSelection( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
 		}
 		if (moving_set.length == 1) {
 			RED.sidebar.info.refresh(moving_set[0].n);
@@ -718,7 +802,7 @@ RED.view = (function() {
 			delete moving_set[i].ox;
 			delete moving_set[i].oy;
 		}
-		RED.history.push({t:'move',nodes:ns,dirty:dirty});
+		RED.history.push({t:'move',nodes:ns,dirty:dirty});// TODO: is this nessesary
 	}
 	function moveSelection(dx,dy) {
 		var minX = 0;
@@ -927,6 +1011,7 @@ RED.view = (function() {
 	}
 
 	function nodeMouseUp(d) {
+		showHideGrid(false);
 		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
 			RED.editor.edit(d);
 			clickElapsed = 0;
@@ -938,6 +1023,7 @@ RED.view = (function() {
 	}
 
 	function nodeMouseDown(d) {
+		showHideGrid(true);
 		//var touch0 = d3.event;
 		//var pos = [touch0.pageX,touch0.pageY];
 		//RED.touch.radialMenu.show(d3.select(this),pos);
@@ -1488,6 +1574,7 @@ RED.view = (function() {
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	function redraw() {
+		console.trace("redraw");
 		//RED.addClassTabsToPalette(); // failsafe debug test that is very slow
 		//RED.refreshClassNodes(); // failsafe debug test that is very slow
 		//console.log("redraw");
@@ -1791,7 +1878,7 @@ RED.view = (function() {
 	RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
 	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard);d3.event.preventDefault();});
 	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){showExportNodesDialog();d3.event.preventDefault();});
-	RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog();d3.event.preventDefault();});
+	RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog(true);d3.event.preventDefault();});
 
 	// TODO: 'dirty' should be a property of RED.nodes - with an event callback for ui hooks
 	function setDirty(d) {
@@ -1816,7 +1903,7 @@ RED.view = (function() {
 		var useStorage = false;
 
 		if ($("#node-input-arduino").prop('checked') === true) {
-			var nodesJSON = RED.nodes.cppToJSON(newNodesStr);
+			var nodesJSON = RED.arduino.import.cppToJSON(newNodesStr);
 			if (nodesJSON.count <= 0) {
 				var note = "No nodes imported!";
 				RED.notify("<strong>Note</strong>: " + note, "warning");
@@ -1927,7 +2014,8 @@ RED.view = (function() {
 		return form;
 	}
 
-	$('#btn-import').click(function() {showImportNodesDialog();});
+	$('#btn-import-json').click(function() {showImportNodesDialog(false);});
+	$('#btn-import-arduino').click(function() {showImportNodesDialog(true);});
 	$('#btn-export-clipboard').click(function() {showExportNodesDialog();});
 	$('#btn-export-library').click(function() {showExportNodesLibraryDialog();});
 
@@ -1958,11 +2046,12 @@ RED.view = (function() {
 		});
 	}
 
-	function showImportNodesDialog() {
+	function showImportNodesDialog(arduino_code) {
 		mouse_mode = RED.state.IMPORT;
 		//$("#dialog-form").html(this.getForm('import-dialog'));
 		getForm("dialog-form", "import-dialog", function(d, f) {
 		$("#node-input-import").val("");
+		$( "#node-input-arduino" ).prop('checked', arduino_code);
 		$( "#dialog" ).dialog("option","title","Import nodes").dialog( "open" );
 		});
 	}
@@ -2174,7 +2263,32 @@ RED.view = (function() {
 		//console.warn("showPopOver retVal.length:" + retVal.length); // debug
 	}
 
+	function setShowWorkspaceToolbarVisible(state)
+	{
+		RED.nodes.showWorkspaceToolbar = state;
+		if (state)
+		{
+			$("#workspace-toolbar").show();
+			$("#chart").css("top", 67);
+		}
+		else
+		{
+			$("#workspace-toolbar").hide();
+			$("#chart").css("top", 31);
+		}
+	}
+
 	return {
+		showHideGrid:showHideGrid,
+		showHideGridH: function (state) { showGridH = state; showHideGridH(state); },
+		showHideGridV: function (state) { showGridV = state; showHideGridV(state); },
+		showGridH:showGridH,
+		showGridV:showGridV,
+		setSnapToGrid:setSnapToGrid,
+		snapToGrid: snapToGrid,
+		setShowWorkspaceToolbarVisible:setShowWorkspaceToolbarVisible,
+		showWorkspaceToolbar:showWorkspaceToolbar,
+		
 		state:function(state) {
 			if (state == null) {
 				return mouse_mode
