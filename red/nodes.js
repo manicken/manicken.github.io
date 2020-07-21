@@ -22,8 +22,7 @@ RED.nodes = (function() {
 	var links = []; // link structure {source:,sourcePort:,target:,targetPort:};
 	var defaultWorkspace;
 	var workspaces = [];
-	var showWorkspaceToolbar = true;
-
+	
 	/**
 	 * this creates a workspace object
 	 */
@@ -31,9 +30,6 @@ RED.nodes = (function() {
 	{
 		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export};
 	}
-
-	var btnWworkspaceToolbar = $("#btn-workspace-toolbar");
-	btnWworkspaceToolbar.toggleClass("active", showWorkspaceToolbar);
 
 	$('#btn-moveWorkSpaceLeft').click(function() { moveWorkSpaceLeft(); });
 	$('#btn-moveWorkSpaceRight').click(function() { moveWorkSpaceRight();  });
@@ -73,16 +69,7 @@ RED.nodes = (function() {
 		var removed = arr.splice(2,2,4,3);
 		console.error("removed:" + removed);
 		console.error("modified:" + arr);
-	}
-	$('#btn-workspace-toolbar').click(function() {
-		showWorkspaceToolbar = !showWorkspaceToolbar;
-		if (showWorkspaceToolbar)
-			$("#workspace-toolbar").show();
-		else
-			$("#workspace-toolbar").hide();
-		btnWworkspaceToolbar.toggleClass("active", showWorkspaceToolbar);
-		});
-		
+	}		
 	function registerType(nt,def) {
 		node_defs[nt] = def;
 		// TODO: too tightly coupled into palette UI
@@ -385,12 +372,13 @@ RED.nodes = (function() {
 		var node = {};
 		node.id = n.id;
 		node.type = n.type;
+
 		for (var d in n._def.defaults) {
 			if (n._def.defaults.hasOwnProperty(d)) {
 				node[d] = n[d];
 			}
 		}
-		if(exportCreds && n.credentials) {
+		/*if(exportCreds && n.credentials) {
 			node.credentials = {};
 			for (var cred in n._def.credentials) {
 				if (n._def.credentials.hasOwnProperty(cred)) {
@@ -399,7 +387,7 @@ RED.nodes = (function() {
 					}
 				}
 			}
-		}
+		}*/
 		if (n._def.category != "config") {
 			node.x = n.x;
 			node.y = n.y;
@@ -414,6 +402,10 @@ RED.nodes = (function() {
 				node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
 			}
 		}
+		
+		//console.warn("convert node: " + n.name);
+		//console.warn("from:" + Object.getOwnPropertyNames(n._def));
+		//console.warn("to:" + Object.getOwnPropertyNames(node));
 		return node;
 	}
 
@@ -464,194 +456,7 @@ RED.nodes = (function() {
 		return nns;
 	}
 
-	/**
-	 * Parses the input string which contains copied code from the Arduino IDE, scans the
-	 * nodes and connections and forms them into a JSON representation which will be
-	 * returned as string.
-	 *
-	 * So the result may directly imported in the localStorage or the import dialog.
-	 */
-	function cppToJSON(newNodesStr) {
-
-		var newNodes = [];
-		var cables = [];
-		var words = [];
-
-		const NODE_COMMENT	= "//";
-		const NODE_AC		= "AudioConnection";
-
-		var parseLine = function(line) {
-
-			var parts = line.match(/^(\S+)\s(.*)/);
-			if (parts == null) {
-				return
-			}
-			parts =	parts.slice(1);
-			if (parts == null || parts.length <= 1) {
-				return
-			}
-			var type = $.trim(parts[0]);
-			line = $.trim(parts[1]) + " ";
-
-			var name = "";
-			var coords = [0, 0];
-			var conn = [];
-
-			parts = line.match(/^([^;]{0,});(.*)/);
-			if (parts && parts.length >= 2) {
-				parts = parts.slice(1);
-				if (parts && parts.length >= 1) {
-					name = $.trim(parts[0]);
-					coords = $.trim(parts[1]);
-					parts = coords.match(/^([^\/]{0,})\/\/xy=(.*)/);
-					if (parts) {
-						parts = parts.slice(1);
-						coords = $.trim(parts[1]).split(",");
-					}
-				}
-			}
-
-			if (type == NODE_AC) {
-				parts = name.match(/^([^\(]*\()([^\)]*)(.*)/);
-				if (parts && parts.length > 1) {
-					conn = $.trim(parts[2]).split(",");
-					cables.push(conn);
-				}
-			} else if (type == NODE_COMMENT) {
-				// do nothing
-			} else {
-				var names = [];
-				var yPos = [];
-				if (name.indexOf(",") >= 0) {
-					names = name.split(",");
-				} else {
-					names.push(name);
-				}
-				for (var n = 0; n < names.length; n++) {
-					name = names[n].trim();
-					var gap = 10;
-					var def = node_defs[type];
-					var dW = Math.max(RED.view.defaults.width, RED.view.calculateTextWidth(name) + (def.inputs > 0 ? 7 : 0));
-					var dH = Math.max(RED.view.defaults.height,(Math.max(def.outputs, def.inputs)||0) * 15);
-					var newX = parseInt(coords ? coords[0] : 0);
-					var newY = parseInt(coords ? coords[1] : 0);
-					//newY = newY == 0 ? lastY + (dH * n) + gap : newY;
-					//lastY = Math.max(lastY, newY);
-					var node = new Object({"order": n, "id": name, "name": name, "type": type, "x": newX, "y": newY, "z": 0, "wires": []});
-					// netter solution: create new id
-					if (RED.nodes.node(node.id) !== null) {
-						node.z = RED.view.getWorkspace();
-						node.id = getID();
-						node.name = getUniqueName(node);
-					}
-					newNodes.push(node);
-				}
-			}
-		};
-
-		var findNode = function(name) {
-			var len = newNodes.length;
-			for (var key = 0; key < len; key++) {
-				if (newNodes[key].id == name) {
-					return newNodes[key];
-				}
-			}
-		};
-
-		var linkCables = function(cables) {
-			$.each(cables, function(i, item) {
-				var conn = item;
-				// when there are only two entries in the array, there
-				// is only one output to connect to one input, so we have
-				// to extend the array with the appropriate index "0" for
-				// both parst (in and out)
-				if (conn.length == 2) {
-					conn[2] = conn[1];
-					conn[1] = conn[3] = 0;
-				}
-				// now we assign the outputs (marked by the "idx" of the array)
-				// to the inputs describend by text
-				var currNode = findNode($.trim(conn[0]));
-				var idx = parseInt($.trim(conn[1]));
-				if (currNode) {
-					if ($.trim(conn[2]) != "" && $.trim(conn[3]) != "") {
-						var wire = $.trim(conn[2]) + ":" + $.trim(conn[3]);
-						var tmp = currNode.wires[idx] ? currNode.wires[idx] : [];
-						tmp.push(wire);
-						currNode.wires[idx] = tmp;
-					}
-				}
-			});
-		};
-
-		var traverseLines = function(raw) {
-			var lines = raw.split("\n");
-			for (var i = 0; i < lines.length; i++) {
-				var line = lines[i].trim();
-				if (line.startsWith("//"))
-					line = line.substring(2).trim();
-
-				// we reached the setup or loop part ...
-				var pattSu = new RegExp(/\s*void\s*setup\s*\(\s*\).*/);
-				var pattLo = new RegExp(/\s*void\s*loop\s*\(\s*\).*/);
-				if (pattSu.test(line) || pattLo.test(line)) {
-					break;
-				}
-
-				// we need at least two parts to examine
-				var parts = line.match(/^(\S+)\s(.*)/);
-				if (parts == null || parts.length == 1) {
-					continue;
-				}
-
-				// ... and it has to end with an semikolon ...
-				var pattSe = new RegExp(/.*;.*$/);
-				var pattCoord = new RegExp(/.*\/\/xy=\d+,\d+$/);
-				if (pattSe.test(line) || pattCoord.test(line)) {
-					var word = parts[1].trim();
-					if (words.indexOf(word) >= 0) {
-						parseLine(line);
-					}
-				}
-			}
-		};
-
-/*
-		var readCode = function() {
-
-			var fileImport = $("#importInput")[0];
-			var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.ino|.txt)$/;
-
-			if (regex.test(fileImport.value.toLowerCase())) {
-				if (typeof (FileReader) != "undefined") {
-					var reader = new FileReader();
-					$(reader).on("load", function (e) {
-					});
-					reader.readAsText(fileImport.files[0]);
-				} else {
-					alert("This browser does not support HTML5.");
-				}
-			} else {
-				alert("Please upload a valid INO or text file.");
-			}
-		};
- */
-		function startImport() {
-			words = Array(NODE_AC);
-			$.each(node_defs, function (key, obj) {
-				words.push(key);
-			});
-			traverseLines(newNodesStr);
-			linkCables(cables);
-		}
-
-		startImport();
-
-		return {
-			count: newNodes.length,
-			data: newNodes.length > 0 ? JSON.stringify(newNodes) : ""
-		};
-	}
+	
 	
 	function createNewDefaultWorkspace() // Jannik Add function
 	{
@@ -809,7 +614,7 @@ RED.nodes = (function() {
 							
 								//console.log("keep name:" + n.name);
 							}
-							node.id = RED.nodes.cppId(node, RED.nodes.workspaces[RED.view.getWorkspace()].label); // jannik add
+							node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
 							for (var d2 in node._def.defaults) {
 								if (node._def.defaults.hasOwnProperty(d2)) {
 									if (d2 == "name" || d2 == "id") continue;
@@ -1206,7 +1011,7 @@ RED.nodes = (function() {
 		{
 			var n = nodes[i];
 			if (n.z != wsId) continue; // workspace filter
-			if (RED.isSpecialNode(n.type)) continue;
+			if (RED.arduino.export.isSpecialNode(n.type)) continue;
 			items.push({ name:n.name, value:n.name, meta: n.type });
 		}
 		AceAutoCompleteKeywords.forEach(function(kw) {
@@ -1343,13 +1148,13 @@ RED.nodes = (function() {
 		workspaceNameCheck:workspaceNameCheck,
 		node: getNode,
 		namedNode: getNodeByName,
-		cppToJSON: cppToJSON,
 		import: importNodes,
 		refreshValidation: refreshValidation,
 		getAllFlowNodes: getAllFlowNodes,
 		createExportableNodeSet: createExportableNodeSet,
 		createCompleteNodeSet: createCompleteNodeSet,
 		id: getID,
+		getUniqueName:getUniqueName,
 		cppName: createUniqueCppName,
 		cppId: createUniqueCppId,
 		hasIO: checkForIO,
@@ -1368,9 +1173,9 @@ RED.nodes = (function() {
 		addClassTabsToPalette:addClassTabsToPalette,
 		refreshClassNodes:refreshClassNodes,
 		make_name:make_name,
-		showWorkspaceToolbar:showWorkspaceToolbar,
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,
-		links: links  // TODO: exposed for d3 vis
+		links: links,  // TODO: exposed for d3 vis
+		node_defs: node_defs
 	};
 })();
