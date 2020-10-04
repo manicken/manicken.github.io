@@ -17,7 +17,6 @@
 
 
 RED.view = (function() {
-<<<<<<< HEAD
 	var _settings = {
 		showWorkspaceToolbar: true,
 		showGridVminor: true,
@@ -68,15 +67,6 @@ RED.view = (function() {
 		get lineCurveScale() { return _settings.lineCurveScale;},
 		set lineCurveScale(value) { _settings.lineCurveScale = value; redraw_links(); },
 	};
-=======
-	var showGridV = true;
-	var showGridH = true;
-	var snapToGrid = true; // this is allready implemented with shift button, this locks that mode
-	var snapToGridXsize = 10;
-	var snapToGridYsize = 5;
-
-	var showWorkspaceToolbar = true;
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 
 	var space_width = 5000,
 		space_height = 5000,
@@ -256,7 +246,6 @@ RED.view = (function() {
 		"id":"grid-h",
 		"style":"display:none;"
 		});
-<<<<<<< HEAD
 	var gridVminor = vis.append('g').attr({ // minor gets rendered first
 		"id":"grid-v-mi",
 		"style":"display:none;"
@@ -284,24 +273,6 @@ RED.view = (function() {
 	function initGrid()
 	{
 		gridH.selectAll("line.horizontal").data(gridScale.ticks(250)).enter()
-=======
-	var gridV1 = vis.append('g').attr({
-		"id":"grid-v1",
-		"style":"display:none;"
-		});
-	var gridV2 = vis.append('g').attr({
-		"id":"grid-v2",
-		"style":"display:none;"
-	});
-	
-	initGrid();
-	var drag_line = vis.append("svg:path").attr("class", "drag_line");
-	
-	
-	function initGrid()
-	{
-		gridH.selectAll("line.horizontal").data(gridScale.ticks(500)).enter()
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	    	.append("line")
 	        .attr(
 	        {
@@ -315,28 +286,8 @@ RED.view = (function() {
 	            "stroke" : "#eee",
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
-<<<<<<< HEAD
 			});
 		gridVminor.selectAll("line.vertical").data(gridScale.ticks(250)).enter()
-=======
-	        });
-		gridV1.selectAll("line.vertical").data(gridScale.ticks(50)).enter()
-	     	.append("line")
-	        .attr(
-	        {
-	            "class":"vertical",
-	            "y1" : 0,
-	            "y2" : 5000,
-	            "x1" : function(d){ return gridScale(d);},
-	            "x2" : function(d){ return gridScale(d);},
-	            "fill" : "none",
-	            "shape-rendering" : "optimizeSpeed",
-		        "stroke" : "#aaa",
-				//"stroke-dasharray":"2",
-	            "stroke-width" : "2px"
-			});
-		gridV2.selectAll("line.vertical").data(gridScale.ticks(500)).enter()
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	     	.append("line")
 	        .attr(
 	        {
@@ -351,7 +302,6 @@ RED.view = (function() {
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 			});
-<<<<<<< HEAD
 		gridVmajor.selectAll("line.vertical").data(gridScale.ticks(50)).enter()
 	     	.append("line")
 	        .attr(
@@ -394,48 +344,13 @@ RED.view = (function() {
 			$('#grid-v-mi').attr("style", "display:block;");
 		} else {
 			$('#grid-v-mi').attr("style", "display:none;");
-=======
-			showHideGridH(showGridH);
-			showHideGridV(showGridV);
-	}
-	function setSnapToGrid(state)
-	{
-		snapToGrid = state;
-	}
-	function showHideGrid(state)
-	{
-		showHideGridH(showGridH || state);
-		showHideGridV(showGridV || state);
-	}
-
-	function showHideGridV(state)
-	{
-		if (state == true)
-		{
-			$('#grid-v1').attr("style", "display:block;");
-			$('#grid-v2').attr("style", "display:block;");
-		}
-		else
-		{
-			$('#grid-v1').attr("style", "display:none;");
-			$('#grid-v2').attr("style", "display:none;");
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		}
 	}
 	function showHideGridH(state)
 	{
-<<<<<<< HEAD
 		if (state == true) {
 			$('#grid-h').attr("style", "display:block;");
 		} else {
-=======
-		if (state == true)
-		{
-			$('#grid-h').attr("style", "display:block;");
-		}
-		else
-		{
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 			$('#grid-h').attr("style", "display:none;");
 		}
 	}
@@ -447,11 +362,7 @@ RED.view = (function() {
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: function(tab) {
-<<<<<<< HEAD
 			setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
-=======
-			setShowWorkspaceToolbarVisible(showWorkspaceToolbar);
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 						
 			console.log("workspace_tabs onchange:" + tab);
 			var chart = $("#chart");
@@ -704,7 +615,6 @@ RED.view = (function() {
 				}
 			}
 			// snap to grid
-<<<<<<< HEAD
 			if (((_settings.snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
 				var gridOffset =  [0,0];
 				node = moving_set[0];
@@ -713,13 +623,6 @@ RED.view = (function() {
 
 				gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor(node.n.x/_settings.snapToGridXsize)); // this works much better than above
 				gridOffset[1] = node.n.y-(_settings.snapToGridYsize*Math.floor(node.n.y/_settings.snapToGridYsize));
-=======
-			if (((snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
-				var gridOffset =  [0,0];
-				node = moving_set[0];
-				gridOffset[0] = node.n.x-(snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/snapToGridXsize)+node.n.w/2);
-				gridOffset[1] = node.n.y-(snapToGridYsize*Math.floor(node.n.y/snapToGridYsize));
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 				if (gridOffset[0] !== 0 || gridOffset[1] !== 0) {
 					for (i = 0; i<moving_set.length; i++) {
 						node = moving_set[i];
@@ -936,17 +839,10 @@ RED.view = (function() {
 			RED.keyboard.remove(/* left */ 37);
 			RED.keyboard.remove(/* right*/ 39);
 		} else {
-<<<<<<< HEAD
 			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection(  0,-_settings.snapToGridYsize)}else{moveSelection( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
 			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection(  0, _settings.snapToGridYsize)}else{moveSelection( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
 			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection(-_settings.snapToGridXsize,  0)}else{moveSelection(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
 			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection( _settings.snapToGridXsize,  0)}else{moveSelection( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
-=======
-			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(  0,-snapToGridYsize)}else{moveSelection( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(  0, snapToGridYsize)}else{moveSelection( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(-snapToGridXsize,  0)}else{moveSelection(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection( snapToGridXsize,  0)}else{moveSelection( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		}
 		if (moving_set.length == 1) {
 			RED.sidebar.info.refresh(moving_set[0].n);
@@ -1757,15 +1653,9 @@ RED.view = (function() {
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	function redraw() {
-<<<<<<< HEAD
 		const t0 = performance.now();
 		//console.trace("redraw");
 		
-=======
-		console.trace("redraw");
-		//RED.addClassTabsToPalette(); // failsafe debug test that is very slow
-		//RED.refreshClassNodes(); // failsafe debug test that is very slow
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		//console.log("redraw");
 		
 		vis.attr("transform","scale("+scaleFactor+")");
@@ -2282,16 +2172,11 @@ RED.view = (function() {
 		});
 	}
 
-<<<<<<< HEAD
 	function showImportNodesDialog(is_arduino_code) {
-=======
-	function showImportNodesDialog(arduino_code) {
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		mouse_mode = RED.state.IMPORT;
 		//$("#dialog-form").html(this.getForm('import-dialog'));
 		getForm("dialog-form", "import-dialog", function(d, f) {
 		$("#node-input-import").val("");
-<<<<<<< HEAD
 		$( "#node-input-arduino" ).prop('checked', is_arduino_code);
 		var title = "";
 		if (is_arduino_code)
@@ -2306,10 +2191,6 @@ RED.view = (function() {
 		}
 			
 		$( "#dialog" ).dialog("option","title",title).dialog( "open" );
-=======
-		$( "#node-input-arduino" ).prop('checked', arduino_code);
-		$( "#dialog" ).dialog("option","title","Import nodes").dialog( "open" );
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		});
 	}
 
@@ -2525,10 +2406,6 @@ RED.view = (function() {
 
 	function setShowWorkspaceToolbarVisible(state)
 	{
-<<<<<<< HEAD
-=======
-		RED.nodes.showWorkspaceToolbar = state;
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		if (state)
 		{
 			$("#workspace-toolbar").show();
@@ -2542,24 +2419,11 @@ RED.view = (function() {
 	}
 
 	return {
-<<<<<<< HEAD
 		settings:settings,
 		settingsCategoryTitle:settingsCategoryTitle,
 		settingsEditorLabels:settingsEditorLabels,
 		init:initView,
 		resetMouseVars:resetMouseVars, // exposed for editor
-=======
-		showHideGrid:showHideGrid,
-		showHideGridH: function (state) { showGridH = state; showHideGridH(state); },
-		showHideGridV: function (state) { showGridV = state; showHideGridV(state); },
-		showGridH:showGridH,
-		showGridV:showGridV,
-		setSnapToGrid:setSnapToGrid,
-		snapToGrid: snapToGrid,
-		setShowWorkspaceToolbarVisible:setShowWorkspaceToolbarVisible,
-		showWorkspaceToolbar:showWorkspaceToolbar,
-		
->>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		state:function(state) {
 			if (state == null) {
 				return mouse_mode
