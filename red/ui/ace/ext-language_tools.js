@@ -1730,6 +1730,12 @@ var Autocomplete = function() {
         }
 
         var tooltipNode = this.tooltipNode;
+
+        if (item.toolTipFixedWidth)
+        {
+            tooltipNode.style.maxWidth = item.toolTipFixedWidth;
+            tooltipNode.style['white-space'] = "normal";
+        }
         if (item.docHTML) {
             tooltipNode.innerHTML = item.docHTML;
         } else if (item.docText) {
@@ -1744,6 +1750,7 @@ var Autocomplete = function() {
         tooltipNode.style.bottom = popup.container.style.bottom;
 
         tooltipNode.style.display = "block";
+        
         if (window.innerWidth - rect.right < 320) {
             if (rect.left < 320) {
                 if(popup.isTopdown) {
@@ -1765,6 +1772,8 @@ var Autocomplete = function() {
             tooltipNode.style.left = (rect.right + 1) + "px";
             tooltipNode.style.right = "";
         }
+        
+        
     };
 
     this.hideDocTooltip = function() {
@@ -1949,6 +1958,7 @@ ace.define("ace/autocomplete/text_completer",["require","exports","module","ace/
         var wordScore = wordDistance(session, pos);
         var wordList = Object.keys(wordScore);
         callback(null, wordList.map(function(word) {
+            console.log(word + ":" + wordScore[word]);
             return {
                 caption: word,
                 value: word,

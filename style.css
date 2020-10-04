@@ -19,6 +19,12 @@ body {
   padding-top: 100px;
   background: url("img/pw_maze_white.png");
 }
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+  }
 #dropTarget {
     position: absolute;
     top: 0; bottom: 0;
@@ -83,7 +89,7 @@ a.brand img {
     position: absolute;
     top: 30px;
     left:0;
-    right: 18px;
+    right: 0px;
     padding: 5px;
     background: #f3f3f3;
 }
@@ -181,10 +187,6 @@ a.brand img {
     border-radius: 3px;
     /*margin-bottom: 5px;*/
 }
-.palette-sub-category-label {
-    padding-top: 3px;
-    text-decoration: underline solid red;
-}
 .palette-content {
     background: #fff;
     border-top: 1px solid #aaa;
@@ -192,6 +194,7 @@ a.brand img {
     padding-bottom: 3px;
 }
 .palette-header {
+    font-weight: bold;
     background: #f1f1f1;
     border-radius: 3px;
     cursor: pointer;
@@ -584,8 +587,13 @@ g.link_unknown path.link_line {
     display: inline-block;
     width: 100px;
 }
+.form-row-long label {
+    display: inline-block;
+    width: 200px;
+}
 .form-row input {
     width:70%;
+    right: 0px;
 }
 
 input.input-append-left {

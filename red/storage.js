@@ -4,8 +4,9 @@
 
 RED.storage = (function() {
 	function update() {
-		RED.nodes.addClassTabsToPalette(); //Jannik
-		RED.nodes.refreshClassNodes(); //Jannik
+
+		//RED.nodes.addClassTabsToPalette(); //Jannik
+		//RED.nodes.refreshClassNodes(); //Jannik
 		
 		// TOOD: use setTimeout to limit the rate of changes?
 		// (Jannik say that is not needed because it's better to save often, not to loose any changes)
@@ -33,19 +34,43 @@ RED.storage = (function() {
 		return archive;
 	}
 	function load() {
+
+		const t0 = performance.now();
 		if (localStorage) {
-			console.warn(allStorage());
-			var data = localStorage.getItem("audio_library_guitool");
-			console.log("localStorage read: " );//+ data);
-			if (data)
-				RED.nodes.import(data, false);
+			//console.warn(allStorage());
+			var json_string = localStorage.getItem("audio_library_guitool");
+			console.log("localStorage read: " );//+ json_string);
+
+			if (json_string && (json_string.trim().length != 0))
+			{
+				var jsonObj = JSON.parse(json_string);
+				
+				if (jsonObj.settings) 
+				{
+					RED.settings.setFromJSONobj(jsonObj.settings);
+				}
+
+				if (jsonObj.workspaces) // new version have this defined
+				{
+					RED.nodes.importWorkspaces(jsonObj.workspaces);
+				}
+				else
+				{
+					RED.nodes.import(jsonObj, false, true);
+				}
+				
+			}
 			else
+			{
 				RED.nodes.createNewDefaultWorkspace();
+			}
 		}
+		const t1 = performance.now();
+		console.log('storage-load took: ' + (t1-t0) +' milliseconds.');
 	}
-	function loadFile(data) {// TODO: rename to loadContents
-		console.log("loadFile:" +data);
-		localStorage.setItem("audio_library_guitool", data);
+	function loadContents(json_string) {
+		console.log("loadContents:" +json_string);
+		localStorage.setItem("audio_library_guitool", json_string);
 		window.location.reload();
 		
 				
@@ -61,7 +86,7 @@ RED.storage = (function() {
 	return {
 		update: update,
 		load: load,
-		loadFile:loadFile, // TODO: rename to loadContents
+		loadContents:loadContents, 
 		clear: clear
 	}
 })();

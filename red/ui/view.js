@@ -17,20 +17,62 @@
 
 
 RED.view = (function() {
-	var showGridV = true;
-	var showGridH = true;
-	var snapToGrid = true; // this is allready implemented with shift button, this locks that mode
-	var snapToGridXsize = 10;
-	var snapToGridYsize = 5;
+	var _settings = {
+		showWorkspaceToolbar: true,
+		showGridVminor: true,
+		showGridVmajor: true,
+		showGridH: true,		
+		snapToGrid: true, // this is allready implemented with shift button, this locks that mode
+	    snapToGridXsize: 5,
+	    snapToGridYsize: 5,
+		lineCurveScale: 0.75,
+	};
 
-	var showWorkspaceToolbar = true;
+	var settingsCategoryTitle = "Workspace View";
+
+	var settingsEditorLabels = {
+		showWorkspaceToolbar: "Show Workspace toolbar.",
+		showGridVminor: "Show Workspace minor v-grid.",
+		showGridVmajor: "Show Workspace major v-grid.",
+		showGridH: "Show Workspace h-grid.",		
+		snapToGrid: "Snap to grid.",
+	    snapToGridXsize: "Snap Grid Size X",
+	    snapToGridYsize: "Snap Grid Size Y",
+		
+		lineCurveScale: "Line Curve Scale",
+	}
+
+	var settings = {
+		get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
+		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); },
+
+		get showGridVminor() { return _settings.showGridVminor; },
+		set showGridVminor(state) { _settings.showGridVminor = state; showHideGridVminor(state); },
+
+		get showGridVmajor() { return _settings.showGridVmajor; },
+		set showGridVmajor(state) { _settings.showGridVmajor = state; showHideGridVmajor(state); },
+
+		get showGridH() { return _settings.showGridH; },
+		set showGridH(state) { _settings.showGridH = state; showHideGridH(state); },
+
+		get snapToGrid() { return _settings.snapToGrid; },
+		set snapToGrid(state) { _settings.snapToGrid = state; },
+
+		get snapToGridXsize() { return _settings.snapToGridXsize; },
+		set snapToGridXsize(value) { _settings.snapToGridXsize = value; },
+
+		get snapToGridYsize() { return _settings.snapToGridYsize; },
+		set snapToGridYsize(value) { _settings.snapToGridYsize = value; },
+
+		get lineCurveScale() { return _settings.lineCurveScale;},
+		set lineCurveScale(value) { _settings.lineCurveScale = value; redraw_links(); },
+	};
 
 	var space_width = 5000,
 		space_height = 5000,
-		lineCurveScale = 0.75,
 		scaleFactor = 1,
 		node_width = 100,
-		node_height = 30;
+		node_height = 35;
 
 	var touchLongPressTimeout = 1000,
 		startTouchDistance = 0,
@@ -204,22 +246,33 @@ RED.view = (function() {
 		"id":"grid-h",
 		"style":"display:none;"
 		});
-	var gridV1 = vis.append('g').attr({
-		"id":"grid-v1",
-		"style":"display:none;"
-		});
-	var gridV2 = vis.append('g').attr({
-		"id":"grid-v2",
+	var gridVminor = vis.append('g').attr({ // minor gets rendered first
+		"id":"grid-v-mi",
 		"style":"display:none;"
 	});
+	var gridVmajor = vis.append('g').attr({ // major then "overrides" the minors
+		"id":"grid-v-ma",
+		"style":"display:none;"
+		});
 	
-	initGrid();
+	
 	var drag_line = vis.append("svg:path").attr("class", "drag_line");
 	
+	function initView() // called from main.js - document ready function
+	{
+		initGrid();
+		$("#menu-arduino").mouseover(function(){
+			showPopOver("#menu-arduino", false, "Arduino-Compatible API", "bottom");
+		});
+		$("#menu-arduino").mouseout(function(){
+			$(this).popover("destroy");
+		});
+		
+	}
 	
 	function initGrid()
 	{
-		gridH.selectAll("line.horizontal").data(gridScale.ticks(500)).enter()
+		gridH.selectAll("line.horizontal").data(gridScale.ticks(250)).enter()
 	    	.append("line")
 	        .attr(
 	        {
@@ -233,23 +286,8 @@ RED.view = (function() {
 	            "stroke" : "#eee",
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
-	        });
-		gridV1.selectAll("line.vertical").data(gridScale.ticks(50)).enter()
-	     	.append("line")
-	        .attr(
-	        {
-	            "class":"vertical",
-	            "y1" : 0,
-	            "y2" : 5000,
-	            "x1" : function(d){ return gridScale(d);},
-	            "x2" : function(d){ return gridScale(d);},
-	            "fill" : "none",
-	            "shape-rendering" : "optimizeSpeed",
-		        "stroke" : "#aaa",
-				//"stroke-dasharray":"2",
-	            "stroke-width" : "2px"
 			});
-		gridV2.selectAll("line.vertical").data(gridScale.ticks(500)).enter()
+		gridVminor.selectAll("line.vertical").data(gridScale.ticks(250)).enter()
 	     	.append("line")
 	        .attr(
 	        {
@@ -264,40 +302,55 @@ RED.view = (function() {
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 			});
-			showHideGridH(showGridH);
-			showHideGridV(showGridV);
-	}
-	function setSnapToGrid(state)
-	{
-		snapToGrid = state;
+		gridVmajor.selectAll("line.vertical").data(gridScale.ticks(50)).enter()
+	     	.append("line")
+	        .attr(
+	        {
+	            "class":"vertical",
+	            "y1" : 0,
+	            "y2" : 5000,
+	            "x1" : function(d){ return gridScale(d);},
+	            "x2" : function(d){ return gridScale(d);},
+	            "fill" : "none",
+	            "shape-rendering" : "optimizeSpeed",
+		        "stroke" : "#aaa",
+				//"stroke-dasharray":"2",
+	            "stroke-width" : "2px"
+			});
+		
+			// sets visibility according to vars, so that it's only changed at one place
+			showHideGridH(_settings.showGridH);
+			showHideGridVmajor(_settings.showGridVmajor);
+			showHideGridVminor(_settings.showGridVminor);
 	}
 	function showHideGrid(state)
 	{
-		showHideGridH(showGridH || state);
-		showHideGridV(showGridV || state);
+		showHideGridH(_settings.showGridH || state);
+		showHideGridVmajor(_settings.showGridVmajor || state);
+		showHideGridVminor(_settings.showGridVminor || state);
 	}
 
-	function showHideGridV(state)
+	function showHideGridVmajor(state)
 	{
-		if (state == true)
-		{
-			$('#grid-v1').attr("style", "display:block;");
-			$('#grid-v2').attr("style", "display:block;");
+		if (state == true) {
+			$('#grid-v-ma').attr("style", "display:block;");
+		} else {
+			$('#grid-v-ma').attr("style", "display:none;");
 		}
-		else
-		{
-			$('#grid-v1').attr("style", "display:none;");
-			$('#grid-v2').attr("style", "display:none;");
+	}
+	function showHideGridVminor(state)
+	{
+		if (state == true) {
+			$('#grid-v-mi').attr("style", "display:block;");
+		} else {
+			$('#grid-v-mi').attr("style", "display:none;");
 		}
 	}
 	function showHideGridH(state)
 	{
-		if (state == true)
-		{
+		if (state == true) {
 			$('#grid-h').attr("style", "display:block;");
-		}
-		else
-		{
+		} else {
 			$('#grid-h').attr("style", "display:none;");
 		}
 	}
@@ -309,7 +362,7 @@ RED.view = (function() {
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: function(tab) {
-			setShowWorkspaceToolbarVisible(showWorkspaceToolbar);
+			setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
 						
 			console.log("workspace_tabs onchange:" + tab);
 			var chart = $("#chart");
@@ -323,6 +376,8 @@ RED.view = (function() {
 			var scrollStartTop = chart.scrollTop();
 
 			activeWorkspace = tab.id;
+			RED.nodes.selectWorkspace(activeWorkspace);
+
 			if (workspaceScrollPositions[activeWorkspace]) {
 				chart.scrollLeft(workspaceScrollPositions[activeWorkspace].left);
 				chart.scrollTop(workspaceScrollPositions[activeWorkspace].top);
@@ -507,7 +562,7 @@ RED.view = (function() {
 			var dy = mousePos[1]-(mousedown_node.y+portY);
 			var dx = mousePos[0]-(mousedown_node.x+sc*mousedown_node.w/2);
 			var delta = Math.sqrt(dy*dy+dx*dx);
-			var scale = lineCurveScale;
+			var scale = _settings.lineCurveScale;
 			var scaleY = 0;
 
 			if (delta < node_width) {
@@ -560,11 +615,14 @@ RED.view = (function() {
 				}
 			}
 			// snap to grid
-			if (((snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
+			if (((_settings.snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
 				var gridOffset =  [0,0];
 				node = moving_set[0];
-				gridOffset[0] = node.n.x-(snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/snapToGridXsize)+node.n.w/2);
-				gridOffset[1] = node.n.y-(snapToGridYsize*Math.floor(node.n.y/snapToGridYsize));
+
+				//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/_settings.snapToGridXsize)+node.n.w/2);
+
+				gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor(node.n.x/_settings.snapToGridXsize)); // this works much better than above
+				gridOffset[1] = node.n.y-(_settings.snapToGridYsize*Math.floor(node.n.y/_settings.snapToGridYsize));
 				if (gridOffset[0] !== 0 || gridOffset[1] !== 0) {
 					for (i = 0; i<moving_set.length; i++) {
 						node = moving_set[i];
@@ -781,10 +839,10 @@ RED.view = (function() {
 			RED.keyboard.remove(/* left */ 37);
 			RED.keyboard.remove(/* right*/ 39);
 		} else {
-			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(  0,-snapToGridYsize)}else{moveSelection( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(  0, snapToGridYsize)}else{moveSelection( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection(-snapToGridXsize,  0)}else{moveSelection(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey || (snapToGrid == true)){moveSelection( snapToGridXsize,  0)}else{moveSelection( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection(  0,-_settings.snapToGridYsize)}else{moveSelection( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection(  0, _settings.snapToGridYsize)}else{moveSelection( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection(-_settings.snapToGridXsize,  0)}else{moveSelection(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey || (_settings.snapToGrid == true)){moveSelection( _settings.snapToGridXsize,  0)}else{moveSelection( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
 		}
 		if (moving_set.length == 1) {
 			RED.sidebar.info.refresh(moving_set[0].n);
@@ -804,7 +862,7 @@ RED.view = (function() {
 		}
 		RED.history.push({t:'move',nodes:ns,dirty:dirty});// TODO: is this nessesary
 	}
-	function moveSelection(dx,dy) {
+	function moveSelection(dx,dy) { // used when moving by keyboard keys
 		var minX = 0;
 		var minY = 0;
 		var node;
@@ -815,11 +873,32 @@ RED.view = (function() {
 				node.ox = node.n.x;
 				node.oy = node.n.y;
 			}
-			node.n.x += dx;
-			node.n.y += dy;
+				node.n.x += dx;
+				node.n.y += dy;
 			node.n.dirty = true;
 			minX = Math.min(node.n.x-node.n.w/2-5,minX);
 			minY = Math.min(node.n.y-node.n.h/2-5,minY);
+		}
+
+		// snap to grid
+		if (((_settings.snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
+			var gridOffset =  [0,0];
+			node = moving_set[0];
+
+			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/_settings.snapToGridXsize)+node.n.w/2);
+
+			gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor(node.n.x/_settings.snapToGridXsize)); // this works much better than above
+			gridOffset[1] = node.n.y-(_settings.snapToGridYsize*Math.floor(node.n.y/_settings.snapToGridYsize));
+			if (gridOffset[0] !== 0 || gridOffset[1] !== 0) {
+				for (i = 0; i<moving_set.length; i++) {
+					node = moving_set[i];
+					node.n.x -= gridOffset[0];
+					node.n.y -= gridOffset[1];
+					if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
+						node.dirty = false;
+					}
+				}
+			}
 		}
 
 		if (minX !== 0 || minY !== 0) {
@@ -845,15 +924,7 @@ RED.view = (function() {
 				if (node.x < 0) {
 					node.x = 25
 				}
-				/*for (var ipi = 0; ipi < node.inputlist.length; ipi++)
-				{
-					$(node.inputlist[ipi]).popover("destroy"); // remove any popovers visible (otherwise they will be left behind)
-				}
-				for (var opi = 0; opi < node._ports.length; opi++)
-				{
-					$(node._ports[opi]).popover("destroy"); // remove any popovers visible (otherwise they will be left behind)
-				}*/
-				
+								
 				var rmlinks = RED.nodes.remove(node.id);
 				for (var j=0; j < rmlinks.length; j++) {
 					var link = rmlinks[j];
@@ -1131,9 +1202,14 @@ RED.view = (function() {
 		d.requirementError = false;
 		d.conflicts = new Array();
 		d.requirements = new Array();
-		requirements.forEach(function(r) {
+		
+		RED.main.requirements.forEach(function(r) {
 			if (r.type == d.type) d.requirements.push(r);
 		});
+
+		// above could be:
+		// d.requirements = RED.main.requirements[d.type];
+		// if the structure is changed a little
 
 		//check for conflicts with other nodes:
 		d.requirements.forEach(function(r) {
@@ -1143,7 +1219,7 @@ RED.view = (function() {
 						if (r["resource"] == r2["resource"]) {
 							if (r["shareable"] == false ) {
 								var msg = "Conflict: shareable '"+r["resource"]+"'  "+d.name+" and "+n2.name;
-								console.log(msg);
+								//console.log(msg);
 								msg = n2.name + " uses " + r["resource"] + ", too";
 								d.conflicts.push(msg);
 								d.requirementError = true;
@@ -1151,7 +1227,7 @@ RED.view = (function() {
 							//else
 							if (r["setting"] != r2["setting"]) {
 								var msg = "Conflict: "+ d.name + " setting['"+r["setting"]+"'] and "+n2.name+" setting['"+r2["setting"]+"']";
-								console.log(msg);
+								//console.log(msg);
 								msg = n2.name + " has different settings: " + r["setting"] + " ./. " + r2["setting"];
 								d.conflicts.push(msg);
 								d.requirementError = true;
@@ -1261,10 +1337,13 @@ RED.view = (function() {
 					//console.log("node mouseover:" + d.name);
 					var popoverText = "<b>" + d.type + "</b><br>";
 					if (d.comment && (d.comment.trim().length != 0))
-						popoverText+=d.comment;
-
+						popoverText+="<p>"+d.comment.replace("    ", "&emsp;").replace("\t", "&emsp;").replace(/\n/g, "<br>") + "</p>";
+					//console.warn("popoverText:" +popoverText);
 					$(current_popup_rect).popover("destroy"); // destroy prev
-					showPopOver(this, true, popoverText)
+					if (d.type == "Function")
+						showPopOver(this, true, popoverText, "bottom");
+					else
+						showPopOver(this, true, popoverText, "top");
 				}
 			})
 			.on("mouseout",function(d) {
@@ -1439,7 +1518,7 @@ RED.view = (function() {
 		//if (d.type == "Mod") // debug test only
 		//	console.error("after:" + d.ports);
 		
-			d._ports = nodeRect.selectAll(".port_output").data(d.ports);
+		d._ports = nodeRect.selectAll(".port_output").data(d.ports);
 		d._ports.enter().append("rect")
 		    .attr("class","port port_output").attr("rx",3).attr("ry",3).attr("width",10).attr("height",10)
 			.attr("nodeType",d.type)
@@ -1509,7 +1588,7 @@ RED.view = (function() {
 				var dy = (d.target.y+ytarget)-(d.source.y+ysource);
 				var dx = (d.target.x-d.target.w/2)-(d.source.x+d.source.w/2);
 				var delta = Math.sqrt(dy*dy+dx*dx);
-				var scale = lineCurveScale;
+				var scale = _settings.lineCurveScale;
 				var scaleY = 0;
 				if (delta < node_width) {
 					scale = 0.75-0.75*((node_width-delta)/node_width);
@@ -1542,7 +1621,7 @@ RED.view = (function() {
 		
 		$(this).popover("destroy"); // destroy prev
 		var data = getIOpinInfo(this, undefined, pi);
-		showPopOver(this, true, data);
+		showPopOver(this, true, data, "left");
 						
 		port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 0 ));
 		//console.log("nodeOutput_mouseover: " + this.getAttribute("nodeZ") + "." + this.getAttribute("nodeName") +" , port:" + pi);
@@ -1553,7 +1632,7 @@ RED.view = (function() {
 		
 		$(this).popover("destroy"); // destroy prev
 		var data = getIOpinInfo(this, d, this.getAttribute("index")); // d is the node
-		showPopOver(this, true, data);
+		showPopOver(this, true, data, "right");
 						
 		port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
 		//console.log("nodeInput_mouseover: " + d.name +" , port:" + this.getAttribute("index"));
@@ -1574,9 +1653,9 @@ RED.view = (function() {
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	function redraw() {
-		console.trace("redraw");
-		//RED.addClassTabsToPalette(); // failsafe debug test that is very slow
-		//RED.refreshClassNodes(); // failsafe debug test that is very slow
+		const t0 = performance.now();
+		//console.trace("redraw");
+		
 		//console.log("redraw");
 		
 		vis.attr("transform","scale("+scaleFactor+")");
@@ -1584,22 +1663,43 @@ RED.view = (function() {
 
 		if (mouse_mode != RED.state.JOINING) {
 			// Don't bother redrawing nodes if we're drawing links
+			const t2 = performance.now();
+			var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d) { return d.z == activeWorkspace }),function(d){return d.id});
+			const t3 = performance.now();
+			console.log('vis.selectAll: ' + (t3-t2) +' milliseconds.');
 
-			var node = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d) { return d.z == activeWorkspace }),function(d){return d.id});
-			
-			node.exit().remove();
+			var updatedClassTypes =	false; // flag so that it only run once at each redraw()
 
-			var nodeEnter = node.enter().insert("svg:g").attr("class", "node nodegroup");
-			nodeEnter.each(function(d,i) // this happens only when a node is added to the current workspace.
+			var nodeExit = nodes.exit().remove();
+			nodeExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
 			{
-				console.error("node added");
+				//console.error("redraw nodeExit:" + d.type);
+				if (d.type == "TabInput" || d.type == "TabOutput")
+				{
+					if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
+				}
+			});
+
+			var nodeEnter = nodes.enter().insert("svg:g").attr("class", "node nodegroup");
+			nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
+			{
+				//console.error("redraw nodeEnter:" + d.type);
+				if (d.type == "TabInput" || d.type == "TabOutput")
+				{
+					if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
+				}
+
 				var nodeRect = d3.select(this);
 				nodeRect.attr("id",d.id);
 				redraw_calcNewNodeSize(d);
 				
-				checkRequirements(d);
-				redraw_nodeReqError(nodeRect, d);
-				redraw_paletteNodesReqError(d);
+				if (d._def.category.startsWith("output") || d._def.category.startsWith("input")) // only need to check I/O
+				{	
+					checkRequirements(d); // this update nodes that allready exist
+					if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
+					redraw_nodeReqError(nodeRect, d);
+					redraw_paletteNodesReqError(d);
+				}
 
 				if (d._def.badge) redraw_nodeBadge(nodeRect, d);
 				if (d._def.button) redraw_nodeButton(nodeRect, d);
@@ -1620,14 +1720,23 @@ RED.view = (function() {
 				nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
 			});
 
-			node.each(function(d,i) {
+			nodes.each(function(d,i) { // redraw all nodes in active workspace
 					var nodeRect = d3.select(this);
-					
-					checkRequirements(d); // this is needed because it will execute on previus items
-					                      // but because it's allways running it takes up much cpu time
 
-					//if (d.requirementError) console.warn("reqError on:" + d.name);
-					if (d.dirty || d.requirementError != undefined) {
+					if (d._def.category.startsWith("output") || d._def.category.startsWith("input")) // only need to check I/O
+					{	
+						checkRequirements(d); // this update nodes that allready exist
+						//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
+						redraw_nodeReqError(nodeRect, d);
+					}
+					if (d.dirty) {
+						//nodeRect.attr("fill",function(d) { console.warn("node bg color:" + d.bgColor); return d.bgColor;});
+						if (d.bgColor == null)
+							d.bgColor = d._def.color;
+							
+						nodeRect.selectAll(".node").attr("fill", d.bgColor);
+
+						//nodeRect.style("background-color", d.bgColor)
 						//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
 						if (d.resize) {
 							
@@ -1636,12 +1745,12 @@ RED.view = (function() {
 							redraw_nodeOutputs(nodeRect, d);
 							d.resize = false;
 						}
-						console.log("redraw stuff");
-						redraw_nodeReqError(nodeRect, d);
+						//console.log("redraw stuff");
+
 						redraw_paletteNodesReqError(d);
 						redraw_other(nodeRect, d);
 						d.dirty = false;
-						d.requirementError = false;
+						
 					}
 			});
 
@@ -1651,10 +1760,17 @@ RED.view = (function() {
 		if (d3.event) {
 			d3.event.preventDefault();
 		}
+		const t1 = performance.now();
+		console.log('redraw took: ' + (t1-t0) +' milliseconds.');
 	}
 	function redraw_paletteNodesReqError(d)
 	{
-		var e1 = document.getElementById("palette_node_"+d.type);
+		var cat = d._def.category;
+		//console.error(cat);
+		cat = cat.substring(0, cat.lastIndexOf("-"));
+		var e1 = document.getElementById("palette_node_"+cat + "_"+d.type);
+
+		//console.error("palette_node_"+cat + "_"+d.type);
 		var e2 = e1.getElementsByClassName("palette_req_error")[0]; // palette_req_error is using a style, where the position of the icon is defined
 		e2.addEventListener("click", 
 							function(){RED.notify('Conflicts:<ul><li>'+d.conflicts.join('</li><li>')+'</li></ul>',null,false, 5000);},
@@ -1837,16 +1953,22 @@ RED.view = (function() {
 		var ioCtrl = [];
 
 		RED.nodes.eachNode(function (node) {
+			if (node.z != activeWorkspace) return;
+			var inputs = 0;
+			if (node.inputs == undefined)
+				inputs = node._def.inputs;
+			else
+				inputs = node.inputs;
 
-			if (node._def.inputs == 0 && node._def.outputs == 0) {
+			if (inputs == 0 && node._def.outputs == 0) {
 				ioCtrl.push(node);
-			} else if (node._def.inputs == 0) {
+			} else if (inputs == 0) {
 				ioNoIn.push(node);
 			} else if (node._def.outputs == 0) {
 				ioNoOut.push(node);
-			} else if (node._def.inputs == 1 && node._def.outputs == 1) {
+			} else if (inputs == 1 && node._def.outputs == 1) {
 				ioInOut.push(node);
-			} else if (node._def.inputs > 1) {
+			} else if (inputs > 1 || node._def.outputs > 1) {
 				ioMultiple.push(node);
 			}
 		});
@@ -1898,9 +2020,9 @@ RED.view = (function() {
 	 *  - attached to mouse for placing - 'IMPORT_DRAGGING'
 	 */
 	function importNodes(newNodesStr,touchImport) {
-
+		console.trace("view: importNodes");
 		var createNewIds = true;
-		var useStorage = false;
+		var replaceFlow = $("#node-input-replace-flow").prop('checked');
 
 		if ($("#node-input-arduino").prop('checked') === true) {
 			var nodesJSON = RED.arduino.import.cppToJSON(newNodesStr);
@@ -1910,75 +2032,78 @@ RED.view = (function() {
 			}
 
 			newNodesStr = nodesJSON.data;
-			createNewIds = false;
-
-			if (useStorage) {
-				RED.storage.clear();
-				localStorage.setItem("audio_library_guitool", newNodesStr);
-				RED.storage.load();
-				redraw();
-				return;
-			}
+			//createNewIds = false;
 		}
+		if (replaceFlow) {
+			RED.storage.clear();
+			//console.warn(newNodesStr);
+			//debugger;
+			
+			localStorage.setItem("audio_library_guitool", newNodesStr);
+			window.location.reload(); // better way because it frees up memory.
+			//RED.storage.load();
+			//redraw();
 
+			return;
+		}
 		try {
 			var result = RED.nodes.import(newNodesStr,createNewIds);
-			if (result) {
-				var new_nodes = result[0];
-				var new_links = result[1];
-				var new_ms = new_nodes.map(function(n) { n.z = activeWorkspace; return {n:n};});
-				var new_node_ids = new_nodes.map(function(n){ return n.id; });
+			if (!result) return;
+			
+			var new_nodes = result[0];
+			var new_links = result[1];
+			var new_ms = new_nodes.map(function(n) { n.z = activeWorkspace; return {n:n};});
+			var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
-				// TODO: pick a more sensible root node
-				var root_node = new_ms[0].n;
-				var dx = root_node.x;
-				var dy = root_node.y;
+			// TODO: pick a more sensible root node
+			var root_node = new_ms[0].n;
+			var dx = root_node.x;
+			var dy = root_node.y;
 
-				if (mouse_position == null) {
-					mouse_position = [0,0];
-				}
-
-				var minX = 0;
-				var minY = 0;
-				var i;
-				var node;
-
-				for (i=0;i<new_ms.length;i++) {
-					node = new_ms[i];
-					node.n.selected = true;
-					node.n.changed = true;
-					node.n.x -= dx - mouse_position[0];
-					node.n.y -= dy - mouse_position[1];
-					node.dx = node.n.x - mouse_position[0];
-					node.dy = node.n.y - mouse_position[1];
-					minX = Math.min(node.n.x-node_width/2-5,minX);
-					minY = Math.min(node.n.y-node_height/2-5,minY);
-				}
-				for (i=0;i<new_ms.length;i++) {
-					node = new_ms[i];
-					node.n.x -= minX;
-					node.n.y -= minY;
-					node.dx -= minX;
-					node.dy -= minY;
-				}
-				if (!touchImport) {
-					mouse_mode = RED.state.IMPORT_DRAGGING;
-				}
-
-				RED.keyboard.add(/* ESCAPE */ 27,function(){
-						RED.keyboard.remove(/* ESCAPE */ 27);
-						clearSelection();
-						RED.history.pop();
-						mouse_mode = 0;
-				});
-
-				RED.history.push({t:'add',nodes:new_node_ids,links:new_links,dirty:RED.view.dirty()});
-
-				clearSelection();
-				moving_set = new_ms;
-
-				redraw();
+			if (mouse_position == null) {
+				mouse_position = [0,0];
 			}
+
+			var minX = 0;
+			var minY = 0;
+			var i;
+			var node;
+
+			for (i=0;i<new_ms.length;i++) {
+				node = new_ms[i];
+				node.n.selected = true;
+				node.n.changed = true;
+				node.n.x -= dx - mouse_position[0];
+				node.n.y -= dy - mouse_position[1];
+				node.dx = node.n.x - mouse_position[0];
+				node.dy = node.n.y - mouse_position[1];
+				minX = Math.min(node.n.x-node_width/2-5,minX);
+				minY = Math.min(node.n.y-node_height/2-5,minY);
+			}
+			for (i=0;i<new_ms.length;i++) {
+				node = new_ms[i];
+				node.n.x -= minX;
+				node.n.y -= minY;
+				node.dx -= minX;
+				node.dy -= minY;
+			}
+			if (!touchImport) {
+				mouse_mode = RED.state.IMPORT_DRAGGING;
+			}
+
+			RED.keyboard.add(/* ESCAPE */ 27,function(){
+					RED.keyboard.remove(/* ESCAPE */ 27);
+					clearSelection();
+					RED.history.pop();
+					mouse_mode = 0;
+			});
+
+			RED.history.push({t:'add',nodes:new_node_ids,links:new_links,dirty:RED.view.dirty()});
+
+			clearSelection();
+			moving_set = new_ms;
+
+			redraw();
 		} catch(error) {
 			console.log(error);
 			RED.notify("<strong>Error</strong>: "+error,"error");
@@ -1993,6 +2118,7 @@ RED.view = (function() {
 
 		if (!server) {
 			data = $("script[data-template-name|='" + key + "']").html();
+			//console.log('%c' + typeof data + "%c"+ data, 'background: #bada55; color: #555 ', 'background: #555; color: #bada55 ');
 			form = $("#" + formId);
 			$(form).empty();
 			$(form).append(data);
@@ -2046,13 +2172,25 @@ RED.view = (function() {
 		});
 	}
 
-	function showImportNodesDialog(arduino_code) {
+	function showImportNodesDialog(is_arduino_code) {
 		mouse_mode = RED.state.IMPORT;
 		//$("#dialog-form").html(this.getForm('import-dialog'));
 		getForm("dialog-form", "import-dialog", function(d, f) {
 		$("#node-input-import").val("");
-		$( "#node-input-arduino" ).prop('checked', arduino_code);
-		$( "#dialog" ).dialog("option","title","Import nodes").dialog( "open" );
+		$( "#node-input-arduino" ).prop('checked', is_arduino_code);
+		var title = "";
+		if (is_arduino_code)
+		{
+			title = "Import Arduino Code";
+			$("#node-input-import").prop('placeholder', "Paste Arduino Code here.");
+		}			
+		else
+		{
+			title = "Import JSON";
+			$("#node-input-import").prop('placeholder', "Paste JSON string here.");
+		}
+			
+		$( "#dialog" ).dialog("option","title",title).dialog( "open" );
 		});
 	}
 
@@ -2216,10 +2354,10 @@ RED.view = (function() {
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}
-		else if (nodeType == "AudioMixer" && portType == "In")
+		/*else if (nodeType == "AudioMixer" && portType == "In")
 		{
 			data2 = $("<div/>").append("<p>" + portName + ": Input Signal #" + (Number(index) + 1) + "</p></div>").html();
-		}
+		}*/
 		else // here we must extract info from Audio Connections table
 		{
 			var tableRows = data2.split("\n");
@@ -2240,24 +2378,27 @@ RED.view = (function() {
 					break;
 				}
 			}
-			//console.log("table contens:\n" + data2); // development debug
+			console.log("table contens: type("+ typeof data2 + "):\n"+ data2); // development debug
 		}
 		//console.log(data2); // development debug
 		return data2;
-		
 	}
 
-	function showPopOver(rect, htmlMode, content)
+	function showPopOver(rect, htmlMode, content,placement)
 	{
+		if (placement == null) placement = "top";
 		current_popup_rect = rect;
 		var options = {
-			placement: "right",
+			placement: placement,
 			trigger: "manual",
 			html: htmlMode,
 			container:'body',
+			rootClose:true, // failsafe
 			content : content
 		};
 		$(rect).popover(options).popover("show");
+		//console.warn("content type:" + typeof content);
+		//console.warn("content:" + content);
 		//console.warn("showPopOver retVal:" + Object.getOwnPropertyNames(retVal)); // debug
 		//console.warn("showPopOver retVal.context:" + retVal.context); // debug
 		//console.warn("showPopOver retVal.length:" + retVal.length); // debug
@@ -2265,7 +2406,6 @@ RED.view = (function() {
 
 	function setShowWorkspaceToolbarVisible(state)
 	{
-		RED.nodes.showWorkspaceToolbar = state;
 		if (state)
 		{
 			$("#workspace-toolbar").show();
@@ -2279,16 +2419,11 @@ RED.view = (function() {
 	}
 
 	return {
-		showHideGrid:showHideGrid,
-		showHideGridH: function (state) { showGridH = state; showHideGridH(state); },
-		showHideGridV: function (state) { showGridV = state; showHideGridV(state); },
-		showGridH:showGridH,
-		showGridV:showGridV,
-		setSnapToGrid:setSnapToGrid,
-		snapToGrid: snapToGrid,
-		setShowWorkspaceToolbarVisible:setShowWorkspaceToolbarVisible,
-		showWorkspaceToolbar:showWorkspaceToolbar,
-		
+		settings:settings,
+		settingsCategoryTitle:settingsCategoryTitle,
+		settingsEditorLabels:settingsEditorLabels,
+		init:initView,
+		resetMouseVars:resetMouseVars, // exposed for editor
 		state:function(state) {
 			if (state == null) {
 				return mouse_mode
