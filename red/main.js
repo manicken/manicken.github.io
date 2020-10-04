@@ -95,7 +95,11 @@ RED.main = (function() {
 	   
 	function displayContents(contents) {
 		//var element = document.getElementById('file-content');
+<<<<<<< HEAD
 		RED.storage.loadContents(contents);
+=======
+		RED.storage.loadFile(contents);
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	}
 	   
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
@@ -114,6 +118,7 @@ RED.main = (function() {
 			   "<p>Note. your current design will be automatically downloaded as <b>TeensyAudioDesign.json</b></p><br>"+
 			   "If you want a different filename,<br>then use the<b> export menu - SaveToFile</b> instead.";
 	}
+<<<<<<< HEAD
 	function addDemoFlowsToMenu()
 	{
 		var html = "";
@@ -161,6 +166,43 @@ RED.main = (function() {
 				}
 			});
 			
+=======
+	$('#btn-demoFlowA').click(function() {
+		var data = $("script[data-container-name|='DemoFlowA']").html();
+		console.error("load demo A");
+		//console.log(data);
+		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowA"), function(okPressed) { 
+			if (okPressed)
+			{
+				saveToFile("TeensyAudioDesign.json");
+				RED.storage.loadFile(data);
+			}
+		});
+	});
+
+	$('#btn-demoFlowB').click(function() {
+		var data = $("script[data-container-name|='DemoFlowB']").html();
+		console.error("load demo B");
+		//console.log(data);
+		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowB"), function(okPressed) { 
+			if (okPressed)
+			{
+				saveToFile("TeensyAudioDesign.json");
+				RED.storage.loadFile(data);
+			}
+		});
+		
+	});
+	$('#btn-originalFlow').click(function() {
+		var data = $("script[data-container-name|='FlowOriginal']").html();
+		console.log(data);
+		verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("FlowOriginal"), function(okPressed) { 
+			if (okPressed)
+			{
+				saveToFile("TeensyAudioDesign.json");
+				RED.storage.loadFile(data);
+			}
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		});
 		$('#btn-emptyFlow').click(function() {
 
@@ -329,12 +371,16 @@ RED.main = (function() {
 		addDemoFlowsToMenu();
 		RED.view.init();
 
+<<<<<<< HEAD
 		jscolor.presets.default = {
 			closeButton:true
 		};
 		jscolor.trigger('input change');
 		jscolor.installByClassName("jscolor");
 		
+=======
+	$(function() {
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		console.warn("main $(function() {...}); is executed after page load!"); // to see load order
 		$(".palette-spinner").show();
 		RED.settings.createTab();
@@ -380,7 +426,11 @@ RED.main = (function() {
 	});
 
 	return {
+<<<<<<< HEAD
 		classColor:classColor,
 		requirements:requirements
+=======
+		classColor:classColor
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	};
 })();

@@ -17,6 +17,7 @@
  
 RED.palette = (function() {
 
+<<<<<<< HEAD
 	var _settings = {
 		categoryHeaderTextSize: 12,
 		onlyShowOne: true,
@@ -41,6 +42,9 @@ RED.palette = (function() {
 		$(".palette-header").each( function(i,e) { $(e).attr("style", "font-size:" + size + "px");});
 	}
 
+=======
+	var onlyShowOne = true;
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	var exclusion = ['config','unknown','deprecated'];
 	var core =	
 	[
@@ -128,6 +132,7 @@ RED.palette = (function() {
 	 * @param {*} nt  node type
 	 * @param {*} def node type def
 	 * 	 */
+<<<<<<< HEAD
 	function addNodeType(nt,def, category) { // externally RED.palettte.add
 		//if ($("#palette_node_"+nt).length)	return;		// avoid duplicates
 		//if (exclusion.indexOf(def.category)!=-1) return;
@@ -150,6 +155,21 @@ RED.palette = (function() {
 		//console.warn("add addNodeType:@" + category + ":" + def.shortName);
 			if ($("#palette_node_"+category +"_"+nt).length)	return;		// avoid duplicates
 
+=======
+	function addNodeType(nt,def) {
+		
+		if ($("#palette_node_"+nt).length)	return;		
+		//if (exclusion.indexOf(def.category)!=-1) return;
+		var indexOf = def.category.lastIndexOf("-");
+		var category = "";
+		if (indexOf != -1)
+			category = def.category.substring(0, indexOf);
+		else
+			category = def.category;
+
+		//console.warn("add addNodeType:" + category);
+			
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 			var d = document.createElement("div");
 			d.id = "palette_node_"+category +"_"+nt;
 			d.type = nt;
@@ -220,16 +240,25 @@ RED.palette = (function() {
 	{
 		$("#header-"+category).off('click').on('click', function(e) {
 			
+<<<<<<< HEAD
 			//console.log("onlyShowOne:" + _settings.onlyShowOne);
 			var catContentElement = $(this).next();
 			var displayStyle = catContentElement.css('display');
 			if (displayStyle == "block")
 			{
 				catContentElement.slideUp();
+=======
+			console.log("onlyShowOne:" + onlyShowOne);
+			var displayStyle = $(this).next().css('display');
+			if (displayStyle == "block")
+			{
+				$(this).next().slideUp();
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 				$(this).children("i").removeClass("expanded"); // chevron
 			}
 			else
 			{
+<<<<<<< HEAD
 				if (!isSubCat(catContentElement.attr('id')) && (_settings.onlyShowOne == true)) // don't run when collapsing sub cat
 				{
 					setShownStateForAll(false);
@@ -237,11 +266,22 @@ RED.palette = (function() {
 				catContentElement.slideDown();
 				$(this).children("i").addClass("expanded"); // chevron
 			}
+=======
+				if (!isSubCat($(this).next().attr('id')) && (onlyShowOne == true)) // don't run when collapsing sub cat
+				{
+					setShownStateForAll(false);
+				}
+				$(this).next().slideDown();
+				$(this).children("i").addClass("expanded"); // chevron
+			}
+			//$(this).children("i").toggleClass("expanded");
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		});
 	}
 	function setShownStateForAll(state)
 	{
 		var otherCat = $(".palette-header");
+<<<<<<< HEAD
 
 		for (var i = 0; i < otherCat.length; i++)
 		{
@@ -250,11 +290,25 @@ RED.palette = (function() {
 			if (state)
 			{
 				$(otherCat[i]).next().slideDown();
+=======
+		var otherCat2 = $(".palette-content");
+		for (var i = 0; i < otherCat.length; i++)
+		{
+			if (isSubCat(otherCat2[i].id)) continue; // don't collapse sub-cat
+			//console.warn(otherCat[i].id);
+			if (state)
+			{
+				$(otherCat2[i]).slideDown();
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 				$(otherCat[i]).children("i").addClass("expanded");
 			}
 			else
 			{
+<<<<<<< HEAD
 				$(otherCat[i]).next().slideUp();
+=======
+				$(otherCat2[i]).slideUp();
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 				$(otherCat[i]).children("i").removeClass("expanded");
 			}
 		}
@@ -343,13 +397,30 @@ RED.palette = (function() {
 		});
 	});
 	
+<<<<<<< HEAD
+=======
+	
+	
+
+	function SetOnlyShowOne(state)
+	{
+		onlyShowOne = state;
+	}
+	
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	return {
 		settings:settings,
 		settingsCategoryTitle:settingsCategoryTitle,
 		settingsEditorLabels:settingsEditorLabels,
 
 		add:addNodeType,
+<<<<<<< HEAD
 		clearCategory:clearCategory,
 		remove:removeNodeType,
+=======
+		remove:removeNodeType,
+		SetOnlyShowOne:SetOnlyShowOne,
+		onlyShowOne:onlyShowOne
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	};
 })();

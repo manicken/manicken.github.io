@@ -21,6 +21,7 @@ RED.nodes = (function() {
 	var configNodes = {};
 	var links = []; // link structure {source:,sourcePort:,target:,targetPort:};
 	var workspaces = [];
+<<<<<<< HEAD
 	var currentWorkspace = {};
 	
 	function getNode()
@@ -39,6 +40,9 @@ RED.nodes = (function() {
 	{
 		var node = getNode();
 	}
+=======
+	
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 	/**
 	 * this creates a workspace object
 	 */
@@ -684,7 +688,20 @@ RED.nodes = (function() {
 							}
 							else {// this allow different workspaces to have nodes that have same name
 								node.name = n.name;
+<<<<<<< HEAD
 								//console.trace("keep name:" + n.name);
+=======
+							
+								//console.log("keep name:" + n.name);
+							}
+							node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
+							for (var d2 in node._def.defaults) {
+								if (node._def.defaults.hasOwnProperty(d2)) {
+									if (d2 == "name" || d2 == "id") continue;
+									node[d2] = n[d2];
+									//console.log("d2: " + d2);
+								}
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 							}
 							// allways create unique id:s
 							node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
@@ -1108,7 +1125,11 @@ RED.nodes = (function() {
 			var n = nodes[i];
 			if (n.z != wsId) continue; // workspace filter
 			if (RED.arduino.export.isSpecialNode(n.type)) continue;
+<<<<<<< HEAD
 			items.push({ name:n.name, value:n.name, meta: n.type, score:(100-n)  });
+=======
+			items.push({ name:n.name, value:n.name, meta: n.type });
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		}
 		AceAutoComplete.Extension.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
 			items.push(kw);
@@ -1305,7 +1326,10 @@ RED.nodes = (function() {
 		workspaceNameCheck:workspaceNameCheck,
 		node: getNode,
 		namedNode: getNodeByName,
+<<<<<<< HEAD
 		importWorkspaces:importWorkspaces, // new structure
+=======
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		import: importNodes,
 		refreshValidation: refreshValidation,
 		getAllFlowNodes: getAllFlowNodes,
@@ -1332,6 +1356,7 @@ RED.nodes = (function() {
 		addClassTabsToPalette:addClassTabsToPalette,
 		refreshClassNodes:refreshClassNodes,
 		make_name:make_name,
+<<<<<<< HEAD
 		selectWorkspace: function (id)
 		{
 			var ws = getWorkspace(id);
@@ -1341,6 +1366,8 @@ RED.nodes = (function() {
 				console.warn("workspace selected:"+ id);
 			}
 		},
+=======
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,
 		links: links,  // TODO: exposed for d3 vis

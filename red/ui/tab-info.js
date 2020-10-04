@@ -15,11 +15,15 @@
  * limitations under the License.
  **/
 RED.sidebar.info = (function() {
+<<<<<<< HEAD
 	var _autoSwitchTabToThis = true;
 	var settings = {
 		set autoSwitchTabToThis(state) { _autoSwitchTabToThis = state; },
 		get autoSwitchTabToThis() { return _autoSwitchTabToThis; },
 	}	
+=======
+	var autoSwitchTabToThis = true;
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 
 	var content = document.createElement("div");
 	content.id = "tab-info";
@@ -57,7 +61,11 @@ RED.sidebar.info = (function() {
 	
 	function refresh(node) {
 		//console.warn("tab-info refresh");
+<<<<<<< HEAD
 		if (_autoSwitchTabToThis)
+=======
+		if (autoSwitchTabToThis)
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 			RED.sidebar.show("info");
 		var table = '<table class="node-info"><tbody>';
 		clearSelection();// partly fix a select node bug, that selects all text, it happens when you try select and move a node to quickly
@@ -180,7 +188,12 @@ RED.sidebar.info = (function() {
 	}
 	
 	return {
+<<<<<<< HEAD
 		settings:settings,
+=======
+		autoSwitchTabToThis:autoSwitchTabToThis,
+		setAutoSwitchTab: function (state) { autoSwitchTabToThis = state;},
+>>>>>>> 1d892075d1258e7e077ee0eaf10ba81e3c2834a4
 		refresh:refresh,
 		showSelection: showSelection,
 		clear: function() {
