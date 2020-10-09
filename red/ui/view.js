@@ -1666,7 +1666,7 @@ RED.view = (function() {
 			const t2 = performance.now();
 			var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d) { return d.z == activeWorkspace }),function(d){return d.id});
 			const t3 = performance.now();
-			console.log('vis.selectAll: ' + (t3-t2) +' milliseconds.');
+			//console.log('vis.selectAll: ' + (t3-t2) +' milliseconds.');
 
 			var updatedClassTypes =	false; // flag so that it only run once at each redraw()
 
@@ -1761,7 +1761,7 @@ RED.view = (function() {
 			d3.event.preventDefault();
 		}
 		const t1 = performance.now();
-		console.log('redraw took: ' + (t1-t0) +' milliseconds.');
+		//console.log('redraw took: ' + (t1-t0) +' milliseconds.');
 	}
 	function redraw_paletteNodesReqError(d)
 	{
@@ -2146,6 +2146,7 @@ RED.view = (function() {
 	$('#btn-export-library').click(function() {showExportNodesLibraryDialog();});
 
 	function showExportNodesDialog() {
+		RED.editor.init_edit_dialog();
 		mouse_mode = RED.state.EXPORT;
 		var nns = RED.nodes.createExportableNodeSet(moving_set);
 		//$("#dialog-form").html(getForm("dialog-form", "export-clipboard-dialog"));
@@ -2163,6 +2164,7 @@ RED.view = (function() {
 	}
 
 	function showExportNodesLibraryDialog() {
+		RED.editor.init_edit_dialog();
 		mouse_mode = RED.state.EXPORT;
 		var nns = RED.nodes.createExportableNodeSet(moving_set);
 		//$("#dialog-form").html(this.getForm('export-library-dialog'));
@@ -2173,6 +2175,7 @@ RED.view = (function() {
 	}
 
 	function showImportNodesDialog(is_arduino_code) {
+		RED.editor.init_edit_dialog();
 		mouse_mode = RED.state.IMPORT;
 		//$("#dialog-form").html(this.getForm('import-dialog'));
 		getForm("dialog-form", "import-dialog", function(d, f) {

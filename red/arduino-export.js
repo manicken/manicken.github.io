@@ -105,19 +105,19 @@ RED.arduino.export = (function() {
 		});
 		//RED.view.dirty(false);
 		const t3 = performance.now();
-		console.log('arduino-export-save2-show-dialog took: ' + (t3-t2) +' milliseconds.');
+		console.log('arduino-export-save-show-dialog took: ' + (t3-t2) +' milliseconds.');
 	}
 
-	function isSpecialNode(type)
+	function isSpecialNode(nt)
 	{
-		if (type == "ClassComment") return true;
-		else if (type == "Comment") return true;
-		else if (type == "TabInput") return true;
-		else if (type == "TabOutput") return true;
-		else if (type == "Function") return true;
-		else if (type == "Variables") return true;
-		else if (type == "tab") return true;
-		else if (type == "Array") return true;
+		if (nt == "ClassComment") return true;
+		else if (nt == "Comment") return true;
+		else if (nt == "TabInput") return true;
+		else if (nt == "TabOutput") return true;
+		else if (nt == "Function") return true;
+		else if (nt == "Variables") return true;
+		else if (nt == "tab") return true;
+		else if (nt == "Array") return true;
 		else return false;
 	}
 	/**
@@ -150,6 +150,11 @@ RED.arduino.export = (function() {
 
 			cpp += n.type + tmplDef + " ";
 			typeLength += tmplDef.length;
+		}
+		else if (n.type == "AudioStreamObject")
+		{
+			cpp += n.subType + " ";
+			typeLength = n.subType.length;
 		}
 		else
 			cpp += n.type + " ";
@@ -319,11 +324,11 @@ RED.arduino.export = (function() {
 					var src_name = RED.nodes.make_name(src);
 					var dst_name = RED.nodes.make_name(dst);
 					cppAC += "AudioConnection          patchCord" + cordcount + "(";
-					if (pi == 0 && dstPortIndex == 0 && src && src.outputs == 1 && dst && dst._def.inputs == 1) {
-						cppAC += src_name + ", " + dst_name;
-					} else {
+					//if (pi == 0 && dstPortIndex == 0 && src && src.outputs == 1 && dst && dst._def.inputs == 1) {
+					//	cppAC += src_name + ", " + dst_name;
+					//} else {
 						cppAC += src_name + ", " + pi + ", " + dst_name + ", " + dstPortIndex;
-					}
+					//}
 					cppAC += ");\n";
 					cordcount++;
 				});
