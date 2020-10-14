@@ -33,7 +33,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 //import javax.swing.JOptionPane;
-
+import processing.app.BaseNoGui;
 import processing.app.Editor;
 import processing.app.tools.Tool;
 import processing.app.Sketch;
@@ -50,52 +50,70 @@ import java.util.ArrayList;
 import static processing.app.I18n.tr;
 
 import javax.swing.JOptionPane;
-import javax.swing.JFrame;
+import javax.swing.*;
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.*;
 
 import java.nio.file.Path;
 
 import org.json.*;
 
+class ConfigDialog extends JPanel
+{
+	private JLabel lblServerport;
+	public JCheckBox chkAutostart;
+    public JTextField txtServerport;
 
-class ANSI{
-	public static final String RESET = "\u001B[0m";
-	public static final String BLACK = "\u001B[30m";
-	public static final String RED = "\u001B[31m";
-	public static final String GREEN = "\u001B[32m";
-	public static final String YELLOW = "\u001B[33m";
-	public static final String BLUE = "\u001B[34m";
-	public static final String PURPLE = "\u001B[35m";
-	public static final String CYAN = "\u001B[36m";
-	public static final String WHITE = "\u001B[37m";
-	public static final String BLACK_BACKGROUND = "\u001B[40m";
-	public static final String RED_BACKGROUND = "\u001B[41m";
-	public static final String GREEN_BACKGROUND = "\u001B[42m";
-	public static final String YELLOW_BACKGROUND = "\u001B[43m";
-	public static final String BLUE_BACKGROUND = "\u001B[44m";
-	public static final String PURPLE_BACKGROUND = "\u001B[45m";
-	public static final String CYAN_BACKGROUND = "\u001B[46m";
-	public static final String WHITE_BACKGROUND = "\u001B[47m";
+    public ConfigDialog() {
+        //construct components
+		lblServerport = new JLabel ("Server Port");
+        chkAutostart = new JCheckBox ("Autostart Server at Arduino IDE start");
+        txtServerport = new JTextField (5);
+
+        //adjust size and set layout
+        setPreferredSize (new Dimension (263, 129));
+        setLayout (null);
+
+        //add components
+		add (lblServerport);
+        add (chkAutostart);
+        add (txtServerport);
+
+        //set component bounds (only needed by Absolute Positioning)
+        lblServerport.setBounds (5, 5, 100, 25);
+        txtServerport.setBounds (85, 5, 100, 25);
+        chkAutostart.setBounds (4, 30, 232, 30);
+    }
+
 }
+
 /**
  * Example Tools menu entry.
  */
 public class API_WebServer implements Tool {
 	Editor editor;
 	
-	Sketch sketch; // for the API uses reflection to get
+	Sketch sketch; // for the API
 	ArrayList<EditorTab> tabs; // for the API uses reflection to get
 	EditorHeader header; // for the API uses reflection to get
 	Runnable runHandler; // for the API uses reflection to get
 	Runnable presentHandler; // for the API uses reflection to get
 	
+	JMenu toolsMenu;
+	
 	HttpServer server;
-	int serverPort = 8080;
+	
+	int DefaultServerPort = 8080;
+	boolean DefaultAutoStart = true;
+	
+	int serverPort = 8080; // replaced by code down
+	boolean autostart = true; // replaced by code down
 	
 	boolean started = false;
 
-	public void init(Editor editor) {
+	public void init(Editor editor) { // required by tool loader
 		this.editor = editor;
 
 		editor.addWindowListener(new WindowAdapter() {
@@ -105,10 +123,14 @@ public class API_WebServer implements Tool {
 		});
 		
 	}
-	public void run()
-	{
-		init();
+	public void run() {// required by tool loader
+		LoadSettings();
+		startServer();
 	}
+	public String getMenuTitle() {// required by tool loader
+		return "API Web Server Start";
+	}
+	
 	private void init()
 	{
 		if (started)
@@ -116,10 +138,13 @@ public class API_WebServer implements Tool {
 			System.out.println("Server is allready running at port " + serverPort);
 			return;
 		}
+		System.out.println("init API_WebServer");
 		try{
-			Field f = Editor.class.getDeclaredField("sketch");
-			f.setAccessible(true);
-			sketch = (Sketch) f.get(this.editor);
+			Field f ;
+			//Field f = Editor.class.getDeclaredField("sketch");
+			//f.setAccessible(true);
+			//sketch = (Sketch) f.get(this.editor);
+			sketch = this.editor.getSketch();
 			
 			f = Editor.class.getDeclaredField("tabs");
 			f.setAccessible(true);
@@ -137,19 +162,165 @@ public class API_WebServer implements Tool {
 			f = Editor.class.getDeclaredField("presentHandler");
 			f.setAccessible(true);
 			presentHandler = (Runnable) f.get(this.editor);
+			
+			f = Editor.class.getDeclaredField("toolsMenu");
+			f.setAccessible(true);
+			toolsMenu = (JMenu) f.get(this.editor);
+			
+			int thisToolIndex = GetMenuItemIndex(toolsMenu, getMenuTitle());
+			JMenuItem newItem = new JMenuItem("API WebServer Config");
+			toolsMenu.add(newItem, thisToolIndex+1);
+			newItem.addActionListener(event -> {
+				//System.out.println("this will be replaced by config window!");
+				ShowConfigDialog();
+			});
+			
 			started = true;
 			
 		}catch (Exception e)
 		{
 			sketch = null;
 			tabs = null;
-			System.err.println("cannot reflect:" + e);
+			System.err.println("cannot reflect: " + e + " @ "+ e.getStackTrace()[0].getLineNumber());
 			System.err.println("API_WebServer not started!!!");
 			return;
 		}
-		System.out.println("init API_WebServer");
 		LoadSettings();
-		startServer();
+		if (autostart)
+			startServer();
+	}
+	public void ShowConfigDialog()
+	{
+		ConfigDialog cd = new ConfigDialog();
+		//cd.setPreferredSize(new Dimension(100, 100)); // set in ConfigDialog code
+		cd.txtServerport.setText(Integer.toString(serverPort));
+		cd.chkAutostart.setSelected(autostart);
+		
+	   int result = JOptionPane.showConfirmDialog(editor, cd, "API Web Server Config" ,JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+			
+		if (result == JOptionPane.OK_OPTION) {
+			serverPort = Integer.parseInt(cd.txtServerport.getText());
+			autostart = cd.chkAutostart.isSelected();
+			System.out.println(serverPort + " " + autostart);
+			SaveSettings();
+		} else {
+			System.out.println("Cancelled");
+		}
+	}
+	public int GetMenuItemIndex(JMenu menu, String name)
+	{
+		//System.out.println("try get menu: " + name);
+		for ( int i = 0; i < menu.getItemCount(); i++)
+		{
+			//System.out.println("try get menu item @ " + i);
+			JMenuItem item = menu.getItem(i);
+			if (item == null) continue; // happens on seperators
+			if (item.getText() == name)
+				return i;
+		}
+		return -1;
+	}
+	public String GetJarFileDir()
+	{
+	  try{
+	    File file = new File(API_WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+	    return file.getParent();
+	    }catch (Exception e) {
+	    System.err.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
+	      return "";
+	    }
+	}
+	
+	public void LoadDefaultSettings()
+	{
+		serverPort = DefaultServerPort;
+		autostart = DefaultAutoStart;
+		System.out.println("Default Settings Used, serverPort=" + serverPort + ", autostart=" + autostart);
+	}
+	
+	public File GetSettingsFile()
+	{
+		//File file = new File("tools/API_WebServer/tool/settings.json"); // works on windows
+		//if (file.exists()) return file;
+		File file = new File(GetJarFileDir() + "/settings.json"); // works on linux and windows
+		if (file.exists()) return file;
+		System.out.println("setting file not found!");
+		return null;
+	}
+	
+	public void LoadSettings()
+	{
+		File file = GetSettingsFile();
+		if (file == null) { LoadDefaultSettings(); return;}
+		
+		String content = "";
+		try { content = new Scanner(file).useDelimiter("\\Z").next(); } 
+		catch (Exception e) {System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber()); LoadDefaultSettings(); return; }
+		JSONObject jsonObj = new JSONObject(content);
+			
+		try {serverPort = jsonObj.getInt("serverPort");} 
+		catch (Exception e) { System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber()); serverPort = DefaultServerPort; System.out.println("Default used for serverPort=" + serverPort);}
+		
+		try {autostart = jsonObj.getBoolean("autostart");}
+		catch (Exception e) { System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber()); autostart = DefaultAutoStart; System.out.println("Default used for autostart=" + autostart);}
+	}
+	
+	public void SaveSettings()
+	{
+		try {
+            // Constructs a FileWriter given a file name, using the platform's default charset
+            FileWriter file = new FileWriter(GetJarFileDir() + "/settings.json");
+            StringWriter stringWriter = new StringWriter();
+			JSONWriter writer = new JSONWriter(stringWriter);
+			writer.object().key("serverPort").value(serverPort).key("autostart").value(autostart).endObject();
+
+			System.out.println(stringWriter.getBuffer().toString());
+			file.write(stringWriter.getBuffer().toString());
+
+			file.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+ 
+        }
+	}
+	
+	private void startServer()
+	{
+		if (server != null)
+			try { server.stop(1); } catch (Exception e) {System.err.println(e + " @ " + e.getStackTrace() + e.getStackTrace()[0].getLineNumber());}
+	  try {
+		server = HttpServer.create(new InetSocketAddress("localhost", serverPort), 0);
+		server.createContext("/", new  MyHttpHandler(editor, this));
+		server.setExecutor(null);
+		server.start();
+
+		System.out.println(" Server started on port " + serverPort);
+	  } catch (Exception e) {
+		System.err.println(e + " @ " + e.getStackTrace() + e.getStackTrace()[0].getLineNumber());
+	  }
+	}
+	
+	public String getJSON()
+	{
+		String filePath = "tools\\API_WebServer\\tool\\settings.json";
+		File file = new File(sketch.getFolder(), "GUI_TOOL.json");
+		boolean exists = file.exists();
+		if (exists)
+		{
+			
+			try {
+				String content = new Scanner(file).useDelimiter("\\Z").next();
+				return content;
+			} catch (Exception e) {
+				System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
+				return "";
+			}
+		}
+		else
+		{
+			System.out.println("GUI_TOOL.json file not found!");
+			return "";
+		}
 	}
 	
 	public void editor_addTab(SketchFile sketchFile, String contents)
@@ -161,7 +332,7 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke editor_addTab");
+			System.err.println("cannot invoke editor_addTab" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
 		}
 	}
 	public void sketch_removeFile(SketchFile sketchFile)
@@ -173,7 +344,7 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke sketch_removeFile");
+			System.err.println("cannot invoke sketch_removeFile" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
 		}
 	}
 	public void editor_removeTab(SketchFile sketchFile)
@@ -185,7 +356,7 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke editor_removeTab");
+			System.err.println("cannot invoke editor_removeTab" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
 		}
 	}
 	public boolean sketchFile_delete(SketchFile sketchFile)
@@ -197,7 +368,7 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke sketchFile_delete" + e);
+			System.err.println("cannot invoke sketchFile_delete" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
 			return false;
 		}
 	}
@@ -210,7 +381,7 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke sketchFile_fileExists" + e);
+			System.err.println("cannot invoke sketchFile_fileExists" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
 			return false;
 		}
 	}
@@ -241,8 +412,8 @@ public class API_WebServer implements Tool {
 		} catch (IOException e) {
 		  // This does not pass on e, to prevent showing a backtrace for
 		  // "normal" errors.
-		  System.err.println(e.getMessage());
-		  JOptionPane.showMessageDialog(new JFrame(), e.getMessage(), tr("Error"),JOptionPane.ERROR_MESSAGE);
+		  System.err.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
+		  JOptionPane.showMessageDialog(new JFrame(), e + " @ "+ e.getStackTrace()[0].getLineNumber(), tr("Error"),JOptionPane.ERROR_MESSAGE);
 		  
 		  return false;
 		}
@@ -302,8 +473,8 @@ public class API_WebServer implements Tool {
 			// This does not pass on e, to prevent showing a backtrace for
 			// "normal" errors.
 			//Base.showWarning(tr("Error"), e.getMessage(), null);
-			JOptionPane.showMessageDialog(new JFrame(), e.getMessage(), tr("Error"),JOptionPane.ERROR_MESSAGE);
-			System.err.println(e.getMessage());
+			JOptionPane.showMessageDialog(new JFrame(), e + " @ "+ e.getStackTrace()[0].getLineNumber(), tr("Error"),JOptionPane.ERROR_MESSAGE);
+			System.err.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
 		  }
 		}
 		return false;
@@ -317,78 +488,7 @@ public class API_WebServer implements Tool {
 	{
 		editor.handleExport(false);
 	}
-	public void LoadSettings()
-	{
-		String filePath = "tools\\API_WebServer\\tool\\settings.json";
-		File file = new File(filePath);
-		boolean exists = file.exists();
-		if (exists)
-		{
-			
-			try {
-				String content = new Scanner(file).useDelimiter("\\Z").next();
-				JSONObject jsonObj = new JSONObject(content);
-				serverPort = jsonObj.getInt("serverPort");
-				System.out.println("API_WebServer Setting file loaded: " +filePath);
-			} catch (Exception e) {
-				System.out.println(e);
-				System.out.println("Using default port 8080.");
-				serverPort = 8080;
-			}
-		}
-		else
-		{
-			System.out.println("setting file not found!");
-			System.out.println("Using default port 8080.");
-			serverPort = 8080;
-		}
-	}
 	
-	public String getJSON()
-	{
-		String filePath = "tools\\API_WebServer\\tool\\settings.json";
-		File file = new File(sketch.getFolder(), "GUI_TOOL.json");
-		boolean exists = file.exists();
-		if (exists)
-		{
-			
-			try {
-				String content = new Scanner(file).useDelimiter("\\Z").next();
-				return content;
-			} catch (Exception e) {
-				System.out.println(e);
-				return "";
-			}
-		}
-		else
-		{
-			System.out.println("GUI_TOOL.json file not found!");
-			return "";
-		}
-	}
-	
-	
-
-
-	public String getMenuTitle() {
-		return "API Web Server";
-	}
-	
-	private void startServer()
-	{
-		
-	  try {
-		server = HttpServer.create(new InetSocketAddress("localhost", serverPort), 0);
-		server.createContext("/", new  MyHttpHandler(editor, this));
-		server.setExecutor(null);
-		server.start();
-		
-		
-		System.out.println(" Server started on port " + serverPort);
-	  } catch (Exception e) {
-		System.out.println(e);
-	  }
-	}
 }
 class MyHttpHandler implements HttpHandler
 {    
