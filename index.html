@@ -59,6 +59,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-sidebar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Sidebar</a></li>
+					<li><a id="btn-bottombar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Bottom Sidebar</a></li>
 					<!--<li><a id="btn-workspace-toolbar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Toolbar</a></li>-->
 					<li class="divider"></li> 
 					
@@ -182,6 +183,12 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<a class="btn btn-mini" id="btn-zoom-in" href="#"><i class="icon-zoom-in"></i></a>
 		</div>
 	</div>
+
+	<div id="bottombar">
+        <ul id="bottombar-tabs"></ul>
+        <div id="bottombar-content"></div>
+    </div>
+    <div id="bottombar-separator"></div>
 
 	<div id="sidebar">
 		<ul id="sidebar-tabs"></ul>
@@ -350,7 +357,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="export-clipboard-dialog">
 	<div class="form-row">
 		<label for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
-		<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll;" class="input-block-level" id="node-input-export" rows="12"></textarea>
+		<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll; cursor: text;" class="input-block-level" id="node-input-export" rows="12"></textarea>
 	</div>
 	<div class="form-tips">
 		Select the text above and copy to the clipboard with Ctrl-A Ctrl-C.
@@ -402,6 +409,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/tabs.js"></script>
 <script src="red/ui/view.js"></script>
 <script src="red/ui/sidebar.js"></script>
+<script src="red/ui/bottombar.js"></script>
+<script src="red/ui/tab-bottom-info.js"></script>
 <script src="red/ui/palette.js"></script>
 <script src="red/ui/tab-info.js"></script>
 <script src="red/ui/tab-config.js"></script>
@@ -564,8 +573,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"Comment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Comment","inputs":0,"outputs":0,"category":"special-function","color":"#ddffbb","icon":"comment.png"}},
 		{"type":"Function","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"code","inputs":0,"outputs":0,"category":"special-function","color":"#ddffbb","icon":"function.png"}},
 		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","inputs":0,"outputs":0,"category":"special-function","color":"#ddffbb","icon":"function.png"}},
-		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""},"comment2":{"value":""}},"shortName":"userObject","inputs":0,"outputs":0,"category":"special-function","color":"#ddffbb","icon":"function.png"}},
-
+		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""}},"shortName":"userObject","inputs":0,"outputs":0,"category":"special-function","color":"#ddffbb","icon":"function.png"}},
+		{"type":"CodeFile","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"codeFile","inputs":0,"outputs":0,"category":"special-function","color":"#ddffbb","icon":"function.png"}},
+		
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-i2s1-function","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SHex","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_hex","inputs":0,"outputs":6,"category":"input-i2s1-function","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -729,26 +739,53 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
+<script type="text/x-red" data-help-name="CodeFile">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This used to make a file, <br>
+		that is used together with the project.
+		The name defines the whole filename 
+		ex. ClassName.h or ClassName.cpp
+	</p>
+	<p>
+		The content is the whole file content.
+	</p>
+	</div>
+	
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+<script type="text/x-red" data-template-name="CodeFile">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> File Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		Color: <input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row-long">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> File contents:</label>
+		<pre id="aceEditor" style="height: 400px;"></pre>
+	</div>
+</script>
+
 <script type="text/x-red" data-help-name="AudioStreamObject">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
-	<p>This used to make custom AudioStream object <br>
+	<p>This used to make use of a custom AudioStream object <br>
 		it have many fields when edit the node.<br><br>
 		<b>Name:</b> is the name given to the instance<br><br>
 		<b>Sub Type:</b> is the class name given in the code, this is the type that will be used when exporting the design.<br><br>
 		<b>Color:</b> just for visuals in this GUI tool<br><br>
 		<b>Inputs:</b> how many audio inputs the AudioStream object has<br><br>
 		<b>Outputs:</b> how many audio outputs the AudioStram object has<br><br>
-		<b>Code contents h file:</b> the contents of the h file<br><br>
-		<b>Code contents cpp file:</b> the contents of the cpp file<br><br>
-		the h and cpp file content will be only usable when using Arduino IDE webserver-link.<br>
-		if you allready have the custom Audio object files in your project then leave theese two fields empty, so that you can use your object in this tool.
 	</p>
 	
 	</div>
 	
 	<h3>Notes</h3>
-	<p></p>
+	<p>The CodeFile type can be used together with this, for easy including/edit of the custom AudioStreamObject</p>
 	<p></p>
 </script>
 <script type="text/x-red" data-template-name="AudioStreamObject">
@@ -771,7 +808,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
 		<input type="text" id="node-input-outputs" placeholder="outputs">
 	</div>
-	<div class="form-row-long">
+	<!--<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents h file:</label>
 		<pre id="aceEditor" style="height: 200px;"></pre>
 	</div>
@@ -779,7 +816,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-comment2"><i class="fa fa-tag"></i> Code contents cpp file:</label>
 		<pre id="aceEditor2" style="height: 200px;"></pre>
 	</div>
-	
+-->
 </script>
 
 <script type="text/x-red" data-help-name="AudioMixer">

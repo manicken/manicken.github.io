@@ -116,6 +116,7 @@ RED.arduino.export = (function() {
 		else if (nt == "TabOutput") return true;
 		else if (nt == "Function") return true;
 		else if (nt == "Variables") return true;
+		else if (nt == "CodeFile") return true;
 		else if (nt == "tab") return true;
 		else if (nt == "Array") return true;
 		else return false;
@@ -387,6 +388,14 @@ RED.arduino.export = (function() {
 		// wsCpp and newWsCpp is used
 		var wsCppFiles = [];
 		var newWsCpp;
+		// first scan for any CodeFile nodes, to make sure theese will be added first
+		for (var i=0; i<nns.length; i++) { 
+			var n = nns[i];
+			if (n.type == "CodeFile") // very special case
+			{
+				wsCppFiles.push(getNewWsCppFile(n.name, "\n// ****** Start Of Included File:" + n.name + " ****** \n" + n.comment + "\n// ****** End Of Included file:" + n.name + " ******\n"));
+			}
+		}
 		for (var wsi=0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
 		{
 			var ws = RED.nodes.workspaces[wsi];

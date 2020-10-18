@@ -249,18 +249,12 @@ RED.editor = (function() {
 		}
 		editing_node.dirty = true;
 		validateNode(editing_node);
-		if (editing_node.type == "Function" || editing_node.type == "Variables")
+		if (editing_node.type == "Function" || editing_node.type == "Variables" || editing_node.type == "CodeFile")
 		{ 
 			var editor = ace.edit("aceEditor");
 			editing_node.comment = editor.getValue();
 		}
-		else if (editing_node.type == "AudioStreamObject")
-		{
-			var editor = ace.edit("aceEditor");
-			var editor2 = ace.edit("aceEditor2");
-			editing_node.comment = editor.getValue();
-			editing_node.comment2 = editor2.getValue();
-		}
+		
 		console.log("edit node bgColor:" + editing_node.bgColor);
 		editing_node.bgColor = $("#node-input-color").val();
 		console.log("edit node bgColor:" + editing_node.bgColor);
@@ -505,7 +499,7 @@ RED.editor = (function() {
 	 * @param prefix - the prefix to use in the input element ids (node-input|node-config-input)
 	 */
 	function prepareEditDialog(node,definition,prefix) {
-		if (node.type == "Function" || node.type == "Variables")
+		if (node.type == "Function" || node.type == "Variables" || node.type == "CodeFile")
 		{ 
 			
 
@@ -629,31 +623,7 @@ RED.editor = (function() {
 				//
 			});
 		}
-		if (node.type == "AudioStreamObject")
-		{
-			var aceEditor = ace.edit("aceEditor");
-			aceEditor.session.setMode("ace/mode/c_cpp");
-			aceEditor.setOptions({
-				enableBasicAutocompletion: true,
-				enableSnippets: true,
-				enableLiveAutocompletion: true,
-			});
-			aceEditor.setValue(node.comment);
-			aceEditor.session.selection.clearSelection();
-			//aceEditor.setOption("showInvisibles", true);
-			aceEditor.setOption("showTokenInfo", true);
-			var aceEditor2 = ace.edit("aceEditor2");
-			aceEditor2.session.setMode("ace/mode/c_cpp");
-			aceEditor2.setOptions({
-				enableBasicAutocompletion: true,
-				enableSnippets: true,
-				enableLiveAutocompletion: true,
-			});
-			aceEditor2.setValue(node.comment2);
-			aceEditor2.session.selection.clearSelection();
-			//aceEditor.setOption("showInvisibles", true);
-			aceEditor2.setOption("showTokenInfo", true);
-		}
+		
 		for (var d in definition.defaults) {
 			if (definition.defaults.hasOwnProperty(d)) {
 				if (definition.defaults[d].type) {

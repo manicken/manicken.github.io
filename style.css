@@ -310,6 +310,17 @@ a.brand img {
     border-style: dashed;
 }
 
+#bottombar {
+    background: #fff;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;    
+}
+#bottombar.closing {
+    background: #eee;
+    border-color: #900;
+    border-style: dashed;
+}
+
 /* ---------- Layout ---------- */
 #main-container {
     position: absolute;
@@ -344,8 +355,27 @@ a.brand img {
 
 .sidebar-closed > #sidebar { display: none; }
 .sidebar-closed > #sidebar-separator { right: 0px !important; }
+.sidebar-closed > #bottombar { right: 15px !important; }
 .sidebar-closed > #workspace { right: 15px !important; }
 .sidebar-closed > #chart-zoom-controls { right: 35px !important; }
+
+#bottombar {
+    height: 305px;
+    position: absolute;
+    left: 180px; right: 330px; bottom: 10px;
+}
+#bottombar-separator {
+    height: 15px;
+    background: url("img/griph.png") no-repeat 50% 50%;
+    position: absolute;
+    left: 5px; right: 10px; bottom: 316px;
+    cursor: row-resize;
+}
+
+.bottombar-closed > #bottombar { display: none; }
+.bottombar-closed > #bottombar-separator { bottom: 0px !important; }
+.bottombar-closed > #workspace { bottom: 15px !important; }
+.bottombar-closed > #chart-zoom-controls { bottom: 35px !important; }
 
 /* ---------- end layout ---------- */
 
@@ -384,11 +414,18 @@ a.brand img {
     margin-left: 20px;
 }
 
-#workspace, #palette, #sidebar {
+#workspace, #palette, #sidebar, #bottombar {
    border: 1px solid #000;
    border-radius: 3px;
 }
 #sidebar-content {
+    font-size: 1.2em;
+    overflow-y: auto;
+    position: absolute;
+    top: 30px; left: 0px; right: 0; bottom: 1px;
+}
+
+#bottombar-content {
     font-size: 1.2em;
     overflow-y: auto;
     position: absolute;
