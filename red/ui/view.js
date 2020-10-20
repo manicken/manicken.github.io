@@ -1769,8 +1769,10 @@ RED.view = (function() {
 	function redraw_paletteNodesReqError(d)
 	{
 		var cat = d._def.category;
+		if (!cat.startsWith("input") && !cat.startsWith("output")) return;
 		//console.error(cat);
-		cat = cat.substring(0, cat.lastIndexOf("-"));
+		//cat = cat.substring(0, cat.lastIndexOf("-"));
+		console.warn("catname @ redraw_paletteNodesReqError:" + cat);
 		var e1 = document.getElementById("palette_node_"+cat + "_"+d.type);
 
 		//console.error("palette_node_"+cat + "_"+d.type);

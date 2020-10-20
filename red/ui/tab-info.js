@@ -103,29 +103,32 @@ RED.sidebar.info = (function() {
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
 		var server = false && patt.test(location.protocol);
-
+		var finalHtml = "";
 
 		prefix = prefix == "" ? "<h3>" + key + "</h3>" : prefix;
 		if (!server) {
 			data = $("script[data-help-name|='" + key + "']").html();
 			if (data)
-				$("#tab-info").html(prefix + '<div class="node-help">' + data + '</div>');
+				finalHtml = '<div class="node-help">' + data + '</div>';
 			else
 			{
 				if (RED.nodes.isClass(key))
-				{
-					$("#tab-info").html(prefix + '<div class="node-help">' + getClassHelpContent(key) + '</div>');
-				}
+					finalHtml = '<div class="node-help">' + getClassHelpContent(key) + '</div>';
 				else
-					$("#tab-info").html(prefix + '<div class="node-help">no help available</div>');
+					finalHtml = '<div class="node-help">no help available</div>';
 			}
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {
-				$("#tab-info").html(prefix + '<h2>' + key + '</h2><div class="node-help">' + data + '</div>');
+				finalHtml = '<h2>' + key + '</h2><div class="node-help">' + data + '</div>';
 			}).fail(function () {
-				$("#tab-info").html(prefix);
+				finalHtml = "";
 			});
 		}
+		var editor = ""; // to test new functinality
+		//editor = $("script[data-template-name|='" + key + "']").html();
+		//if (editor == undefined)
+		//	editor = $("script[data-template-name|='NodesGlobalEdit']").html();
+		$("#tab-info").html(prefix + editor + finalHtml);
 	}
 	function getClassHelpContent(className)
 	{

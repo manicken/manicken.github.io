@@ -632,6 +632,10 @@ g.link_unknown path.link_line {
     width:70%;
     right: 0px;
 }
+#node-input-color {
+    width:70px;
+    right: 0px;
+}
 
 input.input-append-left {
     border-top-right-radius: 0px;

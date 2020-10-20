@@ -42,23 +42,6 @@ RED.palette = (function() {
 	}
 
 	var exclusion = ['config','unknown','deprecated'];
-	var core =	
-	[
-		{name:'favorites',    expanded:false},
-		{name:'used',    expanded:false},
-		{name:'tabs',    expanded:false},
-		{name:'special', expanded:false},
-		{name:'input',   expanded:false, subcats:['i2s1','i2s2','spdif','adc','other']},
-		{name:'output',  expanded:false, subcats:['i2s1','i2s2','spdif','adc','other']},
-		{name:'mixer',   expanded:false},
-		{name:'play',    expanded:false},
-		{name:'record',  expanded:false},
-		{name:'synth',   expanded:false},
-		{name:'effect',  expanded:false},
-		{name:'filter',  expanded:false},
-		{name:'analyze', expanded:false},
-		{name:'control', expanded:false}
-	];
 
 	function createCategoryContainer(category, destContainer, expanded, isSubCat){ 
 		var chevron = "";
@@ -93,7 +76,8 @@ RED.palette = (function() {
 			'<div class="palette-content" id="palette-base-category-'+category+'" style="display: '+displayStyle+';">'+
 			 // '<div id="palette-'+category+'-input" class="palette-sub-category"><div class="palette-sub-category-label">in</div></div>'+ // theese are never used
 			 // '<div id="palette-'+category+'-output" class="palette-sub-category"><div class="palette-sub-category-label">out</div></div>'+ // theese are never used
-			  '<div id="palette-'+category+'-function"></div>'+
+			  //'<div id="palette-'+category+'-function"></div>'+
+			 // '<div id="palette-'+category+'"></div>'+
 			'</div>'+
 			'</div>');
 	}
@@ -104,7 +88,7 @@ RED.palette = (function() {
 			var cat = categories[i];
 			createCategoryContainer(cat.name, "palette-container", cat.expanded, false); 
 			if (cat.subcats != undefined)
-				addSubCats("palette-" + cat.name + "-function", cat.name + "-", cat.subcats);
+				addSubCats("palette-base-category-" + cat.name /*+ "-function"*/, cat.name + "-", cat.subcats);
 		}
 		setCategoryClickFunction('input');
 		setCategoryClickFunction('output');
@@ -116,11 +100,11 @@ RED.palette = (function() {
 			createCategoryContainer(catPreName + categories[i],destContainer, true, true); 
 		}
 	}
-	doInit(core);
+	//doInit(core);
 	
 	function clearCategory(category)
 	{
-		$("#palette-"+ category + "-function").empty();
+		$("#palette-"+ category /*+ "-function"*/).empty();
 	}
 
 	/**
@@ -134,10 +118,10 @@ RED.palette = (function() {
 		var defCategory = "";
 		if (!category)
 		{
-			var indexOf = def.category.lastIndexOf("-");
+			/*var indexOf = def.category.lastIndexOf("-");
 			if (indexOf != -1)
 				category = def.category.substring(0, indexOf);
-			else
+			else*/
 				category = def.category;
 				//console.warn("add to " + category);
 			defCategory = def.category + "";
@@ -145,7 +129,7 @@ RED.palette = (function() {
 		else
 		{
 			//console.error("add to " + category);
-			defCategory = category + "-function";
+			defCategory = category;// + "-function";
 		}
 		//console.warn("add addNodeType:@" + category + ":" + def.shortName);
 			if ($("#palette_node_"+category +"_"+nt).length)	return;		// avoid duplicates
@@ -191,11 +175,12 @@ RED.palette = (function() {
 				createCategoryContainer(category, "palette-container");
 			}
 			
-			if ($("#palette-"+defCategory).length === 0) {          
+			/*if ($("#palette-"+defCategory).length === 0) {          
 				$("#palette-base-category-"+category).append('<div id="palette-'+defCategory+'"></div>');            
-			}
-			
-			$("#palette-"+defCategory).append(d);
+			}*/
+
+			$("#palette-base-category-"+defCategory).append(d);
+			//$("#palette-"+defCategory).append(d);
 			d.onmousedown = function(e) { e.preventDefault(); };
 
 			setTooltipContent('', nt, d);
@@ -347,7 +332,7 @@ RED.palette = (function() {
 		settings:settings,
 		settingsCategoryTitle:settingsCategoryTitle,
 		settingsEditorLabels:settingsEditorLabels,
-
+		doInit:doInit,
 		add:addNodeType,
 		clearCategory:clearCategory,
 		remove:removeNodeType,

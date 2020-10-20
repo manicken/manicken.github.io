@@ -323,6 +323,33 @@ RED.main = (function() {
 	function update(picker, selector) {
 		document.querySelector(selector).style.background = picker.toBackground()
 	}
+	$('#btn-print').click(function() { PrintElem(); });
+	function PrintElem()
+	{
+		var elemName = "chart"
+		var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
+
+		mywindow.document.write('<html><head>');
+		mywindow.document.write('<link rel="stylesheet" href="style.css" type="text/css" />'); 
+		mywindow.document.write('</head><body >');
+		//mywindow.document.write('<div id="chart">')
+		mywindow.document.write(document.getElementById(elemName).outerHTML);
+		mywindow.document.write('</body></html>');
+
+		mywindow.document.close(); // necessary for IE >= 10
+		mywindow.focus(); // necessary for IE >= 10*/
+		mywindow.document.getElementById(elemName).style.top = "0px";
+		mywindow.document.getElementById('grid-h').style.display = "none";
+		mywindow.document.getElementById('grid-v-mi').style.display = "none";
+		mywindow.document.getElementById('grid-v-ma').style.display = "none";
+		mywindow.document.body.onload = function(){
+			mywindow.print();
+		};
+		//mywindow.print();
+		//mywindow.close();
+
+		return true;
+	}
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
 		
@@ -350,9 +377,11 @@ RED.main = (function() {
 			// and in that case later we cannot use RED.main.requirements because that is unassigned.
 			RED.main.requirements = metaData["requirements"]; // RED.main. is used to clarify the location of requirements
 			
-			var data = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
-			var nodes = data["nodes"];
-			$.each(nodes, function (key, val) {
+			var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
+			RED.palette.doInit(nodeCategories["categories"]);
+
+			var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
+			$.each(nodeDefinitions["nodes"], function (key, val) {
 				RED.nodes.registerType(val["type"], val["data"]);
 			});
 			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {

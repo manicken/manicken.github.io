@@ -629,7 +629,7 @@ RED.nodes = (function() {
 					if (ws.inputs != 0 || ws.outputs != 0) // this adds workspaces that have inputs and/or outputs to the palette
 					{
 						var color = RED.main.classColor;
-						var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs-function\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+						var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
 						RED.nodes.registerType(ws.label, data);
 					}
 				}
@@ -1236,7 +1236,7 @@ RED.nodes = (function() {
 			if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
 			var classColor = RED.main.classColor;
 			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
-			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
+			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
 
 			registerType(ws.label, data);
 		}
@@ -1250,6 +1250,7 @@ RED.nodes = (function() {
 		else if (nt == "Array") return false;
 		else if (nt == "Function") return false;
 		else if (nt == "AudioStreamObject") return false;
+		else if (nt == "CodeFile") return false;
 		else if (isClass(nt)) return false;
 		return true;
 	}
@@ -1259,6 +1260,10 @@ RED.nodes = (function() {
 		RED.palette.clearCategory("used");
 		for (var i = 0; i < nodes.length; i++)
 		{
+			if (nodes[i]._def.category.startsWith("input")) continue;
+			if (nodes[i]._def.category.startsWith("output")) continue;
+			if (nodes[i]._def.category.startsWith("control")) continue;
+
 			if (checkIfTypeShouldBeAddedToUsedCat(nodes[i].type))
 			{
 				RED.palette.add(nodes[i].type, nodes[i]._def, "used");
