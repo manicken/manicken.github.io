@@ -112,7 +112,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<ul class="dropdown-menu">
 					<li><a id="btn-import-json" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>JSON</a></li>
 					<li><a id="btn-import-arduino" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>Arduino</a></li>
-					<li><a id="btn-get-design-json";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From Arduino by JSON</a></li>
+					<li><a id="btn-get-design-json";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From Arduino IDE by JSON</a></li>
 					<input id="file-input" class="btn action-import" type="file" style="display:none;">
 					<li><label for="file-input" class="btn action-import" ><i id="btn-icn-deploy" class="icon-download"></i> LoadFromFile</label></li>
 				</ul>
@@ -122,6 +122,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Simple</a></li>
 					<li><a id="btn-deploy2";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Class-based</a></li>
+					<li><a id="btn-pushJSON";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to Arduino IDE</a></li>
 					<li><a id="btn-saveTofile" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> SaveToFile</a></li>
 				</ul>
 			</div>
@@ -424,6 +425,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 
 
+
 <!--
  TODO: generate some or all of this automatically from the C++ source
 -->
@@ -633,12 +635,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 		{"type":"AudioAmplifier","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"amp","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioMixer4","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioPlayMemory","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"playMem","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdWav","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"playSdWav","inputs":0,"outputs":2,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdRaw","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"playSdRaw","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySerialflashRaw","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"playFlashRaw","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlayQueue","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"queue","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioRecordQueue","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"queue","inputs":1,"outputs":0,"category":"record","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioSynthWavetable","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"wavetable","inputs":0,"outputs":1,"category":"synth","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioSynthSimpleDrum","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"drum","inputs":0,"outputs":1,"category":"synth","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioSynthKarplusStrong","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"string","inputs":0,"outputs":1,"category":"synth","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -652,6 +657,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioSynthWaveformDc","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"dc","inputs":0,"outputs":1,"category":"synth","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioSynthNoiseWhite","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"noise","inputs":0,"outputs":1,"category":"synth","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioSynthNoisePink","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"pink","inputs":0,"outputs":1,"category":"synth","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioEffectFade","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"fade","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectChorus","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"chorus","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectFlange","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"flange","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -668,9 +674,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioEffectWaveshaper","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"waveshape","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectGranular","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"granular","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectDigitalCombine","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"combine","inputs":2,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioFilterBiquad","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"biquad","inputs":1,"outputs":1,"category":"filter","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioFilterFIR","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"fir","inputs":1,"outputs":1,"category":"filter","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioFilterStateVariable","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"filter","inputs":2,"outputs":3,"category":"filter","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioAnalyzePeak","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"peak","inputs":1,"outputs":0,"category":"analyze","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioAnalyzeRMS","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"rms","inputs":1,"outputs":0,"category":"analyze","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioAnalyzeFFT256","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"fft256","inputs":1,"outputs":0,"category":"analyze","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -678,6 +686,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioAnalyzeToneDetect","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"tone","inputs":1,"outputs":0,"category":"analyze","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioAnalyzeNoteFrequency","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"notefreq","inputs":1,"outputs":0,"category":"analyze","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioAnalyzePrint","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"print","inputs":1,"outputs":0,"category":"analyze","color":"#E6E0F8","icon":"arrow-in.png"}},
+		
 		{"type":"AudioControlSGTL5000","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"sgtl5000","inputs":0,"outputs":0,"category":"control","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioControlAK4558","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"ak4558","inputs":0,"outputs":0,"category":"control","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioControlCS4272","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"cs4272","inputs":0,"outputs":0,"category":"control","color":"#E6E0F8","icon":"arrow-in.png"}},

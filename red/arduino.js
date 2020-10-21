@@ -16,6 +16,8 @@
  * limitations under the License.
  **/
 RED.arduino = (function() {
+	var isConnected = false;
+
 	var settings = {
 		useExportDialog: true,
 		IOcheckAtExport: true,
@@ -30,15 +32,27 @@ RED.arduino = (function() {
 		WebServerPort: "Web Server Port"
 	};
 
+	function startConnectedChecker()
+	{
+		window.setInterval(function () {
+	        httpGetAsync("ping");
+	    }, 2000);
+	}
+
     function httpPostAsync(data)
 	{
+		const t0 = performance.now();
 		var xhr = new XMLHttpRequest();
+		//console.warn("httpPostAsync:" + data);
 		const url = 'http://localhost:' + settings.WebServerPort;
 		xhr.open("POST", url, true);
 		xhr.onloadend = function () {
 			console.warn("response:" + xhr.responseText);
+			const t1 = performance.now();
+			console.log('httpPostAsync took: ' + (t1-t0) +' milliseconds.');
 		  };
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.timeout = 2000;
 		xhr.send(data); 
 	}
 	function httpGetAsync(param)
@@ -46,19 +60,32 @@ RED.arduino = (function() {
 		var xmlHttp = new XMLHttpRequest();
 		const url = 'http://localhost:' + settings.WebServerPort;
 		xmlHttp.onreadystatechange = function () {
+			if (xmlHttp.readyState != 4) return; // wait for timeout or response
+
 			if (param == "getJSON")
 			{
-				if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+				if (xmlHttp.status == 200) {
 					console.warn("JSON response");
 					RED.storage.loadContents(xmlHttp.responseText);
 				}
-				else if (xmlHttp.readyState == 4)
+				else
 					console.warn("getJSON did not response = " + xmlHttp.status);
 			}
+			else if (param.startsWith("addFile") || param.startsWith("renameFile") || param.startsWith("removeFile"))
+			{
+				console.warn("push json");
+				RED.arduino.export.pushJSON();
+			}
+			else if (param == "ping")
+			{
+				isConnected = (xmlHttp.status == 200);
+				//console.warn("isConnected="+ isConnected);
+			}
 			else
-				console.warn("response:" + xmlHttp.responseText);
-		  };
+				console.warn("response@" + param + ":" + xmlHttp.responseText);
+		};
 		xmlHttp.open("GET", url+"\\?cmd=" + param, true); // true for asynchronous 
+		xmlHttp.timeout = 2000;
 		xmlHttp.send(null);
     }
     $('#btn-verify-compile').click(function() { httpGetAsync("compile"); });
@@ -66,10 +93,11 @@ RED.arduino = (function() {
 	$('#btn-get-design-json').click(function() { httpGetAsync("getJSON"); });
     
     return {
+		isConnected: function() { return isConnected;},
 		settings:settings,
 		settingsCategoryTitle:settingsCategoryTitle,
 		settingsEditorLabels:settingsEditorLabels,
-
+		startConnectedChecker:startConnectedChecker,
 		httpPostAsync:httpPostAsync,
 		httpGetAsync:httpGetAsync,
 	};

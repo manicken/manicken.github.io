@@ -190,11 +190,11 @@ RED.arduino.export = (function() {
 	/**
 	 * 
 	 * @param {*} wsCppFiles array of type "getNewWsCppFile"
-	 * @param {*} removeFiles this tells arduino ide to remove files that is not present in this post, the main ino-file is never removed
+	 * @param {*} command additional command string 
 	 */
-	function getPOST_JSON(wsCppFiles, removeFiles)
+	function getPOST_JSON(wsCppFiles, command)
 	{
-		return {files:wsCppFiles, removeUnusedFiles:removeFiles};
+		return {files:wsCppFiles, command:command};
 	}
 	function getNewAudioConnectionType()
 	{
@@ -588,15 +588,27 @@ RED.arduino.export = (function() {
 		cpp += getCppFooter();
 		//console.log(cpp);
 		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
-		console.log(jsonString);
-		var wsCppFilesJson = getPOST_JSON(wsCppFiles, false);
-		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
+		//console.log(jsonString);
+		var wsCppFilesJson = getPOST_JSON(wsCppFiles, "");
+		if (RED.arduino.isConnected())
+			RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
 
-		if (RED.arduino.settings.useExportDialog)
+		console.error("RED.arduino.isConnected="+RED.arduino.isConnected());
+		if (RED.arduino.settings.useExportDialog && !RED.arduino.isConnected())
 			showExportDialog("Class Export to Arduino", cpp);	
 			//showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 		const t1 = performance.now();
 		console.log('arduino-export-save2 took: ' + (t1-t0) +' milliseconds.');
+	}
+
+	$('#btn-pushJSON').click(function() { pushJSON(); });
+	function pushJSON()
+	{
+		var json = localStorage.getItem("audio_library_guitool");
+		var wsCppFiles = [];
+		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", json)); // JSON beautifier
+		var wsCppFilesJson = getPOST_JSON(wsCppFiles, "");
+		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
 	}
 	
 	/*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
@@ -611,6 +623,7 @@ RED.arduino.export = (function() {
 
     return {
 		isSpecialNode:isSpecialNode,
-		showExportDialog:showExportDialog
+		showExportDialog:showExportDialog,
+		pushJSON:pushJSON,
 	};
 })();

@@ -262,7 +262,7 @@ RED.view = (function() {
 	{
 		initGrid();
 		$("#menu-arduino").mouseover(function(){
-			showPopOver("#menu-arduino", false, "Arduino-Compatible API", "bottom");
+			showPopOver("#menu-arduino", false, "Arduino IDE API", "bottom");
 		});
 		$("#menu-arduino").mouseout(function(){
 			$(this).popover("destroy");
@@ -448,7 +448,8 @@ RED.view = (function() {
 		workspace_tabs.activateTab(tabId);
 		RED.history.push({t:'add',workspaces:[ws],dirty:dirty});
 		RED.view.dirty(true);
-		RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
+		//RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
+		
 	}
 	$('#btn-workspace-add-tab').on("click",addWorkspace);
 	$('#btn-workspace-add').on("click",addWorkspace);
@@ -749,6 +750,7 @@ RED.view = (function() {
 				nn.h = Math.max(node_height,(nn.outputs||0) * 15);
 				RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
 				RED.nodes.add(nn);
+				RED.nodes.addUsedNodeTypesToPalette();
 				RED.editor.validateNode(nn);
 				setDirty(true);
 				// auto select dropped node - so info shows (if visible)
@@ -973,7 +975,9 @@ RED.view = (function() {
 
 		selected_link = null;
 		updateSelection();
+		
 		redraw();
+		RED.nodes.addUsedNodeTypesToPalette();
 	}
 
 	function copySelection() {
@@ -2445,7 +2449,7 @@ RED.view = (function() {
 		},
 		removeWorkspace: function(ws) {
 			workspace_tabs.removeTab(ws.id); // see tabs.js
-			RED.arduino.httpGetAsync("removeFile:" + ws.label + ".h");
+			//RED.arduino.httpGetAsync("removeFile:" + ws.label + ".h");
 		},
 		getWorkspace: function() {
 			return activeWorkspace;

@@ -29,7 +29,7 @@ RED.history = (function() {
 		},
 		push: function(ev) {
 			undo_history.push(ev);
-			console.trace();
+			//console.trace();
 		},
 		pop: function() {
 			var ev = undo_history.pop();

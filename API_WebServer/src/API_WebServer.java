@@ -60,6 +60,9 @@ import java.nio.file.Path;
 
 import org.json.*;
 
+import java.awt.Desktop;
+import java.net.URI;
+
 class ConfigDialog extends JPanel
 {
 	private JLabel lblServerport;
@@ -107,6 +110,8 @@ public class API_WebServer implements Tool {
 	
 	int DefaultServerPort = 8080;
 	boolean DefaultAutoStart = true;
+	String thisToolMenuTitle = "API Web Server";
+	String rootDir;
 	
 	int serverPort = 8080; // replaced by code down
 	boolean autostart = true; // replaced by code down
@@ -128,7 +133,7 @@ public class API_WebServer implements Tool {
 		startServer();
 	}
 	public String getMenuTitle() {// required by tool loader
-		return "API Web Server Start";
+		return thisToolMenuTitle;
 	}
 	
 	private void init()
@@ -139,6 +144,8 @@ public class API_WebServer implements Tool {
 			return;
 		}
 		System.out.println("init API_WebServer");
+		rootDir = GetArduinoRootDir();
+		System.out.println("rootDir="+rootDir);
 		try{
 			Field f ;
 			//Field f = Editor.class.getDeclaredField("sketch");
@@ -167,27 +174,47 @@ public class API_WebServer implements Tool {
 			f.setAccessible(true);
 			toolsMenu = (JMenu) f.get(this.editor);
 			
-			int thisToolIndex = GetMenuItemIndex(toolsMenu, getMenuTitle());
-			JMenuItem newItem = new JMenuItem("API WebServer Config");
-			toolsMenu.add(newItem, thisToolIndex+1);
-			newItem.addActionListener(event -> {
-				//System.out.println("this will be replaced by config window!");
-				ShowConfigDialog();
-			});
+			int thisToolIndex = GetMenuItemIndex(toolsMenu, thisToolMenuTitle);
+			JMenu thisToolMenu = new JMenu(thisToolMenuTitle);		
+			toolsMenu.insert(thisToolMenu, thisToolIndex+1);
+			toolsMenu.remove(thisToolIndex);
 			
+			JMenuItem newItem = new JMenuItem("Start/Restart Server");
+			thisToolMenu.add(newItem);
+			newItem.addActionListener(event -> run());
+			
+			newItem = new JMenuItem("Settings");
+			thisToolMenu.add(newItem);
+			newItem.addActionListener(event -> ShowConfigDialog());
+
+			newItem = new JMenuItem("Start GUI Tool");
+			thisToolMenu.add(newItem);
+			newItem.addActionListener(event -> StartGUItool());
+
 			started = true;
 			
 		}catch (Exception e)
 		{
 			sketch = null;
 			tabs = null;
-			System.err.println("cannot reflect: " + e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			System.err.println("cannot reflect:");
+			e.printStackTrace();
 			System.err.println("API_WebServer not started!!!");
 			return;
 		}
 		LoadSettings();
 		if (autostart)
 			startServer();
+	}
+	public void StartGUItool()
+	{
+		try {
+			File htmlFile = new File(rootDir + "/hardware/teensy/avr/libraries/Audio/gui/index.html");
+			Desktop.getDesktop().browse(htmlFile.toURI());
+			System.out.println("Web page opened in browser");
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
 	}
 	public void ShowConfigDialog()
 	{
@@ -220,13 +247,23 @@ public class API_WebServer implements Tool {
 		}
 		return -1;
 	}
+	public String GetArduinoRootDir()
+	{
+	  try{
+	    File file = new File(API_WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+	    return file.getParentFile().getParentFile().getParentFile().getParent();
+	    }catch (Exception e) {
+	    e.printStackTrace();
+	      return "";
+	    }
+	}
 	public String GetJarFileDir()
 	{
 	  try{
 	    File file = new File(API_WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 	    return file.getParent();
 	    }catch (Exception e) {
-	    System.err.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
+	    e.printStackTrace();
 	      return "";
 	    }
 	}
@@ -255,14 +292,14 @@ public class API_WebServer implements Tool {
 		
 		String content = "";
 		try { content = new Scanner(file).useDelimiter("\\Z").next(); } 
-		catch (Exception e) {System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber()); LoadDefaultSettings(); return; }
+		catch (Exception e) {e.printStackTrace(); LoadDefaultSettings(); return; }
 		JSONObject jsonObj = new JSONObject(content);
 			
 		try {serverPort = jsonObj.getInt("serverPort");} 
-		catch (Exception e) { System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber()); serverPort = DefaultServerPort; System.out.println("Default used for serverPort=" + serverPort);}
+		catch (Exception e) { e.printStackTrace(); serverPort = DefaultServerPort; System.out.println("Default used for serverPort=" + serverPort);}
 		
 		try {autostart = jsonObj.getBoolean("autostart");}
-		catch (Exception e) { System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber()); autostart = DefaultAutoStart; System.out.println("Default used for autostart=" + autostart);}
+		catch (Exception e) { e.printStackTrace(); autostart = DefaultAutoStart; System.out.println("Default used for autostart=" + autostart);}
 	}
 	
 	public void SaveSettings()
@@ -296,13 +333,12 @@ public class API_WebServer implements Tool {
 
 		System.out.println(" Server started on port " + serverPort);
 	  } catch (Exception e) {
-		System.err.println(e + " @ " + e.getStackTrace() + e.getStackTrace()[0].getLineNumber());
+		e.printStackTrace();
 	  }
 	}
 	
 	public String getJSON()
 	{
-		String filePath = "tools\\API_WebServer\\tool\\settings.json";
 		File file = new File(sketch.getFolder(), "GUI_TOOL.json");
 		boolean exists = file.exists();
 		if (exists)
@@ -312,7 +348,7 @@ public class API_WebServer implements Tool {
 				String content = new Scanner(file).useDelimiter("\\Z").next();
 				return content;
 			} catch (Exception e) {
-				System.out.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
+				e.printStackTrace();
 				return "";
 			}
 		}
@@ -321,6 +357,57 @@ public class API_WebServer implements Tool {
 			System.out.println("GUI_TOOL.json file not found!");
 			return "";
 		}
+	}
+	public void SetJSON(String contents)
+	{
+		try {
+            // Constructs a FileWriter given a file name, using the platform's default charset
+            FileWriter file = new FileWriter(sketch.getFolder() + "/GUI_TOOL.json");
+			file.write(contents);
+			file.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+ 
+        }
+	}
+	
+	public void RemoveFilesNotInJSON(JSONArray arr)
+	{
+		System.out.println("RemoveFilesNotInJSON");
+		ArrayList<String> filesToRemove = new ArrayList<String>();
+		
+		// this removes files in the sketch that is not present in the 
+		// JSONArray. To not interfere with the current sketch.getCodeCount()
+		// it stores filenames to be removed in a temporary Array
+		for (int i = 0; i < sketch.getCodeCount(); i++)
+		{
+			SketchFile sf = sketch.getFile(i);
+			if (sf.isPrimary()) continue; // never remove primary sketch ino file
+			
+			String fileName = sf.getFileName();
+			if (!CheckIfFileExistsInJsonArray(fileName, arr))
+				filesToRemove.add(fileName); // store it for later
+		}
+		// now it can remove files 
+		for (int i = 0; i < filesToRemove.size(); i++)
+		{
+			String fileName = filesToRemove.get(i);
+			System.out.println("Removing file:" + fileName);
+			removeFile(fileName);
+		}
+	}
+	private boolean CheckIfFileExistsInJsonArray(String fileName, JSONArray arr)
+	{
+		//System.out.println("CheckIfFileExistsInJsonArray:" + fileName);
+		for (int i = 0; i < arr.length(); i++)
+		{
+			JSONObject e = arr.getJSONObject(i);
+			String name = e.getString("name");
+			//System.out.println("against: " + name);
+			if (name.equals(fileName))
+				return true;
+		}
+		return false;
 	}
 	
 	public void editor_addTab(SketchFile sketchFile, String contents)
@@ -332,7 +419,8 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke editor_addTab" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			System.err.println("cannot invoke editor_addTab");
+			e.printStackTrace();
 		}
 	}
 	public void sketch_removeFile(SketchFile sketchFile)
@@ -344,7 +432,8 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke sketch_removeFile" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			System.err.println("cannot invoke sketch_removeFile");
+			e.printStackTrace();
 		}
 	}
 	public void editor_removeTab(SketchFile sketchFile)
@@ -356,7 +445,8 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke editor_removeTab" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			System.err.println("cannot invoke editor_removeTab");
+			e.printStackTrace();
 		}
 	}
 	public boolean sketchFile_delete(SketchFile sketchFile)
@@ -368,7 +458,8 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke sketchFile_delete" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			System.err.println("cannot invoke sketchFile_delete");
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -381,7 +472,8 @@ public class API_WebServer implements Tool {
 		}
 		catch (Exception e)
 		{
-			System.err.println("cannot invoke sketchFile_fileExists" + e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			System.err.println("cannot invoke sketchFile_fileExists");
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -398,7 +490,7 @@ public class API_WebServer implements Tool {
 			System.err.println(e);
 			return false;
 		}
-		System.out.println("folder: " + folder.toString());
+		//System.out.println("folder: " + folder.toString());
 		File newFile = new File(folder, fileName);
 		int fileIndex = sketch.findFileIndex(newFile);
 		if (fileIndex >= 0) { // file allready exist, just change the contents.
@@ -412,8 +504,7 @@ public class API_WebServer implements Tool {
 		} catch (IOException e) {
 		  // This does not pass on e, to prevent showing a backtrace for
 		  // "normal" errors.
-		  System.err.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
-		  JOptionPane.showMessageDialog(new JFrame(), e + " @ "+ e.getStackTrace()[0].getLineNumber(), tr("Error"),JOptionPane.ERROR_MESSAGE);
+		  e.printStackTrace();
 		  
 		  return false;
 		}
@@ -440,20 +531,13 @@ public class API_WebServer implements Tool {
 				sketch_removeFile(sketchFile);
 			}
 			editor_removeTab(sketchFile);
-			//try {
-				// just set current tab to the main tab
-				editor.selectTab(0);
 
-				// update the tabs
-				header.repaint();
-				return true;
-			//} catch (Exception e) {
-				// This does not pass on e, to prevent showing a backtrace for
-				// "normal" errors.
-				//Base.showWarning(tr("Error"), e.getMessage(), null);
-			//	JOptionPane.showMessageDialog(new JFrame(), e.getMessage(), tr("Error"),JOptionPane.ERROR_MESSAGE);
-			//	System.out.println(e.getMessage());
-			//}      
+			// just set current tab to the main tab
+			editor.selectTab(0);
+
+			// update the tabs
+			header.repaint();
+			return true;
 		}
 		System.err.println("file don't exists in sketch " + fileName);
 		return false;
@@ -470,11 +554,7 @@ public class API_WebServer implements Tool {
 			header.rebuild();
 			return true;
 		  } catch (IOException e) {
-			// This does not pass on e, to prevent showing a backtrace for
-			// "normal" errors.
-			//Base.showWarning(tr("Error"), e.getMessage(), null);
-			JOptionPane.showMessageDialog(new JFrame(), e + " @ "+ e.getStackTrace()[0].getLineNumber(), tr("Error"),JOptionPane.ERROR_MESSAGE);
-			System.err.println(e + " @ "+ e.getStackTrace()[0].getLineNumber());
+			e.printStackTrace();
 		  }
 		}
 		return false;
@@ -512,8 +592,13 @@ class MyHttpHandler implements HttpHandler
 		{ 
 		   //System.out.println("GET");
 		   requestParamValue = handleGetRequest(httpExchange);
-		   System.out.println("GET request params: " + requestParamValue);
-		   if (requestParamValue.equals("compile"))
+		   if (!requestParamValue.equals("ping"))
+			System.out.println("GET request params: " + requestParamValue);
+		   if (requestParamValue.equals("ping"))
+		   {
+			   // do nothing, a OK is default to send back
+		   }
+		   else if (requestParamValue.equals("compile"))
 		   {
 			   editor.setAlwaysOnTop(false);
 			   editor.setAlwaysOnTop(true);
@@ -565,24 +650,26 @@ class MyHttpHandler implements HttpHandler
 	public void ParsePOST_JSON(String data)
 	{
 		JSONObject jsonObj = new JSONObject(data);
-		boolean removeUnusedFiles = jsonObj.getBoolean("removeUnusedFiles"); // this should be implemented later
+		String command = jsonObj.getString("command"); // this should be implemented later
 		JSONArray arr = jsonObj.getJSONArray("files");
+		
+		try{api.RemoveFilesNotInJSON(arr);}
+		catch (Exception e) {e.printStackTrace();}
 		
 		for (int i = 0; i < arr.length(); i++)
 		{
 			JSONObject e = arr.getJSONObject(i);
 			String name = e.getString("name");
-			//if (!name.endsWith(".h"))
-			//	name += ".h";
 			String cpp = e.getString("cpp");
-			//editor.addNewFile(name, cpp); // need modificzation of arduino IDE source code
-			
-			api.addNewFile(name, cpp); // uses reflection to use private members
-			//TODO: fix so that tabs/files that allready exist in the sketch is removed if they not exist in the json, this should be optional
+			if (name.equals("GUI_TOOL.json"))
+				api.SetJSON(cpp);
+			else
+				api.addNewFile(name, cpp); // uses reflection to use private members
 		}
 		//System.out.println(data);
 		editor.handleSave(true);
 	}
+	
 	
 	private String handleGetRequest(HttpExchange httpExchange) {
 		httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
@@ -602,7 +689,7 @@ class MyHttpHandler implements HttpHandler
             try{
 			httpExchange.sendResponseHeaders(200, 0);
 			} catch (Exception e) {
-			System.out.println(e);
+			e.printStackTrace();
 			}
 			System.out.println("hi");
             return "";
@@ -619,19 +706,7 @@ class MyHttpHandler implements HttpHandler
 
 	private void handleResponse(HttpExchange httpExchange, String htmlResponse)  throws  IOException {
 		OutputStream outputStream = httpExchange.getResponseBody();
-		/*StringBuilder htmlBuilder = new StringBuilder();
 
-		htmlBuilder.append("<html>")
-					.append("<body>")
-					.append("<h1>")
-					.append("OK")
-					.append("</h1>")
-					.append("</body>")
-					.append("</html>");
-
-		String htmlResponse = htmlBuilder.toString();*/
-		//System.out.println("htmlResponse:"+htmlResponse);
-	  
 		// this line is a must
 		httpExchange.sendResponseHeaders(200, htmlResponse.length());
 		// additional data to send back

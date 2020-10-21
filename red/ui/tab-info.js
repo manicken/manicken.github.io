@@ -128,6 +128,7 @@ RED.sidebar.info = (function() {
 		//editor = $("script[data-template-name|='" + key + "']").html();
 		//if (editor == undefined)
 		//	editor = $("script[data-template-name|='NodesGlobalEdit']").html();
+
 		$("#tab-info").html(prefix + editor + finalHtml);
 	}
 	function getClassHelpContent(className)

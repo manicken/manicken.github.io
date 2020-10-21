@@ -809,7 +809,7 @@ RED.nodes = (function() {
 
 		console.log("workspaceNameChanged:" + oldName + " to " + newName + " with " + changedCount + " objects changed");
 
-		RED.arduino.httpGetAsync("renameFile:" + oldName + ".h:" + newName + ".h");
+		//RED.arduino.httpGetAsync("renameFile:" + oldName + ".h:" + newName + ".h");
 	}
 	function workspaceNameCheck(newName)
 	{
@@ -1256,7 +1256,7 @@ RED.nodes = (function() {
 	}
 	function addUsedNodeTypesToPalette()
 	{
-		
+		console.trace("addUsedNodeTypesToPalette");
 		RED.palette.clearCategory("used");
 		for (var i = 0; i < nodes.length; i++)
 		{
@@ -1336,7 +1336,8 @@ RED.nodes = (function() {
 		classOutputPortToCpp:classOutputPortToCpp,
 		classInputPortToCpp:classInputPortToCpp,
 		isNameDeclarationArray:isNameDeclarationArray,
-		updateClassTypes: function () {addClassTabsToPalette(); refreshClassNodes(); addUsedNodeTypesToPalette(); console.warn("@updateClassTypes");},
+		updateClassTypes: function () {addClassTabsToPalette(); refreshClassNodes(); console.warn("@updateClassTypes");},
+		addUsedNodeTypesToPalette: addUsedNodeTypesToPalette,
 		addClassTabsToPalette:addClassTabsToPalette,
 		refreshClassNodes:refreshClassNodes,
 		make_name:make_name,

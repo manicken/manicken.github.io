@@ -282,6 +282,7 @@ RED.main = (function() {
 			RED.storage.load();
 			RED.nodes.addClassTabsToPalette();
 			RED.nodes.refreshClassNodes();
+			RED.nodes.addUsedNodeTypesToPalette();
 			RED.view.redraw();
 			
 			setTimeout(function() {
@@ -352,7 +353,9 @@ RED.main = (function() {
 	}
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
-		
+		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
+		RED.arduino.startConnectedChecker();
+
 		addDemoFlowsToMenu();
 		RED.view.init();
 

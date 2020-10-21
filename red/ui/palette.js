@@ -88,7 +88,7 @@ RED.palette = (function() {
 			var cat = categories[i];
 			createCategoryContainer(cat.name, "palette-container", cat.expanded, false); 
 			if (cat.subcats != undefined)
-				addSubCats("palette-base-category-" + cat.name /*+ "-function"*/, cat.name + "-", cat.subcats);
+				addSubCats("palette-base-category-" + cat.name , cat.name + "-", cat.subcats);
 		}
 		setCategoryClickFunction('input');
 		setCategoryClickFunction('output');
@@ -104,7 +104,7 @@ RED.palette = (function() {
 	
 	function clearCategory(category)
 	{
-		$("#palette-"+ category /*+ "-function"*/).empty();
+		$("#palette-base-category-"+ category ).empty();
 	}
 
 	/**
@@ -113,17 +113,12 @@ RED.palette = (function() {
 	 * @param {*} def node type def
 	 * 	 */
 	function addNodeType(nt,def, category) { // externally RED.palettte.add
-		//if ($("#palette_node_"+nt).length)	return;		// avoid duplicates
 		//if (exclusion.indexOf(def.category)!=-1) return;
 		var defCategory = "";
 		if (!category)
 		{
-			/*var indexOf = def.category.lastIndexOf("-");
-			if (indexOf != -1)
-				category = def.category.substring(0, indexOf);
-			else*/
-				category = def.category;
-				//console.warn("add to " + category);
+			category = def.category;
+			//console.warn("add to " + category);
 			defCategory = def.category + "";
 		}
 		else
@@ -132,7 +127,7 @@ RED.palette = (function() {
 			defCategory = category;// + "-function";
 		}
 		//console.warn("add addNodeType:@" + category + ":" + def.shortName);
-			if ($("#palette_node_"+category +"_"+nt).length)	return;		// avoid duplicates
+		if ($("#palette_node_"+category +"_"+nt).length)	return;		// avoid duplicates
 
 			var d = document.createElement("div");
 			d.id = "palette_node_"+category +"_"+nt;

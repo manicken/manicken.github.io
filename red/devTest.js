@@ -59,11 +59,45 @@ RED.devTest = (function() {
         var projectLoadTest = JSON.parse(project_jsonString);
         RED.settings.setFromJSONobj(projectLoadTest.settings);
     }
+
+    function testGetHelpFromServer()
+    {
+        var url = "https://raw.githubusercontent.com/PaulStoffregen/Audio/master/gui/index.html";
+
+        var jsonFile = new XMLHttpRequest();
+            jsonFile.open("GET",url,true);
+            jsonFile.send();
+
+        jsonFile.onreadystatechange = function() {
+            if (jsonFile.readyState== 4 && jsonFile.status == 200) {
+                var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
+                var rawHtml = jsonFile.responseText;
+                localStorage.setItem("audio_library_guitool_help",rawHtml);
+                    
+                mywindow.document.write('<html><head>');
+                mywindow.document.write("Hello World")
+                mywindow.document.write('</head><body >');
+                mywindow.document.write('</body></html>');
+                mywindow.document.close(); // necessary for IE >= 10
+		        mywindow.focus();
+            }
+        }
+        //RED.bottombar.info.addContent("imageExists:" + imageExists(""));
+
+        checkImage("img/adccircuit_.png", function(){ alert("good"); }, function(){ alert("bad"); } );
+    }
+    function checkImage(imageSrc, good, bad) {
+        var img = new Image();
+        img.onload = good; 
+        img.onerror = bad;
+        img.src = imageSrc;
+    }
     
     
     
     return {
         createAndPrintNewWsStruct:createAndPrintNewWsStruct,
+        testGetHelpFromServer:testGetHelpFromServer,
         console_logColor:console_logColor
 	};
 })();
