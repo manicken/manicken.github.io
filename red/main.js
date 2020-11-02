@@ -117,12 +117,12 @@ RED.main = (function() {
 	function addDemoFlowsToMenu()
 	{
 		var html = "";
-		
-		html += '<li><a id="btn-demoFlowA" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowA</a></li>';
-		html += '<li><a id="btn-demoFlowB" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowB</a></li>';
-		html += '<li><a id="btn-originalFlow" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>originalFlow</a></li>';
-		html += '<li><a id="btn-emptyFlow" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>Empty Flow</a></li>';
-		$("#menu-demo-flows").next().append(html);
+		//<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
+		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowA</a></li>';
+		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowB</a></li>';
+		html += '<li><a id="btn-originalFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>originalFlow</a></li>';
+		html += '<li><a id="btn-emptyFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Empty Flow</a></li>';
+		$("#menu-demo-flows").append(html);
 	
 		$('#btn-demoFlowA').click(function() {
 			var data = $("script[data-container-name|='DemoFlowA']").html();

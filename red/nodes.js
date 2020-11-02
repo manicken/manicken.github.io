@@ -1110,7 +1110,12 @@ RED.nodes = (function() {
 			var n = nodes[i];
 			if (n.z != wsId) continue; // workspace filter
 			if (RED.arduino.export.isSpecialNode(n.type)) continue;
-			items.push({ name:n.name, value:n.name, meta: n.type, score:(100-n)  });
+			var data = $("script[data-help-name|='" + n.type + "']").html();
+			//var firstP = $("<div/>").append(data).children("div").first().html();
+			if (data == undefined) data = n.type;
+			else
+				data = $("<div/>").append(data).children("div").first().html();
+			items.push({ name:n.name, value:n.name, type:n.type, meta: data, score:(100-n)  });
 		}
 		AceAutoComplete.Extension.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
 			items.push(kw);

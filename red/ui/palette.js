@@ -92,6 +92,7 @@ RED.palette = (function() {
 		}
 		setCategoryClickFunction('input');
 		setCategoryClickFunction('output');
+
 	}
 	function addSubCats(destContainer, catPreName, categories)
 	{
@@ -162,7 +163,7 @@ RED.palette = (function() {
 			
 			if (def.inputs > 0) {
 				var portIn = document.createElement("div");
-				portIn.className = "palette_port";
+				portIn.className = "palette_port palette_port_input";
 				d.appendChild(portIn);
 			}
 			
@@ -189,7 +190,11 @@ RED.palette = (function() {
 			   helper: 'clone',
 			   appendTo: 'body',
 			   revert: true,
-			   revertDuration: 50
+			   revertDuration: 50,
+			   start: function(e, ui)
+			   {
+				$(ui.helper).addClass("palette_node_drag");
+			   }
 		    });
 		    
 			setCategoryClickFunction(category);

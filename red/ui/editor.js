@@ -30,12 +30,13 @@ RED.editor = (function() {
 				callback(null, rootCompletions);
 			},
 		getDocTooltip: function(item) {
-			var name = "";
-			if (item.name == undefined) name = item.caption;
-			else name = item.name;
+			var caption = "";
+			if (item.type != undefined) caption = item.type;			
+			else if (item.name == undefined) caption = item.caption;
+			else caption = item.name;
 			item.docHTML = [
-				"<b>", name, "</b>", "<hr></hr>",
-				item.me
+				"<b>", caption, "</b>", "<hr></hr>",
+				item.meta
 			].join("");
 			item.toolTipFixedWidth = "300px";
 		}
@@ -550,8 +551,6 @@ RED.editor = (function() {
 			
 					aceEditor.insert(".");            
 
-					
-					
 					// here it need also need to check the type
 					// to get correct function list
 					var tokenType = "";
@@ -569,9 +568,12 @@ RED.editor = (function() {
 					}
 					console.log("lastToken:" + lastToken + " @ " + tokenType);
 					defaultCompleters = aceEditor.completers; // save default
-					if (AceAutoComplete.ClassFunctions[tokenType] != null)
+					// here we get data from html
+					var byToken = AceAutoComplete.getFromHelp(tokenType);
+
+					if (byToken.length != 0) // AceAutoComplete.ClassFunctions[tokenType] != null)
 					{
-						classCompletions = AceAutoComplete.ClassFunctions[tokenType];
+						classCompletions = byToken;//AceAutoComplete.ClassFunctions[tokenType];
 					}
 					else
 					{

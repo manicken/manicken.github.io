@@ -102,7 +102,7 @@ a.brand img {
 
 #palette {
    background: #f3f3f3;
-   width: 165px;
+   width: 95%;
    text-align: center;
    -webkit-user-select: none;
    -khtml-user-select: none;
@@ -180,9 +180,9 @@ a.brand img {
     margin-bottom: 5px;
 }
 .palette-category-sub-cat {
-    margin: 5px;
+    margin: 2px;
     /*margin-left: 3px;*/
-    width: 125px;
+    /*width: 125px;*/
     border: 1px solid #999;
     border-radius: 3px;
     /*margin-bottom: 5px;*/
@@ -192,6 +192,7 @@ a.brand img {
     border-top: 1px solid #aaa;
     padding-top: 3px;
     padding-bottom: 3px;
+    /*width: 90%;*/
 }
 .palette-header {
     font-weight: bold;
@@ -207,6 +208,7 @@ a.brand img {
     cursor: pointer;
     text-align: center;
     padding: 3px;
+    /*width: 80%;*/
 }
 .palette-header i {
     float: right;
@@ -242,7 +244,6 @@ a.brand img {
 .palette_label {
    line-height: 25px;
    text-align: center;
-   
 }
 .palette_node {
     text-decoration: none;
@@ -255,9 +256,13 @@ a.brand img {
    border: 2px solid #999;
    background-position: 5% 50%;
    background-repeat: no-repeat;
-   width: 110px;
+   width: 85%;
+   /*max-width: 150px;*/
    background-size: contain;
    position: relative;
+}
+.palette_node_drag {
+    width: 110px;
 }
 .palette_node:hover {
   border-color: #ff7f0e;
@@ -266,7 +271,6 @@ a.brand img {
 .palette_port {
    position: absolute;
    top:8px;
-   left: -5px;
    box-sizing: border-box;
     -moz-box-sizing: border-box;    
    background:#d9d9d9;
@@ -275,10 +279,16 @@ a.brand img {
    height: 10px;
    border: 1px solid #999;
 }
+.palette_port_input {
+    left:-5px;
+}
+.palette_port_output {
+    right:-5px;
+}
 .palette_req_error {
     position: absolute;
     top:-8px;
-    left: 80px;
+    right: 10px;
     box-sizing: border-box;
     cursor:pointer;
      -moz-box-sizing: border-box;    
@@ -290,9 +300,7 @@ a.brand img {
     height: 15px;
     /*border: 1px solid #999;*/
  }
-.palette_port_output {
-    left:105px;
-}
+
 
 .palette_node:hover .palette_port {
   border-color: #999;
@@ -305,6 +313,17 @@ a.brand img {
     -moz-box-sizing: border-box;    
 }
 #sidebar.closing {
+    background: #eee;
+    border-color: #900;
+    border-style: dashed;
+}
+/*
+#sidebar-palette {
+    background: rgba(255, 255, 255, 0);
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;    
+}*/
+#sidebar-palette.closing {
     background: #eee;
     border-color: #900;
     border-style: dashed;
@@ -353,10 +372,27 @@ a.brand img {
     cursor: col-resize;
 }
 
+#sidebar-palette {
+    width: 170px;
+    position: absolute;
+    left: 0px; top: 0px; bottom:0px;
+}
+#sidebar-palette-separator {
+    width: 15px;
+    background: url("img/grip.png") no-repeat 50% 50%;
+    position: absolute;
+    left: 165px; top: 5px; bottom:10px;
+    cursor: col-resize;
+}
+
 .sidebar-closed > #sidebar { display: none; }
 .sidebar-closed > #sidebar-separator { right: 0px !important; }
+.sidebar-palette-closed > #sidebar-palette { display: none; }
+.sidebar-palette-closed > #sidebar-palette-separator { left: 0px !important; }
 .sidebar-closed > #bottombar { right: 15px !important; }
 .sidebar-closed > #workspace { right: 15px !important; }
+.sidebar-palette-closed > #workspace { left: 15px !important; }
+.sidebar-palette-closed > #bottombar { left: 15px !important; }
 .sidebar-closed > #chart-zoom-controls { right: 35px !important; }
 
 #bottombar {
@@ -423,6 +459,13 @@ a.brand img {
     overflow-y: auto;
     position: absolute;
     top: 30px; left: 0px; right: 0; bottom: 1px;
+}
+
+#sidebar-palette-content {
+    /*font-size: 1.2em;*/
+    overflow-y: auto;
+    position: absolute;
+    top: 0px; left: 0px; right: 0; bottom: 0px;
 }
 
 #bottombar-content {

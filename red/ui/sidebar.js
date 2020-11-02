@@ -19,7 +19,8 @@ RED.sidebar = (function() {
 	//$('#sidebar').tabs();
 	var sidebar_tabs = RED.tabs.create({
 		id:"sidebar-tabs",
-		onchange:function(tab) {
+		onchange:function(tab) { // happens when switching between tabs
+			//console.warn("sidebar-tabs@onchange");
 			$("#sidebar-content").children().hide();
 			$("#"+tab.id).show();
 		},
@@ -36,7 +37,7 @@ RED.sidebar = (function() {
 	}
 	
 	$('#btn-sidebar').click(function() {toggleSidebar();});
-	RED.keyboard.add(/* SPACE */ 32,{ctrl:true},function(){toggleSidebar();d3.event.preventDefault();});
+	RED.keyboard.add(/* SPACE */ 32,{ctrl:true},function(){toggleSidebar(); RED.sidebar.palette.toggleSidebar();d3.event.preventDefault();});
 
 	var sidebarSeparator =  {};
 	$("#sidebar-separator").draggable({
@@ -71,8 +72,9 @@ RED.sidebar = (function() {
 					newSidebarWidth -= 13;
 				}
 				
+				// takes care of chart minimum size
 				if (newSidebarWidth > 150) {
-					if (sidebarSeparator.chartWidth+d < 200) {
+					if (sidebarSeparator.chartWidth+d < 200) { // 200 is the minimum chart width
 						ui.position.left = 200+sidebarSeparator.start-sidebarSeparator.chartWidth;
 						d = ui.position.left-sidebarSeparator.start;
 						newSidebarWidth = sidebarSeparator.width-d;
@@ -96,6 +98,7 @@ RED.sidebar = (function() {
 
 				var newChartRight = sidebarSeparator.chartRight-d;
 				$("#workspace").css("right",newChartRight);
+				$("#bottombar").css("right",newChartRight);
 				$("#chart-zoom-controls").css("right",newChartRight+20);
 				$("#sidebar").width(newSidebarWidth);
 

@@ -38,6 +38,7 @@ RED.settings = (function() {
 		createButton(catContainerId, "btn-dev-create-new-ws-structure", "print new ws struct", "btn-dark btn-sm", RED.devTest.createAndPrintNewWsStruct);
 		createButton(catContainerId, "btn-dev-test", "console color test", "btn-primary btn-sm", function () {RED.devTest.console_logColor("Hello World"); RED.console_ok("Test of console_ok")});
 		createButton(catContainerId, "btn-dev-test-get-help-server", "get help @server", "btn-dark btn-sm", RED.devTest.testGetHelpFromServer);
+		createTextInputWithApplyButton(catContainerId, "btn-dev-test-get-func-help", "get func help", AceAutoComplete.getFromHelp, "AudioEffectFade", 150);
 		// test creating subcat
 		catContainerId = createCategory(catContainerId, "development-tests-sub", "Test post/get (sub-cat of dev-test)", true);
 		createTextInputWithApplyButton(catContainerId, "setting-test-post", "test post", RED.arduino.httpPostAsync, "data");
@@ -206,10 +207,11 @@ RED.settings = (function() {
 			$('#' + id).prop('checked', cb[param]);
 		}
 	}
-	function createTextInputWithApplyButton(containerId, id, label, cb, param)
+	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth)
 	{
+		if (textInputWidth == undefined) textInputWidth = 40;
 		var html = '<div class="center"><label  for="'+id+'" style="font-size: 16px;">';
-			html += '&nbsp;'+label+' <input type="text" id="'+id+'" name="'+id+'" style="width: 40px;">';
+			html += '&nbsp;'+label+' <input type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
 			html += ' <button class="btn btn-success btn-sm" type="button" id="btn-'+id+'">Apply</button></label></div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);

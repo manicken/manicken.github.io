@@ -56,9 +56,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<div class="container-fluid">
 			<span class="brand">Audio System Design Tool for <a href="http://www.pjrc.com/teensy/td_libs_Audio.html" target="_blank">Teensy Audio Library</a></span>
 			<div class="btn-group pull-right">
+				
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-sidebar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Sidebar</a></li>
+					<li><a id="btn-sidebar-palette" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i>Palette Sidebar</a></li>
 					<li><a id="btn-bottombar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Bottom Sidebar</a></li>
 					<!--<li><a id="btn-workspace-toolbar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Toolbar</a></li>-->
 					<li class="divider"></li> 
@@ -90,7 +92,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
  <li><a id="btn-config-nodes" tabindex="-1" href="#"><i class="icon-th-list"></i> Configuration nodes...</a></li>
 					<li class="divider"></li>
 -->
-					
+						<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="fa fa-graduation-cap"></i> Examples</a>
+							<ul id="menu-demo-flows" class="dropdown-menu"> </ul>
+						</li>
 						<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-th-large"></i> Workspaces</a>
 							<ul id="workspace-menu-list" class="dropdown-menu">
 								<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
@@ -117,7 +121,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li><label for="file-input" class="btn action-import" ><i id="btn-icn-deploy" class="icon-download"></i> LoadFromFile</label></li>
 				</ul>
 			</div>
-			<div class="btn-group pull-left">
+				<div class="btn-group pull-left">
 				<a id="menu-export" class="btn dropdown-toggle btn-danger disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Simple</a></li>
@@ -125,8 +129,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li><a id="btn-pushJSON";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to Arduino IDE</a></li>
 					<li><a id="btn-saveTofile" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> SaveToFile</a></li>
 				</ul>
-			</div>
-			<div class="btn-group pull-left">
+				</div>
+				<div class="btn-group pull-left">
 				<a id="menu-arduino" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Arduino <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-verify-compile"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Verify/Compile</a></li>
@@ -134,14 +138,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					
 				</ul>
 			</div>
+			
 			<!--<div class="btn-group pull-left">
 				<a id="btn-deploy" class="btn action-deploy disabled" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Export</a>
 				<a id="btn-deploy2" class="btn action-deploy " href="#"><i id="btn-icn-deploy" class="icon-upload"></i>ExportAsClass(es)</a>
 				<a id="btn-import-arduino" class="btn action-import disabled" href="#"><i id="btn-icn-download" class="icon-download"></i>Import</a>
 			</div>-->
 			<div class="btn-group pull-right">
-				<a id="menu-demo-flows" class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-graduation-cap"></i> Examples <span class="caret"></span></a>
-				<ul class="dropdown-menu">
+				
 					
 				</ul>
 			</div>
@@ -154,13 +158,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </div>
 <div id="main-container" class="sidebar-closed">
-	<div id="palette">
-		<img src="img/spin.svg" class="palette-spinner"/>
-		<div id="palette-search">
-			<i class="icon-search"></i><input id="palette-search-input" type="text" placeholder="filter"><a href="#" id="palette-search-clear"><i class="icon-remove"></i></a></input>
-		</div>
-		<div id="palette-container" class="palette-scroll"></div>
-	</div><!-- /palette -->
+	
 
 	<div id="workspace">
 		<ul id="workspace-tabs"></ul>
@@ -197,9 +195,20 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<ul id="sidebar-tabs"></ul>
 		<div id="sidebar-content"></div>
 	</div>
-
 	<div id="sidebar-separator"></div>
 
+	<div id="sidebar-palette">
+		<div id="sidebar-palette-content">
+			<div id="palette">
+				<img src="img/spin.svg" class="palette-spinner"/>
+				<div id="palette-search">
+					<i class="icon-search"></i><input id="palette-search-input" type="text" placeholder="filter"><a href="#" id="palette-search-clear"><i class="icon-remove"></i></a></input>
+				</div>
+				<div id="palette-container" class="palette-scroll"></div>
+			</div><!-- /palette -->
+		</div>
+	</div>
+	<div id="sidebar-palette-separator"></div>
 </div>
 
 <div id="notifications"></div>
@@ -412,6 +421,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/tabs.js"></script>
 <script src="red/ui/view.js"></script>
 <script src="red/ui/sidebar.js"></script>
+<script src="red/ui/sidebar-palette.js"></script>
 <script src="red/ui/bottombar.js"></script>
 <script src="red/ui/tab-bottom-info.js"></script>
 <script src="red/ui/palette.js"></script>
@@ -595,7 +605,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"Comment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Comment","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"comment.png"}},
 		{"type":"Function","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"code","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
-		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""}},"shortName":"userObject","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
+		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"includeFile":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""}},"shortName":"userObject","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"CodeFile","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"codeFile","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -809,6 +819,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		it have many fields when edit the node.<br><br>
 		<b>Name:</b> is the name given to the instance<br><br>
 		<b>Sub Type:</b> is the class name given in the code, this is the type that will be used when exporting the design.<br><br>
+		<b>Include File:</b> the name of the h file to be included to use the Sub Type<br><br>
 		<b>Color:</b> just for visuals in this GUI tool<br><br>
 		<b>Inputs:</b> how many audio inputs the AudioStream object has<br><br>
 		<b>Outputs:</b> how many audio outputs the AudioStram object has<br><br>
@@ -828,6 +839,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row">
 		<label for="node-input-subType"><i class="fa fa-tag"></i> Sub Type</label>
 		<input type="text" id="node-input-subType" placeholder="SubType">
+	</div>
+	<div class="form-row">
+		<label for="node-input-includeFile"><i class="fa fa-tag"></i> Include File</label>
+		<input type="text" id="node-input-includeFile" placeholder="IncludeFile">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
