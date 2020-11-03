@@ -21,6 +21,7 @@ RED.arduino = (function() {
 	var settings = {
 		useExportDialog: true,
 		IOcheckAtExport: true,
+		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
 	};
 
@@ -29,6 +30,7 @@ RED.arduino = (function() {
 	var settingsEditorLabels = {
 		useExportDialog: "Show export dialog",
 		IOcheckAtExport: "IO check At Export",
+		WriteJSONtoExportedFile: "Write JSON at exported file",
 		WebServerPort: "Web Server Port"
 	};
 

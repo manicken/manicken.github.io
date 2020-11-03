@@ -660,11 +660,11 @@ class MyHttpHandler implements HttpHandler
 		{
 			JSONObject e = arr.getJSONObject(i);
 			String name = e.getString("name");
-			String cpp = e.getString("cpp");
+			String contents = e.getString("contents");
 			if (name.equals("GUI_TOOL.json"))
-				api.SetJSON(cpp);
+				api.SetJSON(contents);
 			else
-				api.addNewFile(name, cpp); // uses reflection to use private members
+				api.addNewFile(name, contents); // uses reflection to use private members
 		}
 		//System.out.println(data);
 		editor.handleSave(true);

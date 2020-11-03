@@ -168,16 +168,17 @@ RED.arduino.export = (function() {
 	{
 		if (includes == undefined)
 			includes = "";
-
-		return    "#include <Audio.h>\n"
+		var returnStr = "#include <Audio.h>\n"
 				+ "#include <Wire.h>\n"
 				+ "#include <SPI.h>\n"
 				+ "#include <SD.h>\n"
 				+ "#include <SerialFlash.h>\n"
 				+ includes + "\n"
-				+ "// GUItool: begin automatically generated code\n"
-				+ "// the following JSON string contains the whole project, \n// it's included in all generated files.\n"
-				+ "// JSON string:" + jsonString + "\n";
+				+ "// GUItool: begin automatically generated code\n";
+		if (RED.arduino.WriteJSONtoExportedFile)
+			returnStr += "// the following JSON string contains the whole project, \n// it's included in all generated files.\n"
+					   + "// JSON string:" + jsonString + "\n";
+		return returnStr;
 	}
 	function getCppFooter()
 	{
@@ -185,7 +186,7 @@ RED.arduino.export = (function() {
 	}
 	function getNewWsCppFile(name, contents)
 	{
-		return {name:name, cpp:contents};
+		return {name:name, contents:contents};
 	}
 	/**
 	 * 
@@ -448,9 +449,9 @@ RED.arduino.export = (function() {
 			}
 			if (classComment.length > 0)
 			{
-				newWsCpp.cpp += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
+				newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
 			}
-			newWsCpp.cpp += "\nclass " + ws.label + "\n{\n public:\n";
+			newWsCpp.contents += "\nclass " + ws.label + "\n{\n public:\n";
 
 			// generate code for all audio processing nodes
 			for (var i=0; i<nns.length; i++) {
@@ -461,7 +462,7 @@ RED.arduino.export = (function() {
 				if(isSpecialNode(n.type)) continue;
 				if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
 
-				newWsCpp.cpp += "    " + getTypeName(nns,n);
+				newWsCpp.contents += "    " + getTypeName(nns,n);
 				//console.log(">>>" + n.type +"<<<"); // debug test
 				var name = RED.nodes.make_name(n)
 
@@ -471,9 +472,9 @@ RED.arduino.export = (function() {
 					arrayNode.objectCount++;
 				}
 				if (n.comment && (n.comment.trim().length != 0))
-					newWsCpp.cpp += name + "; /* " + n.comment +"*/\n";
+					newWsCpp.contents += name + "; /* " + n.comment +"*/\n";
 				else
-					newWsCpp.cpp += name + ";\n";
+					newWsCpp.contents += name + ";\n";
 			}
 			// generate code for all control nodes (no inputs or outputs)
 			for (var i=0; i<nns.length; i++) {
@@ -486,10 +487,10 @@ RED.arduino.export = (function() {
 
 					if(isSpecialNode(n.type)) continue;
 					
-					newWsCpp.cpp += "    " + n.type + " ";
+					newWsCpp.contents += "    " + n.type + " ";
 					for (var j=n.type.length; j<32; j++) cpp += " ";
 					var name = RED.nodes.make_name(n)
-					newWsCpp.cpp += name + ";\n";
+					newWsCpp.contents += name + ";\n";
 				}
 			}
 			// generate code for all connections (aka wires or links)
@@ -536,41 +537,41 @@ RED.arduino.export = (function() {
 				});
 			}
 
-			newWsCpp.cpp += "    AudioConnection ";
-			for (var j="AudioConnection".length; j<32; j++) newWsCpp.cpp += " ";
-			newWsCpp.cpp += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
+			newWsCpp.contents += "    AudioConnection ";
+			for (var j="AudioConnection".length; j<32; j++) newWsCpp.contents += " ";
+			newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
 			if (arrayNode) // if defined and found prev, add it now
 			{
-				newWsCpp.cpp += "    " + arrayNode.type + " ";
+				newWsCpp.contents += "    " + arrayNode.type + " ";
 				for (var j=arrayNode.type.length; j<32; j++) cpp += " ";
-				newWsCpp.cpp += "*" + arrayNode.name +";\n";
+				newWsCpp.contents += "*" + arrayNode.name +";\n";
 			}
 			if (classVars.trim().length > 0)
-				newWsCpp.cpp += "\n" + incrementTextLines(classVars, "    ");
-			newWsCpp.cpp+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
-			newWsCpp.cpp += "        int pci = 0; // used only for adding new patchcords\n\n"
+				newWsCpp.contents += "\n" + incrementTextLines(classVars, "    ");
+			newWsCpp.contents+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
+			newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
 
 			if (arrayNode) // if defined and found prev, add it now
 			{
-				newWsCpp.cpp += "        " + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
+				newWsCpp.contents += "        " + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
 				if (arrayNode.autoGenerate)
-					newWsCpp.cpp += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
+					newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
 				else
-					newWsCpp.cpp += arrayNode.cppCode;
+					newWsCpp.contents += arrayNode.cppCode;
 
-				newWsCpp.cpp += "; // pointer array\n\n";
+				newWsCpp.contents += "; // pointer array\n\n";
 			}
-			newWsCpp.cpp += cppPcs;
+			newWsCpp.contents += cppPcs;
 			if (ac.arrayLenght != 0)
 			{
-				newWsCpp.cpp += "        for (int i = 0; i < " + ac.arrayLenght + "; i++)\n        {\n";
-				newWsCpp.cpp += cppArray;
-				newWsCpp.cpp += "        }\n";
+				newWsCpp.contents += "        for (int i = 0; i < " + ac.arrayLenght + "; i++)\n        {\n";
+				newWsCpp.contents += cppArray;
+				newWsCpp.contents += "        }\n";
 			}
-			newWsCpp.cpp += "    }\n";
+			newWsCpp.contents += "    }\n";
 			if (classFunctions.trim().length > 0)
-				newWsCpp.cpp += "\n" + incrementTextLines(classFunctions, "    ");
-			newWsCpp.cpp += "};\n"; // end of class
+				newWsCpp.contents += "\n" + incrementTextLines(classFunctions, "    ");
+			newWsCpp.contents += "};\n"; // end of class
 			newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n"));
 			newWsCpp.footer = getCppFooter();
 			wsCppFiles.push(newWsCpp);
@@ -580,8 +581,8 @@ RED.arduino.export = (function() {
 		for (var i = 0; i < wsCppFiles.length; i++)
 		{
 
-			cpp += wsCppFiles[i].cpp;
-			wsCppFiles[i].cpp = wsCppFiles[i].header + wsCppFiles[i].cpp + wsCppFiles[i].footer;
+			cpp += wsCppFiles[i].contents;
+			wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
 			delete wsCppFiles[i].header;
 			delete wsCppFiles[i].footer;
 		}
