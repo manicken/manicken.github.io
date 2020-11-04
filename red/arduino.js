@@ -37,7 +37,14 @@ RED.arduino = (function() {
 	function startConnectedChecker()
 	{
 		window.setInterval(function () {
-	        httpGetAsync("ping");
+			httpGetAsync("cmd=ping", null, 
+				function(rt) {
+					isConnected = true;
+				},
+				function(status) {
+					isConnected = false;
+				}
+			);
 	    }, 2000);
 	}
 
@@ -57,42 +64,33 @@ RED.arduino = (function() {
 		xhr.timeout = 2000;
 		xhr.send(data); 
 	}
-	function httpGetAsync(param)
+	function httpGetAsync(queryString, cbOnOk, cbOnError)
 	{
 		var xmlHttp = new XMLHttpRequest();
 		const url = 'http://localhost:' + settings.WebServerPort;
 		xmlHttp.onreadystatechange = function () {
 			if (xmlHttp.readyState != 4) return; // wait for timeout or response
-
-			if (param == "getJSON")
+			if (xmlHttp.status == 200)
 			{
-				if (xmlHttp.status == 200) {
-					console.warn("JSON response");
-					RED.storage.loadContents(xmlHttp.responseText);
-				}
+				if (cbOnOk != undefined)
+					cbOnOk(xmlHttp.responseText);
 				else
-					console.warn("getJSON did not response = " + xmlHttp.status);
+					console.warn("response @ " + queryString + ":\n" + xmlHttp.responseText);
 			}
-			else if (param.startsWith("addFile") || param.startsWith("renameFile") || param.startsWith("removeFile"))
-			{
-				console.warn("push json");
-				RED.arduino.export.pushJSON();
-			}
-			else if (param == "ping")
-			{
-				isConnected = (xmlHttp.status == 200);
-				//console.warn("isConnected="+ isConnected);
-			}
+			else if (cbOnError != undefined)
+				cbOnError(xmlHttp.status);
 			else
-				console.warn("response@" + param + ":" + xmlHttp.responseText);
+				console.warn(queryString + " did not response = " + xmlHttp.status);
 		};
-		xmlHttp.open("GET", url+"\\?cmd=" + param, true); // true for asynchronous 
+		xmlHttp.open("GET", url + "?" + queryString, true); // true for asynchronous 
 		xmlHttp.timeout = 2000;
 		xmlHttp.send(null);
     }
-    $('#btn-verify-compile').click(function() { httpGetAsync("compile"); });
-	$('#btn-compile-upload').click(function() { httpGetAsync("upload"); });
-	$('#btn-get-design-json').click(function() { httpGetAsync("getJSON"); });
+    $('#btn-verify-compile').click(function() { httpGetAsync("cmd=compile"); });
+	$('#btn-compile-upload').click(function() { httpGetAsync("cmd=upload"); });
+	$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response); });
+	function GetGUI_TOOL_JSON_response(responseText) {RED.storage.loadContents(responseText); }
+
     
     return {
 		isConnected: function() { return isConnected;},

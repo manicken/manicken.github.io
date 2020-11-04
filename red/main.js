@@ -393,6 +393,8 @@ RED.main = (function() {
 			});
 			loadNodes();
 			$(".palette-spinner").hide();
+
+			RED.devTest.StartWebSocketConnection();
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){
 				if (xhr.overrideMimeType) {

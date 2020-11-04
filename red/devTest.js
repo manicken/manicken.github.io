@@ -92,12 +92,49 @@ RED.devTest = (function() {
         img.onerror = bad;
         img.src = imageSrc;
     }
+    var wsSocket;
+    function StartWebSocketConnection()
+    {
+        if ('WebSocket' in window) {
+            
+                //var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+                var protocol = 'ws://';
+                var address = protocol + "127.0.0.1:3000";// + '/ws';
+                console.log("StartWebSocket@\n" + address);
+                RED.bottombar.info.addContent("StartWebSocket@" + address + "\n");
+                wsSocket = new WebSocket(address);
+                wsSocket.onmessage = function (msg) {
+                    if (msg.data == 'reload') window.location.reload();
+                    else
+                    {
+                        console.log(msg.data);
+                        RED.bottombar.show('output');
+                        RED.bottombar.info.addContent(msg.data + "\n");
+                    }
+                };
+                if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+                    console.log('Live reload enabled.');
+                    sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+                }
+            
+        }
+        else {
+            console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+        }
+    }
+    function SendToWebSocket(string)
+    {
+        if (wsSocket == undefined) return;
+        wsSocket.send(string);
+    }
     
     
     
     return {
         createAndPrintNewWsStruct:createAndPrintNewWsStruct,
         testGetHelpFromServer:testGetHelpFromServer,
-        console_logColor:console_logColor
+        console_logColor:console_logColor,
+        StartWebSocketConnection:StartWebSocketConnection,
+        SendToWebSocket:SendToWebSocket
 	};
 })();
