@@ -26,14 +26,18 @@ RED.bottombar.info = (function() {
 	content.style.paddingRight = "4px";
 
 	RED.bottombar.addTab("output", content,false);
-	var hmtl = '<textarea readonly class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(255, 255, 255); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
+	//var hmtl = '<textarea readonly class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(255, 255, 255); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
+	var hmtl = '<div class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(250, 250, 250); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
 	$("#tab-output").html(hmtl);
-	setContent("Welcome\n");
+	//setContent("Welcome\n");
 
 	function refresh() {
 	    $("#messages").html(mText);
 	    $("#messages").css("height", $("#bottombar").height() - 50);
-	    $('#messages').scrollTop($('#messages')[0].scrollHeight);
+		//$('#messages').scrollTop($('#messages')[0].scrollHeight);
+		
+		var elem = document.getElementById('messages');
+  		elem.scrollTop = elem.scrollHeight;
     }
 
 	function setContent(txt) {
