@@ -186,16 +186,17 @@ RED.arduino.export = (function() {
 	}
 	function getNewWsCppFile(name, contents)
 	{
+		//contents = contents.replace("undefined", "").replace("undefined", "");
 		return {name:name, contents:contents};
 	}
 	/**
 	 * 
 	 * @param {*} wsCppFiles array of type "getNewWsCppFile"
-	 * @param {*} command additional command string 
+	 * @param {*} removeOtherFiles remove files not present in JSON POST
 	 */
-	function getPOST_JSON(wsCppFiles, command)
+	function getPOST_JSON(wsCppFiles, removeOtherFiles)
 	{
-		return {files:wsCppFiles, command:command};
+		return {files:wsCppFiles, removeOtherFiles:removeOtherFiles};
 	}
 	function getNewAudioConnectionType()
 	{
@@ -352,7 +353,7 @@ RED.arduino.export = (function() {
 
 		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
 
-		var wsCppFilesJson = getPOST_JSON(wsCppFiles, false);
+		var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
 		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
 		const t1 = performance.now();
 
@@ -389,14 +390,12 @@ RED.arduino.export = (function() {
 		// wsCpp and newWsCpp is used
 		var wsCppFiles = [];
 		var newWsCpp;
+		var codeFileIncludes = [];
 		// first scan for any CodeFile nodes, to make sure theese will be added first
-		for (var i=0; i<nns.length; i++) { 
+		/*for (var i=0; i<nns.length; i++) { 
 			var n = nns[i];
-			if (n.type == "CodeFile") // very special case
-			{
-				wsCppFiles.push(getNewWsCppFile(n.name, "\n// ****** Start Of Included File:" + n.name + " ****** \n" + n.comment + "\n// ****** End Of Included file:" + n.name + " ******\n"));
-			}
-		}
+			
+		}*/
 		for (var wsi=0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
 		{
 			var ws = RED.nodes.workspaces[wsi];
@@ -410,6 +409,7 @@ RED.arduino.export = (function() {
 			var classAdditional = [];
 			var arrayNode = undefined;
 			var foundArrayNode = false;
+
 			for (var i=0; i<nns.length; i++) { 
 				var n = nns[i];
 
@@ -444,6 +444,18 @@ RED.arduino.export = (function() {
 				else if (RED.nodes.isClass(n.type))
 				{
 					var includeName = '#include "' + n.type + '.h"';
+					if (!classAdditional.includes(includeName)) classAdditional.push(includeName);
+				}
+				else if (n.type == "CodeFile") // very special case
+				{
+					if (n.comment.length != 0)
+					{
+						var wsFile = getNewWsCppFile(n.name, n.comment);
+						wsFile.header = "\n// ****** Start Of Included File:" + n.name + " ****** \n";
+						wsFile.footer = "\n// ****** End Of Included file:" + n.name + " ******\n";
+						wsCppFiles.push(wsFile);
+					}
+					var includeName = '#include "' + n.name + '"';
 					if (!classAdditional.includes(includeName)) classAdditional.push(includeName);
 				}
 			}
@@ -590,9 +602,11 @@ RED.arduino.export = (function() {
 		//console.log(cpp);
 		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
 		//console.log(jsonString);
-		var wsCppFilesJson = getPOST_JSON(wsCppFiles, "");
-		if (RED.arduino.isConnected())
-			RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
+		var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
+		var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
+		//if (RED.arduino.isConnected())
+			RED.arduino.httpPostAsync(jsonPOSTstring);
+		console.warn(jsonPOSTstring);
 
 		console.error("RED.arduino.isConnected="+RED.arduino.isConnected());
 		if (RED.arduino.settings.useExportDialog && !RED.arduino.isConnected())
@@ -608,7 +622,7 @@ RED.arduino.export = (function() {
 		var json = localStorage.getItem("audio_library_guitool");
 		var wsCppFiles = [];
 		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", json)); // JSON beautifier
-		var wsCppFilesJson = getPOST_JSON(wsCppFiles, "");
+		var wsCppFilesJson = getPOST_JSON(wsCppFiles, false); // false == don't remove other files
 		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
 	}
 	
