@@ -57,20 +57,20 @@ RED.settings = (function() {
         {
             var csettings = psettings[i];
             var json_object = Object.getOwnPropertyNames(csettings)[0]; // there is only one item
-            console.log(json_object);
-            console.log(csettings[json_object]);
+            //console.log(json_object);
+            //console.log(csettings[json_object]);
             
             //RED[json_object].settings = csettings[json_object];// this don't run setters 
             var settingValueNames = Object.getOwnPropertyNames(csettings[json_object]);
-            console.log("@testSettingLoad:");
-            console.log(settingValueNames);
+            //console.log("@testSettingLoad:");
+            //console.log(settingValueNames);
             for (var svi = 0; svi < settingValueNames.length; svi++)
             {
                 var valueName = settingValueNames[svi];
                 if (RED[json_object].settings[valueName]) // this skip any removed settings
                 {
                     RED[json_object].settings[valueName] = csettings[json_object][valueName];
-                    console.warn("typeof " + valueName + ":" + typeof csettings[json_object][valueName])
+                    //console.warn("typeof " + valueName + ":" + typeof csettings[json_object][valueName])
                 }
             }
         }
@@ -86,7 +86,7 @@ RED.settings = (function() {
             var RED_Class = RED[RED_Class_Name];
             var RED_Class_SubClasses = Object.getOwnPropertyNames(RED_Class);
 
-            RED.console_ok("@" + RED_Class_Name);
+            //RED.console_ok("@" + RED_Class_Name);
             //console.log(Object.getOwnPropertyNames(RED_Class));
 
             for (let i = 0; i < RED_Class_SubClasses.length; i++)
@@ -126,9 +126,17 @@ RED.settings = (function() {
 					for (let i = 0; i < settingNames.length; i++)
 					{
 						var settingName = settingNames[i];
+						if (RED_Class.settingsEditorLabels[settingName] == undefined)
+						{
+							// this is a way to hide settings that should not be shown
+							console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a label.");
+							continue;
+						}
+						
 						var typeOf = typeof RED_Class.settings[settingName];
 						if (typeOf === "boolean")
 						{
+							
 							createCheckBox(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
 						}
 						else if (typeOf === "number" || typeOf === "string")

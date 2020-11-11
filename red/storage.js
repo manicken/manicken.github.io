@@ -17,7 +17,8 @@ RED.storage = (function() {
 		if (localStorage)
 		{
 			var nns = RED.nodes.createCompleteNodeSet();
-			localStorage.setItem("audio_library_guitool",JSON.stringify(nns));
+			
+			localStorage.setItem("audio_library_guitool",JSON.stringify(nns,null,4));
 			console.log("localStorage write");
 		}
 	}

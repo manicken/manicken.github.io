@@ -16,7 +16,7 @@
  * limitations under the License.
  **/
 RED.arduino = (function() {
-	var isConnected = false;
+	var serverIsActive = false;
 
 	var settings = {
 		useExportDialog: true,
@@ -36,16 +36,22 @@ RED.arduino = (function() {
 
 	function startConnectedChecker()
 	{
+		checkIfServerIsActive(); // run once first
 		window.setInterval(function () {
-			httpGetAsync("cmd=ping", null, 
-				function(rt) {
-					isConnected = true;
-				},
-				function(status) {
-					isConnected = false;
-				}
-			);
-	    }, 2000);
+			checkIfServerIsActive();
+	    }, 10000);
+	}
+	function checkIfServerIsActive()
+	{
+		httpGetAsync("cmd=ping", 
+			function(rt) {
+				serverIsActive = true;
+				//console.log("serverIsActive" + rt);
+			},
+			function(st) {
+				serverIsActive = false;
+				//console.log("serverIsNotActive" + st);
+			});
 	}
 
     function httpPostAsync(data)
@@ -75,7 +81,7 @@ RED.arduino = (function() {
 				if (cbOnOk != undefined)
 					cbOnOk(xmlHttp.responseText);
 				else
-					console.warn("response @ " + queryString + ":\n" + xmlHttp.responseText);
+					console.warn(cbOnOk + "response @ " + queryString + ":\n" + xmlHttp.responseText);
 			}
 			else if (cbOnError != undefined)
 				cbOnError(xmlHttp.status);
@@ -88,12 +94,13 @@ RED.arduino = (function() {
     }
     $('#btn-verify-compile').click(function() { httpGetAsync("cmd=compile"); });
 	$('#btn-compile-upload').click(function() { httpGetAsync("cmd=upload"); });
-	$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response); });
-	function GetGUI_TOOL_JSON_response(responseText) {RED.storage.loadContents(responseText); }
-
+	//$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
+	$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
+	function GetGUI_TOOL_JSON_response(responseText) { console.log("GetGUI_TOOL_JSON_response"); /*RED.storage.loadContents(responseText);*/ }
+	function NOtresponse(text) {console.log("GetGUI_TOOL_JSON_ not response"); }
     
     return {
-		isConnected: function() { return isConnected;},
+		serverIsActive: function() { return serverIsActive;},
 		settings:settings,
 		settingsCategoryTitle:settingsCategoryTitle,
 		settingsEditorLabels:settingsEditorLabels,

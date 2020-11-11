@@ -355,6 +355,7 @@ RED.main = (function() {
 	{	
 		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
 		RED.arduino.startConnectedChecker();
+		
 
 		addDemoFlowsToMenu();
 		RED.view.init();
@@ -367,7 +368,7 @@ RED.main = (function() {
 		
 		console.warn("main $(function() {...}); is executed after page load!"); // to see load order
 		$(".palette-spinner").show();
-		RED.settings.createTab();
+		
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
 		var server = false && patt.test(location.protocol);
@@ -395,6 +396,7 @@ RED.main = (function() {
 			$(".palette-spinner").hide();
 
 			RED.devTest.StartWebSocketConnection();
+			RED.settings.createTab();
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){
 				if (xhr.overrideMimeType) {
@@ -415,6 +417,7 @@ RED.main = (function() {
 
 	return {
 		classColor:classColor,
-		requirements:requirements
+		requirements:requirements,
+		print:PrintElem
 	};
 })();

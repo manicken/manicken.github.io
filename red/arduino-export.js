@@ -269,7 +269,7 @@ RED.arduino.export = (function() {
 	{
 		// sort by vertical position, plus vertical position,
 		// for well defined update order that follows signal flow
-		return (a.x/50 + a.y/100) - (b.x/50 + b.y/100);
+		return (a.x/100 + a.y/500) - (b.x/100 + b.y/500);
 		// 1 4 7
 		// 2 5 8
 		// 3 6 9
@@ -605,11 +605,11 @@ RED.arduino.export = (function() {
 		var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
 		var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
 		//if (RED.arduino.isConnected())
-			RED.arduino.httpPostAsync(jsonPOSTstring);
+			RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST
 		console.warn(jsonPOSTstring);
 
-		console.error("RED.arduino.isConnected="+RED.arduino.isConnected());
-		if (RED.arduino.settings.useExportDialog && !RED.arduino.isConnected())
+		console.error("RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
+		if (RED.arduino.settings.useExportDialog && !RED.arduino.serverIsActive())
 			showExportDialog("Class Export to Arduino", cpp);	
 			//showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 		const t1 = performance.now();

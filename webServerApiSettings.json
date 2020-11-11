@@ -1,5 +1,8 @@
 {
     "webServerPort": 8080,
     "webSocketPort": 3000,
-    "FilesDirectory": "DesignTool"
+    "FilesDirectory": "DesignTool",
+    "useTerminalOutputCapture": false,
+    "useTerminalOutputAnsiStrip": false,
+    "useTerminalOutputToHtml": true
 }
