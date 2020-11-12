@@ -73,7 +73,7 @@ RED.view = (function() {
 		set space_height(value) { _settings.space_height = value; initWorkspace(); initGrid(); },
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
-		set scaleFactor(value) { _settings.scaleFactor = value; },
+		set scaleFactor(value) { _settings.scaleFactor = value.toFixed(2); $("#lbl-zoom-level").text(value.toFixed(2)); },
 
 		get showGridHminor() { return _settings.showGridHminor; },
 		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); },
@@ -118,10 +118,10 @@ RED.view = (function() {
 		gridVminorSize = 10,
 		gridHminorSize = 10,
 		scaleFactor = 1,*/
-
+	var maxZoomFactor = 3.0;
 	var node_def = {
 		width: 100, // minimum default
-		height: 36, // minimum default
+		height: 30, // minimum default
 		pin_rx: 2, // The horizontal corner radius of the rect.
 		pin_ry: 2, // The vertical corner radius of the rect.
 		pin_xsize: 7,
@@ -361,7 +361,7 @@ RED.view = (function() {
 	function initHminorGrid()
 	{
 		var gridScaleTicks = [];
-		for (var i = settings.gridHminorSize-1; i <= settings.space_height; i+=settings.gridHminorSize)
+		for (var i = settings.gridHminorSize; i <= settings.space_height; i+=settings.gridHminorSize)
 			gridScaleTicks.push(i);
 		//console.log("gridScaleTicks:"+gridScaleTicks);
 		gridHminor.selectAll("line.horizontal").remove();
@@ -384,7 +384,7 @@ RED.view = (function() {
 	function initHmajorGrid()
 	{
 		var gridScaleTicks = [];
-		for (var i = settings.gridHmajorSize-1; i <= settings.space_height; i+=settings.gridHmajorSize)
+		for (var i = settings.gridHmajorSize; i <= settings.space_height; i+=settings.gridHmajorSize)
 			gridScaleTicks.push(i);
 		//console.log("gridScaleTicks:"+gridScaleTicks);
 		gridHmajor.selectAll("line.horizontal").remove();
@@ -407,7 +407,7 @@ RED.view = (function() {
 	function initVminorGrid()
 	{
 		gridScaleTicks = [];
-		for (var i = settings.gridVminorSize-1; i <= settings.space_height; i+=settings.gridVminorSize)
+		for (var i = settings.gridVminorSize; i <= settings.space_height; i+=settings.gridVminorSize)
 			gridScaleTicks.push(i);
 		//console.log("gridScaleTicks:"+gridScaleTicks);
 		gridVminor.selectAll("line.vertical").remove();
@@ -430,7 +430,7 @@ RED.view = (function() {
 	function initVmajorGrid()
 	{
 		var gridScaleTicks = [];
-		for (var i = settings.gridVmajorSize-1; i <= settings.space_height; i+=settings.gridVmajorSize)
+		for (var i = settings.gridVmajorSize; i <= settings.space_height; i+=settings.gridVmajorSize)
 			gridScaleTicks.push(i);
 		//console.log("gridScaleTicks:"+gridScaleTicks);
 		gridVmajor.selectAll("line.vertical").remove();
@@ -867,7 +867,7 @@ RED.view = (function() {
 			settings.scaleFactor += 0.05;
 			redraw();
 		}
-		else if (settings.scaleFactor < 2) {
+		else if (settings.scaleFactor < maxZoomFactor) {
 			settings.scaleFactor += 0.1;
 			redraw();
 		}
@@ -941,10 +941,10 @@ RED.view = (function() {
 			RED.keyboard.remove(/* right*/ 39);
 		} else {
 			
-			RED.keyboard.add(/* up   */ 38, function() { if(d3.event.shiftKey || (settings.snapToGrid == true)){moveSelection_keyboard(  0,(settings.snapToGridVsize)*-1)}else{moveSelection_keyboard( 0,-1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* down */ 40, function() { if(d3.event.shiftKey || (settings.snapToGrid == true)){moveSelection_keyboard(  0,(settings.snapToGridVsize)*1)}else{moveSelection_keyboard( 0, 1);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* left */ 37, function() { if(d3.event.shiftKey || (settings.snapToGrid == true)){moveSelection_keyboard((settings.snapToGridHsize)*-1,  0)}else{moveSelection_keyboard(-1, 0);}d3.event.preventDefault();},endKeyboardMove);
-			RED.keyboard.add(/* right*/ 39, function() { if(d3.event.shiftKey || (settings.snapToGrid == true)){moveSelection_keyboard((settings.snapToGridHsize)*1,  0)}else{moveSelection_keyboard( 1, 0);}d3.event.preventDefault();},endKeyboardMove);
+			RED.keyboard.add(/* up   */ 38, function() { moveSelection_keyboard( 0,-1); d3.event.preventDefault(); }, endKeyboardMove);
+			RED.keyboard.add(/* down */ 40, function() { moveSelection_keyboard( 0, 1); d3.event.preventDefault(); }, endKeyboardMove);
+			RED.keyboard.add(/* left */ 37, function() { moveSelection_keyboard(-1, 0); d3.event.preventDefault(); }, endKeyboardMove);
+			RED.keyboard.add(/* right*/ 39, function() { moveSelection_keyboard( 1, 0); d3.event.preventDefault(); }, endKeyboardMove);
 		}
 		if (moving_set.length == 1) {
 			RED.sidebar.info.refresh(moving_set[0].n);
@@ -964,8 +964,18 @@ RED.view = (function() {
 		}
 		RED.history.push({t:'move',nodes:ns,dirty:dirty});// TODO: is this nessesary
 	}
-
+	function XOR(bool1, bool2)
+	{
+		return (bool1 && !bool2) || (!bool1 && bool2);
+	}
 	function moveSelection_keyboard(dx,dy) { // used when moving by keyboard keys
+		var snapToGrid = XOR(d3.event.shiftKey, settings.snapToGrid);
+		if(snapToGrid)
+		{
+			if (dx != 0) dx *= settings.snapToGridHsize;
+			if (dy != 0) dy *= settings.snapToGridVsize;
+		}
+
 		var minX = 0;
 		var minY = 0;
 		var node;
@@ -995,7 +1005,7 @@ RED.view = (function() {
 		}
 
 		// snap to grid
-		if (((settings.snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
+		if (snapToGrid && moving_set.length > 0) {
 			var gridOffsetX = 0;
 			var gridOffsetY = 0;
 
@@ -1009,12 +1019,12 @@ RED.view = (function() {
 					node = moving_set[i];
 					
 					// having this here makes all selected nodes realign automatically
-					gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-					gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
+					gridOffsetX = /*node.n.x-*/(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
+					gridOffsetY = /*node.n.y-*/(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 					if (gridOffsetX === 0 && gridOffsetY === 0) continue
-
-					node.n.x -= gridOffsetX + 1 ; // +1 for correction to zero location based grid
-					node.n.y -= gridOffsetY + 1;
+					console.error("gridOffsetX:" + gridOffsetX + ", gridOffsetY:" + gridOffsetY);
+					node.n.x = gridOffsetX; // +1 for correction to zero location based grid
+					node.n.y = gridOffsetY;
 					if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
 						node.dirty = false;
 					}
@@ -1026,14 +1036,14 @@ RED.view = (function() {
 	function moveSelection_mouse()
 	{
 		mousePos = mouse_position;
-
+		var snapToGrid = XOR(d3.event.shiftKey, settings.snapToGrid);
 		var node;
 		var i;
 		var minX = 0;
 		var minY = 0;
 		for (var n = 0; n<moving_set.length; n++) {
 			node = moving_set[n];
-			if (d3.event.shiftKey) {
+			if (snapToGrid) {
 				node.n.ox = node.n.x;
 				node.n.oy = node.n.y;
 			}
@@ -1054,7 +1064,7 @@ RED.view = (function() {
 			}
 		}
 		// snap to grid
-		if (((settings.snapToGrid == true) || d3.event.shiftKey) && moving_set.length > 0) {
+		if (snapToGrid && moving_set.length > 0) {
 			var gridOffsetX = 0;
 			var gridOffsetY = 0;
 			node = moving_set[0];
@@ -1073,8 +1083,8 @@ RED.view = (function() {
 					gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 					if (gridOffsetX === 0 && gridOffsetY === 0) continue
 
-					node.n.x -= gridOffsetX+1; // +1 for correction to zero location based grid
-					node.n.y -= gridOffsetY+1;
+					node.n.x -= gridOffsetX; // +1 for correction to zero location based grid
+					node.n.y -= gridOffsetY;
 					if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
 						node.dirty = false;
 					}
