@@ -89,7 +89,8 @@ RED.nodes = (function() {
 	function registerType(nt,def) {
 		node_defs[nt] = def;
 		// TODO: too tightly coupled into palette UI
-		RED.palette.add(nt,def);
+		if (def.dontShowInPalette == undefined)
+			RED.palette.add(nt,def);
 	}
 
 	function getID() {
@@ -619,6 +620,8 @@ RED.nodes = (function() {
 			var unknownTypes = [];
 			for (i=0;i<newNodes.length;i++) {
 				n = newNodes[i];
+				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
+				else if (n.type == "Array") n.type = "PointerArray";
 				// TODO: remove workspace in next release+1
 				if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
 					// TODO: get this UI thing out of here! (see below as well)
@@ -839,11 +842,11 @@ RED.nodes = (function() {
 	/**
 	 * this is the internal type,  different from the saved one which is smaller
 	 * @typedef {"id":"Main_Array_"+type+"_"+name ,
-				 "type":"Array",
+				 "type":"PointerArray",
 				 "name":type + " " + name + " " + cppString,
 				 "x":500,"y":55,"z":items[0].n.z,
 				 "wires":[],
-				 "_def":node_defs["Array"]} Node 
+				 "_def":node_defs["PointerArray"]} Node 
 	 */
 
 	/**
@@ -853,22 +856,27 @@ RED.nodes = (function() {
 	 */
 	function generateArrayNode(items)
 	{
-		var cppString = "{";
+		var arrayItems = "{";
 		var type = items[0].n.type;
-		var name = type.toLowerCase();
+		//var name = type.toLowerCase();
+		var name = items[0].n.name + "s"
+
 		for (var i = 0; i < items.length ; i++)
 		{
-			cppString += items[i].n.name;
-			if (i < (items.length-1)) cppString += ",";
+			arrayItems += items[i].n.name;
+			if (i < (items.length-1)) arrayItems += ",";
 		}
-		cppString += "}";
-		addNode({"id":"Main_Array_"+type+"_"+name ,
-				 "type":"Array",
-				 "name":type + " " + name + " " + cppString,
-				 "x":500,"y":55,"z":items[0].n.z,
+		arrayItems += "}";
+		addNode({"id":"Main_pArray_"+type+"_"+name ,
+				 "type":"PointerArray",
+				 "name":name,
+				 "objectType":type,
+				 "arrayItems":arrayItems,
+				 "x":500,"y":500,"z":items[0].n.z,
 				 "wires":[],
-				 "_def":node_defs["Array"]});
+				 "_def":node_defs["PointerArray"]});
 				 RED.view.redraw();
+				 RED.storage.update();
 	}
 	/**
 	 * Gets all TabInput and TabOutputs, and then sorting them vertically top->bottom (normal view)
@@ -1118,20 +1126,49 @@ RED.nodes = (function() {
 		});
 		return true;
 	}
-	function isNameDeclarationArray(name)
+	function isNameDeclarationArray(name,wsId,replaceConstWithValue)
 	{
+		var value = 0;
 		//console.warn("isNameDeclarationArray: " + name);
 		var startIndex = name.indexOf("[");
 		if (startIndex == -1) return undefined;
 		var endIndex = name.indexOf("]");
 		if (endIndex == -1){ console.log("isNameDeclarationArray: missing end ] in " + name); return undefined;}
-		var arrayDef = name.substring(startIndex,endIndex+1);
-		lenght = Number(name.substring(startIndex+1,endIndex));
-		name = name.replace(arrayDef, "[i]");
-		
-		console.log("NameDeclaration is Array:" + name);
-		
-		return {newName:name, arrayLenght:lenght};
+		var arrayDef = name.substring(startIndex,endIndex+1); // this includes the []
+		var valueDef = name.substring(startIndex+1,endIndex)
+		if (isNaN(valueDef))
+		{
+			value = Number(getConstantNodeValue(valueDef, wsId));
+			if (replaceConstWithValue)
+			{
+				name = name.replace(arrayDef, "[" + Number(value) + "]");
+			}
+			else
+				name = name.replace(arrayDef, "[i]");
+		} 
+		else
+		{
+			value = Number(valueDef);
+			name = name.replace(arrayDef, "[i]");
+		}
+		//console.log("NameDeclaration is Array:" + name);
+		return {newName:name, arrayLenght:value};
+	}
+	
+	function getConstantNodeValue(name, wsId)
+	{
+		for (var i = 0; i < nodes.length; i++)
+		{
+			var n = nodes[i];
+			if (n.z != wsId) continue; // workspace filter
+			if (n.type != "ConstValue") continue; // type filter
+			if (n.name === name)
+			{
+				return Number(n.value);
+			}
+		}
+		console.error("did not found ConstantNodeValue:" + name + " @ wsId:" + wsId);
+		return 0;
 	}
 	//var AceAutoCompleteKeywords = null;
 	/**
@@ -1296,7 +1333,7 @@ RED.nodes = (function() {
 		else if (nt == "TabOutput") return false;
 		else if (nt == "Comment") return false;
 		else if (nt == "ClassComment") return false;
-		else if (nt == "Array") return false;
+		else if (nt == "PointerArray") return false;
 		else if (nt == "Function") return false;
 		else if (nt == "AudioStreamObject") return false;
 		else if (nt == "CodeFile") return false;

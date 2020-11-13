@@ -117,8 +117,9 @@ RED.arduino.export = (function() {
 		else if (nt == "Function") return true;
 		else if (nt == "Variables") return true;
 		else if (nt == "CodeFile") return true;
+		else if (nt == "ConstValue") return true;
 		else if (nt == "tab") return true;
-		else if (nt == "Array") return true;
+		else if (nt == "PointerArray") return true;
 		else return false;
 	}
 	/**
@@ -198,9 +199,10 @@ RED.arduino.export = (function() {
 	{
 		return {files:wsCppFiles, removeOtherFiles:removeOtherFiles};
 	}
-	function getNewAudioConnectionType()
+	function getNewAudioConnectionType(workspaceId)
 	{
 		return {
+			workspaceId: workspaceId,
 			base: "        AudioConnection        patchCord",
 			arrayBase: "        patchCord[pci++] = new AudioConnection(",
 			dstRootIsArray: false,
@@ -239,7 +241,7 @@ RED.arduino.export = (function() {
 				
 			},
 			checkIfDstIsArray: function() {
-				var isArray = RED.nodes.isNameDeclarationArray(this.dstName);
+				var isArray = RED.nodes.isNameDeclarationArray(this.dstName,this.workspaceId);
 				if (!isArray)
 				{
 					this.dstRootIsArray = false;
@@ -252,7 +254,7 @@ RED.arduino.export = (function() {
 			},
 			checkIfSrcIsArray: function() {
 				
-				var isArray = RED.nodes.isNameDeclarationArray(this.srcName);
+				var isArray = RED.nodes.isNameDeclarationArray(this.srcName,this.workspaceId);
 				if (!isArray)
 				{
 					this.srcRootIsArray = false;
@@ -269,7 +271,7 @@ RED.arduino.export = (function() {
 	{
 		// sort by vertical position, plus vertical position,
 		// for well defined update order that follows signal flow
-		return (a.x/100 + a.y/500) - (b.x/100 + b.y/500);
+		return (a.x/100 + a.y/50) - (b.x/100 + b.y/50);
 		// 1 4 7
 		// 2 5 8
 		// 3 6 9
@@ -307,7 +309,7 @@ RED.arduino.export = (function() {
 		for (var i=0; i<nns.length; i++) {
 			var n = nns[i];
 			if (n.z != activeWorkspace) continue; // workspace filter
-			if (isSpecialNode(n.type) || (n.type == "Array")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
+			if (isSpecialNode(n.type) || (n.type == "PointerArray")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
 			var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
 			if (node == null) { console.warn("node == null:" + "type:"+n.type +",id:"+ n.id); continue;} // this should never happen (because now "tab" type is in isSpecialNode)
 			
@@ -407,8 +409,7 @@ RED.arduino.export = (function() {
 			var classFunctions = "";
 			var classVars = "";
 			var classAdditional = [];
-			var arrayNode = undefined;
-			var foundArrayNode = false;
+			var arrayNodes = [];
 
 			for (var i=0; i<nns.length; i++) { 
 				var n = nns[i];
@@ -428,18 +429,9 @@ RED.arduino.export = (function() {
 				{
 					classVars += n.comment + "\n" // we use comment field for vars-data
 				}
-				else if (n.type == "Array" && (foundArrayNode == false)) // this is special thingy that was before real-node, now it's obsolete, it only generates more code
+				else if (n.type == "PointerArray") // this is special thingy that was before real-node, now it's obsolete, it only generates more code
 				{
-					//console.warn("found array node:" + n.name);
-					arrayNode = n.name.split(" ");
-					if (!arrayNode) continue;
-					if (arrayNode.length < 2 || arrayNode.length > 3) continue;
-					// we just save the array def. to later
-					if (arrayNode.length == 2)
-						arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:"", objectCount:0, autoGenerate:true}; 
-					else // arrayNode[2] contains predefined array contents
-						arrayNode = {type:arrayNode[0], name:arrayNode[1], cppCode:arrayNode[2], objectCount:arrayNode[2].split(",").length, autoGenerate:false};
-					foundArrayNode = true; // only one can be defined
+					arrayNodes.push({type:n.objectType, name:n.name, cppCode:n.arrayItems, objectCount:n.arrayItems.split(",").length});
 				}
 				else if (RED.nodes.isClass(n.type))
 				{
@@ -474,15 +466,16 @@ RED.arduino.export = (function() {
 				if(isSpecialNode(n.type)) continue;
 				if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
 
+				var isArray = RED.nodes.isNameDeclarationArray(n.name,ws.id, true);
+				if (isArray)
+				{
+					n.name = isArray.newName;
+				}
+
 				newWsCpp.contents += "    " + getTypeName(nns,n);
 				//console.log(">>>" + n.type +"<<<"); // debug test
 				var name = RED.nodes.make_name(n)
 
-				if (arrayNode && arrayNode.autoGenerate && (n.type == arrayNode.type))
-				{
-					arrayNode.cppCode += name + ",";
-					arrayNode.objectCount++;
-				}
 				if (n.comment && (n.comment.trim().length != 0))
 					newWsCpp.contents += name + "; /* " + n.comment +"*/\n";
 				else
@@ -506,7 +499,7 @@ RED.arduino.export = (function() {
 				}
 			}
 			// generate code for all connections (aka wires or links)
-			var ac = getNewAudioConnectionType();
+			var ac = getNewAudioConnectionType(ws.id);
 			ac.count = 1;
 			var cppPcs = "";
 			var cppArray = "";
@@ -552,10 +545,11 @@ RED.arduino.export = (function() {
 			newWsCpp.contents += "    AudioConnection ";
 			for (var j="AudioConnection".length; j<32; j++) newWsCpp.contents += " ";
 			newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
-			if (arrayNode) // if defined and found prev, add it now
+			for (var ani = 0; ani < arrayNodes.length; ani++)
 			{
+				var arrayNode = arrayNodes[ani];
 				newWsCpp.contents += "    " + arrayNode.type + " ";
-				for (var j=arrayNode.type.length; j<32; j++) cpp += " ";
+				for (var j=arrayNode.type.length; j<32; j++) newWsCpp.contents += " ";
 				newWsCpp.contents += "*" + arrayNode.name +";\n";
 			}
 			if (classVars.trim().length > 0)
@@ -563,16 +557,18 @@ RED.arduino.export = (function() {
 			newWsCpp.contents+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
 			newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
 
-			if (arrayNode) // if defined and found prev, add it now
+			for (var ani = 0; ani < arrayNodes.length; ani++)
 			{
+				var arrayNode = arrayNodes[ani];
 				newWsCpp.contents += "        " + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
 				if (arrayNode.autoGenerate)
 					newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
 				else
 					newWsCpp.contents += arrayNode.cppCode;
 
-				newWsCpp.contents += "; // pointer array\n\n";
+				newWsCpp.contents += "; // pointer array\n";
 			}
+			newWsCpp.contents += "\n";
 			newWsCpp.contents += cppPcs;
 			if (ac.arrayLenght != 0)
 			{
@@ -606,7 +602,7 @@ RED.arduino.export = (function() {
 		var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
 		//if (RED.arduino.isConnected())
 			RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST
-		console.warn(jsonPOSTstring);
+		//console.warn(jsonPOSTstring);
 
 		console.error("RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
 		if (RED.arduino.settings.useExportDialog && !RED.arduino.serverIsActive())

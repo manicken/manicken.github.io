@@ -580,7 +580,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script  type="text/x-red" data-container-name="NodeCategories">
 	{"categories":[
-		{"name":"favorites", "expanded":false},
+		
 		{"name":"used",      "expanded":false},
 		{"name":"tabs",      "expanded":false},
 		{"name":"special",   "expanded":false},
@@ -601,14 +601,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	{"nodes":[
 		{"type":"TabOutput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Out","inputs":1,"outputs":0,"category":"tabs","color":"#cce6ff","icon":"arrow-in.png"}},
 		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"In","inputs":0,"outputs":1,"category":"tabs","color":"#cce6ff","icon":"arrow-in.png", "align":"right"}},
-		{"type":"Array","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Array","inputs":0,"outputs":0,"category":"special","color":"#aaffdd","icon":"range.png"}},
+		{"type":"PointerArray","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"objectType":{"value":""},"arrayItems":{"value":""}},"shortName":"pArray","dontShowInPalette":"","inputs":0,"outputs":0,"category":"special","color":"#aaffdd","icon":"range.png"}},
 		{"type":"AudioMixer","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"inputs":{"value":"1"},"comment":{"value":""}},"shortName":"mixer","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"ClassComment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"ClassComment","inputs":0,"outputs":0,"category":"tabs","color":"#ccffcc","icon":"comment.png"}},
 		{"type":"Comment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Comment","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"comment.png"}},
 		{"type":"Function","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"code","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
-		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
+		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"hash.png"}},
 		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"includeFile":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""}},"shortName":"userObject","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"CodeFile","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"codeFile","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
+		{"type":"ConstValue","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"value":{"value":""}},"shortName":"constValue","inputs":0,"outputs":0,"category":"special","color":"#eb9834","icon":"hash.png"}},
 		
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -814,6 +815,32 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
+<script type="text/x-red" data-help-name="ConstValue">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This used to define a constant   <br>
+		that can be used when having multiple 
+		items that is defined as arrays
+	</p>
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+<script type="text/x-red" data-template-name="ConstValue">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-value"><i class="fa fa-tag"></i> Value</label>
+		<input type="text" id="node-input-value" placeholder="Value">
+	</div>
+</script>
+
 <script type="text/x-red" data-help-name="AudioStreamObject">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
@@ -1013,21 +1040,29 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 
-<script type="text/x-red" data-help-name="Array">
+<script type="text/x-red" data-help-name="PointerArray">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This is used to define an array of objects that is present in current flow.</p>
 	<h3>Usage</h3>
 	<p>To autogenerate a Array-node, select the nodes (they must be of the same type),</p>
 	<p>then press the "Generate array node" button present at the right info panel </p>
-	</div>
-	<h3>Notes</h3>
-	<p>To use it manually, the name should be "[Type] [Name]"</p>
-	<p>Example-name:</p>
-	<p>AudioSynthWaveform waveforms</p>
-	<p>this is the only thing needed, the code-generator will then search for all type matching objects in current flow and use them.</p>
 </script>
 </div>
+<script type="text/x-red" data-template-name="PointerArray">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row form-row-long">
+		<label for="node-input-objectType"><i class="fa fa-tag"></i> Object Type (readOnly)</label>
+		<input readonly type="text" id="node-input-objectType" placeholder="objectType">
+	</div>
+	<div class="form-row form-row-long">
+		<label for="node-input-arrayItems"><i class="fa fa-tag"></i> Array Items (readOnly)</label>
+		<input readonly type="text" id="node-input-arrayItems" placeholder="arrayItems">
+	</div>
+</script>
 
 <div> <!-- Audio Input category -->
 <script type="text/x-red" data-help-name="AudioInputI2S">

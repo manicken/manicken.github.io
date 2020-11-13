@@ -21,23 +21,23 @@ RED.bottombar.info = (function() {
     var message_listener = [];
 
 	content.id = "tab-output";
-	content.style.paddingTop = "4px";
-	content.style.paddingLeft = "4px";
-	content.style.paddingRight = "4px";
+	content.style.paddingTop = "0px";
+	content.style.paddingLeft = "0px";
+	content.style.paddingRight = "0px";
 
 	RED.bottombar.addTab("output", content,false);
 	//var hmtl = '<textarea readonly class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(255, 255, 255); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
-	var hmtl = '<div class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(250, 250, 250); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
+	var hmtl = '<div id="messages" class="input-block-level"'+ mText+'</textarea>';
 	$("#tab-output").html(hmtl);
 	//setContent("Welcome\n");
 
 	function refresh() {
 	    $("#messages").html(mText);
-	    $("#messages").css("height", $("#bottombar").height() - 50);
-		//$('#messages').scrollTop($('#messages')[0].scrollHeight);
-		
+	    //$("#messages").css("height", $("#bottombar").height());
+
 		var elem = document.getElementById('messages');
-  		elem.scrollTop = elem.scrollHeight;
+		  elem.scrollIntoView(false);
+		  $('#messages').scrollTop($('#messages')[0].scrollHeight);
     }
 
 	function setContent(txt) {

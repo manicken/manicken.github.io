@@ -27,6 +27,9 @@ RED.bottombar = (function() {
 			$("#"+tab.id).remove();
 		}
 	});
+	$("#bottombar-tabs").css("display","none");
+	//$("#bottombar-content").css("top", "0");
+	//$("#bottombar-content").css("height", "30");
 	function addTab(title,content,closeable) {
 		$("#bottombar-content").append(content);
 		$(content).hide();
@@ -65,9 +68,9 @@ RED.bottombar = (function() {
 			drag: function (event, ui) {
 				var d = ui.position.top-bottombarSeparator.start;
 				var newbottombarHeight = bottombarSeparator.height - d;
-				if (bottombarSeparator.opening) {
-				    newbottombarHeight -= 13;
-				}
+				/*if (bottombarSeparator.opening) {
+				    newbottombarHeight -= 5;
+				}*/
 				//console.log("height:" + newbottombarHeight);
 				/*if (newbottombarHeight > 60) {
 					if (bottombarSeparator.chartHeight+d < 200) {
@@ -78,7 +81,7 @@ RED.bottombar = (function() {
 				}*/
 				
 					
-				if (newbottombarHeight < 60) {
+				if (newbottombarHeight < 30) {
 					if (!bottombarSeparator.closing) {
 						//console.log("!bottombarSeparator.closing");
 						$("#bottombar").addClass("closing");
@@ -86,11 +89,11 @@ RED.bottombar = (function() {
 					}
 					if (!bottombarSeparator.opening) {
 						//console.log("!bottombarSeparator.opening");
-					    newbottombarHeight = 60;
-					    ui.position.top = bottombarSeparator.height - (60 - bottombarSeparator.start);
+					    newbottombarHeight = 30;
+					    ui.position.top = bottombarSeparator.height - (30 - bottombarSeparator.start);
 						d = ui.position.top-bottombarSeparator.start;
 					}
-				} else if (newbottombarHeight > 60 && (bottombarSeparator.closing || bottombarSeparator.opening)) {
+				} else if (newbottombarHeight > 30 && (bottombarSeparator.closing || bottombarSeparator.opening)) {
 					//console.log("else if (newbottombarHeight > 60 && (bottombarSeparator.closing || bottombarSeparator.opening))");
 					bottombarSeparator.closing = false;
 					$("#bottombar").removeClass("closing");
@@ -104,8 +107,8 @@ RED.bottombar = (function() {
 				$("#workspace").css("bottom",newChartBottom);
 				$("#chart-zoom-controls").css("bottom", newChartBottom + 20);
 				$("#bottombar").height(newbottombarHeight);
-				$("#messages").css("height", newbottombarHeight-50);
-				$("#console_messages").css("height", newbottombarHeight - 80);
+				//$("#messages").css("height", $("#bottombar").height());
+				//$("#console_messages").css("height", newbottombarHeight - 80);
 
 				bottombar_tabs.resize();
 				RED.view.resize();
@@ -125,7 +128,7 @@ RED.bottombar = (function() {
 					}
 				}
 				$("#bottombar-separator").css("top","auto");
-				$("#bottombar-separator").css("bottom",($("#bottombar").height()+13)+"px");
+				$("#bottombar-separator").css("bottom",($("#bottombar").height()+3+"px"));
 			}
 	});
 	
@@ -136,10 +139,13 @@ RED.bottombar = (function() {
 		//}
 		btnbottombar.toggleClass("active");
 		
+		
 		if (!btnbottombar.hasClass("active")) {
+			$("#main-container").removeClass("bottombar-open");
 			$("#main-container").addClass("bottombar-closed");
 		} else {
 			$("#main-container").removeClass("bottombar-closed");
+
 		}
 	}
 	togglebottombar();
