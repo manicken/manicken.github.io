@@ -96,7 +96,7 @@ RED.arduino = (function() {
 	$('#btn-compile-upload').click(function() { httpGetAsync("cmd=upload"); });
 	//$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
 	$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
-	function GetGUI_TOOL_JSON_response(responseText) { console.log("GetGUI_TOOL_JSON_response"); /*RED.storage.loadContents(responseText);*/ }
+	function GetGUI_TOOL_JSON_response(responseText) { RED.storage.loadContents(responseText); }
 	function NOtresponse(text) {console.log("GetGUI_TOOL_JSON_ not response"); }
     
     return {

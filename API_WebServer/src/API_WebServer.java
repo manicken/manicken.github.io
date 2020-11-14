@@ -28,6 +28,17 @@ import java.io.InputStream;
 import java.io.*;
 import java.net.InetSocketAddress;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import org.java_websocket.WebSocket;
+import org.java_websocket.drafts.Draft;
+import org.java_websocket.drafts.Draft_6455;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -40,17 +51,22 @@ import processing.app.Sketch;
 import processing.app.EditorTab;
 import processing.app.SketchFile;
 import processing.app.EditorHeader;
+import processing.app.EditorConsole;
 
 import java.util.Scanner;
 
 import java.lang.reflect.*;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import static processing.app.I18n.tr;
 
 import javax.swing.JOptionPane;
+import javax.lang.model.util.ElementScanner6;
 import javax.swing.*;
+import javax.swing.text.*;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -117,6 +133,26 @@ public class API_WebServer implements Tool {
 	boolean autostart = true; // replaced by code down
 	
 	boolean started = false;
+	public ChatServer cs;
+
+	EditorConsole editorConsole;
+	private ConsoleOutputStream2 out;
+	private ConsoleOutputStream2 err;
+	private SimpleAttributeSet console_stdOutStyle;
+	private SimpleAttributeSet console_stdErrStyle;
+
+	public synchronized void setCurrentEditorConsole() {
+		if (out == null) {
+		  out = new ConsoleOutputStream2(console_stdOutStyle, System.out, cs);
+		  System.setOut(new PrintStream(out, true));
+	
+		  err = new ConsoleOutputStream2(console_stdErrStyle, System.err, cs);
+		  System.setErr(new PrintStream(err, true));
+		}
+	
+		out.setCurrentEditorConsole(editorConsole);
+		err.setCurrentEditorConsole(editorConsole);
+	  }
 
 	public void init(Editor editor) { // required by tool loader
 		this.editor = editor;
@@ -128,9 +164,40 @@ public class API_WebServer implements Tool {
 		});
 		
 	}
+	/*private void SystemOutHookStart()
+	{
+		PrintStream myStream = new PrintStream(System.out) {
+			@Override
+			public void println(String x) {
+				//if (cs != null)
+				//cs.broadcast(x);
+				super.println("hello world:" + x);
+			}
+			public void print(String x) {
+				//if (cs != null)
+				//cs.broadcast(x);
+				super.print("hello world:" + x);
+			}
+		};
+		System.setOut(myStream);
+	}*/
 	public void run() {// required by tool loader
 		LoadSettings();
-		startServer();
+		startWebServer();
+		//SystemOutHookStart();
+		startWebsocketServer();		
+		//System.out.println("Hello World!");
+	}
+	public void startWebsocketServer()
+	{
+		try {
+			cs = new ChatServer(3000);
+			cs.start();
+			} catch (Exception e)
+			{
+				System.err.println("cannot start websocket server!!!");
+				e.printStackTrace();
+			}
 	}
 	public String getMenuTitle() {// required by tool loader
 		return thisToolMenuTitle;
@@ -153,9 +220,20 @@ public class API_WebServer implements Tool {
 			//sketch = (Sketch) f.get(this.editor);
 			sketch = this.editor.getSketch();
 			
+			f = Editor.class.getDeclaredField("console");
+			f.setAccessible(true);
+			editorConsole = (EditorConsole) f.get(this.editor);
+
+			f = EditorConsole.class.getDeclaredField("stdOutStyle");
+			f.setAccessible(true);
+			console_stdOutStyle = (SimpleAttributeSet) f.get(this.editorConsole);
+
+			f = EditorConsole.class.getDeclaredField("stdErrStyle");
+			f.setAccessible(true);
+			console_stdErrStyle = (SimpleAttributeSet) f.get(this.editorConsole);
+
 			f = Editor.class.getDeclaredField("tabs");
 			f.setAccessible(true);
-			
 			tabs = (ArrayList<EditorTab>) f.get(this.editor);
 			
 			f = Editor.class.getDeclaredField("header");
@@ -192,6 +270,8 @@ public class API_WebServer implements Tool {
 			newItem.addActionListener(event -> StartGUItool());
 
 			started = true;
+
+			
 			
 		}catch (Exception e)
 		{
@@ -204,7 +284,11 @@ public class API_WebServer implements Tool {
 		}
 		LoadSettings();
 		if (autostart)
-			startServer();
+		{
+			startWebServer();
+			startWebsocketServer();
+			setCurrentEditorConsole();
+		}
 	}
 	public void StartGUItool()
 	{
@@ -321,7 +405,7 @@ public class API_WebServer implements Tool {
         }
 	}
 	
-	private void startServer()
+	private void startWebServer()
 	{
 		if (server != null)
 			try { server.stop(1); } catch (Exception e) {System.err.println(e + " @ " + e.getStackTrace() + e.getStackTrace()[0].getLineNumber());}
@@ -337,9 +421,9 @@ public class API_WebServer implements Tool {
 	  }
 	}
 	
-	public String getJSON()
+	public String getFile(String name)
 	{
-		File file = new File(sketch.getFolder(), "GUI_TOOL.json");
+		File file = new File(sketch.getFolder(), name);
 		boolean exists = file.exists();
 		if (exists)
 		{
@@ -354,15 +438,15 @@ public class API_WebServer implements Tool {
 		}
 		else
 		{
-			System.out.println("GUI_TOOL.json file not found!");
+			System.out.println(name + " file not found!");
 			return "";
 		}
 	}
-	public void SetJSON(String contents)
+	public void setFile(String name, String contents)
 	{
 		try {
             // Constructs a FileWriter given a file name, using the platform's default charset
-            FileWriter file = new FileWriter(sketch.getFolder() + "/GUI_TOOL.json");
+            FileWriter file = new FileWriter(sketch.getFolder() + "/" + name);
 			file.write(contents);
 			file.close();
         } catch (IOException e) {
@@ -562,13 +646,89 @@ public class API_WebServer implements Tool {
 	
 	public void verifyCompile() 
 	{
+		editor.setAlwaysOnTop(false);
+		editor.setAlwaysOnTop(true);
+		editor.setAlwaysOnTop(false);
 		editor.handleRun(false, presentHandler, runHandler);
 	}
 	public void upload()
 	{
+		editor.setAlwaysOnTop(false);
+		editor.setAlwaysOnTop(true);
+		editor.setAlwaysOnTop(false);
 		editor.handleExport(false);
 	}
-	
+	public String parseGET(Map<String, String> query)
+	{
+		String cmd = query.get("cmd");
+		//if (!cmd.equals("ping"))
+		//	System.out.println("GET request params: " + cmd);
+		if (cmd.equals("ping"))
+		{
+			// do nothing, a OK is default to send back
+		}
+		else if (cmd.equals("compile"))
+		{
+			verifyCompile();
+			System.out.println("WSAPI compile");
+		}
+		else if (cmd.equals("upload"))
+		{   
+			upload();
+			System.out.println("WSAPI upload");
+		}
+		else if (cmd.equals("renameFile"))
+		{
+			String from = query.get("from");
+			if (from == null) { System.out.println("Missing 'from' parameter @ renameFile"); return "Missing 'from' parameter @ renameFile"; }
+			String to = query.get("to");
+			if (to == null) { System.out.println("Missing 'to' parameter @ renameFile"); return "Missing 'to' parameter @ renameFile"; }
+			System.out.println("WSAPI renameFile from:" + from + ", to:" + to);
+			renameFile(from, to);
+		}
+		else if (cmd.equals("removeFile"))
+		{
+			String name = query.get("fileName");
+			if (name == null) { System.out.println("Missing 'fileName' parameter @ removeFile"); return "Missing 'fileName' parameter @ removeFile"; }
+			System.out.println("WSAPI removeFile:" + name);
+			removeFile(name);
+		}
+		else if(cmd.equals("getFile"))
+		{
+			String name = query.get("fileName");
+			if (name == null) { System.out.println("Missing 'fileName' parameter @ getFile"); return "Missing 'fileName' parameter @ getFile"; }
+			System.out.println("WSAPI getFile:" + name);
+			return getFile(name);
+		}
+		else
+			return "unknown GET cmd: " + cmd;
+
+		return "OK"; // default
+	}
+	public synchronized String parsePOST(String data)
+	{
+		JSONObject jsonObj = new JSONObject(data);
+		Boolean removeOtherFiles = jsonObj.getBoolean("removeOtherFiles"); // this should be implemented later
+		JSONArray arr = jsonObj.getJSONArray("files");
+		
+		if (removeOtherFiles) {
+			try{RemoveFilesNotInJSON(arr);}
+			catch (Exception e) {e.printStackTrace();}
+		}
+		for (int i = 0; i < arr.length(); i++)
+		{
+			JSONObject e = arr.getJSONObject(i);
+			String name = e.getString("name");
+			String contents = e.getString("contents");
+			if (name.endsWith(".cpp") || name.endsWith(".c") || name.endsWith(".h") || name.endsWith(".hpp") || name.endsWith(".ino"))
+				addNewFile(name, contents); // adds a new file to the sketch-project
+			else
+				setFile(name, contents); // this writes a file without the IDE knowing it
+		}
+		//System.out.println(data);
+		editor.handleSave(true);
+		return "OK";
+	}
 }
 class MyHttpHandler implements HttpHandler
 {    
@@ -583,106 +743,52 @@ class MyHttpHandler implements HttpHandler
 	
 	@Override    
 	public void handle(HttpExchange httpExchange) throws IOException {
-		String reqMethod = httpExchange.getRequestMethod();
-		//System.out.println("handle:" + reqMethod);
-		String htmlResponse = "OK";
+		httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 		
+		String reqMethod = httpExchange.getRequestMethod();
+		String htmlResponse = "";
 		String requestParamValue=null; 
-		if("GET".equals(reqMethod))
-		{ 
-		   //System.out.println("GET");
-		   requestParamValue = handleGetRequest(httpExchange);
-		   if (!requestParamValue.equals("ping"))
-			System.out.println("GET request params: " + requestParamValue);
-		   if (requestParamValue.equals("ping"))
-		   {
-			   // do nothing, a OK is default to send back
-		   }
-		   else if (requestParamValue.equals("compile"))
-		   {
-			   editor.setAlwaysOnTop(false);
-			   editor.setAlwaysOnTop(true);
-			   editor.setAlwaysOnTop(false);
-			   api.verifyCompile();
-		   }
-		   else if (requestParamValue.equals("upload"))
-		   {
-			   editor.setAlwaysOnTop(false);
-			   editor.setAlwaysOnTop(true);
-			   editor.setAlwaysOnTop(false);
-			   api.upload();
-		   }
-		   else if (requestParamValue.startsWith("renameFile"))
-		   {
-			   String[] params = requestParamValue.split(":");
-			   if (params.length != 3) { System.out.println("Missing parameters @ rename file, length " + params.length + "!=3");  return; }
-			   api.renameFile(params[1], params[2]);
-		   }
-		   else if (requestParamValue.startsWith("removeFile"))
-		   {
-			   String[] params = requestParamValue.split(":");
-			   if (params.length != 2) { System.out.println("Missing parameters @ remove file, length " + params.length + "!=2");  return; }
-			   api.removeFile(params[1]);
-		   }
-		   else if (requestParamValue.startsWith("addFile"))
-		   {
-			   String[] params = requestParamValue.split(":");
-			   if (params.length != 2) { System.out.println("Missing parameters @ add file, length " + params.length + "!=2");  return; }
-			   api.addNewFile(params[1], "");
-			   editor.handleSave(true);
-		   }
-		   else if(requestParamValue.equals("getJSON"))
-		   {
-			   htmlResponse = api.getJSON();
-		   }
-		   else
-			   htmlResponse = "unknown GET method: " + requestParamValue;
+		
+		if(reqMethod.equals("GET"))
+		{
+			htmlResponse = api.parseGET(queryToMap(httpExchange.getRequestURI().getQuery()));
 		}
-		else if("POST".equals(reqMethod))
+		else if(reqMethod.equals("POST"))
 		{ 
-		   requestParamValue = handlePostRequest(httpExchange);
-		   ParsePOST_JSON(requestParamValue);
+			requestParamValue = handlePostRequest(httpExchange);
+			if (requestParamValue.length() == 0)
+			{
+				System.out.println("HTTP POST don't contain any data!");
+				htmlResponse = "";
+			}
+			else
+			{
+				htmlResponse = api.parsePOST(requestParamValue);
+			}
 		}
-
+		else
+		{
+			System.out.println("unknown reqMethod:" + reqMethod);
+			htmlResponse = "unknown reqMethod:" + reqMethod;
+		}
 		//System.out.println(requestParamValue); // debug
 		handleResponse(httpExchange, htmlResponse); 
 	}
-	public void ParsePOST_JSON(String data)
-	{
-		JSONObject jsonObj = new JSONObject(data);
-		String command = jsonObj.getString("command"); // this should be implemented later
-		JSONArray arr = jsonObj.getJSONArray("files");
-		
-		try{api.RemoveFilesNotInJSON(arr);}
-		catch (Exception e) {e.printStackTrace();}
-		
-		for (int i = 0; i < arr.length(); i++)
-		{
-			JSONObject e = arr.getJSONObject(i);
-			String name = e.getString("name");
-			String contents = e.getString("contents");
-			if (name.equals("GUI_TOOL.json"))
-				api.SetJSON(contents);
-			else
-				api.addNewFile(name, contents); // uses reflection to use private members
+
+	public Map<String, String> queryToMap(String query) {
+		Map<String, String> result = new HashMap<>();
+		for (String param : query.split("&")) {
+			String[] entry = param.split("=");
+			if (entry.length > 1) {
+				result.put(entry[0], entry[1]);
+			}else{
+				result.put(entry[0], "");
+			}
 		}
-		//System.out.println(data);
-		editor.handleSave(true);
-	}
-	
-	
-	private String handleGetRequest(HttpExchange httpExchange) {
-		httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-		//System.out.println("handleGetRequest uri:" + httpExchange.getRequestURI());
-		return httpExchange.
-			getRequestURI()
-			.toString()
-			.split("\\?")[1]
-			.split("=")[1];
+		return result;
 	}
 	
 	private String handlePostRequest(HttpExchange httpExchange) {
-		httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 		if (httpExchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
             httpExchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, OPTIONS");
             httpExchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type,Authorization");
@@ -715,3 +821,156 @@ class MyHttpHandler implements HttpHandler
 		outputStream.close();
 	}
 }
+class ChatServer extends WebSocketServer {
+
+	public ChatServer(int port) throws UnknownHostException {
+	  super(new InetSocketAddress(port));
+	}
+  
+	public ChatServer(InetSocketAddress address) {
+	  super(address);
+	}
+  
+	public ChatServer(int port, Draft_6455 draft) {
+	  super(new InetSocketAddress(port), Collections.<Draft>singletonList(draft));
+	}
+  
+	@Override
+	public void onOpen(WebSocket conn, ClientHandshake handshake) {
+	  conn.send("Welcome to the server!"); //This method sends a message to the new client
+	  broadcast("new connection: " + handshake
+		  .getResourceDescriptor()); //This method sends a message to all clients connected
+	  System.out.println(
+		  conn.getRemoteSocketAddress().getAddress().getHostAddress() + " entered the room!");
+	}
+  
+	@Override
+	public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+	  broadcast(conn + " has left the room!");
+	  System.out.println(conn + " has left the room!");
+	}
+  
+	@Override
+	public void onMessage(WebSocket conn, String message) {
+	  broadcast(message);
+	  System.out.println(conn + ": " + message);
+	}
+  
+	@Override
+	public void onMessage(WebSocket conn, ByteBuffer message) {
+	  broadcast(message.array());
+	  System.out.println(conn + ": " + message);
+	}
+  
+  
+	/*public static void main(String[] args) throws InterruptedException, IOException {
+	  int port = 8887; // 843 flash policy port
+	  try {
+		port = Integer.parseInt(args[0]);
+	  } catch (Exception ex) {
+	  }
+	  ChatServer s = new ChatServer(port);
+	  s.start();
+	  System.out.println("ChatServer started on port: " + s.getPort());
+  
+	  BufferedReader sysin = new BufferedReader(new InputStreamReader(System.in));
+	  while (true) {
+		String in = sysin.readLine();
+		s.broadcast(in);
+		if (in.equals("exit")) {
+		  s.stop(1000);
+		  break;
+		}
+	  }
+	}*/
+  
+	@Override
+	public void onError(WebSocket conn, Exception ex) {
+	  ex.printStackTrace();
+	  if (conn != null) {
+		// some errors like port binding failed may not be assignable to a specific websocket
+	  }
+	}
+  
+	@Override
+	public void onStart() {
+	  System.out.println("Websocket Server started!");
+	  setConnectionLostTimeout(0);
+	  setConnectionLostTimeout(100);
+	}
+  
+  }
+  class ConsoleOutputStream2 extends ByteArrayOutputStream {
+
+	private SimpleAttributeSet attributes;
+	private final PrintStream printStream;
+	private final Timer timer;
+  
+	private volatile EditorConsole editorConsole;
+	private volatile boolean newLinePrinted;
+
+	private ChatServer cs;
+	Color fgColor;
+	String fgColorHex;
+	Color bgColor;
+	String bgColorHex;
+  
+	public ConsoleOutputStream2(SimpleAttributeSet attributes, PrintStream printStream, ChatServer cs) {
+	  this.cs = cs;
+	  this.attributes = attributes;
+	  this.printStream = printStream;
+	  this.newLinePrinted = false;
+	
+	  fgColor = StyleConstants.getForeground(attributes);
+	  fgColorHex = "#" + Integer.toHexString(fgColor.getRGB() | 0xFF000000).substring(2);
+	  bgColor = StyleConstants.getBackground(attributes);
+	  bgColorHex = "#" + Integer.toHexString(bgColor.getRGB() | 0xFF000000).substring(2);
+
+	  this.timer = new Timer(100, (e) -> {
+		if (editorConsole != null && newLinePrinted) {
+		  editorConsole.scrollDown();
+		  newLinePrinted = false;
+		}
+	  });
+	  timer.setRepeats(false);
+	}
+  
+	public void setAttibutes(SimpleAttributeSet attributes) {
+	  this.attributes = attributes;
+	}
+  
+	public void setCurrentEditorConsole(EditorConsole console) {
+	  this.editorConsole = console;
+	}
+  
+	public synchronized void flush() {
+	  String text = toString();
+  
+	  if (text.length() == 0) {
+		return;
+	  }
+  
+	  printStream.print(text);
+	  printInConsole(text);
+  
+	  reset();
+	}
+  
+	private void printInConsole(String text) {
+	  newLinePrinted = newLinePrinted || text.contains("\n");
+	  if (editorConsole != null) {
+		SwingUtilities.invokeLater(() -> {
+		  try { editorConsole.insertString(text, attributes); } 
+		  catch (BadLocationException ble) { /*ignore*/ }
+
+		  try { cs.broadcast("<span style=\"color:"+fgColorHex+";background-color:"+bgColorHex+";\">" + text.replace("\r\n", "<br>").replace("\r", "<br>").replace("\n", "<br>") + "</span>"); }
+		  catch (Exception ex) { /*ignore*/ }
+
+		});
+  
+		if (!timer.isRunning()) {
+		  timer.restart();
+		}
+	  }
+	}
+  }
