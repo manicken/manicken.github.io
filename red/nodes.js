@@ -621,7 +621,7 @@ RED.nodes = (function() {
 			for (i=0;i<newNodes.length;i++) {
 				n = newNodes[i];
 				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
-				else if (n.type == "Array") n.type = "PointerArray";
+				else if (n.type == "Array") n.type = "PointerArray"; // type conversion
 				// TODO: remove workspace in next release+1
 				if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
 					// TODO: get this UI thing out of here! (see below as well)
@@ -810,6 +810,21 @@ RED.nodes = (function() {
 
 				if (retVal) return retVal; // only abort/return if cb returns something, and return the value
 			}
+		}
+	}
+	/**
+	 * 
+	 * @param {*} srcNode 
+	 * @param {*} cb is function pointer with following format cb(link);
+	 */
+	function getEachLink(srcNode, cb)
+	{
+		for (var li = 0; li < links.length; li++)
+		{
+			var link = links[li];
+			if (link.source === srcNode)
+			var retVal = cb(link);
+			if (retVal) return retVal; // only abort/return if cb returns something, and return the value
 		}
 	}
 
@@ -1114,7 +1129,7 @@ RED.nodes = (function() {
 			ac.dstPort = dstPortIndex;
 			ac.dstName = currRootName + "." + make_name(dst);
 
-			if (isClass(dst.type))
+			if (dst._def.isClass != undefined) // isClass(dst.type))
 			{
 				// call this function recursive until non class is found
 				classInputPortToCpp(tabInNodes, ac.dstName, ac, dst);
@@ -1190,13 +1205,14 @@ RED.nodes = (function() {
 		{
 			var n = nodes[i];
 			if (n.z != wsId) continue; // workspace filter
-			if (RED.arduino.export.isSpecialNode(n.type)) continue;
+			//if (RED.arduino.export.isSpecialNode(n.type)) continue;
+			if (n.nonObject != undefined) continue;
 			var data = $("script[data-help-name|='" + n.type + "']").html();
 			//var firstP = $("<div/>").append(data).children("div").first().html();
 			if (data == undefined) data = n.type;
 			else
 				data = $("<div/>").append(data).children("div").first().html();
-			items.push({ name:n.name, value:n.name, type:n.type, meta: data, score:(100-n)  });
+			items.push({ name:n.name, value:n.name, type:n.type, html: data, meta: n.type, score:(100-n)  });
 		}
 		AceAutoComplete.Extension.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
 			items.push(kw);
@@ -1289,6 +1305,39 @@ RED.nodes = (function() {
 		    }
 	    }
 	}
+	function getJunctionSrcNode(junctionNode)
+	{
+		for (var i = 0; i < links.length; i++)
+		{
+			var lnk = links[i];
+			if (lnk.target === junctionNode)
+			{
+				if (lnk.source.type.startsWith("Junction"))
+					return getJunctionSrcNode(lnk.source);
+				else
+					return lnk.source;
+			}
+		}
+		return null;
+	}
+	function getJunctionDstNodeEquals(junctionNode, dstNode)
+	{
+		var found = false;
+		for (var i = 0; i < links.length; i++)
+		{
+			var lnk = links[i];
+			if (lnk.source === junctionNode)
+			{
+				if (lnk.target.type.startsWith("Junction"))
+					found = getJunctionDstNodeEquals(lnk.target, dstNode);
+				else
+					found = lnk.target == dstNode;
+
+				if (found) return true;
+			}
+		}
+		return false;
+	}
 	function removeUnusedWires(node)
 	{
 		console.warn("removeUnusedWires:" + node.type);
@@ -1322,12 +1371,12 @@ RED.nodes = (function() {
 			if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
 			var classColor = RED.main.classColor;
 			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
-			var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
+			var data = $.parseJSON('{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"' + ws.label + '","isClass":"","inputs":' + inputCount + ',"outputs":' + outputCount + ',"category":"tabs","color":"' + classColor + '","icon":"arrow-in.png"}');
 
 			registerType(ws.label, data);
 		}
 	}
-	function checkIfTypeShouldBeAddedToUsedCat(nt)
+	/*function checkIfTypeShouldBeAddedToUsedCat(nt)
 	{
 		if (nt == "TabInput") return false;
 		else if (nt == "TabOutput") return false;
@@ -1340,7 +1389,7 @@ RED.nodes = (function() {
 		else if (nt == "unknown") return false;
 		else if (isClass(nt)) return false;
 		return true;
-	}
+	}*/
 	function addUsedNodeTypesToPalette()
 	{
 		//console.trace("addUsedNodeTypesToPalette");
@@ -1348,8 +1397,9 @@ RED.nodes = (function() {
 		for (var i = 0; i < nodes.length; i++)
 		{
 			var n = nodes[i];
-			if (!checkIfTypeShouldBeAddedToUsedCat(n.type)) continue;
-
+			if (n._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+			if (n._def.isClass != undefined) continue;
+			if (n.unknownType != undefined) continue;
 			if (n._def.category == undefined) {console.error("error at addUsedNodeTypesToPalette(): nodes[i].type=" + n.type); continue;}
 			if (n._def.category.startsWith("input")) continue;
 			if (n._def.category.startsWith("output")) continue;
@@ -1372,6 +1422,8 @@ RED.nodes = (function() {
 		getType: getType,
 		convertNode: convertNode,
 		selectNode: selectNode,
+		getJunctionSrcNode:getJunctionSrcNode,
+		getJunctionDstNodeEquals:getJunctionDstNodeEquals,
 		add: addNode,
 		addLink: addLink,
 		remove: removeNode,
@@ -1389,6 +1441,7 @@ RED.nodes = (function() {
 				cb(links[l]);
 			}
 		},
+		getEachLink:getEachLink,
 		eachConfig: function(cb) {
 			for (var id in configNodes) {
 				if (configNodes.hasOwnProperty(id)) {

@@ -707,6 +707,9 @@ g.link_unknown path.link_line {
     width:70px;
     right: 0px;
 }
+#valueType {
+    width:80px;
+}
 
 input.input-append-left {
     border-top-right-radius: 0px;

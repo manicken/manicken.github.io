@@ -108,7 +108,7 @@ RED.arduino.export = (function() {
 		console.log('arduino-export-save-show-dialog took: ' + (t3-t2) +' milliseconds.');
 	}
 
-	function isSpecialNode(nt)
+	/*function isSpecialNode(nt)
 	{
 		if (nt == "ClassComment") return true;
 		else if (nt == "Comment") return true;
@@ -121,7 +121,7 @@ RED.arduino.export = (function() {
 		else if (nt == "tab") return true;
 		else if (nt == "PointerArray") return true;
 		else return false;
-	}
+	}*/
 	/**
 	 * This is only for the moment to get special type AudioMixer<n>
 	 * @param {*} nns nodeArray
@@ -308,11 +308,15 @@ RED.arduino.export = (function() {
 
 		for (var i=0; i<nns.length; i++) {
 			var n = nns[i];
+			if (n.type == "tab" || n.type == "settings") continue;
 			if (n.z != activeWorkspace) continue; // workspace filter
-			if (isSpecialNode(n.type) || (n.type == "PointerArray")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
-			var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
-			if (node == null) { console.warn("node == null:" + "type:"+n.type +",id:"+ n.id); continue;} // this should never happen (because now "tab" type is in isSpecialNode)
 			
+			//if (isSpecialNode(n.type) || (n.type == "PointerArray")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
+			var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
+			
+			if (node == null) { console.warn("node == null:" + "type:"+n.type +",id:"+ n.id); continue;} // this should never happen (because now "tab" type checked at top)
+			if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+
 			if (haveIO(node)) {
 				// generate code for audio processing node instance
 				cppAPN += getTypeName(nns,n);
@@ -450,20 +454,29 @@ RED.arduino.export = (function() {
 					var includeName = '#include "' + n.name + '"';
 					if (!classAdditional.includes(includeName)) classAdditional.push(includeName);
 				}
+				else if (n.type == "ConstValue")
+				{
+					classVars += "const static " + n.valueType + " " + n.name + " = " + n.value + ";\n";
+				}
 			}
 			if (classComment.length > 0)
 			{
 				newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
 			}
 			newWsCpp.contents += "\nclass " + ws.label + "\n{\n public:\n";
+			if (classVars.trim().length > 0)
+				newWsCpp.contents += incrementTextLines(classVars, "    ");
 
 			// generate code for all audio processing nodes
 			for (var i=0; i<nns.length; i++) {
 				var n = nns[i];
+				if (n.type == "tab" || n.type == "settings") continue; // constant special objects
 				if (n.z != ws.id) continue; // workspace filter
 				var node = RED.nodes.node(n.id);
 				if (node == null) { continue;}
-				if(isSpecialNode(n.type)) continue;
+				if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+
+				//if(isSpecialNode(n.type)) continue;
 				if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
 
 				var isArray = RED.nodes.isNameDeclarationArray(n.name,ws.id, true);
@@ -488,15 +501,16 @@ RED.arduino.export = (function() {
 				if (n.z != ws.id) continue;
 				var node = RED.nodes.node(n.id);
 				if (node == null) { continue;}
-				if (node.outputs == 0 && node._def.inputs == 0) {
+				if (node._def.nonObject != undefined) continue;// _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+				if (node._def.outputs != 0) continue;
+				if (node._def.inputs != 0) continue;
 
-					if(isSpecialNode(n.type)) continue;
+				//if(isSpecialNode(n.type)) continue; // replaced by if (node._def.nonObject != undefined) 
 					
-					newWsCpp.contents += "    " + n.type + " ";
-					for (var j=n.type.length; j<32; j++) cpp += " ";
-					var name = RED.nodes.make_name(n)
-					newWsCpp.contents += name + ";\n";
-				}
+				newWsCpp.contents += "    " + n.type + " ";
+				for (var j=n.type.length; j<32; j++) cpp += " ";
+				var name = RED.nodes.make_name(n)
+				newWsCpp.contents += name + ";\n";
 			}
 			// generate code for all connections (aka wires or links)
 			var ac = getNewAudioConnectionType(ws.id);
@@ -508,37 +522,76 @@ RED.arduino.export = (function() {
 				var n = nns[i];
 
 				if (n.z != ws.id) continue; // workspace check
+				if (n.type.startsWith("Junction")) continue;
 				
 				RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex)
 				{
+
 					var src = RED.nodes.node(n.id);
 					var dst = RED.nodes.node(dstId);
 
 					if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
-						
-					ac.cppCode = "";
-					ac.srcName = RED.nodes.make_name(src);
-					ac.dstName = RED.nodes.make_name(dst);
-					ac.srcPort = pi;
-					ac.dstPort = dstPortIndex;
-
-					ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
-					if (RED.nodes.isClass(n.type)) { // if source is class
-						//console.log("root src is class:" + ac.srcName);
-						RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
-					}
 					
-					ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
-					if (RED.nodes.isClass(dst.type)) {
-						//console.log("dst is class:" + dst.name + " from:" + n.name);
-						RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName , ac, dst);
-					} else {
-						ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
+					if (dst.type.startsWith("Junction"))// && )
+					{	
+						var dstNodes = {nodes:[]};
+						getJunctionFinalDestinations(dst, dstNodes);
+						for (var dni = 0; dni < dstNodes.nodes.length; dni++)
+						{
+							if (src === dstNodes.nodes[dni].node) continue; // can't make connections back to itself
+
+							//console.error(src.name +":"+ pi + "->" + dstNodes.nodes[dni].node.name + ":" + dstNodes.nodes[dni].dstPortIndex);
+							dst = dstNodes.nodes[dni].node;
+							ac.cppCode = "";
+							ac.srcName = RED.nodes.make_name(src);
+							ac.dstName = RED.nodes.make_name(dst);
+							ac.srcPort = pi;
+							ac.dstPort = dstNodes.nodes[dni].dstPortIndex;
+
+							ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
+							if (RED.nodes.isClass(n.type)) { // if source is class
+								//console.log("root src is class:" + ac.srcName);
+								RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
+							}
+							
+							ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
+							if (RED.nodes.isClass(dst.type)) {
+								//console.log("dst is class:" + dst.name + " from:" + n.name);
+								RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName , ac, dst);
+							} else {
+								ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
+							}
+							if (ac.ifAnyIsArray())
+								cppArray += ac.cppCode;
+							else
+								cppPcs += ac.cppCode;
+								}
 					}
-					if (ac.ifAnyIsArray())
-						cppArray += ac.cppCode;
-					else
-						cppPcs += ac.cppCode;
+					else{
+						ac.cppCode = "";
+						ac.srcName = RED.nodes.make_name(src);
+						ac.dstName = RED.nodes.make_name(dst);
+						ac.srcPort = pi;
+						ac.dstPort = dstPortIndex;
+
+						ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
+						if (RED.nodes.isClass(n.type)) { // if source is class
+							//console.log("root src is class:" + ac.srcName);
+							RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
+						}
+						
+						ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
+						if (RED.nodes.isClass(dst.type)) {
+							//console.log("dst is class:" + dst.name + " from:" + n.name);
+							RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName , ac, dst);
+						} else {
+							ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
+						}
+						if (ac.ifAnyIsArray())
+							cppArray += ac.cppCode;
+						else
+							cppPcs += ac.cppCode;
+					}
 				});
 			}
 
@@ -552,8 +605,7 @@ RED.arduino.export = (function() {
 				for (var j=arrayNode.type.length; j<32; j++) newWsCpp.contents += " ";
 				newWsCpp.contents += "*" + arrayNode.name +";\n";
 			}
-			if (classVars.trim().length > 0)
-				newWsCpp.contents += "\n" + incrementTextLines(classVars, "    ");
+			
 			newWsCpp.contents+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
 			newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
 
@@ -612,6 +664,20 @@ RED.arduino.export = (function() {
 		console.log('arduino-export-save2 took: ' + (t1-t0) +' milliseconds.');
 	}
 
+	function getJunctionFinalDestinations(junctionNode, dstNodes)
+	{
+		junctionNode = RED.nodes.convertNode(junctionNode);
+		RED.nodes.eachWire(junctionNode, function (pi, dstId, dstPortIndex)
+		{
+			var dst = RED.nodes.node(dstId)
+
+			if (dst.type.startsWith("Junction"))
+				getJunctionFinalDestinations(dst, dstNodes);
+			else
+				dstNodes.nodes.push({node:dst, dstPortIndex:dstPortIndex});
+		});
+	}
+
 	$('#btn-pushJSON').click(function() { pushJSON(); });
 	function pushJSON()
 	{
@@ -633,7 +699,7 @@ RED.arduino.export = (function() {
 					}).focus();*/ 
 
     return {
-		isSpecialNode:isSpecialNode,
+		//isSpecialNode:isSpecialNode,
 		showExportDialog:showExportDialog,
 		pushJSON:pushJSON,
 	};

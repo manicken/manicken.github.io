@@ -149,6 +149,8 @@ RED.palette = (function() {
 			}
 			
 			d.style.backgroundColor = def.color;
+			if (def.textColor != undefined)
+			d.style.color = def.textColor;
 			
 			if (def.outputs > 0) {
 				var portOut = document.createElement("div");

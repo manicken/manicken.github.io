@@ -107,10 +107,10 @@ RED.devTest = (function() {
                     if (msg.data == 'reload') window.location.reload();
                     else
                     {
-                        console.log(msg.data);
+                        //console.log(msg.data);
                         //RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
                         var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
-                        console.warn(dataToAdd);
+                        //console.warn(dataToAdd);
                         RED.bottombar.info.addContent(dataToAdd);
                     }
                 };

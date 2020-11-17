@@ -124,8 +124,8 @@ RED.view = (function() {
 		height: 30, // minimum default
 		pin_rx: 2, // The horizontal corner radius of the rect.
 		pin_ry: 2, // The vertical corner radius of the rect.
-		pin_xsize: 7,
-		pin_ysize: 7,
+		pin_xsize: 10,
+		pin_ysize: 10,
 		pin_xpos: -5,
 		pin_ypadding: 3,
 		pin_yspaceToEdge: 4,
@@ -698,8 +698,14 @@ RED.view = (function() {
 			var sourcePort = mousedown_port_index;
 			var portY = -((numOutputs-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*sourcePort;
 
-			var sc = (mousedown_port_type === 0)?1:-1;
-
+			if (mousedown_node.type == "JunctionRL")
+			{
+				var sc = (mousedown_port_type === 0)?-1:1;
+			}
+			else
+			{
+				var sc = (mousedown_port_type === 0)?1:-1;
+			}
 			var dy = mousePos[1]-(mousedown_node.y+portY);
 			var dx = mousePos[0]-(mousedown_node.x+sc*mousedown_node.w/2);
 			var delta = Math.sqrt(dy*dy+dx*dx);
@@ -715,13 +721,16 @@ RED.view = (function() {
 					scaleY = ((dy>0)?0.5:-0.5)*(((3*node_def.height)-Math.abs(dy))/(3*node_def.height))*(Math.min(node_def.width,Math.abs(dx))/(node_def.width)) ;
 				}
 			}
+			
 
-			drag_line.attr("d",
-				"M "+(mousedown_node.x+sc*mousedown_node.w/2)+" "+(mousedown_node.y+portY)+
-				" C "+(mousedown_node.x+sc*(mousedown_node.w/2+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
-				(mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
-				mousePos[0]+" "+mousePos[1]
-				);
+
+				drag_line.attr("d",
+					"M "+(mousedown_node.x+sc*mousedown_node.w/2)+" "+(mousedown_node.y+portY)+
+					" C "+(mousedown_node.x+sc*(mousedown_node.w/2+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
+					(mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
+					mousePos[0]+" "+mousePos[1]
+					);
+
 			d3.event.preventDefault();
 		} else if (mouse_mode == RED.state.MOVING) {
 			mousePos = mouse_position;
@@ -743,7 +752,7 @@ RED.view = (function() {
 			drag_line.attr("class", "drag_line_hidden");
 		}
 		if (lasso) {
-			console.warn("canvasMouseUp lasso happend");
+			//console.warn("canvasMouseUp lasso happend");
 			var x = parseInt(lasso.attr("x"));
 			var y = parseInt(lasso.attr("y"));
 			var x2 = x+parseInt(lasso.attr("width"));
@@ -764,12 +773,13 @@ RED.view = (function() {
 			lasso.remove();
 			lasso = null;
 		} else if (mouse_mode == RED.state.DEFAULT && mousedown_link == null) {
-			console.warn("canvasMouseUp mouse_mode == RED.state.DEFAULT && mousedown_link == null) happend");
+			
+			//console.warn("canvasMouseUp mouse_mode == RED.state.DEFAULT && mousedown_link == null) happend");
 			clearSelection();
 			updateSelection();
 		}
 		if (mouse_mode == RED.state.MOVING_ACTIVE) {
-			console.warn("canvasMouseUp mouse_mode == RED.state.MOVING_ACTIVE happend");
+			//console.warn("canvasMouseUp mouse_mode == RED.state.MOVING_ACTIVE happend");
 			if (moving_set.length > 0) {
 				var ns = [];
 				for (var j=0;j<moving_set.length;j++) {
@@ -1222,11 +1232,18 @@ RED.view = (function() {
 			} else {
 				mouseup_node = d;
 			}
-			if (portType == mousedown_port_type || mouseup_node === mousedown_node) {
-				drag_line.attr("class", "drag_line_hidden");
-				resetMouseVars();
+			// TODO: fix so that a Junction cannot be used to
+			// override mouseup_node === mousedown_node
+			if (mouseup_node === mousedown_node ) { 
+				stopDragLine();
+				RED.notify("<strong>A connection cannot be made directly to itself!!!</strong>" + portType + mousedown_port_type, "warning", false, 2000);
 				return;
 			}
+			if (portType == mousedown_port_type)
+			{
+				stopDragLine(); return;
+			}
+			
 			var src,dst,src_port,dst_port;
 			if (mousedown_port_type === 0) {
 				src = mousedown_node;
@@ -1239,10 +1256,42 @@ RED.view = (function() {
 				dst = mousedown_node;
 				dst_port = mousedown_port_index;
 			}
-
+			var srcIsJunction = src.type.startsWith("Junction");
+			var dstIsJunction = dst.type.startsWith("Junction");
+			if (srcIsJunction || dstIsJunction)
+			{
+				var newSrc,newDst;
+				if (srcIsJunction)
+					newSrc = RED.nodes.getJunctionSrcNode(src);
+				else
+					newSrc = src;
+				if (newSrc != null)
+				{
+					if (dstIsJunction)
+					{
+						if (RED.nodes.getJunctionDstNodeEquals(dst, newSrc))
+						{
+							stopDragLine();
+							RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
+							return;
+						}
+					}
+					else
+						newDst = dst;
+					
+					if (newSrc === newDst)
+					{
+						stopDragLine();
+						RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
+						return;
+					}
+					RED.notify("<strong>" + src.name  + "->" + newSrc.name +  ":" + dst.name  + "</strong>", "warning", false, 5000);
+				}
+			}
 			var existingLink = false;
 			RED.nodes.eachLink(function(d) {
 					existingLink = existingLink || (d.source === src && d.target === dst && d.sourcePort == src_port && d.targetPort == dst_port);
+
 			});
 			if (!existingLink) {
 				var link = {source: src, sourcePort:src_port, target: dst, targetPort: dst_port};
@@ -1262,6 +1311,11 @@ RED.view = (function() {
 			clearLinkSelection();
 			redraw();
 		}
+	}
+	function stopDragLine()
+	{
+		drag_line.attr("class", "drag_line_hidden");
+		resetMouseVars();
 	}
 
 	function nodeMouseUp(d) {
@@ -1441,6 +1495,12 @@ RED.view = (function() {
 		//l = (typeof l === "function" ? l.call(d) : l)||"";
 		var l = d.name ? d.name : d.id;
 		if (d.unknownType != undefined) l = d.type;
+		if (d.type == "JunctionLR" || d.type == "JunctionRL")
+		{
+			d.w = node_def.height;
+			d.h = node_def.height;
+			return;
+		}
 		if (d.inputs) // Jannik
 		{
 			d.w = Math.max(node_def.width,calculateTextWidth(l)+(d.inputs>0?7:0) );
@@ -1700,23 +1760,29 @@ RED.view = (function() {
 			var rect = nodeRect.append("rect");
 			inputlist[n] = rect;
 			rect.attr("class","port port_input").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry)
-				.attr("y",y).attr("x",node_def.pin_xpos).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize).attr("index",n);
+				.attr("y",y).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize).attr("index",n);
+
+			if (d.type == "JunctionRL")
+				rect.attr("x",d.w - node_def.pin_ysize/2);
+			else
+				rect.attr("x",node_def.pin_xpos);
+			
 
 			if (link && link.length > 0) {
 				// this input already has a link connected, so disallow new links
 				rect.on("mousedown",null)
-					.on("touchstart", null)
-					.on("mouseup", null)
-					.on("touchend", null)
+				    .on("mouseup", null)
+					//.on("touchstart", null)
+					//.on("touchend", null)
 					.on("mouseover", nodeInput_mouseover) // used by popOver
 					.on("mouseout", nodePort_mouseout) // used by popOver
 					.classed("port_hovered",false);
 			} else {
 				// allow new link on inputs without any link connected
-				rect.on("mousedown", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
-					.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
-					.on("mouseup", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
-					.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
+				rect.on("mousedown", (function(nn){return function(d2){portMouseDown(d2,1,nn);}})(n))
+				    .on("mouseup", (function(nn){return function(d2){portMouseUp(d2,1,nn);}})(n))
+					//.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
+					//.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
 					.on("mouseover", nodeInput_mouseover)
 					.on("mouseout", nodePort_mouseout)
 					//.on("mouseover", function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
@@ -1749,10 +1815,10 @@ RED.view = (function() {
 		d._ports.enter().append("rect")
 		    .attr("class","port port_output").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
 			.attr("nodeType",d.type)
-			.on("mousedown",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
-			.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
-			.on("mouseup",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
-			.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
+			.on("mousedown",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseDown(node,0,i);}})() )
+			.on("mouseup",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseUp(node,0,i);}})() )
+			//.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
+			//.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
 			.on("mouseover", nodeOutput_mouseover)
 			.on("mouseout", nodePort_mouseout)
 			//.on("mouseover",function(d,i) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 ));})
@@ -1761,10 +1827,16 @@ RED.view = (function() {
 		if (d._ports) {
 			numOutputs = d.outputs || 1;
 			y = (d.h/2)-((numOutputs-1)/2)*node_def.pin_ydistance;
-			var x = d.w - node_def.pin_ysize/2;
+			var x = 0;
+			if (d.type == "JunctionRL")
+				x = node_def.pin_xpos
+			else
+				x = d.w - node_def.pin_ysize/2;
 			d._ports.each(function(d,i) {
 				var port = d3.select(this);
-				port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2).attr("x",x);
+				port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2);
+				
+				port.attr("x",x);
 			});
 		}
 	}
@@ -1829,16 +1901,58 @@ RED.view = (function() {
 						scaleY = ((dy>0)?0.5:-0.5)*(((3*node_def.height)-Math.abs(dy))/(3*node_def.height))*(Math.min(node_def.width,Math.abs(dx))/(node_def.width)) ;
 					}
 				}
+				if (d.target.type == "JunctionRL" && d.source.type == "JunctionRL") // reversed
+				{
+					d.x1 = d.source.x-d.source.w/2;
+					d.x2 = d.target.x+d.target.w/2;
 
-				d.x1 = d.source.x+d.source.w/2;
-				d.y1 = d.source.y+ysource;
-				d.x2 = d.target.x-d.target.w/2;
-				d.y2 = d.target.y+ytarget;
+					d.y1 = d.source.y+ysource;
+					d.y2 = d.target.y+ytarget;
 
-				return "M "+(d.x1)+" "+(d.y1)+
-					" C "+(d.x1+scale*node_def.width)+" "+(d.y1+scaleY*node_def.height)+" "+
-					(d.x2-scale*node_def.width)+" "+(d.y2-scaleY*node_def.height)+" "+
-					(d.x2)+" "+d.y2;
+					return "M "+(d.x1)+" "+(d.y1)+
+						" C "+(d.x1-scale*d.target.w)+" "+(d.y1+0.25*node_def.height)+" "+
+						      (d.x2+scale*d.target.w)+" "+(d.y2-0.25*node_def.height)+" "+
+						      (d.x2)+" "+d.y2;
+				}
+				else if (d.source.type == "JunctionRL") // reversed
+				{
+					d.x1 = d.source.x-d.source.w/2;
+					d.x2 = d.target.x-d.target.w/2;
+
+					d.y1 = d.source.y+ysource;
+					d.y2 = d.target.y+ytarget;
+
+					return "M "+(d.x1)+" "+(d.y1)+
+						" C "+(d.x1-scale*d.source.w*3.5)+" "+(d.y1+scaleY*node_def.height*2)+" "+
+						      (d.x2-scale*d.source.w*2.0)+" "+(d.y2-scaleY*node_def.height)+" "+
+						      (d.x2)+" "+d.y2;
+				}
+				else if (d.target.type == "JunctionRL") // reversed
+				{
+					d.x1 = d.source.x+d.source.w/2;
+					d.x2 = d.target.x+d.target.w/2;
+
+					d.y1 = d.source.y+ysource;
+					d.y2 = d.target.y+ytarget;
+
+					return "M "+(d.x1)+" "+(d.y1)+
+						" C "+(d.x1+scale*d.target.w*2)+" "+(d.y1+scaleY*node_def.height)+" "+
+						      (d.x2+scale*d.target.w*2)+" "+(d.y2-scaleY*node_def.height)+" "+
+						      (d.x2)+" "+d.y2;
+				}
+				else // standard
+				{
+					d.x1 = d.source.x+d.source.w/2;
+					d.x2 = d.target.x-d.target.w/2;
+
+					d.y1 = d.source.y+ysource;
+					d.y2 = d.target.y+ytarget;
+
+					return "M "+(d.x1)+" "+(d.y1)+
+						" C "+(d.x1+scale*node_def.width)+" "+(d.y1+scaleY*d.source.h)+" "+
+						      (d.x2-scale*node_def.width)+" "+(d.y2-scaleY*d.target.h)+" "+
+						      (d.x2)+" "+d.y2;
+				}
 		});
 
 		link.classed("link_selected", function(d) { return d === selected_link || d.selected; });
@@ -2079,7 +2193,8 @@ RED.view = (function() {
 				if (d._def.icon) redraw_nodeIcon(nodeRect, d);
 				redraw_nodeInputs(nodeRect, d);
 				redraw_nodeOutputs(nodeRect, d);
-				redraw_nodeText(nodeRect, d);
+				if (d.type != "JunctionLR" && d.type != "JunctionRL")
+					redraw_nodeText(nodeRect, d);
 				//redraw_nodeStatus(nodeRect);
 
 				//nodeRect.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
@@ -2121,7 +2236,8 @@ RED.view = (function() {
 
 						redraw_paletteNodesReqError(d);
 						redraw_other(nodeRect, d);
-						redraw_label(nodeRect, d);
+						if (d.type != "JunctionLR" && d.type != "JunctionRL")
+							redraw_label(nodeRect, d);
 						d.dirty = false;
 						
 					}

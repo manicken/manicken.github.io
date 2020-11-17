@@ -571,6 +571,8 @@ RED.editor = (function() {
 					// here we get data from html
 					var byToken = AceAutoComplete.getFromHelp(tokenType);
 
+					if (byToken == undefined) return;
+
 					if (byToken.length != 0) // AceAutoComplete.ClassFunctions[tokenType] != null)
 					{
 						classCompletions = byToken;//AceAutoComplete.ClassFunctions[tokenType];
