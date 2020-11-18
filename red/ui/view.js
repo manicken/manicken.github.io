@@ -1530,6 +1530,10 @@ RED.view = (function() {
 			d.h = node_def.height;
 			return;
 		}
+		if (d.type == "ConstValue")
+		{
+			l = d.name + " (" + d.valueType + ")=" + d.value;
+		}
 		if (d.inputs) // Jannik
 		{
 			d.w = Math.max(node_def.width,calculateTextWidth(l)+(d.inputs>0?7:0) );
@@ -1731,6 +1735,10 @@ RED.view = (function() {
 			}
 			return "n.a.";
 			 */
+			if (d.type == "ConstValue")
+			{
+				return d.name + " (" + d.valueType + ")=" + d.value;
+			}
 			if (d._def.label)
 				return d._def.label;
 			return d.name ? d.name : "";// d.id;

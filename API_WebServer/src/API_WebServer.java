@@ -140,6 +140,10 @@ public class API_WebServer implements Tool {
 	private ConsoleOutputStream2 err;
 	private SimpleAttributeSet console_stdOutStyle;
 	private SimpleAttributeSet console_stdErrStyle;
+	String outFgColorHex;
+	String outBgColorHex;
+	String errFgColorHex;
+	String errBgColorHex;
 
 	public synchronized void setCurrentEditorConsole() {
 		if (out == null) {
@@ -164,27 +168,56 @@ public class API_WebServer implements Tool {
 		});
 		
 	}
-	/*private void SystemOutHookStart()
+	private void SystemOutHookStart()
 	{
-		PrintStream myStream = new PrintStream(System.out) {
+		Color fgColor = StyleConstants.getForeground(console_stdOutStyle);
+		outFgColorHex = "#" + Integer.toHexString(fgColor.getRGB() | 0xFF000000).substring(2);
+		Color bgColor = StyleConstants.getBackground(console_stdOutStyle);
+		outBgColorHex = "#" + Integer.toHexString(bgColor.getRGB() | 0xFF000000).substring(2);
+
+		fgColor = StyleConstants.getForeground(console_stdErrStyle);
+		errFgColorHex = "#" + Integer.toHexString(fgColor.getRGB() | 0xFF000000).substring(2);
+		bgColor = StyleConstants.getBackground(console_stdErrStyle);
+		errBgColorHex = "#" + Integer.toHexString(bgColor.getRGB() | 0xFF000000).substring(2);
+
+		PrintStream psOut = new PrintStream(System.out, true) {
 			@Override
 			public void println(String x) {
-				//if (cs != null)
-				//cs.broadcast(x);
-				super.println("hello world:" + x);
+				cs_SendWithStyle(outFgColorHex, outBgColorHex, x + "<br>");
+				super.println(x);
 			}
-			public void print(String x) {
-				//if (cs != null)
-				//cs.broadcast(x);
-				super.print("hello world:" + x);
-			}
+			/*public void print(String x) {
+				cs_SendWithStyle(outFgColorHex, outBgColorHex, "print:" + x);
+				super.print(x);
+			}*/
 		};
-		System.setOut(myStream);
-	}*/
+		System.setOut(psOut);
+
+		PrintStream psErr = new PrintStream(System.out, true) {
+			@Override
+			public void println(String x) {
+				cs_SendWithStyle(errFgColorHex, errBgColorHex, x + "<br>");
+				super.println(x);
+			}
+			/*public void print(String x) {
+				cs_SendWithStyle(errFgColorHex, errBgColorHex, x);
+				super.print(x);
+			}*/
+		};
+		System.setErr(psErr);
+	}
+	private void cs_SendWithStyle(String fgColorHex, String bgColorHex, String text)
+	{
+		if (cs != null)
+		{
+			try { cs.broadcast("<span style=\"color:"+fgColorHex+";background-color:"+bgColorHex+";\">" + text.replace("\r\n", "<br>").replace("\r", "<br>").replace("\n", "<br>") + "</span>"); }
+			catch (Exception ex) { /*ignore*/ }
+		}
+	}
 	public void run() {// required by tool loader
 		LoadSettings();
 		startWebServer();
-		//SystemOutHookStart();
+		
 		startWebsocketServer();		
 		//System.out.println("Hello World!");
 	}
@@ -287,7 +320,8 @@ public class API_WebServer implements Tool {
 		{
 			startWebServer();
 			startWebsocketServer();
-			setCurrentEditorConsole();
+			SystemOutHookStart();
+			//setCurrentEditorConsole();
 		}
 	}
 	public void StartGUItool()
