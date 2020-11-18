@@ -1164,7 +1164,12 @@ RED.nodes = (function() {
 		else
 		{
 			value = Number(valueDef);
-			name = name.replace(arrayDef, "[i]");
+			if (replaceConstWithValue)
+			{
+				name = name.replace(arrayDef, "["+value+"]");
+			}
+			else
+				name = name.replace(arrayDef, "[i]");
 		}
 		//console.log("NameDeclaration is Array:" + name);
 		return {newName:name, arrayLenght:value};
