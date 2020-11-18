@@ -176,7 +176,7 @@ RED.arduino.export = (function() {
 				+ "#include <SerialFlash.h>\n"
 				+ includes + "\n"
 				+ "// GUItool: begin automatically generated code\n";
-		if (RED.arduino.WriteJSONtoExportedFile)
+		if (RED.arduino.settings.WriteJSONtoExportedFile == true)
 			returnStr += "// the following JSON string contains the whole project, \n// it's included in all generated files.\n"
 					   + "// JSON string:" + jsonString + "\n";
 		return returnStr;
