@@ -92,8 +92,8 @@ RED.arduino = (function() {
 		xmlHttp.timeout = 2000;
 		xmlHttp.send(null);
     }
-    $('#btn-verify-compile').click(function() { httpGetAsync("cmd=compile"); });
-	$('#btn-compile-upload').click(function() { httpGetAsync("cmd=upload"); });
+    $('#btn-verify-compile').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=compile"); });
+	$('#btn-compile-upload').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=upload"); });
 	//$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
 	$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
 	function GetGUI_TOOL_JSON_response(responseText) { RED.storage.loadContents(responseText); }

@@ -44,6 +44,7 @@ RED.palette = (function() {
 	var exclusion = ['config','unknown','deprecated'];
 
 	function createCategoryContainer(category, destContainer, expanded, isSubCat){ 
+		console.warn("@createCategoryContainer category:" + category + ", destContainer:" + destContainer + ", isSubCat:" + isSubCat);
 		var chevron = "";
 		var displayStyle = "";
 		if (!destContainer)	destContainer = "palette-container"; // failsafe
@@ -72,7 +73,7 @@ RED.palette = (function() {
 			}
 		//}
 		$("#" + destContainer).append('<div class="' + palette_category + '">'+
-			'<div id="header-'+category+'" class="'+palette_header_class+'">'+chevron+'<span>'+header+'</span></div>'+
+			'<div class="'+palette_header_class+'" id="header-'+category+'">'+chevron+'<span>'+header+'</span></div>'+
 			'<div class="palette-content" id="palette-base-category-'+category+'" style="display: '+displayStyle+';">'+
 			 // '<div id="palette-'+category+'-input" class="palette-sub-category"><div class="palette-sub-category-label">in</div></div>'+ // theese are never used
 			 // '<div id="palette-'+category+'-output" class="palette-sub-category"><div class="palette-sub-category-label">out</div></div>'+ // theese are never used
@@ -87,19 +88,77 @@ RED.palette = (function() {
 		{
 			var cat = categories[i];
 			createCategoryContainer(cat.name, "palette-container", cat.expanded, false); 
+			setCategoryClickFunction(cat.name, "palette-container", "palette-header");
 			if (cat.subcats != undefined)
 				addSubCats("palette-base-category-" + cat.name , cat.name + "-", cat.subcats);
 		}
-		setCategoryClickFunction('input');
-		setCategoryClickFunction('output');
+		//setCategoryClickFunction('input');
+		//setCategoryClickFunction('output');
 
 	}
 	function addSubCats(destContainer, catPreName, categories)
 	{
 		for (var i = 0; i < categories.length; i++)
 		{
-			createCategoryContainer(catPreName + categories[i],destContainer, true, true); 
+			createCategoryContainer(catPreName + categories[i],destContainer, true, true);
+			setCategoryClickFunction(catPreName + categories[i], destContainer, "palette-header-sub-cat");
 		}
+	}
+
+	function setCategoryClickFunction(category,destContainer, headerClass)
+	{
+		console.warn("@setCategoryClickFunction category:" +category + ", destContainer:" + destContainer + ", headerClass:" + headerClass);
+		$("#header-"+category).off('click').on('click', function(e) {
+			
+			//console.log("onlyShowOne:" + _settings.onlyShowOne);
+			var catContentElement = $(this).next();
+			var displayStyle = catContentElement.css('display');
+			if (displayStyle == "block")
+			{
+				catContentElement.slideUp();
+				$(this).children("i").removeClass("expanded"); // chevron
+			}
+			else
+			{
+
+				if (/*!isSubCat(catContentElement.attr('id')) && */(_settings.onlyShowOne == true)) // don't run when collapsing sub cat
+				{
+					setShownStateForAll(false,this, headerClass);
+				}
+				catContentElement.slideDown();
+				$(this).children("i").addClass("expanded"); // chevron
+			}
+		});
+	}
+	function setShownStateForAll(state,container,headerClass)
+	{
+		console.warn("@setShownStateForAll container:" +container+ ", headerClass:"+headerClass);
+		//var otherCat = $("#"+container);
+		var otherCat = $(container).find("." + headerClass);
+
+		console.error(otherCat);
+		for (var i = 0; i < otherCat.length; i++)
+		{
+			if (otherCat[i].id.startsWith("set-")){ continue; }// never collapse settings
+			//console.warn("setShownStateForAll:" + otherCat[i].id);
+			if (state)
+			{
+				$(otherCat[i]).next().slideDown();
+				$(otherCat[i]).children("i").addClass("expanded");
+			}
+			else
+			{
+				$(otherCat[i]).next().slideUp();
+				$(otherCat[i]).children("i").removeClass("expanded");
+			}
+		}
+	}
+	function isSubCat(id)
+	{
+		if (id.startsWith("palette-base-category-input-")) { return true; }
+		if (id.startsWith("palette-base-category-output-")) { return true; }
+		//console.warn(id + " is not subcat");
+		return false;
 	}
 	//doInit(core);
 	
@@ -199,60 +258,11 @@ RED.palette = (function() {
 			   }
 		    });
 		    
-			setCategoryClickFunction(category);
+			//setCategoryClickFunction(category);
 		
 	}
 	
-	function setCategoryClickFunction(category)
-	{
-		$("#header-"+category).off('click').on('click', function(e) {
-			
-			//console.log("onlyShowOne:" + _settings.onlyShowOne);
-			var catContentElement = $(this).next();
-			var displayStyle = catContentElement.css('display');
-			if (displayStyle == "block")
-			{
-				catContentElement.slideUp();
-				$(this).children("i").removeClass("expanded"); // chevron
-			}
-			else
-			{
-				if (!isSubCat(catContentElement.attr('id')) && (_settings.onlyShowOne == true)) // don't run when collapsing sub cat
-				{
-					setShownStateForAll(false);
-				}
-				catContentElement.slideDown();
-				$(this).children("i").addClass("expanded"); // chevron
-			}
-		});
-	}
-	function setShownStateForAll(state)
-	{
-		var otherCat = $(".palette-header");
-
-		for (var i = 0; i < otherCat.length; i++)
-		{
-			if (otherCat[i].id.startsWith("set-")){ continue; }// never collapse settings
-			//console.warn("setShownStateForAll:" + otherCat[i].id);
-			if (state)
-			{
-				$(otherCat[i]).next().slideDown();
-				$(otherCat[i]).children("i").addClass("expanded");
-			}
-			else
-			{
-				$(otherCat[i]).next().slideUp();
-				$(otherCat[i]).children("i").removeClass("expanded");
-			}
-		}
-	}
-	function isSubCat(id)
-	{
-		if (id.startsWith("palette-base-category-input-")) { return true; }
-		if (id.startsWith("palette-base-category-output-")) { return true; }
-		//console.warn(id + " is not subcat");
-		return false;
-	}
+	
 
 	function setTooltipContent(prefix, key, elem) {
 		// server test switched off - test purposes only

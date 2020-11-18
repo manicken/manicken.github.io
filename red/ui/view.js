@@ -35,6 +35,8 @@ RED.view = (function() {
 	    snapToGridHsize: 5,
 	    snapToGridVsize: 5,
 		lineCurveScale: 0.75,
+		lineConnectionsScale: 1.5,
+		partialRenderLinks: false
 	};
 
 	var settingsCategoryTitle = "Workspace View";
@@ -57,6 +59,8 @@ RED.view = (function() {
 	    snapToGridHsize: "Snap to grid h-size.",
 	    snapToGridVsize: "Snap to grid v-size.",
 		lineCurveScale: "Line Curve Scale.",
+		lineConnectionsScale: "Line Conn. Scale.",
+		partialRenderLinks: "Partial Render Links (experimental)"
 	}
 
 	var settings = {
@@ -110,6 +114,12 @@ RED.view = (function() {
 
 		get lineCurveScale() { return parseFloat(_settings.lineCurveScale);},
 		set lineCurveScale(value) { _settings.lineCurveScale = value; redraw_links(); },
+
+		get lineConnectionsScale() { return parseFloat(_settings.lineConnectionsScale);},
+		set lineConnectionsScale(value) { _settings.lineConnectionsScale = value; redraw_links(); },
+
+		get partialRenderLinks() { return _settings.partialRenderLinks; },
+		set partialRenderLinks(value) { _settings.partialRenderLinks = value; redraw_links();}
 	};
 
 	/*var space_width = 5000,
@@ -120,7 +130,7 @@ RED.view = (function() {
 		scaleFactor = 1,*/
 	var maxZoomFactor = 3.0;
 	var node_def = {
-		width: 100, // minimum default
+		width: 30, // minimum default
 		height: 30, // minimum default
 		pin_rx: 2, // The horizontal corner radius of the rect.
 		pin_ry: 2, // The vertical corner radius of the rect.
@@ -336,7 +346,14 @@ RED.view = (function() {
 		$("#menu-arduino").mouseout(function(){
 			$(this).popover("destroy");
 		});
+
+		document.getElementById("chart").addEventListener("scroll", chartScrolled);
 		
+	}
+	function chartScrolled()
+	{
+		if (settings.partialRenderLinks)
+		redraw_links();
 	}
 	function initWorkspace()
 	{
@@ -949,6 +966,10 @@ RED.view = (function() {
 			RED.keyboard.remove(/* down */ 40);
 			RED.keyboard.remove(/* left */ 37);
 			RED.keyboard.remove(/* right*/ 39);
+			RED.keyboard.add(/* up   */ 38, function() { moveView(0,-1); d3.event.preventDefault(); });
+			RED.keyboard.add(/* down */ 40, function() { moveView(0,1); d3.event.preventDefault(); });
+			RED.keyboard.add(/* left */ 37, function() { moveView(-1,0); d3.event.preventDefault(); });
+			RED.keyboard.add(/* right*/ 39, function() { moveView(1,0); d3.event.preventDefault(); });
 		} else {
 			
 			RED.keyboard.add(/* up   */ 38, function() { moveSelection_keyboard( 0,-1); d3.event.preventDefault(); }, endKeyboardMove);
@@ -964,6 +985,14 @@ RED.view = (function() {
 		} else {
 			RED.sidebar.info.clear();
 		}
+	}
+	function moveView(dx, dy)
+	{
+		var chart = $("#chart");
+		if (dx > 0) chart.scrollLeft(chart.scrollLeft() + 10/settings.scaleFactor);
+		else if (dx < 0) chart.scrollLeft(chart.scrollLeft() - 10/settings.scaleFactor);
+		if (dy > 0) chart.scrollTop(chart.scrollTop() + 10/settings.scaleFactor);
+		else if (dy < 0) chart.scrollTop(chart.scrollTop() - 10/settings.scaleFactor);
 	}
 	function endKeyboardMove() {
 		var ns = [];
@@ -1493,7 +1522,7 @@ RED.view = (function() {
 	{
 		//var l = d._def.label;
 		//l = (typeof l === "function" ? l.call(d) : l)||"";
-		var l = d.name ? d.name : d.id;
+		var l = d.name ? d.name : "";//d.id;
 		if (d.unknownType != undefined) l = d.type;
 		if (d.type == "JunctionLR" || d.type == "JunctionRL")
 		{
@@ -1704,7 +1733,7 @@ RED.view = (function() {
 			 */
 			if (d._def.label)
 				return d._def.label;
-			return d.name ? d.name : d.id;
+			return d.name ? d.name : "";// d.id;
 		})
 		.attr('y', function(d){return (d.h/2)-1;})
 		.attr('class',function(d){
@@ -1842,7 +1871,36 @@ RED.view = (function() {
 	}
 	function redraw_links()
 	{
-		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(d) { return d.source.z == activeWorkspace && d.target.z == activeWorkspace }),function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
+		if (settings.partialRenderLinks)
+		{
+			var chart = $("#chart");
+			var chartViewYmin = chart.scrollTop() / settings.scaleFactor;
+			var chartViewXmin = chart.scrollLeft() / settings.scaleFactor;
+			var chartViewYmax = (chart.height() + chart.scrollTop()) / settings.scaleFactor;
+			var chartViewXmax = (chart.width() + chart.scrollLeft()) / settings.scaleFactor;
+		}
+		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(d)
+		{ 
+			if (settings.partialRenderLinks)
+			{
+				return (d.source.z == activeWorkspace) &&
+					(d.target.z == activeWorkspace) &&
+					(((d.source.x >= chartViewXmin) &&
+					(d.source.x <= chartViewXmax) &&
+					(d.source.y >= chartViewYmin) &&
+					(d.source.y <= chartViewYmax)) ||
+					((d.target.x >= chartViewXmin) &&
+					(d.target.x <= chartViewXmax) &&
+					(d.target.y >= chartViewYmin) &&
+					(d.target.y <= chartViewYmax)));
+			}
+			else
+			{
+				return (d.source.z == activeWorkspace) &&
+					(d.target.z == activeWorkspace);
+			}
+
+		}),function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
 
 		var linkEnter = link.enter().insert("g",".node").attr("class","link");
 
@@ -1909,6 +1967,7 @@ RED.view = (function() {
 					d.y1 = d.source.y+ysource;
 					d.y2 = d.target.y+ytarget;
 
+					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, -3);
 					return "M "+(d.x1)+" "+(d.y1)+
 						" C "+(d.x1-scale*d.target.w)+" "+(d.y1+0.25*node_def.height)+" "+
 						      (d.x2+scale*d.target.w)+" "+(d.y2-0.25*node_def.height)+" "+
@@ -1922,8 +1981,9 @@ RED.view = (function() {
 					d.y1 = d.source.y+ysource;
 					d.y2 = d.target.y+ytarget;
 
+					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, -1.5, 1.5);
 					return "M "+(d.x1)+" "+(d.y1)+
-						" C "+(d.x1-scale*d.source.w*3.5)+" "+(d.y1+scaleY*node_def.height*2)+" "+
+						" C "+(d.x1-scale*d.source.w*3.5)+" "+(d.y1-scaleY*node_def.height*2)+" "+
 						      (d.x2-scale*d.source.w*2.0)+" "+(d.y2-scaleY*node_def.height)+" "+
 						      (d.x2)+" "+d.y2;
 				}
@@ -1935,10 +1995,13 @@ RED.view = (function() {
 					d.y1 = d.source.y+ysource;
 					d.y2 = d.target.y+ytarget;
 
+					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, 1.5, -1.5);
 					return "M "+(d.x1)+" "+(d.y1)+
 						" C "+(d.x1+scale*d.target.w*2)+" "+(d.y1+scaleY*node_def.height)+" "+
-						      (d.x2+scale*d.target.w*2)+" "+(d.y2-scaleY*node_def.height)+" "+
-						      (d.x2)+" "+d.y2;
+						      (d.x2+scale*d.target.w*2)+" "+(d.y2+scaleY*node_def.height)+" "+
+							  (d.x2)+" "+d.y2;
+							  
+					
 				}
 				else // standard
 				{
@@ -1947,6 +2010,8 @@ RED.view = (function() {
 
 					d.y1 = d.source.y+ysource;
 					d.y2 = d.target.y+ytarget;
+
+					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, settings.lineConnectionsScale);
 
 					return "M "+(d.x1)+" "+(d.y1)+
 						" C "+(d.x1+scale*node_def.width)+" "+(d.y1+scaleY*d.source.h)+" "+
@@ -1958,6 +2023,88 @@ RED.view = (function() {
 		link.classed("link_selected", function(d) { return d === selected_link || d.selected; });
 		link.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
 	}
+	function generateLinkPath(orig, dest, origX,origY, destX, destY, sc1, sc2) {
+		var node_height = orig.h; //node_def.height;
+		var node_width = node_def.width;
+		var node_dest_height = node_def.height;
+		var node_dest_width = node_def.width;
+        var dy = destY-origY;
+        var dx = destX-origX;
+        var delta = Math.sqrt(dy*dy+dx*dx);
+        var scale = settings.lineCurveScale;
+		var scaleY = 0;
+		if (sc2 == undefined) sc2 = sc1;
+        if (dx*sc1 > 0 || dx*sc2 > 0) {
+            if (delta < node_width) {
+                scale = 0.75-0.75*((node_width-delta)/node_width);
+                // scale += 2*(Math.min(5*node_width,Math.abs(dx))/(5*node_width));
+                // if (Math.abs(dy) < 3*node_height) {
+                //     scaleY = ((dy>0)?0.5:-0.5)*(((3*node_height)-Math.abs(dy))/(3*node_height))*(Math.min(node_width,Math.abs(dx))/(node_width)) ;
+                // }
+            }
+        } else {
+            scale = 0.4-0.2*(Math.max(0,(node_width-Math.min(Math.abs(dx),Math.abs(dy)))/node_width));
+        }
+        if (dx*sc1 > 0 || dx*sc2 > 0) {
+            return "M "+origX+" "+origY+
+                " C "+(origX+sc1*(node_width*scale))+" "+(origY+scaleY*node_height)+" "+
+                (destX-sc2*(scale)*node_width)+" "+(destY-scaleY*node_dest_height)+" "+
+                destX+" "+destY
+        } else {
+
+            var midX = Math.floor(destX-dx/2);
+            var midY = Math.floor(destY-dy/2);
+            //
+            if (dy === 0) {
+                midY = destY + node_height;
+            }
+			var cp_height = node_height/2;
+			var cp_dest_height = node_dest_height/2;
+            var y1 = (destY + midY)/2
+            var topX =origX + sc1*node_width*scale;
+            var topY = dy>0?Math.min(y1 - dy/2 , origY+cp_height):Math.max(y1 - dy/2 , origY-cp_height);
+            var bottomX = destX - sc2*node_width*scale;
+            var bottomY = dy>0?Math.max(y1, destY-cp_height):Math.min(y1, destY+cp_height);
+            var x1 = (origX+topX)/2;
+            var scy = dy>0?1:-1;
+            var cp = [
+                // Orig -> Top
+                [x1,origY],
+                [topX,dy>0?Math.max(origY, topY-cp_height):Math.min(origY, topY+cp_height)],
+                // Top -> Mid
+                // [Mirror previous cp]
+                [x1,dy>0?Math.min(midY, topY+cp_height):Math.max(midY, topY-cp_height)],
+                // Mid -> Bottom
+                // [Mirror previous cp]
+                [bottomX,dy>0?Math.max(midY, bottomY-cp_height):Math.min(midY, bottomY+cp_height)],
+                // Bottom -> Dest
+                // [Mirror previous cp]
+                [(destX+bottomX)/2,destY]
+            ];
+            if (cp[2][1] === topY+scy*cp_height) {
+                if (Math.abs(dy) < cp_height*10) {
+                    cp[1][1] = topY-scy*cp_height/2;
+                    cp[3][1] = bottomY-scy*cp_height/2;
+                }
+                cp[2][0] = topX;
+            }
+            return "M "+origX+" "+origY+
+                " C "+
+                   cp[0][0]+" "+cp[0][1]+" "+
+                   cp[1][0]+" "+cp[1][1]+" "+
+                   topX+" "+topY+
+                " S "+
+                   cp[2][0]+" "+cp[2][1]+" "+
+                   midX+" "+midY+
+               " S "+
+                  cp[3][0]+" "+cp[3][1]+" "+
+                  bottomX+" "+bottomY+
+                " S "+
+                    cp[4][0]+" "+cp[4][1]+" "+
+                    destX+" "+destY
+        }
+	}
+	
 	function redraw_paletteNodesReqError(d)
 	{
 		var cat = d._def.category;
@@ -2141,16 +2288,28 @@ RED.view = (function() {
 	function redraw() {
 		const t0 = performance.now();
 		//console.trace("redraw");
-		
-		//console.log("redraw");
+		/*var chart = $("#chart");
+		var chartViewYmin = chart.scrollTop() / settings.scaleFactor;
+		var chartViewXmin = chart.scrollLeft() / settings.scaleFactor;
+		var chartViewYmax = (chart.height() + chart.scrollTop()) / settings.scaleFactor;
+		var chartViewXmax = (chart.width() + chart.scrollLeft()) / settings.scaleFactor;*/
+		//console.log("redraw:" + chartViewYmin + ":" + chartViewYmax + ", " + chartViewXmin + ":" + chartViewXmax);
 		
 		vis.attr("transform","scale("+settings.scaleFactor+")");
 		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
-
+		
 		if (mouse_mode != RED.state.JOINING) {
 			// Don't bother redrawing nodes if we're drawing links
 			const t2 = performance.now();
-			var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d) { return d.z == activeWorkspace }),function(d){return d.id});
+			var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
+			{ 
+				return (d.z == activeWorkspace)/* &&
+					   (d.x >= chartViewXmin) &&
+					   (d.x <= chartViewXmax) &&
+					   (d.y >= chartViewYmin) &&
+					   (d.y <= chartViewYmax)*/;
+
+			}),function(d){return d.id});
 			const t3 = performance.now();
 			//console.log('vis.selectAll: ' + (t3-t2) +' milliseconds.');
 

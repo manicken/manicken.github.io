@@ -1169,6 +1169,18 @@ RED.nodes = (function() {
 		//console.log("NameDeclaration is Array:" + name);
 		return {newName:name, arrayLenght:value};
 	}
+	function getArrayDeclarationWithoutSizeSyntax(name)
+	{
+		var value = 0;
+		//console.warn("isNameDeclarationArray: " + name);
+		var startIndex = name.indexOf("[");
+		if (startIndex == -1) return name;
+		var endIndex = name.indexOf("]");
+		if (endIndex == -1){ console.log("isNameDeclarationArray: missing end ] in " + name); return name;}
+		var arrayDef = name.substring(startIndex,endIndex+1); // this includes the []
+		//var valueDef = name.substring(startIndex+1,endIndex)
+		return name.replace(arrayDef, "[]");
+	}
 	
 	function getConstantNodeValue(name, wsId)
 	{
@@ -1201,9 +1213,9 @@ RED.nodes = (function() {
 		}*/
 
 		var items = []; // here we will append current workspace node names
-		for (var i = 0; i < nodes.length; i++)
+		for (var ni = 0; ni < nodes.length; ni++)
 		{
-			var n = nodes[i];
+			var n = nodes[ni];
 			if (n.z != wsId) continue; // workspace filter
 			//if (RED.arduino.export.isSpecialNode(n.type)) continue;
 			if (n.nonObject != undefined) continue;
@@ -1211,8 +1223,36 @@ RED.nodes = (function() {
 			//var firstP = $("<div/>").append(data).children("div").first().html();
 			if (data == undefined) data = n.type;
 			else
-				data = $("<div/>").append(data).children("div").first().html();
-			items.push({ name:n.name, value:n.name, type:n.type, html: data, meta: n.type, score:(100-n)  });
+			{
+				var div = document.createElement('div');
+				
+				div.innerHTML = data.trim();
+				var headerElements = div.getElementsByTagName("h3");
+				var notes = "<h4>Notes</h4>";
+				for (var i2 = 0; i2 < headerElements.length; i2++)
+				{
+					if (headerElements[i2].textContent == "Notes")
+					{
+						var eleSibl = headerElements[i2].nextElementSibling;
+						while(eleSibl)
+						{
+							notes += eleSibl.outerHTML;
+							eleSibl = eleSibl.nextElementSibling;
+						}
+						//notes = headerElements[i2].nextElementSibling.innerHTML;
+						console.log("notes:" + notes);
+						break;
+					}
+				}
+				var summary = "<h4>Summary</h4>" + $("<div/>").append(data).children("div").first().html();
+				data = summary +"<br>"+ notes;
+			}
+			
+			var name = getArrayDeclarationWithoutSizeSyntax(n.name);
+			if (name.endsWith("]"))
+				items.push({ name:name, snippet:name.replace("[]","[${1}]"), value:name, type:n.type, html: data, meta: n.type, score:(1000)  });
+			else
+				items.push({ name:name, value:name, type:n.type, html: data, meta: n.type, score:(1000)  });
 		}
 		AceAutoComplete.Extension.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
 			items.push(kw);
@@ -1415,7 +1455,7 @@ RED.nodes = (function() {
 		return name
 	}
 	return {
-		getWorkspaceNodesAsCompletions:getWorkspaceNodesAsCompletions,
+		
 		createWorkspaceObject:createWorkspaceObject,
 		createNewDefaultWorkspace: createNewDefaultWorkspace,
 		registerType: registerType,
@@ -1477,6 +1517,8 @@ RED.nodes = (function() {
 		classOutputPortToCpp:classOutputPortToCpp,
 		classInputPortToCpp:classInputPortToCpp,
 		isNameDeclarationArray:isNameDeclarationArray,
+		getWorkspaceNodesAsCompletions:getWorkspaceNodesAsCompletions,
+		getArrayDeclarationWithoutSizeSyntax:getArrayDeclarationWithoutSizeSyntax,
 		updateClassTypes: function () {addClassTabsToPalette(); refreshClassNodes(); console.warn("@updateClassTypes");},
 		addUsedNodeTypesToPalette: addUsedNodeTypesToPalette,
 		addClassTabsToPalette:addClassTabsToPalette,

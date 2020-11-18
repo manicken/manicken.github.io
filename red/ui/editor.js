@@ -36,9 +36,9 @@ RED.editor = (function() {
 			else caption = item.name;
 			item.docHTML = [
 				"<b>", caption, "</b>", "<hr></hr>",
-				item.meta
+				item.html
 			].join("");
-			item.toolTipFixedWidth = "300px";
+			item.toolTipFixedWidth = "500px";
 		}
 	}
 	classCompleter= {
@@ -59,6 +59,131 @@ RED.editor = (function() {
 	
 	aceLangTools.addCompleter(completer);
 
+	function initAceCodeEditor(node)
+	{
+		rootCompletions = RED.nodes.getWorkspaceNodesAsCompletions(node.z);
+			
+		classCompletions = AceAutoComplete.Extension;
+		//classCompletions = ; // clear array, this also works: completionsSub.splice(0,completionsSub.length);
+		//AceAutoCompleteKeywords.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
+		//	classCompletions.push(kw);
+		//}); // this is only development test it could search help for functions
+		// of could have global function def list with typenames 
+		// this global def could be used by the help tab to make sure
+		// that there is only one text for each type
+
+		currentCompletions = rootCompletions; // default
+
+		var aceEditor = ace.edit("aceEditor");
+		
+		//aceEditor.completers = [completer];
+
+		//editor.setTheme("ace/theme/iplastic");
+		aceEditor.session.setMode("ace/mode/c_cpp");
+		aceEditor.setOptions({
+			enableBasicAutocompletion: true,
+			enableSnippets: true,
+			enableLiveAutocompletion: true,
+		});
+		aceEditor.setValue(node.comment);
+		aceEditor.session.selection.clearSelection();
+		//aceEditor.setOption("showInvisibles", true);
+		aceEditor.setOption("showTokenInfo", true);
+		defaultCompleters = aceEditor.completers;
+		console.warn("aceEditor.completers:");
+				console.warn(aceEditor.completers);
+
+		aceEditor.commands.addCommand({
+			name: "dotCommand",
+			bindKey: { win: ".", mac: "." },
+			exec: function () {
+				var pos = aceEditor.selection.getCursor();
+				var session = aceEditor.session;
+				console.log(pos);
+				var curLine = (session.getDocument().getLine(pos.row)).trim();
+				var curTokens = curLine.slice(0, pos.column).split(/\s+/);
+				var curCmd = curTokens[0];
+				if (!curCmd) return;
+				var lastToken = curTokens[curTokens.length - 1];
+		
+				aceEditor.insert(".");            
+				lastToken = RED.nodes.getArrayDeclarationWithoutSizeSyntax(lastToken);
+				// here it need also need to check the type
+				// to get correct function list
+				var tokenType = "";
+				for (var i = 0; i < rootCompletions.length; i++) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
+					var kw = rootCompletions[i];
+					if (kw.name == lastToken)
+					{
+						tokenType = kw.type;
+						break;
+					}
+					else
+					{
+						console.warn("kw.name:" + kw.name);
+					}
+				}
+				console.log("lastToken:" + lastToken + " @ " + tokenType);
+				defaultCompleters = aceEditor.completers; // save default
+				// here we get data from html
+				var byToken = AceAutoComplete.getFromHelp(tokenType);
+
+				if (byToken == undefined) return;
+
+				if (byToken.length != 0) // AceAutoComplete.ClassFunctions[tokenType] != null)
+				{
+					classCompletions = byToken;//AceAutoComplete.ClassFunctions[tokenType];
+				}
+				else
+				{
+					classCompletions = AceAutoComplete.Extension;
+				}
+
+				aceEditor.completers = [classCompleter]; // only show class objects
+
+				aceEditor.execCommand("startAutocomplete");
+				return lastToken;
+			}
+		});
+		aceEditor.commands.on("afterExec", function (e) {
+			console.log("afterExec:" + e.command.name + ":" + e.args + ":" + e.returnValue);
+			if (e.command.name == "insertstring")
+			{
+				if (/^[\w.]$/.test(e.args)) {
+					RED.console_ok("hello");
+					aceEditor.execCommand("startAutocomplete");
+				}
+				if (e.args.endsWith(";"))
+				{
+					RED.console_ok("insertString ended");
+					aceEditor.completers = defaultCompleters; // reset to default
+				}
+				else if (e.args == "\n")
+				{
+					console.log("newline");
+				}
+			}
+			else if (e.command.name == "backspace")
+			{
+				aceEditor.completers = defaultCompleters; // reset to default
+			}
+			else if (e.command.name == "Return")
+			{
+				aceEditor.completers = defaultCompleters; // reset to default
+			}
+			else if (e.command.name == "Esc")
+			{
+				aceEditor.completers = defaultCompleters; // reset to default
+			}
+			else if (e.command.name == "dotCommand")
+			{
+				// e.returnValue is the last token
+				//console.log(e.returnValue);
+				//console.trace("dotCommand trace");
+			}
+			//
+		});
+	}
 
 	function getCredentialsURL(nodeType, nodeID) {
 		var dashedType = nodeType.replace(/\s+/g, '-');
@@ -502,130 +627,7 @@ RED.editor = (function() {
 	function prepareEditDialog(node,definition,prefix) {
 		if (node.type == "Function" || node.type == "Variables" || node.type == "CodeFile")
 		{ 
-			
-
-			rootCompletions = RED.nodes.getWorkspaceNodesAsCompletions(node.z);
-			
-			classCompletions = AceAutoComplete.Extension;
-			//classCompletions = ; // clear array, this also works: completionsSub.splice(0,completionsSub.length);
-			//AceAutoCompleteKeywords.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
-			//	classCompletions.push(kw);
-			//}); // this is only development test it could search help for functions
-			// of could have global function def list with typenames 
-			// this global def could be used by the help tab to make sure
-			// that there is only one text for each type
-
-			currentCompletions = rootCompletions; // default
-
-			var aceEditor = ace.edit("aceEditor");
-			
-			//aceEditor.completers = [completer];
-
-			//editor.setTheme("ace/theme/iplastic");
-			aceEditor.session.setMode("ace/mode/c_cpp");
-			aceEditor.setOptions({
-				enableBasicAutocompletion: true,
-				enableSnippets: true,
-				enableLiveAutocompletion: true,
-			});
-			aceEditor.setValue(node.comment);
-			aceEditor.session.selection.clearSelection();
-			//aceEditor.setOption("showInvisibles", true);
-			aceEditor.setOption("showTokenInfo", true);
-			defaultCompleters = aceEditor.completers;
-			console.warn("aceEditor.completers:");
-					console.warn(aceEditor.completers);
-
-			aceEditor.commands.addCommand({
-				name: "dotCommand",
-				bindKey: { win: ".", mac: "." },
-				exec: function () {
-					var pos = aceEditor.selection.getCursor();
-					var session = aceEditor.session;
-					console.log(pos);
-					var curLine = (session.getDocument().getLine(pos.row)).trim();
-					var curTokens = curLine.slice(0, pos.column).split(/\s+/);
-					var curCmd = curTokens[0];
-					if (!curCmd) return;
-					var lastToken = curTokens[curTokens.length - 1];
-			
-					aceEditor.insert(".");            
-
-					// here it need also need to check the type
-					// to get correct function list
-					var tokenType = "";
-					for (var i = 0; i < rootCompletions.length; i++) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
-						var kw = rootCompletions[i];
-						if (kw.name == lastToken)
-						{
-							tokenType = kw.meta;
-							break;
-						}
-						else
-						{
-							console.warn("kw.name:" + kw.name);
-						}
-					}
-					console.log("lastToken:" + lastToken + " @ " + tokenType);
-					defaultCompleters = aceEditor.completers; // save default
-					// here we get data from html
-					var byToken = AceAutoComplete.getFromHelp(tokenType);
-
-					if (byToken == undefined) return;
-
-					if (byToken.length != 0) // AceAutoComplete.ClassFunctions[tokenType] != null)
-					{
-						classCompletions = byToken;//AceAutoComplete.ClassFunctions[tokenType];
-					}
-					else
-					{
-						classCompletions = AceAutoComplete.Extension;
-					}
-
-					aceEditor.completers = [classCompleter]; // only show class objects
-
-					aceEditor.execCommand("startAutocomplete");
-					return lastToken;
-				}
-			});
-			aceEditor.commands.on("afterExec", function (e) {
-				console.log("afterExec:" + e.command.name + ":" + e.args + ":" + e.returnValue);
-				if (e.command.name == "insertstring")
-				{
-					if (/^[\w.]$/.test(e.args)) {
-						RED.console_ok("hello");
-						aceEditor.execCommand("startAutocomplete");
-					}
-					if (e.args.endsWith(";"))
-					{
-						RED.console_ok("insertString ended");
-						aceEditor.completers = defaultCompleters; // reset to default
-					}
-					else if (e.args == "\n")
-					{
-						console.log("newline");
-					}
-				}
-				else if (e.command.name == "backspace")
-				{
-					aceEditor.completers = defaultCompleters; // reset to default
-				}
-				else if (e.command.name == "Return")
-				{
-					aceEditor.completers = defaultCompleters; // reset to default
-				}
-				else if (e.command.name == "Esc")
-				{
-					aceEditor.completers = defaultCompleters; // reset to default
-				}
-				else if (e.command.name == "dotCommand")
-				{
-					// e.returnValue is the last token
-					//console.log(e.returnValue);
-					//console.trace("dotCommand trace");
-				}
-				//
-			});
+			initAceCodeEditor(node);
 		}
 		
 		for (var d in definition.defaults) {
