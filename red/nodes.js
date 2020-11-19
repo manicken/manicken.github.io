@@ -1223,7 +1223,7 @@ RED.nodes = (function() {
 			var n = nodes[ni];
 			if (n.z != wsId) continue; // workspace filter
 			//if (RED.arduino.export.isSpecialNode(n.type)) continue;
-			if (n.nonObject != undefined) continue;
+			if (n._def.nonObject != undefined) continue;
 			var data = $("script[data-help-name|='" + n.type + "']").html();
 			//var firstP = $("<div/>").append(data).children("div").first().html();
 			if (data == undefined) data = n.type;

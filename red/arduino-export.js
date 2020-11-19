@@ -454,6 +454,11 @@ RED.arduino.export = (function() {
 					var includeName = '#include "' + n.name + '"';
 					if (!classAdditional.includes(includeName)) classAdditional.push(includeName);
 				}
+				else if (n.type == "IncludeDef")
+				{
+					var includeName = '#include ' + n.name;
+					if (!classAdditional.includes(includeName)) classAdditional.push(includeName);
+				}
 				else if (n.type == "ConstValue")
 				{
 					classVars += "const static " + n.valueType + " " + n.name + " = " + n.value + ";\n";
