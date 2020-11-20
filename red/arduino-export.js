@@ -19,7 +19,12 @@
 
 RED.arduino.export = (function() {
 	
-	
+	if (JSZip.support.blob)
+	{
+	var zip = new JSZip();
+	}
+	else
+		console.error("JSZip.support.blob what the fuck")
     /**
 	 * this take a multiline text, 
 	 * break it up into linearray, 
@@ -675,8 +680,8 @@ RED.arduino.export = (function() {
 
 		if (generateZip != undefined && (generateZip == true))
 		{
+			//var JSZip = require(['jszip']);
 			
-			zip = new JSZip();
 			console.error("what the motherfuck");
 			for (var i = 0; i < wsCppFiles.length; i++)
 			{
