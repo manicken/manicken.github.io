@@ -678,7 +678,7 @@ g.link_unknown path.link_line {
     z-index: 10000;
     width: 500px;
     margin-left: -250px;
-    left: 50%;
+    left: 55%;
     position: absolute;
     top: 1px;
 }

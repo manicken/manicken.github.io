@@ -103,7 +103,7 @@ RED.main = (function() {
 	$('#btn-saveTofile').click(function() { saveAsFile(); });
 	function saveAsFile()
 	{
-		showSelectNameDialog();
+		showSelectNameDialog("TeensyAudioDesign.json", saveToFile);
 	}
 	
 	function getConfirmLoadDemoText(filename)
@@ -234,7 +234,7 @@ RED.main = (function() {
 
 		}
 	}
-	function showSelectNameDialog()
+	function showSelectNameDialog(defaultFileName, cbOnOk)
 	{
 		$( "#select-name-dialog" ).dialog({
 			title: "Confirm deploy",
@@ -247,7 +247,7 @@ RED.main = (function() {
 					text: "Ok",
 					click: function() {
 						//console.warn($( "#select-name-dialog-name" ).val());
-						saveToFile($( "#select-name-dialog-name" ).val());
+						cbOnOk($( "#select-name-dialog-name" ).val())
 						$( this ).dialog( "close" );
 					}
 				},
@@ -260,7 +260,7 @@ RED.main = (function() {
 			]
 		});
 		if ($( "#select-name-dialog-name" ).val().trim().length == 0)
-			$( "#select-name-dialog-name" ).val("TeensyAudioDesign.json");
+			$( "#select-name-dialog-name" ).val(defaultFileName);
 		$( "#select-name-dialog" ).dialog('open');
 	}
 
@@ -419,6 +419,8 @@ RED.main = (function() {
 	return {
 		classColor:classColor,
 		requirements:requirements,
-		print:PrintElem
+		print:PrintElem,
+		download:download,
+		showSelectNameDialog:showSelectNameDialog
 	};
 })();

@@ -17,7 +17,7 @@
 RED.notify = (function() {
 	var currentNotifications = [];
 	var c = 0;
-	return function(msg,type,fixed,timeout) {
+	return function(msg,type,fixed,timeout,xPos) {
 		if (currentNotifications.length > 4) {
 			var ll = currentNotifications.length;
 			for (var i = 0;ll > 4 && i<currentNotifications.length;i+=1) {
@@ -33,12 +33,14 @@ RED.notify = (function() {
 		n.id="red-notification-"+c;
 		n.className = "alert";
 		n.fixed = fixed;
+		
 		if (type) {
 			n.className = "alert alert-"+type;
 		}
 		n.style.display = "none";
 		n.innerHTML = msg;
 		$("#notifications").append(n);
+		//$("#notifications").css("left", "50%");
 		$(n).slideDown(300);
 		n.close = (function() {
 			var nn = n;

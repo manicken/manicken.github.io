@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-RED.arduino.export = (function() {
 
+
+RED.arduino.export = (function() {
+	
 	
     /**
 	 * this take a multiline text, 
@@ -374,7 +376,8 @@ RED.arduino.export = (function() {
 	}
     
 	$('#btn-deploy2').click(function() { export_classBased(); });
-	function export_classBased()
+	$('#btn-deploy2zip').click(function() { export_classBased(true); });
+	function export_classBased(generateZip)
 	{
 		const t0 = performance.now();
 		RED.storage.update();
@@ -658,15 +661,33 @@ RED.arduino.export = (function() {
 		var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
 		var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
 		//if (RED.arduino.isConnected())
+		if (generateZip == undefined)	
 			RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST
 		//console.warn(jsonPOSTstring);
 
 		console.error("RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
-		if (RED.arduino.settings.useExportDialog && !RED.arduino.serverIsActive())
+		// only show dialog when server is active and not generating zip
+		if (RED.arduino.settings.useExportDialog && !RED.arduino.serverIsActive() && (generateZip == undefined))
 			showExportDialog("Class Export to Arduino", cpp);	
 			//showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 		const t1 = performance.now();
 		console.log('arduino-export-save2 took: ' + (t1-t0) +' milliseconds.');
+
+		if (generateZip != undefined && (generateZip == true))
+		{
+			
+			zip = new JSZip();
+			console.error("what the motherfuck");
+			for (var i = 0; i < wsCppFiles.length; i++)
+			{
+				var wsCppfile = wsCppFiles[i];
+				zip.file(wsCppfile.name, wsCppfile.contents);
+			}
+			zip.generateAsync({type:"blob"}).then(function(content) {
+				RED.showSelectNameDialog("TeensyAudioDesign.zip", function(fileName) { RED.download(fileName, content); });
+			});
+			
+		}
 	}
 
 	function getJunctionFinalDestinations(junctionNode, dstNodes)

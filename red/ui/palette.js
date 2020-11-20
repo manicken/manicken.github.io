@@ -100,7 +100,7 @@ RED.palette = (function() {
 	{
 		for (var i = 0; i < categories.length; i++)
 		{
-			createCategoryContainer(catPreName + categories[i],destContainer, true, true);
+			createCategoryContainer(catPreName + categories[i],destContainer, false, true);
 			setCategoryClickFunction(catPreName + categories[i], destContainer, "palette-header-sub-cat");
 		}
 	}
@@ -123,7 +123,7 @@ RED.palette = (function() {
 
 				if (/*!isSubCat(catContentElement.attr('id')) && */(_settings.onlyShowOne == true)) // don't run when collapsing sub cat
 				{
-					setShownStateForAll(false,this, headerClass);
+					setShownStateForAll(false,destContainer, headerClass);
 				}
 				catContentElement.slideDown();
 				$(this).children("i").addClass("expanded"); // chevron
@@ -134,7 +134,7 @@ RED.palette = (function() {
 	{
 		console.warn("@setShownStateForAll container:" +container+ ", headerClass:"+headerClass);
 		//var otherCat = $("#"+container);
-		var otherCat = $(container).find("." + headerClass);
+		var otherCat = $("#"+container).find("." + headerClass);
 
 		console.error(otherCat);
 		for (var i = 0; i < otherCat.length; i++)
