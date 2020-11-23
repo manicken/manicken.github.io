@@ -41,13 +41,18 @@ RED.settings = (function() {
 		createTextInputWithApplyButton(catContainerId, "btn-dev-test-get-func-help", "get func help", AceAutoComplete.getFromHelp, "AudioEffectFade", 150);
 		// test creating subcat
 		catContainerId = createCategory(catContainerId, "development-tests-sub", "Test post/get (sub-cat of dev-test)", true);
-		createTextInputWithApplyButton(catContainerId, "setting-test-post", "test post", RED.arduino.httpPostAsync, "data");
+		createTextInputWithApplyButton(catContainerId, "setting-test-post", "test post", RED.arduino.httpPostAsync, "data", 150);
 		createTextInputWithApplyButton(catContainerId, "setting-test-get", "test get", RED.arduino.httpGetAsync, "cmd", 150);
 		createTextInputWithApplyButton(catContainerId, "setting-test-ws-send", "test ws send", RED.devTest.SendToWebSocket, "cmd", 150);
+		//createColorSel(catContainerId, "setting-color-sel-test", "color:", colorSelTest, "#000000"); // dev test
 		
 		RED.sidebar.show("settings"); // development, allways show settings tab first
 
 		RED.palette.settings.categoryHeaderTextSize = RED.palette.settings.categoryHeaderTextSize; // read/apply
+	}
+	function colorSelTest(value)
+	{
+		console.error("colorSelTest:"+value);
 	}
 
 	function setFromJSONobj(projectSettings_jsonObj)
@@ -141,7 +146,10 @@ RED.settings = (function() {
 						}
 						else if (typeOf === "number" || typeOf === "string")
 						{
-							createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
+							if (settingName.endsWith("Color"))
+								createColorSel(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName)
+							else
+								createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
 						}
 						else
 							console.error("generateSettingsFromClasses unknown type:" + typeOf);
@@ -168,9 +176,9 @@ RED.settings = (function() {
 		}
 		var headerId = "set-header-" + id;
 		var catContainerId = "set-content-"  + id;
-		var html = '<div class="palette-category">'+ // use style from palette-category
-			'<div id="'+headerId+'" class="palette-header">'+chevron+'<span>'+headerLabel+'</span></div>'+
-			'<div class="palette-content" id="'+catContainerId+'" style="display: '+displayStyle+';">'+
+		var html = '<div class="settings-category">'+ 
+			'<div id="'+headerId+'" class="settings-header">'+chevron+'<span>'+headerLabel+'</span></div>'+
+			'<div class="settings-content" id="'+catContainerId+'" style="display: '+displayStyle+';">'+
 			'</div>\n'+
 			'</div>\n'
 		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
@@ -199,9 +207,9 @@ RED.settings = (function() {
 	 */
 	function createCheckBox(containerId, id, label, cb, param)
 	{
-		var html = '<label for="'+id+'" style="font-size: 16px; padding: 2px 0px 0px 4px;">';
+		var html = '<div class="settings-item center"><label for="'+id+'" style="font-size: 16px; padding: 2px 0px 0px 4px;">';
 		html +=	'<input style="margin-bottom: 4px; margin-left: 4px;" type="checkbox" id="'+id+'" checked="checked" />';
-		html +=	'&nbsp;'+label+'</label>';
+		html +=	'&nbsp;'+label+'</label></div>';
 
 		//RED.console_ok("create complete checkbox @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
@@ -219,9 +227,9 @@ RED.settings = (function() {
 	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="center"><label  for="'+id+'" style="font-size: 16px;">';
-			html += '&nbsp;'+label+' <input type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
-			html += ' <button class="btn btn-success btn-sm" type="button" id="btn-'+id+'">Apply</button></label></div>';
+		var html = '<div class="settings-item settings-item-textwbtn center"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input class="settings-item-textInput" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
+			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
@@ -238,11 +246,34 @@ RED.settings = (function() {
 	}
 	function createButton(containerId, id, label, buttonClass, cb)
 	{
-		var html = '<button class="btn '+buttonClass+'" type="button" id="btn-'+id+'">'+label+'</button></label>';
+		var html = '<button class="btn '+buttonClass+' settings-item-applyBtn" type="button" id="btn-'+id+'">'+label+'</button></label>';
 		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
 		$('#btn-' + id).click(cb);
 
+	}
+	function createColorSel(containerId, id, label, cb, param)
+	{
+		var html = '<div class="settings-item center"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input id="'+id+'" data-jscolor="">';
+			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
+
+		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
+		$("#" + containerId).append(html);
+		if (typeof cb === "function")
+		{
+			$('#btn-' + id).click(function() { cb($('#' + id).val());});
+			$('#' + id).val(param);
+		}
+		else if(typeof cb == "object")
+		{
+			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
+			$('#' + id).val(cb[param]);
+		}
+		//<div class="form-row">
+		//<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		//<input id="node-input-color" data-jscolor="">
+		//</div>
 	}
 	
 	

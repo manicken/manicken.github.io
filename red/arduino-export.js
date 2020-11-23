@@ -19,12 +19,7 @@
 
 RED.arduino.export = (function() {
 	
-	if (JSZip.support.blob)
-	{
-	var zip = new JSZip();
-	}
-	else
-		console.error("JSZip.support.blob what the fuck")
+
     /**
 	 * this take a multiline text, 
 	 * break it up into linearray, 
@@ -59,7 +54,7 @@ RED.arduino.export = (function() {
 			}]
 		}).dialog("open");
 	}
-	function showExportDialog(title, text)
+	function showExportDialog(title, text,textareaLabel)
 	{
 		var box = document.querySelector('.ui-droppable'); // to get window size
 		function float2int (value) {
@@ -68,7 +63,9 @@ RED.arduino.export = (function() {
 		RED.view.state(RED.state.EXPORT);
 		var t2 = performance.now();
 		RED.view.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
-			
+			if (textareaLabel != undefined)
+			$("#export-clipboard-dialog-textarea-label").text(textareaLabel);
+
 			$("#node-input-export").val(text).focus(function() {
 			var textarea = $(this);
 			
@@ -130,7 +127,7 @@ RED.arduino.export = (function() {
 		else return false;
 	}*/
 	/**
-	 * This is only for the moment to get special type AudioMixer<n>
+	 * This is only for the moment to get special type AudioMixer<n> and AudioStreamObject
 	 * @param {*} nns nodeArray
 	 * @param {Node} n node
 	 */
@@ -371,7 +368,7 @@ RED.arduino.export = (function() {
 		const t1 = performance.now();
 
 		if (RED.arduino.settings.useExportDialog)
-			showExportDialog("Simple Export to Arduino", cpp);
+			showExportDialog("Simple Export to Arduino", cpp, " Source Code:");
 			//showExportDialog("Simple Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 
 		const t2 = performance.now();
@@ -397,7 +394,7 @@ RED.arduino.export = (function() {
 		var tabNodes = RED.nodes.getClassIOportsSorted();
 
 		nns.sort(nodeSortFunction); // 50 is the visual major-vertical-gridsize
-		var jsonString = JSON.stringify(nns)
+		
 		//console.log(JSON.stringify(nns)); // debug test
 
 		// to make splitting the classes to different files
@@ -405,6 +402,11 @@ RED.arduino.export = (function() {
 		var wsCppFiles = [];
 		var newWsCpp;
 		var codeFileIncludes = [];
+		// first create the json strings, 
+		// because when replacing constant def with values destroys the design
+		var jsonString = JSON.stringify(nns); // this is for the header
+		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
+
 		// first scan for any CodeFile nodes, to make sure theese will be added first
 		/*for (var i=0; i<nns.length; i++) { 
 			var n = nns[i];
@@ -517,6 +519,7 @@ RED.arduino.export = (function() {
 				if (node._def.nonObject != undefined) continue;// _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 				if (node._def.outputs != 0) continue;
 				if (node._def.inputs != 0) continue;
+				if (node.type == "AudioStreamObject") continue;
 
 				//if(isSpecialNode(n.type)) continue; // replaced by if (node._def.nonObject != undefined) 
 					
@@ -607,10 +610,12 @@ RED.arduino.export = (function() {
 					}
 				});
 			}
-
-			newWsCpp.contents += "    AudioConnection ";
-			for (var j="AudioConnection".length; j<32; j++) newWsCpp.contents += " ";
-			newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
+			if (ac.totalCount != 0)
+			{
+				newWsCpp.contents += "    AudioConnection ";
+				for (var j="AudioConnection".length; j<32; j++) newWsCpp.contents += " ";
+				newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
+			}
 			for (var ani = 0; ani < arrayNodes.length; ani++)
 			{
 				var arrayNode = arrayNodes[ani];
@@ -620,7 +625,8 @@ RED.arduino.export = (function() {
 			}
 			
 			newWsCpp.contents+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
-			newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
+			if (ac.totalCount != 0)
+				newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
 
 			for (var ani = 0; ani < arrayNodes.length; ani++)
 			{
@@ -661,7 +667,7 @@ RED.arduino.export = (function() {
 		}
 		cpp += getCppFooter();
 		//console.log(cpp);
-		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
+		
 		//console.log(jsonString);
 		var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
 		var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
@@ -673,23 +679,23 @@ RED.arduino.export = (function() {
 		console.error("RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
 		// only show dialog when server is active and not generating zip
 		if (RED.arduino.settings.useExportDialog && !RED.arduino.serverIsActive() && (generateZip == undefined))
-			showExportDialog("Class Export to Arduino", cpp);	
+			showExportDialog("Class Export to Arduino", cpp," Source Code:");	
 			//showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 		const t1 = performance.now();
 		console.log('arduino-export-save2 took: ' + (t1-t0) +' milliseconds.');
 
 		if (generateZip != undefined && (generateZip == true))
 		{
-			//var JSZip = require(['jszip']);
+			var zip = new JSZip();
 			
-			console.error("what the motherfuck");
 			for (var i = 0; i < wsCppFiles.length; i++)
 			{
 				var wsCppfile = wsCppFiles[i];
 				zip.file(wsCppfile.name, wsCppfile.contents);
 			}
-			zip.generateAsync({type:"blob"}).then(function(content) {
-				RED.showSelectNameDialog("TeensyAudioDesign.zip", function(fileName) { RED.download(fileName, content); });
+			zip.generateAsync({type:"blob"}).then(function(blob) {
+				console.log("typeof:" + typeof content);
+				RED.main.showSelectNameDialog("TeensyAudioDesign.zip", function(fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
 			});
 			
 		}
@@ -717,6 +723,12 @@ RED.arduino.export = (function() {
 		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", json)); // JSON beautifier
 		var wsCppFilesJson = getPOST_JSON(wsCppFiles, false); // false == don't remove other files
 		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
+	}
+	$('#btn-deploy2singleLineJson').click(function() { exportSingleLineJSON(); });
+	function exportSingleLineJSON()
+	{
+		var json = localStorage.getItem("audio_library_guitool");
+		showExportDialog("Single line JSON", json, " JSON:");	
 	}
 	
 	/*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future

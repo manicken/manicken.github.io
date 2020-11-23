@@ -57,8 +57,7 @@ RED.sidebar.info = (function() {
 	
 	function refresh(node) {
 		//console.warn("tab-info refresh");
-		if (_autoSwitchTabToThis)
-			RED.sidebar.show("info");
+		
 		var table = '<table class="node-info"><tbody>';
 		clearSelection();// partly fix a select node bug, that selects all text, it happens when you try select and move a node to quickly
 		table += "<tr><td>Type</td><td>&nbsp;"+node.type+"</td></tr>";
@@ -100,6 +99,8 @@ RED.sidebar.info = (function() {
 	}
 
 	function setHelpContent(prefix, key) {
+		if (_autoSwitchTabToThis)
+			RED.sidebar.show("info");
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
 		var server = false && patt.test(location.protocol);

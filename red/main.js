@@ -288,8 +288,8 @@ RED.main = (function() {
 			setTimeout(function() {
 				$("#menu-import").removeClass("disabled").addClass("btn-success");
 				$("#menu-export").removeClass("disabled").addClass("btn-danger");
-				$("#menu-arduino").removeClass("disabled").addClass("btn-warning");
-			}, 1000);
+				$("#menu-ide").removeClass("disabled").addClass("btn-warning");
+			}, 500);
 			
 			// if the query string has ?info=className, populate info tab
 			var info = getQueryVariable("info");
@@ -324,10 +324,16 @@ RED.main = (function() {
 	function update(picker, selector) {
 		document.querySelector(selector).style.background = picker.toBackground()
 	}
+	function showHelp()
+	{
+		var mywindow = window.open('help.html', 'PRINT', 'height=400,width=600');
+	}
+
 	$('#btn-print').click(function() { PrintElem(); });
 	function PrintElem()
 	{
 		var elemName = "chart"
+		
 		var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
 
 		mywindow.document.write('<html><head>');

@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-
 <!--
   Modified from original Node-Red source, for audio system visualization
 
@@ -107,7 +106,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li class="divider"></li>
 					<li><a id="btn-print" tabindex="-1" href="#"><i class="icon-plus"></i> Print Design</a></li>
 					<li><a id="btn-keyboard-shortcuts" tabindex="-1" href="#"><i class="icon-question-sign"></i> Keyboard Shortcuts</a></li>
-					<li><a id="btn-help" tabindex="-1" href="http://node-red.github.io/docs" target="_blank"><i class="icon-question-sign"></i> Help...</a></li>
+					<li><a id="btn-help" tabindex="-1" href="help.html" target="_blank"><i class="icon-question-sign"></i> Help...</a></li>
 
 				</ul>
 			</div>
@@ -116,7 +115,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<ul class="dropdown-menu">
 					<li><a id="btn-import-json" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>JSON</a></li>
 					<li><a id="btn-import-arduino" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>Arduino</a></li>
-					<li><a id="btn-get-design-json";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From Arduino IDE by JSON</a></li>
+					<li><a id="btn-get-design-json";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From the IDE by JSON</a></li>
 					<input id="file-input" class="btn action-import" type="file" style="display:none;">
 					<li><label for="file-input" class="btn action-import" ><i id="btn-icn-deploy" class="icon-download"></i> JSON LoadFromFile</label></li>
 				</ul>
@@ -126,13 +125,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Simple</a></li>
 					<li><a id="btn-deploy2";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Class-based</a></li>
-					<li><a id="btn-pushJSON";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to Arduino IDE</a></li>
+					<li><a id="btn-pushJSON";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to the IDE</a></li>
 					<li><a id="btn-saveTofile" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> JSON SaveToFile</a></li>
 					<li><a id="btn-deploy2zip" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Class-based to Zip</a></li>
+					<li><a id="btn-deploy2singleLineJson" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Single Line JSON</a></li>
 				</ul>
 				</div>
 				<div class="btn-group pull-left">
-				<a id="menu-arduino" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Arduino <span class="caret"></span></a>
+				<a id="menu-ide" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-verify-compile"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Verify/Compile</a></li>
 					<li><a id="btn-compile-upload";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Upload</a></li>
@@ -371,7 +371,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script type="text/x-red" data-template-name="export-clipboard-dialog">
 	<div class="form-row">
-		<label for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
+		<label id="export-clipboard-dialog-textarea-label" for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
 		<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll; cursor: text;" class="input-block-level" id="node-input-export" rows="12"></textarea>
 	</div>
 	<div class="form-tips">
@@ -386,7 +386,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </script>
 <script type="text/x-red" data-template-name="import-dialog">
 	<div class="form-row">
-		<label for="node-input-import"><i class="icon-share"></i>Nodes:</label>
+		<label id="import-dialog-textarea-label" for="node-input-import"><i class="icon-share"></i>Nodes:</label>
 		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-import" rows="12" placeholder=""></textarea>
 	</div>
 	<div class="form-tips">
@@ -406,11 +406,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="jquery/js/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="jquery/js/jquery.ui.touch-punch.min.js"></script>
+<script src="red/jszip.js"></script>
+<script src="red/FileSaver.js"></script>
 <script src="orion/built-editor.min.js"></script>
 <script src="jscolor.js"></script>
 <script src="red/ui/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="red/ui/ace/ext-language_tools.js"></script>
 <script src="red/d3/d3.v3.min.js"></script>
+
 <script src="red/main.js"></script> <!-- main must be first because it defines Root var: RED -->
 <script src="red/settings.js"></script>
 <script src="red/arduino.js"></script>
@@ -436,11 +439,6 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/touch/radialMenu.js"></script>
 <script src="red/devTest.js"></script>
 <script src="resize.js"></script>
-<script type="text/javascript" src="red/jszip.js"></script>
-<script type="text/javascript" src="red/jszip-utils.js"></script>
-
-
-
 
 <!--
  TODO: generate some or all of this automatically from the C++ source
@@ -610,8 +608,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"ClassComment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"ClassComment","nonObject":"","inputs":0,"outputs":0,"category":"tabs","color":"#ccffcc","icon":"comment.png"}},
 		{"type":"Comment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Comment","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"comment.png"}},
 		{"type":"Function","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"code","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
-		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"hash.png"}},
-		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"includeFile":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""}},"shortName":"userObject","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"debug.png"}},
+		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#ddffbb","icon":"hash.png"}},
+		{"type":"AudioStreamObject","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"subType":{"value":""},"includeFile":{"value":""},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{"value":""}},"shortName":"userObject","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"debug.png"}},
 		{"type":"CodeFile","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"codeFile","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"IncludeDef","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"includeDef","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"file.png"}},
 		{"type":"ConstValue","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"value":{"value":"0"},"valueType":{"value":"int"}},"shortName":"constValue","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#eb9834","icon":"hash.png"}},
@@ -654,7 +652,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioOutputUSB","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"usb","inputs":2,"outputs":0,"category":"output-other","color":"#E6E0F8","icon":"arrow-in.png"}},
 
 		{"type":"AudioAmplifier","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"amp","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioMixer4","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioMixer4","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"inputs":{"value":"4"}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
 		
 		{"type":"AudioPlayMemory","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"playMem","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioPlaySdWav","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"playSdWav","inputs":0,"outputs":2,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -687,8 +685,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioEffectEnvelope","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"envelope","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectMultiply","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"multiply","inputs":2,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectRectifier","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"rectify","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioEffectDelay","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"delay","inputs":1,"outputs":8,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioEffectDelayExternal","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"delayExt","inputs":1,"outputs":8,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioEffectDelay","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"outputs":{"value":"8"}},"shortName":"delay","inputs":1,"outputs":8,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioEffectDelayExternal","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"outputs":{"value":"8"}},"shortName":"delayExt","inputs":1,"outputs":8,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectBitcrusher","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"bitcrusher","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectMidSide","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"midside","inputs":2,"outputs":2,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioEffectWaveshaper","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"waveshape","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -3106,10 +3104,23 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		mixers, where the fifth mixer combines the outputs of the first 4.
 	</p>
 </script>
-<script type="text/x-red" data-template-name="_AudioMixer4">
+<script type="text/x-red" data-template-name="AudioMixer4">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs (visual):</label>
+		<select name="node-input-inputs" id="node-input-inputs">
+			<option value="4">4</option>
+			<option value="3">3</option>
+			<option value="2">2</option>
+			<option value="1">1</option>
+	    </select>
 	</div>
 </script>
 </div> <!-- Audio Mixer category -->
@@ -4572,10 +4583,27 @@ double s_freq = .0625;</p>
 		<tr class=odd><td>Teensy 3.6</td><td align=center>2413.94 ms</td></tr>
 	</table>
 </script>
-<script type="text/x-red" data-template-name="_AudioEffectDelay">
+<script type="text/x-red" data-template-name="AudioEffectDelay">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs (visual)</label>
+		<select name="node-input-outputs" id="node-input-outputs">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+	    </select>
 	</div>
 </script>
 
@@ -4689,10 +4717,27 @@ double s_freq = .0625;</p>
 		to make the chip work.
 	</p>
 </script>
-<script type="text/x-red" data-template-name="_AudioEffectDelayExternal">
+<script type="text/x-red" data-template-name="AudioEffectDelayExternal">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs (visual)</label>
+		<select name="node-input-outputs" id="node-input-outputs">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+	    </select>
 	</div>
 </script>
 

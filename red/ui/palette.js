@@ -19,12 +19,18 @@ RED.palette = (function() {
 
 	var _settings = {
 		categoryHeaderTextSize: 12,
+		categoryHeaderHeight: 14,
+		categoryHeaderBackgroundColor: "#f3f3f3",
 		onlyShowOne: true,
 	};
 
 	var settings = {
-		set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = size; setCategoryHeaderTextSize(size); },
-		get categoryHeaderTextSize() {return _settings.categoryHeaderTextSize;},
+		set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = size; setCategoryHeaderStyle(); },
+		get categoryHeaderTextSize() {return parseInt(_settings.categoryHeaderTextSize);},
+		set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = size; setCategoryHeaderStyle(); },
+		get categoryHeaderHeight() {return parseInt(_settings.categoryHeaderHeight);},
+		set categoryHeaderBackgroundColor(colorCode) { _settings.categoryHeaderBackgroundColor = colorCode; setCategoryHeaderStyle(); },
+		get categoryHeaderBackgroundColor() {return _settings.categoryHeaderBackgroundColor;},
 		set onlyShowOne(state) { _settings.onlyShowOne = state; },
 		get onlyShowOne() { return _settings.onlyShowOne; },
 	};
@@ -33,18 +39,23 @@ RED.palette = (function() {
 
 	var settingsEditorLabels = {
 		categoryHeaderTextSize: "Header Text Size",
+		categoryHeaderHeight:"Header Height",
+		categoryHeaderBackgroundColor: "Header BG color",
 		onlyShowOne: "Only show one category at a time.",
 	};
 
-	function setCategoryHeaderTextSize(size) // this is to make above "setter" cleaner
+	function setCategoryHeaderStyle() // this is to make above "setter" cleaner
 	{
-		$(".palette-header").each( function(i,e) { $(e).attr("style", "font-size:" + size + "px");});
+		var font_size = settings.categoryHeaderTextSize;
+		var height = settings.categoryHeaderHeight;
+		var bgColor = settings.categoryHeaderBackgroundColor;
+		$(".palette-header").each( function(i,e) { $(e).attr("style", "font-size:" + font_size + "px;background-color:" + bgColor + ";height:" + height +"px;");});
 	}
 
 	var exclusion = ['config','unknown','deprecated'];
 
 	function createCategoryContainer(category, destContainer, expanded, isSubCat){ 
-		console.warn("@createCategoryContainer category:" + category + ", destContainer:" + destContainer + ", isSubCat:" + isSubCat);
+		//console.warn("@createCategoryContainer category:" + category + ", destContainer:" + destContainer + ", isSubCat:" + isSubCat);
 		var chevron = "";
 		var displayStyle = "";
 		if (!destContainer)	destContainer = "palette-container"; // failsafe
@@ -52,6 +63,7 @@ RED.palette = (function() {
 		
 		var header = category;
 		var palette_header_class = "palette-header";
+		
 		if (isSubCat)
 		{
 			displayStyle = "block";
@@ -73,7 +85,7 @@ RED.palette = (function() {
 			}
 		//}
 		$("#" + destContainer).append('<div class="' + palette_category + '">'+
-			'<div class="'+palette_header_class+'" id="header-'+category+'">'+chevron+'<span>'+header+'</span></div>'+
+			'<div class="'+palette_header_class+'" id="header-'+category+'"><div class="'+palette_header_class+'-contents">'+chevron+'<span>'+header+'</span></div></div>'+
 			'<div class="palette-content" id="palette-base-category-'+category+'" style="display: '+displayStyle+';">'+
 			 // '<div id="palette-'+category+'-input" class="palette-sub-category"><div class="palette-sub-category-label">in</div></div>'+ // theese are never used
 			 // '<div id="palette-'+category+'-output" class="palette-sub-category"><div class="palette-sub-category-label">out</div></div>'+ // theese are never used
@@ -107,7 +119,7 @@ RED.palette = (function() {
 
 	function setCategoryClickFunction(category,destContainer, headerClass)
 	{
-		console.warn("@setCategoryClickFunction category:" +category + ", destContainer:" + destContainer + ", headerClass:" + headerClass);
+		//console.warn("@setCategoryClickFunction category:" +category + ", destContainer:" + destContainer + ", headerClass:" + headerClass);
 		$("#header-"+category).off('click').on('click', function(e) {
 			
 			//console.log("onlyShowOne:" + _settings.onlyShowOne);
@@ -132,7 +144,7 @@ RED.palette = (function() {
 	}
 	function setShownStateForAll(state,container,headerClass)
 	{
-		console.warn("@setShownStateForAll container:" +container+ ", headerClass:"+headerClass);
+		//console.warn("@setShownStateForAll container:" +container+ ", headerClass:"+headerClass);
 		//var otherCat = $("#"+container);
 		var otherCat = $("#"+container).find("." + headerClass);
 

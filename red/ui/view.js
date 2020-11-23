@@ -22,6 +22,7 @@ RED.view = (function() {
 		showNodeToolTip:true,
 		space_width: 5000,
 		space_height: 5000,
+		//workspaceBgColor: "#FFF",
 		scaleFactor: 1,	
 		showGridHminor: true,
 		showGridHmajor: true,
@@ -31,6 +32,8 @@ RED.view = (function() {
 		gridHmajorSize: 100,
 		gridVminorSize: 10,
 		gridVmajorSize: 100,
+		gridMinorColor: "#eee",
+		gridMajorColor: "#ddd",
 		snapToGrid: true, // this is allready implemented with shift button, this locks that mode
 	    snapToGridHsize: 5,
 	    snapToGridVsize: 5,
@@ -46,6 +49,7 @@ RED.view = (function() {
 		showNodeToolTip: "Show Node Tooltip Popup.",
 		space_width: "Workspace Width.",
 		space_height: "Workspace Height.",
+		//workspaceBgColor: "Workspace BG color.",
 		//scaleFactor: "Workspace Zoom.", // this setting is hidden from the user
 		showGridHminor: "Show Workspace minor h-grid.",
 		showGridHmajor: "Show Workspace major h-grid.",
@@ -54,7 +58,9 @@ RED.view = (function() {
 		gridHminorSize: "Minor h-grid Size.",
 		gridHmajorSize: "Major h-grid Size.",
 		gridVminorSize: "Minor v-grid Size.",
-		gridVmajorSize: "Major v-grid Size.",		
+		gridVmajorSize: "Major v-grid Size.",
+		gridMinorColor: "Minor grid color.",
+		gridMajorColor: "Major grid color.",
 		snapToGrid: "Snap to grid.",
 	    snapToGridHsize: "Snap to grid h-size.",
 	    snapToGridVsize: "Snap to grid v-size.",
@@ -75,6 +81,9 @@ RED.view = (function() {
 
 		get space_height() { return parseInt(_settings.space_height); },
 		set space_height(value) { _settings.space_height = value; initWorkspace(); initGrid(); },
+
+		//get workspaceBgColor() { return _settings.workspaceBgColor; },
+		//set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); },
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
 		set scaleFactor(value) { _settings.scaleFactor = value.toFixed(2); $("#lbl-zoom-level").text(value.toFixed(2)); },
@@ -103,6 +112,12 @@ RED.view = (function() {
 		get gridVmajorSize() { return parseInt(_settings.gridVmajorSize); },
 		set gridVmajorSize(value) { _settings.gridVmajorSize = value; initVmajorGrid(); },
 
+		get gridMinorColor() { return _settings.gridMinorColor; },
+		set gridMinorColor(value) { _settings.gridMinorColor = value; setMinorGridColor(); },
+
+		get gridMajorColor() { return _settings.gridMajorColor; },
+		set gridMajorColor(value) { _settings.gridMajorColor = value; setMajorGridColor(); },
+
 		get snapToGrid() { return _settings.snapToGrid; },
 		set snapToGrid(state) { _settings.snapToGrid = state; },
 
@@ -121,6 +136,23 @@ RED.view = (function() {
 		get partialRenderLinks() { return _settings.partialRenderLinks; },
 		set partialRenderLinks(value) { _settings.partialRenderLinks = value; redraw_links();}
 	};
+
+	function setMinorGridColor()
+	{
+		var color = settings.gridMinorColor;
+		$("#grid-h-mi").find(".horizontal").each( function(i,e) { $(e).attr("stroke", color); });
+		$("#grid-v-mi").find(".vertical").each( function(i,e) { $(e).attr("stroke", color); });
+	}
+	function setMajorGridColor()
+	{
+		var color = settings.gridMajorColor;
+		$("#grid-h-ma").find(".horizontal").each( function(i,e) { $(e).attr("stroke", color); });
+		$("#grid-v-ma").find(".vertical").each( function(i,e) { $(e).attr("stroke", color); });
+	}
+	function setWorkspaceBgColor()
+	{
+		outer_background.attr('fill',_settings.bgColor);
+	}
 
 	/*var space_width = 5000,
 		space_height = 5000,
@@ -340,10 +372,10 @@ RED.view = (function() {
 	{
 		initWorkspace();
 		initGrid();
-		$("#menu-arduino").mouseover(function(){
-			showPopOver("#menu-arduino", false, "Arduino IDE API", "bottom");
+		$("#menu-ide").mouseover(function(){
+			showPopOver("#menu-ide", false, "Arduino or VSCODE IDE API", "bottom");
 		});
-		$("#menu-arduino").mouseout(function(){
+		$("#menu-ide").mouseout(function(){
 			$(this).popover("destroy");
 		});
 
@@ -359,7 +391,7 @@ RED.view = (function() {
 	{
 		outer_background.attr('width', settings.space_width)
 							  .attr('height', settings.space_height)
-						      .attr('fill','#fff');
+						      .attr('fill',"#FFF");
 	}
 	
 	function initGrid()
@@ -393,7 +425,7 @@ RED.view = (function() {
 	            "y2" : function(d){ return gridScale(d);},
 	            "fill" : "none",
 	            "shape-rendering" : "optimizeSpeed",
-	            "stroke" : "#eee",
+	            "stroke" : _settings.gridMinorColor,
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 			});
@@ -416,7 +448,7 @@ RED.view = (function() {
 	            "y2" : function(d){ return gridScale(d);},
 	            "fill" : "none",
 	            "shape-rendering" : "optimizeSpeed",
-	            "stroke" : "#aaa",
+	            "stroke" : _settings.gridMajorColor,
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "2px"
 			});
@@ -439,7 +471,7 @@ RED.view = (function() {
 	            "y2" : settings.space_height,
 	            "fill" : "none",
 	            "shape-rendering" : "optimizeSpeed",
-		        "stroke" : "#eee",
+		        "stroke" : _settings.gridMinorColor,
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "1px"
 			});
@@ -462,7 +494,7 @@ RED.view = (function() {
 	            "y2" : settings.space_height,
 	            "fill" : "none",
 	            "shape-rendering" : "optimizeSpeed",
-		        "stroke" : "#aaa",
+		        "stroke" : _settings.gridMajorColor,
 				//"stroke-dasharray":"2",
 	            "stroke-width" : "2px"
 			});
@@ -2688,11 +2720,13 @@ RED.view = (function() {
 		{
 			title = "Import Arduino Code";
 			$("#node-input-import").prop('placeholder', "Paste Arduino Code here.");
+			$("#import-dialog-textarea-label").text(" Code:");
 		}			
 		else
 		{
 			title = "Import JSON";
 			$("#node-input-import").prop('placeholder', "Paste JSON string here.");
+			$("#import-dialog-textarea-label").text(" JSON:");
 		}
 			
 		$( "#dialog" ).dialog("option","title",title).dialog( "open" );
