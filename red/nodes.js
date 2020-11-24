@@ -498,20 +498,62 @@ RED.nodes = (function() {
 		var i;
 		nns.push({"type":"settings", "data":RED.settings.getAsJSONobj()});
 		for (i=0;i<workspaces.length;i++)
-			nns.push(workspaces[i]);
+			
 
 		for (i in configNodes) {
 			if (configNodes.hasOwnProperty(i)) {
 				nns.push(convertNode(configNodes[i], true));
 			}
 		}
-		for (i=0;i<nodes.length;i++) {
-			var node = nodes[i];
-			nns.push(convertNode(node, true));
+		var absoluteXposMax = 0;
+		var absoluteYposMax = 0;
+		var workspaceColSize = RED.view.settings.gridVmajorSize;
+		for (var ni = 0; ni < nodes.length; ni++)
+		{
+			var n = nodes[ni];
+			if (n.x > absoluteXposMax) absoluteXposMax = n.x;
+			if (n.y > absoluteYposMax) absoluteYposMax = n.y;
+		}
+		// ensure that every node is included 
+		absoluteXposMax += workspaceColSize*2; 
+		absoluteYposMax += RED.view.node_def.height*2;
+
+		// development debug
+		console.warn("@createCompleteNodeSet\n  absoluteXposMax:" + absoluteXposMax +
+										  "\n  absoluteYposMax:" + absoluteYposMax +
+										  "\n  workspaceColSize:" + workspaceColSize);
+		var ws = {};
+		// sort nodes by workspace
+		for (wsi=0;wsi<workspaces.length;wsi++)
+		{
+			ws = workspaces[wsi];
+			nns.push(ws);
+			
+			// sort nodes by columns (xpos)
+			for (var xPosMin = 0; xPosMin < absoluteXposMax; xPosMin+=workspaceColSize)
+			{
+				var nnsCol = []; // current column
+				var xPosMax = xPosMin+workspaceColSize;
+
+				for (ni=0;ni<nodes.length;ni++)
+				{
+					var node = nodes[ni];
+					if (node.z != ws.id) continue; // workspace filter
+
+					if ((node.x >= xPosMin) && (node.x < xPosMax))
+						nnsCol.push(convertNode(node, true));
+				}
+				// sort "new" nodes by ypos
+				nnsCol.sort(function(a,b){return(a.y-b.y);});
+				// push the "new" nodes to final array
+				for (var nni = 0; nni < nnsCol.length; nni++)
+				{
+					nns.push(nnsCol[nni]);
+				}
+			}
 		}
 		return nns;
 	}
-
 	
 	
 	function createNewDefaultWorkspace() // Jannik Add function
@@ -604,7 +646,7 @@ RED.nodes = (function() {
 					RED.view.addWorkspace(ws); // "final" function is in tabs.js
 					console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
 
-					if (ws.inputs != 0 || ws.outputs != 0) // this adds workspaces that have inputs and/or outputs to the palette
+					//if (ws.inputs != 0 || ws.outputs != 0) // this adds workspaces that have inputs and/or outputs to the palette
 					{
 						var color = RED.main.classColor;
 						var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
@@ -988,10 +1030,10 @@ RED.nodes = (function() {
 		for (var wsi = 0; wsi < workspaces.length; wsi++)
 		{
 			var ws = workspaces[wsi];
-			if (type == ws.label) return true;
+			if (type == ws.label) return ws.id;
 			//console.log(node.type  + "!="+ ws.label);
 		}
-		return false;
+		return undefined;
 	}
 	
 	function getWorkspaceIdFromClassName(type)
@@ -1223,6 +1265,10 @@ RED.nodes = (function() {
 			var n = nodes[ni];
 			if (n.z != wsId) continue; // workspace filter
 			//if (RED.arduino.export.isSpecialNode(n.type)) continue;
+			if (n.type == "Function")
+			{
+				getFunctions(n, items);
+			}
 			if (n._def.nonObject != undefined) continue;
 			var data = $("script[data-help-name|='" + n.type + "']").html();
 			//var firstP = $("<div/>").append(data).children("div").first().html();
@@ -1245,7 +1291,7 @@ RED.nodes = (function() {
 							eleSibl = eleSibl.nextElementSibling;
 						}
 						//notes = headerElements[i2].nextElementSibling.innerHTML;
-						console.log("notes:" + notes);
+						//console.log("notes:" + notes);
 						break;
 					}
 				}
@@ -1263,6 +1309,35 @@ RED.nodes = (function() {
 			items.push(kw);
 		});
 		return items;
+	}
+	function getAllFunctionNodeFunctions(wsId)
+	{
+		var items = [];
+		for (var ni = 0; ni < nodes.length; ni++)
+		{
+			var n = nodes[ni];
+			if (n.z != wsId) continue; // workspace filter
+			//if (RED.arduino.export.isSpecialNode(n.type)) continue;
+			if (n.type == "Function")
+			{
+				getFunctions(n, items);
+			}
+		}
+		return items;
+	}
+	function getFunctions(functionNode, completeItems)
+	{
+		var functions = [...functionNode.comment.matchAll(/\s*(unsigned|signed)?\s*(void|int|char|short|long|float|double|bool)\s+(\w+)\s*(\([^)]*\))\s*/g)];
+		//var functionsStr = "Functions("+functions.length+"):\n";
+		//console.error("functions.length:" + functions.length + ' @ "' + n.name + '"');
+		for (var fi = 0; fi < functions.length; fi++)
+		{					
+			//if (functions[fi] == undefined) continue;
+			var name = functions[fi][3].trim();
+			var param = functions[fi][4].trim();
+			//console.error(functions[fi]);
+			completeItems.push({ name:(name+param), value:(name+param), type:"function", html: "@ " + functionNode.name, meta: "function", score:(1000)  });
+		}
 	}
 	/**
 	 * function used by addClassTabsToPalette()
@@ -1413,7 +1488,7 @@ RED.nodes = (function() {
 			var inputCount = getClassNrOfInputs(nodes, ws.id);
 			var outputCount = getClassNrOfOutputs(nodes, ws.id);
 
-			if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
+			//if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
 			var classColor = RED.main.classColor;
 			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
 			var data = $.parseJSON('{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"' + ws.label + '","isClass":"","inputs":' + inputCount + ',"outputs":' + outputCount + ',"category":"tabs","color":"' + classColor + '","icon":"arrow-in.png"}');
@@ -1523,6 +1598,7 @@ RED.nodes = (function() {
 		classInputPortToCpp:classInputPortToCpp,
 		isNameDeclarationArray:isNameDeclarationArray,
 		getWorkspaceNodesAsCompletions:getWorkspaceNodesAsCompletions,
+		getAllFunctionNodeFunctions:getAllFunctionNodeFunctions,
 		getArrayDeclarationWithoutSizeSyntax:getArrayDeclarationWithoutSizeSyntax,
 		updateClassTypes: function () {addClassTabsToPalette(); refreshClassNodes(); console.warn("@updateClassTypes");},
 		addUsedNodeTypesToPalette: addUsedNodeTypesToPalette,

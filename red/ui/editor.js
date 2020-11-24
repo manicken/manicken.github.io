@@ -86,9 +86,33 @@ RED.editor = (function() {
 			enableLiveAutocompletion: true,
 		});
 		aceEditor.setValue(node.comment);
+		//var funcRegex = new RegExp();
+											/* + 
+											"\s*" +
+											"(unsigned|signed)?" +
+											"\s+" + 
+											"(void|int|char|short|long|float|double|bool)" + 
+											"\s+" +
+											"(\w+)" +
+											"\s*" +
+											"\(" + 
+											"[^)]*" +
+											"\)" + 
+											"\s*" + 
+											"");*/
+
+		//var functions = [...node.comment.matchAll(/\s*(unsigned|signed)?\s*(void|int|char|short|long|float|double|bool)\s+(\w+)\s*\([^)]*\)\s*/g)];
+		//var functionsStr = "Functions("+functions.length+"):\n";
+		/*console.error("functions.length:" + functions.length);
+		for (var fi = 0; fi < functions.length; fi++)
+		{					
+			//if (functions[fi] == undefined) continue;
+			console.error(functions[fi][0].trim());
+		}*/
+		//console.error(functionsStr);
 		aceEditor.session.selection.clearSelection();
 		//aceEditor.setOption("showInvisibles", true);
-		aceEditor.setOption("showTokenInfo", true);
+		//aceEditor.setOption("useSoftTabs", true);
 		defaultCompleters = aceEditor.completers;
 		console.warn("aceEditor.completers:");
 				console.warn(aceEditor.completers);
@@ -108,6 +132,10 @@ RED.editor = (function() {
 		
 				aceEditor.insert(".");            
 				lastToken = RED.nodes.getArrayDeclarationWithoutSizeSyntax(lastToken);
+				var split = lastToken.split(".");
+				console.error(split);
+				if (split.length > 1) lastToken = split[split.length-1];
+
 				// here it need also need to check the type
 				// to get correct function list
 				var tokenType = "";
@@ -123,10 +151,37 @@ RED.editor = (function() {
 						console.warn("kw.name:" + kw.name);
 					}
 				}
+				if (tokenType == "")
+				{
+					for (var i = 0; i < classCompletions.length; i++) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
+						var kw = classCompletions[i];
+						if (kw.name == lastToken)
+						{
+							tokenType = kw.type;
+							break;
+						}
+						else
+						{
+							console.warn("kw.name:" + kw.name);
+						}
+					}
+				}
 				console.log("lastToken:" + lastToken + " @ " + tokenType);
 				defaultCompleters = aceEditor.completers; // save default
-				// here we get data from html
-				var byToken = AceAutoComplete.getFromHelp(tokenType);
+				
+				var byToken = [];
+				var wsId = RED.nodes.isClass(tokenType);
+				if (wsId)
+				{
+					//byToken = RED.nodes.getAllFunctionNodeFunctions(wsId);
+					byToken = RED.nodes.getWorkspaceNodesAsCompletions(wsId);
+					// TODO: also make it fetch AudioObjects
+				}
+				else
+				{
+					// here we get data from html
+					byToken = AceAutoComplete.getFromHelp(tokenType);
+				}
 
 				if (byToken == undefined) return;
 

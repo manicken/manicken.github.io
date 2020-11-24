@@ -192,7 +192,7 @@ RED.arduino.export = (function() {
 	function getNewWsCppFile(name, contents)
 	{
 		//contents = contents.replace("undefined", "").replace("undefined", "");
-		return {name:name, contents:contents};
+		return {name:name, contents:contents, header:"", footer:""};
 	}
 	/**
 	 * 
@@ -271,15 +271,6 @@ RED.arduino.export = (function() {
 			}
 		};
 	}
-	function nodeSortFunction(a,b)
-	{
-		// sort by vertical position, plus vertical position,
-		// for well defined update order that follows signal flow
-		return (a.x/100 + a.y/50) - (b.x/100 + b.y/50);
-		// 1 4 7
-		// 2 5 8
-		// 3 6 9
-	}
 	/**
 	 * Checks if a node have any Input(s)/Output(s)
 	 * @param {Node} node 
@@ -300,7 +291,11 @@ RED.arduino.export = (function() {
 			return;
 		}
 		var nns = RED.nodes.createCompleteNodeSet();
-		nns.sort(nodeSortFunction);
+		// sort is made inside createCompleteNodeSet
+		var wsCppFiles = [];
+		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
+		var jsonString = JSON.stringify(nns); // one liner JSON
+
 		//console.log(JSON.stringify(nns));
 
 		var cppAPN = "// Audio Processing Nodes\n";
@@ -353,15 +348,13 @@ RED.arduino.export = (function() {
 				cppCN += "//xy=" + n.x + "," + n.y + "\n";
 			}
 		}
-		var jsonString = JSON.stringify(nns);
+		
 		var cpp = getCppHeader(jsonString);
 		cpp += "\n" + cppAPN + "\n" + cppAC + "\n" + cppCN + "\n";
 		cpp += getCppFooter();
 		//console.log(cpp);
 
-		var wsCppFiles = [getNewWsCppFile(RED.nodes.getWorkspace(activeWorkspace).label + ".h", cpp)];
-
-		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
+		wsCppFiles.push(getNewWsCppFile(RED.nodes.getWorkspace(activeWorkspace).label + ".h", cpp));
 
 		var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
 		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
@@ -390,10 +383,10 @@ RED.arduino.export = (function() {
 			return;
 		}
 		var nns = RED.nodes.createCompleteNodeSet();
+		// sort is made inside createCompleteNodeSet
 
 		var tabNodes = RED.nodes.getClassIOportsSorted();
 
-		nns.sort(nodeSortFunction); // 50 is the visual major-vertical-gridsize
 		
 		//console.log(JSON.stringify(nns)); // debug test
 
@@ -404,14 +397,9 @@ RED.arduino.export = (function() {
 		var codeFileIncludes = [];
 		// first create the json strings, 
 		// because when replacing constant def with values destroys the design
-		var jsonString = JSON.stringify(nns); // this is for the header
+		var jsonString = JSON.stringify(nns); // one liner JSON
 		wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
 
-		// first scan for any CodeFile nodes, to make sure theese will be added first
-		/*for (var i=0; i<nns.length; i++) { 
-			var n = nns[i];
-			
-		}*/
 		for (var wsi=0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
 		{
 			var ws = RED.nodes.workspaces[wsi];
@@ -655,12 +643,17 @@ RED.arduino.export = (function() {
 			newWsCpp.footer = getCppFooter();
 			wsCppFiles.push(newWsCpp);
 		} // workspaces loop
+		console.error("@export as class RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
+		var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 		// time to generate the final result
 		var cpp = getCppHeader(jsonString);
 		for (var i = 0; i < wsCppFiles.length; i++)
 		{
+			// don't include beautified json string here
+			// and only append to cpp when useExportDialog
+			if (!wsCppFiles[i].name.endsWith(".json") && showExportDialog) 
+				cpp += wsCppFiles[i].contents;
 
-			cpp += wsCppFiles[i].contents;
 			wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
 			delete wsCppFiles[i].header;
 			delete wsCppFiles[i].footer;
@@ -673,12 +666,12 @@ RED.arduino.export = (function() {
 		var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
 		//if (RED.arduino.isConnected())
 		if (generateZip == undefined)	
-			RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST
+			RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST but not when exporting to zip
 		//console.warn(jsonPOSTstring);
 
-		console.error("RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
+		
 		// only show dialog when server is active and not generating zip
-		if (RED.arduino.settings.useExportDialog && !RED.arduino.serverIsActive() && (generateZip == undefined))
+		if (useExportDialog)
 			showExportDialog("Class Export to Arduino", cpp," Source Code:");	
 			//showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 		const t1 = performance.now();

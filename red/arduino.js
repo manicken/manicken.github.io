@@ -18,20 +18,38 @@
 RED.arduino = (function() {
 	var serverIsActive = false;
 
-	var settings = {
-		useExportDialog: true,
+	var _settings = {
+		useExportDialog: false,
 		IOcheckAtExport: true,
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
+		WebSocketServerPort: 3000
+	}
+	var settings = {
+		get useExportDialog() { return _settings.useExportDialog; },
+		set useExportDialog(state) { _settings.useExportDialog = state; },
+
+		get IOcheckAtExport() { return _settings.IOcheckAtExport; },
+		set IOcheckAtExport(state) { _settings.IOcheckAtExport = state; },
+
+		get WriteJSONtoExportedFile() { return _settings.WriteJSONtoExportedFile; },
+		set WriteJSONtoExportedFile(state) { _settings.WriteJSONtoExportedFile = state; },
+
+		get WebServerPort() { return parseInt(_settings.WebServerPort); },
+		set WebServerPort(state) { _settings.WebServerPort = parseInt(state); },
+
+		get WebSocketServerPort() { return parseInt(_settings.WebSocketServerPort); },
+		set WebSocketServerPort(state) { _settings.WebSocketServerPort = parseInt(state); StartWebSocketConnection(); },
 	};
 
 	var settingsCategoryTitle = "Arduino Export/Import";
 
 	var settingsEditorLabels = {
-		useExportDialog: "Show export dialog",
+		useExportDialog: "Force Show export dialog",
 		IOcheckAtExport: "IO check At Export",
 		WriteJSONtoExportedFile: "Write JSON at exported file",
-		WebServerPort: "Web Server Port"
+		WebServerPort: "Web Server Port",
+		WebSocketServerPort: "Web Socket Server Port"
 	};
 
 	function startConnectedChecker()
@@ -91,6 +109,38 @@ RED.arduino = (function() {
 		xmlHttp.open("GET", url + "?" + queryString, true); // true for asynchronous 
 		xmlHttp.timeout = 2000;
 		xmlHttp.send(null);
+	}
+	var wsSocket;
+    function StartWebSocketConnection()
+    {
+		if ('WebSocket' in window)
+		{
+			var protocol = 'ws://';
+			var address = protocol + "127.0.0.1:" + settings.WebSocketServerPort;
+			RED.bottombar.info.addContent("StartWebSocket@" + address + "<br>");
+			if (wsSocket != null)
+				wsSocket.close();
+			wsSocket = new WebSocket(address);
+			wsSocket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else
+				{
+					//console.log(msg.data);
+					RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
+					var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
+					//console.warn(dataToAdd);
+					RED.bottombar.info.addContent(dataToAdd);
+				}
+			};
+        }
+        else {
+            console.error('Upgrade your browser. This Browser is NOT supported WebSocket for receiving terminal text');
+        }
+    }
+    function SendToWebSocket(string)
+    {
+        if (wsSocket == undefined) return;
+        wsSocket.send(string);
     }
     $('#btn-verify-compile').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=compile"); });
 	$('#btn-compile-upload').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=upload"); });
@@ -107,5 +157,7 @@ RED.arduino = (function() {
 		startConnectedChecker:startConnectedChecker,
 		httpPostAsync:httpPostAsync,
 		httpGetAsync:httpGetAsync,
+		StartWebSocketConnection:StartWebSocketConnection,
+        SendToWebSocket:SendToWebSocket
 	};
 })();

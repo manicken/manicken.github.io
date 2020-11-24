@@ -277,19 +277,21 @@ RED.main = (function() {
 
 	function loadNodes() {
 		
+		setTimeout(function() {
+			$("#menu-import").removeClass("disabled").addClass("btn-success");
+			$("#menu-export").removeClass("disabled").addClass("btn-danger");
+			$("#menu-ide").removeClass("disabled").addClass("btn-warning");
+		}, 1000);
 			$(".palette-scroll").show();
 			$("#palette-search").show();
+			
 			RED.storage.load();
 			RED.nodes.addClassTabsToPalette();
 			RED.nodes.refreshClassNodes();
 			RED.nodes.addUsedNodeTypesToPalette();
 			RED.view.redraw();
 			
-			setTimeout(function() {
-				$("#menu-import").removeClass("disabled").addClass("btn-success");
-				$("#menu-export").removeClass("disabled").addClass("btn-danger");
-				$("#menu-ide").removeClass("disabled").addClass("btn-warning");
-			}, 500);
+			
 			
 			// if the query string has ?info=className, populate info tab
 			var info = getQueryVariable("info");
@@ -358,6 +360,7 @@ RED.main = (function() {
 
 		return true;
 	}
+	$('#btn-save').click(function() { RED.storage.update(); });
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
 		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
@@ -366,6 +369,19 @@ RED.main = (function() {
 
 		addDemoFlowsToMenu();
 		RED.view.init();
+
+		$("#menu-ide").mouseover(function(){
+			RED.view.showPopOver("#menu-ide", true, "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "bottom"); // true means html mode
+		});
+		$("#menu-ide").mouseout(function(){
+			$(this).popover("destroy");
+		});
+		$("#btn-save").mouseover(function(){
+			RED.view.showPopOver("#btn-save", true, "Save to localstorage<br>(shortcut CTRL+S)", "bottom");
+		});
+		$("#btn-save").mouseout(function(){
+			$(this).popover("destroy");
+		});
 
 		jscolor.presets.default = {
 			closeButton:true
@@ -402,7 +418,7 @@ RED.main = (function() {
 			loadNodes();
 			$(".palette-spinner").hide();
 
-			RED.devTest.StartWebSocketConnection();
+			RED.arduino.StartWebSocketConnection();
 			RED.settings.createTab();
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){

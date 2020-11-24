@@ -4322,7 +4322,7 @@ var optionsProvider = {
             return;
         var opt = this.$options[name];
         if (!opt) {
-            return warn('misspelled option "' + name + '"');
+            return warn('misspelled option "' + name + '"' + Object.getOwnPropertyNames(this.$options));
         }
         if (opt.forwardTo)
             return this[opt.forwardTo] && this[opt.forwardTo].setOption(name, value);

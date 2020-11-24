@@ -372,12 +372,7 @@ RED.view = (function() {
 	{
 		initWorkspace();
 		initGrid();
-		$("#menu-ide").mouseover(function(){
-			showPopOver("#menu-ide", false, "Arduino or VSCODE IDE API", "bottom");
-		});
-		$("#menu-ide").mouseout(function(){
-			$(this).popover("destroy");
-		});
+		
 
 		document.getElementById("chart").addEventListener("scroll", chartScrolled);
 		
@@ -3005,6 +3000,8 @@ RED.view = (function() {
 		getForm: getForm,
 		calculateTextWidth: calculateTextWidth,
 		showExportNodesDialog: showExportNodesDialog,
+		showPopOver:showPopOver,
+		node_def:node_def,
 		defaults: {
 			width: node_def.width,
 			height: node_def.height
