@@ -72,7 +72,7 @@ RED.storage = (function() {
 	function loadContents(json_string) {
 		console.log("loadContents:" +json_string);
 		localStorage.setItem("audio_library_guitool", json_string);
-		//window.location.reload();
+		window.location.reload();
 		
 				
 	}
