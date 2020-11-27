@@ -92,6 +92,15 @@ RED.devTest = (function() {
         img.onerror = bad;
         img.src = imageSrc;
     }
+    /* this neat thing can trace changes of a variable
+        node._w = 100;
+    
+        Object.defineProperty(node, 'w', {
+            set: function(value) { console.trace(); this._w = value;  },
+            get: function() { console.trace(); return this._w; }
+            })
+    
+    }*/
 
     return {
         createAndPrintNewWsStruct:createAndPrintNewWsStruct,

@@ -599,7 +599,7 @@ RED.nodes = (function() {
 	}
 
 	function importNodes(newNodesObj,createNewIds,clearCurrentFlow) {
-		//console.trace("importNodes");
+		console.trace("importNodes");
 		var i;
 		var n;
 		var newNodes;
@@ -702,6 +702,7 @@ RED.nodes = (function() {
 				}
 					
 				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
+				//console.warn(n);
 
 				var def = getType(n.type);
 				if (def && def.category == "config") {
@@ -717,7 +718,12 @@ RED.nodes = (function() {
 						RED.nodes.add(configNode);
 					}
 				} else {
-					var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
+					if (def.uiObject == undefined)
+						var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
+					else
+						var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,changed:false};
+					//console.log(node);
+				
 					//console.log("new node:" + n.name + ":" + n.id);
 
 					if (!node._def) {
@@ -771,7 +777,7 @@ RED.nodes = (function() {
 						if (node._def.defaults.hasOwnProperty(d2)) {
 							if (d2 == "name" || d2 == "id") continue;
 							node[d2] = n[d2];
-							//console.log("d2: " + d2);
+							
 						}
 					}
 					if (n.bgColor == undefined)
@@ -786,7 +792,9 @@ RED.nodes = (function() {
 					node.outputs = n.outputs||node._def.outputs;
 
 					addNode(node);
+					if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
 					RED.editor.validateNode(node);
+					if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
 					node_map[n.id] = node; // node_map is used for simple access to destinations when generating wires
 					new_nodes.push(node);
 				}

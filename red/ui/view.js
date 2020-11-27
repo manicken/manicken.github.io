@@ -803,33 +803,40 @@ RED.view = (function() {
 		
 		} 
 		// ui object resize mouse move
-		else if (mouse_mode == RED.state.RESIZE_LEFT) {
-			var dx = mouse_offset_resize_x - mouse_position[0];
-			mousedown_node.w = mousedown_node_w + dx;
-			mousedown_node.x = mousedown_node_x - dx/2;
-			if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
-			mousedown_node.dirty = true;
-		} 
-		else if (mouse_mode == RED.state.RESIZE_RIGHT) {
-			var dx = mouse_offset_resize_x - mouse_position[0];
-			mousedown_node.w = mousedown_node_w - dx;
-			mousedown_node.x = mousedown_node_x - dx/2;
-			if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
-			mousedown_node.dirty = true;
-		} 
-		else if (mouse_mode == RED.state.RESIZE_TOP) {
-			var dy = mouse_offset_resize_y - mouse_position[1];
-			mousedown_node.h = mousedown_node_h + dy;
-			mousedown_node.y = mousedown_node_y - dy/2;
-			if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
-			mousedown_node.dirty = true;
-		}
-		else if (mouse_mode == RED.state.RESIZE_BOTTOM) {
-			var dy = mouse_offset_resize_y - mouse_position[1];
-			mousedown_node.h = mousedown_node_h - dy;
-			mousedown_node.y = mousedown_node_y - dy/2;
-			if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
-			mousedown_node.dirty = true;
+		else
+		{ 
+			if (mouse_mode == RED.state.RESIZE_LEFT || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT) {
+				var dx = mouse_offset_resize_x - mouse_position[0];
+				mousedown_node.w = mousedown_node_w + dx;
+				
+				if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
+				else mousedown_node.x = mousedown_node_x - dx/2;
+				mousedown_node.dirty = true;
+			} 
+			if (mouse_mode == RED.state.RESIZE_RIGHT || mouse_mode == RED.state.RESIZE_TOP_RIGHT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
+				var dx = mouse_offset_resize_x - mouse_position[0];
+				mousedown_node.w = mousedown_node_w - dx;
+				
+				if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
+				else mousedown_node.x = mousedown_node_x - dx/2;
+				mousedown_node.dirty = true;
+			} 
+			if (mouse_mode == RED.state.RESIZE_TOP || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_TOP_RIGHT) {
+				var dy = mouse_offset_resize_y - mouse_position[1];
+				mousedown_node.h = mousedown_node_h + dy;
+				
+				if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
+				else mousedown_node.y = mousedown_node_y - dy/2;
+				mousedown_node.dirty = true;
+			}
+			if (mouse_mode == RED.state.RESIZE_BOTTOM || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
+				var dy = mouse_offset_resize_y - mouse_position[1];
+				mousedown_node.h = mousedown_node_h - dy;
+				
+				if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
+				else mousedown_node.y = mousedown_node_y - dy/2;
+				mousedown_node.dirty = true;
+			}
 		}
 		redraw();
 		//console.log("redraw from canvas mouse move");
@@ -1565,8 +1572,25 @@ RED.view = (function() {
 						else
 							mouse_mode = RED.state.MOVING;
 					}
+					else if ((x < uiItemResizeBorderSize) && (y < uiItemResizeBorderSize)) // top left resize
+					{
+						mouse_mode = RED.state.RESIZE_TOP_LEFT;
+					}
+					else if ((x < uiItemResizeBorderSize) && (y>(d.h-uiItemResizeBorderSize))) // bottom left resize
+					{
+						mouse_mode = RED.state.RESIZE_BOTTOM_LEFT;
+					}
+					else if ((y < uiItemResizeBorderSize) && (x>(d.w-uiItemResizeBorderSize))) // top right resize
+					{
+						mouse_mode = RED.state.RESIZE_TOP_RIGHT;
+					}
+					else if ((y > (d.h-uiItemResizeBorderSize)) && (x > (d.w-uiItemResizeBorderSize))) // bottom right resize
+					{
+						mouse_mode = RED.state.RESIZE_BOTTOM_RIGHT;
+					}
 					else
 						mouse_mode = RED.state.MOVING;
+					console.log("resize mouse_mode:" + mouse_mode);
 				}
 				else
 					mouse_mode = RED.state.MOVING;
@@ -2481,7 +2505,7 @@ RED.view = (function() {
 			
 			var nodeRect = d3.select(this);
 			nodeRect.attr("id",d.id);
-			//if (d._def.uiObject == undefined)
+			if (d._def.uiObject == undefined)
 				redraw_calcNewNodeSize(d);
 			
 			if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
