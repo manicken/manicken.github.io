@@ -1327,16 +1327,18 @@ RED.nodes = (function() {
 	}
 	function getFunctions(functionNode, completeItems)
 	{
-		var functions = [...functionNode.comment.matchAll(/\s*(unsigned|signed)?\s*(void|int|char|short|long|float|double|bool)\s+(\w+)\s*(\([^)]*\))\s*/g)];
+		var functions = [...functionNode.comment.matchAll(/\s*(unsigned|signed)?\s*(void|int|byte|char|short|long|float|double|bool)\s+(\w+)\s*(\([^)]*\))\s*/g)];
 		//var functionsStr = "Functions("+functions.length+"):\n";
 		//console.error("functions.length:" + functions.length + ' @ "' + n.name + '"');
 		for (var fi = 0; fi < functions.length; fi++)
 		{					
 			//if (functions[fi] == undefined) continue;
+			if (functions[fi][1] == undefined) functions[fi][1] = "";
+			var returnType = functions[fi][1] + " " + functions[fi][2].trim();
 			var name = functions[fi][3].trim();
 			var param = functions[fi][4].trim();
 			//console.error(functions[fi]);
-			completeItems.push({ name:(name+param), value:(name+param), type:"function", html: "@ " + functionNode.name, meta: "function", score:(1000)  });
+			completeItems.push({ name:(name+param), value:(name+param), type:returnType, html: "@ " + functionNode.name + "<br> returns" + returnType, meta: returnType, score:(1000)  });
 		}
 	}
 	/**

@@ -678,6 +678,38 @@ input.settings-item-textInput {
 .node_hovered {
 }
 
+.n-handle {
+    cursor: n-resize;
+}
+
+.ne-handle {
+    cursor: ne-resize;
+}
+
+.nw-handle {
+    cursor: nw-resize;
+}
+
+.w-handle {
+    cursor: w-resize;
+}
+
+.e-handle {
+    cursor: e-resize;
+}
+
+.s-handle {
+    cursor: s-resize;
+}
+
+.se-handle {
+    cursor: se-resize;
+}
+
+.sw-handle {
+    cursor: sw-resize;
+}
+
 .port_hovered {
   stroke: #ff7f0e;
   fill:  #ff7f0e;

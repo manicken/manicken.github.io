@@ -17,6 +17,9 @@
 
 
 RED.view = (function() {
+	var redrawTotalTime = 0.0;
+	var redrawCount = 0;
+
 	var _settings = {
 		showWorkspaceToolbar: true,
 		showNodeToolTip:true,
@@ -38,9 +41,11 @@ RED.view = (function() {
 	    snapToGridHsize: 5,
 	    snapToGridVsize: 5,
 		lineCurveScale: 0.75,
-		lineConnectionsScale: 1.5,
-		partialRenderLinks: false
+		lineConnectionsScale: 1.5
+		
+		//partialRenderLinks: false// obsolete
 	};
+	var uiItemResizeBorderSize= 6;
 
 	var settingsCategoryTitle = "Workspace View";
 
@@ -66,7 +71,7 @@ RED.view = (function() {
 	    snapToGridVsize: "Snap to grid v-size.",
 		lineCurveScale: "Line Curve Scale.",
 		lineConnectionsScale: "Line Conn. Scale.",
-		partialRenderLinks: "Partial Render Links (experimental)"
+		//partialRenderLinks: "Partial Render Links (experimental)"// obsolete
 	}
 
 	var settings = {
@@ -133,8 +138,8 @@ RED.view = (function() {
 		get lineConnectionsScale() { return parseFloat(_settings.lineConnectionsScale);},
 		set lineConnectionsScale(value) { _settings.lineConnectionsScale = value; redraw_links(); },
 
-		get partialRenderLinks() { return _settings.partialRenderLinks; },
-		set partialRenderLinks(value) { _settings.partialRenderLinks = value; redraw_links();}
+		//get partialRenderLinks() { return _settings.partialRenderLinks; },// obsolete
+		//set partialRenderLinks(value) { _settings.partialRenderLinks = value; redraw_links();}// obsolete
 	};
 
 	function setMinorGridColor()
@@ -188,10 +193,16 @@ RED.view = (function() {
 	var selected_link = null,
 		mousedown_link = null,
 		mousedown_node = null,
+		mousedown_node_w = 0,
+		mousedown_node_h = 0,
+		mousedown_node_x = 0,
+		mousedown_node_y = 0,
 		mousedown_port_type = null,
 		mousedown_port_index = 0,
 		mouseup_node = null,
 		mouse_offset = [0,0],
+		mouse_offset_resize_x = 0,
+		mouse_offset_resize_y = 0,
 		mouse_position = null,
 		mouse_mode = 0,
 		moving_set = [], // the data type of this is a rect
@@ -374,14 +385,14 @@ RED.view = (function() {
 		initGrid();
 		
 
-		document.getElementById("chart").addEventListener("scroll", chartScrolled);
+		//document.getElementById("chart").addEventListener("scroll", chartScrolled); // used by partial render, now obsolete, maybe it can be used for something else later
 		
 	}
-	function chartScrolled()
+	/*function chartScrolled()// used by partial render, now obsolete, maybe it can be used for something else later
 	{
 		if (settings.partialRenderLinks)
 		redraw_links();
-	}
+	}*/
 	function initWorkspace()
 	{
 		outer_background.attr('width', settings.space_width)
@@ -683,6 +694,8 @@ RED.view = (function() {
 
 	function canvasMouseMove() {
 		mouse_position = d3.touches(this)[0]||d3.mouse(this);
+		//console.log(mouse_position);
+		// allways running
 
 		// Prevent touch scrolling...
 		//if (d3.touches(this)[0]) {
@@ -728,6 +741,8 @@ RED.view = (function() {
 		if (mouse_mode != RED.state.IMPORT_DRAGGING && !mousedown_node && selected_link == null) {
 			return;
 		}
+
+		
 
 		var mousePos;
 		if (mouse_mode == RED.state.JOINING) {
@@ -785,8 +800,39 @@ RED.view = (function() {
 			}
 		} else if (mouse_mode == RED.state.MOVING_ACTIVE || mouse_mode == RED.state.IMPORT_DRAGGING) {
 			moveSelection_mouse();
+		
+		} 
+		// ui object resize mouse move
+		else if (mouse_mode == RED.state.RESIZE_LEFT) {
+			var dx = mouse_offset_resize_x - mouse_position[0];
+			mousedown_node.w = mousedown_node_w + dx;
+			mousedown_node.x = mousedown_node_x - dx/2;
+			if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
+			mousedown_node.dirty = true;
+		} 
+		else if (mouse_mode == RED.state.RESIZE_RIGHT) {
+			var dx = mouse_offset_resize_x - mouse_position[0];
+			mousedown_node.w = mousedown_node_w - dx;
+			mousedown_node.x = mousedown_node_x - dx/2;
+			if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
+			mousedown_node.dirty = true;
+		} 
+		else if (mouse_mode == RED.state.RESIZE_TOP) {
+			var dy = mouse_offset_resize_y - mouse_position[1];
+			mousedown_node.h = mousedown_node_h + dy;
+			mousedown_node.y = mousedown_node_y - dy/2;
+			if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
+			mousedown_node.dirty = true;
+		}
+		else if (mouse_mode == RED.state.RESIZE_BOTTOM) {
+			var dy = mouse_offset_resize_y - mouse_position[1];
+			mousedown_node.h = mousedown_node_h - dy;
+			mousedown_node.y = mousedown_node_y - dy/2;
+			if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
+			mousedown_node.dirty = true;
 		}
 		redraw();
+		//console.log("redraw from canvas mouse move");
 	}
 
 	
@@ -1011,6 +1057,13 @@ RED.view = (function() {
 			RED.sidebar.info.showSelection(moving_set);
 		} else {
 			RED.sidebar.info.clear();
+		}
+
+		for (var i = 0; i < moving_set.length; i++)
+		{
+			var n = moving_set[i].n;
+			var links = RED.nodes.links.filter(function(l) {  return l.source.z == activeWorkspace && l.target.z == activeWorkspace; });
+			vis.selectAll(".link").data(links,function(l) {  if (l.source == n) { l.selected = true; } if (l.target == n){ l.selected = true; } return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 		}
 	}
 	function moveView(dx, dy)
@@ -1374,19 +1427,54 @@ RED.view = (function() {
 		resetMouseVars();
 	}
 
-	function nodeMouseUp(d) {
-		showHideGrid(false);
-		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
-			RED.editor.edit(d);
-			clickElapsed = 0;
-			d3.event.stopPropagation();
-			return;
-		}
-		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
-		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
-	}
+	function nodeMouseMove(d) {
+		if (mouse_mode !== 0) return;
 
-	function nodeMouseDown(d) {
+		if (d._def.uiObject == undefined) return;
+
+		var nodeRect = d3.select(this);
+		var mousePos = d3.mouse(this)
+		var x = mousePos[0];
+		var y = mousePos[1];
+
+		if ((y > uiItemResizeBorderSize) && (y < (d.h-uiItemResizeBorderSize))) // width resize
+		{
+			if (x < uiItemResizeBorderSize)
+				this.setAttribute("style", "cursor: w-resize");
+			else if (x > (d.w-uiItemResizeBorderSize))
+				this.setAttribute("style", "cursor: e-resize");
+			else
+				this.setAttribute("style", "cursor: move");
+		}
+		else if ((x > uiItemResizeBorderSize) && (x < (d.w-uiItemResizeBorderSize))) // height resize
+		{
+			if (y < uiItemResizeBorderSize)
+				this.setAttribute("style", "cursor: n-resize");
+			else if (y > (d.h-uiItemResizeBorderSize))
+				this.setAttribute("style", "cursor: s-resize");
+			else
+				this.setAttribute("style", "cursor: move");
+		}
+		else if ((x < uiItemResizeBorderSize) && (y < uiItemResizeBorderSize)) // top left resize
+		{
+			this.setAttribute("style", "cursor: nw-resize");
+		}
+		else if ((x < uiItemResizeBorderSize) && (y>(d.h-uiItemResizeBorderSize))) // bottom left resize
+		{
+			this.setAttribute("style", "cursor: sw-resize");
+		}
+		else if ((y < uiItemResizeBorderSize) && (x>(d.w-uiItemResizeBorderSize))) // top right resize
+		{
+			this.setAttribute("style", "cursor: ne-resize");
+		}
+		else if ((y > (d.h-uiItemResizeBorderSize)) && (x > (d.w-uiItemResizeBorderSize))) // bottom right resize
+		{
+			this.setAttribute("style", "cursor: se-resize");
+		}
+		else
+			this.setAttribute("style", "cursor: move");
+	}
+	function nodeMouseDown(d) { // this only happens once
 		showHideGrid(true);
 		//var touch0 = d3.event;
 		//var pos = [touch0.pageX,touch0.pageY];
@@ -1401,6 +1489,7 @@ RED.view = (function() {
 			return;
 		}
 		mousedown_node = d;
+		
 		var now = Date.now();
 		clickElapsed = now-clickTime;
 		clickTime = now;
@@ -1409,8 +1498,6 @@ RED.view = (function() {
 		lastClickNode = mousedown_node;
 
 		var i;
-
-		
 
 		if (d.selected && d3.event.ctrlKey) {
 			d.selected = false;
@@ -1440,7 +1527,51 @@ RED.view = (function() {
 			if (!d3.event.ctrlKey)
 				clearLinkSelection();
 			if (d3.event.button != 2) {
-				mouse_mode = RED.state.MOVING;
+				
+				// ui object resize mouse down
+				if (d._def.uiObject != undefined)
+				{
+					mousedown_node_w = d.w;
+					mousedown_node_h = d.h;
+					mousedown_node_x = d.x;
+					mousedown_node_y = d.y;
+					mouse_offset_resize_x = mouse_position[0];
+					mouse_offset_resize_y = mouse_position[1];
+					console.log("mousedown_node_w:" + mousedown_node_w +
+					", mousedown_node_h:" + mousedown_node_h +
+					", mouse_offset_resize_x:" + mouse_offset_resize_x +
+					", mouse_offset_resize_y:" + mouse_offset_resize_y);
+
+					var nodeRect = d3.select(this);
+					var mousePos = d3.mouse(this)
+					var x = mousePos[0];
+					var y = mousePos[1];
+
+					if ((y > uiItemResizeBorderSize) && (y < (d.h-uiItemResizeBorderSize))) // width resize
+					{
+						if (x < uiItemResizeBorderSize)
+							mouse_mode = RED.state.RESIZE_LEFT;
+						else if (x > (d.w-uiItemResizeBorderSize))
+							mouse_mode = RED.state.RESIZE_RIGHT;
+						else
+							mouse_mode = RED.state.MOVING;
+					}
+					else if ((x > uiItemResizeBorderSize) && (x < (d.w-uiItemResizeBorderSize)))
+					{
+						if (y < uiItemResizeBorderSize)
+							mouse_mode = RED.state.RESIZE_TOP;
+						else if (y > (d.h-uiItemResizeBorderSize))
+							mouse_mode = RED.state.RESIZE_BOTTOM;
+						else
+							mouse_mode = RED.state.MOVING;
+					}
+					else
+						mouse_mode = RED.state.MOVING;
+				}
+				else
+					mouse_mode = RED.state.MOVING;
+				
+				
 				var mouse = d3.touches(this)[0]||d3.mouse(this);
 				mouse[0] += d.x-d.w/2;
 				mouse[1] += d.y-d.h/2;
@@ -1460,16 +1591,26 @@ RED.view = (function() {
 		updateSelection();
 		
 		//console.log("nodeMouseDown:" + d.name);
-		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(link) {  return link.source.z == activeWorkspace && link.target.z == activeWorkspace}),function(l) {  if (l.source == d){ l.selected = true; }if (l.target == d){ l.selected = true; }return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
-
+		
 		redraw();
 		d3.event.stopPropagation();
+	}
+	function nodeMouseUp(d) {
+		showHideGrid(false);
+		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
+			RED.editor.edit(d);
+			clickElapsed = 0;
+			d3.event.stopPropagation();
+			return;
+		}
+		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
+		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
 	function clearLinkSelection()
 	{
 		selected_link = null;
-		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(d) { return d.source.z == activeWorkspace && d.target.z == activeWorkspace }),function(d) { d.selected = false; return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
-
+		var links = RED.nodes.links.filter(function(l) { return l.source.z == activeWorkspace && l.target.z == activeWorkspace });
+		vis.selectAll(".link").data(links, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 	}
 
 	function nodeButtonClicked(d) {
@@ -1646,14 +1787,19 @@ RED.view = (function() {
 				}
 				nodeMouseUp.call(this,d);
 			})
+			.on("mousemove", nodeMouseMove)
 			.on("mouseover",function(d) {
 				if (mouse_mode === 0) {
 					var nodeRect = d3.select(this);
 					nodeRect.classed("node_hovered",true);
-					//console.log("node mouseover:" + d.name);
-					$(current_popup_rect).popover("destroy"); // destroy prev
 
-					if (settings.showNodeToolTip)
+					//console.log("node mouseover:" + d.name);
+					//console.log(d3.mouse(this));
+
+					$(current_popup_rect).popover("destroy"); // destroy prev
+					
+
+					if (settings.showNodeToolTip && (d._def.uiObject == undefined)) // dont show popup on gui objects
 					{
 						var popoverText = "<b>" + d.type + "</b><br>";
 						if (d.comment && (d.comment.trim().length != 0))
@@ -1669,6 +1815,7 @@ RED.view = (function() {
 				}
 			})
 			.on("mouseout",function(d) {
+				
 				var nodeRect = d3.select(this);
 				nodeRect.classed("node_hovered",false);
 				//console.log("node mouseout:" + d.name);
@@ -1906,40 +2053,18 @@ RED.view = (function() {
 	}
 	function redraw_links()
 	{
-		if (settings.partialRenderLinks)
-		{
-			var chart = $("#chart");
-			var chartViewYmin = chart.scrollTop() / settings.scaleFactor;
-			var chartViewXmin = chart.scrollLeft() / settings.scaleFactor;
-			var chartViewYmax = (chart.height() + chart.scrollTop()) / settings.scaleFactor;
-			var chartViewXmax = (chart.width() + chart.scrollLeft()) / settings.scaleFactor;
-		}
 		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(d)
 		{ 
-			if (settings.partialRenderLinks)
-			{
-				return (d.source.z == activeWorkspace) &&
-					(d.target.z == activeWorkspace) &&
-					(((d.source.x >= chartViewXmin) &&
-					(d.source.x <= chartViewXmax) &&
-					(d.source.y >= chartViewYmin) &&
-					(d.source.y <= chartViewYmax)) ||
-					((d.target.x >= chartViewXmin) &&
-					(d.target.x <= chartViewXmax) &&
-					(d.target.y >= chartViewYmin) &&
-					(d.target.y <= chartViewYmax)));
-			}
-			else
-			{
-				return (d.source.z == activeWorkspace) &&
+			return (d.source.z == activeWorkspace) &&
 					(d.target.z == activeWorkspace);
-			}
 
 		}),function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
-
+		
 		var linkEnter = link.enter().insert("g",".node").attr("class","link");
-
+		var anyLinkEnter = false;
 		linkEnter.each(function(d,i) {
+			anyLinkEnter = true;
+			console.log("link enter");
 			var l = d3.select(this);
 			l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
@@ -1966,7 +2091,14 @@ RED.view = (function() {
 
 		link.exit().remove();
 
-		var links = vis.selectAll(".link_path");
+		link.classed("link_selected", function(d) { return d === selected_link || d.selected; });
+
+		// only redraw links that is selected and where the node is moving
+		if (anyLinkEnter)
+			var links = vis.selectAll(".link_path");
+		else
+			var links = vis.selectAll(".link_selected").selectAll(".link_path");
+
 		links.attr("d",function(d){
 				var numOutputs = d.source.outputs || 1;
 				var sourcePort = d.sourcePort || 0;
@@ -2054,8 +2186,6 @@ RED.view = (function() {
 						      (d.x2)+" "+d.y2;
 				}
 		});
-
-		link.classed("link_selected", function(d) { return d === selected_link || d.selected; });
 		link.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
 	}
 	function generateLinkPath(orig, dest, origX,origY, destX, destY, sc1, sc2) {
@@ -2311,6 +2441,115 @@ RED.view = (function() {
 		port.classed("port_hovered",false);
 		$(this).popover("destroy"); // destroy prev
 	}
+	function redraw_nodes()
+	{
+		
+		//const t2 = performance.now();
+		var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
+		{ 
+			return (d.z == activeWorkspace)/* &&
+				   (d.x >= chartViewXmin) &&
+				   (d.x <= chartViewXmax) &&
+				   (d.y >= chartViewYmin) &&
+				   (d.y <= chartViewYmax)*/;
+
+		}),function(d){return d.id});
+		//const t3 = performance.now();
+		//console.log('vis.selectAll: ' + (t3-t2) +' milliseconds.');
+
+		var updatedClassTypes =	false; // flag so that it only run once at each redraw()
+
+		var nodeExit = nodes.exit().remove();
+		nodeExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
+		{
+			//console.error("redraw nodeExit:" + d.type);
+			if (d.type == "TabInput" || d.type == "TabOutput")
+			{
+				if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
+			}
+		});
+		var anyNodeEnter = false;
+		var nodeEnter = nodes.enter().insert("svg:g").attr("class", "node nodegroup");
+		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
+		{
+			anyNodeEnter = true;
+			//console.error("redraw nodeEnter:" + d.type);
+			if (d.type == "TabInput" || d.type == "TabOutput")
+			{
+				if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
+			}
+			
+			var nodeRect = d3.select(this);
+			nodeRect.attr("id",d.id);
+			//if (d._def.uiObject == undefined)
+				redraw_calcNewNodeSize(d);
+			
+			if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
+			{	
+				checkRequirements(d); // this update nodes that allready exist
+				if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
+				redraw_nodeReqError(nodeRect, d);
+				redraw_paletteNodesReqError(d);
+			}
+
+			if (d._def.badge) redraw_nodeBadge(nodeRect, d);
+			if (d._def.button) redraw_nodeButton(nodeRect, d);
+			redraw_nodeMainRect(nodeRect, d);
+			if (d._def.icon) redraw_nodeIcon(nodeRect, d);
+			redraw_nodeInputs(nodeRect, d);
+			redraw_nodeOutputs(nodeRect, d);
+			if (d.type != "JunctionLR" && d.type != "JunctionRL")
+				redraw_nodeText(nodeRect, d);
+			//redraw_nodeStatus(nodeRect);
+
+			//nodeRect.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
+			// never show these little status icons
+			// people try clicking on them, thinking they're buttons
+			// or some sort of user interface widget
+			//nodeRect.append("path").attr("class","node_error").attr("d","M 3,-3 l 10,0 l -5,-8 z");
+			//nodeRect.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
+			//nodeRect.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
+			nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
+		});
+
+		nodes.each(function(d,i) { // redraw all nodes in active workspace
+				var nodeRect = d3.select(this);
+
+				if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
+				{	
+					checkRequirements(d); // this update nodes that allready exist
+					//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
+					redraw_nodeReqError(nodeRect, d);
+				}
+				if (d.dirty) {
+					//console.warn(d.name + " was dirty");
+					//nodeRect.attr("fill",function(d) { console.warn("node bg color:" + d.bgColor); return d.bgColor;});
+					if (d.bgColor == null)
+						d.bgColor = d._def.color;
+						
+					nodeRect.selectAll(".node").attr("fill", d.bgColor);
+
+					//nodeRect.style("background-color", d.bgColor)
+					//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
+					if (d.resize) {
+						
+						if (d._def.uiObject == undefined)
+							redraw_calcNewNodeSize(d);
+						redraw_nodeInputs(nodeRect, d);
+						redraw_nodeOutputs(nodeRect, d);
+						d.resize = false;
+					}
+					//console.log("redraw stuff");
+
+					redraw_paletteNodesReqError(d);
+					redraw_other(nodeRect, d);
+					if (d.type != "JunctionLR" && d.type != "JunctionRL")
+						redraw_label(nodeRect, d);
+					d.dirty = false;
+					
+				}
+		});
+	}
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
@@ -2333,118 +2572,20 @@ RED.view = (function() {
 		vis.attr("transform","scale("+settings.scaleFactor+")");
 		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
 		
-		if (mouse_mode != RED.state.JOINING) {
-			// Don't bother redrawing nodes if we're drawing links
-			const t2 = performance.now();
-			var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
-			{ 
-				return (d.z == activeWorkspace)/* &&
-					   (d.x >= chartViewXmin) &&
-					   (d.x <= chartViewXmax) &&
-					   (d.y >= chartViewYmin) &&
-					   (d.y <= chartViewYmax)*/;
-
-			}),function(d){return d.id});
-			const t3 = performance.now();
-			//console.log('vis.selectAll: ' + (t3-t2) +' milliseconds.');
-
-			var updatedClassTypes =	false; // flag so that it only run once at each redraw()
-
-			var nodeExit = nodes.exit().remove();
-			nodeExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
-			{
-				//console.error("redraw nodeExit:" + d.type);
-				if (d.type == "TabInput" || d.type == "TabOutput")
-				{
-					if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
-				}
-			});
-
-			var nodeEnter = nodes.enter().insert("svg:g").attr("class", "node nodegroup");
-			nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
-			{
-				//console.error("redraw nodeEnter:" + d.type);
-				if (d.type == "TabInput" || d.type == "TabOutput")
-				{
-					if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
-				}
-
-				var nodeRect = d3.select(this);
-				nodeRect.attr("id",d.id);
-				redraw_calcNewNodeSize(d);
-				
-				if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
-				{	
-					checkRequirements(d); // this update nodes that allready exist
-					if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
-					redraw_nodeReqError(nodeRect, d);
-					redraw_paletteNodesReqError(d);
-				}
-
-				if (d._def.badge) redraw_nodeBadge(nodeRect, d);
-				if (d._def.button) redraw_nodeButton(nodeRect, d);
-				redraw_nodeMainRect(nodeRect, d);
-				if (d._def.icon) redraw_nodeIcon(nodeRect, d);
-				redraw_nodeInputs(nodeRect, d);
-				redraw_nodeOutputs(nodeRect, d);
-				if (d.type != "JunctionLR" && d.type != "JunctionRL")
-					redraw_nodeText(nodeRect, d);
-				//redraw_nodeStatus(nodeRect);
-
-				//nodeRect.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
-				// never show these little status icons
-				// people try clicking on them, thinking they're buttons
-				// or some sort of user interface widget
-				//nodeRect.append("path").attr("class","node_error").attr("d","M 3,-3 l 10,0 l -5,-8 z");
-				//nodeRect.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
-				//nodeRect.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
-				nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
-			});
-
-			nodes.each(function(d,i) { // redraw all nodes in active workspace
-					var nodeRect = d3.select(this);
-
-					if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
-					{	
-						checkRequirements(d); // this update nodes that allready exist
-						//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
-						redraw_nodeReqError(nodeRect, d);
-					}
-					if (d.dirty) {
-						//nodeRect.attr("fill",function(d) { console.warn("node bg color:" + d.bgColor); return d.bgColor;});
-						if (d.bgColor == null)
-							d.bgColor = d._def.color;
-							
-						nodeRect.selectAll(".node").attr("fill", d.bgColor);
-
-						//nodeRect.style("background-color", d.bgColor)
-						//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
-						if (d.resize) {
-							
-							redraw_calcNewNodeSize(d);
-							redraw_nodeInputs(nodeRect, d);
-							redraw_nodeOutputs(nodeRect, d);
-							d.resize = false;
-						}
-						//console.log("redraw stuff");
-
-						redraw_paletteNodesReqError(d);
-						redraw_other(nodeRect, d);
-						if (d.type != "JunctionLR" && d.type != "JunctionRL")
-							redraw_label(nodeRect, d);
-						d.dirty = false;
-						
-					}
-			});
-
-		}
-		redraw_links();
-
-		if (d3.event) {
-			d3.event.preventDefault();
-		}
+		// Don't bother redrawing nodes if we're drawing links
+		if (mouse_mode != RED.state.JOINING) 
+			redraw_nodes();
 		const t1 = performance.now();
-		//console.log('redraw took: ' + (t1-t0) +' milliseconds.');
+		redraw_links(); // this now only redraws links that was added and links that are selected (i.e. they are selected when a node is selected)
+		const t2 = performance.now();
+		if (d3.event) {	d3.event.preventDefault(); }
+
+		redrawCount++;
+		var currentTotalTime = t2-t0;
+		var currentLinksTime = t2-t1;
+		redrawTotalTime += currentTotalTime;
+
+		//console.log('redraw average time: ' + (redrawTotalTime/redrawCount) + ' ms, curr. tot. time:' + currentTotalTime + " ms, curr. link time:" + currentLinksTime + " ms");
 	}
 
 	function doSort (arr) {
