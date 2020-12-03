@@ -360,7 +360,9 @@ RED.arduino.export = (function() {
 		RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
 		const t1 = performance.now();
 
-		if (RED.arduino.settings.useExportDialog)
+		var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive())
+
+		if (useExportDialog)
 			showExportDialog("Simple Export to Arduino", cpp, " Source Code:");
 			//showExportDialog("Simple Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 

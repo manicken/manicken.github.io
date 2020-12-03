@@ -1303,7 +1303,7 @@ RED.view = (function() {
 		document.body.appendChild(sp);
 		var w = sp.offsetWidth;
 		document.body.removeChild(sp);
-		return 50+w;
+		return /*50+*/w;
 	}
 
 	function resetMouseVars() {
@@ -1728,12 +1728,12 @@ RED.view = (function() {
 		}
 		if (d.inputs) // Jannik
 		{
-			d.w = Math.max(node_def.width,calculateTextWidth(l)+(d.inputs>0?7:0) );
+			d.w = Math.max(node_def.width,calculateTextWidth(l)+50+(d.inputs>0?7:0) );
 			d.h = Math.max(node_def.height, (Math.max(d.outputs,d.inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
 		}
 		else
 		{
-			d.w = Math.max(node_def.width,calculateTextWidth(l)+(d._def.inputs>0?7:0) );
+			d.w = Math.max(node_def.width,calculateTextWidth(l)+50+(d._def.inputs>0?7:0) );
 			d.h = Math.max(node_def.height,(Math.max(d.outputs,d._def.inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
 		}
 	}
@@ -1887,11 +1887,11 @@ RED.view = (function() {
 			//icon.attr('class','node_icon_shade_border node_icon_shade_border_'+d._def.align);
 		}
 
-		//if (d._def.inputs > 0 && d._def.align == null) {
-		//    icon_shade.attr("width",35);
-		//    icon.attr("transform","translate(5,0)");
-		//    icon_shade_border.attr("transform","translate(5,0)");
-		//}
+		/*if (d._def.inputs > 0 && d._def.align == null) {
+		    icon_shade.attr("width",35);
+		    icon.attr("transform","translate(5,0)");
+		    icon_shade_border.attr("transform","translate(5,0)");
+		}*/
 		//if (d._def.outputs > 0 && "right" == d._def.align) {
 		//    icon_shade.attr("width",35); //icon.attr("x",5);
 		//}
@@ -1923,7 +1923,7 @@ RED.view = (function() {
 	}
 	function redraw_label(nodeRect, d)
 	{
-		nodeRect.selectAll('text.node_label').text(function(d,i){
+		var nodeRects = nodeRect.selectAll('text.node_label').text(function(d,i){
 			/* if (d._def.label) {
 				if (typeof d._def.label == "function") {
 					return d._def.label.call(d);
@@ -1946,6 +1946,14 @@ RED.view = (function() {
 			return 'node_label'+
 			(d._def.align?' node_label_'+d._def.align:'')+
 			(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
+		});
+		if (d._def.uiObject != undefined)
+		nodeRects.attr('x', function(d)
+		{
+			console.log("text width:" + calculateTextWidth(d.name));
+			console.log("node width:" + d.w);
+			return (d.w-(calculateTextWidth(d.name)))/2;
+			
 		});
 	}
 	function redraw_nodeStatus(nodeRect)
@@ -2026,6 +2034,17 @@ RED.view = (function() {
 			}
 		}
 		d.inputlist = inputlist;
+
+		nodeRect.selectAll(".port_input").each(function(d,i) {
+			var port = d3.select(this);
+			var numInputs = 0;
+			if (d.inputs) numInputs = d.inputs;
+			else numInputs = d._def.inputs;
+				
+			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance;
+			y = (y+node_def.pin_ydistance*i)-node_def.pin_ysize/2;
+			port.attr("y",y)
+		});
 	}
 		
 	function redraw_nodeOutputs(nodeRect, d)
@@ -2347,11 +2366,10 @@ RED.view = (function() {
 		//nodeRect.selectAll(".node_icon_shade_border_right").attr("d",function(d){return "M "+(d.w-30)+" 1 l 0 "+(d.h-2)});
 		
 		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
-		nodeRect.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
-		nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d){ return "M "+(("right" == d._def.align) ?0:30)+" 1 l 0 "+(d.h-2)});
-
-
 		
+		nodeRect.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
+		//nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d){ return "M "+(("right" == d._def.align) ?0:30)+" 1 l 0 "+(d.h-2)});
+
 		//nodeRect.selectAll(".node_tools").attr("x",function(d){return d.w-35;}).attr("y",function(d){return d.h-20;});
 
 		/*nodeRect.selectAll(".node_changed")
@@ -2361,20 +2379,6 @@ RED.view = (function() {
 		/*nodeRect.selectAll(".node_error")
 			.attr("x",function(d){return d.w-10-(d.changed?13:0)})
 			.classed("hidden",function(d) { return d.valid; });*/  // this is disabled above
-
-		nodeRect.selectAll(".port_input").each(function(d,i) {
-			var port = d3.select(this);
-			var numInputs = 0;
-			if (d.inputs) numInputs = d.inputs;
-			else numInputs = d._def.inputs;
-				
-			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance;
-			y = (y+node_def.pin_ydistance*i)-node_def.pin_ysize/2;
-			port.attr("y",y)
-		});
-
-		
-
 		
 		/*nodeRect.selectAll('.node_right_button').attr("transform",function(d){
 				var x = d.w-6;
@@ -2534,6 +2538,7 @@ RED.view = (function() {
 			//nodeRect.append("image").attr("class","node_error hidden").attr("xlink:href","icons/node-error.png").attr("x",0).attr("y",-6).attr("width",10).attr("height",9);
 			//nodeRect.append("image").attr("class","node_changed hidden").attr("xlink:href","icons/node-changed.png").attr("x",12).attr("y",-6).attr("width",10).attr("height",10);
 			nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
+		
 		});
 
 		nodes.each(function(d,i) { // redraw all nodes in active workspace
@@ -2628,7 +2633,7 @@ RED.view = (function() {
 			var name = node.name ? node.name : node.id;
 			var def = node._def;
 			var dH = Math.max(RED.view.defaults.height, (Math.max(def.outputs, def.inputs) || 0) * 15);
-			x = lastX + Math.max(RED.view.defaults.width, RED.view.calculateTextWidth(name) + (def.inputs > 0 ? 7 : 0));
+			x = lastX + Math.max(RED.view.defaults.width, RED.view.calculateTextWidth(name) + 50 + (def.inputs > 0 ? 7 : 0));
 			node.x = x;
 			node.y = y + dH/2;
 			y = y + dH + 15;
