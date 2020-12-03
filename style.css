@@ -339,11 +339,21 @@ input.jscolor {
     padding-right: 3px;
     margin: 0px;
 }
+.settings-item-applyBtn2 {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 3px;
+    padding-right: 3px;
+    margin: 6px;
+}
 label.settings-item-label {
     margin: 0px;
 }
 input.settings-item-textInput {
     height: 12px;
+    margin: 0px;
+}
+settings-item-multilinetextInput {
     margin: 0px;
 }
 .settings-category {

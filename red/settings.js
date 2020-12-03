@@ -149,7 +149,13 @@ RED.settings = (function() {
 							if (settingName.endsWith("Color"))
 								createColorSel(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName)
 							else
-								createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
+							{
+								var value = RED_Class.settings[settingName]
+								if (typeOf === "string" && value.includes("\n"))
+									createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName, 200);
+								else
+									createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
+							}
 						}
 						else
 							console.error("generateSettingsFromClasses unknown type:" + typeOf);
@@ -230,6 +236,29 @@ RED.settings = (function() {
 		var html = '<div class="settings-item settings-item-textwbtn center"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
 			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input class="settings-item-textInput" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
 			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
+
+		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
+		$("#" + containerId).append(html);
+		if (typeof cb === "function")
+		{
+			$('#btn-' + id).click(function() { cb($('#' + id).val());});
+			$('#' + id).val(param);
+		}
+		else if(typeof cb == "object")
+		{
+			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
+			$('#' + id).val(cb[param]);
+		}
+	}
+	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, )
+	{
+		if (textInputWidth == undefined) textInputWidth = 40;
+		var html = '<div class="settings-item settings-item-textwbtn center">'
+			
+			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
+			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="8" cols="50" style="width: '+textInputWidth+'px;">';
+			html += '</div></div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);

@@ -173,11 +173,7 @@ RED.arduino.export = (function() {
 	{
 		if (includes == undefined)
 			includes = "";
-		var returnStr = "#include <Audio.h>\n"
-				+ "#include <Wire.h>\n"
-				+ "#include <SPI.h>\n"
-				+ "#include <SD.h>\n"
-				+ "#include <SerialFlash.h>\n"
+		var returnStr = RED.arduino.settings.StandardIncludeHeader
 				+ includes + "\n"
 				+ "// GUItool: begin automatically generated code\n";
 		if (RED.arduino.settings.WriteJSONtoExportedFile == true)
@@ -297,12 +293,16 @@ RED.arduino.export = (function() {
 		var jsonString = JSON.stringify(nns); // one liner JSON
 
 		//console.log(JSON.stringify(nns));
-
+		var includes = ""; // Include Def nodes
+		var globalVars = "";
+		var codeFiles = "";
+		var functions = "";
 		var cppAPN = "// Audio Processing Nodes\n";
 		var cppAC = "// Audio Connections (all connections (aka wires or links))\n";
 		var cppCN = "// Control Nodes (all control nodes (no inputs or outputs))\n";
 		var cordcount = 1;
 		var activeWorkspace = RED.view.getWorkspace();
+		
 		console.log("save1(simple) workspace:" + activeWorkspace);
 
 		for (var i=0; i<nns.length; i++) {
@@ -314,6 +314,10 @@ RED.arduino.export = (function() {
 			var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
 			
 			if (node == null) { console.warn("node == null:" + "type:"+n.type +",id:"+ n.id); continue;} // this should never happen (because now "tab" type checked at top)
+			if (node.type == "IncludeDef") includes += node.name + "\n";
+			if (node.type == "Variables") globalVars += node.comment + "\n";
+			if (node.type == "CodeFile") codeFiles += "\n" + node.comment + "\n";
+			if (node.type == "Function") functions += "\n" + node.comment + "\n";
 			if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 
 			if (haveIO(node)) {
@@ -349,8 +353,8 @@ RED.arduino.export = (function() {
 			}
 		}
 		
-		var cpp = getCppHeader(jsonString);
-		cpp += "\n" + cppAPN + "\n" + cppAC + "\n" + cppCN + "\n";
+		var cpp = getCppHeader(jsonString, includes);
+		cpp += "\n" + codeFiles + "\n" + cppAPN + "\n" + cppAC + "\n" + cppCN + "\n" + globalVars + "\n" + functions + "\n";
 		cpp += getCppFooter();
 		//console.log(cpp);
 

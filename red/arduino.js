@@ -23,7 +23,12 @@ RED.arduino = (function() {
 		IOcheckAtExport: true,
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
-		WebSocketServerPort: 3000
+		WebSocketServerPort: 3000,
+		StandardIncludeHeader: "#include <Audio.h>\n"
+							  + "#include <Wire.h>\n"
+							  + "#include <SPI.h>\n"
+							  + "#include <SD.h>\n"
+						      + "#include <SerialFlash.h>\n"
 	}
 	var settings = {
 		get useExportDialog() { return _settings.useExportDialog; },
@@ -40,6 +45,9 @@ RED.arduino = (function() {
 
 		get WebSocketServerPort() { return parseInt(_settings.WebSocketServerPort); },
 		set WebSocketServerPort(state) { _settings.WebSocketServerPort = parseInt(state); StartWebSocketConnection(); },
+
+		get StandardIncludeHeader() { return _settings.StandardIncludeHeader; },
+		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; }
 	};
 
 	var settingsCategoryTitle = "Arduino Export/Import";
@@ -49,7 +57,8 @@ RED.arduino = (function() {
 		IOcheckAtExport: "IO check At Export",
 		WriteJSONtoExportedFile: "Write JSON at exported file",
 		WebServerPort: "Web Server Port",
-		WebSocketServerPort: "Web Socket Server Port"
+		WebSocketServerPort: "Web Socket Server Port",
+		StandardIncludeHeader: "Global Includes"
 	};
 
 	function startConnectedChecker()
