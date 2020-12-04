@@ -59,8 +59,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="menu-import" class="btn dropdown-toggle btn-success disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Import <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-import-json" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>JSON</a></li>
-					<li><a id="btn-import-arduino" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>Arduino</a></li>
-					<li><a id="btn-get-design-json";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From the IDE by JSON</a></li>
+					<li><a id="btn-import-arduino" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>Arduino Code</a></li>
+					<li><a id="btn-get-design-json" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From the IDE by JSON</a></li>
 					<input id="file-input" class="btn action-import" type="file" style="display:none;">
 					<li><label for="file-input" class="btn action-import" ><i id="btn-icn-deploy" class="icon-download"></i> JSON LoadFromFile</label></li>
 				</ul>
@@ -68,19 +68,19 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<div class="btn-group pull-left">
 				<a id="menu-export" class="btn dropdown-toggle btn-danger disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export <span class="caret"></span></a>
 				<ul class="dropdown-menu">
-					<li><a id="btn-deploy"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Simple</a></li>
-					<li><a id="btn-deploy2";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Class-based</a></li>
-					<li><a id="btn-pushJSON";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to the IDE</a></li>
-					<li><a id="btn-saveTofile" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> JSON SaveToFile</a></li>
-					<li><a id="btn-deploy2zip" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Class-based to Zip</a></li>
-					<li><a id="btn-deploy2singleLineJson" class="btn action-deploy href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Single Line JSON</a></li>
+					<li><a id="btn-deploy" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Simple</a></li>
+					<li><a id="btn-deploy2" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Class-based</a></li>
+					<li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to the IDE</a></li>
+					<li><a id="btn-saveTofile" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> JSON SaveToFile</a></li>
+					<li><a id="btn-deploy2zip" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Class-based to Zip</a></li>
+					<li><a id="btn-deploy2singleLineJson" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Single Line JSON</a></li>
 				</ul>
 				</div>
 				<div class="btn-group pull-left">
 				<a id="menu-ide" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
 				<ul class="dropdown-menu">
-					<li><a id="btn-verify-compile"" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Verify/Compile</a></li>
-					<li><a id="btn-compile-upload";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Upload</a></li>
+					<li><a id="btn-verify-compile" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Verify/Compile</a></li>
+					<li><a id="btn-compile-upload" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Upload</a></li>
 				</ul>
 			</div>
 			
@@ -174,16 +174,22 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn btn-small" id="btn-moveWorkSpaceLeft" href="#"><i class="fa fa-chevron-left"></i> WS</a>
 				<a class="btn btn-small" id="btn-moveWorkSpaceRight" href="#">WS <i class="fa fa-chevron-right"></i></a>
 			</div>
-			<a id="lbl-zoom-level">1.0</a>
+			<div class="btn-group">
+				<a class="btn btn-small" id="btn-guiEditMode" href="#"><i class="fa fa-cogs fa-lg"></i> gui edit</a>
+				<a class="btn btn-small" id="btn-guiRunMode" href="#"><i class="fa fa-play fa-lg"></i> gui run</a>
+			</div>
+			
 			
 		</div>
 	</div>
 
 	<div id="chart-zoom-controls">
 		<div class="btn-group">
+			<a id="lbl-zoom-level">1.0</a>
 			<a class="btn btn-mini" id="btn-zoom-out" href="#"><i class="icon-zoom-out"></i></a>
 			<a class="btn btn-mini" id="btn-zoom-zero" href="#"><i class="icon-th"></i></a>
 			<a class="btn btn-mini" id="btn-zoom-in" href="#"><i class="icon-zoom-in"></i></a>
+			
 		</div>
 	</div>
 
@@ -616,7 +622,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"JunctionLR","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-in.png"}},
 		{"type":"JunctionRL","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-out.png"}},
 
-		{"type":"UI_Button","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"}},"shortName":"Button","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
+		{"type":"UI_Button","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"},"pressAction":{"value":""},"releaseAction":{"value":""}},"shortName":"Button","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
 		{"type":"UI_VSlider","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"30"},"h":{"value":"300"}},"shortName":"VSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
 		{"type":"UI_HSlider","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"200"},"h":{"value":"30"}},"shortName":"HSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
 		{"type":"UI_TextBox","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"}},"shortName":"TextBox","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
@@ -739,6 +745,31 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
 		<input id="node-input-color" data-jscolor="">
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="UI_Button">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>	</p>
+	<h3>Notes</h3>
+</script>
+<script type="text/x-red" data-template-name="UI_Button">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
+		<input type="text" id="node-input-pressAction" placeholder="pressAction">
+	</div>
+	<div class="form-row">
+		<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
+		<input type="text" id="node-input-releaseAction" placeholder="releaseAction">
 	</div>
 </script>
 

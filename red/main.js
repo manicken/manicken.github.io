@@ -360,6 +360,18 @@ RED.main = (function() {
 
 		return true;
 	}
+	function SetButtonPopOver(buttonId, htmlText)
+	{
+		$(buttonId).mouseover(function() {
+			RED.view.showPopOver(buttonId, true, htmlText, "bottom"); // true means html mode
+		});
+		$(buttonId).mouseout(function() {
+			$(this).popover("destroy");
+		});
+	}
+	$('#btn-guiEditMode').click(function() { RED.view.settings.guiEditMode = true; });
+	$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
+
 	$('#btn-save').click(function() { RED.storage.update(); });
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
@@ -370,18 +382,22 @@ RED.main = (function() {
 		addDemoFlowsToMenu();
 		RED.view.init();
 
-		$("#menu-ide").mouseover(function(){
-			RED.view.showPopOver("#menu-ide", true, "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "bottom"); // true means html mode
-		});
-		$("#menu-ide").mouseout(function(){
-			$(this).popover("destroy");
-		});
-		$("#btn-save").mouseover(function(){
-			RED.view.showPopOver("#btn-save", true, "Save to localstorage<br>(shortcut CTRL+S)", "bottom");
-		});
-		$("#btn-save").mouseout(function(){
-			$(this).popover("destroy");
-		});
+		//SetButtonPopOver("#btn-
+		SetButtonPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload");
+		SetButtonPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
+		SetButtonPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
+		SetButtonPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
+		SetButtonPopOver("#btn-guiEditMode", "Sets the UI nodes<br>to edit mode");
+		SetButtonPopOver("#btn-guiRunMode", "Sets the UI nodes<br>to Run mode");
+		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs, CodeFile-nodes and the design JSON to seperate files and then puts them all in a zipfile.");
+		SetButtonPopOver("#btn-saveTofile", "Used the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is the project name set in settings tab");
+		SetButtonPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.");
+		SetButtonPopOver("#btn-deploy2", "Exports all tabs that have the setting (export workspace set)<br><br>When using the IDE Webserver extension the export dialog is not shown and the export is seperated by the individual files,<br> to force that dialog to show use the setting (Force Show export dialog)");
+		SetButtonPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON, that is usable when a design is shared on for example a forum.<br><br> tip. if shared the last ] could be on a new line to make it easier to copy the whole line");
+		SetButtonPopOver("#btn-deploy", "\"Classic\" export the current tab only,<br>note. this is only intended for exporting simple designs, and have currently no support for Arrays and Tabs(classes)");
+		SetButtonPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.");
+
+		
 
 		jscolor.presets.default = {
 			closeButton:true

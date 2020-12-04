@@ -23,6 +23,7 @@ RED.view = (function() {
 	var _settings = {
 		showWorkspaceToolbar: true,
 		showNodeToolTip:true,
+		guiEditMode: true,
 		space_width: 5000,
 		space_height: 5000,
 		//workspaceBgColor: "#FFF",
@@ -52,6 +53,7 @@ RED.view = (function() {
 	var settingsEditorLabels = {
 		showWorkspaceToolbar: "Show Workspace toolbar.",
 		showNodeToolTip: "Show Node Tooltip Popup.",
+		guiEditMode: "GUI edit mode.",
 		space_width: "Workspace Width.",
 		space_height: "Workspace Height.",
 		//workspaceBgColor: "Workspace BG color.",
@@ -80,6 +82,9 @@ RED.view = (function() {
 
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
 		set showNodeToolTip(value) { _settings.showNodeToolTip = value; },
+
+		get guiEditMode() { return _settings.guiEditMode; },
+		set guiEditMode(value) { _settings.guiEditMode = value; },
 
 		get space_width() { return parseInt(_settings.space_width); },
 		set space_width(value) { _settings.space_width = value; initWorkspace(); initGrid(); },
@@ -1437,7 +1442,12 @@ RED.view = (function() {
 	function nodeMouseMove(d) {
 		if (mouse_mode !== 0) return;
 
+		// for non ui object this method is not used
 		if (d._def.uiObject == undefined) return;
+		if (settings.guiEditMode == false) {
+			this.setAttribute("style", "cursor: default");
+			return;
+		}
 
 		var nodeRect = d3.select(this);
 		var mousePos = d3.mouse(this)
@@ -1481,7 +1491,15 @@ RED.view = (function() {
 		else
 			this.setAttribute("style", "cursor: move");
 	}
+	
 	function nodeMouseDown(d) { // this only happens once
+
+		if (d._def.uiObject != undefined && settings.guiEditMode == false)
+		{
+			uiObjectMouseDown(d); // here the event is passed down to the ui object
+			return;
+		}
+
 		showHideGrid(true);
 		//var touch0 = d3.event;
 		//var pos = [touch0.pageX,touch0.pageY];
@@ -1620,6 +1638,11 @@ RED.view = (function() {
 		d3.event.stopPropagation();
 	}
 	function nodeMouseUp(d) {
+		if (d._def.uiObject != undefined && settings.guiEditMode == false)
+		{
+			uiObjectMouseUp(d); // here the event is passed down to the ui object
+			return;
+		}
 		showHideGrid(false);
 		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
 			RED.editor.edit(d);
@@ -1630,6 +1653,27 @@ RED.view = (function() {
 		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
 		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
+	function uiObjectMouseDown(d)
+	{
+		if (d.type == "UI_Button") {
+			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
+		} else if (d.type == "UI_VSlider") {
+
+		} else if (d.type == "UI_HSlider") {
+
+		}
+	}
+	function uiObjectMouseUp(d)
+	{
+		if (d.type == "UI_Button") {
+			if (d.releaseAction != "") RED.arduino.SendToWebSocket(d.releaseAction);
+		} else if (d.type == "UI_VSlider") {
+
+		} else if (d.type == "UI_HSlider") {
+
+		}
+	}
+
 	function clearLinkSelection()
 	{
 		selected_link = null;
