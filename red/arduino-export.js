@@ -652,7 +652,7 @@ function export_classBased(generateZip)
     if (classFunctions.trim().length > 0)
       newWsCpp.contents += "\n" + incrementTextLines(classFunctions, "    ");
     newWsCpp.contents += "};\n"; // end of class
-    newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n") + "\n" + classIncludes.join("\n") + "\n");
+    newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n") + "\n" + classIncludes.join("\n") + "\n ");
     newWsCpp.footer = getCppFooter();
     wsCppFiles.push(newWsCpp);
 
