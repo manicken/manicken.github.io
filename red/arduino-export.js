@@ -314,10 +314,11 @@ RED.arduino.export = (function() {
 			var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
 			
 			if (node == null) { console.warn("node == null:" + "type:"+n.type +",id:"+ n.id); continue;} // this should never happen (because now "tab" type checked at top)
-			if (node.type == "IncludeDef") includes += node.name + "\n";
+			if (node.type == "IncludeDef") if (!includes.includes(node.name)) includes += node.name + "\n";
 			if (node.type == "Variables") globalVars += node.comment + "\n";
 			if (node.type == "CodeFile") codeFiles += "\n" + node.comment + "\n";
 			if (node.type == "Function") functions += "\n" + node.comment + "\n";
+			if (node.type == "AudioStreamObject"){ if (!includes.includes(node.includeFile)) includes += node.includeFile + "\n";
 			if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 
 			if (haveIO(node)) {
