@@ -360,10 +360,11 @@ RED.main = (function() {
 
 		return true;
 	}
-	function SetButtonPopOver(buttonId, htmlText)
+	function SetButtonPopOver(buttonId, htmlText, location)
 	{
+		if (location == undefined) location = "bottom";
 		$(buttonId).mouseover(function() {
-			RED.view.showPopOver(buttonId, true, htmlText, "bottom"); // true means html mode
+			RED.view.showPopOver(buttonId, true, htmlText, location); // true means html mode
 		});
 		$(buttonId).mouseout(function() {
 			$(this).popover("destroy");
@@ -396,7 +397,7 @@ RED.main = (function() {
 		SetButtonPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON, that is usable when a design is shared on for example a forum.<br><br> tip. if shared the last ] could be on a new line to make it easier to copy the whole line");
 		SetButtonPopOver("#btn-deploy", "\"Classic\" export the current tab only,<br>note. this is only intended for exporting simple designs, and have currently no support for Arrays and Tabs(classes)");
 		SetButtonPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.");
-
+		SetButtonPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
 		
 
 		jscolor.presets.default = {

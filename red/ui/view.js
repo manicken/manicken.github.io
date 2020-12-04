@@ -96,7 +96,7 @@ RED.view = (function() {
 		//set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); },
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
-		set scaleFactor(value) { _settings.scaleFactor = value.toFixed(2); $("#lbl-zoom-level").text(value.toFixed(2)); },
+		set scaleFactor(value) { _settings.scaleFactor = value.toFixed(2); $("#btn-zoom-zero").text(value.toFixed(2)); },
 
 		get showGridHminor() { return _settings.showGridHminor; },
 		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); },
