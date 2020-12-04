@@ -655,7 +655,7 @@ RED.arduino.export = (function() {
 		console.error("@export as class RED.arduino.serverIsActive="+RED.arduino.serverIsActive());
 		var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 		// time to generate the final result
-		var cpp = getCppHeader(jsonString);
+		var cpp = getCppHeader(jsonString, classAdditional.join("\n"));
 		for (var i = 0; i < wsCppFiles.length; i++)
 		{
 			// don't include beautified json string here
