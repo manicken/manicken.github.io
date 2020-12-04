@@ -175,15 +175,15 @@ function getCppHeader(jsonString,includes)
     includes = "";
   var returnStr = RED.arduino.settings.StandardIncludeHeader
       + includes + "\n"
-      + "// GUItool: begin automatically generated code\n";
+      + "// "+RED.arduino.settings.ProjectName+": begin automatically generated code\n";
   if (RED.arduino.settings.WriteJSONtoExportedFile == true)
     returnStr += "// the following JSON string contains the whole project, \n// it's included in all generated files.\n"
-           + "// JSON string:" + jsonString + "\n";
+           + "// JSON string:" + jsonString + "\n\n";
   return returnStr;
 }
 function getCppFooter()
 {
-  return "// GUItool: end automatically generated code\n";
+  return "// "+RED.arduino.settings.ProjectName+": end automatically generated code\n";
 }
 function getNewWsCppFile(name, contents)
 {
@@ -411,7 +411,22 @@ function export_classBased(generateZip)
   // because when replacing constant def with values destroys the design
   var jsonString = JSON.stringify(nns); // one liner JSON
   wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
-
+  // first scan for code files to include them first
+  for (var i=0; i<nns.length; i++) { 
+      var n = nns[i];
+      if (n.type == "CodeFile") // very special case
+      {
+          if (n.comment.length != 0)
+          {
+              var wsFile = getNewWsCppFile(n.name, n.comment);
+              wsFile.header = "\n// ****** Start Of Included File:" + n.name + " ****** \n";
+              wsFile.footer = "\n// ****** End Of Included file:" + n.name + " ******\n";
+              wsCppFiles.push(wsFile);
+          }
+          
+      }
+  }
+  
   for (var wsi=0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
   {
     var ws = RED.nodes.workspaces[wsi];
@@ -455,15 +470,8 @@ function export_classBased(generateZip)
       }
       else if (n.type == "CodeFile") // very special case
       {
-        if (n.comment.length != 0)
-        {
-          var wsFile = getNewWsCppFile(n.name, n.comment);
-          wsFile.header = "\n// ****** Start Of Included File:" + n.name + " ****** \n";
-          wsFile.footer = "\n// ****** End Of Included file:" + n.name + " ******\n";
-          wsCppFiles.push(wsFile);
-        }
-        var includeName = '#include "' + n.name + '"';
-        if (!classIncludes.includes(includeName)) classIncludes.push(includeName);
+          var includeName = '#include "' + n.name + '"';
+          if (!classIncludes.includes(includeName)) classIncludes.push(includeName);
       }
       else if (n.type == "IncludeDef")
       {
@@ -667,7 +675,7 @@ function export_classBased(generateZip)
   // time to generate the final result
   var cpp = "";
   if (useExportDialog)
-    cpp = getCppHeader(jsonString, codeFileIncludes.join("\n"));
+    cpp = getCppHeader(jsonString);//, codeFileIncludes.join("\n"));
   for (var i = 0; i < wsCppFiles.length; i++)
   {
     // don't include beautified json string here
@@ -709,7 +717,7 @@ function export_classBased(generateZip)
     }
     zip.generateAsync({type:"blob"}).then(function(blob) {
       console.log("typeof:" + typeof content);
-      RED.main.showSelectNameDialog("TeensyAudioDesign.zip", function(fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
+      RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function(fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
     });
     
   }

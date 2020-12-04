@@ -153,6 +153,8 @@ RED.settings = (function() {
 								var value = RED_Class.settings[settingName]
 								if (typeOf === "string" && value.includes("\n"))
 									createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName, 200);
+								else if (typeOf === "string")
+									createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName, 150);
 								else
 									createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
 							}

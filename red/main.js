@@ -103,7 +103,7 @@ RED.main = (function() {
 	$('#btn-saveTofile').click(function() { saveAsFile(); });
 	function saveAsFile()
 	{
-		showSelectNameDialog("TeensyAudioDesign.json", saveToFile);
+		showSelectNameDialog(RED.arduino.settings.ProjectName + ".json", saveToFile);
 	}
 	
 	function getConfirmLoadDemoText(filename)
@@ -111,7 +111,7 @@ RED.main = (function() {
 		return "<p> You are going to replace<br> <b>current flow</b>" +
 			   " with <b>" + filename + "</b>.</p><br>" +
 			   "<p>Are you sure you want to load?</p><br>" +
-			   "<p>Note. your current design will be automatically downloaded as <b>TeensyAudioDesign.json</b></p><br>"+
+			   "<p>Note. your current design will be automatically downloaded as <b>" + RED.arduino.settings.ProjectName + ".json</b></p><br>"+
 			   "If you want a different filename,<br>then use the<b> export menu - SaveToFile</b> instead.";
 	}
 	function addDemoFlowsToMenu()
@@ -131,7 +131,7 @@ RED.main = (function() {
 				{
 					console.error("load demo A");
 					console.log("newFlowData:" + data);
-					saveToFile("TeensyAudioDesign.json");
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
 					RED.storage.loadContents(data);
 				}
 			});
@@ -143,7 +143,7 @@ RED.main = (function() {
 				{
 					console.warn("load demo B");
 					console.log("newFlowData:" + data);
-					saveToFile("TeensyAudioDesign.json");
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
 					RED.storage.loadContents(data);
 				}
 			});
@@ -156,7 +156,7 @@ RED.main = (function() {
 				{
 					console.warn("load demo original");
 					console.log("newFlowData:" + data);
-					saveToFile("TeensyAudioDesign.json");
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
 					RED.storage.loadContents(data);
 				}
 			});
@@ -168,7 +168,7 @@ RED.main = (function() {
 				if (okPressed)
 				{
 					console.warn("load empty flow")
-					saveToFile("TeensyAudioDesign.json");
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
 					RED.storage.loadContents(""); // [{"type":"tab","id":"Main","label":"Main","inputs":0,"outputs":0,"export":true,"nodes":[]}]
 				}
 			});

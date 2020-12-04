@@ -24,7 +24,9 @@ RED.arduino = (function() {
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
 		WebSocketServerPort: 3000,
-		StandardIncludeHeader: "#include <Audio.h>\n"
+		ProjectName: "TeensyAudioDesign",
+		StandardIncludeHeader: "#include <Arduino.h>\n"
+							  +	"#include <Audio.h>\n"
 							  + "#include <Wire.h>\n"
 							  + "#include <SPI.h>\n"
 							  + "#include <SD.h>\n"
@@ -46,6 +48,9 @@ RED.arduino = (function() {
 		get WebSocketServerPort() { return parseInt(_settings.WebSocketServerPort); },
 		set WebSocketServerPort(state) { _settings.WebSocketServerPort = parseInt(state); StartWebSocketConnection(); },
 
+		get ProjectName() { return _settings.ProjectName; },
+		set ProjectName(value) { _settings.ProjectName = value; },
+
 		get StandardIncludeHeader() { return _settings.StandardIncludeHeader; },
 		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; }
 	};
@@ -58,6 +63,7 @@ RED.arduino = (function() {
 		WriteJSONtoExportedFile: "Write JSON at exported file",
 		WebServerPort: "Web Server Port",
 		WebSocketServerPort: "Web Socket Server Port",
+		ProjectName: "Project Name",
 		StandardIncludeHeader: "Global Includes"
 	};
 
