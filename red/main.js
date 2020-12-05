@@ -424,6 +424,7 @@ RED.main = (function() {
 			var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
 			RED.palette.doInit(nodeCategories["categories"]);
 
+
 			var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
 			$.each(nodeDefinitions["nodes"], function (key, val) {
 				RED.nodes.registerType(val["type"], val["data"]);

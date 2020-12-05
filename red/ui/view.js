@@ -812,7 +812,7 @@ RED.view = (function() {
 		{ 
 			if (mouse_mode == RED.state.RESIZE_LEFT || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT) {
 				var dx = mouse_offset_resize_x - mouse_position[0];
-				mousedown_node.w = mousedown_node_w + dx;
+				mousedown_node.w = parseInt(mousedown_node_w + dx);
 				
 				if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
 				else mousedown_node.x = mousedown_node_x - dx/2;
@@ -820,7 +820,7 @@ RED.view = (function() {
 			} 
 			if (mouse_mode == RED.state.RESIZE_RIGHT || mouse_mode == RED.state.RESIZE_TOP_RIGHT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
 				var dx = mouse_offset_resize_x - mouse_position[0];
-				mousedown_node.w = mousedown_node_w - dx;
+				mousedown_node.w = parseInt(mousedown_node_w - dx);
 				
 				if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
 				else mousedown_node.x = mousedown_node_x - dx/2;
@@ -828,7 +828,7 @@ RED.view = (function() {
 			} 
 			if (mouse_mode == RED.state.RESIZE_TOP || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_TOP_RIGHT) {
 				var dy = mouse_offset_resize_y - mouse_position[1];
-				mousedown_node.h = mousedown_node_h + dy;
+				mousedown_node.h = parseInt(mousedown_node_h + dy);
 				
 				if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
 				else mousedown_node.y = mousedown_node_y - dy/2;
@@ -836,10 +836,10 @@ RED.view = (function() {
 			}
 			if (mouse_mode == RED.state.RESIZE_BOTTOM || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
 				var dy = mouse_offset_resize_y - mouse_position[1];
-				mousedown_node.h = mousedown_node_h - dy;
+				mousedown_node.h = parseInt(mousedown_node_h - dy);
 				
 				if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
-				else mousedown_node.y = mousedown_node_y - dy/2;
+				else mousedown_node.y = parseInt(mousedown_node_y - dy/2);
 				mousedown_node.dirty = true;
 			}
 		}
@@ -2140,18 +2140,26 @@ RED.view = (function() {
 	}
 	function redraw_links()
 	{
-		var link = vis.selectAll(".link").data(RED.nodes.links.filter(function(d)
+		const t0 = performance.now();
+		var wsLinks = RED.nodes.links.filter(function(d)
 		{ 
 			return (d.source.z == activeWorkspace) &&
 					(d.target.z == activeWorkspace);
 
-		}),function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
-		
-		var linkEnter = link.enter().insert("g",".node").attr("class","link");
+		});
+		const t1 = performance.now();
+		var visLinks = vis.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
+
+		const t2 = performance.now();
+
+		console.log("redraw_links filter "+ (t1-t0) +  "ms, select all:" + (t2-t1) + " ms");
+
+		var linkEnter = visLinks.enter().insert("g",".node").attr("class","link");
 		var anyLinkEnter = false;
 		linkEnter.each(function(d,i) {
 			anyLinkEnter = true;
-			console.log("link enter");
+			
+			console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
 			l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
@@ -2176,17 +2184,18 @@ RED.view = (function() {
 			l.append("svg:path").attr("class","link_line link_path");
 		});
 
-		link.exit().remove();
+		visLinks.exit().remove();
 
-		link.classed("link_selected", function(d) { return d === selected_link || d.selected; });
-
+		visLinks.classed("link_selected", function(d) { return d === selected_link || d.selected; });
+		visLinks.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
 		// only redraw links that is selected and where the node is moving
 		if (anyLinkEnter)
 			var links = vis.selectAll(".link_path");
 		else
 			var links = vis.selectAll(".link_selected").selectAll(".link_path");
 
-		links.attr("d",function(d){
+		links.attr("d",
+			function(d) {
 				var numOutputs = d.source.outputs || 1;
 				var sourcePort = d.sourcePort || 0;
 				var ysource = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort;
@@ -2272,8 +2281,9 @@ RED.view = (function() {
 						      (d.x2-scale*node_def.width)+" "+(d.y2-scaleY*d.target.h)+" "+
 						      (d.x2)+" "+d.y2;
 				}
-		});
-		link.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
+			}
+		);
+		
 	}
 	function generateLinkPath(orig, dest, origX,origY, destX, destY, sc1, sc2) {
 		var node_height = orig.h; //node_def.height;
@@ -2564,8 +2574,8 @@ RED.view = (function() {
 				redraw_paletteNodesReqError(d);
 			}
 
-			if (d._def.badge) redraw_nodeBadge(nodeRect, d);
-			if (d._def.button) redraw_nodeButton(nodeRect, d);
+			//if (d._def.badge) redraw_nodeBadge(nodeRect, d);
+			//if (d._def.button) redraw_nodeButton(nodeRect, d);
 			redraw_nodeMainRect(nodeRect, d);
 			if (d._def.icon) redraw_nodeIcon(nodeRect, d);
 			redraw_nodeInputs(nodeRect, d);
@@ -2584,16 +2594,18 @@ RED.view = (function() {
 			nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
 		
 		});
-
+		//const t0 = performance.now();
 		nodes.each(function(d,i) { // redraw all nodes in active workspace
 				var nodeRect = d3.select(this);
-
+				
 				if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
 				{	
 					checkRequirements(d); // this update nodes that allready exist
 					//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
 					redraw_nodeReqError(nodeRect, d);
 				}
+				
+
 				if (d.dirty) {
 					//console.warn(d.name + " was dirty");
 					//nodeRect.attr("fill",function(d) { console.warn("node bg color:" + d.bgColor); return d.bgColor;});
@@ -2622,6 +2634,8 @@ RED.view = (function() {
 					
 				}
 		});
+		//const t1 = performance.now();
+		//console.log('redraw nodes.each( ' + (t1-t0) +' ms.');
 	}
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
@@ -2658,7 +2672,7 @@ RED.view = (function() {
 		var currentLinksTime = t2-t1;
 		redrawTotalTime += currentTotalTime;
 
-		//console.log('redraw average time: ' + (redrawTotalTime/redrawCount) + ' ms, curr. tot. time:' + currentTotalTime + " ms, curr. link time:" + currentLinksTime + " ms");
+		console.log('redraw average time: ' + (redrawTotalTime/redrawCount) + ' ms, curr. tot. time:' + currentTotalTime + " ms, curr. link time:" + currentLinksTime + " ms");
 	}
 
 	function doSort (arr) {

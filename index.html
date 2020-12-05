@@ -622,12 +622,41 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"JunctionLR","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-in.png"}},
 		{"type":"JunctionRL","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-out.png"}},
 
-		{"type":"UI_Button","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"},"pressAction":{"value":""},"releaseAction":{"value":""}},"shortName":"Button","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
-		{"type":"UI_VSlider","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"30"},"h":{"value":"300"}},"shortName":"VSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
-		{"type":"UI_HSlider","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"200"},"h":{"value":"30"}},"shortName":"HSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
-		{"type":"UI_TextBox","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"}},"shortName":"TextBox","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
-		{"type":"UI_Label","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"}},"shortName":"Label","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
-		{"type":"UI_Image","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"}},"shortName":"Image","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":""}},
+		{"type":"UI_Button",
+		 "data":{
+			"shortName":"Button","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"},"textSize":{"value":"14"},"pressAction":{"value":""},"repeatPressAction":{"value":"false"},"releaseAction":{"value":""},"repeatReleaseAction":{"value":"false"},"local":{"value":"false"}}
+		}},
+
+		{"type":"UI_VSlider",
+		 "data":{
+			"shortName":"VSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"30"},"h":{"value":"300"},"textSize":{"value":"14"},"minVal":{"value":"0"},"maxVal":{"value":"100"},"val":{"value":"0"},"minValF":{"value":"-1.0"},"maxValF":{"value":"1.0"},"floatVal":{"value":"0.0"},"outputFloat":{"value":"false"},"decimalCount":{"value":"-1"},"steps":{"value":"201"},"sendSpace":{"value":"true"},"autoReturn":{"value":"false"},"repeat":{"value":"false"},"repeatPeriod":{"value":"0"},"sendMode":{"value":"r"}}
+		}},
+		
+		{"type":"UI_HSlider",
+		 "data":{
+			"shortName":"HSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"200"},"h":{"value":"30"},"textSize":{"value":"14"}}
+		}},
+		
+		{"type":"UI_TextBox",
+		 "data":{
+			"shortName":"TextBox","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"},"textSize":{"value":"14"}}
+		}},
+		
+		{"type":"UI_Label",
+		 "data":{
+			"shortName":"Label","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"},"textSize":{"value":"14"}}
+		}},
+		
+		{"type":"UI_Image",
+		 "data":{
+			"shortName":"Image","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"},"textSize":{"value":"14"}}
+		}},
 
 
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -768,8 +797,31 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<input type="text" id="node-input-pressAction" placeholder="pressAction">
 	</div>
 	<div class="form-row">
+        <label for="node-input-repeatPressAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
+        <label for="node-input-repeatPressAction" style="width:70%">
+        <input type="checkbox" id="node-input-repeatPressAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Press Action</span>
+        </label>
+    </div>
+	<div class="form-row">
 		<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
 		<input type="text" id="node-input-releaseAction" placeholder="releaseAction">
+	</div>
+	<div class="form-row">
+        <label for="node-input-repeatReleaseAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
+        <label for="node-input-repeatReleaseAction" style="width:70%">
+        <input type="checkbox" id="node-input-repeatReleaseAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Release Action</span>
+        </label>
+    </div>
+	<div class="form-row">
+		<label for="node-input-local"><i class="fa fa-tag"></i> Action Type</label>
+		<select name="node-input-local" id="node-input-local">
+			<option value="true">local</option>
+			<option value="false">remote</option>
+	    </select>
+	</div>
+	<div class="form-row">
+		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+		<input type="text" id="node-input-textSize" placeholder="textSize">
 	</div>
 </script>
 
