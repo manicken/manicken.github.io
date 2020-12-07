@@ -20,10 +20,14 @@ RED.view = (function() {
 	var redrawTotalTime = 0.0;
 	var redrawCount = 0;
 
+	var anyLinkEnter = false;
+	var anyNodeEnter = false;
+
 	var _settings = {
 		showWorkspaceToolbar: true,
 		showNodeToolTip:true,
 		guiEditMode: true,
+		lockWindowMouseScrollInRunMode: true,
 		space_width: 5000,
 		space_height: 5000,
 		//workspaceBgColor: "#FFF",
@@ -54,6 +58,7 @@ RED.view = (function() {
 		showWorkspaceToolbar: "Show Workspace toolbar.",
 		showNodeToolTip: "Show Node Tooltip Popup.",
 		guiEditMode: "GUI edit mode.",
+		lockWindowMouseScrollInRunMode: "Lock Window MouseScroll In Run Mode",
 		space_width: "Workspace Width.",
 		space_height: "Workspace Height.",
 		//workspaceBgColor: "Workspace BG color.",
@@ -85,6 +90,9 @@ RED.view = (function() {
 
 		get guiEditMode() { return _settings.guiEditMode; },
 		set guiEditMode(value) { _settings.guiEditMode = value; },
+
+		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
+		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; },
 
 		get space_width() { return parseInt(_settings.space_width); },
 		set space_width(value) { _settings.space_width = value; initWorkspace(); initGrid(); },
@@ -196,6 +204,9 @@ RED.view = (function() {
 	var workspaceScrollPositions = {};
 
 	var selected_link = null,
+		currentUiObject = null,
+		//currentUiObjectMouseX = 0,
+		//currentUiObjectMouseY = 0,
 		mousedown_link = null,
 		mousedown_node = null,
 		mousedown_node_w = 0,
@@ -244,115 +255,124 @@ RED.view = (function() {
 		.on("mousemove", canvasMouseMove)
 		.on("mousedown", canvasMouseDown)
 		.on("mouseup", canvasMouseUp)
-		.on("touchend", function() {
+		.on("touchend", canvasTouchEnd)
+		.on("touchcancel", canvasMouseUp)
+		.on("touchstart", canvasTouchStart)
+		.on("touchmove", canvasTouchMove);
+	
+	function canvasTouchEnd()
+	{
+		clearTimeout(touchStartTime);
+		touchStartTime = null;
+		if  (RED.touch.radialMenu.active()) {
+			return;
+		}
+		if (lasso) {
+			outer_background.attr("fill","#fff");
+		}
+		canvasMouseUp.call(this);
+	}
+	function canvasTouchStart()
+	{
+		var touch0;
+		if (d3.event.touches.length>1) {
 			clearTimeout(touchStartTime);
 			touchStartTime = null;
-			if  (RED.touch.radialMenu.active()) {
-				return;
-			}
-			if (lasso) {
-				outer_background.attr("fill","#fff");
-			}
-			canvasMouseUp.call(this);
-		})
-		.on("touchcancel", canvasMouseUp)
-		.on("touchstart", function() {
-			var touch0;
-			if (d3.event.touches.length>1) {
-				clearTimeout(touchStartTime);
+			d3.event.preventDefault();
+			touch0 = d3.event.touches.item(0);
+			var touch1 = d3.event.touches.item(1);
+			var a = touch0['pageY']-touch1['pageY'];
+			var b = touch0['pageX']-touch1['pageX'];
+
+			var offset = $("#chart").offset();
+			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
+			startTouchCenter = [
+				(touch1['pageX']+(b/2)-offset.left+scrollPos[0])/settings.scaleFactor,
+				(touch1['pageY']+(a/2)-offset.top+scrollPos[1])/settings.scaleFactor
+			];
+			moveTouchCenter = [
+				touch1['pageX']+(b/2),
+				touch1['pageY']+(a/2)
+			];
+			startTouchDistance = Math.sqrt((a*a)+(b*b));
+		} else {
+			var obj = d3.select(document.body);
+			touch0 = d3.event.touches.item(0);
+			var pos = [touch0.pageX,touch0.pageY];
+			startTouchCenter = [touch0.pageX,touch0.pageY];
+			startTouchDistance = 0;
+			var point = d3.touches(this)[0];
+			touchStartTime = setTimeout(function() {
 				touchStartTime = null;
-				d3.event.preventDefault();
+				showTouchMenu(obj,pos);
+				//lasso = vis.append('rect')
+				//    .attr("ox",point[0])
+				//    .attr("oy",point[1])
+				//    .attr("rx",2)
+				//    .attr("ry",2)
+				//    .attr("x",point[0])
+				//    .attr("y",point[1])
+				//    .attr("width",0)
+				//    .attr("height",0)
+				//    .attr("class","lasso");
+				//outer_background.attr("fill","#e3e3f3");
+			},touchLongPressTimeout);
+		}
+	}
+	function canvasTouchMove()
+	{
+		if  (RED.touch.radialMenu.active()) {
+			d3.event.preventDefault();
+			return;
+		}
+		var touch0;
+		if (d3.event.touches.length<2) {
+			if (touchStartTime) {
 				touch0 = d3.event.touches.item(0);
-				var touch1 = d3.event.touches.item(1);
-				var a = touch0['pageY']-touch1['pageY'];
-				var b = touch0['pageX']-touch1['pageX'];
-
-				var offset = $("#chart").offset();
-				var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
-				startTouchCenter = [
-					(touch1['pageX']+(b/2)-offset.left+scrollPos[0])/settings.scaleFactor,
-					(touch1['pageY']+(a/2)-offset.top+scrollPos[1])/settings.scaleFactor
-				];
-				moveTouchCenter = [
-					touch1['pageX']+(b/2),
-					touch1['pageY']+(a/2)
-				];
-				startTouchDistance = Math.sqrt((a*a)+(b*b));
-			} else {
-				var obj = d3.select(document.body);
-				touch0 = d3.event.touches.item(0);
-				var pos = [touch0.pageX,touch0.pageY];
-				startTouchCenter = [touch0.pageX,touch0.pageY];
-				startTouchDistance = 0;
-				var point = d3.touches(this)[0];
-				touchStartTime = setTimeout(function() {
+				var dx = (touch0.pageX-startTouchCenter[0]);
+				var dy = (touch0.pageY-startTouchCenter[1]);
+				var d = Math.abs(dx*dx+dy*dy);
+				if (d > 64) {
+					clearTimeout(touchStartTime);
 					touchStartTime = null;
-					showTouchMenu(obj,pos);
-					//lasso = vis.append('rect')
-					//    .attr("ox",point[0])
-					//    .attr("oy",point[1])
-					//    .attr("rx",2)
-					//    .attr("ry",2)
-					//    .attr("x",point[0])
-					//    .attr("y",point[1])
-					//    .attr("width",0)
-					//    .attr("height",0)
-					//    .attr("class","lasso");
-					//outer_background.attr("fill","#e3e3f3");
-				},touchLongPressTimeout);
+				}
+			} else if (lasso) {
+				d3.event.preventDefault();
 			}
-		})
-		.on("touchmove", function(){
-				if  (RED.touch.radialMenu.active()) {
-					d3.event.preventDefault();
-					return;
-				}
-				var touch0;
-				if (d3.event.touches.length<2) {
-					if (touchStartTime) {
-						touch0 = d3.event.touches.item(0);
-						var dx = (touch0.pageX-startTouchCenter[0]);
-						var dy = (touch0.pageY-startTouchCenter[1]);
-						var d = Math.abs(dx*dx+dy*dy);
-						if (d > 64) {
-							clearTimeout(touchStartTime);
-							touchStartTime = null;
-						}
-					} else if (lasso) {
-						d3.event.preventDefault();
-					}
-					canvasMouseMove.call(this);
-				} else {
-					touch0 = d3.event.touches.item(0);
-					var touch1 = d3.event.touches.item(1);
-					var a = touch0['pageY']-touch1['pageY'];
-					var b = touch0['pageX']-touch1['pageX'];
-					var offset = $("#chart").offset();
-					var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
-					var moveTouchDistance = Math.sqrt((a*a)+(b*b));
-					var touchCenter = [
-						touch1['pageX']+(b/2),
-						touch1['pageY']+(a/2)
-					];
+			canvasMouseMove.call(this);
+		} else {
+			touch0 = d3.event.touches.item(0);
+			var touch1 = d3.event.touches.item(1);
+			var a = touch0['pageY']-touch1['pageY'];
+			var b = touch0['pageX']-touch1['pageX'];
+			var offset = $("#chart").offset();
+			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
+			var moveTouchDistance = Math.sqrt((a*a)+(b*b));
+			var touchCenter = [
+				touch1['pageX']+(b/2),
+				touch1['pageY']+(a/2)
+			];
 
-					if (!isNaN(moveTouchDistance)) {
-						oldScaleFactor = settings.scaleFactor;
-						settings.scaleFactor = Math.min(2,Math.max(0.3, settings.scaleFactor + (Math.floor(((moveTouchDistance*100)-(startTouchDistance*100)))/10000)));
+			if (!isNaN(moveTouchDistance)) {
+				oldScaleFactor = settings.scaleFactor;
+				settings.scaleFactor = Math.min(2,Math.max(0.3, settings.scaleFactor + (Math.floor(((moveTouchDistance*100)-(startTouchDistance*100)))/10000)));
 
-						var deltaTouchCenter = [                             // Try to pan whilst zooming - not 100%
-							startTouchCenter[0]*(settings.scaleFactor-oldScaleFactor),//-(touchCenter[0]-moveTouchCenter[0]),
-							startTouchCenter[1]*(settings.scaleFactor-oldScaleFactor) //-(touchCenter[1]-moveTouchCenter[1])
-						];
+				var deltaTouchCenter = [                             // Try to pan whilst zooming - not 100%
+					startTouchCenter[0]*(settings.scaleFactor-oldScaleFactor),//-(touchCenter[0]-moveTouchCenter[0]),
+					startTouchCenter[1]*(settings.scaleFactor-oldScaleFactor) //-(touchCenter[1]-moveTouchCenter[1])
+				];
 
-						startTouchDistance = moveTouchDistance;
-						moveTouchCenter = touchCenter;
+				startTouchDistance = moveTouchDistance;
+				moveTouchCenter = touchCenter;
 
-						$("#chart").scrollLeft(scrollPos[0]+deltaTouchCenter[0]);
-						$("#chart").scrollTop(scrollPos[1]+deltaTouchCenter[1]);
-						redraw();
-					}
-				}
-		});
+				$("#chart").scrollLeft(scrollPos[0]+deltaTouchCenter[0]);
+				$("#chart").scrollTop(scrollPos[1]+deltaTouchCenter[1]);
+				//redraw();
+				//redraw_links_init();
+				//redraw_links();
+			}
+		}
+	}
 
 	var outer_background = vis.append('svg:rect');
 		
@@ -388,10 +408,7 @@ RED.view = (function() {
 	{
 		initWorkspace();
 		initGrid();
-		
-
 		//document.getElementById("chart").addEventListener("scroll", chartScrolled); // used by partial render, now obsolete, maybe it can be used for something else later
-		
 	}
 	/*function chartScrolled()// used by partial render, now obsolete, maybe it can be used for something else later
 	{
@@ -593,7 +610,9 @@ RED.view = (function() {
 			RED.nodes.eachNode(function(n) {
 					n.dirty = true;
 			});
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		},
 		ondblclick: function(tab) {
 			showRenameWorkspaceDialog(tab.id);
@@ -673,13 +692,14 @@ RED.view = (function() {
 		if (!mousedown_node && !mousedown_link) {
 			clearLinkSelection();
 			updateSelection();
+			redraw(true);
 		}
 		if (mouse_mode === 0) {
 			if (lasso) {
 				lasso.remove();
 				lasso = null;
 			}
-
+			
 			if (!touchStartTime) {
 				var point = d3.mouse(this);
 				lasso = vis.append('rect')
@@ -699,9 +719,6 @@ RED.view = (function() {
 
 	function canvasMouseMove() {
 		mouse_position = d3.touches(this)[0]||d3.mouse(this);
-		//console.log(mouse_position);
-		// allways running
-
 		// Prevent touch scrolling...
 		//if (d3.touches(this)[0]) {
 		//    d3.event.preventDefault();
@@ -843,7 +860,9 @@ RED.view = (function() {
 				mousedown_node.dirty = true;
 			}
 		}
-		redraw();
+		redraw(false);
+		//redraw_links_init();
+		redraw_links();
 		//console.log("redraw from canvas mouse move");
 	}
 
@@ -901,7 +920,9 @@ RED.view = (function() {
 			RED.keyboard.remove(/* ESCAPE */ 27);
 			setDirty(true);
 		}
-		redraw();
+		redraw(true);
+		//redraw_links_init();
+		redraw_links();
 		// clear mouse event vars
 		resetMouseVars();
 	}
@@ -910,6 +931,19 @@ RED.view = (function() {
 	$('#btn-zoom-zero').click(function() {zoomZero();});
 	$('#btn-zoom-in').click(function() {zoomIn();});
 	$("#chart").on('DOMMouseScroll mousewheel', function (evt) {
+		if (currentUiObject != undefined)
+		{
+			evt.preventDefault();
+			evt.stopPropagation();
+			var move = -(evt.originalEvent.detail) || evt.originalEvent.wheelDelta;
+			uiObjectMouseScroll(move);
+			return;
+		}
+		if ((settings.guiEditMode == false) && (settings.lockWindowMouseScrollInRunMode == true))
+		{
+			evt.preventDefault();
+			evt.stopPropagation();
+		}
 		if ( evt.altKey ) {
 			evt.preventDefault();
 			evt.stopPropagation();
@@ -966,7 +1000,9 @@ RED.view = (function() {
 				nn.selected = true;
 				moving_set.push({n:nn});
 				updateSelection();
-				redraw();
+				redraw(true);
+				//redraw_links_init();
+				//redraw_links();
 				if (nn._def.autoedit) {
 					RED.editor.edit(nn);
 				}
@@ -977,27 +1013,37 @@ RED.view = (function() {
 		if (settings.scaleFactor < 0.3)
 		{
 			settings.scaleFactor += 0.05;
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		}
 		else if (settings.scaleFactor < maxZoomFactor) {
 			settings.scaleFactor += 0.1;
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		}
 
 	}
 	function zoomOut() {
 		if (settings.scaleFactor > 0.3) {
 			settings.scaleFactor -= 0.1;
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		}
 		else if (settings.scaleFactor > 0.1) {
 			settings.scaleFactor -= 0.05;
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		}
 	}
 	function zoomZero() {
 		settings.scaleFactor = 1;
-		redraw();
+		redraw(true);
+		redraw_links_init();
+		redraw_links();
 	}
 
 	function selectAll() {
@@ -1012,7 +1058,9 @@ RED.view = (function() {
 		});
 		clearLinkSelection();
 		updateSelection();
-		redraw();
+		redraw(true);
+		redraw_links_init();
+		redraw_links();
 	}
 
 	function clearSelection() {
@@ -1077,6 +1125,7 @@ RED.view = (function() {
 			var links = RED.nodes.links.filter(function(l) {  return l.source.z == activeWorkspace && l.target.z == activeWorkspace; });
 			vis.selectAll(".link").data(links,function(l) {  if (l.source == n) { l.selected = true; } if (l.target == n){ l.selected = true; } return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 		}
+		redraw_links_init();
 	}
 	function moveView(dx, dy)
 	{
@@ -1162,7 +1211,9 @@ RED.view = (function() {
 				}
 			//}
 		}
-		redraw();
+		redraw(false);
+		//redraw_links_init();
+		redraw_links();
 	}
 	function moveSelection_mouse()
 	{
@@ -1283,7 +1334,9 @@ RED.view = (function() {
 		clearLinkSelection();
 		updateSelection();
 		
-		redraw();
+		redraw(true);
+		redraw_links_init();
+		redraw_links();
 		RED.nodes.addUsedNodeTypesToPalette();
 	}
 
@@ -1430,7 +1483,9 @@ RED.view = (function() {
 					.on("mouseout", nodePort_mouseout);
 			}
 			clearLinkSelection();
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		}
 	}
 	function stopDragLine()
@@ -1438,22 +1493,101 @@ RED.view = (function() {
 		drag_line.attr("class", "drag_line_hidden");
 		resetMouseVars();
 	}
-
-	function nodeMouseMove(d) {
-		if (mouse_mode !== 0) return;
-
-		// for non ui object this method is not used
-		if (d._def.uiObject == undefined) return;
-		if (settings.guiEditMode == false) {
-			this.setAttribute("style", "cursor: default");
+	function nodeTouchStart(d)
+	{
+		var obj = d3.select(this);
+		var touch0 = d3.event.touches.item(0);
+		var pos = [touch0.pageX,touch0.pageY];
+		startTouchCenter = [touch0.pageX,touch0.pageY];
+		startTouchDistance = 0;
+		touchStartTime = setTimeout(function() {
+			showTouchMenu(obj,pos);
+		},touchLongPressTimeout);
+		nodeMouseDown.call(this,d)
+	}
+	function nodeTouchEnd(d)
+	{
+		clearTimeout(touchStartTime);
+		touchStartTime = null;
+		if  (RED.touch.radialMenu.active()) {
+			d3.event.stopPropagation();
 			return;
 		}
+		nodeMouseUp.call(this,d);
+	}
 
+	function nodeMouseOver(d) {
+		if (d._def.uiObject != undefined && settings.guiEditMode == false)
+		{
+			var mousePos = d3.mouse(this)
+					var x = mousePos[0];
+					var y = mousePos[1];
+			
+			uiObjectMouseOver(d,x,y); // here the event is passed down to the ui object
+			return;
+		}
+		if (mouse_mode === 0) {
+			var nodeRect = d3.select(this);
+			nodeRect.classed("node_hovered",true);
+
+			//console.log("node mouseover:" + d.name);
+			//console.log(d3.mouse(this));
+
+			$(current_popup_rect).popover("destroy"); // destroy prev
+			
+
+			if (settings.showNodeToolTip && (d._def.uiObject == undefined)) // dont show popup on gui objects
+			{
+				var popoverText = "<b>" + d.type + "</b><br>";
+				if (d.comment && (d.comment.trim().length != 0))
+					popoverText+="<p>"+d.comment.replace("    ", "&emsp;").replace("\t", "&emsp;").replace(/\n/g, "<br>") + "</p>";
+				//console.warn("popoverText:" +popoverText);
+				
+
+				if (d.type == "Function" || d.type == "Variables" || d.type == "CodeFile")
+					showPopOver(this, true, popoverText, "right");
+				else
+					showPopOver(this, true, popoverText, "top");
+			}
+		}
+	}
+	function nodeMouseOut(d)
+	{
+		if (d._def.uiObject != undefined && settings.guiEditMode == false)
+		{
+			var mousePos = d3.mouse(this)
+					var x = mousePos[0];
+					var y = mousePos[1];
+			
+			uiObjectMouseOut(d,x,y); // here the event is passed down to the ui object
+			return;
+		}
 		var nodeRect = d3.select(this);
+		nodeRect.classed("node_hovered",false);
+		//console.log("node mouseout:" + d.name);
+		$(current_popup_rect).popover("destroy");
+	}
+
+	function nodeMouseMove(d) {
+		// for non ui object this method is not used
+		if (d._def.uiObject == undefined) return;
 		var mousePos = d3.mouse(this)
 		var x = mousePos[0];
 		var y = mousePos[1];
 
+		if (settings.guiEditMode == false) {
+			this.setAttribute("style", "cursor: default");
+			//currentUiObjectMouseX = x;
+			//currentUiObjectMouseY = y;
+			uiObjectMouseMove(d, x, y);
+			return;
+		}
+
+		if (mouse_mode !== 0) return;
+
+
+		var nodeRect = d3.select(this);
+		
 		if ((y > uiItemResizeBorderSize) && (y < (d.h-uiItemResizeBorderSize))) // width resize
 		{
 			if (x < uiItemResizeBorderSize)
@@ -1496,7 +1630,10 @@ RED.view = (function() {
 
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
-			uiObjectMouseDown(d); // here the event is passed down to the ui object
+			var mousePos = d3.mouse(this)
+					var x = mousePos[0];
+					var y = mousePos[1];
+			uiObjectMouseDown(d, x, y); // here the event is passed down to the ui object
 			return;
 		}
 
@@ -1508,7 +1645,9 @@ RED.view = (function() {
 			RED.keyboard.remove(/* ESCAPE */ 27);
 			updateSelection();
 			setDirty(true);
-			redraw();
+			redraw(true);
+			//redraw_links_init();
+			//redraw_links();
 			resetMouseVars();
 			d3.event.stopPropagation();
 			return;
@@ -1634,13 +1773,18 @@ RED.view = (function() {
 		
 		//console.log("nodeMouseDown:" + d.name);
 		
-		redraw();
+		redraw(true);
+		redraw_links_init();
+		redraw_links();
 		d3.event.stopPropagation();
 	}
 	function nodeMouseUp(d) {
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
-			uiObjectMouseUp(d); // here the event is passed down to the ui object
+			var mousePos = d3.mouse(this)
+					var x = mousePos[0];
+					var y = mousePos[1];
+			uiObjectMouseUp(d,x,y); // here the event is passed down to the ui object
 			return;
 		}
 		showHideGrid(false);
@@ -1653,24 +1797,132 @@ RED.view = (function() {
 		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
 		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
-	function uiObjectMouseDown(d)
+
+
+	function uiObjectMouseOver (d, mouseX, mouseY)
 	{
+		//mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
+		//console.error("uiObjectMouseOver @" + d.name + " "  + mouseX + ":" + mouseY);
+		currentUiObject = d; // used by scroll event
+	}
+
+	function uiObjectMouseOut (d, mouseX, mouseY)
+	{
+		//mouse_mode = RED.state.DEFAULT;
+		//console.warn("uiObjectMouseOut @"+ d.name + " " + mouseX + ":" + mouseY);
+		currentUiObject = null; // used by scroll event
+	}
+
+	function uiObjectMouseMove (d, mouseX, mouseY)
+	{
+		if (mouse_mode != RED.state.UI_OBJECT_MOUSE_DOWN) return;
+
+		//console.warn("uiObjectMouseMove " + mouseX + ":" + mouseY);
+		
 		if (d.type == "UI_Button") {
-			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
-		} else if (d.type == "UI_VSlider") {
-
-		} else if (d.type == "UI_HSlider") {
-
+			
+		} else if (d.type == "UI_Slider") {
+			setUiSliderValueFromMouse(d, mouseX, mouseY);
+			if (d.sendMode == "m")
+				sendUiSliderValue(d);
 		}
 	}
-	function uiObjectMouseUp(d)
+	function sendUiSliderValue(d)
 	{
+		if (d.sendFormat.trim() != "")
+		{
+			var formatted = eval(d.sendFormat);
+			RED.arduino.SendToWebSocket(formatted);
+		}
+		else if (d.sendSpace == true)
+			RED.arduino.SendToWebSocket(d.name + " " + d.val); // n.name is the labelID
+		else
+			RED.arduino.SendToWebSocket(d.name + d.val); // n.name is the labelID
+	}
+	function setUiSliderValueFromMouse(d, mouseX, mouseY)
+	{
+		//console.error("setUiSliderValueFromMouse");
+		if (d.orientation == "v")
+		{
+			if (mouseY < 0 || mouseY >= d.h) return;
+			d.maxVal = parseInt(d.maxVal);
+			d.minVal = parseInt(d.minVal);
+			//console.log(typeof mouseY + typeof mouseX + typeof d.maxVal + typeof d.minVal + typeof d.h);
+			var interval = parseInt(d.maxVal - d.minVal);
+
+			d.val = parseInt(((d.h - mouseY) * interval / d.h) + d.minVal);
+
+			if (d.val < d.minVal) d.val = d.minVal;
+			if (d.val > d.maxVal) d.val = d.maxVal;
+			d.dirty = true;
+			redraw_nodes(true);
+		}
+		else if (d.orientation == "h")
+		{
+			if (mouseX < 0 || mouseX > d.w) return;
+			d.maxVal = parseInt(d.maxVal);
+			d.minVal = parseInt(d.minVal);
+			var interval = parseInt(d.maxVal - d.minVal);
+			d.val = parseInt(((mouseX * interval) / d.w) + d.minVal);
+
+			if (d.val < d.minVal) d.val = d.minVal;
+			if (d.val > d.maxVal) d.val = d.maxVal;
+			d.dirty = true;
+			redraw_nodes(true);
+		}
+	}
+	function uiObjectMouseDown(d, mouseX, mouseY)
+	{
+		mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
+		console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
+
+		if (d.type == "UI_Button") {
+			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
+		} else if (d.type == "UI_Slider") {
+			setUiSliderValueFromMouse(d, mouseX, mouseY);
+			if (d.sendMode == "m")
+				sendUiSliderValue(d);
+		}
+	}
+	function uiObjectMouseUp(d, mouseX, mouseY)
+	{
+		mouse_mode = RED.state.DEFAULT;
+		
+		console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
 			if (d.releaseAction != "") RED.arduino.SendToWebSocket(d.releaseAction);
-		} else if (d.type == "UI_VSlider") {
-
-		} else if (d.type == "UI_HSlider") {
-
+		} else if (d.type == "UI_Slider") {
+			if (d.sendMode == "r")
+				sendUiSliderValue(d);
+		}
+	}
+	function uiObjectMouseScroll(delta)
+	{
+		var d = currentUiObject;
+		if (d.type == "UI_Button") {
+			
+		} else if (d.type == "UI_Slider") {
+			if (delta > 0)
+			{
+				console.log("uiObjectMouseScroll up");
+				d.val += 1;
+				if (d.val > d.maxVal) d.val = d.maxVal;
+				if (d.sendMode == "m")
+					sendUiSliderValue(d);
+				d.dirty = true;
+				redraw_nodes(true);
+			}
+			else if (delta < 0)
+			{
+				console.log("uiObjectMouseScroll down");
+				d.val -= 1;
+				if (d.val < d.minVal) d.val = d.minVal;
+				if (d.sendMode == "m")
+					sendUiSliderValue(d);
+				d.dirty = true;
+				redraw_nodes(true);
+			}
+			
 		}
 	}
 
@@ -1691,7 +1943,7 @@ RED.view = (function() {
 			d._def.button.onclick.call(d);
 		}
 		if (d.dirty) {
-			redraw();
+			redraw(false);
 		}
 		d3.event.preventDefault();
 	}
@@ -1825,72 +2077,44 @@ RED.view = (function() {
 			.on("click",nodeButtonClicked)
 			.on("touchstart",nodeButtonClicked)
 	}
-	function redraw_nodeMainRect(nodeRect, d)
+	function redraw_nodeMainRect_init(nodeRect, d)
 	{
 		var mainRect = nodeRect.append("rect")
 			.attr("class", "node")
 			.classed("node_unknown",function(d) { if (d.unknownType != undefined) return true; return (d.type == "unknown"); })
 			.attr("rx", 6)
 			.attr("ry", 6)
-			.attr("fill",function(d) { return d._def.color;})
 			.on("mouseup",nodeMouseUp)
 			.on("mousedown",nodeMouseDown)
-			.on("touchstart",function(d) {
-				var obj = d3.select(this);
-				var touch0 = d3.event.touches.item(0);
-				var pos = [touch0.pageX,touch0.pageY];
-				startTouchCenter = [touch0.pageX,touch0.pageY];
-				startTouchDistance = 0;
-				touchStartTime = setTimeout(function() {
-					showTouchMenu(obj,pos);
-				},touchLongPressTimeout);
-				nodeMouseDown.call(this,d)
-			})
-			.on("touchend", function(d) {
-				clearTimeout(touchStartTime);
-				touchStartTime = null;
-				if  (RED.touch.radialMenu.active()) {
-					d3.event.stopPropagation();
-					return;
-				}
-				nodeMouseUp.call(this,d);
-			})
 			.on("mousemove", nodeMouseMove)
-			.on("mouseover",function(d) {
-				if (mouse_mode === 0) {
-					var nodeRect = d3.select(this);
-					nodeRect.classed("node_hovered",true);
-
-					//console.log("node mouseover:" + d.name);
-					//console.log(d3.mouse(this));
-
-					$(current_popup_rect).popover("destroy"); // destroy prev
-					
-
-					if (settings.showNodeToolTip && (d._def.uiObject == undefined)) // dont show popup on gui objects
-					{
-						var popoverText = "<b>" + d.type + "</b><br>";
-						if (d.comment && (d.comment.trim().length != 0))
-							popoverText+="<p>"+d.comment.replace("    ", "&emsp;").replace("\t", "&emsp;").replace(/\n/g, "<br>") + "</p>";
-						//console.warn("popoverText:" +popoverText);
-						
-
-						if (d.type == "Function" || d.type == "Variables" || d.type == "CodeFile")
-							showPopOver(this, true, popoverText, "right");
-						else
-							showPopOver(this, true, popoverText, "top");
-					}
-				}
-			})
-			.on("mouseout",function(d) {
-				
-				var nodeRect = d3.select(this);
-				nodeRect.classed("node_hovered",false);
-				//console.log("node mouseout:" + d.name);
-				$(current_popup_rect).popover("destroy");
-			});
+			.on("mouseover", nodeMouseOver)
+			.on("mouseout", nodeMouseOut)
+			.on("touchstart",nodeTouchStart)
+			.on("touchend", nodeTouchEnd);
+		if (d.type == "UI_Slider")
+		{
+			mainRect.attr("fill",function(d) { return "#505050";});
+			redraw_sliderNodeRect_init(nodeRect);
+		}
+		else
+			mainRect.attr("fill",function(d) { return d._def.color;});
+			
 		//nodeRect.append("rect").attr("class", "node-gradient-top").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-top)").style("pointer-events","none");
 		//nodeRect.append("rect").attr("class", "node-gradient-bottom").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-bottom)").style("pointer-events","none");
+	}
+	function redraw_sliderNodeRect_init(nodeRect)
+	{
+		var sliderRect = nodeRect.append("rect")
+			.attr("class", "slidernode")
+			.attr("rx", 6)
+			.attr("ry", 6)
+			.on("mouseup",nodeMouseUp)
+			.on("mousedown",nodeMouseDown)
+			.on("mousemove", nodeMouseMove)
+			.on("mouseover", nodeMouseOver)
+			.on("mouseout", nodeMouseOut)
+			.attr("fill",function(d) { return d._def.color;})
+			
 	}
 	function redraw_nodeIcon(nodeRect, d)
 	{
@@ -1967,6 +2191,7 @@ RED.view = (function() {
 	}
 	function redraw_label(nodeRect, d)
 	{
+		var nodeText = "";
 		var nodeRects = nodeRect.selectAll('text.node_label').text(function(d,i){
 			/* if (d._def.label) {
 				if (typeof d._def.label == "function") {
@@ -1979,13 +2204,20 @@ RED.view = (function() {
 			 */
 			if (d.type == "ConstValue")
 			{
-				return d.name + " (" + d.valueType + ")=" + d.value;
+				nodeText = d.name + " (" + d.valueType + ")=" + d.value;
+				return nodeText;
 			}
-			if (d._def.label)
-				return d._def.label;
-			return d.name ? d.name : "";// d.id;
+			else if (d.type == "UI_Slider")
+			{
+				nodeText = d.label;
+				if (nodeText.includes("#")) nodeText = nodeText.replace("#", d.val);
+				return nodeText;
+			}
+			nodeText = d.name ? d.name : "";// d.id;
+			return nodeText;
 		})
-		.attr('y', function(d){return (d.h/2)-1;})
+		.attr('y', function(d){ if (d.type == "UI_Slider") return d.h + 10;
+								else return (d.h/2)-1;})
 		.attr('class',function(d){
 			return 'node_label'+
 			(d._def.align?' node_label_'+d._def.align:'')+
@@ -1994,10 +2226,9 @@ RED.view = (function() {
 		if (d._def.uiObject != undefined)
 		nodeRects.attr('x', function(d)
 		{
-			console.log("text width:" + calculateTextWidth(d.name));
-			console.log("node width:" + d.w);
-			return (d.w-(calculateTextWidth(d.name)))/2;
-			
+			//console.log("text width:" + calculateTextWidth(d.name));
+			//console.log("node width:" + d.w);
+			return (d.w-(calculateTextWidth(nodeText)))/2;
 		});
 	}
 	function redraw_nodeStatus(nodeRect)
@@ -2138,24 +2369,21 @@ RED.view = (function() {
 			});
 		}
 	}
-	function redraw_links()
+	function redraw_links_init()
 	{
-		const t0 = performance.now();
+		//const t0 = performance.now();
 		var wsLinks = RED.nodes.links.filter(function(d)
 		{ 
 			return (d.source.z == activeWorkspace) &&
 					(d.target.z == activeWorkspace);
 
 		});
-		const t1 = performance.now();
+		//const t1 = performance.now();
 		var visLinks = vis.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
-
-		const t2 = performance.now();
-
-		console.log("redraw_links filter "+ (t1-t0) +  "ms, select all:" + (t2-t1) + " ms");
+		//const t2 = performance.now();
 
 		var linkEnter = visLinks.enter().insert("g",".node").attr("class","link");
-		var anyLinkEnter = false;
+		anyLinkEnter = false;
 		linkEnter.each(function(d,i) {
 			anyLinkEnter = true;
 			
@@ -2169,7 +2397,9 @@ RED.view = (function() {
 					selected_link = mousedown_link;
 					d.selected = true;
 					updateSelection();
-					redraw();
+					//redraw();
+					redraw_links_init();
+					redraw_links();
 					d3.event.stopPropagation();
 				})
 				.on("touchstart",function(d) {
@@ -2177,7 +2407,9 @@ RED.view = (function() {
 					clearSelection();
 					selected_link = mousedown_link;
 					updateSelection();
-					redraw();
+					//redraw();
+					redraw_links_init();
+					redraw_links();
 					d3.event.stopPropagation();
 				});
 			l.append("svg:path").attr("class","link_outline link_path");
@@ -2188,12 +2420,19 @@ RED.view = (function() {
 
 		visLinks.classed("link_selected", function(d) { return d === selected_link || d.selected; });
 		visLinks.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
+		//const t3 = performance.now();
+
+		//console.log("redraw_links_init filter:"+ (t1-t0) +  "ms, select all:" + (t2-t1) + " ms, linkEnterEdit: " + (t3-t2) + " ms");
+	}
+	function redraw_links()
+	{
+		//const t0 = performance.now();
 		// only redraw links that is selected and where the node is moving
 		if (anyLinkEnter)
 			var links = vis.selectAll(".link_path");
 		else
 			var links = vis.selectAll(".link_selected").selectAll(".link_path");
-
+		anyLinkEnter = false;
 		links.attr("d",
 			function(d) {
 				var numOutputs = d.source.outputs || 1;
@@ -2283,8 +2522,10 @@ RED.view = (function() {
 				}
 			}
 		);
-		
+		//const t1 = performance.now();
+		//console.log("redraw_links :"+ (t1-t0) +  "ms");
 	}
+
 	function generateLinkPath(orig, dest, origX,origY, destX, destY, sc1, sc2) {
 		var node_height = orig.h; //node_def.height;
 		var node_width = node_def.width;
@@ -2400,7 +2641,7 @@ RED.view = (function() {
 				)});
 	}
 	
-	function redraw_other(nodeRect, d) // this contains the rest until they get own functions
+	function redraw_nodeRefresh(nodeRect, d) // this contains the rest until they get own functions
 	{
 		//nodeRect.selectAll(".centerDot").attr({"cx":function(d) { return d.w/2;},"cy":function(d){return d.h/2}});
 		nodeRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
@@ -2523,17 +2764,13 @@ RED.view = (function() {
 		port.classed("port_hovered",false);
 		$(this).popover("destroy"); // destroy prev
 	}
-	function redraw_nodes()
+
+	function redraw_nodes_init()
 	{
-		
 		//const t2 = performance.now();
-		var nodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
+		var visNodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
 		{ 
-			return (d.z == activeWorkspace)/* &&
-				   (d.x >= chartViewXmin) &&
-				   (d.x <= chartViewXmax) &&
-				   (d.y >= chartViewYmin) &&
-				   (d.y <= chartViewYmax)*/;
+			return (d.z == activeWorkspace);
 
 		}),function(d){return d.id});
 		//const t3 = performance.now();
@@ -2541,7 +2778,7 @@ RED.view = (function() {
 
 		var updatedClassTypes =	false; // flag so that it only run once at each redraw()
 
-		var nodeExit = nodes.exit().remove();
+		var nodeExit = visNodes.exit().remove();
 		nodeExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
 		{
 			//console.error("redraw nodeExit:" + d.type);
@@ -2550,8 +2787,8 @@ RED.view = (function() {
 				if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
 			}
 		});
-		var anyNodeEnter = false;
-		var nodeEnter = nodes.enter().insert("svg:g").attr("class", "node nodegroup");
+		anyNodeEnter = false;
+		var nodeEnter = visNodes.enter().insert("svg:g").attr("class", "node nodegroup");
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
 			anyNodeEnter = true;
@@ -2576,7 +2813,7 @@ RED.view = (function() {
 
 			//if (d._def.badge) redraw_nodeBadge(nodeRect, d);
 			//if (d._def.button) redraw_nodeButton(nodeRect, d);
-			redraw_nodeMainRect(nodeRect, d);
+			redraw_nodeMainRect_init(nodeRect, d);
 			if (d._def.icon) redraw_nodeIcon(nodeRect, d);
 			redraw_nodeInputs(nodeRect, d);
 			redraw_nodeOutputs(nodeRect, d);
@@ -2594,8 +2831,27 @@ RED.view = (function() {
 			nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
 		
 		});
+		visNodes.classed("node_selected",function(d) { return d.selected; })
+		return visNodes;
+	}
+	function redraw_nodes(fullUpdate)
+	{
+		if (fullUpdate != undefined && fullUpdate == true)
+		{
+			var visNodes = redraw_nodes_init();
+			//console.warn("redraw_nodes full update")
+		}
+		else
+		{
+			var visNodes = vis.selectAll(".node_selected").data(RED.nodes.nodes.filter(function(d)
+			{ 
+				return (d.z == activeWorkspace);
+
+			}),function(d){return d.id});
+		}
 		//const t0 = performance.now();
-		nodes.each(function(d,i) { // redraw all nodes in active workspace
+		visNodes.each(
+			function(d,i) { // redraw all nodes in active workspace
 				var nodeRect = d3.select(this);
 				
 				if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
@@ -2604,35 +2860,76 @@ RED.view = (function() {
 					//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
 					redraw_nodeReqError(nodeRect, d);
 				}
-				
 
-				if (d.dirty) {
-					//console.warn(d.name + " was dirty");
-					//nodeRect.attr("fill",function(d) { console.warn("node bg color:" + d.bgColor); return d.bgColor;});
-					if (d.bgColor == null)
-						d.bgColor = d._def.color;
-						
+				if (d.dirty == false) return;
+
+				d.dirty = false;
+				
+				//console.warn(d.name + " was dirty");
+				//nodeRect.attr("fill",function(d) { console.warn("node bg color:" + d.bgColor); return d.bgColor;});
+				if (d.bgColor == null)
+					d.bgColor = d._def.color;
+					
+				if (d.type == "UI_Slider")
+				{
+					console.warn("UI_Slider was dirty")
+					nodeRect.selectAll(".node").attr("fill", "#808080");
+
+					nodeRect.selectAll(".slidernode")
+								.attr("x", function(d) {
+									if (d.orientation == "v") return 0; 
+									else if (d.orientation == "h") return 0;
+								})
+								.attr("y", function(d) {
+									d.maxVal = parseInt(d.maxVal);
+									d.minVal = parseInt(d.minVal);
+									d.val = parseInt(d.val);
+									if (d.val < d.minVal) d.val = d.minVal;
+									if (d.val > d.maxVal) d.val = d.maxVal;
+									if (d.orientation == "v") return d.h - ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h ;
+									else if (d.orientation == "h") return 0;
+								})
+								.attr("width", function(d) {
+									d.maxVal = parseInt(d.maxVal);
+									d.minVal = parseInt(d.minVal);
+									d.val = parseInt(d.val);
+									if (d.val < d.minVal) d.val = d.minVal;
+									if (d.val > d.maxVal) d.val = d.maxVal;
+									if (d.orientation == "v") return d.w;
+									else if (d.orientation == "h") return ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.w;
+								})
+								.attr("height", function(d) {
+									d.maxVal = parseInt(d.maxVal);
+									d.minVal = parseInt(d.minVal);
+									d.val = parseInt(d.val);
+									if (d.val < d.minVal) d.val = d.minVal;
+									if (d.val > d.maxVal) d.val = d.maxVal;
+									if (d.orientation == "v") return  ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h;
+									else if (d.orientation == "h") return d.h;
+								});
+
+				}
+				else
 					nodeRect.selectAll(".node").attr("fill", d.bgColor);
 
-					//nodeRect.style("background-color", d.bgColor)
-					//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
-					if (d.resize) {
-						
-						if (d._def.uiObject == undefined)
-							redraw_calcNewNodeSize(d);
-						redraw_nodeInputs(nodeRect, d);
-						redraw_nodeOutputs(nodeRect, d);
-						d.resize = false;
-					}
-					//console.log("redraw stuff");
-
-					redraw_paletteNodesReqError(d);
-					redraw_other(nodeRect, d);
-					if (d.type != "JunctionLR" && d.type != "JunctionRL")
-						redraw_label(nodeRect, d);
-					d.dirty = false;
+				//nodeRect.style("background-color", d.bgColor)
+				//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
+				if (d.resize) {
 					
+					if (d._def.uiObject == undefined)
+						redraw_calcNewNodeSize(d);
+					redraw_nodeInputs(nodeRect, d);
+					redraw_nodeOutputs(nodeRect, d);
+					d.resize = false;
 				}
+				//console.log("redraw stuff");
+
+				redraw_paletteNodesReqError(d);
+
+				redraw_nodeRefresh(nodeRect, d);
+
+				if (d.type != "JunctionLR" && d.type != "JunctionRL")
+					redraw_label(nodeRect, d);
 		});
 		//const t1 = performance.now();
 		//console.log('redraw nodes.each( ' + (t1-t0) +' ms.');
@@ -2646,7 +2943,7 @@ RED.view = (function() {
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
-	function redraw() {
+	function redraw(fullUpdate) {
 		const t0 = performance.now();
 		//console.trace("redraw");
 		/*var chart = $("#chart");
@@ -2661,18 +2958,18 @@ RED.view = (function() {
 		
 		// Don't bother redrawing nodes if we're drawing links
 		if (mouse_mode != RED.state.JOINING) 
-			redraw_nodes();
-		const t1 = performance.now();
-		redraw_links(); // this now only redraws links that was added and links that are selected (i.e. they are selected when a node is selected)
+			redraw_nodes(fullUpdate);
+		//const t1 = performance.now();
+		//redraw_links(); // this now only redraws links that was added and links that are selected (i.e. they are selected when a node is selected)
 		const t2 = performance.now();
 		if (d3.event) {	d3.event.preventDefault(); }
 
 		redrawCount++;
 		var currentTotalTime = t2-t0;
-		var currentLinksTime = t2-t1;
+		//var currentLinksTime = t2-t1;
 		redrawTotalTime += currentTotalTime;
 
-		console.log('redraw average time: ' + (redrawTotalTime/redrawCount) + ' ms, curr. tot. time:' + currentTotalTime + " ms, curr. link time:" + currentLinksTime + " ms");
+		//console.log('redraw average time: ' + (redrawTotalTime/redrawCount) + ' ms, curr. tot. time:' + currentTotalTime + " ms");
 	}
 
 	function doSort (arr) {
@@ -2744,7 +3041,9 @@ RED.view = (function() {
 			startY = lowestY + (RED.view.defaults.height * 1.5);
 		}
 		RED.storage.update();
-		redraw();
+		redraw(true);
+		redraw_links_init();
+		redraw_links();
 	}
 
 	RED.keyboard.add(/* z */ 90,{ctrl:true},function(){RED.history.pop();});
@@ -2860,7 +3159,9 @@ RED.view = (function() {
 			clearSelection();
 			moving_set = new_ms;
 
-			redraw();
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
 		} catch(error) {
 			console.log(error);
 			RED.notify("<strong>Error</strong>: "+error,"error");
@@ -3207,7 +3508,11 @@ RED.view = (function() {
 		showWorkspace: function(id) {
 			workspace_tabs.activateTab(id); // see tabs.js
 		},
-		redraw: redraw,
+		redraw: function() {
+			redraw(true);
+			redraw_links_init();
+			redraw_links();
+		},
 		dirty: function(d) {
 			if (d == null) {
 				return dirty;
@@ -3223,7 +3528,7 @@ RED.view = (function() {
 			showStatus = s;
 			RED.nodes.eachNode(function(n) { n.dirty = true;});
 			//TODO: subscribe/unsubscribe here
-			redraw();
+			redraw(false);
 		},
 		getForm: getForm,
 		calculateTextWidth: calculateTextWidth,

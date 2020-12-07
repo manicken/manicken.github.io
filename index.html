@@ -624,40 +624,43 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 		{"type":"UI_Button",
 		 "data":{
-			"shortName":"Button","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
-			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"},"textSize":{"value":"14"},"pressAction":{"value":""},"repeatPressAction":{"value":"false"},"releaseAction":{"value":""},"repeatReleaseAction":{"value":"false"},"local":{"value":"false"}}
+			"shortName":"Button","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{
+				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":100},"h":{"value":30},"textSize":{"value":14},
+				"pressAction":{"value":""},"repeatPressAction":{"value":false},
+				"releaseAction":{"value":""},"repeatReleaseAction":{"value":false},
+				"local":{"value":false}}
 		}},
 
-		{"type":"UI_VSlider",
+		{"type":"UI_Slider",
 		 "data":{
-			"shortName":"VSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
-			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"30"},"h":{"value":"300"},"textSize":{"value":"14"},"minVal":{"value":"0"},"maxVal":{"value":"100"},"val":{"value":"0"},"minValF":{"value":"-1.0"},"maxValF":{"value":"1.0"},"floatVal":{"value":"0.0"},"outputFloat":{"value":"false"},"decimalCount":{"value":"-1"},"steps":{"value":"201"},"sendSpace":{"value":"true"},"autoReturn":{"value":"false"},"repeat":{"value":"false"},"repeatPeriod":{"value":"0"},"sendMode":{"value":"r"}}
+			"shortName":"Slider","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{
+				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":30},"h":{"value":300},"textSize":{"value":14},
+				"orientation":{"value":"h"},"label":{"value":""},
+				"minVal":{"value":0},"maxVal":{"value":100},"val":{"value":50},
+				"outputFloat":{"value":false},"minValF":{"value":-1.0},"maxValF":{"value":1.0},"floatVal":{"value":0.0},"decimalCount":{"value":-1},"steps":{"value":201},
+				"sendSpace":{"value":true},"repeat":{"value":false},"repeatPeriod":{"value":0},"sendMode":{"value":"r"},"sendFormat":{"value":""},
+				"autoReturn":{"value":false},"returnValue":{"value":"mid"}}
 		}},
-		
-		{"type":"UI_HSlider",
-		 "data":{
-			"shortName":"HSlider","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
-			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"200"},"h":{"value":"30"},"textSize":{"value":"14"}}
-		}},
-		
+
 		{"type":"UI_TextBox",
 		 "data":{
-			"shortName":"TextBox","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
-			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"},"textSize":{"value":"14"}}
-		}},
-		
-		{"type":"UI_Label",
-		 "data":{
-			"shortName":"Label","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
-			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"100"},"h":{"value":"30"},"textSize":{"value":"14"}}
-		}},
-		
-		{"type":"UI_Image",
-		 "data":{
-			"shortName":"Image","uiObject":"","nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
-			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":"150"},"h":{"value":"150"},"textSize":{"value":"14"}}
+			"shortName":"TextBox","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
 		}},
 
+		{"type":"UI_Label",
+		 "data":{
+			"shortName":"Label","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":100},"h":{"value":30},"textSize":{"value":14}}
+		}},
+
+		{"type":"UI_Image",
+		 "data":{
+			"shortName":"Image","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
+		}},
 
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -760,15 +763,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="NodesGlobalEdit">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row hidden">
 		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
-		<input type="text" id="node-input-id" placeholder="Id">
+		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
-		<input type="text" id="node-input-comment" placeholder="Comment">
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
 		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
 	</div>
 	<div class="form-row">
@@ -786,7 +789,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="UI_Button">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -821,8 +824,116 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+		<input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off">
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="UI_Slider">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>	</p>
+	<h3>Notes</h3>
+</script>
+<script type="text/x-red" data-template-name="UI_Slider">
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-name"><i class="fa fa-tag"></i> Slider Id</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-label"><i class="fa fa-tag"></i> Label</label>
+		<input type="text" id="node-input-label" placeholder="Label" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-sendFormat"><i class="fa fa-tag"></i> Send Format</label>
+		<input type="text" id="node-input-sendFormat" placeholder="sendFormat" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
 		<input type="text" id="node-input-textSize" placeholder="textSize">
 	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-orientation"><i class="fa fa-tag"></i> Orientation</label>
+		<select name="node-input-orientation" id="node-input-orientation">
+			<option value="v">vertical</option>
+			<option value="h">horizontal</option>
+	    </select>
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-minVal"><i class="fa fa-tag"></i> Min Value (int)</label>
+		<input type="text" id="node-input-minVal" placeholder="minVal" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-maxVal"><i class="fa fa-tag"></i> Max Value(int)</label>
+		<input type="text" id="node-input-maxVal" placeholder="maxVal" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-val"><i class="fa fa-tag"></i> Value(int)</label>
+		<input type="text" id="node-input-val" placeholder="val" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+        <label style="width:150px" for="node-input-outputFloat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Output</span></label>
+        <label for="node-input-outputFloat">
+        <input type="checkbox" id="node-input-outputFloat" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Float</span>
+        </label>
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-minValF"><i class="fa fa-tag"></i> Min Value (float)</label>
+		<input type="text" id="node-input-minValF" placeholder="minValF" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-maxValF"><i class="fa fa-tag"></i> Max Value(float)</label>
+		<input type="text" id="node-input-maxValF" placeholder="maxValF" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-floatVal"><i class="fa fa-tag"></i> Value(float)</label>
+		<input type="text" id="node-input-floatVal" placeholder="floatVal" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-steps"><i class="fa fa-tag"></i> Value Steps (float)</label>
+		<input type="text" id="node-input-steps" placeholder="steps" autocomplete="off">
+	</div>
+	<div class="form-row">
+        <label style="width:150px" for="node-input-sendSpace"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Send Space</label>
+        <label for="node-input-sendSpace">
+        <input type="checkbox" id="node-input-sendSpace" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	<div class="form-row-long">
+        <label style="width:150px" for="node-input-autoReturn"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Auto Return</label>
+        <label for="node-input-autoReturn">
+        <input type="checkbox" id="node-input-autoReturn" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-returnValue"><i class="fa fa-tag"></i> Auto Return To</label>
+		<select name="node-input-returnValue" id="node-input-returnValue">
+			<option value="mid">mid</option>
+			<option value="max">max</option>
+			<option value="min">min</option>
+	    </select>
+	</div>
+	<div class="form-row">
+        <label style="width:150px" for="node-input-repeat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Repeat</label>
+        <label for="node-input-repeat">
+        <input type="checkbox" id="node-input-repeat" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-repeatPeriod"><i class="fa fa-tag"></i> Repeat Period</label>
+		<input type="text" id="node-input-repeatPeriod" placeholder="repeatPeriod" autocomplete="off">
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-sendMode"><i class="fa fa-tag"></i> Send Mode</label>
+		<select name="node-input-sendMode" id="node-input-sendMode">
+			<option value="r">release</option>
+			<option value="m">moving</option>
+	    </select>
+	</div>
+	
 </script>
 
 <div> <!-- tab-category -->
@@ -867,7 +978,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="Function">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -899,7 +1010,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="CodeFile">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> File Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -939,7 +1050,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="ConstValue">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -947,7 +1058,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-value"><i class="fa fa-tag"></i> Value</label>
-		<input type="text" id="node-input-value" placeholder="Value">
+		<input type="text" id="node-input-value" placeholder="Value" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-valueType"><i class="fa fa-tag"></i> Value Type</label>
@@ -1009,15 +1120,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="AudioStreamObject">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-subType"><i class="fa fa-tag"></i> Sub Type</label>
-		<input type="text" id="node-input-subType" placeholder="SubType">
+		<input type="text" id="node-input-subType" placeholder="SubType" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-includeFile"><i class="fa fa-tag"></i> Include File</label>
-		<input type="text" id="node-input-includeFile" placeholder="IncludeFile">
+		<input type="text" id="node-input-includeFile" placeholder="IncludeFile" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -1025,11 +1136,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
-		<input type="text" id="node-input-inputs" placeholder="Inputs">
+		<input type="text" id="node-input-inputs" placeholder="Inputs" autocomplete="off">
 	</div>
 	<div class="form-row"> 
 		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
-		<input type="text" id="node-input-outputs" placeholder="outputs">
+		<input type="text" id="node-input-outputs" placeholder="outputs" autocomplete="off">
 	</div>
 	<!--<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents h file:</label>
@@ -1092,15 +1203,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="AudioMixer">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
-		<input type="text" id="node-input-id" placeholder="Id">
+		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
-		<input type="text" id="node-input-inputs" placeholder="Inputs">
+		<input type="text" id="node-input-inputs" placeholder="Inputs" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -1109,11 +1220,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<!-- this is only for debugging of the output pins change so i choose MixerX because it's allready dynamic -->
 	<!-- <div class="form-row"> 
 		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
-		<input type="text" id="node-input-outputs" placeholder="outputs">
+		<input type="text" id="node-input-outputs" placeholder="outputs" autocomplete="off">
 	</div> --> 
 	<div class="form-row">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
-		<input type="text" id="node-input-comment" placeholder="Comment">
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
 		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea>-->
 	</div>
 </script>
@@ -1140,14 +1251,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="Variables">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
 		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row">
-		<label for="node-input-comment"><i class="fa fa-tag"></i> Variable contens:</label>
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Variable contents:</label>
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
@@ -1206,7 +1317,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="PointerArray">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row form-row-long">
 		<label for="node-input-objectType"><i class="fa fa-tag"></i> Object Type (readOnly)</label>

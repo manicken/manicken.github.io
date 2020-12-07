@@ -717,7 +717,7 @@ RED.nodes = (function() {
 						configNode._def = def;
 						RED.nodes.add(configNode);
 					}
-				} else {
+				} else if (def != undefined) {
 					if (def.uiObject == undefined)
 						var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
 					else
@@ -828,7 +828,7 @@ RED.nodes = (function() {
 		catch(error) { // hijack import errors so that a notification can be shown to the user
 			createNewDefaultWorkspace();
 			var newException = error.message + " " +  error.stack;
-			RED.notify("<strong>import nodes Error</strong>: " + newException, "error",null,false,10000); // better timeout
+			RED.notify("<strong>import nodes Error</strong>: " + newException, "error",null,false,20000); // better timeout
 			throw newException; // throw exception so it can be shown in webbrowser console
 		}
 

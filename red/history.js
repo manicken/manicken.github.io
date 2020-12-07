@@ -89,6 +89,7 @@ RED.history = (function() {
 				}
 				RED.view.dirty(ev.dirty);
 				RED.view.redraw();
+				
 			}
 		}
 	}
