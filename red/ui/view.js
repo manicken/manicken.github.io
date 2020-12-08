@@ -2215,9 +2215,15 @@ RED.view = (function() {
 			}
 			else if (d.type == "UI_Slider")
 			{
-				nodeText = d.label;
-				if (nodeText.includes("#")) nodeText = nodeText.replace("#", d.val);
-				return nodeText;
+				nodeText = d.label ? d.label : "";
+				if (nodeText == "") 
+				if (nodeText.includes("#")) nodeText = nodeText.replace("#", "d.val");
+				try{nodeText = eval(nodeText); }
+				catch (e) { 
+					//nodeText = d.label;
+				}
+				
+				return nodeText + "";
 			}
 			nodeText = d.name ? d.name : "";// d.id;
 			return nodeText;
@@ -2882,6 +2888,7 @@ RED.view = (function() {
 					nodeRect.selectAll(".node").attr("fill", "#808080");
 
 					nodeRect.selectAll(".slidernode")
+								.attr("fill", d.bgColor)
 								.attr("x", function(d) {
 									if (d.orientation == "v") return 0; 
 									else if (d.orientation == "h") return 0;

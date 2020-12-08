@@ -125,7 +125,8 @@ RED.arduino = (function() {
 		xmlHttp.timeout = 2000;
 		xmlHttp.send(null);
 	}
-	var wsSocket;
+	var wsSocketTerminal;
+	var wsSocketBiDirData;
     function StartWebSocketConnection()
     {
 		if ('WebSocket' in window)
@@ -133,10 +134,25 @@ RED.arduino = (function() {
 			var protocol = 'ws://';
 			var address = protocol + "127.0.0.1:" + settings.WebSocketServerPort;
 			RED.bottombar.info.addContent("StartWebSocket@" + address + "<br>");
-			if (wsSocket != null)
-				wsSocket.close();
-			wsSocket = new WebSocket(address);
-			wsSocket.onmessage = function (msg) {
+			if (wsSocketTerminal != null)
+			wsSocketTerminal.close();
+			wsSocketTerminal = new WebSocket(address);
+			wsSocketTerminal.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else
+				{
+					//console.log(msg.data);
+					RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
+					var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
+					//console.warn(dataToAdd);
+					RED.bottombar.info.addContent(dataToAdd);
+				}
+			};
+			if (wsSocketBiDirData != null)
+			wsSocketBiDirData.close();
+			address = protocol + "127.0.0.1:3001";// + settings.WebSocketServerPort;
+			wsSocketBiDirData = new WebSocket(address);
+			wsSocketBiDirData.onmessage = function (msg) {
 				if (msg.data == 'reload') window.location.reload();
 				else
 				{
@@ -154,8 +170,8 @@ RED.arduino = (function() {
     }
     function SendToWebSocket(string)
     {
-        if (wsSocket == undefined) return;
-        wsSocket.send(string);
+        if (wsSocketBiDirData == undefined) return;
+        wsSocketBiDirData.send(string);
     }
     $('#btn-verify-compile').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=compile"); });
 	$('#btn-compile-upload').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=upload"); });

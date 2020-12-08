@@ -497,14 +497,12 @@ RED.nodes = (function() {
 		var nns = [];
 		var i;
 		nns.push({"type":"settings", "data":RED.settings.getAsJSONobj()});
-		for (i=0;i<workspaces.length;i++)
-			
 
-		for (i in configNodes) {
+		/*for (i in configNodes) {
 			if (configNodes.hasOwnProperty(i)) {
 				nns.push(convertNode(configNodes[i], true));
 			}
-		}
+		}*/
 		var absoluteXposMax = 0;
 		var absoluteYposMax = 0;
 		var workspaceColSize = RED.view.settings.gridVmajorSize;
@@ -528,7 +526,14 @@ RED.nodes = (function() {
 		{
 			ws = workspaces[wsi];
 			nns.push(ws);
-			
+
+			for (ni=0;ni<nodes.length;ni++)
+			{
+				var node = nodes[ni];
+				if (node.z != ws.id) continue; // workspace filter
+				if (node._def.uiObject == undefined) continue; // skip non ui nodes
+				nns.push(convertNode(node, true)); // just add ui nodes as is
+			}
 			// sort nodes by columns (xpos)
 			for (var xPosMin = 0; xPosMin < absoluteXposMax; xPosMin+=workspaceColSize)
 			{
@@ -539,6 +544,8 @@ RED.nodes = (function() {
 				{
 					var node = nodes[ni];
 					if (node.z != ws.id) continue; // workspace filter
+
+					if (node._def.uiObject != undefined) continue; // skip ui nodes they are added above (and should never be sorted because then it will mess up ui)
 
 					if ((node.x >= xPosMin) && (node.x < xPosMax))
 						nnsCol.push(convertNode(node, true));
