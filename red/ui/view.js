@@ -2085,9 +2085,14 @@ RED.view = (function() {
 	}
 	function redraw_nodeMainRect_init(nodeRect, d)
 	{
-		var mainRect = nodeRect.append("rect")
-			.attr("class", "node")
-			.classed("node_unknown",function(d) { if (d.unknownType != undefined) return true; return (d.type == "unknown"); })
+		var mainRect = nodeRect.append("rect");
+
+			if (d.type == "UI_Label")
+				mainRect.attr("class", "node uiLabel");
+			else
+				mainRect.attr("class", "node");
+
+		mainRect.classed("node_unknown",function(d) { if (d.unknownType != undefined) return true; return (d.type == "unknown"); })
 			.attr("rx", 6)
 			.attr("ry", 6)
 			.on("mouseup",nodeMouseUp)
