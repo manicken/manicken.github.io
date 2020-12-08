@@ -263,6 +263,38 @@ RED.main = (function() {
 			$( "#select-name-dialog-name" ).val(defaultFileName);
 		$( "#select-name-dialog" ).dialog('open');
 	}
+	//var midiOutputs = null;
+	var midiInputs = null;
+	let midiOutput = null;
+	
+
+	/*$('#btn-getMidiDevices').click(function() { getMidiDevices(); });
+	function getMidiDevices()
+	{
+		
+		RED.bottombar.show('output');
+		navigator.requestMIDIAccess()
+		.then(function(midiAccess) {
+			const outputs = midiAccess.outputs.values();
+			console.log(outputs);
+			
+			for (const output of outputs) {
+				RED.bottombar.info.addContent(output);
+				midiOutput = output;
+			}
+			//midiOutput = midiOutputs[0];
+			midiOutput.send([0x90, 0x3c, 0x80]);
+		});
+		
+		navigator.requestMIDIAccess()
+		.then(function(midiAccess) {
+			midiInputs = Array.from(midiAccess.inputs.values());
+			console.log(midiInputs);
+			RED.bottombar.info.addContent(midiInputs[0]);
+		});
+	}*/
+	//$('#btn-midiSendNoOn').click(function() { midiOutput.send([0x90, 0x3c, 0x80]); });
+	//$('#btn-midiSendNoOff').click(function() { midiOutput.send([0x80, 0x3c, 0x80]); });
 
 	// from http://css-tricks.com/snippets/javascript/get-url-variables/
 	function getQueryVariable(variable) {

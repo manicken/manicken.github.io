@@ -1829,7 +1829,13 @@ RED.view = (function() {
 	}
 	function sendUiSliderValue(d)
 	{
-		if (d.sendFormat.trim() != "")
+		if (d.lastSentValue != undefined)
+		{
+			if (d.lastSentValue === d.val) return;
+		}
+		d.lastSentValue = d.val;
+
+		if (d.sendFormat != undefined && d.sendFormat.trim() != "")
 		{
 			var formatted = eval(d.sendFormat);
 			RED.arduino.SendToWebSocket(formatted);
@@ -1874,7 +1880,7 @@ RED.view = (function() {
 	function uiObjectMouseDown(d, mouseX, mouseY)
 	{
 		mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
-		console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
+		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
 
 		if (d.type == "UI_Button") {
 			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
@@ -1888,7 +1894,7 @@ RED.view = (function() {
 	{
 		mouse_mode = RED.state.DEFAULT;
 		
-		console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
+		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
 			if (d.releaseAction != "") RED.arduino.SendToWebSocket(d.releaseAction);
 		} else if (d.type == "UI_Slider") {
@@ -1904,7 +1910,7 @@ RED.view = (function() {
 		} else if (d.type == "UI_Slider") {
 			if (delta > 0)
 			{
-				console.log("uiObjectMouseScroll up");
+				//console.log("uiObjectMouseScroll up");
 				d.val += 1;
 				if (d.val > d.maxVal) d.val = d.maxVal;
 				if (d.sendMode == "m")
@@ -1914,7 +1920,7 @@ RED.view = (function() {
 			}
 			else if (delta < 0)
 			{
-				console.log("uiObjectMouseScroll down");
+				//console.log("uiObjectMouseScroll down");
 				d.val -= 1;
 				if (d.val < d.minVal) d.val = d.minVal;
 				if (d.sendMode == "m")
@@ -2872,7 +2878,7 @@ RED.view = (function() {
 					
 				if (d.type == "UI_Slider")
 				{
-					console.warn("UI_Slider was dirty")
+					//console.warn("UI_Slider was dirty")
 					nodeRect.selectAll(".node").attr("fill", "#808080");
 
 					nodeRect.selectAll(".slidernode")
