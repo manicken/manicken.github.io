@@ -666,6 +666,24 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
 		}},
 
+		{"type":"UI_ListBox",
+		 "data":{
+			"shortName":"ListBox","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{
+				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14},
+				"items":{"value":"item1\nitem2\nitem3"},"sendCommand":{"value":""},"selectedIndex":{"value":-1},"itemHeight":{"value":30}
+			}
+		}},
+
+		{"type":"UI_Piano",
+		 "data":{
+			"shortName":"Piano","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"defaults":{
+				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14},
+				"midiCh":{"value":0},"octave":{"value":4}
+			}
+		}},
+
 		{"type":"AudioInputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SQuad","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputI2SHex","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_hex","inputs":0,"outputs":6,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -787,7 +805,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-help-name="UI_Button">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
-	<p>	</p>
+	<p>UI Button that sends data on pressed and/or released</p>
 	<h3>Notes</h3>
 </script>
 <script type="text/x-red" data-template-name="UI_Button">
@@ -835,7 +853,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-help-name="UI_Slider">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
-	<p>	</p>
+	<p>	Vertical or Horizontal slider that sends data on moved or release.</p>
+	<p> It can have a label the contents is generated using javascript eval so the result can be a complicated formula, the input value is taken from d.val</p>
+	<p> example "Label" + (d.val*10-1)</p>
 	<h3>Notes</h3>
 </script>
 <script type="text/x-red" data-template-name="UI_Slider">
@@ -937,7 +957,77 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<option value="m">moving</option>
 	    </select>
 	</div>
+</script>
+
+<script type="text/x-red" data-help-name="UI_TextBox">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>not implemented yet!</p>
+	<p> but should be a simple text input box (to either show a value(s) or used together with a button to send data) </p>
+	<h3>Notes</h3>
+</script>
+<script type="text/x-red" data-help-name="UI_Label">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>UI Simple Label With selected background color.</p>
+	<h3>Notes</h3>
+</script>
+<script type="text/x-red" data-help-name="UI_Image">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>not implemented yet!</p>
+	<p>but should be implemented to just show a user selected image</p>
+	<h3>Notes</h3>
+</script>
+<script type="text/x-red" data-help-name="UI_ListBox">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>not implemented yet!</p>
+	<p>but should be implemented to just show a list of text items that send data when a item is pressed</p>
+	<h3>Notes</h3>
+</script>
+<script type="text/x-red" data-template-name="UI_ListBox">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row hidden">
+		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
+		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
+		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
+		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-itemHeight"><i class="fa fa-tag"></i> item Height</label>
+		<input type="text" id="node-input-itemHeight" placeholder="itemHeight" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-selectedIndex"><i class="fa fa-tag"></i> selected Index</label>
+		<input type="text" id="node-input-selectedIndex" placeholder="selectedIndex" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-items"><i class="fa fa-tag"></i> Items</label>
+		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-items" rows="12"></textarea>
+	</div>
 	
+</script>
+<script type="text/x-red" data-help-name="UI_Piano">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>not implemented yet!</p>
+	<p>but should be implemented to show a single octave of a piano, multiple objects can be stacked to implement a full size piano keyboard.</p>
+	<h3>Notes</h3>
 </script>
 
 <div> <!-- tab-category -->

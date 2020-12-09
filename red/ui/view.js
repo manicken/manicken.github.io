@@ -1778,7 +1778,8 @@ RED.view = (function() {
 		redraw_links();
 		d3.event.stopPropagation();
 	}
-	function nodeMouseUp(d) {
+	function nodeMouseUp(d,i) {
+		console.log("nodeMouseUp i" + i);
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
@@ -1877,17 +1878,42 @@ RED.view = (function() {
 			redraw_nodes(true);
 		}
 	}
+	function subtractColor(colorA, colorB)
+	{
+		var color_R = parseInt(colorA.substring(1,3), 16) - parseInt(colorB.substring(1,3), 16);
+		var color_G = parseInt(colorA.substring(3,5), 16) - parseInt(colorB.substring(3,5), 16);
+		var color_B = parseInt(colorA.substring(5), 16) - parseInt(colorB.substring(5), 16);
+		if (color_R < 0) color_R = 0;
+		if (color_G < 0) color_G = 0;
+		if (color_B < 0) color_B = 0;
+		return "#" + getTwoHex(color_R) + getTwoHex(color_G) + getTwoHex(color_B);
+	}
+	function getTwoHex(value)
+	{
+		if (value < 0x10)
+			return "0" + value.toString(16);
+		else
+			return value.toString(16);
+	}
 	function uiObjectMouseDown(d, mouseX, mouseY)
 	{
 		mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
 		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
 
 		if (d.type == "UI_Button") {
+			if (d.bgColorOld != undefined) d.bgColor = d.bgColorOld; // failsafe
+			d.bgColorOld = d.bgColor;
+			d.bgColor = subtractColor(d.bgColor, "#202020");
+			d.dirty = true;
+			redraw(false);
 			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
+		
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
 			if (d.sendMode == "m")
 				sendUiSliderValue(d);
+		} else if (d.type == "UI_ListBox") {
+			ui_listBoxMouseDown(d);
 		}
 	}
 	function uiObjectMouseUp(d, mouseX, mouseY)
@@ -1896,10 +1922,16 @@ RED.view = (function() {
 		
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
+			d.bgColor = d.bgColorOld;
+			d.bgColorOld = undefined;
+			d.dirty = true;
+			redraw(false);
 			if (d.releaseAction != "") RED.arduino.SendToWebSocket(d.releaseAction);
 		} else if (d.type == "UI_Slider") {
 			if (d.sendMode == "r")
 				sendUiSliderValue(d);
+		} else if (d.type == "UI_ListBox") {
+			ui_listBoxMouseUp(d);
 		}
 	}
 	function uiObjectMouseScroll(delta)
@@ -2107,6 +2139,11 @@ RED.view = (function() {
 			mainRect.attr("fill",function(d) { return "#505050";});
 			redraw_sliderNodeRect_init(nodeRect);
 		}
+		else if (d.type == "UI_ListBox")
+		{
+			redraw_ListBoxNodeRects_init(nodeRect,d);
+
+		}
 		else
 			mainRect.attr("fill",function(d) { return d._def.color;});
 			
@@ -2125,7 +2162,83 @@ RED.view = (function() {
 			.on("mouseover", nodeMouseOver)
 			.on("mouseout", nodeMouseOut)
 			.attr("fill",function(d) { return d._def.color;})
+	}
+	function redraw_ListBoxNodeRects_init(nodeRect,n)
+	{
+		var index = 1;
+		var items = n.items.split("\n");
+		for ( var i = 0; i < items.length; i++)
+		{
+			var item = nodeRect.append("rect")
+				.attr("class", "ui_listBox_item")
+				.attr("rx", 6)
+				.attr("ry", 6)
+				.attr("y", (i+1)* n.itemHeight)
+				.attr("x",0)
+				.attr("width",n.w)
+				.attr("height","30")
+				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.attr("fill",function(d) { return d._def.color;});
+
+			var itemText = nodeRect.append("text")
+				.attr("class", "node_label_uiListBoxItem")
+				.attr("x", (n.w - calculateTextWidth(items[i]))/2)
+				.attr("y", (i+1)* n.itemHeight + 14)
+				.attr("text-anchor", "start")
+				.attr("dy", "0.35em")
+				.text(items[i]);
+		}
+		nodeRect.attr("height", ((items.lenght+5)*30));
+		/*var items = nodeRect.selectAll(".ui_listBox_item").data(itemsTexts);
+		items.enter().append("g")
+			.attr("class","node ui_listBox_item")
+			.attr("rx",6)
+			.attr("ry",6)
+			.attr("y", (index++)* n.itemHeight)
+			.attr("x",0);
 			
+		items.exit().remove();
+
+		items.each(function(d,i) {
+			var item = d3.select(this);
+			item.append("rect")
+				//.on("mousedown",ui_listBoxMouseDown)
+				//.on("mouseup",ui_listBoxMouseUp)
+				.on("mouseup",function (d) {nodeMouseUp(n); })
+				.on("mousedown",function (d) {nodeMouseDown(n); })
+				.on("mousemove",function (d) { nodeMouseMove(n); })
+				.on("mouseover", function (d) {nodeMouseOver(n); })
+				.on("mouseout", function (d) {nodeMouseOut(n); })
+				.attr("y", (i+1)* n.itemHeight)
+				.attr("x",0)
+				.attr("rx",3)
+				.attr("ry",3)
+				.attr("width",n.w)
+				.attr("height","30"); // width="120" height="30"
+				
+			item.append("text")
+				.attr("class", "node_label_uiListBoxItem")
+				.attr("x", (n.w - calculateTextWidth(itemsTexts[i]))/2)
+				.attr("y", (i+1)* n.itemHeight + 14)
+				.attr("text-anchor", "start")
+				.attr("dy", "0.35em")
+				.text(itemsTexts[i]);
+		});
+		//n.h = (itemsTexts.lenght+1)*30;
+		//nodeRect.h = 
+		return (itemsTexts.lenght+1)*30;*/
+	}
+	function ui_listBoxMouseDown(d)
+	{
+		console.warn("ui_listBoxMouseDown " + d.name + " " + d.selectedIndex);
+	}
+	function ui_listBoxMouseUp(d)
+	{
+		console.warn("ui_listBoxMouseUp " + d.name + " " + d.selectedIndex);
 	}
 	function redraw_nodeIcon(nodeRect, d)
 	{
@@ -2233,12 +2346,15 @@ RED.view = (function() {
 			nodeText = d.name ? d.name : "";// d.id;
 			return nodeText;
 		})
-		.attr('y', function(d){ if (d.type == "UI_Slider") return d.h + 10;
-								else return (d.h/2)-1;})
+		.attr('y', function(d){
+			if (d.type == "UI_Slider") return d.h + 10;
+			else if (d.type == "UI_ListBox") return 15;
+			else return (d.h/2)-1;
+		})
 		.attr('class',function(d){
-			return 'node_label'+
-			(d._def.align?' node_label_'+d._def.align:'')+
-			(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
+			return 'node_label';//+
+			//(d._def.align?' node_label_'+d._def.align:''); //+
+			//(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
 		});
 		if (d._def.uiObject != undefined)
 		nodeRects.attr('x', function(d)
@@ -2961,6 +3077,10 @@ RED.view = (function() {
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
+	/**
+	 * 
+	 * @param {boolean} fullUpdate 
+	 */
 	function redraw(fullUpdate) {
 		const t0 = performance.now();
 		//console.trace("redraw");
