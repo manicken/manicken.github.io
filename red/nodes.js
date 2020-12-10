@@ -787,15 +787,21 @@ RED.nodes = (function() {
 							
 						}
 					}
-					if (n.bgColor == undefined)
+					if (n.bgColor == undefined)	node.bgColor = node._def.color; 
+					else node.bgColor = n.bgColor;
+
+					/*if (n.type == "Ui_ListBox")
 					{
-						node.bgColor = node._def.color; 
+						if (n.itemBGcolor == undefined)	node.itemBGcolor = node._def.color; 
+						else node.itemBGcolor = n.itemBGcolor;
 					}
-					else
+					else if (n.type == "Ui_Piano")
 					{
-						node.bgColor = n.bgColor;
-					}
-					
+						if (n.whiteKeysColor == undefined)	node.whiteKeysColor = node._def.color; 
+						else node.whiteKeysColor = n.whiteKeysColor;
+						if (n.blackKeysColor == undefined)	node.blackKeysColor = node._def.color; 
+						else node.blackKeysColor = n.blackKeysColor;
+					}*/
 					node.outputs = n.outputs||node._def.outputs;
 
 					addNode(node);

@@ -1626,14 +1626,15 @@ RED.view = (function() {
 			this.setAttribute("style", "cursor: move");
 	}
 	
-	function nodeMouseDown(d) { // this only happens once
+	function nodeMouseDown(d,i) { // this only happens once
 
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
 					var x = mousePos[0];
 					var y = mousePos[1];
-			uiObjectMouseDown(d, x, y); // here the event is passed down to the ui object
+			var rect = d3.select(this);
+			uiObjectMouseDown(d, x, y, rect); // here the event is passed down to the ui object
 			return;
 		}
 
@@ -1785,7 +1786,8 @@ RED.view = (function() {
 			var mousePos = d3.mouse(this)
 					var x = mousePos[0];
 					var y = mousePos[1];
-			uiObjectMouseUp(d,x,y); // here the event is passed down to the ui object
+			var rect = d3.select(this);
+			uiObjectMouseUp(d, x, y, rect); // here the event is passed down to the ui object
 			return;
 		}
 		showHideGrid(false);
@@ -1895,7 +1897,7 @@ RED.view = (function() {
 		else
 			return value.toString(16);
 	}
-	function uiObjectMouseDown(d, mouseX, mouseY)
+	function uiObjectMouseDown(d, mouseX, mouseY, rect)
 	{
 		mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
 		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
@@ -1913,10 +1915,20 @@ RED.view = (function() {
 			if (d.sendMode == "m")
 				sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
-			ui_listBoxMouseDown(d);
+			d.selectedIndex = rect.attr("listItemIndex");
+			console.warn("ui_listBoxMouseDown " + d.sendCommand + " " + d.selectedIndex);
+			var formatted = eval(d.sendCommand);
+			RED.arduino.SendToWebSocket(formatted);
+		} else if (d.type == "UI_Piano") {
+			d.keyIndex = parseInt(rect.attr("keyIndex"));
+			d.keyDown = 0x90;
+			
+			var formatted = eval(d.sendCommand);
+			console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
+			RED.arduino.SendToWebSocket(formatted);
 		}
 	}
-	function uiObjectMouseUp(d, mouseX, mouseY)
+	function uiObjectMouseUp(d, mouseX, mouseY, rect)
 	{
 		mouse_mode = RED.state.DEFAULT;
 		
@@ -1931,7 +1943,18 @@ RED.view = (function() {
 			if (d.sendMode == "r")
 				sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
-			ui_listBoxMouseUp(d);
+			//ui_listBoxMouseUp(d, rect);
+		}
+		 else if (d.type == "UI_Piano") {
+			d.keyIndex = parseInt(rect.attr("keyIndex"));
+			d.keyDown = 0x80;
+			
+			var formatted = eval(d.sendCommand);
+			console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
+			RED.arduino.SendToWebSocket(formatted);
+		}
+		else if (d.type == "UI_ScriptButton") {
+			eval(d.comment);
 		}
 	}
 	function uiObjectMouseScroll(delta)
@@ -2142,7 +2165,10 @@ RED.view = (function() {
 		else if (d.type == "UI_ListBox")
 		{
 			redraw_ListBoxNodeRects_init(nodeRect,d);
-
+		}
+		else if (d.type == "UI_Piano")
+		{
+			redraw_Piano_init(nodeRect,d);
 		}
 		else
 			mainRect.attr("fill",function(d) { return d._def.color;});
@@ -2165,80 +2191,60 @@ RED.view = (function() {
 	}
 	function redraw_ListBoxNodeRects_init(nodeRect,n)
 	{
-		var index = 1;
 		var items = n.items.split("\n");
+
+		nodeRect.selectAll(".ui_listBox_item").remove();
+		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
+
 		for ( var i = 0; i < items.length; i++)
 		{
 			var item = nodeRect.append("rect")
 				.attr("class", "ui_listBox_item")
 				.attr("rx", 6)
 				.attr("ry", 6)
-				.attr("y", (i+1)* n.itemHeight)
-				.attr("x",0)
-				.attr("width",n.w)
-				.attr("height","30")
+				.attr("listItemIndex", i)
+				.attr("selected", false)
 				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
 				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
 				.on("mousemove", nodeMouseMove)
 				.on("mouseover", nodeMouseOver)
 				.on("mouseout", nodeMouseOut)
-				.attr("fill",function(d) { return d._def.color;});
+				.attr("fill",function(d) { return d.bgColor;});
 
 			var itemText = nodeRect.append("text")
 				.attr("class", "node_label_uiListBoxItem")
-				.attr("x", (n.w - calculateTextWidth(items[i]))/2)
-				.attr("y", (i+1)* n.itemHeight + 14)
 				.attr("text-anchor", "start")
 				.attr("dy", "0.35em")
 				.text(items[i]);
 		}
-		nodeRect.attr("height", ((items.lenght+5)*30));
-		/*var items = nodeRect.selectAll(".ui_listBox_item").data(itemsTexts);
-		items.enter().append("g")
-			.attr("class","node ui_listBox_item")
-			.attr("rx",6)
-			.attr("ry",6)
-			.attr("y", (index++)* n.itemHeight)
-			.attr("x",0);
-			
-		items.exit().remove();
+	}
+	function redraw_Piano_init(nodeRect,n)
+	{
+		nodeRect.selectAll(".ui_piano_item").remove();
+		nodeRect.selectAll(".node_label_uiPianoKey").remove();
+		var items =     ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
+		var itemIndex = [0  ,2  ,4  ,5  ,7  ,9  ,11 ,1   ,3   ,6   ,8   ,10];
+		for ( var i = 0; i < 12; i++)
+		{
+			var item = nodeRect.append("rect")
+				.attr("class", "ui_piano_item")
+				.attr("rx", 6)
+				.attr("ry", 6)
+				.attr("keyIndex", itemIndex[i])
+				.attr("selected", false)
+				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.attr("fill",function(d) { return d.bgColor;});
 
-		items.each(function(d,i) {
-			var item = d3.select(this);
-			item.append("rect")
-				//.on("mousedown",ui_listBoxMouseDown)
-				//.on("mouseup",ui_listBoxMouseUp)
-				.on("mouseup",function (d) {nodeMouseUp(n); })
-				.on("mousedown",function (d) {nodeMouseDown(n); })
-				.on("mousemove",function (d) { nodeMouseMove(n); })
-				.on("mouseover", function (d) {nodeMouseOver(n); })
-				.on("mouseout", function (d) {nodeMouseOut(n); })
-				.attr("y", (i+1)* n.itemHeight)
-				.attr("x",0)
-				.attr("rx",3)
-				.attr("ry",3)
-				.attr("width",n.w)
-				.attr("height","30"); // width="120" height="30"
-				
-			item.append("text")
-				.attr("class", "node_label_uiListBoxItem")
-				.attr("x", (n.w - calculateTextWidth(itemsTexts[i]))/2)
-				.attr("y", (i+1)* n.itemHeight + 14)
+			var itemText = nodeRect.append("text")
+				.attr("class", "node_label_uiPianoKey")
 				.attr("text-anchor", "start")
 				.attr("dy", "0.35em")
-				.text(itemsTexts[i]);
-		});
-		//n.h = (itemsTexts.lenght+1)*30;
-		//nodeRect.h = 
-		return (itemsTexts.lenght+1)*30;*/
-	}
-	function ui_listBoxMouseDown(d)
-	{
-		console.warn("ui_listBoxMouseDown " + d.name + " " + d.selectedIndex);
-	}
-	function ui_listBoxMouseUp(d)
-	{
-		console.warn("ui_listBoxMouseUp " + d.name + " " + d.selectedIndex);
+				.text(items[i]);
+		}
 	}
 	function redraw_nodeIcon(nodeRect, d)
 	{
@@ -2349,6 +2355,7 @@ RED.view = (function() {
 		.attr('y', function(d){
 			if (d.type == "UI_Slider") return d.h + 10;
 			else if (d.type == "UI_ListBox") return 15;
+			else if (d.type == "UI_Piano") return 15;
 			else return (d.h/2)-1;
 		})
 		.attr('class',function(d){
@@ -2364,6 +2371,7 @@ RED.view = (function() {
 			return (d.w-(calculateTextWidth(nodeText)))/2;
 		});
 	}
+
 	function redraw_nodeStatus(nodeRect)
 	{
 		var status = nodeRect.append("svg:g").attr("class","node_status_group").style("display","none");
@@ -3043,18 +3051,130 @@ RED.view = (function() {
 								});
 
 				}
+				else if (d.type == "UI_ListBox")
+				{
+					if (d.itemCountChanged != undefined && d.itemCountChanged == true)
+					{
+						redraw_ListBoxNodeRects_init(nodeRect, d);
+					}
+
+					var items = d.items.split("\n");
+					d.headerHeight = parseInt(d.headerHeight)
+					var itemHeight = (d.h-d.headerHeight-4) / (items.length);
+					nodeRect.selectAll(".node").attr("height", d.h+4)
+											.attr("fill", d.bgColor);
+
+					nodeRect.selectAll('.ui_listBox_item').each(function(d,i) {
+						var li = d3.select(this);
+						li.attr('y', ((i)*itemHeight + d.headerHeight));
+						li.attr("width", d.w-8);
+						li.attr("x", 4);
+						li.attr("height", itemHeight);
+						li.attr("fill", d.itemBGcolor);
+					});
+
+					nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
+						var ti = d3.select(this);
+						ti.attr('x', (d.w-(calculateTextWidth(items[i])))/2 - 4);
+						ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
+						ti.text(items[i]);
+					});
+				}
+				else if (d.type == "UI_Piano")
+				{
+					//d.headerHeight = 30;//parseInt(d.headerHeight)
+					//d.whiteKeysColor = "#FFFFFF";
+					//d.blackKeysColor = "#A0A0A0";
+					var items = ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
+					var keyWidth = d.w/7;
+					var itemHeight = d.h - d.headerHeight;
+					nodeRect.selectAll(".node").attr("height", d.h+4)
+											.attr("fill", d.bgColor);
+
+					nodeRect.selectAll('.ui_piano_item').each(function(d,i) {
+						var li = d3.select(this);
+						li.attr('y', d.headerHeight);
+						li.attr("width", keyWidth);
+						
+
+						if (i <= 6)
+						{
+							li.attr("x", i*keyWidth);
+							li.attr("height", itemHeight);
+							li.attr("fill", d.whiteKeysColor);
+						}
+						else if (i >= 7 && i <= 8)
+						{
+							li.attr("x", (i-7)*keyWidth + keyWidth/2);
+							li.attr("height", itemHeight/2);
+							li.attr("fill", d.blackKeysColor);
+						}
+						else if (i >= 9)
+						{
+							li.attr("x", (i-6)*keyWidth + keyWidth/2);
+							li.attr("height", itemHeight/2);
+							li.attr("fill", d.blackKeysColor);
+						}
+						
+					});
+
+					nodeRect.selectAll('text.node_label_uiPianoKey').each(function(d,i) {
+						var ti = d3.select(this);
+						if (i <= 6)
+						{
+							ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextWidth(items[i])))/2));
+							ti.attr('y', d.headerHeight + itemHeight - 15);
+						}
+						else if (i >= 7 && i <= 8)
+						{
+							ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextWidth(items[i])))/2)+keyWidth/2);
+							ti.attr('y', d.headerHeight + (itemHeight/2)/2);
+						}
+						else if (i >= 9)
+						{
+							ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextWidth(items[i])))/2)+keyWidth/2);
+							ti.attr('y', d.headerHeight + (itemHeight/2)/2);
+						}
+						ti.text(items[i]);
+					});
+					/*var item = nodeRect.append("rect")
+						.attr("class", "ui_piano_item")
+						.attr("rx", 6)
+						.attr("ry", 6)
+						.attr("index", i)
+						.attr("selected", false)
+						.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+						.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+						.on("mousemove", nodeMouseMove)
+						.on("mouseover", nodeMouseOver)
+						.on("mouseout", nodeMouseOut)
+						.attr("fill",function(d) { return d.bgColor;});
+
+					var itemText = nodeRect.append("text")
+						.attr("class", "node_label_uiPianoKey")
+						.attr("text-anchor", "start")
+						.attr("dy", "0.35em")
+						.text(items[i]);*/
+				}
 				else
 					nodeRect.selectAll(".node").attr("fill", d.bgColor);
 
 				//nodeRect.style("background-color", d.bgColor)
 				//if (d.x < -50) deleteSelection();  // Delete nodes if dragged back to palette
+
 				if (d.resize) {
-					
-					if (d._def.uiObject == undefined)
-						redraw_calcNewNodeSize(d);
-					redraw_nodeInputs(nodeRect, d);
-					redraw_nodeOutputs(nodeRect, d);
 					d.resize = false;
+					if (d._def.uiObject == undefined)
+					{
+						redraw_calcNewNodeSize(d);
+						redraw_nodeInputs(nodeRect, d);
+						redraw_nodeOutputs(nodeRect, d);
+					}
+					else // UI object
+					{
+
+					}
+					
 				}
 				//console.log("redraw stuff");
 

@@ -79,12 +79,16 @@ RED.editor = (function() {
 		//aceEditor.completers = [completer];
 
 		//editor.setTheme("ace/theme/iplastic");
-		aceEditor.session.setMode("ace/mode/c_cpp");
+		if (node.type == "UI_ScriptButton")
+			aceEditor.session.setMode("ace/mode/javascript");
+		else
+			aceEditor.session.setMode("ace/mode/c_cpp");
 		aceEditor.setOptions({
 			enableBasicAutocompletion: true,
 			enableSnippets: true,
 			enableLiveAutocompletion: true,
 		});
+		if (node.comment == undefined) node.comment = " ";
 		aceEditor.setValue(node.comment);
 		//var funcRegex = new RegExp();
 											/* + 
@@ -404,7 +408,13 @@ RED.editor = (function() {
 									configNode.users.push(editing_node);
 								}
 							}
+							if (editing_node.type == "UI_ListBox" && d == "items")
+							{
+								var newItemCount = newValue.split("\n").length;
+								var oldItemCount = editing_node.items.split("\n").length;
 
+								if (newItemCount != oldItemCount) editing_node.itemCountChanged = true;
+							}
 							changes[d] = editing_node[d];
 							editing_node[d] = newValue;
 							changed = true;
@@ -420,6 +430,10 @@ RED.editor = (function() {
 			changed = changed || credsChanged;
 		}
 
+		if (editing_node.type == "UI_ListBox")
+		{
+			var items = editing_node.items.split("\n");
+		}
 
 		var removedLinks = updateNodeProperties(editing_node);
 		if (changed) {
@@ -430,15 +444,22 @@ RED.editor = (function() {
 		}
 		editing_node.dirty = true;
 		validateNode(editing_node);
-		if (editing_node.type == "Function" || editing_node.type == "Variables" || editing_node.type == "CodeFile")
+		if (editing_node._def.useAceEditor != undefined)
 		{ 
 			var editor = ace.edit("aceEditor");
 			editing_node.comment = editor.getValue();
 		}
 		
-		console.log("edit node bgColor:" + editing_node.bgColor);
+		
+		
 		editing_node.bgColor = $("#node-input-color").val();
-		console.log("edit node bgColor:" + editing_node.bgColor);
+		if (editing_node.type == "UI_ListBox")
+			editing_node.itemBGcolor = $("#node-input-itemBGcolor").val();
+		else if (editing_node.type == "UI_Piano")
+		{
+			editing_node.whiteKeysColor = $("#node-input-whiteKeysColor").val();
+			editing_node.blackKeysColor = $("#node-input-blackKeysColor").val();
+		}
 		RED.view.redraw();
 		console.log("edit node saved!");
 	}
@@ -516,7 +537,14 @@ RED.editor = (function() {
 							
 						}
 						$("#node-input-color").val(editing_node.bgColor);
-						jscolor.init();
+						if (editing_node.type == "UI_ListBox")
+							$("#node-input-itemBGcolor").val(editing_node.itemBGcolor);
+						else if (editing_node.type == "UI_Piano")
+						{
+							$("#node-input-whiteKeysColor").val(editing_node.whiteKeysColor);
+							$("#node-input-blackKeysColor").val(editing_node.blackKeysColor);
+						}
+						jscolor.install();
 					}
 
 				},
@@ -680,7 +708,7 @@ RED.editor = (function() {
 	 * @param prefix - the prefix to use in the input element ids (node-input|node-config-input)
 	 */
 	function prepareEditDialog(node,definition,prefix) {
-		if (node.type == "Function" || node.type == "Variables" || node.type == "CodeFile")
+		if (node._def.useAceEditor != undefined)
 		{ 
 			initAceCodeEditor(node);
 		}

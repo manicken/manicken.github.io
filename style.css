@@ -608,6 +608,18 @@ settings-item-multilinetextInput {
     -ms-user-select: none;
     user-select: none;
  }
+ .node_label_uiPianoKey {
+    stroke-width: 0;
+    fill: rgb(0, 0, 0);
+    font-size: 16px;
+    pointer-events: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+ }
 .node_label2 {
     stroke-width: 0;
     fill: #333;
