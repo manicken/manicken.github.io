@@ -1520,10 +1520,10 @@ RED.view = (function() {
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
-					var x = mousePos[0];
-					var y = mousePos[1];
-			
-			uiObjectMouseOver(d,x,y); // here the event is passed down to the ui object
+			var x = mousePos[0];
+			var y = mousePos[1];
+			var rect = d3.select(this);
+			uiObjectMouseOver(d,x,y,rect); // here the event is passed down to the ui object
 			return;
 		}
 		if (mouse_mode === 0) {
@@ -1556,10 +1556,10 @@ RED.view = (function() {
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
-					var x = mousePos[0];
-					var y = mousePos[1];
-			
-			uiObjectMouseOut(d,x,y); // here the event is passed down to the ui object
+			var x = mousePos[0];
+			var y = mousePos[1];
+			var rect = d3.select(this);
+			uiObjectMouseOut(d,x,y,rect); // here the event is passed down to the ui object
 			return;
 		}
 		var nodeRect = d3.select(this);
@@ -1631,8 +1631,8 @@ RED.view = (function() {
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
-					var x = mousePos[0];
-					var y = mousePos[1];
+			var x = mousePos[0];
+			var y = mousePos[1];
 			var rect = d3.select(this);
 			uiObjectMouseDown(d, x, y, rect); // here the event is passed down to the ui object
 			return;
@@ -1802,19 +1802,7 @@ RED.view = (function() {
 	}
 
 
-	function uiObjectMouseOver (d, mouseX, mouseY)
-	{
-		//mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
-		//console.error("uiObjectMouseOver @" + d.name + " "  + mouseX + ":" + mouseY);
-		currentUiObject = d; // used by scroll event
-	}
-
-	function uiObjectMouseOut (d, mouseX, mouseY)
-	{
-		//mouse_mode = RED.state.DEFAULT;
-		//console.warn("uiObjectMouseOut @"+ d.name + " " + mouseX + ":" + mouseY);
-		currentUiObject = null; // used by scroll event
-	}
+	
 
 	function uiObjectMouseMove (d, mouseX, mouseY)
 	{
@@ -1897,6 +1885,19 @@ RED.view = (function() {
 		else
 			return value.toString(16);
 	}
+	function uiObjectMouseOver (d, mouseX, mouseY, rect)
+	{
+		if (mouse_mode == RED.state.UI_OBJECT_MOUSE_DOWN)
+			uiObjectMouseDown(d, mouseX, mouseY, rect);
+		currentUiObject = d; // used by scroll event
+	}
+
+	function uiObjectMouseOut (d, mouseX, mouseY, rect)
+	{
+		if (mouse_mode == RED.state.UI_OBJECT_MOUSE_DOWN)
+			uiObjectMouseUp(d, mouseX, mouseY, rect, true);
+		currentUiObject = null; // used by scroll event
+	}
 	function uiObjectMouseDown(d, mouseX, mouseY, rect)
 	{
 		mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
@@ -1924,13 +1925,14 @@ RED.view = (function() {
 			d.keyDown = 0x90;
 			
 			var formatted = eval(d.sendCommand);
-			console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
+			//console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
 			RED.arduino.SendToWebSocket(formatted);
 		}
 	}
-	function uiObjectMouseUp(d, mouseX, mouseY, rect)
+	function uiObjectMouseUp(d, mouseX, mouseY, rect, mouse_still_down)
 	{
-		mouse_mode = RED.state.DEFAULT;
+		if (mouse_still_down == undefined)
+		mouse_mode = RED.state.UI_OBJECT_MOUSE_UP;
 		
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
@@ -1950,7 +1952,7 @@ RED.view = (function() {
 			d.keyDown = 0x80;
 			
 			var formatted = eval(d.sendCommand);
-			console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
+			//console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
 			RED.arduino.SendToWebSocket(formatted);
 		}
 		else if (d.type == "UI_ScriptButton") {
@@ -3094,26 +3096,27 @@ RED.view = (function() {
 					nodeRect.selectAll('.ui_piano_item').each(function(d,i) {
 						var li = d3.select(this);
 						li.attr('y', d.headerHeight);
-						li.attr("width", keyWidth);
-						
 
 						if (i <= 6)
 						{
 							li.attr("x", i*keyWidth);
 							li.attr("height", itemHeight);
 							li.attr("fill", d.whiteKeysColor);
+							li.attr("width", keyWidth);
 						}
 						else if (i >= 7 && i <= 8)
 						{
-							li.attr("x", (i-7)*keyWidth + keyWidth/2);
+							li.attr("x", (i-7)*keyWidth + keyWidth/2 + 3);
 							li.attr("height", itemHeight/2);
 							li.attr("fill", d.blackKeysColor);
+							li.attr("width", keyWidth-6);
 						}
 						else if (i >= 9)
 						{
-							li.attr("x", (i-6)*keyWidth + keyWidth/2);
+							li.attr("x", (i-6)*keyWidth + keyWidth/2 + 3);
 							li.attr("height", itemHeight/2);
 							li.attr("fill", d.blackKeysColor);
+							li.attr("width", keyWidth-6);
 						}
 						
 					});
