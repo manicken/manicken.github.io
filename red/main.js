@@ -259,7 +259,7 @@ RED.main = (function() {
 				}
 			]
 		});
-		if ($( "#select-name-dialog-name" ).val().trim().length == 0)
+		//if ($( "#select-name-dialog-name" ).val().trim().length == 0)
 			$( "#select-name-dialog-name" ).val(defaultFileName);
 		$( "#select-name-dialog" ).dialog('open');
 	}

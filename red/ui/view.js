@@ -956,44 +956,13 @@ RED.view = (function() {
 			accept:".palette_node",
 			drop: function( event, ui ) {
 				d3.event = event;
-				var selected_tool = ui.draggable[0].type;
-
 				var mousePos = d3.touches(this)[0]||d3.mouse(this);
 				mousePos[1] += this.scrollTop;
 				mousePos[0] += this.scrollLeft;
 				mousePos[1] /= settings.scaleFactor;
 				mousePos[0] /= settings.scaleFactor;
 
-				var nn = {x: mousePos[0],y:mousePos[1],w:node_def.width,z:activeWorkspace};
-				nn.type = selected_tool;
-				nn._def = RED.nodes.getType(nn.type);
-				
-				nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
-				nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
-				nn.name = RED.nodes.cppName(nn); // jannik add/change create unique name
-
-				nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
-				nn._def.defaults.name = { value: nn.id };
-
-				nn.outputs = nn._def.outputs;
-				nn.changed = true;
-				console.log("drop happend:" + selected_tool + ", type:" + nn.type);
-				for (var d in nn._def.defaults) {
-					if (nn._def.defaults.hasOwnProperty(d)) {
-						if (d == "name" || d == "id") continue; // jannik add (this prevent above assigment to be overwritten)
-						nn[d] = nn._def.defaults[d].value;
-					}
-				}
-
-				if (nn._def.onadd) {
-					nn._def.onadd.call(nn);
-				}
-
-				nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
-				RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
-				RED.nodes.add(nn);
-				RED.nodes.addUsedNodeTypesToPalette();
-				RED.editor.validateNode(nn);
+				var nn = AddNewNode(mousePos[0],mousePos[1], ui.draggable[0].type);
 				setDirty(true);
 				// auto select dropped node - so info shows (if visible)
 				clearSelection();
@@ -1008,7 +977,41 @@ RED.view = (function() {
 				}
 			}
 	});
+	function AddNewNode(xPos, yPos, typeName)
+	{
+		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
+		nn.type = typeName;
+		nn._def = RED.nodes.getType(nn.type);
+		
+		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
+		nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
+		nn.name = RED.nodes.cppName(nn); // jannik add/change create unique name
 
+		nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
+		nn._def.defaults.name = { value: nn.id };
+
+		nn.outputs = nn._def.outputs;
+		nn.changed = true;
+		console.log("drop happend:" + typeName);
+		for (var d in nn._def.defaults) {
+			if (nn._def.defaults.hasOwnProperty(d)) {
+				if (d == "name" || d == "id") continue; // jannik add (this prevent above assigment to be overwritten)
+				nn[d] = nn._def.defaults[d].value;
+			}
+		}
+
+		if (nn._def.onadd) {
+			nn._def.onadd.call(nn);
+		}
+
+		nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
+		RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
+		RED.nodes.add(nn);
+		RED.nodes.addUsedNodeTypesToPalette();
+		RED.editor.validateNode(nn);
+		
+		return nn;
+	}
 	function zoomIn() {
 		if (settings.scaleFactor < 0.3)
 		{
@@ -1274,6 +1277,33 @@ RED.view = (function() {
 			//}
 		}
 	}
+	function removeNode(node)
+	{
+		node.selected = false;
+		if (node.x < 0) {
+			node.x = 25
+		}
+						
+		var rmlinks = RED.nodes.remove(node.id);
+		for (var j=0; j < rmlinks.length; j++) {
+			var link = rmlinks[j];
+			//console.log("delete link: " + link.source.id + ":" + link.sourcePort
+			//	+ " -> " + link.target.id + ":" + link.targetPort);
+			if (link.source == node) {
+				// reenable input port
+				var n = link.targetPort;
+				var rect = link.target.inputlist[n];
+				rect.on("mousedown", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
+					.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
+					.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
+					.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
+					.on("mouseover", nodeInput_mouseover)
+					.on("mouseout", nodePort_mouseout)
+					//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
+					//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
+			}
+		}
+	}
 	function deleteSelection() {
 		var removedNodes = [];
 		var removedLinks = [];
@@ -1351,17 +1381,35 @@ RED.view = (function() {
 			RED.notify(moving_set.length+" node"+(moving_set.length>1?"s":"")+" copied");
 		}
 	}
-
-	function calculateTextWidth(str) {
-		var sp = document.createElement("span");
+	var calculateTextSizeElement = undefined;
+	function calculateTextSize(str) {
+		
+		//if (str == undefined)
+		//	return {w:0, h:0};
+		//console.error("@calculateTextSize str type:" + typeof str);
+		if (calculateTextSizeElement == undefined)
+		{
+			console.error("@calculateTextSize created new");
+			var sp = document.createElement("span");
+			sp.className = "node_label";
+			sp.style.position = "absolute";
+			sp.style.top = "-1000px";
+			document.body.appendChild(sp);
+			calculateTextSizeElement = sp;
+		}
+		var sp = calculateTextSizeElement;
+		/*var sp = document.createElement("span");
 		sp.className = "node_label";
 		sp.style.position = "absolute";
-		sp.style.top = "-1000px";
+		sp.style.top = "-1000px";*/
 		sp.innerHTML = (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-		document.body.appendChild(sp);
+		const t0 = performance.now();
 		var w = sp.offsetWidth;
-		document.body.removeChild(sp);
-		return /*50+*/w;
+		var h = sp.offsetHeight;
+		//document.body.removeChild(sp);
+		const t1 = performance.now();
+		//console.error("@calculateTextSize time:" + (t1-t0));
+		return {w:parseInt(w), h:parseInt(h)};
 	}
 
 	function resetMouseVars() {
@@ -1665,6 +1713,7 @@ RED.view = (function() {
 		var i;
 
 		if (d.selected && d3.event.ctrlKey) {
+			console.error("selection splice");
 			d.selected = false;
 			for (i=0;i<moving_set.length;i+=1) {
 				if (moving_set[i].n === d) {
@@ -1904,11 +1953,7 @@ RED.view = (function() {
 		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
 
 		if (d.type == "UI_Button") {
-			if (d.bgColorOld != undefined) d.bgColor = d.bgColorOld; // failsafe
-			d.bgColorOld = d.bgColor;
-			d.bgColor = subtractColor(d.bgColor, "#202020");
-			d.dirty = true;
-			redraw(false);
+			setRectFill(rect);
 			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
 		
 		} else if (d.type == "UI_Slider") {
@@ -1916,18 +1961,49 @@ RED.view = (function() {
 			if (d.sendMode == "m")
 				sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
-			d.selectedIndex = rect.attr("listItemIndex");
+			var newIndex = rect.attr("listItemIndex");
+			if (newIndex == undefined) {
+				console.warn("listbox title clicked");
+				return; // this happenns when click title bar
+			}
+			d.selectedIndex = parseInt(newIndex);
 			console.warn("ui_listBoxMouseDown " + d.sendCommand + " " + d.selectedIndex);
 			var formatted = eval(d.sendCommand);
+
+			setRectFill(rect);
+
 			RED.arduino.SendToWebSocket(formatted);
 		} else if (d.type == "UI_Piano") {
-			d.keyIndex = parseInt(rect.attr("keyIndex"));
+			var newKeyIndex = rect.attr("keyIndex");
+			if (newKeyIndex == undefined) {
+				console.warn("piano title clicked");
+				return; // this happenns when click title bar
+			}
+			d.keyIndex = parseInt(newKeyIndex);
 			d.keyDown = 0x90;
-			
+			setRectFill(rect);
 			var formatted = eval(d.sendCommand);
 			//console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
 			RED.arduino.SendToWebSocket(formatted);
 		}
+		else if (d.type == "UI_ScriptButton") {
+			setRectFill(rect);
+		}
+	}
+	function setRectFill(rect)
+	{
+		console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
+		console.warn('rect.attr("fill")' + rect.attr("fill"));
+
+		if (rect.attr("fillOld") != undefined)
+			rect.attr("fill", rect.attr("fillOld")); // failsafe
+		rect.attr("fillOld", rect.attr("fill"));
+		rect.attr("fill", subtractColor(rect.attr("fill"), "#202020"));
+	}
+	function resetRectFill(rect)
+	{
+		if (rect.attr("fillOld") != undefined)
+			rect.attr("fill", rect.attr("fillOld"));
 	}
 	function uiObjectMouseUp(d, mouseX, mouseY, rect, mouse_still_down)
 	{
@@ -1936,26 +2012,30 @@ RED.view = (function() {
 		
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
-			d.bgColor = d.bgColorOld;
-			d.bgColorOld = undefined;
-			d.dirty = true;
-			redraw(false);
+			resetRectFill(rect)
 			if (d.releaseAction != "") RED.arduino.SendToWebSocket(d.releaseAction);
 		} else if (d.type == "UI_Slider") {
 			if (d.sendMode == "r")
 				sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
 			//ui_listBoxMouseUp(d, rect);
+			resetRectFill(rect);
 		}
 		 else if (d.type == "UI_Piano") {
-			d.keyIndex = parseInt(rect.attr("keyIndex"));
+			var newKeyIndex = rect.attr("keyIndex");
+			if (newKeyIndex == undefined) {
+				console.warn("piano title clicked");
+				return; // this happenns when click title bar
+			}
+			d.keyIndex = parseInt(newKeyIndex);
 			d.keyDown = 0x80;
-			
+			resetRectFill(rect);
 			var formatted = eval(d.sendCommand);
 			//console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
 			RED.arduino.SendToWebSocket(formatted);
 		}
 		else if (d.type == "UI_ScriptButton") {
+			resetRectFill(rect);
 			eval(d.comment);
 		}
 	}
@@ -2085,14 +2165,15 @@ RED.view = (function() {
 		{
 			l = d.name + " (" + d.valueType + ")=" + d.value;
 		}
+		console.error("calculateTextSize(\"Hello\").w:" + calculateTextSize("Hello").w)
 		if (d.inputs) // Jannik
 		{
-			d.w = Math.max(node_def.width,calculateTextWidth(l)+50+(d.inputs>0?7:0) );
+			d.w = Math.max(node_def.width,(calculateTextSize(l).w)+50+(d.inputs>0?7:0) );
 			d.h = Math.max(node_def.height, (Math.max(d.outputs,d.inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
 		}
 		else
 		{
-			d.w = Math.max(node_def.width,calculateTextWidth(l)+50+(d._def.inputs>0?7:0) );
+			d.w = Math.max(node_def.width,(calculateTextSize(l).w)+50+(d._def.inputs>0?7:0) );
 			d.h = Math.max(node_def.height,(Math.max(d.outputs,d._def.inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
 		}
 	}
@@ -2166,6 +2247,7 @@ RED.view = (function() {
 		}
 		else if (d.type == "UI_ListBox")
 		{
+			//mainRect.attr("listItemIndex", -1);
 			redraw_ListBoxNodeRects_init(nodeRect,d);
 		}
 		else if (d.type == "UI_Piano")
@@ -2344,7 +2426,7 @@ RED.view = (function() {
 				nodeText = d.label ? d.label : "";
 				if (nodeText == "") 
 				if (nodeText.includes("#")) nodeText = nodeText.replace("#", "d.val");
-				try{nodeText = eval(nodeText); }
+				try{nodeText = new String(eval(nodeText)); }
 				catch (e) { 
 					//nodeText = d.label;
 				}
@@ -2368,9 +2450,9 @@ RED.view = (function() {
 		if (d._def.uiObject != undefined)
 		nodeRects.attr('x', function(d)
 		{
-			//console.log("text width:" + calculateTextWidth(d.name));
+			//console.log("text width:" + calculateTextSize(d.name).w);
 			//console.log("node width:" + d.w);
-			return (d.w-(calculateTextWidth(nodeText)))/2;
+			return (d.w-(calculateTextSize(nodeText).w))/2;
 		});
 	}
 
@@ -3077,7 +3159,7 @@ RED.view = (function() {
 
 					nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
 						var ti = d3.select(this);
-						ti.attr('x', (d.w-(calculateTextWidth(items[i])))/2 - 4);
+						ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2 - 4);
 						ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
 						ti.text(items[i]);
 					});
@@ -3125,17 +3207,17 @@ RED.view = (function() {
 						var ti = d3.select(this);
 						if (i <= 6)
 						{
-							ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextWidth(items[i])))/2));
+							ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2));
 							ti.attr('y', d.headerHeight + itemHeight - 15);
 						}
 						else if (i >= 7 && i <= 8)
 						{
-							ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextWidth(items[i])))/2)+keyWidth/2);
+							ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
 							ti.attr('y', d.headerHeight + (itemHeight/2)/2);
 						}
 						else if (i >= 9)
 						{
-							ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextWidth(items[i])))/2)+keyWidth/2);
+							ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
 							ti.attr('y', d.headerHeight + (itemHeight/2)/2);
 						}
 						ti.text(items[i]);
@@ -3743,10 +3825,12 @@ RED.view = (function() {
 	}
 
 	return {
+		evalHere: function(string,d) { eval(string); },
 		settings:settings,
 		settingsCategoryTitle:settingsCategoryTitle,
 		settingsEditorLabels:settingsEditorLabels,
 		init:initView,
+		AddNewNode:AddNewNode,
 		resetMouseVars:resetMouseVars, // exposed for editor
 		state:function(state) {
 			if (state == null) {
@@ -3792,7 +3876,7 @@ RED.view = (function() {
 			redraw(false);
 		},
 		getForm: getForm,
-		calculateTextWidth: calculateTextWidth,
+		calculateTextSize: calculateTextSize,
 		showExportNodesDialog: showExportNodesDialog,
 		showPopOver:showPopOver,
 		node_def:node_def,

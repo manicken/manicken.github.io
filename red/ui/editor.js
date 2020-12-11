@@ -462,6 +462,32 @@ RED.editor = (function() {
 		}
 		RED.view.redraw();
 		console.log("edit node saved!");
+		RED.storage.update();
+	}
+	function edit_dialog_apply()
+	{
+		if (editing_node) {
+			editNode_dialog_OK_pressed(); // found above
+		} else if (RED.view.state() == RED.state.EXPORT) {
+			console.error("RED.view.state() == RED.state.EXPORT");
+			if (/library/.test($( "#dialog" ).dialog("option","title"))) {
+				//TODO: move this to RED.library
+				var flowName = $("#node-input-filename").val();
+				if (!/^\s*$/.test(flowName)) {
+					$.post('library/flows/'+flowName,$("#node-input-filename").attr('nodes'),function() {
+							RED.library.loadFlowLibrary();
+							RED.notify("Saved nodes","success");
+					});
+				}
+			}
+		} else if (RED.view.state() == RED.state.IMPORT) {
+			console.error("RED.view.state() == RED.state.IMPORT");
+			RED.view.importNodes($("#node-input-import").val());
+		}
+		else
+		{
+			console.error("editor no mode");
+		}
 	}
 	function init_edit_dialog()
 	{
@@ -472,30 +498,23 @@ RED.editor = (function() {
 				width: 500,
 				buttons: [
 					{
+						id: "btnRunScript",
+						text: "Run script",
+						click: function() {
+							var editor = ace.edit("aceEditor");
+							RED.view.evalHere(editor.getValue(), editing_node);
+						}
+					},
+					{
+						text: "Apply",
+						click: function() {
+							edit_dialog_apply();
+						}
+					},
+					{
 						text: "Ok",
 						click: function() {
-							if (editing_node) {
-								editNode_dialog_OK_pressed(); // found above
-							} else if (RED.view.state() == RED.state.EXPORT) {
-								console.error("RED.view.state() == RED.state.EXPORT");
-								if (/library/.test($( "#dialog" ).dialog("option","title"))) {
-									//TODO: move this to RED.library
-									var flowName = $("#node-input-filename").val();
-									if (!/^\s*$/.test(flowName)) {
-										$.post('library/flows/'+flowName,$("#node-input-filename").attr('nodes'),function() {
-												RED.library.loadFlowLibrary();
-												RED.notify("Saved nodes","success");
-										});
-									}
-								}
-							} else if (RED.view.state() == RED.state.IMPORT) {
-								console.error("RED.view.state() == RED.state.IMPORT");
-								RED.view.importNodes($("#node-input-import").val());
-							}
-							else
-							{
-								console.error("editor no mode");
-							}
+							edit_dialog_apply();
 							$( this ).dialog( "close" );
 						}
 					},
@@ -753,7 +772,11 @@ RED.editor = (function() {
 
 	function showEditDialog(node) {
 		editing_node = node;
+		
 		init_edit_dialog();
+
+		if (node.type != "UI_ScriptButton")
+			$("#btnRunScript").hide();
 		RED.view.state(RED.state.EDITING);
 		//$("#dialog-form").html(RED.view.getForm(node.type));
 		//console.log("get form for type:" + node.type);
