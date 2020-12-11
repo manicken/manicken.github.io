@@ -1004,7 +1004,7 @@ RED.view = (function() {
 			nn._def.onadd.call(nn);
 		}
 
-		nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
+		//nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
 		RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
 		RED.nodes.add(nn);
 		RED.nodes.addUsedNodeTypesToPalette();
