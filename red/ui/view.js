@@ -571,7 +571,7 @@ RED.view = (function() {
 
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
-	$('#btn-paste').click(function() {importNodes(clipboard)});
+	$('#btn-paste').click(function() {importNodes(clipboard,null, true)});
 
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
@@ -1995,12 +1995,15 @@ RED.view = (function() {
 				return; // this happenns when click title bar
 			}
 			d.selectedIndex = parseInt(newIndex);
+			d.dirty = true;
 			console.warn("ui_listBoxMouseDown " + d.sendCommand + " " + d.selectedIndex);
 			var formatted = eval(d.sendCommand);
 
-			setRectFill(rect);
+			//setRectFill(rect);
+			
 
 			RED.arduino.SendToWebSocket(formatted);
+			redraw(false);
 		} else if (d.type == "UI_Piano") {
 			var newKeyIndex = rect.attr("keyIndex");
 			if (newKeyIndex == undefined) {
@@ -2047,7 +2050,7 @@ RED.view = (function() {
 				sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
 			//ui_listBoxMouseUp(d, rect);
-			resetRectFill(rect);
+			//resetRectFill(rect);
 		}
 		 else if (d.type == "UI_Piano") {
 			var newKeyIndex = rect.attr("keyIndex");
@@ -2125,7 +2128,7 @@ RED.view = (function() {
 		options.push({name:"delete",disabled:(moving_set.length===0),onselect:function() {deleteSelection();}});
 		options.push({name:"cut",disabled:(moving_set.length===0),onselect:function() {copySelection();deleteSelection();}});
 		options.push({name:"copy",disabled:(moving_set.length===0),onselect:function() {copySelection();}});
-		options.push({name:"paste",disabled:(clipboard.length===0),onselect:function() {importNodes(clipboard,true);}});
+		options.push({name:"paste",disabled:(clipboard.length===0),onselect:function() {importNodes(clipboard,true, true);}});
 		options.push({name:"edit",disabled:(moving_set.length != 1),onselect:function() { RED.editor.edit(mdn);}});
 		options.push({name:"select",onselect:function() {selectAll();}});
 		options.push({name:"undo",disabled:(RED.history.depth() === 0),onselect:function() {RED.history.pop();}});
@@ -3116,7 +3119,7 @@ RED.view = (function() {
 
 			}),function(d){return d.id});
 		}
-		const t0 = performance.now();
+		//const t0 = performance.now();
 		var updateCount = 0;
 		visNodes.each(
 			function(d,i) { // redraw all nodes in active workspace
@@ -3197,7 +3200,10 @@ RED.view = (function() {
 						li.attr("width", d.w-8);
 						li.attr("x", 4);
 						li.attr("height", itemHeight);
-						li.attr("fill", d.itemBGcolor);
+						if (d.selectedIndex == i)
+							li.attr("fill", subtractColor(d.itemBGcolor, "#303030"));
+						else
+							li.attr("fill", d.itemBGcolor);
 					});
 
 					nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
@@ -3309,15 +3315,15 @@ RED.view = (function() {
 				redraw_paletteNodesReqError(d);
 
 				redraw_nodeRefresh(nodeRect, d);
-				const t0_lbl = performance.now();
+				//const t0_lbl = performance.now();
 				if (d.type != "JunctionLR" && d.type != "JunctionRL")
 					redraw_label(nodeRect, d);
-				const t1_lbl = performance.now();
-				console.log('redraw nodes label ' + (t1_lbl-t0_lbl) +' ms.');
+				//const t1_lbl = performance.now();
+				//console.log('redraw nodes label ' + (t1_lbl-t0_lbl) +' ms.');
 		});
-		console.log("redraw nodes count:" + updateCount);
-		const t1 = performance.now();
-		console.log('redraw nodes.each( ' + (t1-t0) +' ms.');
+		//console.log("redraw nodes count:" + updateCount);
+		//const t1 = performance.now();
+		//console.log('redraw nodes.each( ' + (t1-t0) +' ms.');
 	}
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
@@ -3441,7 +3447,7 @@ RED.view = (function() {
 	RED.keyboard.add(/* = */ 187,{ctrl:true},function(){zoomIn();d3.event.preventDefault();});
 	RED.keyboard.add(/* - */ 189,{ctrl:true},function(){zoomOut();d3.event.preventDefault();});
 	RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
-	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard);d3.event.preventDefault();});
+	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard, null, true);d3.event.preventDefault();});
 	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){showExportNodesDialog();d3.event.preventDefault();});
 	RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog(true);d3.event.preventDefault();});
 	RED.keyboard.add(/* s */ 83,{ctrl:true},function(){RED.storage.update();  d3.event.preventDefault();});
@@ -3464,9 +3470,9 @@ RED.view = (function() {
 	 *  - all 'selected'
 	 *  - attached to mouse for placing - 'IMPORT_DRAGGING'
 	 */
-	function importNodes(newNodesStr,touchImport) {
+	function importNodes(newNodesStr,touchImport, createNewIds) {
 		console.trace("view: importNodes");
-		var createNewIds = true;
+		if (createNewIds == undefined) createNewIds = true;
 		var replaceFlow = $("#node-input-replace-flow").prop('checked');
 
 		if ($("#node-input-arduino").prop('checked') === true) {

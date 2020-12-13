@@ -136,7 +136,8 @@ RED.nodes = (function() {
 	function createUniqueCppName(n, wsId) {
 		//console.log("getUniqueCppName, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
 		var basename = n.name; //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
-
+		if (!checkName(basename, wsId)) return basename; // no need to change
+		
 		//console.log("getUniqueCppName, using basename=" + basename);
 		var count = 1;
 		var sep = /[0-9]$/.test(basename) ? "_" : ""; // expression checks if basename ends with a number, sep = seperator
@@ -606,7 +607,7 @@ RED.nodes = (function() {
 	}
 
 	function importNodes(newNodesObj,createNewIds,clearCurrentFlow) {
-		console.trace("importNodes");
+		console.trace("@ importNodes - createNewIds:" + createNewIds);
 		var i;
 		var n;
 		var newNodes;
@@ -805,9 +806,9 @@ RED.nodes = (function() {
 					node.outputs = n.outputs||node._def.outputs;
 
 					addNode(node);
-					if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
+					//if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
 					RED.editor.validateNode(node);
-					if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
+					//if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
 					node_map[n.id] = node; // node_map is used for simple access to destinations when generating wires
 					new_nodes.push(node);
 				}
