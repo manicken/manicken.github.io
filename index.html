@@ -682,14 +682,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":210},"h":{"value":130},"textSize":{"value":14},
 				"midiCh":{"value":0},"octave":{"value":4},"sendCommand":{"value":""},"headerHeight":{"value":30},
-				"whiteKeysColor":{"value":"#FFFFFF"},"blackKeysColor":{"value":"#A0A0A0"},"x":{"value":150},"y":{"value":150}
+				"whiteKeysColor":{"value":"#FFFFFF"},"blackKeysColor":{"value":"#A0A0A0"},"blackKeysWidthDiff":{"value":6},"x":{"value":150},"y":{"value":150}
 			}
 		}},
 		{"type":"UI_ScriptButton",
 		 "data":{
 			"shortName":"scriptBtn","uiObject":true,"nonObject":"","useAceEditor":"","inputs":0,"outputs":0,"category":"ui","color":"#ddffbb","icon":"function.png",
 			"defaults":{
-				 "name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}
+				 "name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":100},"h":{"value":30},"textSize":{"value":14}
 			}
 		}},
 		
@@ -1101,6 +1101,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row">
 		<label for="node-input-y"><i class="fa fa-tag"></i> yPos</label>
 		<input type="text" id="node-input-y" placeholder="y" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
+		<input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off">
 	</div>
 </script>
 <script type="text/x-red" data-help-name="UI_ScriptButton">

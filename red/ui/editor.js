@@ -80,9 +80,10 @@ RED.editor = (function() {
 
 		//editor.setTheme("ace/theme/iplastic");
 		if (node.type == "UI_ScriptButton")
-			aceEditor.session.setMode("ace/mode/javascript");
+			aceEditor.session.setMode("ace/mode/js");
 		else
 			aceEditor.session.setMode("ace/mode/c_cpp");
+
 		aceEditor.setOptions({
 			enableBasicAutocompletion: true,
 			enableSnippets: true,
@@ -117,6 +118,8 @@ RED.editor = (function() {
 		aceEditor.session.selection.clearSelection();
 		//aceEditor.setOption("showInvisibles", true);
 		//aceEditor.setOption("useSoftTabs", true);
+		if (node.type == "UI_ScriptButton") return; 
+		
 		defaultCompleters = aceEditor.completers;
 		console.warn("aceEditor.completers:");
 				console.warn(aceEditor.completers);

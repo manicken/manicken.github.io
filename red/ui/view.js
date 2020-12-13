@@ -1927,6 +1927,34 @@ RED.view = (function() {
 		if (color_B < 0) color_B = 0;
 		return "#" + getTwoHex(color_R) + getTwoHex(color_G) + getTwoHex(color_B);
 	}
+	function generateColorMap()
+	{
+		// FF0000 -> FFFF00 upcount   G
+		// FEFF00 -> 00FF00 downcount R
+		// 00FF01 -> 00FFFF upcount   B
+		// 00FEFF -> 0000FF downcount G
+		// 0000FF -> FF00FF upcount   R
+		// FF00FF -> FF0000 downcount B
+
+		var colorMap = [];
+		var cR = 255;
+		var cG = 0;
+		var cB = 0;
+
+		// upcount   G
+		while(cG != 255) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cG++; }
+		// downcount R
+		while(cR != 0) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cR--; }
+		// upcount   B
+		while(cB != 255) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cB++; }
+		// downcount G
+		while(cG != 0) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cG--; }
+		// upcount   R
+		while(cR != 255) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cR++; }
+		// downcount B
+		while(cB != 0) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cB--; }
+		return colorMap;
+	}
 	function getTwoHex(value)
 	{
 		if (value < 0x10)
@@ -2165,7 +2193,6 @@ RED.view = (function() {
 		{
 			l = d.name + " (" + d.valueType + ")=" + d.value;
 		}
-		console.error("calculateTextSize(\"Hello\").w:" + calculateTextSize("Hello").w)
 		if (d.inputs) // Jannik
 		{
 			d.w = Math.max(node_def.width,(calculateTextSize(l).w)+50+(d.inputs>0?7:0) );
@@ -2436,23 +2463,34 @@ RED.view = (function() {
 			nodeText = d.name ? d.name : "";// d.id;
 			return nodeText;
 		})
-		.attr('y', function(d){
-			if (d.type == "UI_Slider") return d.h + 10;
-			else if (d.type == "UI_ListBox") return 15;
-			else if (d.type == "UI_Piano") return 15;
-			else return (d.h/2)-1;
-		})
 		.attr('class',function(d){
 			return 'node_label';//+
 			//(d._def.align?' node_label_'+d._def.align:''); //+
 			//(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
 		});
+
+		if ((d.oldNodeText != undefined && d.oldNodeText == nodeText) &&
+			(d.oldWidth != undefined && d.oldWidth == d.w) &&
+			(d.oldHeight != undefined && d.oldHeight == d.h)) return;
+		d.oldNodeText = nodeText;
+		d.oldWidth = d.w;
+		d.oldHeight = d.h;
+
+		var textSize = calculateTextSize(nodeText);
+		console.warn("textSize:" + textSize.h + ":" + textSize.w);
+		nodeRects.attr('y', function(d){
+			if (d.type == "UI_Slider") return d.h + parseInt(textSize.h);
+			else if (d.type == "UI_ListBox") return parseInt(textSize.h);
+			else if (d.type == "UI_Piano") return parseInt(textSize.h);
+			else return (d.h/2)-1;
+		});
+
 		if (d._def.uiObject != undefined)
 		nodeRects.attr('x', function(d)
 		{
 			//console.log("text width:" + calculateTextSize(d.name).w);
 			//console.log("node width:" + d.w);
-			return (d.w-(calculateTextSize(nodeText).w))/2;
+			return (d.w-(textSize.w))/2;
 		});
 	}
 
@@ -3017,6 +3055,10 @@ RED.view = (function() {
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
 			anyNodeEnter = true;
+			d.oldNodeText = undefined;
+			d.oldWidth = undefined;
+			d.oldHeight = undefined;
+
 			//console.error("redraw nodeEnter:" + d.type);
 			if (d.type == "TabInput" || d.type == "TabOutput")
 			{
@@ -3074,7 +3116,8 @@ RED.view = (function() {
 
 			}),function(d){return d.id});
 		}
-		//const t0 = performance.now();
+		const t0 = performance.now();
+		var updateCount = 0;
 		visNodes.each(
 			function(d,i) { // redraw all nodes in active workspace
 				var nodeRect = d3.select(this);
@@ -3087,7 +3130,7 @@ RED.view = (function() {
 				}
 
 				if (d.dirty == false) return;
-
+				updateCount++;
 				d.dirty = false;
 				
 				//console.warn(d.name + " was dirty");
@@ -3188,17 +3231,17 @@ RED.view = (function() {
 						}
 						else if (i >= 7 && i <= 8)
 						{
-							li.attr("x", (i-7)*keyWidth + keyWidth/2 + 3);
+							li.attr("x", (i-7)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
 							li.attr("height", itemHeight/2);
 							li.attr("fill", d.blackKeysColor);
-							li.attr("width", keyWidth-6);
+							li.attr("width", keyWidth-d.blackKeysWidthDiff);
 						}
 						else if (i >= 9)
 						{
-							li.attr("x", (i-6)*keyWidth + keyWidth/2 + 3);
+							li.attr("x", (i-6)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
 							li.attr("height", itemHeight/2);
 							li.attr("fill", d.blackKeysColor);
-							li.attr("width", keyWidth-6);
+							li.attr("width", keyWidth-d.blackKeysWidthDiff);
 						}
 						
 					});
@@ -3266,12 +3309,15 @@ RED.view = (function() {
 				redraw_paletteNodesReqError(d);
 
 				redraw_nodeRefresh(nodeRect, d);
-
+				const t0_lbl = performance.now();
 				if (d.type != "JunctionLR" && d.type != "JunctionRL")
 					redraw_label(nodeRect, d);
+				const t1_lbl = performance.now();
+				console.log('redraw nodes label ' + (t1_lbl-t0_lbl) +' ms.');
 		});
-		//const t1 = performance.now();
-		//console.log('redraw nodes.each( ' + (t1-t0) +' ms.');
+		console.log("redraw nodes count:" + updateCount);
+		const t1 = performance.now();
+		console.log('redraw nodes.each( ' + (t1-t0) +' ms.');
 	}
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
