@@ -764,8 +764,6 @@ RED.view = (function() {
 			return;
 		}
 
-		
-
 		var mousePos;
 		if (mouse_mode == RED.state.JOINING) {
 			// update drag line
@@ -1067,6 +1065,7 @@ RED.view = (function() {
 	}
 
 	function clearSelection() {
+		console.trace("clearSelection");
 		for (var i=0;i<moving_set.length;i++) {
 			var n = moving_set[i];
 			n.n.dirty = true;
@@ -1722,25 +1721,38 @@ RED.view = (function() {
 				}
 			}
 		} else {
+			
 			if (d3.event.shiftKey) {
 				clearSelection();
 				var cnodes = RED.nodes.getAllFlowNodes(mousedown_node);
 				for (var n=0;n<cnodes.length;n++) {
+					console.log("asmfjkl.nodes[ni].name:" +cnodes[n].name);
 					cnodes[n].selected = true;
 					cnodes[n].dirty = true;
 					moving_set.push({n:cnodes[n]});
 				}
+				
 			} else if (!d.selected) {
+				
 				if (!d3.event.ctrlKey) {
 					clearSelection();
 				}
 				mousedown_node.selected = true;
-				console.warn("node mouse down happend" + this);
-				moving_set.push({n:mousedown_node, rect:this});
+				moving_set.push({n:mousedown_node});//, rect:this});
+
+				if (mousedown_node.nodes != undefined)
+				{
+					for (var ni = 0;ni < mousedown_node.nodes.length; ni++)
+					{
+						mousedown_node.nodes[ni].selected = true;
+						mousedown_node.nodes[ni].dirty = true;
+						moving_set.push({n:mousedown_node.nodes[ni]});
+					}
+				}
 			}
 			if (!d3.event.ctrlKey)
 				clearLinkSelection();
-			if (d3.event.button != 2) {
+			if (d3.event.button == 0) {
 				
 				// ui object resize mouse down
 				if (d._def.uiObject != undefined)
@@ -1756,7 +1768,7 @@ RED.view = (function() {
 					", mouse_offset_resize_x:" + mouse_offset_resize_x +
 					", mouse_offset_resize_y:" + mouse_offset_resize_y);
 
-					var nodeRect = d3.select(this);
+					//var nodeRect = d3.select(this);
 					var mousePos = d3.mouse(this)
 					var x = mousePos[0];
 					var y = mousePos[1];
@@ -1797,11 +1809,12 @@ RED.view = (function() {
 					}
 					else
 						mouse_mode = RED.state.MOVING;
-					console.log("resize mouse_mode:" + mouse_mode);
+					//console.log("resize mouse_mode:" + mouse_mode);
 				}
 				else
 					mouse_mode = RED.state.MOVING;
 				
+					console.log("mouse down mouse_mode:" + mouse_mode);
 				
 				var mouse = d3.touches(this)[0]||d3.mouse(this);
 				mouse[0] += d.x-d.w/2;
@@ -1829,7 +1842,7 @@ RED.view = (function() {
 		d3.event.stopPropagation();
 	}
 	function nodeMouseUp(d,i) {
-		console.log("nodeMouseUp i" + i);
+		console.log("nodeMouseUp i:" + i);
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)

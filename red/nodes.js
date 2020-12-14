@@ -411,7 +411,17 @@ RED.nodes = (function() {
 		}
 		return nns;
 	}
-
+	function getNodesIds(nodes)
+	{
+		if (nodes == undefined) return [];
+		var nids = [];
+		for (var i = 0; i < nodes.length; i++)
+		{
+			if (nodes[i] == undefined) continue;
+			nids.push(nodes[i].id);
+		}
+		return nids;
+	}
 	/**
 	 * Converts a node to an exportable JSON Object
 	 **/
@@ -423,8 +433,15 @@ RED.nodes = (function() {
 
 		for (var d in n._def.defaults) {
 			if (n._def.defaults.hasOwnProperty(d)) {
-				node[d] = n[d];
+				if (d === "nodes")
+					node[d] = getNodesIds(n[d]);
+				else
+					node[d] = n[d];
 			}
+		}
+		if (n.groupParent != undefined)
+		{
+			node.groupParent = n.groupParent.id;
 		}
 		/*if(exportCreds && n.credentials) {
 			node.credentials = {};
@@ -599,7 +616,7 @@ RED.nodes = (function() {
 
 	function importWorkspaces(newWorkspaces)
 	{
-		for (var i = 0; i < newWorkspaces.lenght; i++)
+		for (var i = 0; i < newWorkspaces.length; i++)
 		{
 			currentWorkspace = newWorkspaces[i];
 			importNodes(newWorkspaces[i].nodes, false);
@@ -731,7 +748,12 @@ RED.nodes = (function() {
 					else
 						var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,changed:false};
 					//console.log(node);
-				
+					
+						/*Object.defineProperty(node, 'selected', {
+							_selected: false,
+							set: function(value) { console.trace(value); this._selected = value;  },
+							get: function() { return this._selected; }
+							})*/
 					//console.log("new node:" + n.name + ":" + n.id);
 
 					if (!node._def) {
@@ -835,6 +857,17 @@ RED.nodes = (function() {
 						}
 					}
 				}
+				if (n.nodes != undefined)
+				{
+					var newNodesList = [];
+					for (var ni = 0; ni < n.nodes.length; ni++)
+					{
+						var nodeRef = node_map[n.nodes[ni]];
+						if (nodeRef != undefined) newNodesList.push(nodeRef);
+					}
+					n.nodes = newNodesList;
+				}
+				
 				delete n.wires;
 			}
 			return [new_nodes,new_links];
@@ -846,6 +879,14 @@ RED.nodes = (function() {
 			throw newException; // throw exception so it can be shown in webbrowser console
 		}
 
+	}
+	function findNodeById(newNodes, id)
+	{
+		for (var i = 0; i < newNodes.length; i++)
+		{
+			if (newNodes[i].id == id) return newNodes[i];
+		}
+		return undefined;
 	}
 	/**
 		 * this function checks for !node.wires at beginning and returns if so.
@@ -1236,7 +1277,7 @@ RED.nodes = (function() {
 				name = name.replace(arrayDef, "[i]");
 		}
 		//console.log("NameDeclaration is Array:" + name);
-		return {newName:name, arrayLenght:value};
+		return {newName:name, arrayLength:value};
 	}
 	function getArrayDeclarationWithoutSizeSyntax(name)
 	{

@@ -79,47 +79,33 @@ RED.editor = (function() {
 		//aceEditor.completers = [completer];
 
 		//editor.setTheme("ace/theme/iplastic");
-		if (node.type == "UI_ScriptButton")
-			aceEditor.session.setMode("ace/mode/js");
-		else
-			aceEditor.session.setMode("ace/mode/c_cpp");
-
+		
 		aceEditor.setOptions({
 			enableBasicAutocompletion: true,
 			enableSnippets: true,
 			enableLiveAutocompletion: true,
 		});
-		if (node.comment == undefined) node.comment = " ";
-		aceEditor.setValue(node.comment);
-		//var funcRegex = new RegExp();
-											/* + 
-											"\s*" +
-											"(unsigned|signed)?" +
-											"\s+" + 
-											"(void|int|char|short|long|float|double|bool)" + 
-											"\s+" +
-											"(\w+)" +
-											"\s*" +
-											"\(" + 
-											"[^)]*" +
-											"\)" + 
-											"\s*" + 
-											"");*/
-
-		//var functions = [...node.comment.matchAll(/\s*(unsigned|signed)?\s*(void|int|char|short|long|float|double|bool)\s+(\w+)\s*\([^)]*\)\s*/g)];
-		//var functionsStr = "Functions("+functions.length+"):\n";
-		/*console.error("functions.length:" + functions.length);
-		for (var fi = 0; fi < functions.length; fi++)
-		{					
-			//if (functions[fi] == undefined) continue;
-			console.error(functions[fi][0].trim());
-		}*/
-		//console.error(functionsStr);
-		aceEditor.session.selection.clearSelection();
-		//aceEditor.setOption("showInvisibles", true);
-		//aceEditor.setOption("useSoftTabs", true);
-		if (node.type == "UI_ScriptButton") return; 
 		
+		
+		if (node._def.useAceEditor == "javascript")
+		{
+			aceEditor.session.setMode("ace/mode/javascript");
+			console.warn("ace editor in javascript mode");
+		}
+		else if (node._def.useAceEditor == "c_cpp")
+		{
+			aceEditor.session.setMode("ace/mode/c_cpp");
+			init_aceEditor_c_cpp_mode(aceEditor);
+			console.warn("ace editor in c_cpp mode");
+		}
+
+		if (node.comment == undefined) node.comment = new String("");
+		aceEditor.setValue(node.comment);
+		aceEditor.session.selection.clearSelection();
+	}
+
+	function init_aceEditor_c_cpp_mode(aceEditor)
+	{
 		defaultCompleters = aceEditor.completers;
 		console.warn("aceEditor.completers:");
 				console.warn(aceEditor.completers);
@@ -537,7 +523,10 @@ RED.editor = (function() {
 						var aceEditor = $("#aceEditor");
 						if (aceEditor)
 						{
-							aceEditor.css("height", $(this).height() - 100);
+							console.log("editor window height:"+$(this).height());
+							$("#aceEditor").height($(this).height() - 120);
+							var aceEditor = ace.edit("aceEditor");
+							aceEditor.resize(true);
 							$(this).scrollTop(aceEditor.scrollHeight);
 						}
 					}
@@ -785,7 +774,7 @@ RED.editor = (function() {
 		//console.log("get form for type:" + node.type);
 		var editorType = "";
 		
-		console.log("showEditDialog"); // just to make it easier to find this function
+		//console.log("showEditDialog"); // just to make it easier to find this function
 		
 		// Jannik add start
 		// (this method is better because then we can define special edit for some types)

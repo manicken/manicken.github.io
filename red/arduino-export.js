@@ -145,7 +145,7 @@ function getTypeName(nns, n)
       if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
       {
         var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
-        if (isArray) tmplDef = "<" + isArray.arrayLenght + ">";
+        if (isArray) tmplDef = "<" + isArray.arrayLength + ">";
         console.log("special case AudioMixer connected from array " + src.node.name + ", new AudioMixer def:" + tmplDef);
       }
       else
@@ -207,7 +207,7 @@ function getNewAudioConnectionType(workspaceId)
     arrayBase: "        patchCord[pci++] = new AudioConnection(",
     dstRootIsArray: false,
     srcRootIsArray: false,
-    arrayLenght: 0,
+    arrayLength: 0,
     srcName: "",
     srcPort: 0,
     dstName: "",
@@ -225,12 +225,12 @@ function getNewAudioConnectionType(workspaceId)
       if (this.dstRootIsArray)
       {
         this.cppCode	+= "    " + this.arrayBase + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
-        this.totalCount+=this.arrayLenght;
+        this.totalCount+=this.arrayLength;
       }
       else if (this.srcRootIsArray)
       {
         this.cppCode	+= "    " + this.arrayBase + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", i);\n";
-        this.totalCount+=this.arrayLenght;
+        this.totalCount+=this.arrayLength;
       }
       else 
       {
@@ -247,7 +247,7 @@ function getNewAudioConnectionType(workspaceId)
         this.dstRootIsArray = false;
         return false;
       }
-      this.arrayLenght = isArray.arrayLenght;
+      this.arrayLength = isArray.arrayLength;
       this.dstName = isArray.newName;
       this.dstRootIsArray = true;
       return true;
@@ -260,7 +260,7 @@ function getNewAudioConnectionType(workspaceId)
         this.srcRootIsArray = false;
         return false;
       }
-      this.arrayLenght = isArray.arrayLenght;
+      this.arrayLength = isArray.arrayLength;
       this.srcName = isArray.newName;
       this.srcRootIsArray = true;
       return true;
@@ -650,9 +650,9 @@ function export_classBased(generateZip)
     }
     newWsCpp.contents += "\n";
     newWsCpp.contents += cppPcs;
-    if (ac.arrayLenght != 0)
+    if (ac.arrayLength != 0)
     {
-      newWsCpp.contents += "        for (int i = 0; i < " + ac.arrayLenght + "; i++)\n        {\n";
+      newWsCpp.contents += "        for (int i = 0; i < " + ac.arrayLength + "; i++)\n        {\n";
       newWsCpp.contents += cppArray;
       newWsCpp.contents += "        }\n";
     }
