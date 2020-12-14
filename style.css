@@ -636,6 +636,21 @@ settings-item-multilinetextInput {
 .function_label {
    font-size: 12px;
 }
+
+.nodeGroupSelOutlineBG {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 6;
+}
+.nodeGroupSelOutline {
+    fill: none;
+    stroke: #ff7f0e;
+    stroke-width: 3;
+}
+.nodeGroupSelOutline-hovered {
+    stroke-opacity:0.8 !important;
+    stroke-dasharray:10 4 !important
+}
 .node {
   stroke: #999;
   cursor: move;

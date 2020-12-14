@@ -309,6 +309,7 @@ RED.editor = (function() {
 		node.resize = true;
 		node.dirty = true;
 		var removedLinks = [];
+		if (node.type == "group") return removedLinks;
 		if (node.outputs < node.ports.length) {
 			while (node.outputs < node.ports.length) {
 				node.ports.pop();
