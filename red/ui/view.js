@@ -243,6 +243,7 @@ RED.view = (function() {
 
 	var outer = d3.select("#chart")
 		.append("svg:svg")
+		.attr("class", "workspace-chart-outer")
 		.attr("width", settings.space_width)
 		.attr("height", settings.space_height)
 		.attr("pointer-events", "all")
@@ -250,8 +251,10 @@ RED.view = (function() {
 
 	 var vis = outer
 		.append('svg:g')
+		.attr("class", "workspace-chart-vis")
 		.on("dblclick.zoom", null)
 		.append('svg:g')
+		.attr("class", "workspace-chart-vis-transform")
 		.on("mousemove", canvasMouseMove)
 		.on("mousedown", canvasMouseDown)
 		.on("mouseup", canvasMouseUp)
@@ -260,149 +263,41 @@ RED.view = (function() {
 		.on("touchstart", canvasTouchStart)
 		.on("touchmove", canvasTouchMove);
 	
-	function canvasTouchEnd()
-	{
-		clearTimeout(touchStartTime);
-		touchStartTime = null;
-		if  (RED.touch.radialMenu.active()) {
-			return;
-		}
-		if (lasso) {
-			outer_background.attr("fill","#fff");
-		}
-		canvasMouseUp.call(this);
-	}
-	function canvasTouchStart()
-	{
-		var touch0;
-		if (d3.event.touches.length>1) {
-			clearTimeout(touchStartTime);
-			touchStartTime = null;
-			d3.event.preventDefault();
-			touch0 = d3.event.touches.item(0);
-			var touch1 = d3.event.touches.item(1);
-			var a = touch0['pageY']-touch1['pageY'];
-			var b = touch0['pageX']-touch1['pageX'];
-
-			var offset = $("#chart").offset();
-			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
-			startTouchCenter = [
-				(touch1['pageX']+(b/2)-offset.left+scrollPos[0])/settings.scaleFactor,
-				(touch1['pageY']+(a/2)-offset.top+scrollPos[1])/settings.scaleFactor
-			];
-			moveTouchCenter = [
-				touch1['pageX']+(b/2),
-				touch1['pageY']+(a/2)
-			];
-			startTouchDistance = Math.sqrt((a*a)+(b*b));
-		} else {
-			var obj = d3.select(document.body);
-			touch0 = d3.event.touches.item(0);
-			var pos = [touch0.pageX,touch0.pageY];
-			startTouchCenter = [touch0.pageX,touch0.pageY];
-			startTouchDistance = 0;
-			var point = d3.touches(this)[0];
-			touchStartTime = setTimeout(function() {
-				touchStartTime = null;
-				showTouchMenu(obj,pos);
-				//lasso = vis.append('rect')
-				//    .attr("ox",point[0])
-				//    .attr("oy",point[1])
-				//    .attr("rx",2)
-				//    .attr("ry",2)
-				//    .attr("x",point[0])
-				//    .attr("y",point[1])
-				//    .attr("width",0)
-				//    .attr("height",0)
-				//    .attr("class","lasso");
-				//outer_background.attr("fill","#e3e3f3");
-			},touchLongPressTimeout);
-		}
-	}
-	function canvasTouchMove()
-	{
-		if  (RED.touch.radialMenu.active()) {
-			d3.event.preventDefault();
-			return;
-		}
-		var touch0;
-		if (d3.event.touches.length<2) {
-			if (touchStartTime) {
-				touch0 = d3.event.touches.item(0);
-				var dx = (touch0.pageX-startTouchCenter[0]);
-				var dy = (touch0.pageY-startTouchCenter[1]);
-				var d = Math.abs(dx*dx+dy*dy);
-				if (d > 64) {
-					clearTimeout(touchStartTime);
-					touchStartTime = null;
-				}
-			} else if (lasso) {
-				d3.event.preventDefault();
-			}
-			canvasMouseMove.call(this);
-		} else {
-			touch0 = d3.event.touches.item(0);
-			var touch1 = d3.event.touches.item(1);
-			var a = touch0['pageY']-touch1['pageY'];
-			var b = touch0['pageX']-touch1['pageX'];
-			var offset = $("#chart").offset();
-			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
-			var moveTouchDistance = Math.sqrt((a*a)+(b*b));
-			var touchCenter = [
-				touch1['pageX']+(b/2),
-				touch1['pageY']+(a/2)
-			];
-
-			if (!isNaN(moveTouchDistance)) {
-				oldScaleFactor = settings.scaleFactor;
-				settings.scaleFactor = Math.min(2,Math.max(0.3, settings.scaleFactor + (Math.floor(((moveTouchDistance*100)-(startTouchDistance*100)))/10000)));
-
-				var deltaTouchCenter = [                             // Try to pan whilst zooming - not 100%
-					startTouchCenter[0]*(settings.scaleFactor-oldScaleFactor),//-(touchCenter[0]-moveTouchCenter[0]),
-					startTouchCenter[1]*(settings.scaleFactor-oldScaleFactor) //-(touchCenter[1]-moveTouchCenter[1])
-				];
-
-				startTouchDistance = moveTouchDistance;
-				moveTouchCenter = touchCenter;
-
-				$("#chart").scrollLeft(scrollPos[0]+deltaTouchCenter[0]);
-				$("#chart").scrollTop(scrollPos[1]+deltaTouchCenter[1]);
-				//redraw();
-				//redraw_links_init();
-				//redraw_links();
-			}
-		}
-	}
-
-	var outer_background = vis.append('svg:rect');
-		
+	var outer_background = vis.append('svg:rect').attr("class", "workspace-chart-outer-background");
 
 	var gridScale = d3.scale.linear().range([0,1000]).domain([0,1000]);
 	//var gridScaleTicks = gridScale.ticks(50); // this returns a array with the spacing ex:
 	//0,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000
 	
+	var grid = vis.append('g').attr("class", "workspace-chart-grid").attr("style", "visibility: visble;");
+
 	// minors gets rendered first
-	var gridHminor = vis.append('g').attr({
+	var gridHminor = grid.append('g').attr({
 		"id":"grid-h-mi",
 		"style":"display:none;"
 		});
 	
-	var gridVminor = vis.append('g').attr({ 
+	var gridVminor = grid.append('g').attr({ 
 		"id":"grid-v-mi",
 		"style":"display:none;"
 	});
     // major then gets rendered over the minors
-	var gridHmajor = vis.append('g').attr({
+	var gridHmajor = grid.append('g').attr({
 		"id":"grid-h-ma",
 		"style":"display:none;"
 		});
-	var gridVmajor = vis.append('g').attr({ 
+	var gridVmajor = grid.append('g').attr({ 
 		"id":"grid-v-ma",
 		"style":"display:none;"
 		});
-	
-	
+
+	var groups = vis.append('g').attr("class", "workspace-chart-groups");
+
+	var visLinks = vis.append('g').attr("class", "workspace-chart-links");
+
 	var drag_line = vis.append("svg:path").attr("class", "drag_line");
+
+	var visNodes = vis.append('g').attr("class", "workspace-chart-nodes");
 	
 	function initView() // called from main.js - document ready function
 	{
@@ -1001,14 +896,27 @@ RED.view = (function() {
 		if (nn._def.onadd) {
 			nn._def.onadd.call(nn);
 		}
+	
 
 		//nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
 		RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
-		RED.nodes.add(nn);
+		if (nn.type == "group")
+			RED.nodes.add(nn, 0);
+		else
+			RED.nodes.add(nn);
 		RED.nodes.addUsedNodeTypesToPalette();
 		RED.editor.validateNode(nn);
 		
 		return nn;
+	}
+	function moveNodeToBeginning(node)
+	{
+		var nodeElement = document.getElementById(node.id);
+		let elements=document.getElementsByClassName(".nodegroup");
+		let wrapper=document.querySelector("#chart");
+		let firstChild = elements[0];
+		
+		wrapper.insertBefore(nodeElement, firstChild); // children[index] is inserted before children[index-1]
 	}
 	function zoomIn() {
 		if (settings.scaleFactor < 0.3)
@@ -2658,10 +2566,10 @@ RED.view = (function() {
 
 		});
 		//const t1 = performance.now();
-		var visLinks = vis.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
+		var visLinksAll = visLinks.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
 		//const t2 = performance.now();
 
-		var linkEnter = visLinks.enter().insert("g",".node").attr("class","link");
+		var linkEnter = visLinksAll.enter().insert("g",".node").attr("class","link");
 		anyLinkEnter = false;
 		linkEnter.each(function(d,i) {
 			anyLinkEnter = true;
@@ -2695,10 +2603,10 @@ RED.view = (function() {
 			l.append("svg:path").attr("class","link_line link_path");
 		});
 
-		visLinks.exit().remove();
+		visLinksAll.exit().remove();
 
-		visLinks.classed("link_selected", function(d) { return d === selected_link || d.selected; });
-		visLinks.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
+		visLinksAll.classed("link_selected", function(d) { return d === selected_link || d.selected; });
+		visLinksAll.classed("link_unknown",function(d) { if (d.target.unknownType != undefined) return true; return d.target.type == "unknown" || d.source.type == "unknown"});
 		//const t3 = performance.now();
 
 		//console.log("redraw_links_init filter:"+ (t1-t0) +  "ms, select all:" + (t2-t1) + " ms, linkEnterEdit: " + (t3-t2) + " ms");
@@ -3047,7 +2955,7 @@ RED.view = (function() {
 	function redraw_nodes_init()
 	{
 		//const t2 = performance.now();
-		var visNodes = vis.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
+		var visNodesAll = visNodes.selectAll(".nodegroup").data(RED.nodes.nodes.filter(function(d)
 		{ 
 			return (d.z == activeWorkspace);
 
@@ -3057,7 +2965,7 @@ RED.view = (function() {
 
 		var updatedClassTypes =	false; // flag so that it only run once at each redraw()
 
-		var nodeExit = visNodes.exit().remove();
+		var nodeExit = visNodesAll.exit().remove();
 		nodeExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
 		{
 			//console.error("redraw nodeExit:" + d.type);
@@ -3067,7 +2975,7 @@ RED.view = (function() {
 			}
 		});
 		anyNodeEnter = false;
-		var nodeEnter = visNodes.enter().insert("svg:g").attr("class", "node nodegroup");
+		var nodeEnter = visNodesAll.enter().insert("svg:g").attr("class", "node nodegroup");
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
 			anyNodeEnter = true;
@@ -3114,19 +3022,19 @@ RED.view = (function() {
 			nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
 		
 		});
-		visNodes.classed("node_selected",function(d) { return d.selected; })
-		return visNodes;
+		visNodesAll.classed("node_selected",function(d) { return d.selected; })
+		return visNodesAll;
 	}
 	function redraw_nodes(fullUpdate)
 	{
 		if (fullUpdate != undefined && fullUpdate == true)
 		{
-			var visNodes = redraw_nodes_init();
+			var visNodesAll = redraw_nodes_init();
 			//console.warn("redraw_nodes full update")
 		}
 		else
 		{
-			var visNodes = vis.selectAll(".node_selected").data(RED.nodes.nodes.filter(function(d)
+			var visNodesAll = vis.selectAll(".node_selected").data(RED.nodes.nodes.filter(function(d)
 			{ 
 				return (d.z == activeWorkspace);
 
@@ -3134,7 +3042,7 @@ RED.view = (function() {
 		}
 		//const t0 = performance.now();
 		var updateCount = 0;
-		visNodes.each(
+		visNodesAll.each(
 			function(d,i) { // redraw all nodes in active workspace
 				var nodeRect = d3.select(this);
 				
@@ -3889,6 +3797,119 @@ RED.view = (function() {
 		}
 	}
 
+	function canvasTouchEnd()
+	{
+		clearTimeout(touchStartTime);
+		touchStartTime = null;
+		if  (RED.touch.radialMenu.active()) {
+			return;
+		}
+		if (lasso) {
+			outer_background.attr("fill","#fff");
+		}
+		canvasMouseUp.call(this);
+	}
+	function canvasTouchStart()
+	{
+		var touch0;
+		if (d3.event.touches.length>1) {
+			clearTimeout(touchStartTime);
+			touchStartTime = null;
+			d3.event.preventDefault();
+			touch0 = d3.event.touches.item(0);
+			var touch1 = d3.event.touches.item(1);
+			var a = touch0['pageY']-touch1['pageY'];
+			var b = touch0['pageX']-touch1['pageX'];
+
+			var offset = $("#chart").offset();
+			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
+			startTouchCenter = [
+				(touch1['pageX']+(b/2)-offset.left+scrollPos[0])/settings.scaleFactor,
+				(touch1['pageY']+(a/2)-offset.top+scrollPos[1])/settings.scaleFactor
+			];
+			moveTouchCenter = [
+				touch1['pageX']+(b/2),
+				touch1['pageY']+(a/2)
+			];
+			startTouchDistance = Math.sqrt((a*a)+(b*b));
+		} else {
+			var obj = d3.select(document.body);
+			touch0 = d3.event.touches.item(0);
+			var pos = [touch0.pageX,touch0.pageY];
+			startTouchCenter = [touch0.pageX,touch0.pageY];
+			startTouchDistance = 0;
+			var point = d3.touches(this)[0];
+			touchStartTime = setTimeout(function() {
+				touchStartTime = null;
+				showTouchMenu(obj,pos);
+				//lasso = vis.append('rect')
+				//    .attr("ox",point[0])
+				//    .attr("oy",point[1])
+				//    .attr("rx",2)
+				//    .attr("ry",2)
+				//    .attr("x",point[0])
+				//    .attr("y",point[1])
+				//    .attr("width",0)
+				//    .attr("height",0)
+				//    .attr("class","lasso");
+				//outer_background.attr("fill","#e3e3f3");
+			},touchLongPressTimeout);
+		}
+	}
+	function canvasTouchMove()
+	{
+		if  (RED.touch.radialMenu.active()) {
+			d3.event.preventDefault();
+			return;
+		}
+		var touch0;
+		if (d3.event.touches.length<2) {
+			if (touchStartTime) {
+				touch0 = d3.event.touches.item(0);
+				var dx = (touch0.pageX-startTouchCenter[0]);
+				var dy = (touch0.pageY-startTouchCenter[1]);
+				var d = Math.abs(dx*dx+dy*dy);
+				if (d > 64) {
+					clearTimeout(touchStartTime);
+					touchStartTime = null;
+				}
+			} else if (lasso) {
+				d3.event.preventDefault();
+			}
+			canvasMouseMove.call(this);
+		} else {
+			touch0 = d3.event.touches.item(0);
+			var touch1 = d3.event.touches.item(1);
+			var a = touch0['pageY']-touch1['pageY'];
+			var b = touch0['pageX']-touch1['pageX'];
+			var offset = $("#chart").offset();
+			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
+			var moveTouchDistance = Math.sqrt((a*a)+(b*b));
+			var touchCenter = [
+				touch1['pageX']+(b/2),
+				touch1['pageY']+(a/2)
+			];
+
+			if (!isNaN(moveTouchDistance)) {
+				oldScaleFactor = settings.scaleFactor;
+				settings.scaleFactor = Math.min(2,Math.max(0.3, settings.scaleFactor + (Math.floor(((moveTouchDistance*100)-(startTouchDistance*100)))/10000)));
+
+				var deltaTouchCenter = [                             // Try to pan whilst zooming - not 100%
+					startTouchCenter[0]*(settings.scaleFactor-oldScaleFactor),//-(touchCenter[0]-moveTouchCenter[0]),
+					startTouchCenter[1]*(settings.scaleFactor-oldScaleFactor) //-(touchCenter[1]-moveTouchCenter[1])
+				];
+
+				startTouchDistance = moveTouchDistance;
+				moveTouchCenter = touchCenter;
+
+				$("#chart").scrollLeft(scrollPos[0]+deltaTouchCenter[0]);
+				$("#chart").scrollTop(scrollPos[1]+deltaTouchCenter[1]);
+				//redraw();
+				//redraw_links_init();
+				//redraw_links();
+			}
+		}
+	}
 	return {
 		evalHere: function(string,d) { eval(string); },
 		settings:settings,

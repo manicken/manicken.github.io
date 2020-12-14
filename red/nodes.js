@@ -202,7 +202,7 @@ RED.nodes = (function() {
 	 * 
 	 * @param {Node} n 
 	 */
-	function addNode(n) {
+	function addNode(n,index) {
 		if (n.type == "AudioMixerX")
 		{
 			if (!n.inputs)
@@ -214,7 +214,10 @@ RED.nodes = (function() {
 		} else {*/
 		if (n._def.category != "config") { // config nodes is not used in this GUI
 			n.dirty = true;
-			nodes.push(n);
+			if (index == undefined)
+				nodes.push(n);
+			else
+				nodes.splice(index,1,n);
 			
 			//console.warn("addNode:");
 			//console.warn(n);
