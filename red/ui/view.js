@@ -719,6 +719,7 @@ RED.view = (function() {
 			}
 		} else if (mouse_mode == RED.state.MOVING_ACTIVE || mouse_mode == RED.state.IMPORT_DRAGGING) {
 			moveSelection_mouse();
+
 			var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
 			if (groupAt != undefined)
 			{
@@ -2986,6 +2987,7 @@ RED.view = (function() {
 	}
 
 	function getGroupAt(x,y) {
+		var candidates = [];
 		for (var gi = 0; gi < activeGroups.length; gi++)
 		{
 			var g = activeGroups[gi];
@@ -2997,10 +2999,12 @@ RED.view = (function() {
 
 			
             if ((x >= gxmi) && (x <= gxma) && (y >= gymi) && (y <= gyma)) {
-				
-                return g;
+				if (g !== mousedown_node)
+                	candidates.push(g);
             }
 		}
+		if (candidates.length != 0)
+			return candidates[candidates.length-1]; // return last item
 		return undefined;
 	}
 	function redraw_groups_init()

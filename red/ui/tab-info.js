@@ -77,10 +77,16 @@ RED.sidebar.info = (function() {
 				} else if (type === "number") {
 					val = val.toString();
 				} else if ($.isArray(val)) {
+					
 					val = "[<br/>";
 					for (var i=0;i<Math.min(node[n].length,10);i++) {
+						if (n== "nodes")
+						val += "&nbsp;"+i+": "+node[n][i].name+"<br/>";
+						else
+						{
 						var vv = JSON.stringify(node[n][i],jsonFilter," ").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 						val += "&nbsp;"+i+": "+vv+"<br/>";
+						}
 					}
 					if (node[n].length > 10) {
 						val += "&nbsp;... "+node[n].length+" items<br/>";
