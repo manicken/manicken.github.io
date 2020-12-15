@@ -62,6 +62,8 @@ RED.sidebar.info = (function() {
 		clearSelection();// partly fix a select node bug, that selects all text, it happens when you try select and move a node to quickly
 		table += "<tr><td>Type</td><td>&nbsp;"+node.type+"</td></tr>";
 		table += "<tr><td>ID</td><td>&nbsp;"+node.id+"</td></tr>";
+		if (node.parentGroup != undefined)
+			table += "<tr><td>ParentGroup Name</td><td>&nbsp;"+node.parentGroup.name+"</td></tr>";
 		table += "<tr><td>posX</td><td>&nbsp;"+node.x+"</td></tr>"; // development info only
 		table += "<tr><td>posY</td><td>&nbsp;"+node.y+"</td></tr>"; // development info only
 		table += '<tr class="blank"><td colspan="2">&nbsp;Properties</td></tr>';

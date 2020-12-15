@@ -636,20 +636,42 @@ settings-item-multilinetextInput {
 .function_label {
    font-size: 12px;
 }
-
+.group {
+    stroke: #999;
+    cursor: move;
+    stroke-width: 2;
+  }
+.nodeGroupSelOutline {
+    fill: none;
+    stroke-width: 0;
+}
+.nodeGroupSelOutline-selected {
+    fill: none;
+    stroke: #ff7f0e;
+    stroke-width: 6;
+    stroke-opacity:0.8 !important;
+    /*stroke-dasharray:10 4 !important*/
+}
+.nodeGroupSelOutline-hovered {
+    fill: none;
+    stroke: #ff7f0e;
+    stroke-width: 3;
+    stroke-opacity:0.8 !important;
+    stroke-dasharray:10 4 !important
+}
 .nodeGroupSelOutlineBG {
+    fill: none;
+    stroke-width: 0;
+}
+.nodeGroupSelOutlineBG-selected {
     fill: none;
     stroke: #fff;
     stroke-width: 6;
 }
-.nodeGroupSelOutline {
+.nodeGroupSelOutlineBG-hovered {
     fill: none;
-    stroke: #ff7f0e;
-    stroke-width: 3;
-}
-.nodeGroupSelOutline-hovered {
-    stroke-opacity:0.8 !important;
-    stroke-dasharray:10 4 !important
+    stroke: #fff;
+    stroke-width: 6;
 }
 .node {
   stroke: #999;

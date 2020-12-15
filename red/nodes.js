@@ -442,9 +442,9 @@ RED.nodes = (function() {
 					node[d] = n[d];
 			}
 		}
-		if (n.groupParent != undefined)
+		if (n.parentGroup != undefined)
 		{
-			node.groupParent = n.groupParent.id;
+			node.parentGroup = n.parentGroup.id;
 		}
 		/*if(exportCreds && n.credentials) {
 			node.credentials = {};
@@ -538,9 +538,9 @@ RED.nodes = (function() {
 		absoluteYposMax += RED.view.node_def.height*2;
 
 		// development debug
-		console.warn("@createCompleteNodeSet\n  absoluteXposMax:" + absoluteXposMax +
-										  "\n  absoluteYposMax:" + absoluteYposMax +
-										  "\n  workspaceColSize:" + workspaceColSize);
+		//console.warn("@createCompleteNodeSet\n  absoluteXposMax:" + absoluteXposMax +
+		//								  "\n  absoluteYposMax:" + absoluteYposMax +
+		//								  "\n  workspaceColSize:" + workspaceColSize);
 		var ws = {};
 		// sort nodes by workspace
 		for (wsi=0;wsi<workspaces.length;wsi++)
@@ -750,6 +750,11 @@ RED.nodes = (function() {
 						var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
 					else
 						var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,changed:false};
+
+					if (n.parentGroup != undefined)
+					{
+						node.parentGroup = n.parentGroup;
+					}
 					//console.log(node);
 					
 						/*Object.defineProperty(node, 'selected', {
@@ -869,6 +874,10 @@ RED.nodes = (function() {
 						if (nodeRef != undefined) newNodesList.push(nodeRef);
 					}
 					n.nodes = newNodesList;
+				}
+				if (n.parentGroup != undefined)
+				{
+					n.parentGroup = node_map[n.parentGroup]; // convert id to ref
 				}
 				
 				delete n.wires;

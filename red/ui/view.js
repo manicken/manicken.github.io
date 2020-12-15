@@ -247,7 +247,7 @@ RED.view = (function() {
 
 	var outer = d3.select("#chart")
 		.append("svg:svg")
-		.attr("class", "workspace-chart-outer")
+		.attr("class", "ws-chart-outer")
 		.attr("width", settings.space_width)
 		.attr("height", settings.space_height)
 		.attr("pointer-events", "all")
@@ -255,10 +255,10 @@ RED.view = (function() {
 
 	 var vis = outer
 		.append('svg:g')
-		.attr("class", "workspace-chart-vis")
+		.attr("class", "ws-chart-vis")
 		.on("dblclick.zoom", null)
 		.append('svg:g')
-		.attr("class", "workspace-chart-vis-transform")
+		.attr("class", "ws-chart-vis-transform")
 		.on("mousemove", canvasMouseMove)
 		.on("mousedown", canvasMouseDown)
 		.on("mouseup", canvasMouseUp)
@@ -267,13 +267,13 @@ RED.view = (function() {
 		.on("touchstart", canvasTouchStart)
 		.on("touchmove", canvasTouchMove);
 	
-	var outer_background = vis.append('svg:rect').attr("class", "workspace-chart-outer-background");
+	var outer_background = vis.append('svg:rect').attr("class", "ws-chart-outer-background");
 
 	var gridScale = d3.scale.linear().range([0,1000]).domain([0,1000]);
 	//var gridScaleTicks = gridScale.ticks(50); // this returns a array with the spacing ex:
 	//0,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000
 	
-	var grid = vis.append('g').attr("class", "workspace-chart-grid").attr("style", "visibility: visble;");
+	var grid = vis.append('g').attr("class", "ws-chart-grid").attr("style", "visibility: visble;");
 
 	// minors gets rendered first
 	var gridHminor = grid.append('g').attr({
@@ -719,25 +719,8 @@ RED.view = (function() {
 			}
 		} else if (mouse_mode == RED.state.MOVING_ACTIVE || mouse_mode == RED.state.IMPORT_DRAGGING) {
 			moveSelection_mouse();
-
-			var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
-			if (groupAt != undefined)
-			{
-				lastHoveredGroup = groupAt;
-
-				console.warn("group hovered:" + groupAt.name);
-				if (currentHoveredGroup != undefined) // failsafe
-				currentHoveredGroup.hovered = false;
-				currentHoveredGroup = groupAt;
-				groupAt.hovered = true;
-				redraw_groups(true);
-			}
-			else if (currentHoveredGroup != undefined)
-			{
-				currentHoveredGroup.hovered = false;
-				currentHoveredGroup = undefined;
-				redraw_groups(true);
-			}
+			moveToFromGroup_update();
+			
 		} 
 		// ui object resize mouse move
 		else
@@ -781,8 +764,6 @@ RED.view = (function() {
 		//console.log("redraw from canvas mouse move");
 	}
 
-	
-
 	function canvasMouseUp() {
 		if (mousedown_node && mouse_mode == RED.state.JOINING) {
 			drag_line.attr("class", "drag_line_hidden");
@@ -798,6 +779,10 @@ RED.view = (function() {
 			}
 			RED.nodes.eachNode(function(n) {
 				if (n.z == activeWorkspace && !n.selected) {
+					// don't select groups with lasso (only with ctrl pressed) 
+					if (n.type == "group" && !d3.event.ctrlKey)
+						return; // return is used because this is a function not a loop
+
 					n.selected = (n.x > x && n.x < x2 && n.y > y && n.y < y2);
 					if (n.selected) {
 						n.dirty = true;
@@ -897,6 +882,7 @@ RED.view = (function() {
 		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
 		nn.type = typeName;
 		nn._def = RED.nodes.getType(nn.type);
+		nn.bgColor = nn._def.color;
 		
 		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
 		nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
@@ -1483,7 +1469,7 @@ RED.view = (function() {
 
 	function nodeMouseOver(d) {
 		//if (d != mousedown_node)
-			console.error(" >>>>>>>>>>>>>> node mouseover:" + d.name);
+			//console.error(" >>>>>>>>>>>>>> node mouseover:" + d.name);
 
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
@@ -1593,6 +1579,8 @@ RED.view = (function() {
 		else
 			this.setAttribute("style", "cursor: move");
 	}
+
+	
 	
 	function nodeMouseDown(d,i) { // this only happens once
 
@@ -1661,14 +1649,10 @@ RED.view = (function() {
 				mousedown_node.selected = true;
 				moving_set.push({n:mousedown_node});//, rect:this});
 
-				if (mousedown_node.nodes != undefined)
+				if (mousedown_node.nodes != undefined && mousedown_node.nodes.length != 0)
 				{
-					for (var ni = 0;ni < mousedown_node.nodes.length; ni++)
-					{
-						mousedown_node.nodes[ni].selected = true;
-						mousedown_node.nodes[ni].dirty = true;
-						moving_set.push({n:mousedown_node.nodes[ni]});
-					}
+					allreadyVisited = [];
+					SelectAllInGroup(mousedown_node);
 				}
 			}
 			if (!d3.event.ctrlKey)
@@ -1764,26 +1748,9 @@ RED.view = (function() {
 	}
 	function nodeMouseUp(d,i) {
 		console.log("nodeMouseUp "+ d.name+" i:" + i);
-		if (currentHoveredGroup != undefined && (currentHoveredGroup != d))
-		{
-			if (!currentHoveredGroup.nodes.includes(d) )
-			{
-				currentHoveredGroup.nodes.push(d);
-				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name, 2000);
-			}
-		}
-		else if (lastHoveredGroup != undefined)
-		{
-			for (var ni = 0; ni < lastHoveredGroup.nodes.length; ni++)
-			{
-				if (lastHoveredGroup.nodes[ni] == d)
-				{
-					lastHoveredGroup.nodes.splice(ni,1);
-					RED.notify(d.name + " was removed from the group " + lastHoveredGroup.name, 2000);
-				}
-			}
-		}
 
+		moveSelectionToFromGroupMouseUp(d);
+		
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
@@ -1803,10 +1770,6 @@ RED.view = (function() {
 		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
 		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
-
-
-	
-
 	function uiObjectMouseMove (d, mouseX, mouseY)
 	{
 		if (mouse_mode != RED.state.UI_OBJECT_MOUSE_DOWN) return;
@@ -1954,10 +1917,14 @@ RED.view = (function() {
 			var formatted = eval(d.sendCommand);
 
 			//setRectFill(rect);
-			
+			if (d.parentGroup != undefined)
+			{
+				UI_ListBoxDeselectOther(d);
+			}
 
 			RED.arduino.SendToWebSocket(formatted);
-			redraw(false);
+			//redraw(true);
+			redraw_update_UI_ListBox(rect, d);
 		} else if (d.type == "UI_Piano") {
 			var newKeyIndex = rect.attr("keyIndex");
 			if (newKeyIndex == undefined) {
@@ -1975,21 +1942,20 @@ RED.view = (function() {
 			setRectFill(rect);
 		}
 	}
-	function setRectFill(rect)
-	{
-		console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
-		console.warn('rect.attr("fill")' + rect.attr("fill"));
 
-		if (rect.attr("fillOld") != undefined)
-			rect.attr("fill", rect.attr("fillOld")); // failsafe
-		rect.attr("fillOld", rect.attr("fill"));
-		rect.attr("fill", subtractColor(rect.attr("fill"), "#202020"));
-	}
-	function resetRectFill(rect)
+	function UI_ListBoxDeselectOther(d)
 	{
-		if (rect.attr("fillOld") != undefined)
-			rect.attr("fill", rect.attr("fillOld"));
+
+		for (var i = 0; i < d.parentGroup.nodes.length; i++)
+		{
+			if (d.parentGroup.nodes[i] != d)
+			{
+				d.parentGroup.nodes[i].selectedIndex = -1;
+				d.parentGroup.nodes[i].dirty = true;
+			}
+		}
 	}
+	
 	function uiObjectMouseUp(d, mouseX, mouseY, rect, mouse_still_down)
 	{
 		if (mouse_still_down == undefined)
@@ -2050,8 +2016,22 @@ RED.view = (function() {
 				d.dirty = true;
 				redraw_nodes(true);
 			}
-			
 		}
+	}
+	function setRectFill(rect)
+	{
+		console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
+		console.warn('rect.attr("fill")' + rect.attr("fill"));
+
+		if (rect.attr("fillOld") != undefined)
+			rect.attr("fill", rect.attr("fillOld")); // failsafe
+		rect.attr("fillOld", rect.attr("fill"));
+		rect.attr("fill", subtractColor(rect.attr("fill"), "#202020"));
+	}
+	function resetRectFill(rect)
+	{
+		if (rect.attr("fillOld") != undefined)
+			rect.attr("fill", rect.attr("fillOld"));
 	}
 
 	function clearLinkSelection()
@@ -2214,8 +2194,8 @@ RED.view = (function() {
 			else
 				mainRect.attr("class", "node");
 
-		mainRect.classed("node_unknown",function(d) { if (d.unknownType != undefined) return true; return (d.type == "unknown"); })
-			.attr("rx", 6)
+		mainRect.classed("node_unknown",function(d) { if (d.unknownType != undefined) return true; return (d.type == "unknown"); });
+		mainRect.attr("rx", 6)
 			.attr("ry", 6)
 			.on("mouseup",nodeMouseUp)
 			.on("mousedown",nodeMouseDown)
@@ -2227,93 +2207,24 @@ RED.view = (function() {
 		if (d.type == "UI_Slider")
 		{
 			mainRect.attr("fill",function(d) { return "#505050";});
-			redraw_sliderNodeRect_init(nodeRect);
+			redraw_init_UI_Slider(nodeRect);
 		}
 		else if (d.type == "UI_ListBox")
 		{
 			//mainRect.attr("listItemIndex", -1);
-			redraw_ListBoxNodeRects_init(nodeRect,d);
+			redraw_init_UI_ListBox(nodeRect,d);
 		}
 		else if (d.type == "UI_Piano")
 		{
-			redraw_Piano_init(nodeRect,d);
+			redraw_init_UI_Piano(nodeRect,d);
 		}
 		else
 			mainRect.attr("fill",function(d) { return d._def.color;});
 			
 		//nodeRect.append("rect").attr("class", "node-gradient-top").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-top)").style("pointer-events","none");
 		//nodeRect.append("rect").attr("class", "node-gradient-bottom").attr("rx", 6).attr("ry", 6).attr("height",30).attr("stroke","none").attr("fill","url(#gradient-bottom)").style("pointer-events","none");
-	}
-	function redraw_sliderNodeRect_init(nodeRect)
-	{
-		var sliderRect = nodeRect.append("rect")
-			.attr("class", "slidernode")
-			.attr("rx", 6)
-			.attr("ry", 6)
-			.on("mouseup",nodeMouseUp)
-			.on("mousedown",nodeMouseDown)
-			.on("mousemove", nodeMouseMove)
-			.on("mouseover", nodeMouseOver)
-			.on("mouseout", nodeMouseOut)
-			.attr("fill",function(d) { return d._def.color;})
-	}
-	function redraw_ListBoxNodeRects_init(nodeRect,n)
-	{
-		var items = n.items.split("\n");
-
-		nodeRect.selectAll(".ui_listBox_item").remove();
-		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
-
-		for ( var i = 0; i < items.length; i++)
-		{
-			var item = nodeRect.append("rect")
-				.attr("class", "ui_listBox_item")
-				.attr("rx", 6)
-				.attr("ry", 6)
-				.attr("listItemIndex", i)
-				.attr("selected", false)
-				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
-				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
-				.on("mousemove", nodeMouseMove)
-				.on("mouseover", nodeMouseOver)
-				.on("mouseout", nodeMouseOut)
-				.attr("fill",function(d) { return d.bgColor;});
-
-			var itemText = nodeRect.append("text")
-				.attr("class", "node_label_uiListBoxItem")
-				.attr("text-anchor", "start")
-				.attr("dy", "0.35em")
-				.text(items[i]);
-		}
-	}
-	function redraw_Piano_init(nodeRect,n)
-	{
-		nodeRect.selectAll(".ui_piano_item").remove();
-		nodeRect.selectAll(".node_label_uiPianoKey").remove();
-		var items =     ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
-		var itemIndex = [0  ,2  ,4  ,5  ,7  ,9  ,11 ,1   ,3   ,6   ,8   ,10];
-		for ( var i = 0; i < 12; i++)
-		{
-			var item = nodeRect.append("rect")
-				.attr("class", "ui_piano_item")
-				.attr("rx", 6)
-				.attr("ry", 6)
-				.attr("keyIndex", itemIndex[i])
-				.attr("selected", false)
-				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
-				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
-				.on("mousemove", nodeMouseMove)
-				.on("mouseover", nodeMouseOver)
-				.on("mouseout", nodeMouseOut)
-				.attr("fill",function(d) { return d.bgColor;});
-
-			var itemText = nodeRect.append("text")
-				.attr("class", "node_label_uiPianoKey")
-				.attr("text-anchor", "start")
-				.attr("dy", "0.35em")
-				.text(items[i]);
-		}
-	}
+	}	
+	
 	function redraw_nodeIcon(nodeRect, d)
 	{
 		nodeRect.selectAll(".node_icon_group").remove();
@@ -2425,13 +2336,19 @@ RED.view = (function() {
 			//(d._def.align?' node_label_'+d._def.align:''); //+
 			//(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
 		});
-
-		if ((d.oldNodeText != undefined && d.oldNodeText == nodeText) &&
+		
+		if ((d.oldNodeText != undefined && nodeText.localeCompare(d.oldNodeText) == 0 ) &&
 			(d.oldWidth != undefined && d.oldWidth == d.w) &&
-			(d.oldHeight != undefined && d.oldHeight == d.h)) return;
+			(d.oldHeight != undefined && d.oldHeight == d.h))
+			return;
+
+		//console.error(d.oldNodeText + "==" + nodeText + ":"+ (nodeText.localeCompare(d.oldNodeText)) +  "\n" +
+		//			  d.oldWidth + "==" + d.w + ":" + (d.oldWidth == d.w) + "\n" +
+		//			  d.oldHeight + "!=" + d.h + ":" + (d.oldHeight == d.h));
 		d.oldNodeText = nodeText;
 		d.oldWidth = d.w;
 		d.oldHeight = d.h;
+		
 
 		var textSize = calculateTextSize(nodeText);
 		console.warn("textSize:" + textSize.h + ":" + textSize.w);
@@ -2986,6 +2903,28 @@ RED.view = (function() {
 		$(this).popover("destroy"); // destroy prev
 	}
 
+	//#region Group redraw init/update
+	var allreadyVisited = [];
+	/**
+	 * This includes all items in subgroups as well (by recursive calls)
+	 * @param {*} group 
+	 */
+	function SelectAllInGroup(group)
+	{
+		if (allreadyVisited.includes(group)) return;
+		allreadyVisited.push(group); // failsafe until the group loop is fixed
+		
+		console.error("select all in:" + group.name);
+		for (var ni = 0;ni < mousedown_node.nodes.length; ni++)
+		{
+			mousedown_node.nodes[ni].selected = true;
+			mousedown_node.nodes[ni].dirty = true;
+			moving_set.push({n:mousedown_node.nodes[ni]});
+
+			if (mousedown_node.nodes[ni].nodes != undefined && mousedown_node.nodes[ni].nodes.length != 0)
+				SelectAllInGroup(mousedown_node.nodes[ni]);
+		}
+	}
 	function getGroupAt(x,y) {
 		var candidates = [];
 		for (var gi = 0; gi < activeGroups.length; gi++)
@@ -2997,7 +2936,6 @@ RED.view = (function() {
 			var gxma = g.x + g.w/2;
 			var gyma = g.y + g.h/2;
 
-			
             if ((x >= gxmi) && (x <= gxma) && (y >= gymi) && (y <= gyma)) {
 				if (g !== mousedown_node)
                 	candidates.push(g);
@@ -3006,6 +2944,66 @@ RED.view = (function() {
 		if (candidates.length != 0)
 			return candidates[candidates.length-1]; // return last item
 		return undefined;
+	}
+	function moveSelectionToFromGroupMouseUp(d)
+	{
+		//if (d.type == "group") return; // this will not allow groups to be added to groups
+
+		/*for (var i = 0; i < moving_set.length; i++)
+		{
+			moveToFromGroupMouseUp(moving_set[i].n);
+		}*/
+		moveToFromGroupMouseUp(d);
+	}
+	function moveToFromGroupMouseUp(d)
+	{
+		if (currentHoveredGroup != undefined && (currentHoveredGroup != d))
+		{
+			if (!currentHoveredGroup.nodes.includes(d) )
+			{
+				currentHoveredGroup.nodes.push(d);
+				d.parentGroup = currentHoveredGroup;
+				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name, 2000);
+			}
+		}
+		else if (lastHoveredGroup != undefined)
+		{
+			for (var ni = 0; ni < lastHoveredGroup.nodes.length; ni++)
+			{
+				if (lastHoveredGroup.nodes[ni] == d)
+				{
+					d.parentGroup = undefined;
+					lastHoveredGroup.nodes.splice(ni,1);
+					RED.notify(d.name + " was removed from the group " + lastHoveredGroup.name, 2000);
+				}
+			}
+		}
+	}
+	function moveToFromGroup_update()
+	{
+		var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
+		if (groupAt != undefined)
+		{
+			if (currentHoveredGroup != undefined) // used when hovering from child-to-parent or parent-to-child
+			{
+				if (groupAt == currentHoveredGroup) return;
+				currentHoveredGroup.hovered = false;
+				lastHoveredGroup = currentHoveredGroup;
+				console.warn("group leave2:" + currentHoveredGroup.name);
+			}
+			currentHoveredGroup = groupAt;
+			currentHoveredGroup.hovered = true;
+			console.warn("group enter:" + currentHoveredGroup.name);
+			redraw_groups(true);
+		}
+		else if (currentHoveredGroup != undefined)
+		{
+			lastHoveredGroup = currentHoveredGroup;
+			console.warn("group leave1:" + currentHoveredGroup.name);
+			currentHoveredGroup.hovered = false;
+			currentHoveredGroup = undefined;
+			redraw_groups(true);
+		}
 	}
 	function redraw_groups_init()
 	{
@@ -3041,14 +3039,281 @@ RED.view = (function() {
 			var selRectBG = groupRect.append("rect").attr("class", "nodeGroupSelOutlineBG");
 			var selRect = groupRect.append("rect").attr("class", "nodeGroupSelOutline");
 			//groupRect.classed("nodeGroupSelOutline-hovered", function(d) { return d.hovered; })
-			redraw_nodeMainRect_init(groupRect, d); // use this for now
-			redraw_nodeText(groupRect, d);
+
+			//redraw_nodeMainRect_init(groupRect, d);
+			var mainRect = groupRect.append("rect")
+									.attr("class", "node")
+									.attr("fill",function(d) { return d._def.color;})
+									.attr("rx", 6)
+									.attr("ry", 6)
+									.on("mouseup",nodeMouseUp)
+									.on("mousedown",nodeMouseDown)
+									.on("mousemove", nodeMouseMove)
+									.on("mouseover", nodeMouseOver)
+									.on("mouseout", nodeMouseOut)
+									.on("touchstart",nodeTouchStart)
+									.on("touchend", nodeTouchEnd);
+
+			var text = groupRect.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '0.35em').attr('text-anchor','start');
+
+			if (d._def.align) { // replace with custom thingy
+				text.attr('class','node_label node_label_'+d._def.align);
+				text.attr('text-anchor','end');
+			}
 
 		});
-		visGroupAll.classed("node_selected",function(d) { return d.selected; })
-		visGroupAll.classed("nodeGroupSelOutline-hovered",function(d) { return d.hovered == true; })
+		//visGroupAll.selectAll()
+		//visGroupAll.classed("nodeGroupSelOutline-selected",function(d) { return d.selected == true; })
+		//visGroupAll.classed("nodeGroupSelOutline-hovered",function(d) { return d.hovered == true; })
 		return visGroupAll;
 	}
+	function redraw_groups(fullUpdate)
+	{
+		//if (fullUpdate != undefined && fullUpdate == true)
+		//{
+			var visGroupAll = redraw_groups_init();
+		//}
+		//else
+		/*{
+			var visGroupAll = visGroups.selectAll(".nodeGroupSelOutline_selected").data(RED.nodes.nodes.filter(function(d)
+			{ 
+				return ((d.z == activeWorkspace) && (d.type == "group"));
+
+			}),function(d){return d.id});
+		}*/
+		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace
+			var groupRect = d3.select(this);
+
+			groupRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+			groupRect.selectAll(".node")
+				.attr("width",function(d){return d.w})
+				.attr("height",function(d){return d.h})
+				.attr("fill", d.bgColor);
+
+			redraw_label(groupRect, d);
+			
+			groupRect.selectAll(".nodeGroupSelOutlineBG")
+				.attr("x", -6).attr("y", -6)
+				.attr("rx", 4).attr("ry", 4)
+				.attr("width", d.w + 12)
+				.attr("height", d.h + 12)
+				.attr("class", function(d) { if (d.selected) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-selected";
+											 else if (d.hovered) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-hovered"; 
+											else return "nodeGroupSelOutlineBG"});
+			groupRect.selectAll(".nodeGroupSelOutline")
+				.attr("x", -6).attr("y", -6)
+				.attr("rx", 4).attr("ry", 4)
+				.attr("width", d.w + 12)
+				.attr("height", d.h + 12)
+				.attr("class", function(d) { if (d.selected) return "nodeGroupSelOutline nodeGroupSelOutline-selected";
+											 else if (d.hovered) return "nodeGroupSelOutline nodeGroupSelOutline-hovered"; 
+											else return "nodeGroupSelOutline"});
+		});
+	}
+	//#endregion Group redraw init/update
+
+	//#region UI items redraw init/update
+	function redraw_init_UI_Slider(nodeRect)
+	{
+		var sliderRect = nodeRect.append("rect")
+			.attr("class", "slidernode")
+			.attr("rx", 6)
+			.attr("ry", 6)
+			.on("mouseup",nodeMouseUp)
+			.on("mousedown",nodeMouseDown)
+			.on("mousemove", nodeMouseMove)
+			.on("mouseover", nodeMouseOver)
+			.on("mouseout", nodeMouseOut)
+			.attr("fill",function(d) { return d._def.color;})
+	}
+	function redraw_init_UI_ListBox(nodeRect,n)
+	{
+		var items = n.items.split("\n");
+
+		nodeRect.selectAll(".ui_listBox_item").remove();
+		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
+
+		for ( var i = 0; i < items.length; i++)
+		{
+			var item = nodeRect.append("rect")
+				.attr("class", "ui_listBox_item")
+				.attr("rx", 6)
+				.attr("ry", 6)
+				.attr("listItemIndex", i)
+				.attr("selected", false)
+				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.attr("fill",function(d) { return d.bgColor;});
+
+			var itemText = nodeRect.append("text")
+				.attr("class", "node_label_uiListBoxItem")
+				.attr("text-anchor", "start")
+				.attr("dy", "0.35em")
+				.text(items[i]);
+		}
+	}
+	function redraw_init_UI_Piano(nodeRect,n)
+	{
+		nodeRect.selectAll(".ui_piano_item").remove();
+		nodeRect.selectAll(".node_label_uiPianoKey").remove();
+		var items =     ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
+		var itemIndex = [0  ,2  ,4  ,5  ,7  ,9  ,11 ,1   ,3   ,6   ,8   ,10];
+		for ( var i = 0; i < 12; i++)
+		{
+			var item = nodeRect.append("rect")
+				.attr("class", "ui_piano_item")
+				.attr("rx", 6)
+				.attr("ry", 6)
+				.attr("keyIndex", itemIndex[i])
+				.attr("selected", false)
+				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.attr("fill",function(d) { return d.bgColor;});
+
+			var itemText = nodeRect.append("text")
+				.attr("class", "node_label_uiPianoKey")
+				.attr("text-anchor", "start")
+				.attr("dy", "0.35em")
+				.text(items[i]);
+		}
+	}
+	function redraw_update_UI_Slider(nodeRect, d)
+	{
+		//console.warn("UI_Slider was dirty")
+		nodeRect.selectAll(".node").attr("fill", "#808080");
+
+		nodeRect.selectAll(".slidernode")
+			.attr("fill", d.bgColor)
+			.attr("x", function(d) {
+				if (d.orientation == "v") return 0; 
+				else if (d.orientation == "h") return 0;
+			})
+			.attr("y", function(d) {
+				d.maxVal = parseInt(d.maxVal);
+				d.minVal = parseInt(d.minVal);
+				d.val = parseInt(d.val);
+				if (d.val < d.minVal) d.val = d.minVal;
+				if (d.val > d.maxVal) d.val = d.maxVal;
+				if (d.orientation == "v") return d.h - ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h ;
+				else if (d.orientation == "h") return 0;
+			})
+			.attr("width", function(d) {
+				d.maxVal = parseInt(d.maxVal);
+				d.minVal = parseInt(d.minVal);
+				d.val = parseInt(d.val);
+				if (d.val < d.minVal) d.val = d.minVal;
+				if (d.val > d.maxVal) d.val = d.maxVal;
+				if (d.orientation == "v") return d.w;
+				else if (d.orientation == "h") return ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.w;
+			})
+			.attr("height", function(d) {
+				d.maxVal = parseInt(d.maxVal);
+				d.minVal = parseInt(d.minVal);
+				d.val = parseInt(d.val);
+				if (d.val < d.minVal) d.val = d.minVal;
+				if (d.val > d.maxVal) d.val = d.maxVal;
+				if (d.orientation == "v") return  ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h;
+				else if (d.orientation == "h") return d.h;
+			});
+	}
+	function redraw_update_UI_ListBox(nodeRect, d)
+	{
+		if (d.itemCountChanged != undefined && d.itemCountChanged == true)
+		{
+			redraw_init_UI_ListBox(nodeRect, d);
+		}
+
+		var items = d.items.split("\n");
+		d.headerHeight = parseInt(d.headerHeight)
+		var itemHeight = (d.h-d.headerHeight-4) / (items.length);
+		nodeRect.selectAll(".node").attr("height", d.h+4)
+								.attr("fill", d.bgColor);
+
+		nodeRect.selectAll('.ui_listBox_item').each(function(d,i) {
+			var li = d3.select(this);
+			li.attr('y', ((i)*itemHeight + d.headerHeight));
+			li.attr("width", d.w-8);
+			li.attr("x", 4);
+			li.attr("height", itemHeight);
+			if (d.selectedIndex == i)
+				li.attr("fill", subtractColor(d.itemBGcolor, "#303030"));
+			else
+				li.attr("fill", d.itemBGcolor);
+		});
+
+		nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
+			var ti = d3.select(this);
+			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2 - 4);
+			ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
+			ti.text(items[i]);
+		});
+	}
+	function redraw_update_UI_Piano(nodeRect, d)
+	{
+		//d.headerHeight = 30;//parseInt(d.headerHeight)
+		//d.whiteKeysColor = "#FFFFFF";
+		//d.blackKeysColor = "#A0A0A0";
+		var items = ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
+		var keyWidth = d.w/7;
+		var itemHeight = d.h - d.headerHeight;
+		nodeRect.selectAll(".node").attr("height", d.h+4)
+								.attr("fill", d.bgColor);
+
+		nodeRect.selectAll('.ui_piano_item').each(function(d,i) {
+			var li = d3.select(this);
+			li.attr('y', d.headerHeight);
+
+			if (i <= 6)
+			{
+				li.attr("x", i*keyWidth);
+				li.attr("height", itemHeight);
+				li.attr("fill", d.whiteKeysColor);
+				li.attr("width", keyWidth);
+			}
+			else if (i >= 7 && i <= 8)
+			{
+				li.attr("x", (i-7)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
+				li.attr("height", itemHeight/2);
+				li.attr("fill", d.blackKeysColor);
+				li.attr("width", keyWidth-d.blackKeysWidthDiff);
+			}
+			else if (i >= 9)
+			{
+				li.attr("x", (i-6)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
+				li.attr("height", itemHeight/2);
+				li.attr("fill", d.blackKeysColor);
+				li.attr("width", keyWidth-d.blackKeysWidthDiff);
+			}
+			
+		});
+
+		nodeRect.selectAll('text.node_label_uiPianoKey').each(function(d,i) {
+			var ti = d3.select(this);
+			if (i <= 6)
+			{
+				ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2));
+				ti.attr('y', d.headerHeight + itemHeight - 15);
+			}
+			else if (i >= 7 && i <= 8)
+			{
+				ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
+				ti.attr('y', d.headerHeight + (itemHeight/2)/2);
+			}
+			else if (i >= 9)
+			{
+				ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
+				ti.attr('y', d.headerHeight + (itemHeight/2)/2);
+			}
+			ti.text(items[i]);
+		});
+	}
+	//#endregion UI items redraw init/update
 
 	function redraw_nodes_init()
 	{
@@ -3120,39 +3385,6 @@ RED.view = (function() {
 		visNodesAll.classed("node_selected",function(d) { return d.selected; })
 		return visNodesAll;
 	}
-	function redraw_groups(fullUpdate)
-	{
-		if (fullUpdate != undefined && fullUpdate == true)
-		{
-			var visGroupAll = redraw_groups_init();
-		}
-		else
-		{
-			var visGroupAll = visGroups.selectAll(".node_selected").data(RED.nodes.nodes.filter(function(d)
-			{ 
-				return ((d.z == activeWorkspace) && (d.type == "group"));
-
-			}),function(d){return d.id});
-		}
-		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace
-			var groupRect = d3.select(this);
-
-			redraw_nodeRefresh(groupRect, d);
-			redraw_label(groupRect, d);
-			groupRect.selectAll(".nodeGroupSelOutlineBG")
-				.attr("x", -6)
-				.attr("y", -6)
-				.attr("width", d.w + 12)
-				.attr("height", d.h + 12);
-			groupRect.selectAll(".nodeGroupSelOutline")
-				.attr("x", -6)
-				.attr("y", -6)
-				.attr("width", d.w + 12)
-				.attr("height", d.h + 12);
-			groupRect.selectAll(".node").attr("fill", d.bgColor);
-		});
-	}
-
 	function redraw_nodes(fullUpdate) // fullUpdate means that it checks for removed/added nodes as well
 	{
 		if (fullUpdate != undefined && fullUpdate == true) {
@@ -3180,11 +3412,11 @@ RED.view = (function() {
 				d.bgColor = d._def.color;
 				
 			if (d.type == "UI_Slider") {
-				redraw_refresh_UI_Slider(nodeRect, d);
+				redraw_update_UI_Slider(nodeRect, d);
 			} else if (d.type == "UI_ListBox") {
-				redraw_refresh_UI_ListBox(nodeRect, d);
+				redraw_update_UI_ListBox(nodeRect, d);
 			} else if (d.type == "UI_Piano") {
-				redraw_refresh_UI_Piano(nodeRect, d);
+				redraw_update_UI_Piano(nodeRect, d);
 			} else {
 				nodeRect.selectAll(".node").attr("fill", d.bgColor);
 			}
@@ -3204,143 +3436,6 @@ RED.view = (function() {
 				redraw_label(nodeRect, d);
 		});
 	}
-	function redraw_refresh_UI_Slider(nodeRect, d)
-	{
-		//console.warn("UI_Slider was dirty")
-		nodeRect.selectAll(".node").attr("fill", "#808080");
-
-		nodeRect.selectAll(".slidernode")
-			.attr("fill", d.bgColor)
-			.attr("x", function(d) {
-				if (d.orientation == "v") return 0; 
-				else if (d.orientation == "h") return 0;
-			})
-			.attr("y", function(d) {
-				d.maxVal = parseInt(d.maxVal);
-				d.minVal = parseInt(d.minVal);
-				d.val = parseInt(d.val);
-				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.val > d.maxVal) d.val = d.maxVal;
-				if (d.orientation == "v") return d.h - ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h ;
-				else if (d.orientation == "h") return 0;
-			})
-			.attr("width", function(d) {
-				d.maxVal = parseInt(d.maxVal);
-				d.minVal = parseInt(d.minVal);
-				d.val = parseInt(d.val);
-				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.val > d.maxVal) d.val = d.maxVal;
-				if (d.orientation == "v") return d.w;
-				else if (d.orientation == "h") return ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.w;
-			})
-			.attr("height", function(d) {
-				d.maxVal = parseInt(d.maxVal);
-				d.minVal = parseInt(d.minVal);
-				d.val = parseInt(d.val);
-				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.val > d.maxVal) d.val = d.maxVal;
-				if (d.orientation == "v") return  ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h;
-				else if (d.orientation == "h") return d.h;
-			});
-	}
-	function redraw_refresh_UI_ListBox(nodeRect, d)
-	{
-		if (d.itemCountChanged != undefined && d.itemCountChanged == true)
-		{
-			redraw_ListBoxNodeRects_init(nodeRect, d);
-		}
-
-		var items = d.items.split("\n");
-		d.headerHeight = parseInt(d.headerHeight)
-		var itemHeight = (d.h-d.headerHeight-4) / (items.length);
-		nodeRect.selectAll(".node").attr("height", d.h+4)
-								.attr("fill", d.bgColor);
-
-		nodeRect.selectAll('.ui_listBox_item').each(function(d,i) {
-			var li = d3.select(this);
-			li.attr('y', ((i)*itemHeight + d.headerHeight));
-			li.attr("width", d.w-8);
-			li.attr("x", 4);
-			li.attr("height", itemHeight);
-			if (d.selectedIndex == i)
-				li.attr("fill", subtractColor(d.itemBGcolor, "#303030"));
-			else
-				li.attr("fill", d.itemBGcolor);
-		});
-
-		nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
-			var ti = d3.select(this);
-			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2 - 4);
-			ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
-			ti.text(items[i]);
-		});
-	}
-	function redraw_refresh_UI_Piano(nodeRect, d)
-	{
-		//d.headerHeight = 30;//parseInt(d.headerHeight)
-		//d.whiteKeysColor = "#FFFFFF";
-		//d.blackKeysColor = "#A0A0A0";
-		var items = ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
-		var keyWidth = d.w/7;
-		var itemHeight = d.h - d.headerHeight;
-		nodeRect.selectAll(".node").attr("height", d.h+4)
-								.attr("fill", d.bgColor);
-
-		nodeRect.selectAll('.ui_piano_item').each(function(d,i) {
-			var li = d3.select(this);
-			li.attr('y', d.headerHeight);
-
-			if (i <= 6)
-			{
-				li.attr("x", i*keyWidth);
-				li.attr("height", itemHeight);
-				li.attr("fill", d.whiteKeysColor);
-				li.attr("width", keyWidth);
-			}
-			else if (i >= 7 && i <= 8)
-			{
-				li.attr("x", (i-7)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
-				li.attr("height", itemHeight/2);
-				li.attr("fill", d.blackKeysColor);
-				li.attr("width", keyWidth-d.blackKeysWidthDiff);
-			}
-			else if (i >= 9)
-			{
-				li.attr("x", (i-6)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
-				li.attr("height", itemHeight/2);
-				li.attr("fill", d.blackKeysColor);
-				li.attr("width", keyWidth-d.blackKeysWidthDiff);
-			}
-			
-		});
-
-		nodeRect.selectAll('text.node_label_uiPianoKey').each(function(d,i) {
-			var ti = d3.select(this);
-			if (i <= 6)
-			{
-				ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2));
-				ti.attr('y', d.headerHeight + itemHeight - 15);
-			}
-			else if (i >= 7 && i <= 8)
-			{
-				ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
-				ti.attr('y', d.headerHeight + (itemHeight/2)/2);
-			}
-			else if (i >= 9)
-			{
-				ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
-				ti.attr('y', d.headerHeight + (itemHeight/2)/2);
-			}
-			ti.text(items[i]);
-		});
-	}
-	/*********************************************************************************************************************************/
-	/*********************************************************************************************************************************/
-	/*********************************************************************************************************************************/
-	/*********************************************************************************************************************************/
-	/*********************************************************************************************************************************/
-	/*********************************************************************************************************************************/
-	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	/**
