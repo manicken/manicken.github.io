@@ -3009,13 +3009,21 @@ RED.view = (function() {
 	function ifAnyRootParent(childGroup,parentGroup)
 	{
 		//var check = false;
-		if (childGroup.parentGroup != undefined)
-			return false;
-		else if (childGroup.parentGroup == parentGroup)
-			return true;
-		else
+		if ((childGroup.parentGroup != undefined) && (childGroup.parentGroup != parentGroup))
+		{	
+			console.warn(childGroup.parentGroup.name + "!=" + parentGroup.name);
 			return ifAnyRootParent(childGroup.parentGroup, parentGroup);
-		//return check;
+		}
+		if (childGroup.parentGroup == undefined)
+		{
+			console.warn(childGroup.name +".parentGroup == undefinded");
+			return false;
+		}
+		if (childGroup.parentGroup == parentGroup)
+		{
+			console.warn(childGroup.name +".parentGroup ==" + parentGroup.name);
+			return true;
+		}
 	}
 	function moveToFromGroup_update()
 	{
