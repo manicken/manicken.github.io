@@ -54,20 +54,76 @@ RED.sidebar.info = (function() {
 		if (window.getSelection) {window.getSelection().removeAllRanges();}
 		else if (document.selection) {document.selection.empty();}
 	}
+
+	function getMultipleOfString(str, mult)
+	{
+		var retStr = ""
+		for (var i = 0; i < mult; i++)
+		{
+			retStr += str;
+		}
+		return retStr
+	}
+
+	function getGroupTree(node, incr, level)
+	{
+		var isRoot = (level == 0);
+		var currIncr = getMultipleOfString(incr, level);
+		level++;
+
+		if (isRoot == false)
+			var val = currIncr + "[<br/>";
+		else
+			var val = "[<br/>";
+		for (var i=0;i<node.nodes.length;i++) {
+			//if (isRoot == false)
+			//	val+=newIncr;
+			val += currIncr + incr /*+ i + ":&nbsp;"*/ + node.nodes[i].parentGroup.name + ":" + node.nodes[i].name + "<br/>";
+			if (node.nodes[i].nodes != undefined && !d3.event.shiftKey) // shiftkey don't allow sub groups (good when there exists recursive group loops)
+				val += getGroupTree(node.nodes[i], incr, level);
+		}
+		
+		if (isRoot == false)
+			val += currIncr + "]<br>";
+		else
+			val += "]<br>";
+		return val;
+	}
+
+	function getSimpleArray(node,n)
+	{
+		var val = "[<br/>";
+		for (var i=0;i<Math.min(node[n].length,10);i++) {
+			if (n== "nodes")
+			val += "&nbsp;"+i+": "+node[n][i].name+"<br/>";
+			else
+			{
+			var vv = JSON.stringify(node[n][i],jsonFilter," ").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+			val += "&nbsp;"+i+": "+vv+"<br/>";
+			}
+		}
+		if (node[n].length > 10) {
+			val += "&nbsp;... "+node[n].length+" items<br/>";
+		}
+		val += "]";
+		return val;
+	}
 	
 	function refresh(node) {
 		//console.warn("tab-info refresh");
 		
 		var table = '<table class="node-info"><tbody>';
 		clearSelection();// partly fix a select node bug, that selects all text, it happens when you try select and move a node to quickly
-		table += "<tr><td>Type</td><td>&nbsp;"+node.type+"</td></tr>";
-		table += "<tr><td>ID</td><td>&nbsp;"+node.id+"</td></tr>";
+		table += "<tr><td>&nbsp;<b>Type</b></td><td>&nbsp;<b>"+node.type+"</b></td></tr>";
+		table += "<tr><td>&nbsp;Name</td><td>&nbsp;"+node.name+"</td></tr>";
+		table += "<tr><td>&nbsp;ID</td><td>&nbsp;"+node.id+"</td></tr>";
 		if (node.parentGroup != undefined)
-			table += "<tr><td>ParentGroup Name</td><td>&nbsp;"+node.parentGroup.name+"</td></tr>";
-		table += "<tr><td>posX</td><td>&nbsp;"+node.x+"</td></tr>"; // development info only
-		table += "<tr><td>posY</td><td>&nbsp;"+node.y+"</td></tr>"; // development info only
+			table += "<tr><td>&nbsp;ParentGroup Name</td><td>&nbsp;"+node.parentGroup.name+"</td></tr>";
+		table += "<tr><td>&nbsp;posX</td><td>&nbsp;"+node.x+"</td></tr>"; // development info only
+		table += "<tr><td>&nbsp;posY</td><td>&nbsp;"+node.y+"</td></tr>"; // development info only
 		table += '<tr class="blank"><td colspan="2">&nbsp;Properties</td></tr>';
 		for (var n in node._def.defaults) {
+			if (n == "id" || n == "name") continue;
 			if (node._def.defaults.hasOwnProperty(n)) {
 				var val = node[n]||"";
 				var type = typeof val;
@@ -79,21 +135,11 @@ RED.sidebar.info = (function() {
 				} else if (type === "number") {
 					val = val.toString();
 				} else if ($.isArray(val)) {
+					if (n == "nodes")
+						val = getGroupTree(node,"&nbsp;&nbsp;", 0);
+					else
+						val = getSimpleArray(node,n);
 					
-					val = "[<br/>";
-					for (var i=0;i<Math.min(node[n].length,10);i++) {
-						if (n== "nodes")
-						val += "&nbsp;"+i+": "+node[n][i].name+"<br/>";
-						else
-						{
-						var vv = JSON.stringify(node[n][i],jsonFilter," ").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-						val += "&nbsp;"+i+": "+vv+"<br/>";
-						}
-					}
-					if (node[n].length > 10) {
-						val += "&nbsp;... "+node[n].length+" items<br/>";
-					}
-					val += "]";
 				} else {
 					val = JSON.stringify(val,jsonFilter," ");
 					val = val.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");

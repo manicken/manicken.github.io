@@ -750,8 +750,6 @@ settings-item-multilinetextInput {
    stroke-width: 3;
    stroke-dasharray: 10, 4;
 }
-.node_hovered {
-}
 
 .n-handle {
     cursor: n-resize;
@@ -905,11 +903,16 @@ g.link_unknown path.link_line {
     left:200px;
 }
 
-#node-input-color {
-    width:70px;
-    right: 0px;
+.node-input-color-group-bg input {
+    width:170px;
+    left:200px;
 }
-#node-input-itemBGcolor {
+
+.node-input-color-bg input {
+    width:80px;
+    left:200px;
+}
+/*#node-input-itemBGcolor {
     width:70px;
     right: 0px;
 }
@@ -920,7 +923,7 @@ g.link_unknown path.link_line {
 #node-input-blackKeysColor {
     width:70px;
     right: 0px;
-}
+}*/
 #valueType {
     width:80px;
 }

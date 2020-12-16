@@ -698,7 +698,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"shortName":"group","uiObject":true,"nonObject":"","inputs":0,"outputs":0,"category":"ui","color":"#ddffbb","icon":"",
 			"defaults":{
 				 "name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":200},"h":{"value":200},"textSize":{"value":14},
-				 "nodes":{"value":[]}
+				 "nodes":{"value":[]},"border_color":{"value":"#999"},"individualListBoxMode":{"value":"false"},"exportAsClass":{"value":"false"}
 			}
 		}},
 		
@@ -817,7 +817,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 </script>
 
@@ -834,7 +834,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
 		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
@@ -896,7 +896,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-orientation"><i class="fa fa-tag"></i> Orientation</label>
@@ -1023,11 +1023,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-itemBGcolor"><i class="fa fa-tag"></i> Item BG Color</label>
-		<input id="node-input-itemBGcolor" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-itemBGcolor" data-jscolor=""></a>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Selected Index Offset</label>
@@ -1069,15 +1069,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-whiteKeysColor"><i class="fa fa-tag"></i> White Keys Color</label>
-		<input id="node-input-whiteKeysColor" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-whiteKeysColor" data-jscolor=""></a>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-blackKeysColor"><i class="fa fa-tag"></i> Black Keys Color</label>
-		<input id="node-input-blackKeysColor" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-blackKeysColor" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
@@ -1140,13 +1140,65 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
+
+<script type="text/x-red" data-help-name="group">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This is a group box.</p>
+	<p>Where nodes/groups can be grouped together.</p>
+	<p>It's fully supported drag/drop, not like Node-Red:s group.</p>
+	<p>The size is not automatically adjusted and must be adjusted manually.</p>
+	<p>
+		If multiple selected nodes is dropped they will be inserted to the group,
+		even if some are outside when dropped,<br><br>then the group size should be adjusted to visually contain all the nodes.<br>
+		This will eventually be fixed so that the group size is automatically adjusted.
+	</p>
+	<p> 
+		When multiple UI_ListBox is placed inside, <br>
+		they act like a big ListBox and only one item can be "selected".
+	</p>
+	</div>
+	
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+<script type="text/x-red" data-template-name="group">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
+		<a class="node-input-color-group-bg"><input id="node-input-color" data-jscolor=""></a>
+	</div>
+	<div class="form-row">
+		<label for="node-input-border_color"><i class="fa fa-tag"></i> Border Color</label>
+		<a class="node-input-color-group-bg"><input id="node-input-border_color" data-jscolor=""></a>
+	</div>
+	<div class="form-row">
+        <label style="width:150px" for="node-input-individualListBoxMode"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Individual ListBox Mode</label>
+        <label for="node-input-individualListBoxMode">
+        <input type="checkbox" id="node-input-individualListBoxMode" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	<div class="form-row">
+        <label style="width:150px" for="node-input-exportAsClass"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Export as class</label>
+        <label for="node-input-exportAsClass">
+        <input type="checkbox" id="node-input-exportAsClass" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	
+</script>
+
+
 
 <div> <!-- tab-category -->
 <script type="text/x-red" data-help-name="ClassComment">
@@ -1194,7 +1246,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
@@ -1226,7 +1278,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> File contents:</label>
@@ -1266,7 +1318,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
 		<label for="node-input-value"><i class="fa fa-tag"></i> Value</label>
@@ -1344,7 +1396,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
 		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
@@ -1427,7 +1479,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<!-- this is only for debugging of the output pins change so i choose MixerX because it's allready dynamic -->
 	<!-- <div class="form-row"> 
@@ -1467,7 +1519,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Variable contents:</label>

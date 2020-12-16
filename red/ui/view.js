@@ -185,7 +185,7 @@ RED.view = (function() {
 	var maxZoomFactor = 3.0;
 	var node_def = {
 		width: 30, // minimum default
-		height: 30, // minimum default
+		height: 34, // minimum default
 		pin_rx: 2, // The horizontal corner radius of the rect.
 		pin_ry: 2, // The vertical corner radius of the rect.
 		pin_xsize: 10,
@@ -1095,18 +1095,18 @@ RED.view = (function() {
 			var gridOffsetX = 0;
 			var gridOffsetY = 0;
 
-			//node = moving_set[0];
+			node = moving_set[0];
 			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/_settings.snapToGridXsize)+node.n.w/2);
-			//gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-			//gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
+			gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
+			gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 
 			//if (gridOffsetX !== 0 || gridOffsetY !== 0) {
 				for (i = 0; i<moving_set.length; i++) {
 					node = moving_set[i];
 					
 					// having this here makes all selected nodes realign automatically
-					gridOffsetX = /*node.n.x-*/(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-					gridOffsetY = /*node.n.y-*/(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
+					//gridOffsetX = /*node.n.x-*/(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
+					//gridOffsetY = /*node.n.y-*/(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 					if (gridOffsetX === 0 && gridOffsetY === 0) continue
 					console.error("gridOffsetX:" + gridOffsetX + ", gridOffsetY:" + gridOffsetY);
 					node.n.x = gridOffsetX; // +1 for correction to zero location based grid
@@ -1215,12 +1215,15 @@ RED.view = (function() {
 			$(current_popup_rect).popover("destroy");
 		if (moving_set.length > 0) {
 			for (var i=0;i<moving_set.length;i++) {
-				var node = moving_set[i].n; // moving_set[i] is a rect
+				var node = moving_set[i].n; // moving_set[i] is a rect?
 				node.selected = false;
 				if (node.x < 0) {
 					node.x = 25
 				}
-								
+
+				if (node.parentGroup != undefined)
+					removeNodeFromGroup(node.parentGroup, node);
+
 				var rmlinks = RED.nodes.remove(node.id);
 				for (var j=0; j < rmlinks.length; j++) {
 					var link = rmlinks[j];
@@ -1530,7 +1533,7 @@ RED.view = (function() {
 		var y = mousePos[1];
 
 		if (settings.guiEditMode == false) {
-			this.setAttribute("style", "cursor: default");
+			this.style.cursor = "default";
 			//currentUiObjectMouseX = x;
 			//currentUiObjectMouseY = y;
 			uiObjectMouseMove(d, x, y);
@@ -1545,39 +1548,39 @@ RED.view = (function() {
 		if ((y > uiItemResizeBorderSize) && (y < (d.h-uiItemResizeBorderSize))) // width resize
 		{
 			if (x < uiItemResizeBorderSize)
-				this.setAttribute("style", "cursor: w-resize");
+				this.style.cursor = "w-resize";
 			else if (x > (d.w-uiItemResizeBorderSize))
-				this.setAttribute("style", "cursor: e-resize");
+				this.style.cursor = "e-resize";
 			else
-				this.setAttribute("style", "cursor: move");
+				this.style.cursor = "move";
 		}
 		else if ((x > uiItemResizeBorderSize) && (x < (d.w-uiItemResizeBorderSize))) // height resize
 		{
 			if (y < uiItemResizeBorderSize)
-				this.setAttribute("style", "cursor: n-resize");
+				this.style.cursor = "n-resize";
 			else if (y > (d.h-uiItemResizeBorderSize))
-				this.setAttribute("style", "cursor: s-resize");
+				this.style.cursor = "s-resize";
 			else
-				this.setAttribute("style", "cursor: move");
+				this.style.cursor = "move";
 		}
 		else if ((x < uiItemResizeBorderSize) && (y < uiItemResizeBorderSize)) // top left resize
 		{
-			this.setAttribute("style", "cursor: nw-resize");
+			this.style.cursor = "nw-resize";
 		}
 		else if ((x < uiItemResizeBorderSize) && (y>(d.h-uiItemResizeBorderSize))) // bottom left resize
 		{
-			this.setAttribute("style", "cursor: sw-resize");
+			this.style.cursor = "sw-resize";
 		}
 		else if ((y < uiItemResizeBorderSize) && (x>(d.w-uiItemResizeBorderSize))) // top right resize
 		{
-			this.setAttribute("style", "cursor: ne-resize");
+			this.style.cursor = "ne-resize";
 		}
 		else if ((y > (d.h-uiItemResizeBorderSize)) && (x > (d.w-uiItemResizeBorderSize))) // bottom right resize
 		{
-			this.setAttribute("style", "cursor: se-resize");
+			this.style.cursor = "se-resize";
 		}
 		else
-			this.setAttribute("style", "cursor: move");
+			this.style.cursor = "move";
 	}
 
 	
@@ -1916,8 +1919,9 @@ RED.view = (function() {
 			var formatted = eval(d.sendCommand);
 
 			//setRectFill(rect);
-			if (d.parentGroup != undefined)
+			if (d.parentGroup != undefined && d.parentGroup.individualListBoxMode == false)
 			{
+
 				UI_ListBoxDeselectOther(d);
 			}
 
@@ -2945,6 +2949,20 @@ RED.view = (function() {
 		return undefined;
 	}
 
+	
+	function removeNodeFromGroup(group, node)
+	{
+		for (var i = 0; i < group.nodes.length; i++)
+		{
+			if (group.nodes[i] == node)
+			{
+				node.parentGroup = undefined;
+				group.nodes.splice(i,1);
+				console.warn(node.name + " was removed from the group " + group.name)
+				RED.notify(node.name + " was removed from the group " + group.name,false,false, 10000);
+			}
+		}
+	}
 	function moveSelectionToFromGroupMouseUp()
 	{
 		var currentHoveredGroupDef = (currentHoveredGroup != undefined);
@@ -2958,16 +2976,7 @@ RED.view = (function() {
 				var d = moving_set[i].n;
 				if (lastHoveredGroup == d) continue;
 
-				for (var ni = 0; ni < lastHoveredGroup.nodes.length; ni++)
-				{
-					if (lastHoveredGroup.nodes[ni] == d)
-					{
-						d.parentGroup = undefined;
-						lastHoveredGroup.nodes.splice(ni,1);
-						console.warn(d.name + " was removed from the group " + lastHoveredGroup.name)
-						RED.notify(d.name + " was removed from the group " + lastHoveredGroup.name,false,false, 10000);
-					}
-				}
+				removeNodeFromGroup(lastHoveredGroup, d);
 			}
 			lastHoveredGroup.hovered = false;
 			lastHoveredGroup = undefined;
@@ -2982,6 +2991,11 @@ RED.view = (function() {
 				if (currentHoveredGroup.nodes.includes(d)) continue;
 				if (d.parentGroup != undefined) continue;
 				
+				// here a parent "recursive prevention" root check needs to be done
+				// if any parent of currentHoveredGroup is equal to d
+				// then that parent should never be added
+				if (ifAnyRootParent(currentHoveredGroup, d)) continue;
+
 				currentHoveredGroup.nodes.push(d);
 				d.parentGroup = currentHoveredGroup;
 				console.warn(d.name + " was added to the group " + currentHoveredGroup.name);
@@ -2991,6 +3005,17 @@ RED.view = (function() {
 			currentHoveredGroup = undefined;
 		}
 		 
+	}
+	function ifAnyRootParent(childGroup,parentGroup)
+	{
+		//var check = false;
+		if (childGroup.parentGroup != undefined)
+			return false;
+		else if (childGroup.parentGroup == parentGroup)
+			return true;
+		else
+			return ifAnyRootParent(childGroup.parentGroup, parentGroup);
+		//return check;
 	}
 	function moveToFromGroup_update()
 	{
@@ -3006,7 +3031,7 @@ RED.view = (function() {
 			}
 			currentHoveredGroup = groupAt;
 			currentHoveredGroup.hovered = true;
-			console.warn("group enter:" + currentHoveredGroup.name);
+			console.trace("group enter:" + currentHoveredGroup.name);
 			redraw_groups(true);
 		}
 		else if (currentHoveredGroup != undefined)
@@ -3075,25 +3100,12 @@ RED.view = (function() {
 			}
 
 		});
-		//visGroupAll.selectAll()
-		//visGroupAll.classed("nodeGroupSelOutline-selected",function(d) { return d.selected == true; })
-		//visGroupAll.classed("nodeGroupSelOutline-hovered",function(d) { return d.hovered == true; })
 		return visGroupAll;
 	}
 	function redraw_groups(fullUpdate)
 	{
-		//if (fullUpdate != undefined && fullUpdate == true)
-		//{
-			var visGroupAll = redraw_groups_init();
-		//}
-		//else
-		/*{
-			var visGroupAll = visGroups.selectAll(".nodeGroupSelOutline_selected").data(RED.nodes.nodes.filter(function(d)
-			{ 
-				return ((d.z == activeWorkspace) && (d.type == "group"));
+		var visGroupAll = redraw_groups_init();
 
-			}),function(d){return d.id});
-		}*/
 		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace
 			var groupRect = d3.select(this);
 
@@ -3101,7 +3113,9 @@ RED.view = (function() {
 			groupRect.selectAll(".node")
 				.attr("width",function(d){return d.w})
 				.attr("height",function(d){return d.h})
-				.attr("fill", d.bgColor);
+				.attr("fill", d.bgColor)
+				.attr("style", "stroke:" + d.border_color + ";");
+				//.attr("stroke", d.border_color);
 
 			redraw_label(groupRect, d);
 			
@@ -3262,7 +3276,7 @@ RED.view = (function() {
 
 		nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
 			var ti = d3.select(this);
-			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2 - 4);
+			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2 - 11);
 			ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
 			ti.text(items[i]);
 		});
@@ -3677,6 +3691,7 @@ RED.view = (function() {
 			redraw(true);
 			redraw_links_init();
 			redraw_links();
+			updateSelection(); // this selects the wires, because the optimized wire redraw is used
 		} catch(error) {
 			console.log(error);
 			RED.notify("<strong>Error</strong>: "+error,"error");

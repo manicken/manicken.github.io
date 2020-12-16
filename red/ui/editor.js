@@ -770,6 +770,18 @@ RED.editor = (function() {
 
 		if (node.type != "UI_ScriptButton")
 			$("#btnRunScript").hide();
+		if (node.type == "group")
+		{
+			jscolor.presets.default = {
+				format:'rgba', closeButton:true, shadow:true
+			};
+		}
+		else
+		{
+			jscolor.presets.default = {
+				format:'hex', closeButton:true, shadow:true
+			};
+		}
 		RED.view.state(RED.state.EDITING);
 		//$("#dialog-form").html(RED.view.getForm(node.type));
 		//console.log("get form for type:" + node.type);
