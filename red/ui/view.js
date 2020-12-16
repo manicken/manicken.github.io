@@ -969,7 +969,7 @@ RED.view = (function() {
 	}
 
 	function clearSelection() {
-		console.trace("clearSelection");
+		//console.trace("clearSelection");
 		for (var i=0;i<moving_set.length;i++) {
 			var n = moving_set[i];
 			n.n.dirty = true;
@@ -1016,7 +1016,7 @@ RED.view = (function() {
 			RED.keyboard.add(/* left */ 37, function() { moveSelection_keyboard(-1, 0); d3.event.preventDefault(); }, endKeyboardMove);
 			RED.keyboard.add(/* right*/ 39, function() { moveSelection_keyboard( 1, 0); d3.event.preventDefault(); }, endKeyboardMove);
 		}
-		if (moving_set.length == 1) {
+		if (moving_set.length == 1 || (moving_set[0] != undefined && moving_set[0].n.type == "group")) {
 			RED.sidebar.info.refresh(moving_set[0].n);
 			RED.nodes.selectNode(moving_set[0].n.type);
 		} else if (moving_set.length > 1) {
@@ -1641,7 +1641,7 @@ RED.view = (function() {
 					moving_set.push({n:cnodes[n]});
 				}
 				
-			} else if (!d.selected) {
+			} else if (!d.selected || d.type == "group") {
 				
 				if (!d3.event.ctrlKey) {
 					clearSelection();
@@ -1651,7 +1651,6 @@ RED.view = (function() {
 
 				if (mousedown_node.nodes != undefined && mousedown_node.nodes.length != 0)
 				{
-					allreadyVisited = [];
 					SelectAllInGroup(mousedown_node);
 				}
 			}
@@ -1668,10 +1667,10 @@ RED.view = (function() {
 					mousedown_node_y = d.y;
 					mouse_offset_resize_x = mouse_position[0];
 					mouse_offset_resize_y = mouse_position[1];
-					console.log("mousedown_node_w:" + mousedown_node_w +
-					", mousedown_node_h:" + mousedown_node_h +
-					", mouse_offset_resize_x:" + mouse_offset_resize_x +
-					", mouse_offset_resize_y:" + mouse_offset_resize_y);
+					//console.log("mousedown_node_w:" + mousedown_node_w +
+					//", mousedown_node_h:" + mousedown_node_h +
+					//", mouse_offset_resize_x:" + mouse_offset_resize_x +
+					//", mouse_offset_resize_y:" + mouse_offset_resize_y);
 
 					//var nodeRect = d3.select(this);
 					var mousePos = d3.mouse(this)
@@ -1719,7 +1718,7 @@ RED.view = (function() {
 				else
 					mouse_mode = RED.state.MOVING;
 				
-					console.log("mouse down mouse_mode:" + mouse_mode);
+					//console.log("mouse down mouse_mode:" + mouse_mode);
 				
 				var mouse = d3.touches(this)[0]||d3.mouse(this);
 				mouse[0] += d.x-d.w/2;
@@ -1749,7 +1748,7 @@ RED.view = (function() {
 	function nodeMouseUp(d,i) {
 		console.log("nodeMouseUp "+ d.name+" i:" + i);
 
-		moveSelectionToFromGroupMouseUp(d);
+		moveSelectionToFromGroupMouseUp();
 		
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
@@ -2911,18 +2910,18 @@ RED.view = (function() {
 	 */
 	function SelectAllInGroup(group)
 	{
-		if (allreadyVisited.includes(group)) return;
-		allreadyVisited.push(group); // failsafe until the group loop is fixed
+		//if (allreadyVisited.includes(group)) return;
+		//allreadyVisited.push(group); // failsafe until the group loop is fixed
 		
-		console.error("select all in:" + group.name);
-		for (var ni = 0;ni < mousedown_node.nodes.length; ni++)
+		//console.error("select all in:" + group.name);
+		for (var ni = 0;ni < group.nodes.length; ni++)
 		{
-			mousedown_node.nodes[ni].selected = true;
-			mousedown_node.nodes[ni].dirty = true;
-			moving_set.push({n:mousedown_node.nodes[ni]});
+			group.nodes[ni].selected = true;
+			group.nodes[ni].dirty = true;
+			moving_set.push({n:group.nodes[ni]});
 
-			if (mousedown_node.nodes[ni].nodes != undefined && mousedown_node.nodes[ni].nodes.length != 0)
-				SelectAllInGroup(mousedown_node.nodes[ni]);
+			if (group.nodes[ni].nodes != undefined && group.nodes[ni].nodes.length != 0)
+				SelectAllInGroup(group.nodes[ni]);
 		}
 	}
 	function getGroupAt(x,y) {
@@ -2945,39 +2944,53 @@ RED.view = (function() {
 			return candidates[candidates.length-1]; // return last item
 		return undefined;
 	}
-	function moveSelectionToFromGroupMouseUp(d)
-	{
-		//if (d.type == "group") return; // this will not allow groups to be added to groups
 
-		/*for (var i = 0; i < moving_set.length; i++)
-		{
-			moveToFromGroupMouseUp(moving_set[i].n);
-		}*/
-		moveToFromGroupMouseUp(d);
-	}
-	function moveToFromGroupMouseUp(d)
+	function moveSelectionToFromGroupMouseUp()
 	{
-		if (currentHoveredGroup != undefined && (currentHoveredGroup != d))
+		var currentHoveredGroupDef = (currentHoveredGroup != undefined);
+		var lastHoveredGroupDef = (lastHoveredGroup != undefined);
+		console.error(currentHoveredGroupDef + ":" + lastHoveredGroupDef);
+
+		if (lastHoveredGroupDef)
 		{
-			if (!currentHoveredGroup.nodes.includes(d) )
+			for (var i = 0; i < moving_set.length; i++)
 			{
-				currentHoveredGroup.nodes.push(d);
-				d.parentGroup = currentHoveredGroup;
-				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name, 2000);
-			}
-		}
-		else if (lastHoveredGroup != undefined)
-		{
-			for (var ni = 0; ni < lastHoveredGroup.nodes.length; ni++)
-			{
-				if (lastHoveredGroup.nodes[ni] == d)
+				var d = moving_set[i].n;
+				if (lastHoveredGroup == d) continue;
+
+				for (var ni = 0; ni < lastHoveredGroup.nodes.length; ni++)
 				{
-					d.parentGroup = undefined;
-					lastHoveredGroup.nodes.splice(ni,1);
-					RED.notify(d.name + " was removed from the group " + lastHoveredGroup.name, 2000);
+					if (lastHoveredGroup.nodes[ni] == d)
+					{
+						d.parentGroup = undefined;
+						lastHoveredGroup.nodes.splice(ni,1);
+						console.warn(d.name + " was removed from the group " + lastHoveredGroup.name)
+						RED.notify(d.name + " was removed from the group " + lastHoveredGroup.name,false,false, 10000);
+					}
 				}
 			}
+			lastHoveredGroup.hovered = false;
+			lastHoveredGroup = undefined;
 		}
+		if (currentHoveredGroupDef)
+		{
+			for (var i = 0; i < moving_set.length; i++)
+			{
+				//moveToFromGroupMouseUp(moving_set[i].n);
+				var d = moving_set[i].n;
+				if (currentHoveredGroup == d) continue;
+				if (currentHoveredGroup.nodes.includes(d)) continue;
+				if (d.parentGroup != undefined) continue;
+				
+				currentHoveredGroup.nodes.push(d);
+				d.parentGroup = currentHoveredGroup;
+				console.warn(d.name + " was added to the group " + currentHoveredGroup.name);
+				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name,false,false, 10000);
+			}
+			currentHoveredGroup.hovered = false;
+			currentHoveredGroup = undefined;
+		}
+		 
 	}
 	function moveToFromGroup_update()
 	{
