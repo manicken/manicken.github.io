@@ -725,44 +725,14 @@ RED.view = (function() {
 		// ui object resize mouse move
 		else
 		{ 
-			if (mouse_mode == RED.state.RESIZE_LEFT || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT) {
-				var dx = mouse_offset_resize_x - mouse_position[0];
-				mousedown_node.w = parseInt(mousedown_node_w + dx);
-				
-				if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
-				else mousedown_node.x = mousedown_node_x - dx/2;
-				mousedown_node.dirty = true;
-			} 
-			if (mouse_mode == RED.state.RESIZE_RIGHT || mouse_mode == RED.state.RESIZE_TOP_RIGHT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
-				var dx = mouse_offset_resize_x - mouse_position[0];
-				mousedown_node.w = parseInt(mousedown_node_w - dx);
-				
-				if (mousedown_node.w < node_def.width) mousedown_node.w = node_def.width;
-				else mousedown_node.x = mousedown_node_x - dx/2;
-				mousedown_node.dirty = true;
-			} 
-			if (mouse_mode == RED.state.RESIZE_TOP || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_TOP_RIGHT) {
-				var dy = mouse_offset_resize_y - mouse_position[1];
-				mousedown_node.h = parseInt(mousedown_node_h + dy);
-				
-				if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
-				else mousedown_node.y = mousedown_node_y - dy/2;
-				mousedown_node.dirty = true;
-			}
-			if (mouse_mode == RED.state.RESIZE_BOTTOM || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
-				var dy = mouse_offset_resize_y - mouse_position[1];
-				mousedown_node.h = parseInt(mousedown_node_h - dy);
-				
-				if (mousedown_node.h < node_def.height) mousedown_node.h = node_def.height;
-				else mousedown_node.y = parseInt(mousedown_node_y - dy/2);
-				mousedown_node.dirty = true;
-			}
+			uiNodeResize();
 		}
 		redraw(false);
 		//redraw_links_init();
 		redraw_links();
 		//console.log("redraw from canvas mouse move");
 	}
+	
 
 	function canvasMouseUp() {
 		if (mousedown_node && mouse_mode == RED.state.JOINING) {
@@ -880,6 +850,8 @@ RED.view = (function() {
 	function AddNewNode(xPos, yPos, typeName)
 	{
 		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
+		
+
 		nn.type = typeName;
 		nn._def = RED.nodes.getType(nn.type);
 		nn.bgColor = nn._def.color;
@@ -893,18 +865,32 @@ RED.view = (function() {
 
 		nn.outputs = nn._def.outputs;
 		nn.changed = true;
-		console.log("drop happend:" + typeName);
+
+		
 		for (var d in nn._def.defaults) {
 			if (nn._def.defaults.hasOwnProperty(d)) {
 				if (d == "name" || d == "id") continue; // jannik add (this prevent above assigment to be overwritten)
+
+				// this creates a new array instance
+				// instead of taking it from nn._def.defaults["nodes"].value;
+				// (otherwise all new nodes uses the same instance see note below)
+				if (nn.type == "group" && d == "nodes") { nn.nodes = []; continue;} 
+
 				nn[d] = nn._def.defaults[d].value;
 			}
 		}
-
+		// note. 
+		// if (nn.type == "group" && d == "nodes") { nn.nodes = []; continue;} 
+		// removes a very annoying odd bug:
+		// 1. when a new group has been added and a node is placed inside it, 
+		// 2. then when annother group is added that node is also "inside"(not visually) that new group
+		// it's like string theory where a object can be at two places at the same "time"(how can that even be measured?)
+		
 		if (nn._def.onadd) {
 			nn._def.onadd.call(nn);
 		}
 	
+		
 
 		//nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
 		RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
@@ -912,6 +898,7 @@ RED.view = (function() {
 		RED.nodes.addUsedNodeTypesToPalette();
 		RED.editor.validateNode(nn);
 		
+		console.log("drop happend:" + typeName);
 		return nn;
 	}
 	function zoomIn() {
@@ -1033,6 +1020,8 @@ RED.view = (function() {
 		}
 		redraw_links_init();
 	}
+	$('#btn-debugShowSelection').click(function() {RED.sidebar.info.showSelection(moving_set);});
+
 	function moveView(dx, dy)
 	{
 		var chart = $("#chart");
@@ -2907,6 +2896,27 @@ RED.view = (function() {
 	}
 
 	//#region Group redraw init/update
+
+	function getSelectionExtents()
+	{
+		var xmin=settings.space_width,xmax=0,ymin=settings.space_height,ymax=0;
+
+		for (var i = 0; i < moving_set.length; i++)
+		{
+			var n = moving_set[i].n;
+			var nxmin = (n.x - n.w/2);
+			var nxmax = (n.x + n.w/2);
+			var nymin = (n.y - n.h/2);
+			var nymax = (n.y + n.h/2);
+
+			if (nxmin < xmin) xmin = nxmin;
+			if (nxmax > xmax) xmax = nxmax;
+			if (nymin < ymin) ymin = nymin;
+			if (nymax > ymax) ymax = nymax;
+		}
+		return {xmin:xmin,xmax:xmax,ymin:ymin,ymax:ymax};
+	}
+
 	var allreadyVisited = [];
 	/**
 	 * This includes all items in subgroups as well (by recursive calls)
@@ -2952,6 +2962,7 @@ RED.view = (function() {
 	
 	function removeNodeFromGroup(group, node)
 	{
+		
 		for (var i = 0; i < group.nodes.length; i++)
 		{
 			if (group.nodes[i] == node)
@@ -2959,7 +2970,7 @@ RED.view = (function() {
 				node.parentGroup = undefined;
 				group.nodes.splice(i,1);
 				console.warn(node.name + " was removed from the group " + group.name)
-				RED.notify(node.name + " was removed from the group " + group.name,false,false, 10000);
+				RED.notify(node.name + " was removed from the group " + group.name,false,false, 2000);
 			}
 		}
 	}
@@ -2969,8 +2980,9 @@ RED.view = (function() {
 		var lastHoveredGroupDef = (lastHoveredGroup != undefined);
 		console.error(currentHoveredGroupDef + ":" + lastHoveredGroupDef);
 
-		if (lastHoveredGroupDef)
+		if (lastHoveredGroupDef == true)
 		{
+			console.log("lastHoveredGroupDef == true");
 			for (var i = 0; i < moving_set.length; i++)
 			{
 				var d = moving_set[i].n;
@@ -2981,8 +2993,9 @@ RED.view = (function() {
 			lastHoveredGroup.hovered = false;
 			lastHoveredGroup = undefined;
 		}
-		if (currentHoveredGroupDef)
+		if (currentHoveredGroupDef == true)
 		{
+			console.log("currentHoveredGroupDef == true");
 			for (var i = 0; i < moving_set.length; i++)
 			{
 				//moveToFromGroupMouseUp(moving_set[i].n);
@@ -2994,12 +3007,12 @@ RED.view = (function() {
 				// here a parent "recursive prevention" root check needs to be done
 				// if any parent of currentHoveredGroup is equal to d
 				// then that parent should never be added
-				if (ifAnyRootParent(currentHoveredGroup, d)) continue;
+				if (ifAnyRootParent(currentHoveredGroup, d)){ console.log("(recursive prevention) cannot add " + d.name + " into " + currentHoveredGroup.name); continue; }
 
 				currentHoveredGroup.nodes.push(d);
 				d.parentGroup = currentHoveredGroup;
 				console.warn(d.name + " was added to the group " + currentHoveredGroup.name);
-				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name,false,false, 10000);
+				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name,false,false, 2000);
 			}
 			currentHoveredGroup.hovered = false;
 			currentHoveredGroup = undefined;
@@ -3025,6 +3038,51 @@ RED.view = (function() {
 			return true;
 		}
 	}
+	function setUInode_Xmin(node, val)
+	{
+		var dx = (node.x - node.w/2) - val;
+		node.w = node.w + dx;
+		node.x = node.x - dx/2;
+	}
+	function setUInode_Xmax(node, val)
+	{
+		var dx = (node.x + node.w/2) - val;
+		node.w = node.w - dx;
+		node.x = node.x - dx/2;
+	}
+	function setUInode_Ymin(node, val)
+	{
+		var dy = (node.y - node.h/2) - val;
+		node.h = node.h + dy;
+		node.y = node.y - dy/2;
+	}
+	function setUInode_Ymax(node, val)
+	{
+		var dy = (node.y + node.h/2) - val;
+		node.h = node.h - dy;
+		node.y = node.y - dy/2;
+	}
+	function saveOldSizeAndPos(node)
+	{
+		node.xo = node.x;
+		node.yo = node.y;
+		node.wo = node.w;
+		node.ho = node.h;
+	}
+	function restoreOldSizeAndPos(node)
+	{
+		node.x = node.xo;
+		node.y = node.yo;
+		node.w = node.wo;
+		node.h = node.ho;
+	}
+	function getNodeExtents(node)
+	{
+		return {xmin: node.x - node.w/2,
+				xmax: node.x + node.w/2,
+				ymin: node.y - node.h/2,
+				ymax: node.y + node.h/2}
+	}
 	function moveToFromGroup_update()
 	{
 		var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
@@ -3034,12 +3092,22 @@ RED.view = (function() {
 			{
 				if (groupAt == currentHoveredGroup) return;
 				currentHoveredGroup.hovered = false;
+				restoreOldSizeAndPos(currentHoveredGroup);
 				lastHoveredGroup = currentHoveredGroup;
 				console.warn("group leave2:" + currentHoveredGroup.name);
 			}
 			currentHoveredGroup = groupAt;
 			currentHoveredGroup.hovered = true;
 			console.trace("group enter:" + currentHoveredGroup.name);
+			var selExtents = getSelectionExtents();
+			var chgExtents = getNodeExtents(currentHoveredGroup);
+			saveOldSizeAndPos(currentHoveredGroup);
+			if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
+			if (selExtents.xmax > chgExtents.xmax){setUInode_Xmax(currentHoveredGroup, selExtents.xmax + 30); }
+			if (selExtents.ymin < chgExtents.ymin){setUInode_Ymin(currentHoveredGroup, selExtents.ymin - 30); }
+			if (selExtents.ymax > chgExtents.ymax){setUInode_Ymax(currentHoveredGroup, selExtents.ymax + 30); }
+
+			console.log(selExtents);
 			redraw_groups(true);
 		}
 		else if (currentHoveredGroup != undefined)
@@ -3047,6 +3115,7 @@ RED.view = (function() {
 			lastHoveredGroup = currentHoveredGroup;
 			console.warn("group leave1:" + currentHoveredGroup.name);
 			currentHoveredGroup.hovered = false;
+			restoreOldSizeAndPos(currentHoveredGroup);
 			currentHoveredGroup = undefined;
 			redraw_groups(true);
 		}
@@ -3148,6 +3217,41 @@ RED.view = (function() {
 	//#endregion Group redraw init/update
 
 	//#region UI items redraw init/update
+	function uiNodeResize()
+	{
+		if (mouse_mode == RED.state.RESIZE_LEFT || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT) {
+			var dx = mouse_offset_resize_x - mouse_position[0];
+			mousedown_node.w = parseInt(mousedown_node_w + dx);
+			
+			if (mousedown_node.w <= node_def.width) mousedown_node.w = node_def.width;
+			else mousedown_node.x = mousedown_node_x - dx/2;
+			mousedown_node.dirty = true;
+		} 
+		if (mouse_mode == RED.state.RESIZE_RIGHT || mouse_mode == RED.state.RESIZE_TOP_RIGHT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
+			var dx = mouse_offset_resize_x - mouse_position[0];
+			mousedown_node.w = parseInt(mousedown_node_w - dx);
+			
+			if (mousedown_node.w <= node_def.width) mousedown_node.w = node_def.width;
+			else mousedown_node.x = mousedown_node_x - dx/2;
+			mousedown_node.dirty = true;
+		} 
+		if (mouse_mode == RED.state.RESIZE_TOP || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_TOP_RIGHT) {
+			var dy = mouse_offset_resize_y - mouse_position[1];
+			mousedown_node.h = parseInt(mousedown_node_h + dy);
+			
+			if (mousedown_node.h <= node_def.height) mousedown_node.h = node_def.height;
+			else mousedown_node.y = mousedown_node_y - dy/2;
+			mousedown_node.dirty = true;
+		}
+		if (mouse_mode == RED.state.RESIZE_BOTTOM || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
+			var dy = mouse_offset_resize_y - mouse_position[1];
+			mousedown_node.h = parseInt(mousedown_node_h - dy);
+			
+			if (mousedown_node.h <= node_def.height) mousedown_node.h = node_def.height;
+			else mousedown_node.y = parseInt(mousedown_node_y - dy/2);
+			mousedown_node.dirty = true;
+		}
+	}
 	function redraw_init_UI_Slider(nodeRect)
 	{
 		var sliderRect = nodeRect.append("rect")

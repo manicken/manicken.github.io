@@ -64,6 +64,7 @@ RED.sidebar.info = (function() {
 		}
 		return retStr
 	}
+	
 
 	function getGroupTree(node, incr, level)
 	{
