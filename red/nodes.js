@@ -46,7 +46,10 @@ RED.nodes = (function() {
 	{
 		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, nodes:[]};
 	}
-
+	function moveNodeToEnd(node)
+	{
+		nodes.push(nodes.splice(nodes.indexOf(node), 1)[0]);
+	}
 	$('#btn-moveWorkSpaceLeft').click(function() { moveWorkSpaceLeft(); });
 	$('#btn-moveWorkSpaceRight').click(function() { moveWorkSpaceRight();  });
 	function moveWorkSpaceLeft()
@@ -1612,7 +1615,7 @@ RED.nodes = (function() {
 		return name
 	}
 	return {
-		
+		moveNodeToEnd:moveNodeToEnd,
 		createWorkspaceObject:createWorkspaceObject,
 		createNewDefaultWorkspace: createNewDefaultWorkspace,
 		registerType: registerType,

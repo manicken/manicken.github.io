@@ -20,6 +20,8 @@ RED.view = (function() {
 	var redrawTotalTime = 0.0;
 	var redrawCount = 0;
 
+	var posMode = 1; // position mode (1 = topLeft, 2 = center)
+
 	var activeGroups = [];
 	var currentHoveredGroup = undefined; // used to select the current hovered group
 	var lastHoveredGroup = undefined; // this contains the last hovered group so that a node can be moved outside a group
@@ -50,7 +52,8 @@ RED.view = (function() {
 	    snapToGridHsize: 5,
 	    snapToGridVsize: 5,
 		lineCurveScale: 0.75,
-		lineConnectionsScale: 1.5
+		lineConnectionsScale: 1.5,
+		useCenterBasedPositions: true // default back compatible
 		
 		//partialRenderLinks: false// obsolete
 	};
@@ -82,6 +85,7 @@ RED.view = (function() {
 	    snapToGridVsize: "Snap to grid v-size.",
 		lineCurveScale: "Line Curve Scale.",
 		lineConnectionsScale: "Line Conn. Scale.",
+		useCenterBasedPositions: "Center Based Positions"
 		//partialRenderLinks: "Partial Render Links (experimental)"// obsolete
 	}
 
@@ -154,6 +158,9 @@ RED.view = (function() {
 
 		get lineConnectionsScale() { return parseFloat(_settings.lineConnectionsScale);},
 		set lineConnectionsScale(value) { _settings.lineConnectionsScale = value; redraw_links(); },
+
+		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
+		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; },
 
 		//get partialRenderLinks() { return _settings.partialRenderLinks; },// obsolete
 		//set partialRenderLinks(value) { _settings.partialRenderLinks = value; redraw_links();}// obsolete
@@ -674,7 +681,12 @@ RED.view = (function() {
 			else numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node._def.inputs || 1);
 
 			var sourcePort = mousedown_port_index;
-			var portY = -((numOutputs-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*sourcePort;
+			if (posMode === 2)
+				var portY = -((numOutputs-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*sourcePort;
+			else
+				var portY = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort + mousedown_node.h/2;
+
+			
 
 			if (mousedown_node.type == "JunctionRL")
 			{
@@ -685,7 +697,7 @@ RED.view = (function() {
 				var sc = (mousedown_port_type === 0)?1:-1;
 			}
 			var dy = mousePos[1]-(mousedown_node.y+portY);
-			var dx = mousePos[0]-(mousedown_node.x+sc*mousedown_node.w/2);
+			var dx = mousePos[0]-(mousedown_node.x+sc*mousedown_node.w/posMode);
 			var delta = Math.sqrt(dy*dy+dx*dx);
 			var scale = settings.lineCurveScale; // use of getter which uses parseFloat
 			var scaleY = 0;
@@ -701,13 +713,31 @@ RED.view = (function() {
 			}
 			
 
-
+			//drag_line.attr("d", redraw_link);
+			if (posMode === 2)
+			{
 				drag_line.attr("d",
 					"M "+(mousedown_node.x+sc*mousedown_node.w/2)+" "+(mousedown_node.y+portY)+
 					" C "+(mousedown_node.x+sc*(mousedown_node.w/2+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
 					(mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
 					mousePos[0]+" "+mousePos[1]
 					);
+			}
+			else
+			{
+				/*drag_line.attr("d",
+					"M "+(mousedown_node.x+sc*1)+" "+(mousedown_node.y+portY)+
+					" C "+(mousedown_node.x+sc*(1+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
+					(mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
+					mousePos[0]+" "+mousePos[1]
+					);*/
+
+					drag_line.attr("d",
+					"M "+(mousedown_node.x+sc*1)+" "+(mousedown_node.y+portY)+
+					" L "+mousePos[0]+" "+mousePos[1]
+					);
+			}
+				
 
 			d3.event.preventDefault();
 		} else if (mouse_mode == RED.state.MOVING) {
@@ -1067,8 +1097,8 @@ RED.view = (function() {
 
 			// gets the node locations that is the minimum in the selection
 			// limits so that the node(s) cannot be moved outside of workspace
-			minX = Math.min(node.n.x-node.n.w/2-5,minX); 
-			minY = Math.min(node.n.y-node.n.h/2-5,minY);
+			minX = Math.min(node.n.x-node.n.w/posMode-5,minX); 
+			minY = Math.min(node.n.y-node.n.h/posMode-5,minY);
 		}
 		if (minX !== 0 || minY !== 0) { // limit so that the node(s) cannot be moved outside of workspace
 			console.warn("nodes tried to move outside workspace");
@@ -1085,7 +1115,7 @@ RED.view = (function() {
 			var gridOffsetY = 0;
 
 			node = moving_set[0];
-			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/_settings.snapToGridXsize)+node.n.w/2);
+			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/posMode)/_settings.snapToGridXsize)+node.n.w/posMode);
 			gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
 			gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 
@@ -1130,8 +1160,16 @@ RED.view = (function() {
 			
 			// gets the node locations that is the minimum in the selection
 			// limits so that the node(s) cannot be moved outside of workspace
-			minX = Math.min(node.n.x-node.n.w/2-5,minX);
-			minY = Math.min(node.n.y-node.n.h/2-5,minY);
+			if (posMode === 2)
+			{
+				minX = Math.min(node.n.x-node.n.w/2-5,minX);
+				minY = Math.min(node.n.y-node.n.h/2-5,minY);
+			}
+			else
+			{
+				minX = Math.min(node.n.x-5,minX);
+				minY = Math.min(node.n.y-5,minY);
+			}
 		}
 		if (minX !== 0 || minY !== 0) { // limit so that the node(s) cannot be moved outside of workspace
 			for (i = 0; i<moving_set.length; i++) {
@@ -1146,18 +1184,18 @@ RED.view = (function() {
 			var gridOffsetY = 0;
 			node = moving_set[0];
 
-			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/2)/_settings.snapToGridXsize)+node.n.w/2);
+			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/posMode)/_settings.snapToGridXsize)+node.n.w/posMode);
 
-			//gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-			//gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
+			gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
+			gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 			
 			//if (gridOffsetX !== 0 || gridOffsetY !== 0) {
 				for (i = 0; i<moving_set.length; i++) {
 					node = moving_set[i];
 
 					// having this here makes all selected nodes realign automatically
-					gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-					gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
+					//gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
+					//gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 					if (gridOffsetX === 0 && gridOffsetY === 0) continue
 
 					node.n.x -= gridOffsetX; // +1 for correction to zero location based grid
@@ -1333,8 +1371,8 @@ RED.view = (function() {
 			if (typeof TouchEvent != "undefined" && d3.event instanceof TouchEvent) {
 				RED.nodes.eachNode(function(n) {
 						if (n.z == activeWorkspace) {
-							var hw = n.w/2;
-							var hh = n.h/2;
+							var hw = n.w/posMode;
+							var hh = n.h/posMode;
 							if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
 								n.y-hh<mouse_position[1] && n.y+hh>mouse_position[1]) {
 									mouseup_node = n;
@@ -1713,8 +1751,16 @@ RED.view = (function() {
 					//console.log("mouse down mouse_mode:" + mouse_mode);
 				
 				var mouse = d3.touches(this)[0]||d3.mouse(this);
-				mouse[0] += d.x-d.w/2;
-				mouse[1] += d.y-d.h/2;
+				if (posMode === 2)
+				{
+					mouse[0] += d.x-d.w/2;
+					mouse[1] += d.y-d.h/2;
+				}
+				else
+				{
+					mouse[0] += d.x;
+					mouse[1] += d.y;
+				}
 				for (i=0;i<moving_set.length;i++) {
 					moving_set[i].ox = moving_set[i].n.x;
 					moving_set[i].oy = moving_set[i].n.y;
@@ -2349,7 +2395,7 @@ RED.view = (function() {
 			else if (d.type == "UI_ListBox") return parseInt(textSize.h);
 			else if (d.type == "UI_Piano") return parseInt(textSize.h);
 			else if (d.type == "group") return parseInt(textSize.h);
-			else return (d.h/2)-1;
+			else return (d.h/2)-1; // allways divide by 2
 		});
 
 		if (d._def.uiObject != undefined)
@@ -2357,7 +2403,7 @@ RED.view = (function() {
 		{
 			//console.log("text width:" + calculateTextSize(d.name).w);
 			//console.log("node width:" + d.w);
-			return (d.w-(textSize.w))/2;
+			return (d.w-(textSize.w))/2; // allways divide by 2
 		});
 	}
 
@@ -2401,9 +2447,9 @@ RED.view = (function() {
 		for (var n=0; n < numInputs; n++) {
 			var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
 			
-			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance;
+			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance; // allways divide by 2
 			//console.error("in node y:" + y);
-			y = (y+node_def.pin_ydistance*n)-node_def.pin_ysize/2;
+			y = (y+node_def.pin_ydistance*n)-node_def.pin_ysize/2;// allways divide by 2
 
 			var rect = nodeRect.append("rect");
 			inputlist[n] = rect;
@@ -2411,7 +2457,7 @@ RED.view = (function() {
 				.attr("y",y).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize).attr("index",n);
 
 			if (d.type == "JunctionRL")
-				rect.attr("x",d.w - node_def.pin_ysize/2);
+				rect.attr("x",d.w - node_def.pin_ysize/2);// allways divide by 2
 			else
 				rect.attr("x",node_def.pin_xpos);
 			
@@ -2446,8 +2492,8 @@ RED.view = (function() {
 			if (d.inputs) numInputs = d.inputs;
 			else numInputs = d._def.inputs;
 				
-			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance;
-			y = (y+node_def.pin_ydistance*i)-node_def.pin_ysize/2;
+			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance;// allways divide by 2
+			y = (y+node_def.pin_ydistance*i)-node_def.pin_ysize/2;// allways divide by 2
 			port.attr("y",y)
 		});
 	}
@@ -2485,15 +2531,15 @@ RED.view = (function() {
 		d._ports.exit().remove();
 		if (d._ports) {
 			numOutputs = d.outputs || 1;
-			y = (d.h/2)-((numOutputs-1)/2)*node_def.pin_ydistance;
+			y = (d.h/2)-((numOutputs-1)/2)*node_def.pin_ydistance; // allways divide by 2 (local space)
 			var x = 0;
 			if (d.type == "JunctionRL")
 				x = node_def.pin_xpos
 			else
-				x = d.w - node_def.pin_ysize/2;
+				x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
 			d._ports.each(function(d,i) {
 				var port = d3.select(this);
-				port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2);
+				port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2);// allways divide by 2 (local space)
 				
 				port.attr("x",x);
 			});
@@ -2554,6 +2600,7 @@ RED.view = (function() {
 
 		//console.log("redraw_links_init filter:"+ (t1-t0) +  "ms, select all:" + (t2-t1) + " ms, linkEnterEdit: " + (t3-t2) + " ms");
 	}
+
 	function redraw_links()
 	{
 		//const t0 = performance.now();
@@ -2563,99 +2610,144 @@ RED.view = (function() {
 		else
 			var links = vis.selectAll(".link_selected").selectAll(".link_path");
 		anyLinkEnter = false;
-		links.attr("d",
-			function(d) {
-				var numOutputs = d.source.outputs || 1;
-				var sourcePort = d.sourcePort || 0;
-				var ysource = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort;
-				
-				var numInputs = 0;
-				if (d.target.inputs) numInputs = d.target.inputs || 1; //Jannik
-				else numInputs = d.target._def.inputs || 1;
-				
-				var targetPort = d.targetPort || 0;
-				var ytarget = -((numInputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*targetPort;
-
-				var dy = (d.target.y+ytarget)-(d.source.y+ysource);
-				var dx = (d.target.x-d.target.w/2)-(d.source.x+d.source.w/2);
-				var delta = Math.sqrt(dy*dy+dx*dx);
-				var scale = settings.lineCurveScale;// use of getter which uses parseFloat
-				var scaleY = 0;
-				if (delta < node_def.width) {
-					scale = 0.75-0.75*((node_def.width-delta)/node_def.width);
-				}
-
-				if (dx < 0) {
-					scale += 2*(Math.min(5*node_def.width,Math.abs(dx))/(5*node_def.width));
-					if (Math.abs(dy) < 3*node_def.height) {
-						scaleY = ((dy>0)?0.5:-0.5)*(((3*node_def.height)-Math.abs(dy))/(3*node_def.height))*(Math.min(node_def.width,Math.abs(dx))/(node_def.width)) ;
-					}
-				}
-				if (d.target.type == "JunctionRL" && d.source.type == "JunctionRL") // reversed
-				{
-					d.x1 = d.source.x-d.source.w/2;
-					d.x2 = d.target.x+d.target.w/2;
-
-					d.y1 = d.source.y+ysource;
-					d.y2 = d.target.y+ytarget;
-
-					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, -3);
-					return "M "+(d.x1)+" "+(d.y1)+
-						" C "+(d.x1-scale*d.target.w)+" "+(d.y1+0.25*node_def.height)+" "+
-						      (d.x2+scale*d.target.w)+" "+(d.y2-0.25*node_def.height)+" "+
-						      (d.x2)+" "+d.y2;
-				}
-				else if (d.source.type == "JunctionRL") // reversed
-				{
-					d.x1 = d.source.x-d.source.w/2;
-					d.x2 = d.target.x-d.target.w/2;
-
-					d.y1 = d.source.y+ysource;
-					d.y2 = d.target.y+ytarget;
-
-					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, -1.5, 1.5);
-					return "M "+(d.x1)+" "+(d.y1)+
-						" C "+(d.x1-scale*d.source.w*3.5)+" "+(d.y1-scaleY*node_def.height*2)+" "+
-						      (d.x2-scale*d.source.w*2.0)+" "+(d.y2-scaleY*node_def.height)+" "+
-						      (d.x2)+" "+d.y2;
-				}
-				else if (d.target.type == "JunctionRL") // reversed
-				{
-					d.x1 = d.source.x+d.source.w/2;
-					d.x2 = d.target.x+d.target.w/2;
-
-					d.y1 = d.source.y+ysource;
-					d.y2 = d.target.y+ytarget;
-
-					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, 1.5, -1.5);
-					return "M "+(d.x1)+" "+(d.y1)+
-						" C "+(d.x1+scale*d.target.w*2)+" "+(d.y1+scaleY*node_def.height)+" "+
-						      (d.x2+scale*d.target.w*2)+" "+(d.y2+scaleY*node_def.height)+" "+
-							  (d.x2)+" "+d.y2;
-							  
-					
-				}
-				else // standard
-				{
-					d.x1 = d.source.x+d.source.w/2;
-					d.x2 = d.target.x-d.target.w/2;
-
-					d.y1 = d.source.y+ysource;
-					d.y2 = d.target.y+ytarget;
-
-					return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, settings.lineConnectionsScale);
-
-					return "M "+(d.x1)+" "+(d.y1)+
-						" C "+(d.x1+scale*node_def.width)+" "+(d.y1+scaleY*d.source.h)+" "+
-						      (d.x2-scale*node_def.width)+" "+(d.y2-scaleY*d.target.h)+" "+
-						      (d.x2)+" "+d.y2;
-				}
-			}
-		);
+		links.attr("d",redraw_link);
 		//const t1 = performance.now();
 		//console.log("redraw_links :"+ (t1-t0) +  "ms");
 	}
+	function redraw_link(d)
+	{
+		var numOutputs = d.source.outputs || 1;
+		var sourcePort = d.sourcePort || 0;
+		
+		var numInputs = 0;
+		if (d.target.inputs) numInputs = d.target.inputs || 1; //Jannik
+		else numInputs = d.target._def.inputs || 1;
+		
+		var targetPort = d.targetPort || 0;
+		
+		if (posMode === 2)
+		{
+			var ytarget = -((numInputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*targetPort;
+			var ysource = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort;
+			var dy = (d.target.y+ytarget)-(d.source.y+ysource);
+			var dx = (d.target.x-d.target.w/2)-(d.source.x+d.source.w/2);
+		}
+		else
+		{
+			var ytarget = -((numInputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*targetPort + d.target.h/2;
+			var ysource = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort + d.source.h/2;
+			var dy = (d.target.y+ytarget)-(d.source.y+ysource);
+			if (d.target.type == "JunctionRL" && d.source.type == "JunctionRL") // Left Out to Right In
+				var dx = (d.source.x)-(d.target.x+d.target.w);
+			else if (d.source.type == "JunctionRL") // Left Out to Left In
+				var dx = (d.source.x) - (d.target.x);
+			else if (d.target.type == "JunctionRL") // Right Out to Right In
+				var dx = (d.source.x+d.source.w) - (d.target.x+d.target.w);
+			else // standard
+				var dx = (d.target.x)-(d.source.x+d.source.w);
 
+		}
+		var delta = Math.sqrt(dy*dy+dx*dx);
+		var scale = settings.lineCurveScale;// use of getter which uses parseFloat
+		var scaleY = 0;
+		if (delta < node_def.width) {
+			scale = 0.75-0.75*((node_def.width-delta)/node_def.width);
+		}
+
+		if (dx < 0) {
+			scale += 2*(Math.min(5*node_def.width,Math.abs(dx))/(5*node_def.width));
+			if (Math.abs(dy) < 3*node_def.height) {
+				scaleY = ((dy>0)?0.5:-0.5)*(((3*node_def.height)-Math.abs(dy))/(3*node_def.height))*(Math.min(node_def.width,Math.abs(dx))/(node_def.width)) ;
+			}
+		}
+		if (d.target.type == "JunctionRL" && d.source.type == "JunctionRL") // Left Out to Right In
+		{
+			if (posMode == 2)
+			{
+				d.x1 = d.source.x-d.source.w/2;
+				d.x2 = d.target.x+d.target.w/2;
+			}
+			else
+			{
+				d.x1 = d.source.x;
+				d.x2 = d.target.x+d.target.w;
+			}
+			d.y1 = d.source.y+ysource;
+			d.y2 = d.target.y+ytarget;
+
+			return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, -3);
+			return "M "+(d.x1)+" "+(d.y1)+
+				" C "+(d.x1-scale*d.target.w)+" "+(d.y1+0.25*node_def.height)+" "+
+						(d.x2+scale*d.target.w)+" "+(d.y2-0.25*node_def.height)+" "+
+						(d.x2)+" "+d.y2;
+		}
+		else if (d.source.type == "JunctionRL") // Left Out to Left In
+		{
+			if (posMode == 2)
+			{
+				d.x1 = d.source.x-d.source.w/2;
+				d.x2 = d.target.x-d.target.w/2;
+			}
+			else
+			{
+				d.x1 = d.source.x;
+				d.x2 = d.target.x;
+			}
+			d.y1 = d.source.y+ysource;
+			d.y2 = d.target.y+ytarget;
+
+			return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, -2.5, 2.5);
+			return "M "+(d.x1)+" "+(d.y1)+
+				" C "+(d.x1-scale*d.source.w*3.5)+" "+(d.y1-scaleY*node_def.height*2)+" "+
+						(d.x2-scale*d.source.w*2.0)+" "+(d.y2-scaleY*node_def.height)+" "+
+						(d.x2)+" "+d.y2;
+		}
+		else if (d.target.type == "JunctionRL") // Right Out to Right In
+		{
+			if (posMode == 2)
+			{
+				d.x1 = d.source.x+d.source.w/2;
+				d.x2 = d.target.x+d.target.w/2;
+			}
+			else
+			{
+				d.x1 = d.source.x+d.source.w;
+				d.x2 = d.target.x+d.target.w;
+			}
+			d.y1 = d.source.y+ysource;
+			d.y2 = d.target.y+ytarget;
+
+			return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, 2.5, -2.5);
+			return "M "+(d.x1)+" "+(d.y1)+
+				" C "+(d.x1+scale*d.target.w*2)+" "+(d.y1+scaleY*node_def.height)+" "+
+						(d.x2+scale*d.target.w*2)+" "+(d.y2+scaleY*node_def.height)+" "+
+						(d.x2)+" "+d.y2;		
+		}
+		else // standard
+		{
+			if (posMode == 2)
+			{
+				d.x1 = d.source.x+d.source.w/2;
+				d.x2 = d.target.x-d.target.w/2;
+			}
+			else
+			{
+				d.x1 = d.source.x+d.source.w;
+				d.x2 = d.target.x;
+			}
+			d.y1 = d.source.y+ysource;
+			d.y2 = d.target.y+ytarget;
+
+			return generateLinkPath(d.source,d.target,d.x1, d.y1, d.x2, d.y2, settings.lineConnectionsScale);
+			return "M "+(d.x1)+" "+(d.y1)+
+				" C "+(d.x1+scale*node_def.width)+" "+(d.y1+scaleY*d.source.h)+" "+
+						(d.x2-scale*node_def.width)+" "+(d.y2-scaleY*d.target.h)+" "+
+						(d.x2)+" "+d.y2;
+		}
+	}
+	
+	
+	var linksPosMode = 2;
 	function generateLinkPath(orig, dest, origX,origY, destX, destY, sc1, sc2) {
 		var node_height = orig.h; //node_def.height;
 		var node_width = node_def.width;
@@ -2684,21 +2776,21 @@ RED.view = (function() {
                 (destX-sc2*(scale)*node_width)+" "+(destY-scaleY*node_dest_height)+" "+
                 destX+" "+destY
         } else {
-
-            var midX = Math.floor(destX-dx/2);
-            var midY = Math.floor(destY-dy/2);
+			console.error("Test");
+            var midX = Math.floor(destX-dx/linksPosMode);
+            var midY = Math.floor(destY-dy/linksPosMode);
             //
             if (dy === 0) {
                 midY = destY + node_height;
             }
-			var cp_height = node_height/2;
-			var cp_dest_height = node_dest_height/2;
-            var y1 = (destY + midY)/2
+			var cp_height = node_height/linksPosMode;
+			var cp_dest_height = node_dest_height/linksPosMode;
+            var y1 = (destY + midY)/linksPosMode
             var topX =origX + sc1*node_width*scale;
-            var topY = dy>0?Math.min(y1 - dy/2 , origY+cp_height):Math.max(y1 - dy/2 , origY-cp_height);
+            var topY = dy>0?Math.min(y1 - dy/linksPosMode , origY+cp_height):Math.max(y1 - dy/linksPosMode , origY-cp_height);
             var bottomX = destX - sc2*node_width*scale;
             var bottomY = dy>0?Math.max(y1, destY-cp_height):Math.min(y1, destY+cp_height);
-            var x1 = (origX+topX)/2;
+            var x1 = (origX+topX)/linksPosMode;
             var scy = dy>0?1:-1;
             var cp = [
                 // Orig -> Top
@@ -2712,12 +2804,12 @@ RED.view = (function() {
                 [bottomX,dy>0?Math.max(midY, bottomY-cp_height):Math.min(midY, bottomY+cp_height)],
                 // Bottom -> Dest
                 // [Mirror previous cp]
-                [(destX+bottomX)/2,destY]
+                [(destX+bottomX)/linksPosMode,destY]
             ];
             if (cp[2][1] === topY+scy*cp_height) {
                 if (Math.abs(dy) < cp_height*10) {
-                    cp[1][1] = topY-scy*cp_height/2;
-                    cp[3][1] = bottomY-scy*cp_height/2;
+                    cp[1][1] = topY-scy*cp_height/linksPosMode;
+                    cp[3][1] = bottomY-scy*cp_height/linksPosMode;
                 }
                 cp[2][0] = topX;
             }
@@ -2773,8 +2865,12 @@ RED.view = (function() {
 	
 	function redraw_nodeRefresh(nodeRect, d) // this contains the rest until they get own functions
 	{
-		//nodeRect.selectAll(".centerDot").attr({"cx":function(d) { return d.w/2;},"cy":function(d){return d.h/2}});
-		nodeRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+		//nodeRect.selectAll(".centerDot").attr({"cx":function(d) { return d.w/posMode;},"cy":function(d){return d.h/posMode}});
+		if (posMode === 2)
+			nodeRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+		else
+			nodeRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
+
 		nodeRect.selectAll(".node")
 			.attr("width",function(d){return d.w})
 			.attr("height",function(d){return d.h})
@@ -2790,7 +2886,7 @@ RED.view = (function() {
 		//nodeRect.selectAll(".node_icon_shade_right").attr("x",function(d){return d.w-30;});
 		//nodeRect.selectAll(".node_icon_shade_border_right").attr("d",function(d){return "M "+(d.w-30)+" 1 l 0 "+(d.h-2)});
 		
-		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
+		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/posMode;});
 		
 		nodeRect.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
 		//nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d){ return "M "+(("right" == d._def.align) ?0:30)+" 1 l 0 "+(d.h-2)});
@@ -2897,6 +2993,29 @@ RED.view = (function() {
 
 	//#region Group redraw init/update
 
+	$('#btn-debugShowGroupElements').click(function() { moveGroupToFront(null); });
+	function moveGroupToFront(group)
+	{
+		let wrapper=document.querySelector(".workspace-chart-groups");
+		let children=wrapper.children;
+
+		for ( var i = 0; i < children.length; i++)
+		{
+			if (children[i].id == group.id)
+			{
+				if (i == children.length - 1) return; // allready at the end
+
+				// first move the child to the second last position
+				wrapper.insertBefore(children[i], children[children.length-1]);
+				// swap the last items (now the selected child is at the end)
+				wrapper.insertBefore(children[children.length-1], children[children.length-2]);
+				RED.nodes.moveNodeToEnd(group);
+				return;
+			}
+		}
+	}
+
+
 	function getSelectionExtents()
 	{
 		var xmin=settings.space_width,xmax=0,ymin=settings.space_height,ymax=0;
@@ -2904,10 +3023,10 @@ RED.view = (function() {
 		for (var i = 0; i < moving_set.length; i++)
 		{
 			var n = moving_set[i].n;
-			var nxmin = (n.x - n.w/2);
-			var nxmax = (n.x + n.w/2);
-			var nymin = (n.y - n.h/2);
-			var nymax = (n.y + n.h/2);
+			var nxmin = (n.x - n.w/posMode);
+			var nxmax = (n.x + n.w/posMode);
+			var nymin = (n.y - n.h/posMode);
+			var nymax = (n.y + n.h/posMode);
 
 			if (nxmin < xmin) xmin = nxmin;
 			if (nxmax > xmax) xmax = nxmax;
@@ -2944,11 +3063,20 @@ RED.view = (function() {
 		{
 			var g = activeGroups[gi];
 			// because the nodes are middle point based
-			var gxmi = g.x - g.w/2; 
-			var gymi = g.y - g.h/2;
-			var gxma = g.x + g.w/2;
-			var gyma = g.y + g.h/2;
-
+			if (posMode === 2)
+			{
+				var gxmi = g.x - g.w/posMode; 
+				var gymi = g.y - g.h/posMode;
+				var gxma = g.x + g.w/posMode;
+				var gyma = g.y + g.h/posMode;
+			}
+			else
+			{
+				var gxmi = g.x; 
+				var gymi = g.y;
+				var gxma = g.x + g.w;
+				var gyma = g.y + g.h;
+			}
             if ((x >= gxmi) && (x <= gxma) && (y >= gymi) && (y <= gyma)) {
 				if (g !== mousedown_node)
                 	candidates.push(g);
@@ -3040,27 +3168,63 @@ RED.view = (function() {
 	}
 	function setUInode_Xmin(node, val)
 	{
-		var dx = (node.x - node.w/2) - val;
-		node.w = node.w + dx;
-		node.x = node.x - dx/2;
+		if (posMode === 2)
+		{
+			var dx = (node.x - node.w/posMode) - val;
+			node.w = node.w + dx;
+			node.x = node.x - dx/posMode;
+		}
+		else
+		{
+			var dx = node.x - val;
+			node.w = node.w + dx;
+			node.x = node.x - dx;
+		}
 	}
 	function setUInode_Xmax(node, val)
 	{
-		var dx = (node.x + node.w/2) - val;
-		node.w = node.w - dx;
-		node.x = node.x - dx/2;
+		if (posMode === 2)
+		{
+			var dx = (node.x + node.w/posMode) - val;
+			node.w = node.w - dx;
+			node.x = node.x - dx/posMode;
+		}
+		else
+		{
+			var dx = (node.x + node.w) - val;
+			node.w = node.w - dx;
+			//node.x = node.x - dx;
+		}
 	}
 	function setUInode_Ymin(node, val)
 	{
-		var dy = (node.y - node.h/2) - val;
-		node.h = node.h + dy;
-		node.y = node.y - dy/2;
+		if (posMode === 2)
+		{
+			var dy = (node.y - node.h/posMode) - val;
+			node.h = node.h + dy;
+			node.y = node.y - dy/posMode;
+		}
+		else
+		{
+			var dy = node.y - val;
+			node.h = node.h + dy;
+			node.y = node.y - dy;
+		}
 	}
 	function setUInode_Ymax(node, val)
 	{
-		var dy = (node.y + node.h/2) - val;
-		node.h = node.h - dy;
-		node.y = node.y - dy/2;
+		if (posMode === 2)
+		{
+			var dy = (node.y + node.h/posMode) - val;
+			node.h = node.h - dy;
+			node.y = node.y - dy/posMode;
+		}
+		else
+		{
+			var dy = (node.y + node.h) - val;
+			node.h = node.h - dy;
+			//node.y = node.y - dy;
+		}
 	}
 	function saveOldSizeAndPos(node)
 	{
@@ -3071,17 +3235,27 @@ RED.view = (function() {
 	}
 	function restoreOldSizeAndPos(node)
 	{
-		node.x = node.xo;
-		node.y = node.yo;
-		node.w = node.wo;
-		node.h = node.ho;
+		if (node.xo != undefined) node.x = node.xo;
+		if (node.yo != undefined) node.y = node.yo;
+		if (node.wo != undefined) node.w = node.wo;
+		if (node.ho != undefined) node.h = node.ho;
 	}
 	function getNodeExtents(node)
 	{
-		return {xmin: node.x - node.w/2,
-				xmax: node.x + node.w/2,
-				ymin: node.y - node.h/2,
-				ymax: node.y + node.h/2}
+		if (posMode === 2)
+		{
+			return {xmin: node.x - node.w/posMode,
+					xmax: node.x + node.w/posMode,
+					ymin: node.y - node.h/posMode,
+					ymax: node.y + node.h/posMode}
+		}
+		else
+		{
+			return {xmin: node.x,
+					xmax: node.x + node.w,
+					ymin: node.y,
+					ymax: node.y + node.h}
+		}
 	}
 	function moveToFromGroup_update()
 	{
@@ -3099,15 +3273,26 @@ RED.view = (function() {
 			currentHoveredGroup = groupAt;
 			currentHoveredGroup.hovered = true;
 			console.trace("group enter:" + currentHoveredGroup.name);
-			var selExtents = getSelectionExtents();
-			var chgExtents = getNodeExtents(currentHoveredGroup);
-			saveOldSizeAndPos(currentHoveredGroup);
-			if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
-			if (selExtents.xmax > chgExtents.xmax){setUInode_Xmax(currentHoveredGroup, selExtents.xmax + 30); }
-			if (selExtents.ymin < chgExtents.ymin){setUInode_Ymin(currentHoveredGroup, selExtents.ymin - 30); }
-			if (selExtents.ymax > chgExtents.ymax){setUInode_Ymax(currentHoveredGroup, selExtents.ymax + 30); }
 
-			console.log(selExtents);
+			if (mousedown_node.type == "group")
+			{
+				// prevents parent group to be before child
+				if (currentHoveredGroup.parentGroup !== mousedown_node)
+					moveGroupToFront(mousedown_node);
+			}
+			// prevents child group to be resized outside parent
+			if (currentHoveredGroup.parentGroup !== mousedown_node)
+			{
+				var selExtents = getSelectionExtents();
+				var chgExtents = getNodeExtents(currentHoveredGroup);
+				saveOldSizeAndPos(currentHoveredGroup);
+				if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
+				if (selExtents.xmax > chgExtents.xmax){setUInode_Xmax(currentHoveredGroup, selExtents.xmax + 30); }
+				if (selExtents.ymin < chgExtents.ymin){setUInode_Ymin(currentHoveredGroup, selExtents.ymin - 30); }
+				if (selExtents.ymax > chgExtents.ymax){setUInode_Ymax(currentHoveredGroup, selExtents.ymax + 30); }
+
+				console.log(selExtents);
+			}
 			redraw_groups(true);
 		}
 		else if (currentHoveredGroup != undefined)
@@ -3186,7 +3371,11 @@ RED.view = (function() {
 		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace
 			var groupRect = d3.select(this);
 
-			groupRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+			if (posMode === 2)
+				groupRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+			else
+				groupRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
+				
 			groupRect.selectAll(".node")
 				.attr("width",function(d){return d.w})
 				.attr("height",function(d){return d.h})
@@ -3224,7 +3413,7 @@ RED.view = (function() {
 			mousedown_node.w = parseInt(mousedown_node_w + dx);
 			
 			if (mousedown_node.w <= node_def.width) mousedown_node.w = node_def.width;
-			else mousedown_node.x = mousedown_node_x - dx/2;
+			else mousedown_node.x = mousedown_node_x - dx/posMode;
 			mousedown_node.dirty = true;
 		} 
 		if (mouse_mode == RED.state.RESIZE_RIGHT || mouse_mode == RED.state.RESIZE_TOP_RIGHT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
@@ -3232,7 +3421,7 @@ RED.view = (function() {
 			mousedown_node.w = parseInt(mousedown_node_w - dx);
 			
 			if (mousedown_node.w <= node_def.width) mousedown_node.w = node_def.width;
-			else mousedown_node.x = mousedown_node_x - dx/2;
+			else if (posMode === 2) mousedown_node.x = mousedown_node_x - dx/2;
 			mousedown_node.dirty = true;
 		} 
 		if (mouse_mode == RED.state.RESIZE_TOP || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_TOP_RIGHT) {
@@ -3240,7 +3429,7 @@ RED.view = (function() {
 			mousedown_node.h = parseInt(mousedown_node_h + dy);
 			
 			if (mousedown_node.h <= node_def.height) mousedown_node.h = node_def.height;
-			else mousedown_node.y = mousedown_node_y - dy/2;
+			else mousedown_node.y = mousedown_node_y - dy/posMode;
 			mousedown_node.dirty = true;
 		}
 		if (mouse_mode == RED.state.RESIZE_BOTTOM || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
@@ -3248,7 +3437,7 @@ RED.view = (function() {
 			mousedown_node.h = parseInt(mousedown_node_h - dy);
 			
 			if (mousedown_node.h <= node_def.height) mousedown_node.h = node_def.height;
-			else mousedown_node.y = parseInt(mousedown_node_y - dy/2);
+			else if (posMode === 2) mousedown_node.y = parseInt(mousedown_node_y - dy/2);
 			mousedown_node.dirty = true;
 		}
 	}
@@ -3631,7 +3820,7 @@ RED.view = (function() {
 			var dH = Math.max(RED.view.defaults.height, (Math.max(def.outputs, def.inputs) || 0) * 15);
 			x = lastX + Math.max(RED.view.defaults.width, RED.view.calculateTextWidth(name) + 50 + (def.inputs > 0 ? 7 : 0));
 			node.x = x;
-			node.y = y + dH/2;
+			node.y = y + dH/posMode;
 			y = y + dH + 15;
 			node.dirty = true;
 		}
@@ -3774,8 +3963,8 @@ RED.view = (function() {
 				node.n.y -= dy - mouse_position[1];
 				node.dx = node.n.x - mouse_position[0];
 				node.dy = node.n.y - mouse_position[1];
-				minX = Math.min(node.n.x-node_def.width/2-5,minX);
-				minY = Math.min(node.n.y-node_def.height/2-5,minY);
+				minX = Math.min(node.n.x-node_def.width/posMode-5,minX);
+				minY = Math.min(node.n.y-node_def.height/posMode-5,minY);
 			}
 			for (i=0;i<new_ms.length;i++) {
 				node = new_ms[i];
@@ -4150,12 +4339,12 @@ RED.view = (function() {
 			var offset = $("#chart").offset();
 			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
 			startTouchCenter = [
-				(touch1['pageX']+(b/2)-offset.left+scrollPos[0])/settings.scaleFactor,
-				(touch1['pageY']+(a/2)-offset.top+scrollPos[1])/settings.scaleFactor
+				(touch1['pageX']+(b/posMode)-offset.left+scrollPos[0])/settings.scaleFactor,
+				(touch1['pageY']+(a/posMode)-offset.top+scrollPos[1])/settings.scaleFactor
 			];
 			moveTouchCenter = [
-				touch1['pageX']+(b/2),
-				touch1['pageY']+(a/2)
+				touch1['pageX']+(b/posMode),
+				touch1['pageY']+(a/posMode)
 			];
 			startTouchDistance = Math.sqrt((a*a)+(b*b));
 		} else {
@@ -4212,8 +4401,8 @@ RED.view = (function() {
 			var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
 			var moveTouchDistance = Math.sqrt((a*a)+(b*b));
 			var touchCenter = [
-				touch1['pageX']+(b/2),
-				touch1['pageY']+(a/2)
+				touch1['pageX']+(b/posMode),
+				touch1['pageY']+(a/posMode)
 			];
 
 			if (!isNaN(moveTouchDistance)) {

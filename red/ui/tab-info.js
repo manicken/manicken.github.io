@@ -79,7 +79,11 @@ RED.sidebar.info = (function() {
 		for (var i=0;i<node.nodes.length;i++) {
 			//if (isRoot == false)
 			//	val+=newIncr;
-			val += currIncr + incr /*+ i + ":&nbsp;"*/ + node.nodes[i].parentGroup.name + ":" + node.nodes[i].name + "<br/>";
+			//if (node.nodes[i].parentGroup != undefined)
+			//	val += currIncr + incr /*+ i + ":&nbsp;"*/ + node.nodes[i].parentGroup.name + ":" + node.nodes[i].name + "<br/>";
+			//else
+				val += currIncr + incr /*+ i + ":&nbsp;"*/ + node.nodes[i].name + "<br/>";
+
 			if (node.nodes[i].nodes != undefined && !d3.event.shiftKey) // shiftkey don't allow sub groups (good when there exists recursive group loops)
 				val += getGroupTree(node.nodes[i], incr, level);
 		}
