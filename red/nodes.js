@@ -404,6 +404,7 @@ RED.nodes = (function() {
 			delete node_defs[wsLbl];
 			console.log("class type deleted "+ wsLbl);
 		}
+		removeClassNodes(wsLbl);
 		addClassTabsToPalette();
 		refreshClassNodes();
 		return {nodes:removedNodes,links:removedLinks};
@@ -969,7 +970,10 @@ RED.nodes = (function() {
 				changedCount++;
 			}
 		}
-		RED.palette.remove(oldName);
+		
+		addClassTabsToPalette();
+		refreshClassNodes();
+		//RED.palette.remove(oldName);
 		node_defs[oldName] = undefined;
 
 		console.log("workspaceNameChanged:" + oldName + " to " + newName + " with " + changedCount + " objects changed");
@@ -1470,6 +1474,18 @@ RED.nodes = (function() {
 		}
 		return count;
 	}
+
+	function removeClassNodes(type)
+	{
+		for ( var ni = 0; ni < nodes.length; ni++)
+		{
+			var n = nodes[ni];
+			//console.log("n.type:" + n.type); // debug
+			if (n.type != type)  continue;
+
+			removeNode(n.id);
+		}
+	}
 	
 	function refreshClassNodes()// Jannik add function
 	{
@@ -1487,12 +1503,15 @@ RED.nodes = (function() {
 			    // node is class
 				//console.log("updating " + n.type);
 				var node = RED.nodes.node(n.id);
-				node._def = RED.nodes.getType(n.type); // refresh type def
-				if (node._def == undefined)
+				var def = RED.nodes.getType(n.type); // refresh type def
+				if (def == undefined)
 				{
 					console.error("@refreshClassNodes: node._def is undefined!!!")
 					continue;
 				}
+				else
+					console.error(def);
+				node._def = def;
 				var newInputCount = getClassNrOfInputs(nodes, ws.id);
 				var newOutputCount = getClassNrOfOutputs(nodes, ws.id); 
 				

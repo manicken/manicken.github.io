@@ -588,7 +588,8 @@ RED.view = (function() {
 		}
 		var ws = RED.nodes.workspace(id);
 		$( "#node-dialog-delete-workspace" ).dialog('option','workspace',ws);
-		$( "#node-dialog-delete-workspace-name" ).text(ws.label);
+		$( ".node-dialog-delete-workspace-name" ).text(ws.label);
+		//$( "#node-dialog-delete-workspace-name2" ).text(ws.label);
 		$( "#node-dialog-delete-workspace" ).dialog('open');
 
 		
@@ -4134,7 +4135,7 @@ RED.view = (function() {
 							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
 							return; // abort name change if name allready exist
 						} 
-						RED.nodes.workspaceNameChanged(workspace.label, label); // Jannik add end
+						
 
 						workspace.label = label;
 
@@ -4148,7 +4149,7 @@ RED.view = (function() {
 						menuItem.text(label);
 
 						RED.view.dirty(true);
-
+						RED.nodes.workspaceNameChanged(workspace.label, label); // Jannik add end
 					}
 					var exportNew = $( "#node-input-export-workspace" ).prop('checked')
 					if (workspace.export != exportNew)
