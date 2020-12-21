@@ -928,7 +928,7 @@ RED.view = (function() {
 		RED.nodes.addUsedNodeTypesToPalette();
 		RED.editor.validateNode(nn);
 		
-		console.log("drop happend:" + typeName);
+		//console.log("drop happend:" + typeName);
 		return nn;
 	}
 	function zoomIn() {
@@ -2389,7 +2389,7 @@ RED.view = (function() {
 		
 
 		var textSize = calculateTextSize(nodeText);
-		console.warn("textSize:" + textSize.h + ":" + textSize.w);
+		//console.warn("textSize:" + textSize.h + ":" + textSize.w);
 		nodeRects.attr('y', function(d){
 			if (d.type == "UI_Slider") return d.h + parseInt(textSize.h);
 			else if (d.type == "UI_ListBox") return parseInt(textSize.h);
@@ -3514,10 +3514,10 @@ RED.view = (function() {
 	function redraw_update_UI_Slider(nodeRect, d)
 	{
 		//console.warn("UI_Slider was dirty")
-		nodeRect.selectAll(".node").attr("fill", "#808080");
+		nodeRect.selectAll(".node").attr("fill", d.bgColor);
 
 		nodeRect.selectAll(".slidernode")
-			.attr("fill", d.bgColor)
+			.attr("fill", d.barFGcolor)
 			.attr("x", function(d) {
 				if (d.orientation == "v") return 0; 
 				else if (d.orientation == "h") return 0;

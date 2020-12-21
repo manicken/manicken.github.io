@@ -148,7 +148,7 @@ RED.palette = (function() {
 		//var otherCat = $("#"+container);
 		var otherCat = $("#"+container).find("." + headerClass);
 
-		console.error(otherCat);
+		//console.error(otherCat);
 		for (var i = 0; i < otherCat.length; i++)
 		{
 			if (otherCat[i].id.startsWith("set-")){ continue; }// never collapse settings
@@ -185,6 +185,7 @@ RED.palette = (function() {
 	 * @param {*} def node type def
 	 * 	 */
 	function addNodeType(nt,def, category) { // externally RED.palettte.add
+
 		//if (exclusion.indexOf(def.category)!=-1) return;
 		var defCategory = "";
 		if (!category)
@@ -202,6 +203,7 @@ RED.palette = (function() {
 		if ($("#palette_node_"+category +"_"+nt).length)	return;		// avoid duplicates
 
 			var d = document.createElement("div");
+			
 			d.id = "palette_node_"+category +"_"+nt;
 			d.type = nt;
 
@@ -226,6 +228,7 @@ RED.palette = (function() {
 			if (def.outputs > 0) {
 				var portOut = document.createElement("div");
 				portOut.className = "palette_port palette_port_output";
+				def.palettePortOut = portOut;
 				d.appendChild(portOut);
 			}
 
@@ -237,6 +240,7 @@ RED.palette = (function() {
 			if (def.inputs > 0) {
 				var portIn = document.createElement("div");
 				portIn.className = "palette_port palette_port_input";
+				def.palettePortIn = portIn;
 				d.appendChild(portIn);
 			}
 			

@@ -91,9 +91,10 @@ RED.nodes = (function() {
 	}		
 	function registerType(nt,def) {
 		node_defs[nt] = def;
+
 		// TODO: too tightly coupled into palette UI
 		if (def.dontShowInPalette == undefined)
-			RED.palette.add(nt,def);
+			RED.palette.add(nt,node_defs[nt]);
 	}
 
 	function getID() {
@@ -350,6 +351,7 @@ RED.nodes = (function() {
 	function addWorkspace(ws) {
 		workspaces.push(ws);
 		currentWorkspace = ws;
+		addClassTabsToPalette();
 	}
 	function getWorkspaceLabel(id)
 	{
@@ -379,7 +381,9 @@ RED.nodes = (function() {
 		return null;
 	}
 	function removeWorkspace(id) {
+		console.trace("workspace removed " + id);
 		var index = getWorkspaceIndex(id);
+		var wsLbl = workspaces[index].label;
 		if (index != -1) workspaces.splice(index, 1);
 		
 		var removedNodes = [];
@@ -395,6 +399,13 @@ RED.nodes = (function() {
 			var rmlinks = removeNode(removedNodes[n].id);
 			removedLinks = removedLinks.concat(rmlinks);
 		}
+		if (node_defs[wsLbl] != undefined)
+		{
+			delete node_defs[wsLbl];
+			console.log("class type deleted "+ wsLbl);
+		}
+		addClassTabsToPalette();
+		refreshClassNodes();
 		return {nodes:removedNodes,links:removedLinks};
 	}
 
@@ -1477,7 +1488,7 @@ RED.nodes = (function() {
 				//console.log("updating " + n.type);
 				var node = RED.nodes.node(n.id);
 				node._def = RED.nodes.getType(n.type); // refresh type def
-				if (!node._def)
+				if (node._def == undefined)
 				{
 					console.error("@refreshClassNodes: node._def is undefined!!!")
 					continue;
@@ -1501,9 +1512,11 @@ RED.nodes = (function() {
 					removeUnusedWires(node); // so updating all for now
 
 				node.resize = true; // trigger redraw of ports
+				node.dirty = true;
 			   
 		    }
-	    }
+		}
+		
 	}
 	function getJunctionSrcNode(junctionNode)
 	{
@@ -1562,6 +1575,7 @@ RED.nodes = (function() {
 	function addClassTabsToPalette()// Jannik add function
 	{
 		//console.warn("addClassTabsToPalette");
+		RED.palette.clearCategory("tabs");
 		for (var i=0; i < workspaces.length; i++)
 		{
 			var ws = workspaces[i];
@@ -1571,7 +1585,12 @@ RED.nodes = (function() {
 			//if ((inputCount == 0) && (outputCount == 0)) continue; // skip adding class with no IO
 			var classColor = RED.main.classColor;
 			//var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + inputCount + ",\"outputs\":" + outputCount + ",\"category\":\"tabs-function\",\"color\":\"" + classColor + "\",\"icon\":\"arrow-in.png\"}");
-			var data = $.parseJSON('{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"' + ws.label + '","isClass":"","inputs":' + inputCount + ',"outputs":' + outputCount + ',"category":"tabs","color":"' + classColor + '","icon":"arrow-in.png"}');
+			//var data = $.parseJSON('{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"' + ws.label + '","isClass":"","inputs":' + inputCount + ',"outputs":' + outputCount + ',"category":"tabs","color":"' + classColor + '","icon":"arrow-in.png" + }');
+
+			var data = {
+				defaults:{
+					name:{value:"new"},id:{value:"new"}
+				},shortName: ws.label, isClass:"",inputs:inputCount, outputs:outputCount ,category:"tabs",color: classColor ,icon:"arrow-in.png"};
 
 			registerType(ws.label, data);
 		}

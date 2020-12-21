@@ -125,8 +125,8 @@ RED.arduino = (function() {
 		xmlHttp.timeout = 2000;
 		xmlHttp.send(null);
 	}
-	var wsSocketTerminal;
-	var wsSocketBiDirData;
+	var wsClientTerminal;
+	var wsClientBiDirData;
     function StartWebSocketConnection()
     {
 		if ('WebSocket' in window)
@@ -134,10 +134,10 @@ RED.arduino = (function() {
 			var protocol = 'ws://';
 			var address = protocol + "127.0.0.1:" + settings.WebSocketServerPort;
 			RED.bottombar.info.addContent("StartWebSocket@" + address + "<br>");
-			if (wsSocketTerminal != null)
-			wsSocketTerminal.close();
-			wsSocketTerminal = new WebSocket(address);
-			wsSocketTerminal.onmessage = function (msg) {
+			if (wsClientTerminal != null)
+			wsClientTerminal.close();
+			wsClientTerminal = new WebSocket(address);
+			wsClientTerminal.onmessage = function (msg) {
 				if (msg.data == 'reload') window.location.reload();
 				else
 				{
@@ -148,14 +148,16 @@ RED.arduino = (function() {
 					RED.bottombar.info.addContent(dataToAdd);
 				}
 			};
-			if (wsSocketBiDirData != null)
-			wsSocketBiDirData.close();
+			if (wsClientBiDirData != null)
+			wsClientBiDirData.close();
 			address = protocol + "127.0.0.1:3001";// + settings.WebSocketServerPort;
-			wsSocketBiDirData = new WebSocket(address);
-			wsSocketBiDirData.onmessage = function (msg) {
+			wsClientBiDirData = new WebSocket(address);
+			wsClientBiDirData.onmessage = function (msg) {
 				if (msg.data == 'reload') window.location.reload();
 				else
 				{
+					if (msg.data.startsWith("midi"))
+						decodeWSCBDD_midi(msg.data);
 					//console.log(msg.data);
 					RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
 					var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
@@ -167,11 +169,62 @@ RED.arduino = (function() {
         else {
             console.error('Upgrade your browser. This Browser is NOT supported WebSocket for receiving terminal text');
         }
-    }
+	}
+	function decodeWSCBDD_midi(message) // WebSocketClientBiDirData
+	{
+		var beginIndex = message.indexOf("(");
+		if (beginIndex == -1) { wsClientBiDirData.send("midi send missing first ("); return; }
+		var endIndex = message.indexOf(")");
+		if (endIndex == -1) { wsClientBiDirData.send("midi send missing last )"); return; }
+		message = message.substring(beginIndex+1, endIndex);
+		var params = message.split(",");
+		if (params.length != 3)  { wsClientBiDirData.send("midi send don't contain 3 parameters"); return; }
+		if (params[0].startsWith("0xB"))
+		{
+			var midiId = params[1].trim();
+			var value = params[2].trim();
+			if (midiId.startsWith("0x")) midiId = parseInt(midiId, 16);
+			if (value.startsWith("0x")) value = parseInt(value, 16);
+			setUiItemValue(midiId, value);
+		}
+		else
+			console.log("midi message:" + message);
+	}
+	function setUiItemValue(midiId, value)
+	{
+		for (var i = 0; i < RED.nodes.nodes.length; i++)
+		{
+			var n = RED.nodes.nodes[i];
+			if (n._def.uiObject == undefined) continue;
+
+			if (n.midiId == undefined) continue;
+
+			if (n.midiId == midiId)
+			{
+				if (n.type == "UI_Slider")
+				{
+					console.log("setting " + n.name  + " val to " + value);
+					n.val = value;
+					n.dirty = true;
+				}
+				else if (n.type == "UI_ListBox")
+				{
+					console.log("setting " + n.name  + " selectedIndex to " + value);
+					n.selectedIndex = value;
+					n.dirty = true;
+				}
+				else if (n.type == "UI_Piano")
+				{
+					// this can be used to feed back 
+				}
+			}
+		}
+		RED.view.redraw();
+	}
     function SendToWebSocket(string)
     {
-        if (wsSocketBiDirData == undefined) return;
-        wsSocketBiDirData.send(string);
+        if (wsClientBiDirData == undefined) return;
+        wsClientBiDirData.send(string);
     }
     $('#btn-verify-compile').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=compile"); });
 	$('#btn-compile-upload').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=upload"); });

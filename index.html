@@ -178,7 +178,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn btn-small" id="btn-guiEditMode" href="#"><i class="fa fa-cogs fa-lg"></i> gui edit</a>
 				<a class="btn btn-small" id="btn-guiRunMode" href="#"><i class="fa fa-play fa-lg"></i> gui run</a>
 			</div>
-			<div class="btn-group">
+			<div class="btn-group hidden">
 				<a class="btn btn-small" id="btn-debugShowSelection" href="#"><i class="fa fa-cogs fa-lg"></i> debug show moving set</a>
 				<a class="btn btn-small" id="btn-debugShowGroupElements" href="#"><i class="fa fa-cogs fa-lg"></i> debug ShowGroupElements</a>
 			</div>
@@ -615,11 +615,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script  type="text/x-red" data-container-name="NodeDefinitions">
 	{"nodes":[
-		{"type":"TabOutput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Out","nonObject":"","inputs":1,"outputs":0,"category":"tabs","color":"#cce6ff","icon":"arrow-in.png"}},
-		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"In","nonObject":"","inputs":0,"outputs":1,"category":"tabs","color":"#cce6ff","icon":"arrow-in.png", "align":"right"}},
+		{"type":"TabOutput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Out","nonObject":"","inputs":1,"outputs":0,"category":"special","color":"#cce6ff","icon":"arrow-in.png"}},
+		{"type":"TabInput","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"In","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"}},
 		{"type":"PointerArray","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"objectType":{"value":""},"arrayItems":{"value":""}},"shortName":"pArray","nonObject":"","dontShowInPalette":"","inputs":0,"outputs":0,"category":"special","color":"#aaffdd","icon":"range.png"}},
 		{"type":"AudioMixer","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"inputs":{"value":"1"},"comment":{"value":""}},"shortName":"mixer","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"ClassComment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"ClassComment","nonObject":"","inputs":0,"outputs":0,"category":"tabs","color":"#ccffcc","icon":"comment.png"}},
+		{"type":"ClassComment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"}},"shortName":"ClassComment","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ccffcc","icon":"comment.png"}},
 		{"type":"Comment","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Comment","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"comment.png"}},
 		{"type":"Function","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"code","nonObject":"","useAceEditor":"c_cpp","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"Variables","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"vars","nonObject":"","useAceEditor":"c_cpp","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"hash.png"}},
@@ -635,6 +635,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"shortName":"Button","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":100},"h":{"value":30},"textSize":{"value":14},
+				"midiCh":{"value":"0"},"midiId":{"value":"0"},
 				"pressAction":{"value":""},"repeatPressAction":{"value":false},
 				"releaseAction":{"value":""},"repeatReleaseAction":{"value":false},
 				"local":{"value":false}}
@@ -642,14 +643,17 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 		{"type":"UI_Slider",
 		 "data":{
-			"shortName":"Slider","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+			"shortName":"Slider","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#808080","textColor":"#000000","icon":"",
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":30},"h":{"value":300},"textSize":{"value":14},
+				"midiCh":{"value":"0"},"midiId":{"value":"0"},
 				"orientation":{"value":"v"},"label":{"value":""},
 				"minVal":{"value":0},"maxVal":{"value":100},"val":{"value":50},
 				"outputFloat":{"value":false},"minValF":{"value":-1.0},"maxValF":{"value":1.0},"floatVal":{"value":0.0},"decimalCount":{"value":-1},"steps":{"value":201},
 				"sendSpace":{"value":true},"repeat":{"value":false},"repeatPeriod":{"value":0},"sendMode":{"value":"r"},"sendFormat":{"value":""},
-				"autoReturn":{"value":false},"returnValue":{"value":"mid"}}
+				"autoReturn":{"value":false},"returnValue":{"value":"mid"},
+				"barFGcolor":{"value":"#F6F8BC"}
+			}
 		}},
 
 		{"type":"UI_TextBox",
@@ -675,6 +679,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"shortName":"ListBox","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":150},"h":{"value":150},"textSize":{"value":14},
+				"midiCh":{"value":"0"},"midiId":{"value":"0"},
 				"items":{"value":"item1\nitem2\nitem3"},"sendCommand":{"value":""},"selectedIndex":{"value":0},"selectedIndexOffset":{"value":0},"headerHeight":{"value":30},
 				"itemBGcolor":{"value":"#F6F8BC"}
 			}
@@ -685,7 +690,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"shortName":"Piano","uiObject":true,"nonObject":true,"inputs":0,"outputs":0,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":210},"h":{"value":130},"textSize":{"value":14},
-				"midiCh":{"value":0},"octave":{"value":4},"sendCommand":{"value":""},"headerHeight":{"value":30},
+				"midiCh":{"value":"0"},"midiId":{"value":"0"},"octave":{"value":4},"sendCommand":{"value":""},"headerHeight":{"value":30},
 				"whiteKeysColor":{"value":"#FFFFFF"},"blackKeysColor":{"value":"#A0A0A0"},"blackKeysWidthDiff":{"value":6},"x":{"value":150},"y":{"value":150}
 			}
 		}},
@@ -841,6 +846,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
+		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
+	</div>
+	<div class="form-row">
 		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
 		<input type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
 	</div>
@@ -890,6 +903,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label style="width:150px" for="node-input-label"><i class="fa fa-tag"></i> Label</label>
 		<input type="text" id="node-input-label" placeholder="Label" autocomplete="off">
 	</div>
+	<div class="form-row">
+		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
+	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-sendFormat"><i class="fa fa-tag"></i> Send Format</label>
 		<input style="width:100%" type="text" id="node-input-sendFormat" placeholder="sendFormat" autocomplete="off">
@@ -899,8 +920,12 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<input type="text" id="node-input-textSize" placeholder="textSize">
 	</div>
 	<div class="form-row-long">
-		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Bar BG Color</label>
 		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+	</div>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-barFGcolor"><i class="fa fa-tag"></i> Bar FG Color</label>
+		<a class="node-input-color-bg"><input id="node-input-barFGcolor" data-jscolor=""></a>
 	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-orientation"><i class="fa fa-tag"></i> Orientation</label>
@@ -921,6 +946,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label style="width:150px" for="node-input-val"><i class="fa fa-tag"></i> Value(int)</label>
 		<input type="text" id="node-input-val" placeholder="val" autocomplete="off">
 	</div>
+
 	<div class="form-row-long">
         <label style="width:150px" for="node-input-outputFloat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Output</span></label>
         <label for="node-input-outputFloat">
@@ -1037,6 +1063,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Selected Index Offset</label>
 		<input type="text" id="node-input-selectedIndexOffset" placeholder="selectedIndexOffset" autocomplete="off">
 	</div>
+	<div class="form-row">
+		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
+	</div>
 	<div class="form-row-mid">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
 		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
@@ -1094,6 +1128,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row">
 		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
 		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-octave"><i class="fa fa-tag"></i> Octave</label>
