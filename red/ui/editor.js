@@ -194,21 +194,21 @@ RED.editor = (function() {
 			}
 		});
 		aceEditor.commands.on("afterExec", function (e) {
-			console.log("afterExec:" + e.command.name + ":" + e.args + ":" + e.returnValue);
+			//console.log("afterExec:" + e.command.name + ":" + e.args + ":" + e.returnValue);
 			if (e.command.name == "insertstring")
 			{
 				if (/^[\w.]$/.test(e.args)) {
-					RED.console_ok("hello");
+					//RED.console_ok("hello");
 					aceEditor.execCommand("startAutocomplete");
 				}
 				if (e.args.endsWith(";"))
 				{
-					RED.console_ok("insertString ended");
+					//RED.console_ok("insertString ended");
 					aceEditor.completers = defaultCompleters; // reset to default
 				}
 				else if (e.args == "\n")
 				{
-					console.log("newline");
+					//console.log("newline");
 				}
 			}
 			else if (e.command.name == "backspace")
@@ -524,7 +524,7 @@ RED.editor = (function() {
 						var aceEditor = $("#aceEditor");
 						if (aceEditor)
 						{
-							console.log("editor window height:"+$(this).height());
+							//console.log("editor window height:"+$(this).height());
 							$("#aceEditor").height($(this).height() - 120);
 							var aceEditor = ace.edit("aceEditor");
 							aceEditor.resize(true);

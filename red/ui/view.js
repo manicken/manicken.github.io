@@ -36,7 +36,7 @@ RED.view = (function() {
 		lockWindowMouseScrollInRunMode: true,
 		space_width: 5000,
 		space_height: 5000,
-		//workspaceBgColor: "#FFF",
+		workspaceBgColor: "#FFF",
 		scaleFactor: 1,	
 		showGridHminor: true,
 		showGridHmajor: true,
@@ -68,7 +68,7 @@ RED.view = (function() {
 		lockWindowMouseScrollInRunMode: "Lock Window MouseScroll In Run Mode",
 		space_width: "Workspace Width.",
 		space_height: "Workspace Height.",
-		//workspaceBgColor: "Workspace BG color.",
+		workspaceBgColor: "Workspace BG color.",
 		//scaleFactor: "Workspace Zoom.", // this setting is hidden from the user
 		showGridHminor: "Show Workspace minor h-grid.",
 		showGridHmajor: "Show Workspace major h-grid.",
@@ -108,8 +108,8 @@ RED.view = (function() {
 		get space_height() { return parseInt(_settings.space_height); },
 		set space_height(value) { _settings.space_height = value; initWorkspace(); initGrid(); },
 
-		//get workspaceBgColor() { return _settings.workspaceBgColor; },
-		//set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); },
+		get workspaceBgColor() { return _settings.workspaceBgColor; },
+		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); },
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
 		set scaleFactor(value) { _settings.scaleFactor = value.toFixed(2); $("#btn-zoom-zero").text(value.toFixed(2)); },
@@ -325,7 +325,7 @@ RED.view = (function() {
 	{
 		outer_background.attr('width', settings.space_width)
 							  .attr('height', settings.space_height)
-						      .attr('fill',"#FFF");
+						      .attr('fill',settings.workspaceBgColor);
 	}
 	
 	function initGrid()
