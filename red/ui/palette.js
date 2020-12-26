@@ -35,13 +35,13 @@ RED.palette = (function() {
 		get onlyShowOne() { return _settings.onlyShowOne; },
 	};
 
-	var settingsCategoryTitle = "Palette";
+	var settingsCategory = { Title:"Palette", Expanded:false };
 
-	var settingsEditorLabels = {
-		categoryHeaderTextSize: "Header Text Size",
-		categoryHeaderHeight:"Header Height",
-		categoryHeaderBackgroundColor: "Header BG color",
-		onlyShowOne: "Only show one category at a time.",
+	var settingsEditor = {
+		categoryHeaderTextSize: {label:"Header Text Size", type:"number" },
+		categoryHeaderHeight: {label:"Header Height", type:"number" },
+		categoryHeaderBackgroundColor: {label:"Header BG color", type:"color" },
+		onlyShowOne: {label:"Only show one category at a time.", type:"boolean" },
 	};
 
 	function setCategoryHeaderStyle() // this is to make above "setter" cleaner
@@ -358,8 +358,8 @@ RED.palette = (function() {
 	
 	return {
 		settings:settings,
-		settingsCategoryTitle:settingsCategoryTitle,
-		settingsEditorLabels:settingsEditorLabels,
+		settingsCategory:settingsCategory,
+		settingsEditor:settingsEditor,
 		doInit:doInit,
 		add:addNodeType,
 		clearCategory:clearCategory,

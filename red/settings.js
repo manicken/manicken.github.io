@@ -32,7 +32,7 @@ RED.settings = (function() {
 		var catContainerId = "";
 		generateSettingsFromClasses(content.id);
 
-		catContainerId = createCategory(content.id, "development-tests", "Development Tests", true);
+		catContainerId = createCategory(content.id, "development-tests", "Development Tests", false);
 		createCheckBox(catContainerId, "setting-auto-switch-to-info-tab", "Auto switch to info-tab when selecting node(s).",RED.sidebar.info.settings, "autoSwitchTabToThis");
 		
 		createButton(catContainerId, "btn-dev-create-new-ws-structure", "print new ws struct", "btn-dark btn-sm", RED.devTest.createAndPrintNewWsStruct);
@@ -126,41 +126,48 @@ RED.settings = (function() {
                 let RED_SubClass_Name = RED_Class_SubClasses[sci];
                 if (RED_SubClass_Name == "settings")
                 {
-					catContainerId = createCategory(containerId, RED_Class_Name, RED_Class.settingsCategoryTitle, true);
+					catContainerId = createCategory(containerId, RED_Class_Name, RED_Class.settingsCategory.Title, RED_Class.settingsCategory.Expanded);
 					var settingNames = Object.getOwnPropertyNames(RED_Class.settings);
 					for (let i = 0; i < settingNames.length; i++)
 					{
 						var settingName = settingNames[i];
-						if (RED_Class.settingsEditorLabels[settingName] == undefined)
+						if (RED_Class.settingsEditor[settingName] == undefined)
 						{
 							// this is a way to hide settings that should not be shown
-							console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a label.");
+							console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a editor def");
 							continue;
 						}
 						
-						var typeOf = typeof RED_Class.settings[settingName];
+						var typeOf = RED_Class.settingsEditor[settingName].type;
+
 						if (typeOf === "boolean")
 						{
-							
-							createCheckBox(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
+							createCheckBox(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName);
 						}
-						else if (typeOf === "number" || typeOf === "string")
+						else if (typeOf === "number")
 						{
-							if (settingName.endsWith("Color"))
-								createColorSel(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName)
-							else
-							{
-								var value = RED_Class.settings[settingName]
-								if (typeOf === "string" && value.includes("\n"))
-									createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName, 200);
-								else if (typeOf === "string")
-									createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName, 150);
-								else
-									createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditorLabels[settingName], RED_Class.settings, settingName);
-							}
+							createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName);
+						}
+						else if (typeOf === "multiline")
+						{
+							createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName, 200);
+						}
+						else if (typeOf === "color")
+						{
+							createColorSel(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName);
+						}
+						else if (typeOf === "string")
+						{
+							createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName, 150);
+						}
+						else if (typeOf === "combobox")
+						{
+							createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName, 180);
 						}
 						else
-							console.error("generateSettingsFromClasses unknown type:" + typeOf);
+						{
+							console.error("******************\ngenerateSettingsFromClasses unknown type of:" + settingName + " " + typeOf + "******************\n");
+						}
 					}
                     //settings.push({[RED_Class_Name]:RED_Class.settings});
                     //RED.console_ok("found settings@" + RED_Class_Name);
@@ -252,7 +259,7 @@ RED.settings = (function() {
 			$('#' + id).val(cb[param]);
 		}
 	}
-	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, )
+	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
 		var html = '<div class="settings-item settings-item-textwbtn center">'
@@ -260,6 +267,29 @@ RED.settings = (function() {
 			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
 			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
 			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="8" cols="50" style="width: '+textInputWidth+'px;">';
+			html += '</div></div>';
+
+		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
+		$("#" + containerId).append(html);
+		if (typeof cb === "function")
+		{
+			$('#btn-' + id).click(function() { cb($('#' + id).val());});
+			$('#' + id).val(param);
+		}
+		else if(typeof cb == "object")
+		{
+			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
+			$('#' + id).val(cb[param]);
+		}
+	}
+	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth)
+	{
+		if (textInputWidth == undefined) textInputWidth = 40;
+		var html = '<div class="settings-item settings-item-textwbtn center">'
+			
+			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
+			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><select class="settings-item-combobox" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
 			html += '</div></div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);

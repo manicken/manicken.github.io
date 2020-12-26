@@ -154,6 +154,18 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="btn-save";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Save</a>
 
 			</div>
+			<div class="btn-group hidden">
+				<select name="node-input-midiInputdevice" id="node-input-midiInputdevice">
+					<option value="0">device1</option>
+					<option value="1">device2</option>
+					<option value="2">device3</option>
+				</select>
+				<select name="node-input-midiOutputdevice" id="node-input-midiOutputdevice">
+					<option value="0">device1</option>
+					<option value="1">device2</option>
+					<option value="2">device3</option>
+				</select>
+			</div>
 		</div>
 	</div>
 </div>
@@ -178,9 +190,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn btn-small" id="btn-guiEditMode" href="#"><i class="fa fa-cogs fa-lg"></i> gui edit</a>
 				<a class="btn btn-small" id="btn-guiRunMode" href="#"><i class="fa fa-play fa-lg"></i> gui run</a>
 			</div>
+			
 			<div class="btn-group hidden">
 				<a class="btn btn-small" id="btn-debugShowSelection" href="#"><i class="fa fa-cogs fa-lg"></i> debug show moving set</a>
 				<a class="btn btn-small" id="btn-debugShowGroupElements" href="#"><i class="fa fa-cogs fa-lg"></i> debug ShowGroupElements</a>
+				<a class="btn btn-small" id="btn-debugGetMidiDevices" href="#"><i class="fa fa-cogs fa-lg"></i> debug get midi devices</a>
 			</div>
 			<!--<div class="btn-group">
 				<a class="btn btn-small" id="btn-getMidiDevices" href="#"><i class="fa fa-cogs fa-lg"></i> getMidiDevices</a>

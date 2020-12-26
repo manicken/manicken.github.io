@@ -356,6 +356,10 @@ input.settings-item-textInput {
 settings-item-multilinetextInput {
     margin: 0px;
 }
+settings-item-combobox {
+    margin: 0px;
+    height: 12px;
+}
 .settings-category {
     border: 1px solid #999;
     border-radius: 3px;

@@ -54,39 +54,36 @@ RED.view = (function() {
 		lineCurveScale: 0.75,
 		lineConnectionsScale: 1.5,
 		useCenterBasedPositions: true // default back compatible
-		
-		//partialRenderLinks: false// obsolete
 	};
 	var uiItemResizeBorderSize= 6;
 
-	var settingsCategoryTitle = "Workspace View";
+	var settingsCategory = { Title:"Workspace View", Expanded:false };
 
-	var settingsEditorLabels = {
-		showWorkspaceToolbar: "Show Workspace toolbar.",
-		showNodeToolTip: "Show Node Tooltip Popup.",
-		guiEditMode: "GUI edit mode.",
-		lockWindowMouseScrollInRunMode: "Lock Window MouseScroll In Run Mode",
-		space_width: "Workspace Width.",
-		space_height: "Workspace Height.",
-		workspaceBgColor: "Workspace BG color.",
-		//scaleFactor: "Workspace Zoom.", // this setting is hidden from the user
-		showGridHminor: "Show Workspace minor h-grid.",
-		showGridHmajor: "Show Workspace major h-grid.",
-		showGridVminor: "Show Workspace minor v-grid.",
-		showGridVmajor: "Show Workspace major v-grid.",
-		gridHminorSize: "Minor h-grid Size.",
-		gridHmajorSize: "Major h-grid Size.",
-		gridVminorSize: "Minor v-grid Size.",
-		gridVmajorSize: "Major v-grid Size.",
-		gridMinorColor: "Minor grid color.",
-		gridMajorColor: "Major grid color.",
-		snapToGrid: "Snap to grid.",
-	    snapToGridHsize: "Snap to grid h-size.",
-	    snapToGridVsize: "Snap to grid v-size.",
-		lineCurveScale: "Line Curve Scale.",
-		lineConnectionsScale: "Line Conn. Scale.",
-		useCenterBasedPositions: "Center Based Positions"
-		//partialRenderLinks: "Partial Render Links (experimental)"// obsolete
+	var settingsEditor = {
+		showWorkspaceToolbar:  {label:"Show Workspace toolbar.", type:"boolean"},
+		showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
+		guiEditMode:  {label:"GUI edit mode.", type:"boolean"},
+		lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean"},
+		space_width:  {label:"Workspace Width.", type:"number"},
+		space_height:  {label:"Workspace Height.", type:"number"},
+		workspaceBgColor:  {label:"Workspace BG color.", type:"color"},
+		/*scaleFactor:  {label:"Workspace Zoom.", type:"number"}, */ // this setting is hidden from the user
+		showGridHminor: {label:"Show Workspace minor h-grid.", type:"boolean"},
+		showGridHmajor: {label:"Show Workspace major h-grid.", type:"boolean"},
+		showGridVminor: {label:"Show Workspace minor v-grid.", type:"boolean"},
+		showGridVmajor: {label:"Show Workspace major v-grid.", type:"boolean"},
+		gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
+		gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
+		gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
+		gridVmajorSize: {label:"Major v-grid Size.", type:"number"},
+		gridMinorColor: {label:"Minor grid color.", type:"color"},
+		gridMajorColor: {label:"Major grid color.", type:"color"},
+		snapToGrid: {label:"Snap to grid.", type:"boolean"},
+	    snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
+	    snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
+		lineCurveScale: {label:"Line Curve Scale.", type:"number"},
+		lineConnectionsScale: {label:"Line Conn. Scale.", type:"number"},
+		useCenterBasedPositions: {label:"Center Based Positions", type:"boolean"}
 	}
 
 	var settings = {
@@ -161,9 +158,6 @@ RED.view = (function() {
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
 		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; },
-
-		//get partialRenderLinks() { return _settings.partialRenderLinks; },// obsolete
-		//set partialRenderLinks(value) { _settings.partialRenderLinks = value; redraw_links();}// obsolete
 	};
 
 	function setMinorGridColor()
@@ -4429,8 +4423,8 @@ RED.view = (function() {
 	return {
 		evalHere: function(string,d) { eval(string); },
 		settings:settings,
-		settingsCategoryTitle:settingsCategoryTitle,
-		settingsEditorLabels:settingsEditorLabels,
+		settingsCategory:settingsCategory,
+		settingsEditor:settingsEditor,
 		init:initView,
 		AddNewNode:AddNewNode,
 		resetMouseVars:resetMouseVars, // exposed for editor

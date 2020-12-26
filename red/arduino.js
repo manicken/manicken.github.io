@@ -24,13 +24,16 @@ RED.arduino = (function() {
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
 		WebSocketServerPort: 3000,
+		bddwssPort: 3001, // BiDirWebSocketServer
 		ProjectName: "TeensyAudioDesign",
 		StandardIncludeHeader: "#include <Arduino.h>\n"
 							  +	"#include <Audio.h>\n"
 							  + "#include <Wire.h>\n"
 							  + "#include <SPI.h>\n"
 							  + "#include <SD.h>\n"
-						      + "#include <SerialFlash.h>\n"
+							  + "#include <SerialFlash.h>\n",
+		MidiDeviceIn: 0,
+		MidiDeviceOut: 0
 	}
 	var settings = {
 		get useExportDialog() { return _settings.useExportDialog; },
@@ -46,25 +49,36 @@ RED.arduino = (function() {
 		set WebServerPort(state) { _settings.WebServerPort = parseInt(state); },
 
 		get WebSocketServerPort() { return parseInt(_settings.WebSocketServerPort); },
-		set WebSocketServerPort(state) { _settings.WebSocketServerPort = parseInt(state); StartWebSocketConnection(); },
+		set WebSocketServerPort(state) { _settings.WebSocketServerPort = parseInt(state); StartWebSocketTerminal_Connection(); },
+
+		get bddwssPort() { return parseInt(_settings.bddwssPort); },
+		set bddwssPort(state) { _settings.bddwssPort = parseInt(state); StartWebSocketBiDirData_Connection(); },
 
 		get ProjectName() { return _settings.ProjectName; },
 		set ProjectName(value) { _settings.ProjectName = value; },
 
 		get StandardIncludeHeader() { return _settings.StandardIncludeHeader; },
-		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; }
+		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; },
+
+		get MidiDeviceIn() { return _settings.MidiDeviceIn; },
+		set MidiDeviceIn(value) { _settings.MidiDeviceIn = value; SendToWebSocket("midiSetDeviceIn(" + value + ")"); },
+
+		get MidiDeviceOut() { return _settings.MidiDeviceOut; },
+		set MidiDeviceOut(value) { _settings.MidiDeviceOut = value; SendToWebSocket("midiSetDeviceOut(" + value + ")");},
 	};
 
-	var settingsCategoryTitle = "Arduino Export/Import";
+	var settingsCategory = { Title:"Arduino Export/Import", Expanded:false };
 
-	var settingsEditorLabels = {
-		useExportDialog: "Force Show export dialog",
-		IOcheckAtExport: "IO check At Export",
-		WriteJSONtoExportedFile: "Write JSON at exported file",
-		WebServerPort: "Web Server Port",
-		WebSocketServerPort: "Web Socket Server Port",
-		ProjectName: "Project Name",
-		StandardIncludeHeader: "Global Includes"
+	var settingsEditor = {
+		useExportDialog:         { label:"Force Show export dialog", type:"boolean"},
+		IOcheckAtExport:         { label:"IO check At Export", type:"boolean"},
+		WriteJSONtoExportedFile: { label:"Write JSON at exported file", type:"boolean"},
+		WebServerPort:           { label:"Web Server Port", type:"number"},
+		WebSocketServerPort:     { label:"Web Socket Server Port", type:"number"},
+		ProjectName:             { label:"Project Name", type:"string"},
+		StandardIncludeHeader:   { label:"Global Includes", type:"multiline"},
+		MidiDeviceIn:            { label:"MidiDevice In", type:"combobox"},
+		MidiDeviceOut:           { label:"MidiDevice Out", type:"combobox"},
 	};
 
 	function startConnectedChecker()
@@ -127,50 +141,65 @@ RED.arduino = (function() {
 	}
 	var wsClientTerminal;
 	var wsClientBiDirData;
-    function StartWebSocketConnection()
+	
+	function StartWebSocketConnection()
     {
-		if ('WebSocket' in window)
-		{
-			var protocol = 'ws://';
-			var address = protocol + "127.0.0.1:" + settings.WebSocketServerPort;
-			RED.bottombar.info.addContent("StartWebSocket@" + address + "<br>");
-			if (wsClientTerminal != null)
-			wsClientTerminal.close();
-			wsClientTerminal = new WebSocket(address);
-			wsClientTerminal.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else
-				{
-					//console.log(msg.data);
-					RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
-					var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
-					//console.warn(dataToAdd);
-					RED.bottombar.info.addContent(dataToAdd);
-				}
-			};
-			if (wsClientBiDirData != null)
-			wsClientBiDirData.close();
-			address = protocol + "127.0.0.1:3001";// + settings.WebSocketServerPort;
-			wsClientBiDirData = new WebSocket(address);
-			wsClientBiDirData.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else
-				{
-					if (msg.data.startsWith("midi"))
-						decodeWSCBDD_midi(msg.data);
-					//console.log(msg.data);
-					RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
-					var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
-					//console.warn(dataToAdd);
-					RED.bottombar.info.addContent(dataToAdd);
-				}
-			};
-        }
-        else {
-            console.error('Upgrade your browser. This Browser is NOT supported WebSocket for receiving terminal text');
-        }
+		StartWebSocketTerminal_Connection();
+		StartWebSocketBiDirData_Connection();
 	}
-	function decodeWSCBDD_midi(message) // WebSocketClientBiDirData
+    function StartWebSocketTerminal_Connection()
+    {
+		if (!('WebSocket' in window)){ console.error('Upgrade your browser. This Browser is NOT supported WebSocket (used by terminal capture)'); return;}
+
+		if (wsClientTerminal != null)
+			wsClientTerminal.close();
+		wsClientTerminal = new WebSocket("ws://127.0.0.1:" + settings.WebSocketServerPort);
+		wsClientTerminal.onmessage = function (msg) {
+			if (msg.data == 'reload') window.location.reload();
+			else
+			{
+				//console.log(msg.data);
+				RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
+				var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
+				//console.warn(dataToAdd);
+				RED.bottombar.info.addContent(dataToAdd);
+			}
+		};
+		wsClientTerminal.onopen = function (ev) {
+			RED.bottombar.info.setContent("");
+		};
+	}
+	function StartWebSocketBiDirData_Connection()
+    {
+		if (!('WebSocket' in window)){ console.error('Upgrade your browser. This Browser is NOT supported WebSocket (used by midi rx/tx)'); return;}
+
+		if (wsClientBiDirData != null)
+			wsClientBiDirData.close();
+		wsClientBiDirData = new WebSocket("ws://127.0.0.1:" + settings.bddwssPort);
+		wsClientBiDirData.onmessage = function (msg) {
+			if (msg.data == 'reload') window.location.reload();
+			else
+			{
+				if (msg.data.startsWith("midiSend"))
+					decodeWSCBDD_midiSend(msg.data);
+				else if (msg.data.startsWith("midiDevices"))
+					decodeWSCBDD_midiDevices(msg.data.substring("midiDevices".length));
+				else
+					console.log("unknown WebSocketBiDirData message:" + msg.data);
+				//console.log(msg.data);
+				RED.bottombar.show('output'); // '<span style="color:#000">black<span style="color:#AAA">white</span></span>' + 
+				var dataToAdd = msg.data.replace('style="color:#FFF"', 'style="color:#000"');//.replace("[CR][LF]", "<br>").replace("[CR]", "<br>").replace("[LF]", "<br>");
+				//console.warn(dataToAdd);
+				RED.bottombar.info.addContent(dataToAdd);
+			}
+		};
+		wsClientBiDirData.onopen = function(ev) {
+			SendToWebSocket("midigetdevices");
+			RED.bottombar.info.setContent("");
+		};
+		
+	}
+	function decodeWSCBDD_midiSend(message) // WebSocketClientBiDirData
 	{
 		var beginIndex = message.indexOf("(");
 		if (beginIndex == -1) { wsClientBiDirData.send("midi send missing first ("); return; }
@@ -221,11 +250,76 @@ RED.arduino = (function() {
 		}
 		RED.view.redraw();
 	}
+	var midiDevicesIn = [];
+	var midiDeviceInIndex = 0;
+	var midiDevicesOut = [];
+	var midiDeviceOutIndex = 0;
+	function decodeWSCBDD_midiDevices(string)
+	{			
+		//console.log(string);
+		var params = getSubStringOf(string, "(", ")");
+		if (params == undefined) { wsClientBiDirData.send("err. missing some parantesis in:" + string); }
+		//console.log(params);
+		if (string.startsWith("In"))
+		{
+			midiDevicesIn = params.split("\t");
+			midiDeviceInIndex = parseInt(getSubStringOf(string, "[", "]"));
+		}
+		else if (string.startsWith("Out"))
+		{
+			midiDevicesOut = params.split("\t");
+			midiDeviceOutIndex = parseInt(getSubStringOf(string, "[", "]"));
+			// when here we have both input and output devices
+			/*setOptionList("node-input-midiInputdevice", midiDevicesIn);
+			setOptionList("node-input-midiOutputdevice", midiDevicesOut);
+			$("#node-input-midiInputdevice").val(midiDeviceInIndex);
+			$("#node-input-midiOutputdevice").val(midiDeviceOutIndex);*/
+			
+			setOptionList("arduino-MidiDeviceIn", midiDevicesIn);
+			$("#arduino-MidiDeviceIn").val(midiDeviceInIndex);
+			setOptionList("arduino-MidiDeviceOut", midiDevicesOut);
+			$("#arduino-MidiDeviceOut").val(midiDeviceOutIndex);
+			//console.log(midiDevicesIn);
+			//console.log(midiDevicesOut);
+		}
+	}
+	function setOptionList(selectId, options)
+	{
+		var select = $("select#"+ selectId);
+		select.empty();
+
+		for (var i = 0; i < options.length; i++)
+		{
+			select.append( $("<option>")
+    			.val(i)
+    			.html(options[i]));
+		}
+	}
+	function getSubStringOfParantesis(string)
+	{
+		var beginIndex = string.indexOf("(");
+		if (beginIndex == -1) return undefined;
+		var endIndex = string.indexOf(")");
+		if (endIndex == -1) return undefined;
+		return string.substring(beginIndex+1, endIndex);
+	}
+	function getSubStringOf(string, startToken, endToken)
+	{
+		var beginIndex = string.indexOf(startToken);
+		if (beginIndex == -1) return undefined;
+		var endIndex = string.indexOf(endToken);
+		if (endIndex == -1) return undefined;
+		return string.substring(beginIndex+1, endIndex);
+	}
     function SendToWebSocket(string)
     {
         if (wsClientBiDirData == undefined) return;
         wsClientBiDirData.send(string);
-    }
+	}
+	$('#btn-debugGetMidiDevices').click(function() {
+		SendToWebSocket("mididevicesget");
+	});
+
     $('#btn-verify-compile').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=compile"); });
 	$('#btn-compile-upload').click(function() {RED.bottombar.info.setContent(""); httpGetAsync("cmd=upload"); });
 	//$('#btn-get-design-json').click(function() { httpGetAsync("cmd=getFile&fileName=GUI_TOOL.json", GetGUI_TOOL_JSON_response,NOtresponse); });
@@ -236,8 +330,8 @@ RED.arduino = (function() {
     return {
 		serverIsActive: function() { return serverIsActive;},
 		settings:settings,
-		settingsCategoryTitle:settingsCategoryTitle,
-		settingsEditorLabels:settingsEditorLabels,
+		settingsCategory:settingsCategory,
+		settingsEditor:settingsEditor,
 		startConnectedChecker:startConnectedChecker,
 		httpPostAsync:httpPostAsync,
 		httpGetAsync:httpGetAsync,
