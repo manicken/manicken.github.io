@@ -188,7 +188,7 @@ function getCppFooter()
 function getNewWsCppFile(name, contents)
 {
   //contents = contents.replace("undefined", "").replace("undefined", "");
-  return {name:name, contents:contents, header:"", footer:""};
+  return {name:name, contents:contents, header:"", footer:"", overwrite_file:true};
 }
 /**
  * 
@@ -423,7 +423,16 @@ function export_classBased(generateZip)
               wsFile.footer = "\n// ****** End Of Included file:" + n.name + " ******\n";
               wsCppFiles.push(wsFile);
           }
-          
+      }
+      else if (n.type == "DontRemoveCodeFiles")
+      {
+          var files = n.comment.split("\n");
+          for (var fi = 0; fi < files.length; fi++)
+          {
+              var wsFile = getNewWsCppFile(files[fi], "");
+              wsFile.overwrite_file = false;
+              wsCppFiles.push(wsFile);
+          }
       }
   }
   
@@ -715,7 +724,7 @@ function export_classBased(generateZip)
       var wsCppfile = wsCppFiles[i];
       zip.file(wsCppfile.name, wsCppfile.contents);
     }
-    zip.generateAsync({type:"blob"}).then(function(blob) {
+    zip.generateAsync({type:"blob", compression:"DEFLATE"}).then(function(blob) {
       console.log("typeof:" + typeof content);
       RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function(fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
     });
