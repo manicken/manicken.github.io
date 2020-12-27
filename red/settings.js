@@ -32,20 +32,6 @@ RED.settings = (function() {
 		var catContainerId = "";
 		generateSettingsFromClasses(content.id);
 
-		catContainerId = createCategory(content.id, "development-tests", "Development Tests", false);
-		createCheckBox(catContainerId, "setting-auto-switch-to-info-tab", "Auto switch to info-tab when selecting node(s).",RED.sidebar.info.settings, "autoSwitchTabToThis");
-		
-		createButton(catContainerId, "btn-dev-create-new-ws-structure", "print new ws struct", "btn-dark btn-sm", RED.devTest.createAndPrintNewWsStruct);
-		createButton(catContainerId, "btn-dev-test", "console color test", "btn-primary btn-sm", function () {RED.devTest.console_logColor("Hello World"); RED.console_ok("Test of console_ok")});
-		createButton(catContainerId, "btn-dev-test-get-help-server", "get help @server", "btn-dark btn-sm", RED.devTest.testGetHelpFromServer);
-		createTextInputWithApplyButton(catContainerId, "btn-dev-test-get-func-help", "get func help", AceAutoComplete.getFromHelp, "AudioEffectFade", 150);
-		// test creating subcat
-		catContainerId = createCategory(catContainerId, "development-tests-sub", "Test post/get (sub-cat of dev-test)", true);
-		createTextInputWithApplyButton(catContainerId, "setting-test-post", "test post", RED.arduino.httpPostAsync, "data", 150);
-		createTextInputWithApplyButton(catContainerId, "setting-test-get", "test get", RED.arduino.httpGetAsync, "cmd", 150);
-		createTextInputWithApplyButton(catContainerId, "setting-test-ws-send", "test ws send", RED.devTest.SendToWebSocket, "cmd", 150);
-		//createColorSel(catContainerId, "setting-color-sel-test", "color:", colorSelTest, "#000000"); // dev test
-		
 		RED.sidebar.show("settings"); // development, allways show settings tab first
 
 		RED.palette.settings.categoryHeaderTextSize = RED.palette.settings.categoryHeaderTextSize; // read/apply
@@ -124,60 +110,87 @@ RED.settings = (function() {
             for (let sci = 0; sci < RED_Class_SubClasses.length; sci++)
             {
                 let RED_SubClass_Name = RED_Class_SubClasses[sci];
-                if (RED_SubClass_Name == "settings")
-                {
-					catContainerId = createCategory(containerId, RED_Class_Name, RED_Class.settingsCategory.Title, RED_Class.settingsCategory.Expanded);
-					var settingNames = Object.getOwnPropertyNames(RED_Class.settings);
-					for (let i = 0; i < settingNames.length; i++)
-					{
-						var settingName = settingNames[i];
-						if (RED_Class.settingsEditor[settingName] == undefined)
-						{
-							// this is a way to hide settings that should not be shown
-							console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a editor def");
-							continue;
-						}
-						
-						var typeOf = RED_Class.settingsEditor[settingName].type;
-
-						if (typeOf === "boolean")
-						{
-							createCheckBox(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName);
-						}
-						else if (typeOf === "number")
-						{
-							createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName);
-						}
-						else if (typeOf === "multiline")
-						{
-							createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName, 200);
-						}
-						else if (typeOf === "color")
-						{
-							createColorSel(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName);
-						}
-						else if (typeOf === "string")
-						{
-							createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName, 150);
-						}
-						else if (typeOf === "combobox")
-						{
-							createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, RED_Class.settingsEditor[settingName].label, RED_Class.settings, settingName, 180);
-						}
-						else
-						{
-							console.error("******************\ngenerateSettingsFromClasses unknown type of:" + settingName + " " + typeOf + "******************\n");
-						}
-					}
-                    //settings.push({[RED_Class_Name]:RED_Class.settings});
-                    //RED.console_ok("found settings@" + RED_Class_Name);
-                }
+				if (RED_SubClass_Name != "settingsEditor")
+					continue;
                 
+				CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, RED_Class.settingsEditor, RED_Class.settingsCategory.Title, RED_Class.settingsCategory.Expanded, RED_Class.settingsCategory.popupText);
             }
         }
 	}
 
-	function createCategory(containerId, id, headerLabel, expanded)
+	function CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, settings, catTitle, catExpanded, popupText)
+	{
+		var catContainerId = createCategory(containerId, RED_Class_Name, catTitle, catExpanded, popupText);
+		var settingNames = Object.getOwnPropertyNames(settings);
+		for (let i = 0; i < settingNames.length; i++)
+		{
+			var settingName = settingNames[i];
+			var setting = settings[settingName];
+
+			if (setting.items != undefined)
+			{
+				CreateSettingsEditorCat(RED_Class, RED_Class_Name + "-" + settingName, catContainerId, setting.items, setting.label, setting.expanded, setting.popupText);
+				continue;
+			}
+
+			if (RED_Class.settings[settingName] == undefined)
+			{
+				// this is a special case, when there are not any setting for this settingsEditor item
+				// that means it can have a button only for special commands
+				if (setting.type === "button" && setting.action != undefined)
+				{
+					if ((typeof setting.action) === "function")
+					{
+						if (setting.buttonClass != undefined)
+							createButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, setting.buttonClass, setting.action, setting.popupText);
+						else
+							createButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, "btn-primary btn-sm", setting.action, setting.popupText);
+					}
+					else
+						console.error("generateSettingsFromClasses, " + settingName + " have no action callback function");
+				}
+				else
+					console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting");
+				continue;
+			}
+			var typeOf = setting.type;
+
+			if (typeOf === "boolean")
+			{
+				createCheckBox(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, setting.popupText);
+				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
+			}
+			else if (typeOf === "number")
+			{
+				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 40, setting.popupText);
+				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
+			}
+			else if (typeOf === "multiline")
+			{
+				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 180, setting.popupText);
+			}
+			else if (typeOf === "color")
+			{
+				createColorSel(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, setting.popupText);
+			}
+			else if (typeOf === "string")
+			{
+				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 150, setting.popupText);
+				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
+			}
+			else if (typeOf === "combobox")
+			{
+				createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 180, setting.popupText);
+				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
+			}
+			else
+			{
+				console.error("******************\ngenerateSettingsFromClasses unknown type of:" + settingName + " " + typeOf + "******************\n");
+			}
+		}
+	}
+
+	function createCategory(containerId, id, headerLabel, expanded, popupText)
 	{
 		if (expanded)
 		{
@@ -212,6 +225,10 @@ RED.settings = (function() {
 				$(this).children("i").addClass("expanded"); // chevron
 			}
 		});
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#" + headerId, popupText, "left");
+		}
 		return catContainerId;
 	}
 
@@ -220,9 +237,9 @@ RED.settings = (function() {
 	 * @param {string} id 
 	 * @param {string} label 
 	 */
-	function createCheckBox(containerId, id, label, cb, param)
+	function createCheckBox(containerId, id, label, cb, param, popupText)
 	{
-		var html = '<div class="settings-item center"><label for="'+id+'" style="font-size: 16px; padding: 2px 0px 0px 4px;">';
+		var html = '<div class="settings-item center" id="divSetting-'+id+'"><label for="'+id+'" style="font-size: 16px; padding: 2px 0px 0px 4px;">';
 		html +=	'<input style="margin-bottom: 4px; margin-left: 4px;" type="checkbox" id="'+id+'" checked="checked" />';
 		html +=	'&nbsp;'+label+'</label></div>';
 
@@ -238,15 +255,19 @@ RED.settings = (function() {
 			$('#' + id).click(function() { cb[param] = $('#' + id).prop('checked'); });
 			$('#' + id).prop('checked', cb[param]);
 		}
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
 	}
-	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth)
+	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
 	{
-		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="settings-item settings-item-textwbtn center"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+		
+		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
 			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input class="settings-item-textInput" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
 			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
 
-		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
+		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id + popupText);
 		$("#" + containerId).append(html);
 		if (typeof cb === "function")
 		{
@@ -258,11 +279,15 @@ RED.settings = (function() {
 			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
 			$('#' + id).val(cb[param]);
 		}
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
 	}
-	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth)
+	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="settings-item settings-item-textwbtn center">'
+		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'">'
 			
 			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
 			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
@@ -281,11 +306,15 @@ RED.settings = (function() {
 			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
 			$('#' + id).val(cb[param]);
 		}
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
 	}
-	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth)
+	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="settings-item settings-item-textwbtn center">'
+		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'">'
 			
 			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
 			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
@@ -304,18 +333,25 @@ RED.settings = (function() {
 			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
 			$('#' + id).val(cb[param]);
 		}
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
 	}
-	function createButton(containerId, id, label, buttonClass, cb)
+	function createButton(containerId, id, label, buttonClass, cb, popupText)
 	{
-		var html = '<button class="btn '+buttonClass+' settings-item-applyBtn" type="button" id="btn-'+id+'">'+label+'</button></label>';
+		var html = '<div class="settings-item center" id="divSetting-'+id+'"><button class="btn '+buttonClass+'" type="button" id="btn-'+id+'">'+label+'</button></label></div>';
 		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
 		$('#btn-' + id).click(cb);
-
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
 	}
-	function createColorSel(containerId, id, label, cb, param)
+	function createColorSel(containerId, id, label, cb, param, popupText)
 	{
-		var html = '<div class="settings-item center"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+		var html = '<div class="settings-item center" id="divSetting-'+id+'"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
 			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input id="'+id+'" data-jscolor="">';
 			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
 
@@ -335,9 +371,11 @@ RED.settings = (function() {
 		//<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
 		//<input id="node-input-color" data-jscolor="">
 		//</div>
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
 	}
-	
-	
 
     return {
 		createTab:createTab,
@@ -345,3 +383,20 @@ RED.settings = (function() {
 		setFromJSONobj:setFromJSONobj
 	};
 })();
+
+
+	/* this following is now replaced by setting definer in devText.js
+		catContainerId = createCategory(content.id, "development-tests", "Development Tests", false);
+		createCheckBox(catContainerId, "setting-auto-switch-to-info-tab", "Auto switch to info-tab when selecting node(s).",RED.sidebar.info.settings, "autoSwitchTabToThis");
+		
+		createButton(catContainerId, "btn-dev-create-new-ws-structure", "print new ws struct", "btn-dark btn-sm", RED.devTest.createAndPrintNewWsStruct);
+		createButton(catContainerId, "btn-dev-test", "console color test", "btn-primary btn-sm", function () {RED.devTest.console_logColor("Hello World"); RED.console_ok("Test of console_ok")});
+		createButton(catContainerId, "btn-dev-test-get-help-server", "get help @server", "btn-dark btn-sm", RED.devTest.testGetHelpFromServer);
+		createTextInputWithApplyButton(catContainerId, "btn-dev-test-get-func-help", "get func help", AceAutoComplete.getFromHelp, "AudioEffectFade", 150);
+		// test creating subcat
+		catContainerId = createCategory(catContainerId, "development-tests-sub", "Test post/get (sub-cat of dev-test)", true);
+		createTextInputWithApplyButton(catContainerId, "setting-test-post", "test post", RED.arduino.httpPostAsync, "data", 150);
+		createTextInputWithApplyButton(catContainerId, "setting-test-get", "test get", RED.arduino.httpGetAsync, "cmd", 150);
+		createTextInputWithApplyButton(catContainerId, "setting-test-ws-send", "test ws send", RED.devTest.SendToWebSocket, "cmd", 150);
+		//createColorSel(catContainerId, "setting-color-sel-test", "color:", colorSelTest, "#000000"); // dev test
+		*/

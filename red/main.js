@@ -394,6 +394,7 @@ RED.main = (function() {
 	}
 	function SetButtonPopOver(buttonId, htmlText, location)
 	{
+		//console.error("setting popover for:" + buttonId + "  " + htmlText);
 		if (location == undefined) location = "bottom";
 		$(buttonId).mouseover(function() {
 			RED.view.showPopOver(buttonId, true, htmlText, location); // true means html mode
@@ -493,6 +494,7 @@ RED.main = (function() {
 		requirements:requirements,
 		print:PrintElem,
 		download:download,
-		showSelectNameDialog:showSelectNameDialog
+		showSelectNameDialog:showSelectNameDialog,
+		SetButtonPopOver:SetButtonPopOver
 	};
 })();

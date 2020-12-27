@@ -57,35 +57,6 @@ RED.view = (function() {
 	};
 	var uiItemResizeBorderSize= 6;
 
-	var settingsCategory = { Title:"Workspace View", Expanded:false };
-
-	var settingsEditor = {
-		showWorkspaceToolbar:  {label:"Show Workspace toolbar.", type:"boolean"},
-		showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
-		guiEditMode:  {label:"GUI edit mode.", type:"boolean"},
-		lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean"},
-		space_width:  {label:"Workspace Width.", type:"number"},
-		space_height:  {label:"Workspace Height.", type:"number"},
-		workspaceBgColor:  {label:"Workspace BG color.", type:"color"},
-		/*scaleFactor:  {label:"Workspace Zoom.", type:"number"}, */ // this setting is hidden from the user
-		showGridHminor: {label:"Show Workspace minor h-grid.", type:"boolean"},
-		showGridHmajor: {label:"Show Workspace major h-grid.", type:"boolean"},
-		showGridVminor: {label:"Show Workspace minor v-grid.", type:"boolean"},
-		showGridVmajor: {label:"Show Workspace major v-grid.", type:"boolean"},
-		gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
-		gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
-		gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
-		gridVmajorSize: {label:"Major v-grid Size.", type:"number"},
-		gridMinorColor: {label:"Minor grid color.", type:"color"},
-		gridMajorColor: {label:"Major grid color.", type:"color"},
-		snapToGrid: {label:"Snap to grid.", type:"boolean"},
-	    snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
-	    snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
-		lineCurveScale: {label:"Line Curve Scale.", type:"number"},
-		lineConnectionsScale: {label:"Line Conn. Scale.", type:"number"},
-		useCenterBasedPositions: {label:"Center Based Positions", type:"boolean"}
-	}
-
 	var settings = {
 		get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
 		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); },
@@ -94,7 +65,7 @@ RED.view = (function() {
 		set showNodeToolTip(value) { _settings.showNodeToolTip = value; },
 
 		get guiEditMode() { return _settings.guiEditMode; },
-		set guiEditMode(value) { _settings.guiEditMode = value; },
+		set guiEditMode(state) { _settings.guiEditMode = state; $('#' + settingsEditor.guiEditMode.valueId).prop('checked', state); },
 
 		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
 		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; },
@@ -109,7 +80,13 @@ RED.view = (function() {
 		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); },
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
-		set scaleFactor(value) { _settings.scaleFactor = value.toFixed(2); $("#btn-zoom-zero").text(value.toFixed(2)); },
+		set scaleFactor(value) { value = parseFloat(value);
+								 _settings.scaleFactor = value.toFixed(2);
+								 $("#btn-zoom-zero").text(value.toFixed(2));
+								 $("#" + settingsEditor.scaleFactor.valueId).val(value.toFixed(2));
+								 redraw(true);
+								 redraw_links_init();
+								 redraw_links(); },
 
 		get showGridHminor() { return _settings.showGridHminor; },
 		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); },
@@ -151,14 +128,56 @@ RED.view = (function() {
 		set snapToGridVsize(value) { _settings.snapToGridVsize = value; },
 
 		get lineCurveScale() { return parseFloat(_settings.lineCurveScale);},
-		set lineCurveScale(value) { _settings.lineCurveScale = value; redraw_links(); },
+		set lineCurveScale(value) { value = parseFloat(value);
+									if (value < 0.01) value = 0.01;
+									_settings.lineCurveScale = value;
+									$("#" + settingsEditor.lineCurveScale.valueId).val(value.toFixed(2));
+									anyLinkEnter= true; redraw_links(); },
 
 		get lineConnectionsScale() { return parseFloat(_settings.lineConnectionsScale);},
-		set lineConnectionsScale(value) { _settings.lineConnectionsScale = value; redraw_links(); },
+		set lineConnectionsScale(value) { value = parseFloat(value); 
+										  if (value < 0.01) value = 0.01;
+										  _settings.lineConnectionsScale = value;
+										  $("#" + settingsEditor.lineConnectionsScale.valueId).val(value.toFixed(2));
+										  anyLinkEnter= true; redraw_links(); },
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; },
+		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; completeRedraw();},
 	};
+
+	var settingsCategory = { Title:"Workspace", Expanded:false };
+
+	var settingsEditor = {
+		gridSubCat: {label:"Grid", expanded:false, popupText: "Change workspace grid appearence.", items: {
+			showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
+			showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
+			showGridVminor: {label:"Show minor v-grid.", type:"boolean"},
+			showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
+			gridMinorColor: {label:"Minor grid color.", type:"color"},
+			gridMajorColor: {label:"Major grid color.", type:"color"},
+			gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
+			gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
+			gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
+			gridVmajorSize: {label:"Major v-grid Size.", type:"number", popupText:"This also affects the export sorting of nodes<br> that means nodes are first sorted by xpos<br>then in each v-grid-column they are sorted by ypos.<br><br>note. that when using non center-based positioning the sorting is using the node topLeft position instead of the center"},
+			snapToGrid: {label:"Snap to grid.", type:"boolean", popupText:"Enables/Disables snap node positions to grid<br><br>When this is enabled the snapping can be temporary disabled by holding the shift-key<br><br>When this is disabled the snapping can be temporary enabled by holding the shift-key"},
+			snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
+			snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
+		}},
+		wsSizeSubCat: {label:"Workspace size", expanded:false, popupText: "Change the workspace size<br>This can be used to make a bigger or smaller workspace area.<br>Note when changing the size it can be a little sluggish, and sometimes the space is not updated<br> that is fixed by zooming out/in.", items: {
+		space_width:  {label:"Width.", type:"number"},
+		space_height:  {label:"Height.", type:"number"},
+		}},
+		workspaceBgColor:  {label:"BG color.", type:"color"},
+		
+		scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},
+		lineCurveScale: {label:"Line Curve Scale.", type:"number", popupText: "adjust the wires curve scale, smaller values means that lines are more straight,<br> and bigger values means more curvy lines.<br>note. this cannot be set to zero."},
+		lineConnectionsScale: {label:"Line Conn. Scale.", type:"number", valueId:"", popupText: "this defines the curve scale used wires are going backward"},
+		showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
+		showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
+		guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
+		lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
+		useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br>that makes everything jump when switching between modes.<br> (the jumping will be fixed in a future release)"},
+	}
 
 	function setMinorGridColor()
 	{
@@ -378,7 +397,7 @@ RED.view = (function() {
 	            "shape-rendering" : "optimizeSpeed",
 	            "stroke" : _settings.gridMajorColor,
 				//"stroke-dasharray":"2",
-	            "stroke-width" : "2px"
+	            "stroke-width" : "3px"
 			});
 	}
 	function initVminorGrid()
@@ -424,7 +443,7 @@ RED.view = (function() {
 	            "shape-rendering" : "optimizeSpeed",
 		        "stroke" : _settings.gridMajorColor,
 				//"stroke-dasharray":"2",
-	            "stroke-width" : "2px"
+	            "stroke-width" : "3px"
 			});
 	}
 	function showHideGrid(state)
@@ -928,39 +947,18 @@ RED.view = (function() {
 	}
 	function zoomIn() {
 		if (settings.scaleFactor < 0.3)
-		{
 			settings.scaleFactor += 0.05;
-			redraw(true);
-			redraw_links_init();
-			redraw_links();
-		}
-		else if (settings.scaleFactor < maxZoomFactor) {
+		else if (settings.scaleFactor < maxZoomFactor)
 			settings.scaleFactor += 0.1;
-			redraw(true);
-			redraw_links_init();
-			redraw_links();
-		}
-
 	}
 	function zoomOut() {
-		if (settings.scaleFactor > 0.3) {
+		if (settings.scaleFactor > 0.3)
 			settings.scaleFactor -= 0.1;
-			redraw(true);
-			redraw_links_init();
-			redraw_links();
-		}
-		else if (settings.scaleFactor > 0.1) {
+		else if (settings.scaleFactor > 0.1)
 			settings.scaleFactor -= 0.05;
-			redraw(true);
-			redraw_links_init();
-			redraw_links();
-		}
 	}
 	function zoomZero() {
 		settings.scaleFactor = 1;
-		redraw(true);
-		redraw_links_init();
-		redraw_links();
 	}
 
 	function selectAll() {
@@ -2053,8 +2051,8 @@ RED.view = (function() {
 	}
 	function setRectFill(rect)
 	{
-		console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
-		console.warn('rect.attr("fill")' + rect.attr("fill"));
+		//console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
+		//console.warn('rect.attr("fill")' + rect.attr("fill"));
 
 		if (rect.attr("fillOld") != undefined)
 			rect.attr("fill", rect.attr("fillOld")); // failsafe
@@ -3101,11 +3099,11 @@ RED.view = (function() {
 	{
 		var currentHoveredGroupDef = (currentHoveredGroup != undefined);
 		var lastHoveredGroupDef = (lastHoveredGroup != undefined);
-		console.error(currentHoveredGroupDef + ":" + lastHoveredGroupDef);
+		//console.error(currentHoveredGroupDef + ":" + lastHoveredGroupDef);
 
 		if (lastHoveredGroupDef == true)
 		{
-			console.log("lastHoveredGroupDef == true");
+			//console.log("lastHoveredGroupDef == true");
 			for (var i = 0; i < moving_set.length; i++)
 			{
 				var d = moving_set[i].n;
@@ -3118,7 +3116,7 @@ RED.view = (function() {
 		}
 		if (currentHoveredGroupDef == true)
 		{
-			console.log("currentHoveredGroupDef == true");
+			//console.log("currentHoveredGroupDef == true");
 			for (var i = 0; i < moving_set.length; i++)
 			{
 				//moveToFromGroupMouseUp(moving_set[i].n);
@@ -3708,7 +3706,7 @@ RED.view = (function() {
 		visNodesAll.classed("node_selected",function(d) { return d.selected; })
 		return visNodesAll;
 	}
-	function redraw_nodes(fullUpdate) // fullUpdate means that it checks for removed/added nodes as well
+	function redraw_nodes(fullUpdate,superUpdate) // fullUpdate means that it checks for removed/added nodes as well
 	{
 		if (fullUpdate != undefined && fullUpdate == true) {
 			var visNodesAll = redraw_nodes_init();
@@ -3727,6 +3725,11 @@ RED.view = (function() {
 				checkRequirements(d); // this update nodes that allready exist
 				//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
 				redraw_nodeReqError(nodeRect, d);
+			}
+			if (superUpdate != undefined && superUpdate == true)
+			{
+				d.dirty = true;
+				d.resize = true;
 			}
 			if (d.dirty == false) return;
 			d.dirty = false;
@@ -4420,6 +4423,16 @@ RED.view = (function() {
 			}
 		}
 	}
+	function completeRedraw()
+	{
+		vis.attr("transform","scale("+settings.scaleFactor+")");
+		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
+		redraw_nodes(true,true);
+		redraw_groups(true);
+		redraw_links_init();
+		anyLinkEnter = true;
+		redraw_links();
+	}
 	return {
 		evalHere: function(string,d) { eval(string); },
 		settings:settings,
@@ -4452,6 +4465,7 @@ RED.view = (function() {
 		redraw: function() {
 			redraw(true);
 			redraw_links_init();
+			anyLinkEnter = true;
 			redraw_links();
 		},
 		dirty: function(d) {

@@ -19,6 +19,45 @@
  **/
 
 RED.devTest = (function() {
+
+    var _settings = {
+        autoSwitchTabToInfoTab: true,
+        testPost: "data",
+        testGet: "cmd",
+        testWsSend: "data",
+        getFuncHelp: "AudioEffectFade"
+    };
+
+    var settings = {
+        get autoSwitchTabToInfoTab() { return _settings.autoSwitchTabToInfoTab; },
+		set autoSwitchTabToInfoTab(state) { _settings.autoSwitchTabToInfoTab = state; RED.sidebar.info.settings.autoSwitchTabToThis = state; },
+
+        get testPost() { return _settings.testPost; },
+		set testPost(value) { _settings.testPost = value; RED.arduino.httpPostAsync(value); },
+
+        get testGet() { return _settings.testGet; },
+		set testGet(value) { _settings.testGet = value; RED.arduino.httpGetAsync(value); },
+
+        get testWsSend() { return _settings.testWsSend; },
+        set testWsSend(value) { _settings.testWsSend = value; RED.arduino.SendToWebSocket(value); },
+        
+        get getFuncHelp() { return _settings.getFuncHelp; },
+		set getFuncHelp(value) { _settings.getFuncHelp = value; console.log(AceAutoComplete.getFromHelp(value)); },
+
+    }
+
+    var settingsCategory = { Title:"Development Tests", Expanded:false };
+    var settingsEditor = {
+		autoSwitchTabToInfoTab: { label:"Auto switch to info-tab when selecting node(s).", type:"boolean"},
+		testPost:               { label:"test post", type:"string"},
+		testGet:                { label:"test get", type:"string"},
+        testWsSend:             { label:"test ws send", type:"string"},
+        getFuncHelp:            { label:"get func help", type:"string"},
+        printNewWsStruct:       { label:"print new ws struct", type:"button", buttonClass:"btn-primary btn-sm", action: createAndPrintNewWsStruct},
+        consoleColorTest:       { label:"console color test", type:"button", buttonClass:"btn-primary btn-sm", action: function() {RED.devTest.console_logColor("Hello World"); RED.console_ok("Test of console_ok"); }},
+        getHelpAtServer:        { label:"get help @ github server", type:"button", buttonClass:"btn-primary btn-sm", action: testGetHelpFromServer},
+        
+	};
     
     function console_logColor(data)
     {
@@ -73,11 +112,13 @@ RED.devTest = (function() {
                 var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
                 var rawHtml = jsonFile.responseText;
                 localStorage.setItem("audio_library_guitool_help",rawHtml);
-                    
+                mywindow.document.write(rawHtml);
+                /*
                 mywindow.document.write('<html><head>');
                 mywindow.document.write("Hello World")
                 mywindow.document.write('</head><body >');
                 mywindow.document.write('</body></html>');
+                */
                 mywindow.document.close(); // necessary for IE >= 10
 		        mywindow.focus();
             }
@@ -103,6 +144,10 @@ RED.devTest = (function() {
     }*/
 
     return {
+        settings:settings,
+		settingsCategory:settingsCategory,
+        settingsEditor:settingsEditor,
+        
         createAndPrintNewWsStruct:createAndPrintNewWsStruct,
         testGetHelpFromServer:testGetHelpFromServer,
         console_logColor:console_logColor,
