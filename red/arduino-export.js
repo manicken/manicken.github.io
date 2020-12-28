@@ -316,11 +316,21 @@ function export_simple() {
     if (node == null) { console.warn("node == null:" + "type:"+n.type +",id:"+ n.id); continue;} // this should never happen (because now "tab" type checked at top)
     // first handle special nodes
     if (node.type == "IncludeDef"){ if (!includes.includes("#include " + node.name)) includes += "#include " + node.name + "\n";}
-    if (node.type == "Variables") globalVars += node.comment + "\n";
-    if (node.type == "CodeFile") codeFiles += "\n" + node.comment + "\n";
-    if (node.type == "Function") functions += "\n" + node.comment + "\n";
-    if (node.type == "AudioStreamObject"){ if (!includes.includes("#include " + node.includeFile)) includes += "#include " + node.includeFile + "\n";}
-    
+    else if (node.type == "Variables") globalVars += node.comment + "\n";
+    else if (node.type == "CodeFile") codeFiles += "\n" + node.comment + "\n";
+    else if (node.type == "Function") functions += "\n" + node.comment + "\n";
+    else if (node.type == "AudioStreamObject"){ if (!includes.includes("#include " + node.includeFile)) includes += "#include " + node.includeFile + "\n";}
+    else if (node.type == "DontRemoveCodeFiles")
+    {
+        var files = node.comment.split("\n");
+        for (var fi = 0; fi < files.length; fi++)
+        {
+            var wsFile = getNewWsCppFile(files[fi], "");
+            wsFile.overwrite_file = false;
+            wsCppFiles.push(wsFile);
+        }
+    }
+
     if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 
     if (haveIO(node)) {

@@ -180,7 +180,7 @@ RED.settings = (function() {
 			}
 			else if (typeOf === "combobox")
 			{
-				createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 180, setting.popupText);
+				createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 180, setting.popupText, setting.options);
 				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
 			}
 			else
@@ -311,15 +311,22 @@ RED.settings = (function() {
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
 		}
 	}
-	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
+	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText, options)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'">'
-			
-			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
-			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
-			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><select class="settings-item-combobox" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
-			html += '</div></div>';
+		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'">';
+		html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
+		html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>';
+		html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group">';
+		html += '<select class="settings-item-combobox" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
+		if (options != undefined && Array.isArray(options))
+		{
+			for (var oi = 0; oi < options.length; oi++)
+			{
+				html += '<option value="' + options[oi] + '">' + options[oi] + '</option>'
+			}
+		}
+		html += '</select></div></div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);

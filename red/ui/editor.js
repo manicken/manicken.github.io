@@ -15,6 +15,20 @@
  * limitations under the License.
  **/
 RED.editor = (function() {
+
+	var _settings = {
+		aceEditorTheme: "theme-chrome",
+	}
+	var settings = {
+		get aceEditorTheme() { return _settings.aceEditorTheme; },
+		set aceEditorTheme(value) { _settings.aceEditorTheme = value; },
+	}
+	var settingsCategory = { Title:"Editor", Expanded:false };
+
+	var settingsEditor = {
+		aceEditorTheme:         { label:"Ace Theme", type:"combobox", options:["ambiance","chaos","chrome","clouds","clouds_midnight","cobalt","crimson_editor","dawn","dracula","dreamweaver","eclipse","github","gob","gruvbox","idle_fingers","iplastic","katzenmilch","kr_theme","kuroir","merbivore","merbivore_soft","mono_industrial","monokai","nord_dark","pastel_on_dark","solarized_dark","solarized_light","sqlserver","terminal","textmate","tomorrow","tomorrow_night","tomorrow_night_blue","tomorrow_night_bright","tomorrow_night_eighties","twilight","vibrant_ink","xcode"]},
+	}
+
 	var editing_node = null;
 	// TODO: should IMPORT/EXPORT get their own dialogs?
 
@@ -78,7 +92,11 @@ RED.editor = (function() {
 		
 		//aceEditor.completers = [completer];
 
-		//editor.setTheme("ace/theme/iplastic");
+		var aceTheme = "ace/theme/" + settings.aceEditorTheme
+		console.log("setting ace editor theme to:" + aceTheme)
+		aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
+		//$(".ui-dialog").css('background-color', "#282a36"); 
+		//$(".ui-dialog").css('color', "#f8f8f2"); 
 		
 		aceEditor.setOptions({
 			enableBasicAutocompletion: true,
@@ -89,12 +107,12 @@ RED.editor = (function() {
 		
 		if (node._def.useAceEditor == "javascript")
 		{
-			aceEditor.session.setMode("ace/mode/javascript");
+			aceEditor.session.setMode("ace/mode/javascript", function() { console.log("ace mode changed to javascript");});
 			console.warn("ace editor in javascript mode");
 		}
 		else if (node._def.useAceEditor == "c_cpp")
 		{
-			aceEditor.session.setMode("ace/mode/c_cpp");
+			aceEditor.session.setMode("ace/mode/c_cpp", function() { console.log("ace mode changed to c_cpp");});
 			init_aceEditor_c_cpp_mode(aceEditor);
 			console.warn("ace editor in c_cpp mode");
 		}
@@ -1000,6 +1018,9 @@ RED.editor = (function() {
 
 
 	return {
+		settings:settings,
+		settingsCategory:settingsCategory,
+		settingsEditor:settingsEditor,
 		init_edit_dialog:init_edit_dialog,
 		edit: showEditDialog,
 		editConfig: showEditConfigNodeDialog,
