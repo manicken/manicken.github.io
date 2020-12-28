@@ -726,6 +726,7 @@ function export_classBased(generateZip)
     }
     zip.generateAsync({type:"blob", compression:"DEFLATE"}).then(function(blob) {
       console.log("typeof:" + typeof content);
+      localStorage.setItem("test.zip",blob);
       RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function(fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
     });
     

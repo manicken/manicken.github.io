@@ -131,15 +131,15 @@ RED.view = (function() {
 		set lineCurveScale(value) { value = parseFloat(value);
 									if (value < 0.01) value = 0.01;
 									_settings.lineCurveScale = value;
-									$("#" + settingsEditor.lineCurveScale.valueId).val(value.toFixed(2));
-									anyLinkEnter= true; redraw_links(); },
+									$("#" + settingsEditor.lineCurveSubCat.items.lineCurveScale.valueId).val(value.toFixed(2));
+									anyLinkEnter=true; redraw_links(); },
 
 		get lineConnectionsScale() { return parseFloat(_settings.lineConnectionsScale);},
 		set lineConnectionsScale(value) { value = parseFloat(value); 
 										  if (value < 0.01) value = 0.01;
 										  _settings.lineConnectionsScale = value;
-										  $("#" + settingsEditor.lineConnectionsScale.valueId).val(value.toFixed(2));
-										  anyLinkEnter= true; redraw_links(); },
+										  $("#" + settingsEditor.lineCurveSubCat.items.lineConnectionsScale.valueId).val(value.toFixed(2));
+										  anyLinkEnter=true; redraw_links(); },
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
 		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; completeRedraw();},
@@ -148,30 +148,37 @@ RED.view = (function() {
 	var settingsCategory = { Title:"Workspace", Expanded:false };
 
 	var settingsEditor = {
-		gridSubCat: {label:"Grid", expanded:false, popupText: "Change workspace grid appearence.", items: {
-			showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
-			showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
-			showGridVminor: {label:"Show minor v-grid.", type:"boolean"},
-			showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
-			gridMinorColor: {label:"Minor grid color.", type:"color"},
-			gridMajorColor: {label:"Major grid color.", type:"color"},
-			gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
-			gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
-			gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
-			gridVmajorSize: {label:"Major v-grid Size.", type:"number", popupText:"This also affects the export sorting of nodes<br> that means nodes are first sorted by xpos<br>then in each v-grid-column they are sorted by ypos.<br><br>note. that when using non center-based positioning the sorting is using the node topLeft position instead of the center"},
-			snapToGrid: {label:"Snap to grid.", type:"boolean", popupText:"Enables/Disables snap node positions to grid<br><br>When this is enabled the snapping can be temporary disabled by holding the shift-key<br><br>When this is disabled the snapping can be temporary enabled by holding the shift-key"},
-			snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
-			snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
-		}},
-		wsSizeSubCat: {label:"Workspace size", expanded:false, popupText: "Change the workspace size<br>This can be used to make a bigger or smaller workspace area.<br>Note when changing the size it can be a little sluggish, and sometimes the space is not updated<br> that is fixed by zooming out/in.", items: {
-		space_width:  {label:"Width.", type:"number"},
-		space_height:  {label:"Height.", type:"number"},
-		}},
+		gridSubCat: {label:"Grid", expanded:false, popupText: "Change workspace grid appearence.", 
+			items: {
+				showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
+				showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
+				showGridVminor: {label:"Show minor v-grid.", type:"boolean"},
+				showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
+				gridMinorColor: {label:"Minor grid color.", type:"color"},
+				gridMajorColor: {label:"Major grid color.", type:"color"},
+				gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
+				gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
+				gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
+				gridVmajorSize: {label:"Major v-grid Size.", type:"number", popupText:"This also affects the export sorting of nodes<br> that means nodes are first sorted by xpos<br>then in each v-grid-column they are sorted by ypos.<br><br>note. that when using non center-based positioning the sorting is using the node topLeft position instead of the center"},
+				snapToGrid: {label:"Snap to grid.", type:"boolean", popupText:"Enables/Disables snap node positions to grid<br><br>When this is enabled the snapping can be temporary disabled by holding the shift-key<br><br>When this is disabled the snapping can be temporary enabled by holding the shift-key"},
+				snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
+				snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
+			}
+		},
+		wsSizeSubCat: {label:"Workspace size", expanded:false, popupText: "Change the workspace size<br>This can be used to make a bigger or smaller workspace area.<br>Note when changing the size it can be a little sluggish, and sometimes the space is not updated<br> that is fixed by zooming out/in.", 
+			items: {
+				space_width:  {label:"Width.", type:"number"},
+				space_height:  {label:"Height.", type:"number"},
+			}
+		},
+		lineCurveSubCat: {label:"Line Curve Scales", expanded:false, popupText: "adjust the different line curve scales, smaller values means that lines are more straight,<br> and bigger values means more curvy lines.<br>note. this cannot be set to zero.", 
+			items: {
+				lineCurveScale: {label:"Forward", type:"number", popupText: "curve scale of wires going forward"},
+				lineConnectionsScale: {label:"Backward", type:"number", valueId:"", popupText: "curve scale of wires going backward"},
+			}
+		},
 		workspaceBgColor:  {label:"BG color.", type:"color"},
-		
 		scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},
-		lineCurveScale: {label:"Line Curve Scale.", type:"number", popupText: "adjust the wires curve scale, smaller values means that lines are more straight,<br> and bigger values means more curvy lines.<br>note. this cannot be set to zero."},
-		lineConnectionsScale: {label:"Line Conn. Scale.", type:"number", valueId:"", popupText: "this defines the curve scale used wires are going backward"},
 		showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
 		showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
 		guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},

@@ -57,6 +57,7 @@ RED.devTest = (function() {
         consoleColorTest:       { label:"console color test", type:"button", buttonClass:"btn-primary btn-sm", action: function() {RED.devTest.console_logColor("Hello World"); RED.console_ok("Test of console_ok"); }},
         getHelpAtServer:        { label:"get help @ github server", type:"button", buttonClass:"btn-primary btn-sm", action: testGetHelpFromServer},
         
+        
 	};
     
     function console_logColor(data)

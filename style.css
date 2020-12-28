@@ -325,9 +325,10 @@ input.jscolor {
     border: 1px solid #333;
 }
 .settings-item {
-    border-top: 1px solid #aaa;
-    border-bottom: 1px solid #aaa;
+    border: 1px solid #aaa;
+    /*border-bottom: 1px solid #aaa;*/
     padding: 2px;
+    margin: 3px;
 }
 .settings-item-textwbtn {
     padding: 5px;
@@ -364,6 +365,9 @@ settings-item-combobox {
     border: 1px solid #999;
     border-radius: 3px;
     margin-bottom: 5px;
+    margin-top: 5px;
+    margin-left: 3px;
+    margin-right: 3px;
 }
 .settings-content {
     background: #fff;
