@@ -46,13 +46,13 @@ RED.arduino = (function() {
 		set WriteJSONtoExportedFile(state) { _settings.WriteJSONtoExportedFile = state; },
 
 		get WebServerPort() { return parseInt(_settings.WebServerPort); },
-		set WebServerPort(state) { _settings.WebServerPort = parseInt(state); },
+		set WebServerPort(value) { _settings.WebServerPort = parseInt(value); },
 
 		get WebSocketServerPort() { return parseInt(_settings.WebSocketServerPort); },
-		set WebSocketServerPort(state) { _settings.WebSocketServerPort = parseInt(state); StartWebSocketTerminal_Connection(); },
+		set WebSocketServerPort(value) { _settings.WebSocketServerPort = parseInt(value); StartWebSocketTerminal_Connection(); },
 
 		get bddwssPort() { return parseInt(_settings.bddwssPort); },
-		set bddwssPort(state) { _settings.bddwssPort = parseInt(state); StartWebSocketBiDirData_Connection(); },
+		set bddwssPort(value) { _settings.bddwssPort = parseInt(value); StartWebSocketBiDirData_Connection(); },
 
 		get ProjectName() { return _settings.ProjectName; },
 		set ProjectName(value) { _settings.ProjectName = value; },
@@ -61,10 +61,10 @@ RED.arduino = (function() {
 		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; },
 
 		get MidiDeviceIn() { return _settings.MidiDeviceIn; },
-		set MidiDeviceIn(value) { _settings.MidiDeviceIn = value; SendToWebSocket("midiSetDeviceIn(" + value + ")"); },
+		set MidiDeviceIn(value) { _settings.MidiDeviceIn = parseInt(value); SendToWebSocket("midiSetDeviceIn(" + value + ")"); RED.storage.update();}, // storage update will only run after this program has started
 
 		get MidiDeviceOut() { return _settings.MidiDeviceOut; },
-		set MidiDeviceOut(value) { _settings.MidiDeviceOut = value; SendToWebSocket("midiSetDeviceOut(" + value + ")");},
+		set MidiDeviceOut(value) { _settings.MidiDeviceOut = parseInt(value); SendToWebSocket("midiSetDeviceOut(" + value + ")"); RED.storage.update();},
 	};
 
 	var settingsCategory = { Title:"Arduino", Expanded:false };
@@ -260,9 +260,9 @@ RED.arduino = (function() {
 		RED.view.redraw();
 	}
 	var midiDevicesIn = [];
-	var midiDeviceInIndex = 0;
+	var midiDeviceInIndex = -1;
 	var midiDevicesOut = [];
-	var midiDeviceOutIndex = 0;
+	var midiDeviceOutIndex = -1;
 	function decodeWSCBDD_midiDevices(string)
 	{			
 		//console.log(string);
@@ -272,12 +272,14 @@ RED.arduino = (function() {
 		if (string.startsWith("In"))
 		{
 			midiDevicesIn = params.split("\t");
-			midiDeviceInIndex = parseInt(getSubStringOf(string, "[", "]"));
+			//midiDeviceInIndex = parseInt(getSubStringOf(string, "[", "]"));
 		}
 		else if (string.startsWith("Out"))
 		{
 			midiDevicesOut = params.split("\t");
-			midiDeviceOutIndex = parseInt(getSubStringOf(string, "[", "]"));
+			//midiDeviceOutIndex = parseInt(getSubStringOf(string, "[", "]"));
+			//console.warn("midi devices indexes:" + midiDeviceInIndex + " " + midiDeviceOutIndex);
+			
 			// when here we have both input and output devices
 			/*setOptionList("node-input-midiInputdevice", midiDevicesIn);
 			setOptionList("node-input-midiOutputdevice", midiDevicesOut);
@@ -285,10 +287,26 @@ RED.arduino = (function() {
 			$("#node-input-midiOutputdevice").val(midiDeviceOutIndex);*/
 			
 			setOptionList(settingsEditor.midiSubCat.items.MidiDeviceIn.valueId, midiDevicesIn);
-			$("#" + settingsEditor.midiSubCat.items.MidiDeviceIn.valueId).val(midiDeviceInIndex);
 			setOptionList(settingsEditor.midiSubCat.items.MidiDeviceOut.valueId, midiDevicesOut);
-			$("#" + settingsEditor.midiSubCat.items.MidiDeviceOut.valueId).val(midiDeviceOutIndex);
 			
+			if (midiDeviceInIndex == -1)
+			{
+				console.warn("trying to use prev midi in device:" + settings.MidiDeviceIn);
+				$("#" + settingsEditor.midiSubCat.items.MidiDeviceIn.valueId).val(settings.MidiDeviceIn);
+				SendToWebSocket("midiSetDeviceIn(" + settings.MidiDeviceIn + ")");
+			}
+			else
+				$("#" + settingsEditor.midiSubCat.items.MidiDeviceIn.valueId).val(midiDeviceInIndex);
+
+			if (midiDeviceOutIndex == -1)
+			{
+				console.warn("trying to use prev midi out device:" + settings.MidiDeviceOut);
+				$("#" + settingsEditor.midiSubCat.items.MidiDeviceOut.valueId).val(settings.MidiDeviceOut);
+				SendToWebSocket("midiSetDeviceOut(" + settings.MidiDeviceOut + ")");
+			}
+			else
+				$("#" + settingsEditor.midiSubCat.items.MidiDeviceOut.valueId).val(midiDeviceOutIndex);
+
 			//console.log(midiDevicesIn);
 			//console.log(midiDevicesOut);
 		}
@@ -304,14 +322,6 @@ RED.arduino = (function() {
     			.val(i)
     			.html(options[i]));
 		}
-	}
-	function getSubStringOfParantesis(string)
-	{
-		var beginIndex = string.indexOf("(");
-		if (beginIndex == -1) return undefined;
-		var endIndex = string.indexOf(")");
-		if (endIndex == -1) return undefined;
-		return string.substring(beginIndex+1, endIndex);
 	}
 	function getSubStringOf(string, startToken, endToken)
 	{

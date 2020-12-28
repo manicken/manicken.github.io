@@ -29,7 +29,8 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
  * node RED main - here the main entry function exist
  */
 RED.main = (function() {
-	
+	var firstStart = true; // this is set to false when whole "program" has started once
+
 	//NOTE: code generation save function have moved to arduino-export.js
 	
 	//var classColor = "#E6E0F8"; // standard
@@ -407,6 +408,12 @@ RED.main = (function() {
 	$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
 
 	$('#btn-save').click(function() { RED.storage.update(); });
+
+	//***********************************************/
+	//***********************************************/
+	//*************MAIN ENTRY POINT******************/
+	//***********************************************/
+	//***********************************************/
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
 		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
@@ -487,9 +494,11 @@ RED.main = (function() {
 				$(".palette-spinner").hide();
 			})
 		}
+		firstStart = false;
 	});
 
 	return {
+		firstStart: function () {return firstStart;},
 		classColor:classColor,
 		requirements:requirements,
 		print:PrintElem,

@@ -3,8 +3,12 @@
  */
 
 RED.storage = (function() {
-	function update() {
 
+	
+
+	function update() {
+		if (RED.main.firstStart() == true) return; // this prevents saves while setting settings
+		 
 		//RED.nodes.addClassTabsToPalette(); //Jannik
 		//RED.nodes.refreshClassNodes(); //Jannik
 		
@@ -85,6 +89,7 @@ RED.storage = (function() {
 		}
 	}
 	return {
+		
 		update: update,
 		load: load,
 		loadContents:loadContents, 

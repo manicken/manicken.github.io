@@ -58,11 +58,13 @@ RED.settings = (function() {
             for (var svi = 0; svi < settingValueNames.length; svi++)
             {
                 var valueName = settingValueNames[svi];
-                if (RED[json_object].settings[valueName]) // this skip any removed settings
+                if (RED[json_object].settings[valueName] != undefined) // this skip any removed settings
                 {
                     RED[json_object].settings[valueName] = csettings[json_object][valueName];
                     //console.warn("typeof " + valueName + ":" + typeof csettings[json_object][valueName])
-                }
+				}
+				else
+					console.error("setting removed typeof " + valueName + ":" + typeof csettings[json_object][valueName] + ":" + json_object)
             }
         }
 	}
