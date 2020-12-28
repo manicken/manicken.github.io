@@ -162,12 +162,12 @@ RED.settings = (function() {
 			}
 			else if (typeOf === "number")
 			{
-				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 40, setting.popupText);
+				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "40px", setting.popupText);
 				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
 			}
 			else if (typeOf === "multiline")
 			{
-				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 180, setting.popupText);
+				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText);
 			}
 			else if (typeOf === "color")
 			{
@@ -175,12 +175,12 @@ RED.settings = (function() {
 			}
 			else if (typeOf === "string")
 			{
-				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 150, setting.popupText);
+				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText);
 				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
 			}
 			else if (typeOf === "combobox")
 			{
-				createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, 180, setting.popupText, setting.options);
+				createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText, setting.options);
 				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
 			}
 			else
@@ -239,9 +239,18 @@ RED.settings = (function() {
 	 */
 	function createCheckBox(containerId, id, label, cb, param, popupText)
 	{
-		var html = '<div class="settings-item center" id="divSetting-'+id+'"><label for="'+id+'" style="font-size: 16px; padding: 2px 0px 0px 4px;">';
-		html +=	'<input style="margin-bottom: 4px; margin-left: 4px;" type="checkbox" id="'+id+'" checked="checked" />';
-		html +=	'&nbsp;'+label+'</label></div>';
+		var html = "";
+		html += '<div class="settings-item" id="divSetting-'+id+'">';
+
+		html += '<div class="center">';
+		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'</label>';
+		html +=	'</div>';
+
+		html += '<div class="center">';
+		html +=	'<input style="margin-bottom: 0px; margin-top: 0px;" type="checkbox" id="'+id+'" checked="checked" />';
+		html +=	'</div>';
+
+		html +=	'</div>';
 
 		//RED.console_ok("create complete checkbox @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
@@ -263,9 +272,25 @@ RED.settings = (function() {
 	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
 	{
 		
-		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
-			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input class="settings-item-textInput" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
-			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
+		var html = "";
+		html += '<div class="settings-item" id="divSetting-'+id+'">';
+
+		html += '<div class="center">';
+		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
+		html += '</div>';
+
+		html += '<div class="center">';
+		html += '<input class="settings-item-textInput" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+';"/>';
+		if (textInputWidth.endsWith("%"))
+		{
+			html += '</div>';
+			
+			html += '<div class="settings-item-multiline-btn">';
+		}
+		html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+		html += '</div>';
+
+		html += '</div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id + popupText);
 		$("#" + containerId).append(html);
@@ -287,12 +312,22 @@ RED.settings = (function() {
 	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'">'
-			
-			html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
-			html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>'
-			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="8" cols="50" style="width: '+textInputWidth+'px;">';
-			html += '</div></div>';
+		var html = "";
+		html += '<div class="settings-item" id="divSetting-'+id+'">';
+
+		html += '<div class="center">';
+		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
+		html += '</div>';
+
+		html += '<div class="center">';
+		html += '<textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="8" cols="50" style="width: '+textInputWidth+'px;"/>';
+		html += '</div>';
+
+		html += '<div class="settings-item-multiline-btn">';
+		html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+		html += '</div>';
+
+		html += '</div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
@@ -314,11 +349,15 @@ RED.settings = (function() {
 	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText, options)
 	{
 		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = '<div class="settings-item settings-item-textwbtn center" id="divSetting-'+id+'">';
-		html += '<label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
-		html += '<button class="btn btn-success settings-item-applyBtn2" type="button" id="btn-'+id+'">Apply</button>';
-		html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group">';
-		html += '<select class="settings-item-combobox" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+'px;">';
+		var html = ""
+		html += '<div class="settings-item" id="divSetting-'+id+'">';
+
+		html += '<div class="center" id="divSetting-'+id+'">';
+		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
+		html += '</div>';
+		
+		html += '<div class="center">';
+		html += '<select class="settings-item-combobox" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+';">';
 		if (options != undefined && Array.isArray(options))
 		{
 			for (var oi = 0; oi < options.length; oi++)
@@ -326,7 +365,15 @@ RED.settings = (function() {
 				html += '<option value="' + options[oi] + '">' + options[oi] + '</option>'
 			}
 		}
-		html += '</select></div></div>';
+		html += '</select>';
+		html += '</div>';
+
+		html += '<div class="settings-item-multiline-btn">';
+		html += '<button class="btn btn-success settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+		html += '</div>';
+
+		html += '</div>';
+		
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
@@ -345,22 +392,21 @@ RED.settings = (function() {
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
 		}
 	}
-	function createButton(containerId, id, label, buttonClass, cb, popupText)
-	{
-		var html = '<div class="settings-item center" id="divSetting-'+id+'"><button class="btn '+buttonClass+'" type="button" id="btn-'+id+'">'+label+'</button></label></div>';
-		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
-		$("#" + containerId).append(html);
-		$('#btn-' + id).click(cb);
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-	}
 	function createColorSel(containerId, id, label, cb, param, popupText)
 	{
-		var html = '<div class="settings-item center" id="divSetting-'+id+'"><label class="settings-item-label" for="'+id+'" style="font-size: 16px;">';
-			html += '&nbsp;'+label+'&nbsp;</label><div class="btn-group"><input id="'+id+'" data-jscolor="">';
-			html += ' <button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button></div></div>';
+		var html = "";
+		html += '<div class="settings-item" id="divSetting-'+id+'">';
+
+		html += '<div class="center">';
+		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
+		html += '</div>';
+
+		html += '<div class="center">';
+		html += '<input id="'+id+'" data-jscolor=""/>';
+		html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+		html += '</div>';
+
+		html += '</div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
 		$("#" + containerId).append(html);
@@ -378,6 +424,20 @@ RED.settings = (function() {
 		//<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
 		//<input id="node-input-color" data-jscolor="">
 		//</div>
+		if (popupText != undefined)
+		{
+			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
+	}
+	function createButton(containerId, id, label, buttonClass, cb, popupText)
+	{
+		var html = "";
+		html += '<div class="settings-item center" id="divSetting-'+id+'">';
+		html += '<button class="btn '+buttonClass+'" type="button" id="btn-'+id+'">'+label+'</button>';
+		html += '</div>';
+		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
+		$("#" + containerId).append(html);
+		$('#btn-' + id).click(cb);
 		if (popupText != undefined)
 		{
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");

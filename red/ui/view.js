@@ -183,7 +183,7 @@ RED.view = (function() {
 		showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
 		guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
 		lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
-		useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br>that makes everything jump when switching between modes.<br> (the jumping will be fixed in a future release)"},
+		useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
 	}
 
 	function setMinorGridColor()

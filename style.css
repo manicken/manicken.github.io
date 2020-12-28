@@ -25,6 +25,12 @@ body {
     align-items: center;
     
   }
+  .right {
+    display: flex;
+    justify-content: right;
+    align-items: right;
+    
+  }
 #dropTarget {
     position: absolute;
     top: 0; bottom: 0;
@@ -328,6 +334,7 @@ input.jscolor {
     border: 1px solid #aaa;
     /*border-bottom: 1px solid #aaa;*/
     padding: 2px;
+    padding-bottom: 6px;
     margin: 3px;
 }
 .settings-item-textwbtn {
@@ -339,27 +346,39 @@ input.jscolor {
     padding-left: 3px;
     padding-right: 3px;
     margin: 0px;
+    margin-left: 3px;
+}
+.settings-item-multiline-btn {
+    text-align: right;
+    padding: 3px;
 }
 .settings-item-applyBtn2 {
     padding-top: 0px;
     padding-bottom: 0px;
     padding-left: 3px;
     padding-right: 3px;
-    margin: 6px;
-}
-label.settings-item-label {
     margin: 0px;
+    border: 0px;
+}
+
+label.settings-item-label {
+    font-size: 16px;
+    margin: 3px;
+    text-align: center;
+    font-weight: bold;
 }
 input.settings-item-textInput {
     height: 12px;
-    margin: 0px;
+    margin: 3px;
 }
-settings-item-multilinetextInput {
+.settings-item-multilinetextInput {
     margin: 0px;
+    padding: 0px;
+   
 }
-settings-item-combobox {
+.settings-item-combobox {
     margin: 0px;
-    height: 12px;
+    height: 30px;
 }
 .settings-category {
     border: 1px solid #999;
@@ -872,6 +891,15 @@ g.link_unknown path.link_line {
 #notifications .alert {
     box-shadow: 0 0 1px 1px;
     margin-bottom: 5px;
+}
+
+.setting-row {
+    clear: both;
+    margin-bottom: 7px;
+}
+.setting-row label {
+    display: block;
+    width: 100px;
 }
 
 .form-row {
