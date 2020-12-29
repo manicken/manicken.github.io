@@ -42,6 +42,10 @@ RED.view = (function() {
 		showGridHmajor: true,
 		showGridVminor: true,
 		showGridVmajor: true,
+		nodeMouseDownShowGridHminor: false,
+		nodeMouseDownShowGridHmajor: true,
+		nodeMouseDownShowGridVminor: false,
+		nodeMouseDownShowGridVmajor: true,
 		gridHminorSize: 10,
 		gridHmajorSize: 100,
 		gridVminorSize: 10,
@@ -65,7 +69,7 @@ RED.view = (function() {
 		set showNodeToolTip(value) { _settings.showNodeToolTip = value; },
 
 		get guiEditMode() { return _settings.guiEditMode; },
-		set guiEditMode(state) { _settings.guiEditMode = state; $('#' + settingsEditor.guiEditMode.valueId).prop('checked', state); },
+		set guiEditMode(state) { _settings.guiEditMode = state; $('#' + settingsEditor.otherSubCat.items.guiEditMode.valueId).prop('checked', state); },
 
 		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
 		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; },
@@ -83,7 +87,7 @@ RED.view = (function() {
 		set scaleFactor(value) { value = parseFloat(value);
 								 _settings.scaleFactor = value.toFixed(2);
 								 $("#btn-zoom-zero").text(value.toFixed(2));
-								 $("#" + settingsEditor.scaleFactor.valueId).val(value.toFixed(2));
+								 $("#" + settingsEditor.otherSubCat.items.scaleFactor.valueId).val(value.toFixed(2));
 								 redraw(true);
 								 redraw_links_init();
 								 redraw_links(); },
@@ -99,6 +103,18 @@ RED.view = (function() {
 
 		get showGridVmajor() { return _settings.showGridVmajor; },
 		set showGridVmajor(state) { _settings.showGridVmajor = state; showHideGridVmajor(state); },
+
+		get nodeMouseDownShowGridHminor() { return _settings.nodeMouseDownShowGridHminor; },
+		set nodeMouseDownShowGridHminor(state) { _settings.nodeMouseDownShowGridHminor = state; },
+
+		get nodeMouseDownShowGridHmajor() { return _settings.nodeMouseDownShowGridHmajor; },
+		set nodeMouseDownShowGridHmajor(state) { _settings.nodeMouseDownShowGridHmajor = state; },
+
+		get nodeMouseDownShowGridVminor() { return _settings.nodeMouseDownShowGridVminor; },
+		set nodeMouseDownShowGridVminor(state) { _settings.nodeMouseDownShowGridVminor = state; },
+
+		get nodeMouseDownShowGridVmajor() { return _settings.nodeMouseDownShowGridVmajor; },
+		set nodeMouseDownShowGridVmajor(state) { _settings.nodeMouseDownShowGridVmajor = state; },
 
 		get gridHminorSize() { return parseInt(_settings.gridHminorSize); },
 		set gridHminorSize(value) { _settings.gridHminorSize = value; initHminorGrid(); },
@@ -150,19 +166,43 @@ RED.view = (function() {
 	var settingsEditor = {
 		gridSubCat: {label:"Grid", expanded:false, popupText: "Change workspace grid appearence.", 
 			items: {
-				showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
-				showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
-				showGridVminor: {label:"Show minor v-grid.", type:"boolean"},
-				showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
-				gridMinorColor: {label:"Minor grid color.", type:"color"},
-				gridMajorColor: {label:"Major grid color.", type:"color"},
-				gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
-				gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
-				gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
-				gridVmajorSize: {label:"Major v-grid Size.", type:"number", popupText:"This also affects the export sorting of nodes<br> that means nodes are first sorted by xpos<br>then in each v-grid-column they are sorted by ypos.<br><br>note. that when using non center-based positioning the sorting is using the node topLeft position instead of the center"},
-				snapToGrid: {label:"Snap to grid.", type:"boolean", popupText:"Enables/Disables snap node positions to grid<br><br>When this is enabled the snapping can be temporary disabled by holding the shift-key<br><br>When this is disabled the snapping can be temporary enabled by holding the shift-key"},
-				snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
-				snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
+				gridNodeMoveShowSubCat: {label:"Node Move Show", expanded:false, popupText: "if grid is not visible enabling each here makes the grid visible when moving a node.<br><br>note. showing the minor grid can be sluggish specially when the gridsize is small and the workspace big.", 
+					items: {
+						nodeMouseDownShowGridHminor: {label:"Show minor h-grid.", type:"boolean"},
+						nodeMouseDownShowGridHmajor: {label:"Show major h-grid.", type:"boolean"},
+						nodeMouseDownShowGridVminor: {label:"Show minor v-grid.", type:"boolean"},
+						nodeMouseDownShowGridVmajor: {label:"Show major v-grid.", type:"boolean"},
+					}
+				},
+				gridShowHideSubCat: {label:"Show/Hide", expanded:false,
+					items: {
+						showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
+						showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
+						showGridVminor: {label:"Show minor v-grid.", type:"boolean"},
+						showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
+					}
+				},
+				gridColorsSubCat: {label:"Colors", expanded:false,
+					items: {	
+						gridMinorColor: {label:"Minor grid color.", type:"color"},
+						gridMajorColor: {label:"Major grid color.", type:"color"},
+					}
+				},
+				gridSizesSubCat: {label:"Sizes", expanded:false,
+					items: {
+						gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
+						gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
+						gridVminorSize: {label:"Minor v-grid Size.", type:"number"},
+						gridVmajorSize: {label:"Major v-grid Size.", type:"number", popupText:"This also affects the export sorting of nodes<br> that means nodes are first sorted by xpos<br>then in each v-grid-column they are sorted by ypos.<br><br>note. that when using non center-based positioning the sorting is using the node topLeft position instead of the center"},
+					}
+				},
+				gridSnapSubCat: {label:"Snap", expanded:false,
+					items: {
+						snapToGrid: {label:"Snap to grid.", type:"boolean", popupText:"Enables/Disables snap node positions to grid<br><br>When this is enabled the snapping can be temporary disabled by holding the shift-key<br><br>When this is disabled the snapping can be temporary enabled by holding the shift-key"},
+						snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
+						snapToGridVsize: {label:"Snap to grid v-size.", type:"number"},
+					}
+				},
 			}
 		},
 		wsSizeSubCat: {label:"Workspace size", expanded:false, popupText: "Change the workspace size<br>This can be used to make a bigger or smaller workspace area.<br>Note when changing the size it can be a little sluggish, and sometimes the space is not updated<br> that is fixed by zooming out/in.", 
@@ -177,13 +217,17 @@ RED.view = (function() {
 				lineConnectionsScale: {label:"Backward", type:"number", valueId:"", popupText: "curve scale of wires going backward"},
 			}
 		},
-		workspaceBgColor:  {label:"BG color.", type:"color"},
-		scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},
-		showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
-		showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
-		guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
-		lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
-		useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
+		otherSubCat: {label:"Other", expanded:false,
+			items: {
+				workspaceBgColor:  {label:"BG color.", type:"color"},
+				scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},
+				showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
+				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
+				guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
+				lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
+				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
+			}
+		}
 	}
 
 	function setMinorGridColor()
@@ -455,42 +499,46 @@ RED.view = (function() {
 	}
 	function showHideGrid(state)
 	{
-		showHideGridHminor(settings.showGridHminor || state);
-		showHideGridHmajor(settings.showGridHmajor || state);
-		showHideGridVmajor(settings.showGridVmajor || state);
-		showHideGridVminor(settings.showGridVminor || state);
+		if (settings.nodeMouseDownShowGridHminor == true)
+			showHideGridHminor(settings.showGridHminor || state);
+		if (settings.nodeMouseDownShowGridHmajor == true)
+			showHideGridHmajor(settings.showGridHmajor || state);
+		if (settings.nodeMouseDownShowGridVmajor == true)
+			showHideGridVmajor(settings.showGridVmajor || state);
+		if (settings.nodeMouseDownShowGridVminor == true)
+			showHideGridVminor(settings.showGridVminor || state);
 	}
 
 	function showHideGridHminor(state)
 	{
 		if (state == true) {
-			$('#grid-h-mi').attr("style", "display:block;");
+			/*$('#grid-h-mi')*/gridHminor.attr("style", "visibility:visible;");
 		} else {
-			$('#grid-h-mi').attr("style", "display:none;");
+			/*$('#grid-h-mi')*/gridHminor.attr("style", "visibility:hidden;");
 		}
 	}
 	function showHideGridHmajor(state)
 	{
 		if (state == true) {
-			$('#grid-h-ma').attr("style", "display:block;");
+			/*$('#grid-h-ma')*/gridHmajor.attr("style", "visibility:visible;");
 		} else {
-			$('#grid-h-ma').attr("style", "display:none;");
+			/*$('#grid-h-ma')*/gridHmajor.attr("style", "visibility:hidden;");
 		}
 	}
 	function showHideGridVmajor(state)
 	{
 		if (state == true) {
-			$('#grid-v-ma').attr("style", "display:block;");
+			/*$('#grid-v-ma')*/gridVmajor.attr("style", "visibility:visible;");
 		} else {
-			$('#grid-v-ma').attr("style", "display:none;");
+			/*$('#grid-v-ma')*/gridVmajor.attr("style", "visibility:hidden;");
 		}
 	}
 	function showHideGridVminor(state)
 	{
 		if (state == true) {
-			$('#grid-v-mi').attr("style", "display:block;");
+			/*$('#grid-v-mi')*/gridVminor.attr("style", "visibility:visible;");
 		} else {
-			$('#grid-v-mi').attr("style", "display:none;");
+			/*$('#grid-v-mi')*/gridVminor.attr("style", "visibility:hidden;");
 		}
 	}
 	
@@ -762,6 +810,7 @@ RED.view = (function() {
 
 			d3.event.preventDefault();
 		} else if (mouse_mode == RED.state.MOVING) {
+			
 			mousePos = mouse_position;
 			var d = (mouse_offset[0]-mousePos[0])*(mouse_offset[0]-mousePos[0]) + (mouse_offset[1]-mousePos[1])*(mouse_offset[1]-mousePos[1]);
 			if (d > 2) {
@@ -769,6 +818,7 @@ RED.view = (function() {
 				clickElapsed = 0;
 			}
 		} else if (mouse_mode == RED.state.MOVING_ACTIVE || mouse_mode == RED.state.IMPORT_DRAGGING) {
+			showHideGrid(true);
 			moveSelection_mouse();
 			moveToFromGroup_update();
 			
@@ -920,7 +970,7 @@ RED.view = (function() {
 		
 		for (var d in nn._def.defaults) {
 			if (nn._def.defaults.hasOwnProperty(d)) {
-				if (d == "name" || d == "id") continue; // jannik add (this prevent above assigment to be overwritten)
+				if (d == "name" || d == "id" || d == "x" || d == "y") continue; // jannik add (this prevent above assigment to be overwritten)
 
 				// this creates a new array instance
 				// instead of taking it from nn._def.defaults["nodes"].value;
@@ -1624,7 +1674,7 @@ RED.view = (function() {
 			return;
 		}
 
-		showHideGrid(true);
+		//showHideGrid(true);
 		//var touch0 = d3.event;
 		//var pos = [touch0.pageX,touch0.pageY];
 		//RED.touch.radialMenu.show(d3.select(this),pos);
@@ -1786,7 +1836,6 @@ RED.view = (function() {
 	function nodeMouseUp(d,i) {
 		console.log("nodeMouseUp "+ d.name+" i:" + i);
 
-		moveSelectionToFromGroupMouseUp();
 		
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
@@ -1798,6 +1847,8 @@ RED.view = (function() {
 			return;
 		}
 		showHideGrid(false);
+		moveSelectionToFromGroupMouseUp();
+		
 		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
 			RED.editor.edit(d);
 			clickElapsed = 0;
@@ -2376,16 +2427,16 @@ RED.view = (function() {
 		});
 		
 		if ((d.oldNodeText != undefined && nodeText.localeCompare(d.oldNodeText) == 0 ) &&
-			(d.oldWidth != undefined && d.oldWidth == d.w) &&
-			(d.oldHeight != undefined && d.oldHeight == d.h))
+			(d.oldWidth != undefined && d.oldWidth === d.w) &&
+			(d.oldHeight != undefined && d.oldHeight === d.h))
 			return;
 
 		//console.error(d.oldNodeText + "==" + nodeText + ":"+ (nodeText.localeCompare(d.oldNodeText)) +  "\n" +
 		//			  d.oldWidth + "==" + d.w + ":" + (d.oldWidth == d.w) + "\n" +
 		//			  d.oldHeight + "!=" + d.h + ":" + (d.oldHeight == d.h));
 		d.oldNodeText = nodeText;
-		d.oldWidth = d.w;
-		d.oldHeight = d.h;
+		d.oldWidth = parseFloat(d.w);
+		d.oldHeight = parseFloat(d.h);
 		
 
 		var textSize = calculateTextSize(nodeText);
@@ -4070,6 +4121,8 @@ RED.view = (function() {
 
 	function showImportNodesDialog(is_arduino_code) {
 		RED.editor.init_edit_dialog();
+		$("#btnEditorRunScript").hide();
+		$("#btnEditorApply").hide();
 		mouse_mode = RED.state.IMPORT;
 		//$("#dialog-form").html(this.getForm('import-dialog'));
 		getForm("dialog-form", "import-dialog", function(d, f) {
@@ -4470,10 +4523,11 @@ RED.view = (function() {
 			workspace_tabs.activateTab(id); // see tabs.js
 		},
 		redraw: function() {
-			redraw(true);
+			completeRedraw();
+			/*redraw(true);
 			redraw_links_init();
 			anyLinkEnter = true;
-			redraw_links();
+			redraw_links();*/
 		},
 		dirty: function(d) {
 			if (d == null) {

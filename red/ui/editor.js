@@ -393,41 +393,45 @@ RED.editor = (function() {
 			for (d in editing_node._def.defaults) {
 				if (editing_node._def.defaults.hasOwnProperty(d)) {
 					var input = $("#node-input-"+d);
+					console.warn(input);
 					var newValue;
 					if (input.attr('type') === "checkbox") {
 						newValue = input.prop('checked');
 					} else {
+						console.warn("input.attr('type'):" +input.attr('type') + " " + d);
 						newValue = input.val();
 					}
-					if (newValue != null) {
-						if (editing_node[d] != newValue) {
-							if (editing_node._def.defaults[d].type) {
-								if (newValue == "_ADD_") {
-									newValue = "";
-								}
-								// Change to a related config node
-								var configNode = RED.nodes.node(editing_node[d]);
-								if (configNode) {
-									var users = configNode.users;
-									users.splice(users.indexOf(editing_node),1);
-								}
-								configNode = RED.nodes.node(newValue);
-								if (configNode) {
-									configNode.users.push(editing_node);
-								}
-							}
-							if (editing_node.type == "UI_ListBox" && d == "items")
-							{
-								var newItemCount = newValue.split("\n").length;
-								var oldItemCount = editing_node.items.split("\n").length;
+					if (newValue == null) continue;
+					if (editing_node[d] == newValue)  continue;
 
-								if (newItemCount != oldItemCount) editing_node.itemCountChanged = true;
-							}
-							changes[d] = editing_node[d];
-							editing_node[d] = newValue;
-							changed = true;
+					if (editing_node._def.defaults[d].type) {
+						if (newValue == "_ADD_") {
+							newValue = "";
 						}
+						/*
+						// Change to a related config node
+						var configNode = RED.nodes.node(editing_node[d]);
+						if (configNode) {
+							var users = configNode.users;
+							users.splice(users.indexOf(editing_node),1);
+						}
+						configNode = RED.nodes.node(newValue);
+						if (configNode) {
+							configNode.users.push(editing_node);
+						}*/
 					}
+					if (editing_node.type == "UI_ListBox" && d == "items")
+					{
+						var newItemCount = newValue.split("\n").length;
+						var oldItemCount = editing_node.items.split("\n").length;
+
+						if (newItemCount != oldItemCount) editing_node.itemCountChanged = true;
+					}
+					changes[d] = editing_node[d];
+					if (typeof editing_node[d] == "number")
+						newValue = parseFloat(newValue);
+					editing_node[d] = newValue;
+					changed = true;
 				}
 			}
 		}
@@ -451,6 +455,7 @@ RED.editor = (function() {
 			RED.history.push({t:'edit',node:editing_node,changes:changes,links:removedLinks,dirty:wasDirty,changed:wasChanged});
 		}
 		editing_node.dirty = true;
+		editing_node.resize = true;
 		validateNode(editing_node);
 		if (editing_node._def.useAceEditor != undefined)
 		{ 
@@ -506,7 +511,7 @@ RED.editor = (function() {
 				width: 500,
 				buttons: [
 					{
-						id: "btnRunScript",
+						id: "btnEditorRunScript",
 						text: "Run script",
 						click: function() {
 							var editor = ace.edit("aceEditor");
@@ -514,6 +519,7 @@ RED.editor = (function() {
 						}
 					},
 					{
+						id: "btnEditorApply",
 						text: "Apply",
 						click: function() {
 							edit_dialog_apply();
@@ -787,7 +793,7 @@ RED.editor = (function() {
 		init_edit_dialog();
 
 		if (node.type != "UI_ScriptButton")
-			$("#btnRunScript").hide();
+			$("#btnEditorRunScript").hide();
 		if (node.type == "group")
 		{
 			jscolor.presets.default = {
