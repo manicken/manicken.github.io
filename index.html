@@ -1057,6 +1057,28 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p>UI Simple Label With selected background color.</p>
 	<h3>Notes</h3>
 </script>
+<script type="text/x-red" data-template-name="UI_Label">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+	</div>
+	<div class="form-row">
+		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+		<input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
+		<input type="text" id="node-input-w" placeholder="w" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
+		<input type="text" id="node-input-h" placeholder="h" autocomplete="off">
+	</div>
+</script>
 <script type="text/x-red" data-help-name="UI_Image">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
@@ -1094,6 +1116,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row-mid">
 		<label for="node-input-itemBGcolor"><i class="fa fa-tag"></i> Item BG Color</label>
 		<a class="node-input-color-bg"><input id="node-input-itemBGcolor" data-jscolor=""></a>
+	</div>
+	<div class="form-row">
+		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+		<input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off">
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Selected Index Offset</label>

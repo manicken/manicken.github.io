@@ -626,7 +626,7 @@ input.settings-item-textInput {
 .node_label_uiListBoxItem {
     stroke-width: 0;
     fill: rgb(0, 0, 0);
-    font-size: 16px;
+    font-size: 14px;
     pointer-events: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -638,7 +638,7 @@ input.settings-item-textInput {
  .node_label_uiPianoKey {
     stroke-width: 0;
     fill: rgb(0, 0, 0);
-    font-size: 16px;
+    font-size: 14px;
     pointer-events: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;

@@ -1365,7 +1365,7 @@ RED.view = (function() {
 		}
 	}
 	var calculateTextSizeElement = undefined;
-	function calculateTextSize(str) {
+	function calculateTextSize(str,fontSize) {
 		
 		//if (str == undefined)
 		//	return {w:0, h:0};
@@ -1381,6 +1381,8 @@ RED.view = (function() {
 			calculateTextSizeElement = sp;
 		}
 		var sp = calculateTextSizeElement;
+		if (fontSize != undefined)
+			sp.style.fontSize = fontSize + "px";
 		/*var sp = document.createElement("span");
 		sp.className = "node_label";
 		sp.style.position = "absolute";
@@ -2426,9 +2428,13 @@ RED.view = (function() {
 			//(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
 		});
 		
+		if (d.textSize != undefined)
+			nodeRects.attr("style", "font-size: "+d.textSize+"px;");
+
 		if ((d.oldNodeText != undefined && nodeText.localeCompare(d.oldNodeText) == 0 ) &&
 			(d.oldWidth != undefined && d.oldWidth === d.w) &&
-			(d.oldHeight != undefined && d.oldHeight === d.h))
+			(d.oldHeight != undefined && d.oldHeight === d.h) &&
+			(d.oldTextSize != undefined && d.oldTextSize === d.textSize))
 			return;
 
 		//console.error(d.oldNodeText + "==" + nodeText + ":"+ (nodeText.localeCompare(d.oldNodeText)) +  "\n" +
@@ -2437,9 +2443,11 @@ RED.view = (function() {
 		d.oldNodeText = nodeText;
 		d.oldWidth = parseFloat(d.w);
 		d.oldHeight = parseFloat(d.h);
-		
+		if (d.textSize != undefined)
+			d.oldTextSize = parseFloat(d.textSize);
 
-		var textSize = calculateTextSize(nodeText);
+		var textSize = calculateTextSize(nodeText, d.textSize);
+		
 		//console.warn("textSize:" + textSize.h + ":" + textSize.w);
 		nodeRects.attr('y', function(d){
 			if (d.type == "UI_Slider") return d.h + parseInt(textSize.h);
@@ -3628,7 +3636,7 @@ RED.view = (function() {
 
 		nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
 			var ti = d3.select(this);
-			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2 - 11);
+			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2);
 			ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
 			ti.text(items[i]);
 		});
