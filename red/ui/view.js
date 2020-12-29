@@ -20,7 +20,7 @@ RED.view = (function() {
 	var redrawTotalTime = 0.0;
 	var redrawCount = 0;
 
-	var posMode = 1; // position mode (1 = topLeft, 2 = center)
+	var posMode = 2; // position mode (1 = topLeft, 2 = center)
 
 	var activeGroups = [];
 	var currentHoveredGroup = undefined; // used to select the current hovered group
@@ -1832,12 +1832,12 @@ RED.view = (function() {
 		if (d.sendFormat != undefined && d.sendFormat.trim() != "")
 		{
 			var formatted = eval(d.sendFormat);
-			RED.arduino.SendToWebSocket(formatted);
+			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
 		}
 		else if (d.sendSpace == true)
-			RED.arduino.SendToWebSocket(d.name + " " + d.val); // n.name is the labelID
+			RED.BiDirDataWebSocketBridge.SendToWebSocket(d.name + " " + d.val); // n.name is the labelID
 		else
-			RED.arduino.SendToWebSocket(d.name + d.val); // n.name is the labelID
+			RED.BiDirDataWebSocketBridge.SendToWebSocket(d.name + d.val); // n.name is the labelID
 	}
 	function setUiSliderValueFromMouse(d, mouseX, mouseY)
 	{
@@ -1936,7 +1936,7 @@ RED.view = (function() {
 
 		if (d.type == "UI_Button") {
 			setRectFill(rect);
-			if (d.pressAction != "") RED.arduino.SendToWebSocket(d.pressAction);
+			if (d.pressAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.pressAction);
 		
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
@@ -1960,7 +1960,7 @@ RED.view = (function() {
 				UI_ListBoxDeselectOther(d);
 			}
 
-			RED.arduino.SendToWebSocket(formatted);
+			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
 			//redraw(true);
 			redraw_update_UI_ListBox(rect, d);
 		} else if (d.type == "UI_Piano") {
@@ -1974,7 +1974,7 @@ RED.view = (function() {
 			setRectFill(rect);
 			var formatted = eval(d.sendCommand);
 			//console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
-			RED.arduino.SendToWebSocket(formatted);
+			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
 		}
 		else if (d.type == "UI_ScriptButton") {
 			setRectFill(rect);
@@ -2002,7 +2002,7 @@ RED.view = (function() {
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
 			resetRectFill(rect)
-			if (d.releaseAction != "") RED.arduino.SendToWebSocket(d.releaseAction);
+			if (d.releaseAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.releaseAction);
 		} else if (d.type == "UI_Slider") {
 			if (d.sendMode == "r")
 				sendUiSliderValue(d);
@@ -2021,7 +2021,7 @@ RED.view = (function() {
 			resetRectFill(rect);
 			var formatted = eval(d.sendCommand);
 			//console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
-			RED.arduino.SendToWebSocket(formatted);
+			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
 		}
 		else if (d.type == "UI_ScriptButton") {
 			resetRectFill(rect);

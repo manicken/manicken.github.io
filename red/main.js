@@ -477,6 +477,11 @@ RED.main = (function() {
 			$(".palette-spinner").hide();
 
 			RED.arduino.StartWebSocketConnection();
+			RED.BiDirDataWebSocketBridge.StartWebSocketConnection();
+			
+			
+
+
 			RED.settings.createTab();
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){

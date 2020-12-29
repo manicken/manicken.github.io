@@ -39,7 +39,7 @@ RED.devTest = (function() {
 		set testGet(value) { _settings.testGet = value; RED.arduino.httpGetAsync(value); },
 
         get testWsSend() { return _settings.testWsSend; },
-        set testWsSend(value) { _settings.testWsSend = value; RED.arduino.SendToWebSocket(value); },
+        set testWsSend(value) { _settings.testWsSend = value; RED.BiDirDataWebSocketBridge.SendToWebSocket(value); },
         
         get getFuncHelp() { return _settings.getFuncHelp; },
 		set getFuncHelp(value) { _settings.getFuncHelp = value; console.log(AceAutoComplete.getFromHelp(value)); },
