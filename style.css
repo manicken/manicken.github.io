@@ -623,6 +623,19 @@ input.settings-item-textInput {
    -ms-user-select: none;
    user-select: none;
 }
+
+.slider_value_label {
+    stroke-width: 0;
+    fill: #333;
+    font-size: 14px;
+    pointer-events: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+ }
 .node_label_uiListBoxItem {
     stroke-width: 0;
     fill: rgb(0, 0, 0);
@@ -637,8 +650,6 @@ input.settings-item-textInput {
  }
  .node_label_uiPianoKey {
     stroke-width: 0;
-    fill: rgb(0, 0, 0);
-    font-size: 14px;
     pointer-events: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -646,6 +657,15 @@ input.settings-item-textInput {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+ }
+ .node_label_uiPianoKeyWhite {
+    stroke-width: 0;
+    fill: rgb(0, 0, 0);
+    font-size: 14px;
+ }
+ .node_label_uiPianoKeyBlack {
+    fill: rgb(255, 255, 255);
+    font-size: 14px;
  }
 .node_label2 {
     stroke-width: 0;
@@ -771,6 +791,7 @@ input.settings-item-textInput {
 }
 .node_selected {
    stroke: #ff7f0e;
+   stroke-width: 2;
 }
 .node_highlighted {
    stroke: #dd1616;

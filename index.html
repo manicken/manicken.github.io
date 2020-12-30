@@ -667,7 +667,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":30},"h":{"value":300},"textSize":{"value":14},
 				"midiCh":{"value":"0"},"midiId":{"value":"0"},
-				"orientation":{"value":"v"},"label":{"value":""},
+				"orientation":{"value":"v"},"label":{"value":"d.val"},
 				"minVal":{"value":0},"maxVal":{"value":100},"val":{"value":50},
 				"outputFloat":{"value":false},"minValF":{"value":-1.0},"maxValF":{"value":1.0},"floatVal":{"value":0.0},"decimalCount":{"value":-1},"steps":{"value":201},
 				"sendSpace":{"value":true},"repeat":{"value":false},"repeatPeriod":{"value":0},"sendMode":{"value":"r"},"sendFormat":{"value":""},
@@ -711,7 +711,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			"defaults":{
 				"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""},"w":{"value":210},"h":{"value":130},"textSize":{"value":14},
 				"midiCh":{"value":"0"},"midiId":{"value":"0"},"octave":{"value":4},"sendCommand":{"value":""},"headerHeight":{"value":30},
-				"whiteKeysColor":{"value":"#FFFFFF"},"blackKeysColor":{"value":"#A0A0A0"},"blackKeysWidthDiff":{"value":6},"x":{"value":150},"y":{"value":150}
+				"whiteKeysColor":{"value":"#FFFFFF"},"blackKeysColor":{"value":"#A0A0A0"},"blackKeysWidthDiff":{"value":6},"x":{"value":150},"y":{"value":150},
+				"blackKeyLabelsVisible":{"value":true},"whiteKeyLabelsVisible":{"value":true}
 			}
 		}},
 		{"type":"UI_ScriptButton",
@@ -923,8 +924,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 </script>
 <script type="text/x-red" data-template-name="UI_Slider">
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-name"><i class="fa fa-tag"></i> Slider Id</label>
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-name"><i class="fa fa-tag"></i> Top Label</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row-long">
@@ -1188,6 +1189,22 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<a class="node-input-color-bg"><input id="node-input-blackKeysColor" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
+		<label for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
+		<input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off">
+	</div>
+	<div class="form-row">
+        <label style="width:150px" for="node-input-whiteKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>WhiteKeyLabels Visible</label>
+        <label for="node-input-whiteKeyLabelsVisible">
+        <input type="checkbox" id="node-input-whiteKeyLabelsVisible" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	<div class="form-row">
+        <label style="width:150px" for="node-input-blackKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>BlackKeyLabels Visible</label>
+        <label for="node-input-blackKeyLabelsVisible">
+        <input type="checkbox" id="node-input-blackKeyLabelsVisible" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        </label>
+	</div>
+	<div class="form-row">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
 		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
 	</div>
@@ -1223,10 +1240,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-y"><i class="fa fa-tag"></i> yPos</label>
 		<input type="text" id="node-input-y" placeholder="y" autocomplete="off">
 	</div>
-	<div class="form-row">
-		<label for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
-		<input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off">
-	</div>
+	
+
 </script>
 <script type="text/x-red" data-help-name="UI_ScriptButton">
 	<h3>Summary</h3>

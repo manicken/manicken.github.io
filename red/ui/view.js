@@ -1127,8 +1127,8 @@ RED.view = (function() {
 		var snapToGrid = XOR(d3.event.shiftKey, settings.snapToGrid);
 		if(snapToGrid)
 		{
-			if (dx != 0) dx *= settings.snapToGridHsize;
-			if (dy != 0) dy *= settings.snapToGridVsize;
+			if (dx !== 0) dx *= settings.snapToGridHsize;
+			if (dy !== 0) dy *= settings.snapToGridVsize;
 		}
 
 		var minX = 0;
@@ -1147,11 +1147,20 @@ RED.view = (function() {
 
 			// gets the node locations that is the minimum in the selection
 			// limits so that the node(s) cannot be moved outside of workspace
-			minX = Math.min(node.n.x-node.n.w/posMode-5,minX); 
-			minY = Math.min(node.n.y-node.n.h/posMode-5,minY);
+
+			if (posMode === 2)
+			{
+				minX = Math.min(node.n.x-node.n.w/2-5,minX);
+				minY = Math.min(node.n.y-node.n.h/2-5,minY);
+			}
+			else
+			{
+				minX = Math.min(node.n.x-5,minX);
+				minY = Math.min(node.n.y-5,minY);
+			}
 		}
 		if (minX !== 0 || minY !== 0) { // limit so that the node(s) cannot be moved outside of workspace
-			console.warn("nodes tried to move outside workspace");
+			console.warn("nodes tried to move outside workspace " + minX + " " +  minY);
 			for (var n = 0; n<moving_set.length; n++) {
 				node = moving_set[n];
 				node.n.x -= minX;
@@ -1178,8 +1187,8 @@ RED.view = (function() {
 					//gridOffsetY = /*node.n.y-*/(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
 					if (gridOffsetX === 0 && gridOffsetY === 0) continue
 					console.error("gridOffsetX:" + gridOffsetX + ", gridOffsetY:" + gridOffsetY);
-					node.n.x = gridOffsetX; // +1 for correction to zero location based grid
-					node.n.y = gridOffsetY;
+					node.n.x -= gridOffsetX; // +1 for correction to zero location based grid
+					node.n.y -= gridOffsetY;
 					if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
 						node.dirty = false;
 					}
@@ -2024,7 +2033,8 @@ RED.view = (function() {
 			}
 			d.keyIndex = parseInt(newKeyIndex);
 			d.keyDown = 0x90;
-			setRectFill(rect);
+			setRectFill(rect, "#ff7f0e");
+			setRectStroke(rect, "#ff7f0e");
 			var formatted = eval(d.sendCommand);
 			//console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
 			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
@@ -2072,6 +2082,7 @@ RED.view = (function() {
 			d.keyIndex = parseInt(newKeyIndex);
 			d.keyDown = 0x80;
 			resetRectFill(rect);
+			resetRectStroke(rect);
 			var formatted = eval(d.sendCommand);
 			//console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
 			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
@@ -2109,7 +2120,7 @@ RED.view = (function() {
 			}
 		}
 	}
-	function setRectFill(rect)
+	function setRectFill(rect, setColor)
 	{
 		//console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
 		//console.warn('rect.attr("fill")' + rect.attr("fill"));
@@ -2117,12 +2128,33 @@ RED.view = (function() {
 		if (rect.attr("fillOld") != undefined)
 			rect.attr("fill", rect.attr("fillOld")); // failsafe
 		rect.attr("fillOld", rect.attr("fill"));
-		rect.attr("fill", subtractColor(rect.attr("fill"), "#202020"));
+		if (setColor == undefined)
+			rect.attr("fill", subtractColor(rect.attr("fill"), "#202020"));
+		else
+			rect.attr("fill", setColor);
 	}
 	function resetRectFill(rect)
 	{
 		if (rect.attr("fillOld") != undefined)
 			rect.attr("fill", rect.attr("fillOld"));
+	}
+	function setRectStroke(rect, setColor)
+	{
+		//console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
+		//console.warn('rect.attr("fill")' + rect.attr("fill"));
+
+		if (rect.attr("strokeOld") != undefined)
+			rect.attr("stroke", rect.attr("strokeOld")); // failsafe
+		rect.attr("strokeOld", rect.attr("stroke"));
+		if (setColor == undefined)
+			rect.attr("stroke", subtractColor(rect.attr("stroke"), "#202020"));
+		else
+			rect.attr("stroke", setColor);
+	}
+	function resetRectStroke(rect)
+	{
+		if (rect.attr("strokeOld") != undefined)
+			rect.attr("stroke", rect.attr("strokeOld"));
 	}
 
 	function clearLinkSelection()
@@ -2409,7 +2441,7 @@ RED.view = (function() {
 			}
 			else if (d.type == "UI_Slider")
 			{
-				nodeText = d.label ? d.label : "";
+				nodeText = d.name ? d.name : "";
 				if (nodeText == "") 
 				if (nodeText.includes("#")) nodeText = nodeText.replace("#", "d.val");
 				try{nodeText = new String(eval(nodeText)); }
@@ -2450,7 +2482,10 @@ RED.view = (function() {
 		
 		//console.warn("textSize:" + textSize.h + ":" + textSize.w);
 		nodeRects.attr('y', function(d){
-			if (d.type == "UI_Slider") return d.h + parseInt(textSize.h);
+			if (d.type == "UI_Slider")
+			{
+				return parseInt(textSize.h) - 30;
+			}
 			else if (d.type == "UI_ListBox") return parseInt(textSize.h);
 			else if (d.type == "UI_Piano") return parseInt(textSize.h);
 			else if (d.type == "group") return parseInt(textSize.h);
@@ -2930,12 +2965,15 @@ RED.view = (function() {
 		else
 			nodeRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
 
-		nodeRect.selectAll(".node")
-			.attr("width",function(d){return d.w})
-			.attr("height",function(d){return d.h})
+		var nodenodeRect = nodeRect.selectAll(".node")			
 			.classed("node_selected",function(d) { return d.selected; })
 			.classed("node_highlighted",function(d) { return d.highlighted; })
 		;
+		if (d.type != "UI_Piano")
+		{
+			nodenodeRect.attr("width",function(d){return d.w});
+			nodenodeRect.attr("height",function(d){return d.h;});
+		}
 		//nodeRect.selectAll(".node-gradient-top").attr("width",function(d){return d.w});
 		//nodeRect.selectAll(".node-gradient-bottom").attr("width",function(d){return d.w}).attr("y",function(d){return d.h-30});
 
@@ -3504,71 +3542,19 @@ RED.view = (function() {
 	{
 		var sliderRect = nodeRect.append("rect")
 			.attr("class", "slidernode")
-			.attr("rx", 6)
-			.attr("ry", 6)
+			.attr("rx", 4)
+			.attr("ry", 4)
 			.on("mouseup",nodeMouseUp)
 			.on("mousedown",nodeMouseDown)
 			.on("mousemove", nodeMouseMove)
 			.on("mouseover", nodeMouseOver)
 			.on("mouseout", nodeMouseOut)
 			.attr("fill",function(d) { return d._def.color;})
-	}
-	function redraw_init_UI_ListBox(nodeRect,n)
-	{
-		var items = n.items.split("\n");
 
-		nodeRect.selectAll(".ui_listBox_item").remove();
-		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
-
-		for ( var i = 0; i < items.length; i++)
-		{
-			var item = nodeRect.append("rect")
-				.attr("class", "ui_listBox_item")
-				.attr("rx", 6)
-				.attr("ry", 6)
-				.attr("listItemIndex", i)
-				.attr("selected", false)
-				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
-				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
-				.on("mousemove", nodeMouseMove)
-				.on("mouseover", nodeMouseOver)
-				.on("mouseout", nodeMouseOut)
-				.attr("fill",function(d) { return d.bgColor;});
-
-			var itemText = nodeRect.append("text")
-				.attr("class", "node_label_uiListBoxItem")
-				.attr("text-anchor", "start")
-				.attr("dy", "0.35em")
-				.text(items[i]);
-		}
-	}
-	function redraw_init_UI_Piano(nodeRect,n)
-	{
-		nodeRect.selectAll(".ui_piano_item").remove();
-		nodeRect.selectAll(".node_label_uiPianoKey").remove();
-		var items =     ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
-		var itemIndex = [0  ,2  ,4  ,5  ,7  ,9  ,11 ,1   ,3   ,6   ,8   ,10];
-		for ( var i = 0; i < 12; i++)
-		{
-			var item = nodeRect.append("rect")
-				.attr("class", "ui_piano_item")
-				.attr("rx", 6)
-				.attr("ry", 6)
-				.attr("keyIndex", itemIndex[i])
-				.attr("selected", false)
-				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
-				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
-				.on("mousemove", nodeMouseMove)
-				.on("mouseover", nodeMouseOver)
-				.on("mouseout", nodeMouseOut)
-				.attr("fill",function(d) { return d.bgColor;});
-
-			var itemText = nodeRect.append("text")
-				.attr("class", "node_label_uiPianoKey")
-				.attr("text-anchor", "start")
-				.attr("dy", "0.35em")
-				.text(items[i]);
-		}
+		var sliderValueLabel = nodeRect.append("text")
+			.attr("class", "slider_value_label")
+			.attr("text-anchor", "start")
+			.attr("dy", "0.35em");
 	}
 	function redraw_update_UI_Slider(nodeRect, d)
 	{
@@ -3608,6 +3594,55 @@ RED.view = (function() {
 				if (d.orientation == "v") return  ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h;
 				else if (d.orientation == "h") return d.h;
 			});
+		nodeRect.selectAll('text.slider_value_label').each(function(d,i) {
+				var ti = d3.select(this);
+				
+				
+
+				var nodeText = d.label ? d.label : "";
+				if (nodeText == "") 
+				if (nodeText.includes("#")) nodeText = nodeText.replace("#", "d.val");
+				try{nodeText = new String(eval(nodeText)); }
+				catch (e) { 
+					//nodeText = d.label;
+				}
+				ti.text(nodeText);
+
+				var textSize = calculateTextSize(nodeText)
+				ti.attr('x', (d.w-textSize.w)/2);
+				ti.attr('y', (d.h+textSize.h));
+
+		});
+
+	}
+	function redraw_init_UI_ListBox(nodeRect,n)
+	{
+		var items = n.items.split("\n");
+
+		nodeRect.selectAll(".ui_listBox_item").remove();
+		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
+
+		for ( var i = 0; i < items.length; i++)
+		{
+			var item = nodeRect.append("rect")
+				.attr("class", "ui_listBox_item")
+				.attr("rx", 6)
+				.attr("ry", 6)
+				.attr("listItemIndex", i)
+				.attr("selected", false)
+				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.attr("fill",function(d) { return d.bgColor;});
+
+			var itemText = nodeRect.append("text")
+				.attr("class", "node_label_uiListBoxItem")
+				.attr("text-anchor", "start")
+				.attr("dy", "0.35em")
+				.text(items[i]);
+		}
 	}
 	function redraw_update_UI_ListBox(nodeRect, d)
 	{
@@ -3641,40 +3676,82 @@ RED.view = (function() {
 			ti.text(items[i]);
 		});
 	}
+	function redraw_init_UI_Piano(nodeRect,n)
+	{
+		nodeRect.selectAll(".ui_piano_item").remove();
+		nodeRect.selectAll(".node_label_uiPianoKey").remove();
+		var keyTexts =     ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
+		var keyIndex = [0  ,2  ,4  ,5  ,7  ,9  ,11 ,1   ,3   ,6   ,8   ,10];
+		for ( var i = 0; i < 12; i++)
+		{
+			var keyRect = nodeRect.append("rect")
+				.attr("class", "ui_piano_item")
+				.attr("keyIndex", keyIndex[i])
+				.attr("selected", false)
+				.on("mouseup",  nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.attr("fill",function(d) { return d.bgColor;});
+
+			if (i < 7)
+				keyRect.attr("rx", 2).attr("ry", 2); // white keys corner roundness
+			else
+				keyRect.attr("rx", 1).attr("ry", 1); // black keys corner roundness
+
+			var itemText = nodeRect.append("text")
+				.attr("text-anchor", "start")
+				.attr("dy", "0.35em")
+				.text(keyTexts[i]);
+			if (i < 7)
+				itemText.attr("class", "node_label_uiPianoKey node_label_uiPianoKeyWhite");
+			else
+				itemText.attr("class", "node_label_uiPianoKey node_label_uiPianoKeyBlack");
+		}
+	}
 	function redraw_update_UI_Piano(nodeRect, d)
 	{
 		//d.headerHeight = 30;//parseInt(d.headerHeight)
 		//d.whiteKeysColor = "#FFFFFF";
 		//d.blackKeysColor = "#A0A0A0";
-		var items = ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
-		var keyWidth = d.w/7;
-		var itemHeight = d.h - d.headerHeight;
-		nodeRect.selectAll(".node").attr("height", d.h+4)
-								.attr("fill", d.bgColor);
+		var keyTexts = ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
+		var keyWidth = d.w/7-1;
+		var whiteKeyHeight = (d.h - d.headerHeight);
+		var blackKeyHeight = (whiteKeyHeight * 0.55);
+		nodeRect.selectAll('.node').attr("height", d.headerHeight+8)//d.h+4)
+								   .attr("width", d.w-4)
+								   .attr("x", 2)
+								   .attr("fill", d.bgColor)
+								   .attr("stroke-width", "1px");
 
 		nodeRect.selectAll('.ui_piano_item').each(function(d,i) {
 			var li = d3.select(this);
 			li.attr('y', d.headerHeight);
+			li.attr("stroke-width", "1px");
 
 			if (i <= 6)
 			{
-				li.attr("x", i*keyWidth);
-				li.attr("height", itemHeight);
+				li.attr("x", i*keyWidth + i + 0.5);
+				li.attr("height", whiteKeyHeight);
 				li.attr("fill", d.whiteKeysColor);
+				li.attr("stroke", subtractColor(d.whiteKeysColor, "#303030"));
 				li.attr("width", keyWidth);
 			}
 			else if (i >= 7 && i <= 8)
 			{
-				li.attr("x", (i-7)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
-				li.attr("height", itemHeight/2);
+				li.attr("x", (i-7)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2 + (i-7)+ 1 );
+				li.attr("height", blackKeyHeight);
 				li.attr("fill", d.blackKeysColor);
+				li.attr("stroke", d.blackKeysColor);
 				li.attr("width", keyWidth-d.blackKeysWidthDiff);
 			}
 			else if (i >= 9)
 			{
-				li.attr("x", (i-6)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2);
-				li.attr("height", itemHeight/2);
+				li.attr("x", (i-6)*keyWidth + keyWidth/2 + d.blackKeysWidthDiff/2 + (i-6)+ 1 );
+				li.attr("height", blackKeyHeight);
 				li.attr("fill", d.blackKeysColor);
+				li.attr("stroke", d.blackKeysColor);
 				li.attr("width", keyWidth-d.blackKeysWidthDiff);
 			}
 			
@@ -3684,20 +3761,48 @@ RED.view = (function() {
 			var ti = d3.select(this);
 			if (i <= 6)
 			{
-				ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2));
-				ti.attr('y', d.headerHeight + itemHeight - 15);
+				if (d.whiteKeyLabelsVisible != undefined)
+				{
+					if (d.whiteKeyLabelsVisible == true)
+					{
+						ti.attr("visibility", "visible");
+						ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextSize(keyTexts[i]).w))/2) + i + 0.5);
+						ti.attr('y', d.headerHeight + whiteKeyHeight - 15);
+					}
+					else
+						ti.attr("visibility", "hidden");
+				}
 			}
 			else if (i >= 7 && i <= 8)
 			{
-				ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
-				ti.attr('y', d.headerHeight + (itemHeight/2)/2);
+				if (d.blackKeyLabelsVisible != undefined)
+				{
+					if (d.blackKeyLabelsVisible == true)
+					{
+						ti.attr("visibility", "visible");
+						ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextSize(keyTexts[i]).w))/2)+keyWidth/2 + (i-7)+ 0.5 );
+						ti.attr('y', d.headerHeight + blackKeyHeight/2 + 3);
+					}
+					else
+						ti.attr("visibility", "hidden");
+				}
+				
 			}
 			else if (i >= 9)
 			{
-				ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextSize(items[i]).w))/2)+keyWidth/2);
-				ti.attr('y', d.headerHeight + (itemHeight/2)/2);
+				if (d.blackKeyLabelsVisible != undefined)
+				{
+					if (d.blackKeyLabelsVisible == true)
+					{
+						ti.attr("visibility", "visible");
+						ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextSize(keyTexts[i]).w))/2)+keyWidth/2 + (i-6)+ 0.5 );
+						ti.attr('y', d.headerHeight + blackKeyHeight/2 + 3);
+					}
+					else
+						ti.attr("visibility", "hidden");
+				}
 			}
-			ti.text(items[i]);
+			ti.text(keyTexts[i]);
 		});
 	}
 	//#endregion UI items redraw init/update
