@@ -549,13 +549,13 @@ RED.editor = (function() {
 					}
 				],
 				resize: function(e,ui) {
-					if (editing_node) {
+					if (editing_node != undefined) {
 
 						$(this).dialog('option',"sizeCache-"+editing_node.type,ui.size);
 						//RED.console_ok("editor height:" + ui.size.height);
 						//RED.console_ok("editor this height:"+$(this).height())
 						var aceEditor = $("#aceEditor");
-						if (aceEditor)
+						if (aceEditor != undefined)
 						{
 							//console.log("editor window height:"+$(this).height());
 							$("#aceEditor").height($(this).height() - 120);
@@ -567,15 +567,15 @@ RED.editor = (function() {
 				},
 				open: function(e) {
 					RED.keyboard.disable();
-					if (editing_node) {
+					if (editing_node != undefined) {
 						
 						var size = $(this).dialog('option','sizeCache-'+editing_node.type);
-						if (size) {
+						if (size != undefined) {
 							$(this).dialog('option','width',size.width);
 							$(this).dialog('option','height',size.height);
 						}
 						var aceEditor = $("#aceEditor");
-						if (aceEditor)
+						if (aceEditor != undefined)
 						{
 							aceEditor.css("height", $(this).height() - 100);
 							$(this).scrollTop(aceEditor.scrollHeight);
@@ -632,7 +632,7 @@ RED.editor = (function() {
 		});
 		var label = "";
 		var configNode = RED.nodes.node(node[property]);
-		if (configNode && node_def.label) {
+		if (configNode != undefined && node_def.label) {
 			if (typeof node_def.label == "function") {
 				label = node_def.label.call(configNode);
 			} else {

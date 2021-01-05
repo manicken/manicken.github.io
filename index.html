@@ -884,33 +884,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
 	</div>
 	<div class="form-row">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+		<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off"></a>
 	</div>
-	<div class="form-row">
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
-		<input type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-        <label for="node-input-repeatPressAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
-        <label for="node-input-repeatPressAction" style="width:70%">
-        <input type="checkbox" id="node-input-repeatPressAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Press Action</span>
-        </label>
-    </div>
-	<div class="form-row">
-		<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
-		<input type="text" id="node-input-releaseAction" placeholder="releaseAction" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-        <label for="node-input-repeatReleaseAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
-        <label for="node-input-repeatReleaseAction" style="width:70%">
-        <input type="checkbox" id="node-input-repeatReleaseAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Release Action</span>
-        </label>
-    </div>
 	<div class="form-row hidden">
 		<label for="node-input-local"><i class="fa fa-tag"></i> Action Type</label>
 		<select name="node-input-local" id="node-input-local">
@@ -919,17 +895,37 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	    </select>
 	</div>
 	<div class="form-row">
-		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
-		<input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off">
-	</div>
-	<div class="form-row">
 		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<input type="text" id="node-input-w" placeholder="w" autocomplete="off">
+		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
+		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
+		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
 	</div>
 	<div class="form-row">
-		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<input type="text" id="node-input-h" placeholder="h" autocomplete="off">
+		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"></a>
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
 	</div>
+	<div class="form-row-long">
+		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
+		<input style="width:100%" type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
+	</div>
+	<div class="form-row hidden">
+        <label for="node-input-repeatPressAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
+        <label for="node-input-repeatPressAction" style="width:70%">
+        <input type="checkbox" id="node-input-repeatPressAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Press Action</span>
+        </label>
+    </div>
+	<div class="form-row-long">
+		<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
+		<input style="width:100%" type="text" id="node-input-releaseAction" placeholder="releaseAction" autocomplete="off">
+	</div>
+	<div class="form-row hidden">
+        <label for="node-input-repeatReleaseAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
+        <label for="node-input-repeatReleaseAction" style="width:70%">
+        <input type="checkbox" id="node-input-repeatReleaseAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Release Action</span>
+        </label>
+    </div>
 </script>
 
 <script type="text/x-red" data-help-name="UI_Slider">
@@ -941,30 +937,19 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 </script>
 <script type="text/x-red" data-template-name="UI_Slider">
-	<div class="form-row-long">
+	<div class="form-row-mid">
 		<label style="width:150px" for="node-input-name"><i class="fa fa-tag"></i> Top Label</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
-	<div class="form-row-long">
+	<div class="form-row-mid">
 		<label style="width:150px" for="node-input-label"><i class="fa fa-tag"></i> Bottom Label</label>
 		<input type="text" id="node-input-label" placeholder="Label" autocomplete="off">
 	</div>
-	<div class="form-row">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
-	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-sendFormat"><i class="fa fa-tag"></i> Send Format</label>
-		<input style="width:100%" type="text" id="node-input-sendFormat" placeholder="sendFormat" autocomplete="off">
-	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
-		<input type="text" id="node-input-textSize" placeholder="textSize">
+		<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize"></a>
 	</div>
+	
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Bar BG Color</label>
 		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
@@ -980,17 +965,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<option value="h">horizontal</option>
 	    </select>
 	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-minVal"><i class="fa fa-tag"></i> Min Value (int)</label>
-		<input type="text" id="node-input-minVal" placeholder="minVal" autocomplete="off">
+	<div class="form-row-mid">
+		<label style="width:150px" for="node-input-minVal"><i class="fa fa-tag"></i> Min Value</label>
+		<a class="node-input-number"><input type="text" id="node-input-minVal" placeholder="minVal" autocomplete="off"></a>
+		<label style="width:150px" for="node-input-maxVal"><i class="fa fa-tag"></i> Max Value</label>
+		<a class="node-input-number"><input type="text" id="node-input-maxVal" placeholder="maxVal" autocomplete="off"></a>
 	</div>
 	<div class="form-row-long">
-		<label style="width:150px" for="node-input-maxVal"><i class="fa fa-tag"></i> Max Value(int)</label>
-		<input type="text" id="node-input-maxVal" placeholder="maxVal" autocomplete="off">
-	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-val"><i class="fa fa-tag"></i> Value(int)</label>
-		<input type="text" id="node-input-val" placeholder="val" autocomplete="off">
+		<label style="width:150px" for="node-input-val"><i class="fa fa-tag"></i> Value</label>
+		<a class="node-input-number"><input type="text" id="node-input-val" placeholder="val" autocomplete="off"></a>
 	</div>
 
 	<div class="form-row-long hidden">
@@ -1052,13 +1035,21 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<option value="m">moving</option>
 	    </select>
 	</div>
-	<div class="form-row">
-		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<input type="text" id="node-input-w" placeholder="w" autocomplete="off">
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-sendFormat"><i class="fa fa-tag"></i> Send Format</label>
+		<input style="width:100%" type="text" id="node-input-sendFormat" placeholder="sendFormat" autocomplete="off">
 	</div>
 	<div class="form-row">
+		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"></a>
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
+	</div>
+	<div class="form-row">
+		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
+		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
 		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<input type="text" id="node-input-h" placeholder="h" autocomplete="off">
+		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
 	</div>
 </script>
 
@@ -1090,11 +1081,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<input type="text" id="node-input-w" placeholder="w" autocomplete="off">
-	</div>
-	<div class="form-row">
+		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
 		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<input type="text" id="node-input-h" placeholder="h" autocomplete="off">
+		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
 	</div>
 </script>
 <script type="text/x-red" data-help-name="UI_Image">
@@ -1116,15 +1105,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-template-name="UI_ListBox">
 	<div class="form-row-mid">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off"/>
 	</div>
 	<div class="form-row hidden">
 		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
-		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
+		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off"/>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
-		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off"/>
 		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
 	</div>
 	<div class="form-row-mid">
@@ -1135,45 +1124,40 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-itemBGcolor"><i class="fa fa-tag"></i> Item BG Color</label>
 		<a class="node-input-color-bg"><input id="node-input-itemBGcolor" data-jscolor=""></a>
 	</div>
-	<div class="form-row">
-		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
-		<input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-itemTextSize"><i class="fa fa-tag"></i> Item Text Size</label>
-		<input type="text" id="node-input-itemTextSize" placeholder="itemTextSize" autocomplete="off">
-	</div
 	<div class="form-row-mid">
-		<label for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Selected Index Offset</label>
-		<input type="text" id="node-input-selectedIndexOffset" placeholder="selectedIndexOffset" autocomplete="off">
+		<label for="node-input-textSize"><i class="fa fa-tag"></i> Header Text Size</label>
+		<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off"/></a>
+		<label style="width: 80px;" for="node-input-headerHeight"><i class="fa fa-tag"></i> Height</label>
+		<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"/></a>
 	</div>
-	<div class="form-row">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+	<div class="form-row-mid">
+		<label for="node-input-itemTextSize"><i class="fa fa-tag"></i> Item Text Size</label>
+		<a class="node-input-number"><input type="text" id="node-input-itemTextSize" placeholder="itemTextSize" autocomplete="off"/></a>
 	</div>
-	<div class="form-row">
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
+	<div class="form-row-long">
+		<label style="width: 180px;" for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Selected Index Offset</label>
+		<a class="node-input-number"><input type="text" id="node-input-selectedIndexOffset" placeholder="selectedIndexOffset" autocomplete="off"/></a>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
 		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
 	</div>
-	<div class="form-row-mid">
-		<label for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
-		<input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off">
+	<div class="form-row">
+		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"/></a>
+		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"/></a>
 	</div>
+	
 	<div class="form-row">
 		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<input type="text" id="node-input-w" placeholder="w" autocomplete="off">
-	</div>
-	<div class="form-row">
+		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"/></a>
 		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<input type="text" id="node-input-h" placeholder="h" autocomplete="off">
+		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-items"><i class="fa fa-tag"></i> Items</label>
-		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-items" rows="12"></textarea>
+		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-items" rows="8"/></textarea>
 	</div>
 	
 </script>
