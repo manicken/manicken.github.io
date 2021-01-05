@@ -57,7 +57,8 @@ RED.view = (function() {
 	    snapToGridVsize: 5,
 		lineCurveScale: 0.75,
 		lineConnectionsScale: 1.5,
-		useCenterBasedPositions: true // default back compatible
+		useCenterBasedPositions: true, // default -> backwards compatible,
+		nodeDefaultTextSize: 14
 	};
 	var uiItemResizeBorderSize= 6;
 
@@ -159,6 +160,9 @@ RED.view = (function() {
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
 		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; completeRedraw();},
+
+		get nodeDefaultTextSize() { return parseInt(_settings.nodeDefaultTextSize); },
+		set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = value; completeRedraw();},
 	};
 
 	var settingsCategory = { Title:"Workspace", Expanded:false };
@@ -217,15 +221,20 @@ RED.view = (function() {
 				lineConnectionsScale: {label:"Backward", type:"number", valueId:"", popupText: "curve scale of wires going backward"},
 			}
 		},
+		nodeSubCat: {label:"Nodes", expanded:false,
+			items: {
+				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
+				nodeDefaultTextSize: {label:"Text Size", type:"number", popupText: "AudioStream-type Node label text size (not used for UI-category nodes as they have their own invidual settings)"},
+				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
+			}
+		},
 		otherSubCat: {label:"Other", expanded:false,
 			items: {
 				workspaceBgColor:  {label:"BG color.", type:"color"},
 				scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},
 				showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
-				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean"},
 				guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
 				lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
-				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
 			}
 		}
 	}
@@ -1374,7 +1383,7 @@ RED.view = (function() {
 		}
 	}
 	var calculateTextSizeElement = undefined;
-	function calculateTextSize(str,fontSize) {
+	function calculateTextSize(str,textSize) {
 		
 		//if (str == undefined)
 		//	return {w:0, h:0};
@@ -1389,9 +1398,13 @@ RED.view = (function() {
 			document.body.appendChild(sp);
 			calculateTextSizeElement = sp;
 		}
+		
 		var sp = calculateTextSizeElement;
-		if (fontSize != undefined)
-			sp.style.fontSize = fontSize + "px";
+		textSize = new String(textSize);
+		if (textSize.endsWith("px") == false) textSize += "px";
+		//console.error(textSize);
+		sp.style.fontSize = textSize;
+		
 		/*var sp = document.createElement("span");
 		sp.className = "node_label";
 		sp.style.position = "absolute";
@@ -1403,7 +1416,7 @@ RED.view = (function() {
 		//document.body.removeChild(sp);
 		const t1 = performance.now();
 		//console.error("@calculateTextSize time:" + (t1-t0));
-		return {w:parseInt(w), h:parseInt(h)};
+		return {w:parseFloat(w), h:parseFloat(h)};
 	}
 
 	function resetMouseVars() {
@@ -2253,16 +2266,17 @@ RED.view = (function() {
 		{
 			l = d.name + " (" + d.valueType + ")=" + d.value;
 		}
-		if (d.inputs) // Jannik
-		{
-			d.w = Math.max(node_def.width,(calculateTextSize(l).w)+50+(d.inputs>0?7:0) );
-			d.h = Math.max(node_def.height, (Math.max(d.outputs,d.inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
-		}
+
+		if (d.inputs != undefined) // Jannik
+			var inputs = d.inputs;
 		else
-		{
-			d.w = Math.max(node_def.width,(calculateTextSize(l).w)+50+(d._def.inputs>0?7:0) );
-			d.h = Math.max(node_def.height,(Math.max(d.outputs,d._def.inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
-		}
+			var inputs = d._def.inputs;
+
+		d.textDimensions = calculateTextSize(l, d.textSize);
+		console.error("@redraw_calcNewNodeSize: "+ d.textSize + " -> " + d.name );
+		console.error(d.textDimensions);
+		d.w = Math.max(node_def.width, d.textDimensions.w + 50 /*+ (inputs>0?7:0) */);
+		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
 	}
 	function redraw_nodeBadge(nodeRect, d)
 	{
@@ -2412,16 +2426,22 @@ RED.view = (function() {
 		//icon.style("pointer-events","none");
 		icon_group.style("pointer-events","none");			
 	}
-	function redraw_nodeText(nodeRect, d)
+	function redraw_init_nodeLabel(nodeRect, d)
 	{
-		var text = nodeRect.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '0.35em').attr('text-anchor','start');
-				
+		var text = nodeRect.append('svg:text')
+							.attr('class','node_label')
+							.attr('style', 'text-size:' + settings.nodeDefaultTextSize + "px;")
+							.attr('x', 38)
+							.attr('dy', '0.35em')
+							.attr('text-anchor','start');
+		
 		if (d._def.align) {
 			text.attr('class','node_label node_label_'+d._def.align);
 			text.attr('text-anchor','end');
 		}
 	}
-	function redraw_label(nodeRect, d)
+	
+	function redraw_update_label(nodeRect, d)
 	{
 		var nodeText = "";
 		var nodeRects = nodeRect.selectAll('text.node_label').text(function(d,i){
@@ -2459,46 +2479,45 @@ RED.view = (function() {
 			//(d._def.align?' node_label_'+d._def.align:''); //+
 			//(d._def.label?' '+(typeof d._def.labelStyle == "function" ? d._def.labelStyle.call(d):d._def.labelStyle):'') ;
 		});
+
+		
 		
 		if (d.textSize != undefined)
 			nodeRects.attr("style", "font-size: "+d.textSize+"px;");
 
-		if ((d.oldNodeText != undefined && nodeText.localeCompare(d.oldNodeText) == 0 ) &&
-			(d.oldWidth != undefined && d.oldWidth === d.w) &&
-			(d.oldHeight != undefined && d.oldHeight === d.h) &&
-			(d.oldTextSize != undefined && d.oldTextSize === d.textSize))
-			return;
+		if (d.textDimensions != undefined && d.oldNodeText != undefined)
+		{
+			if ((nodeText.localeCompare(d.oldNodeText) != 0) ||
+				((d.textSize != undefined) && (d.textSize != d.oldTextSize)))
+				d.textDimensions = calculateTextSize(nodeText, d.textSize);
+		}
+		else
+			d.textDimensions = calculateTextSize(nodeText, d.textSize);
 
-		//console.error(d.oldNodeText + "==" + nodeText + ":"+ (nodeText.localeCompare(d.oldNodeText)) +  "\n" +
-		//			  d.oldWidth + "==" + d.w + ":" + (d.oldWidth == d.w) + "\n" +
-		//			  d.oldHeight + "!=" + d.h + ":" + (d.oldHeight == d.h));
 		d.oldNodeText = nodeText;
-		d.oldWidth = parseFloat(d.w);
-		d.oldHeight = parseFloat(d.h);
+
 		if (d.textSize != undefined)
 			d.oldTextSize = parseFloat(d.textSize);
 
-		var textSize = calculateTextSize(nodeText, d.textSize);
+		//var textSize = calculateTextSize(nodeText, d.textSize);
 		
 		//console.warn("textSize:" + textSize.h + ":" + textSize.w);
-		nodeRects.attr('y', function(d){
-			if (d.type == "UI_Slider")
-			{
-				return parseInt(textSize.h) - 30;
-			}
-			else if (d.type == "UI_ListBox") return parseInt(textSize.h);
-			else if (d.type == "UI_Piano") return parseInt(textSize.h);
-			else if (d.type == "group") return parseInt(textSize.h);
+		nodeRects.attr('y', function(d) 
+		{
+			if (d.type == "UI_Slider") return parseInt(d.textDimensions.h) - 30;
+			else if (d.type == "UI_ListBox") return parseInt(d.textDimensions.h);
+			else if (d.type == "UI_Piano") return parseInt(d.textDimensions.h);
+			else if (d.type == "group") return parseInt(d.textDimensions.h);
 			else return (d.h/2)-1; // allways divide by 2
 		});
 
 		if (d._def.uiObject != undefined)
-		nodeRects.attr('x', function(d)
-		{
-			//console.log("text width:" + calculateTextSize(d.name).w);
-			//console.log("node width:" + d.w);
-			return (d.w-(textSize.w))/2; // allways divide by 2
-		});
+			nodeRects.attr('x', function(d)
+			{
+				//console.log("text width:" + calculateTextSize(d.name).w);
+				//console.log("node width:" + d.w);
+				return (d.w-(d.textDimensions.w))/2; // allways divide by 2
+			});
 	}
 
 	function redraw_nodeStatus(nodeRect)
@@ -3480,7 +3499,9 @@ RED.view = (function() {
 				.attr("style", "stroke:" + d.border_color + ";");
 				//.attr("stroke", d.border_color);
 
-			redraw_label(groupRect, d);
+			var groupLabel = groupRect.selectAll('text.node_label').text(d.name);
+
+			redraw_update_label(groupRect, d);
 			
 			groupRect.selectAll(".nodeGroupSelOutlineBG")
 				.attr("x", -6).attr("y", -6)
@@ -3607,8 +3628,9 @@ RED.view = (function() {
 					//nodeText = d.label;
 				}
 				ti.text(nodeText);
+			
 
-				var textSize = calculateTextSize(nodeText)
+				var textSize = calculateTextSize(nodeText,d.textSize)
 				ti.attr('x', (d.w-textSize.w)/2);
 				ti.attr('y', (d.h+textSize.h));
 
@@ -3621,6 +3643,7 @@ RED.view = (function() {
 
 		nodeRect.selectAll(".ui_listBox_item").remove();
 		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
+		n.itemsTextDimensions = [];
 
 		for ( var i = 0; i < items.length; i++)
 		{
@@ -3642,13 +3665,22 @@ RED.view = (function() {
 				.attr("text-anchor", "start")
 				.attr("dy", "0.35em")
 				.text(items[i]);
+			if (n.itemTextSize == undefined) n.itemTextSize = 14;
+			n.itemsTextDimensions.push(calculateTextSize(items[i], n.itemTextSize));
 		}
 	}
 	function redraw_update_UI_ListBox(nodeRect, d)
 	{
 		if (d.itemCountChanged != undefined && d.itemCountChanged == true)
 		{
+			d.itemCountChanged = false;
 			redraw_init_UI_ListBox(nodeRect, d);
+		}
+		var updateTextDimensions = false;
+		if (d.anyItemChanged != undefined && d.anyItemChanged == true)
+		{
+			d.anyItemChanged = false;
+			updateTextDimensions = true;
 		}
 
 		var items = d.items.split("\n");
@@ -3671,10 +3703,19 @@ RED.view = (function() {
 
 		nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
 			var ti = d3.select(this);
-			ti.attr('x', (d.w-(calculateTextSize(items[i]).w))/2);
+			if (updateTextDimensions)
+			{
+				d.itemsTextDimensions[i] = calculateTextSize(items[i], d.itemTextSize);
+				if (d.itemTextSize != undefined)
+					ti.style({'font-size':d.itemTextSize+'px'});
+			}
+			var textDimension = d.itemsTextDimensions[i];
+			ti.attr('x', (d.w-textDimension.w)/2);
 			ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
+			
 			ti.text(items[i]);
 		});
+		updateTextDimensions = false;
 	}
 	function redraw_init_UI_Piano(nodeRect,n)
 	{
@@ -3682,6 +3723,7 @@ RED.view = (function() {
 		nodeRect.selectAll(".node_label_uiPianoKey").remove();
 		var keyTexts =     ['C','D','E','F','G','A','B','C#','D#','F#','G#','A#'];
 		var keyIndex = [0  ,2  ,4  ,5  ,7  ,9  ,11 ,1   ,3   ,6   ,8   ,10];
+		n.keysTextDimensions = [];
 		for ( var i = 0; i < 12; i++)
 		{
 			var keyRect = nodeRect.append("rect")
@@ -3708,6 +3750,8 @@ RED.view = (function() {
 				itemText.attr("class", "node_label_uiPianoKey node_label_uiPianoKeyWhite");
 			else
 				itemText.attr("class", "node_label_uiPianoKey node_label_uiPianoKeyBlack");
+			if (n.textSize == undefined) n.textSize = 14;
+			n.keysTextDimensions.push(calculateTextSize(keyTexts[i],n.textSize));
 		}
 	}
 	function redraw_update_UI_Piano(nodeRect, d)
@@ -3766,7 +3810,7 @@ RED.view = (function() {
 					if (d.whiteKeyLabelsVisible == true)
 					{
 						ti.attr("visibility", "visible");
-						ti.attr('x', i*keyWidth + ((keyWidth-(calculateTextSize(keyTexts[i]).w))/2) + i + 0.5);
+						ti.attr('x', i*keyWidth + ((keyWidth-d.keysTextDimensions[i].w)/2) + i + 0.5);
 						ti.attr('y', d.headerHeight + whiteKeyHeight - 15);
 					}
 					else
@@ -3780,7 +3824,7 @@ RED.view = (function() {
 					if (d.blackKeyLabelsVisible == true)
 					{
 						ti.attr("visibility", "visible");
-						ti.attr('x', (i-7)*keyWidth + ((keyWidth-(calculateTextSize(keyTexts[i]).w))/2)+keyWidth/2 + (i-7)+ 0.5 );
+						ti.attr('x', (i-7)*keyWidth + ((keyWidth-d.keysTextDimensions[i].w)/2)+keyWidth/2 + (i-7)+ 0.5 );
 						ti.attr('y', d.headerHeight + blackKeyHeight/2 + 3);
 					}
 					else
@@ -3795,7 +3839,7 @@ RED.view = (function() {
 					if (d.blackKeyLabelsVisible == true)
 					{
 						ti.attr("visibility", "visible");
-						ti.attr('x', (i-6)*keyWidth + ((keyWidth-(calculateTextSize(keyTexts[i]).w))/2)+keyWidth/2 + (i-6)+ 0.5 );
+						ti.attr('x', (i-6)*keyWidth + ((keyWidth-d.keysTextDimensions[i].w)/2)+keyWidth/2 + (i-6)+ 0.5 );
 						ti.attr('y', d.headerHeight + blackKeyHeight/2 + 3);
 					}
 					else
@@ -3844,7 +3888,11 @@ RED.view = (function() {
 			var nodeRect = d3.select(this);
 			nodeRect.attr("id",d.id);
 			if (d._def.uiObject == undefined)
+			{
+				
+				d.textSize = settings.nodeDefaultTextSize;
 				redraw_calcNewNodeSize(d);
+			}
 			
 			if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
 			{	
@@ -3861,7 +3909,7 @@ RED.view = (function() {
 			redraw_nodeInputs(nodeRect, d);
 			redraw_nodeOutputs(nodeRect, d);
 			if (d.type != "JunctionLR" && d.type != "JunctionRL")
-				redraw_nodeText(nodeRect, d);
+				redraw_init_nodeLabel(nodeRect, d);
 			//redraw_nodeStatus(nodeRect);
 
 			//nodeRect.append("circle").attr({"class":"centerDot","cx":0,"cy":0,"r":5});
@@ -3917,9 +3965,10 @@ RED.view = (function() {
 			} else {
 				nodeRect.selectAll(".node").attr("fill", d.bgColor);
 			}
-			if (d.resize) {
+			if (d.resize == true) {
 				d.resize = false;
 				if (d._def.uiObject == undefined) {
+					d.textSize = settings.nodeDefaultTextSize;
 					redraw_calcNewNodeSize(d);
 					redraw_nodeInputs(nodeRect, d);
 					redraw_nodeOutputs(nodeRect, d);
@@ -3930,7 +3979,7 @@ RED.view = (function() {
 			redraw_paletteNodesReqError(d);
 			redraw_nodeRefresh(nodeRect, d);
 			if (d.type != "JunctionLR" && d.type != "JunctionRL")
-				redraw_label(nodeRect, d);
+				redraw_update_label(nodeRect, d);
 		});
 	}
 	/*********************************************************************************************************************************/

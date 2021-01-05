@@ -420,12 +420,21 @@ RED.editor = (function() {
 							configNode.users.push(editing_node);
 						}*/
 					}
-					if (editing_node.type == "UI_ListBox" && d == "items")
+					if (editing_node.type == "UI_ListBox")
 					{
-						var newItemCount = newValue.split("\n").length;
-						var oldItemCount = editing_node.items.split("\n").length;
+						if (d == "items")
+						{
+							var newItemCount = newValue.split("\n").length;
+							var oldItemCount = editing_node.items.split("\n").length;
 
-						if (newItemCount != oldItemCount) editing_node.itemCountChanged = true;
+							if (newItemCount != oldItemCount) editing_node.itemCountChanged = true;
+							else if (newValue.localeCompare(editing_node.items) != 0) editing_node.anyItemChanged = true;
+						}
+						else if (d == "itemTextSize")
+						{
+							if (newValue.localeCompare(editing_node.itemTextSize) != 0) editing_node.anyItemChanged = true;
+						}
+
 					}
 					changes[d] = editing_node[d];
 					if (typeof editing_node[d] == "number")
