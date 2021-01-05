@@ -30,8 +30,7 @@ RED.sidebar.info = (function() {
 
 	console.warn("tab-info loading.."); // to see loading order
 	
-	var standardHelpText = "<h3>Welcome</h3><p>The Audio System Design Tool lets you easily draw a system to process 16 bit, 44.1 kHz streaming audio while your Arduino sketch also runs.</p><p>Export will generate code to copy into the Arduino editor, to implement your system.</p><p>Most objects provide simple functions you can call from setup() or loop() to control your audio project!</p><h3>Offline Use</h3><p>This tool does not use a server.  A stand-alone copy is provided with the Teensy Audio Library, in the gui folder.</p><h3>Credits</h3><p>Special thanks to Nicholas O'Leary, Dave Conway-Jones and IBM.</p><p>Without their work on the open source <a href=\"http://nodered.org/\" target=\"_blank\">Node-RED</a> project, this graphical design tool would not have been possible!</p>";
-	$("#tab-info").html(standardHelpText);
+	
 	
 	function jsonFilter(key,value) {
 		if (key === "") {
@@ -248,6 +247,7 @@ RED.sidebar.info = (function() {
 		refresh:refresh,
 		showSelection: showSelection,
 		clear: function() {
+			var standardHelpText = $("script[data-help-name|='WelcomeStandardText']").html();
 			$("#tab-info").html(standardHelpText);
 		},
 		setHelpContent: setHelpContent

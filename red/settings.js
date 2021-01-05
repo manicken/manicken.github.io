@@ -32,9 +32,11 @@ RED.settings = (function() {
 		var catContainerId = "";
 		generateSettingsFromClasses(content.id);
 
-		RED.sidebar.show("settings"); // development, allways show settings tab first
+		//RED.sidebar.show("settings"); // development, allways show settings tab first
 
 		RED.palette.settings.categoryHeaderTextSize = RED.palette.settings.categoryHeaderTextSize; // read/apply
+
+		//RED.sidebar.show("info");
 	}
 	function colorSelTest(value)
 	{

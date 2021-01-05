@@ -483,6 +483,7 @@ RED.main = (function() {
 
 
 			RED.settings.createTab();
+			RED.sidebar.info.clear();
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){
 				if (xhr.overrideMimeType) {
