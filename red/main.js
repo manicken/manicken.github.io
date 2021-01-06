@@ -119,12 +119,40 @@ RED.main = (function() {
 	{
 		var html = "";
 		//<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
+		html += '<li><a id="btn-manickenPolySynth" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Manicken Poly Synth</a></li>';
+		html += '<li><a id="btn-GroupBasedDesign" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>GroupBasedDesign</a></li>';
 		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowA</a></li>';
 		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowB</a></li>';
 		html += '<li><a id="btn-originalFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>originalFlow</a></li>';
 		html += '<li><a id="btn-emptyFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Empty Flow</a></li>';
 		$("#menu-demo-flows").append(html);
 	
+		$('#btn-manickenPolySynth').click(function() {
+			var data = $("script[data-container-name|='ManickenPolySynth']").html();
+			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("Manicken PolySynth"), function(okPressed) { 
+				if (okPressed)
+				{
+					console.error("load ManickenPolySynth");
+					console.log("newFlowData:" + data);
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
+					RED.storage.loadContents(data);
+				}
+			});
+		});
+
+		$('#btn-GroupBasedDesign').click(function() {
+			var data = $("script[data-container-name|='GroupBasedDesign']").html();
+			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("GroupBasedDesign"), function(okPressed) { 
+				if (okPressed)
+				{
+					console.error("load GroupBasedDesign");
+					console.log("newFlowData:" + data);
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
+					RED.storage.loadContents(data);
+				}
+			});
+		});
+
 		$('#btn-demoFlowA').click(function() {
 			var data = $("script[data-container-name|='DemoFlowA']").html();
 			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowA"), function(okPressed) { 
