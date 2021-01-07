@@ -1,6 +1,6 @@
 var AceAutoComplete  = (function() {
     var Extension=[
-        { "name":"begin", 				        "value":"begin();", 						  "meta": "begin" },
+        { "name":"begin", 				        "value":"begin();", 						  "meta": "snippet" },
         { "caption":"begin", 				    "snippet":"void begin()\n{\n    ${1}\n}\n", 			  "meta": "snippet" , "type":"snippet"},
         { "name":"WAVEFORM_SINE",               "value":"WAVEFORM_SINE", "meta":"sinus waveform"},
         { "name":"WAVEFORM_SAWTOOTH",           "value":"WAVEFORM_SAWTOOTH", "meta":"saw waveform"},

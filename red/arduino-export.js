@@ -450,8 +450,10 @@ function export_classBased(generateZip)
   {
     var ws = RED.nodes.workspaces[wsi];
     if (!ws.export) continue; // this skip export
-    newWsCpp = getNewWsCppFile(ws.label + ".h", "");
-    
+    if(ws.label != "main.cpp")
+      newWsCpp = getNewWsCppFile(ws.label + ".h", "");
+    else
+      newWsCpp = getNewWsCppFile(ws.label, "");
     // first go through special types
     var classComment = "";
     var classFunctions = "";
@@ -506,38 +508,47 @@ function export_classBased(generateZip)
     {
       newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
     }
-    newWsCpp.contents += "\nclass " + ws.label + "\n{\n public:\n";
+    if(newWsCpp.name != "main.cpp")
+      newWsCpp.contents += "\nclass " + ws.label + "\n{\n public:\n";
     if (classVars.trim().length > 0)
-      newWsCpp.contents += incrementTextLines(classVars, "    ");
-
-    // generate code for all audio processing nodes
-    for (var i=0; i<nns.length; i++) {
-      var n = nns[i];
-      if (n.type == "tab" || n.type == "settings") continue; // constant special objects
-      if (n.z != ws.id) continue; // workspace filter
-      var node = RED.nodes.node(n.id);
-      if (node == null) { continue;}
-      if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
-
-      //if(isSpecialNode(n.type)) continue;
-      if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
-
-      var isArray = RED.nodes.isNameDeclarationArray(n.name,ws.id, true);
-      if (isArray)
-      {
-        n.name = isArray.newName;
-      }
-
-      newWsCpp.contents += "    " + getTypeName(nns,n);
-      //console.log(">>>" + n.type +"<<<"); // debug test
-      var name = RED.nodes.make_name(n)
-
-      if (n.comment && (n.comment.trim().length != 0))
-        newWsCpp.contents += name + "; /* " + n.comment +"*/\n";
+    {
+      if(newWsCpp.name != "main.cpp")
+        newWsCpp.contents += incrementTextLines(classVars, "    ");
       else
-        newWsCpp.contents += name + ";\n";
+        newWsCpp.contents += classVars;
     }
-    // generate code for all control nodes (no inputs or outputs)
+
+    if(newWsCpp.name != "main.cpp") // audio processing nodes should not be in the main file
+    {
+      // generate code for all audio processing nodes
+      for (var i=0; i<nns.length; i++) {
+        var n = nns[i];
+        if (n.type == "tab" || n.type == "settings") continue; // constant special objects
+        if (n.z != ws.id) continue; // workspace filter
+        var node = RED.nodes.node(n.id);
+        if (node == null) { continue;}
+        if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+
+        //if(isSpecialNode(n.type)) continue;
+        if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
+
+        var isArray = RED.nodes.isNameDeclarationArray(n.name,ws.id, true);
+        if (isArray)
+        {
+          n.name = isArray.newName;
+        }
+
+        newWsCpp.contents += "    " + getTypeName(nns,n);
+        //console.log(">>>" + n.type +"<<<"); // debug test
+        var name = RED.nodes.make_name(n)
+
+        if (n.comment && (n.comment.trim().length != 0))
+          newWsCpp.contents += name + "; /* " + n.comment +"*/\n";
+        else
+          newWsCpp.contents += name + ";\n";
+      }
+    }
+    // generate code for all control/standard class nodes (no inputs or outputs)
     for (var i=0; i<nns.length; i++) {
       var n = nns[i];
 
@@ -550,8 +561,10 @@ function export_classBased(generateZip)
       if (node.type == "AudioStreamObject") continue;
 
       //if(isSpecialNode(n.type)) continue; // replaced by if (node._def.nonObject != undefined) 
-        
-      newWsCpp.contents += "    " + n.type + " ";
+      if(newWsCpp.name != "main.cpp")
+        newWsCpp.contents += "    ";
+      
+      newWsCpp.contents += n.type + " ";
       for (var j=n.type.length; j<32; j++) cpp += " ";
       var name = RED.nodes.make_name(n)
       newWsCpp.contents += name + ";\n";
@@ -651,34 +664,47 @@ function export_classBased(generateZip)
       for (var j=arrayNode.type.length; j<32; j++) newWsCpp.contents += " ";
       newWsCpp.contents += "*" + arrayNode.name +";\n";
     }
-    
-    newWsCpp.contents+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
-    if (ac.totalCount != 0)
-      newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
 
-    for (var ani = 0; ani < arrayNodes.length; ani++)
+    if(newWsCpp.name != "main.cpp") // don't generate constructor in main file
     {
-      var arrayNode = arrayNodes[ani];
-      newWsCpp.contents += "        " + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
-      if (arrayNode.autoGenerate)
-        newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
-      else
-        newWsCpp.contents += arrayNode.cppCode;
+      newWsCpp.contents+= "\n    " + ws.label + "() // constructor (this is called when class-object is created)\n    {\n";
+      if (ac.totalCount != 0)
+        newWsCpp.contents += "        int pci = 0; // used only for adding new patchcords\n\n"
 
-      newWsCpp.contents += "; // pointer array\n";
-    }
-    newWsCpp.contents += "\n";
-    newWsCpp.contents += cppPcs;
-    if (ac.arrayLength != 0)
-    {
-      newWsCpp.contents += "        for (int i = 0; i < " + ac.arrayLength + "; i++)\n        {\n";
-      newWsCpp.contents += cppArray;
-      newWsCpp.contents += "        }\n";
-    }
-    newWsCpp.contents += "    }\n";
+      for (var ani = 0; ani < arrayNodes.length; ani++)
+      {
+        var arrayNode = arrayNodes[ani];
+        newWsCpp.contents += "        " + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
+        if (arrayNode.autoGenerate)
+          newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
+        else
+          newWsCpp.contents += arrayNode.cppCode;
+
+        newWsCpp.contents += "; // pointer array\n";
+      }
+      newWsCpp.contents += "\n";
+      newWsCpp.contents += cppPcs;
+      if (ac.arrayLength != 0)
+      {
+        newWsCpp.contents += "        for (int i = 0; i < " + ac.arrayLength + "; i++)\n        {\n";
+        newWsCpp.contents += cppArray;
+        newWsCpp.contents += "        }\n";
+      }
+      newWsCpp.contents += "    }\n";
+    } // don't generate constructor in main file END
+
     if (classFunctions.trim().length > 0)
-      newWsCpp.contents += "\n" + incrementTextLines(classFunctions, "    ");
-    newWsCpp.contents += "};\n"; // end of class
+    {
+      if(newWsCpp.name != "main.cpp")
+        newWsCpp.contents += "\n" + incrementTextLines(classFunctions, "    ");
+      else
+        newWsCpp.contents += "\n" + classFunctions;
+    }
+    
+    if(newWsCpp.name != "main.cpp") // don't include end of class marker when doing main.cpp 
+      newWsCpp.contents += "};\n"; // end of class
+    
+
     newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n") + "\n" + classIncludes.join("\n") + "\n ");
     newWsCpp.footer = getCppFooter();
     wsCppFiles.push(newWsCpp);
@@ -732,6 +758,9 @@ function export_classBased(generateZip)
     for (var i = 0; i < wsCppFiles.length; i++)
     {
       var wsCppfile = wsCppFiles[i];
+
+      if (wsCppfile.overwrite_file == false) continue; // don't include in zip as it's only a placeholder for existing files
+
       zip.file(wsCppfile.name, wsCppfile.contents);
     }
     zip.generateAsync({type:"blob", compression:"DEFLATE"}).then(function(blob) {
