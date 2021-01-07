@@ -160,7 +160,7 @@ it's a single octave Piano-part (multiple can be stacked together to form a full
 sendCommand example:
 "midiSend("+(d.keyDown+d.midiCh)+","+(d.octave*12+ d.keyIndex) +",127)"
 
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/Piano.png?raw=true)
+![Piano](/Piano.png)
 
 * UI_ScriptButton
 this is the most fun node type,
@@ -193,7 +193,7 @@ have two variants one that goes in normal direction L-R
 and one that goes in the reverse direction
 
 example of R-L junction usage:
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/ReverseJunction.png?raw=true)
+![ReverseJunction](/ReverseJunction.png)
 
 I tried my best to make the embedded documentation as clear as possible,
 but contributions is appreciated.
