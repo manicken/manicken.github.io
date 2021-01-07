@@ -1,5 +1,5 @@
 Main Screen With my project:
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/MainScreenDemo.png?raw=true)
+![MainScreenDemo](/MainScreenDemo.png)
 
 I have included my complete Poly Synth Project into the html
 it's available at the rightmost menu -> Examples -> Manicken Poly Synth
@@ -23,7 +23,7 @@ GUI Edit/Run (only used for the UI objects)
 the toolbar can be hidden in the settings
 
 * Drop down Import and Export Menus
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/ImportMenu.png?raw=true)
+![ImportMenu](/ImportMenu.png)
 
 * when exporting/saving the nodes are sorted by the visible major grid columns
 1 4 7
@@ -59,7 +59,7 @@ with descriptions both for the objects and object functions.
 Autocomplete currently don't have support for variables.
 
 example how the autocomplete looks:
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/Autocomplete_MultiLevel.png?raw=true)
+![Autocomplete_MultiLevel](/Autocomplete_MultiLevel.png)
 
 Code is edited in CodeFile and Function node types.
 
@@ -126,7 +126,7 @@ I plan to use the group like a exportable class/(seperate object) so that it can
 so the checkbox "Export as class" have no function yet.
 
 example of grouped listboxes:
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/GroupedListBoxes.png ?raw=true)
+![GroupedListBoxes](/GroupedListBoxes.png)
 
 * UI_Button
 have seperate pressed and release send data fields (the text in the field is the raw data sent)
@@ -138,8 +138,8 @@ have a bottom placed label that can show the current value
 have a "Send Format" field that is also parsed by the eval, example:
 "midisend(0xB0,"+d.midiId+"," + d.val + ");"
 
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/H_Slider.png?raw=true)
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/V_Slider.png?raw=true)
+![H Slider](/H_Slider.png)
+![V Slider](/V_Slider.png)
 
 * UI_Label
 is a borderless node with a selectable background color
@@ -151,7 +151,7 @@ behaves like a big listbox item (can be used when long list of items need to be 
 sendCommand example:
 "midiSend("+(0xB0+d.midiCh)+","+d.midiId+","+d.sel ectedIndex+")"
 
-(https://raw.githubusercontent.com/manicken/manicken.github.io/master/ListBox.png?raw=true)
+![ListBox](/ListBox.png)
 
 * UI_Piano (one octave)
 this is the most advanced (by design) node yet
@@ -192,7 +192,7 @@ save notification that shows when the design is saved
 have two variants one that goes in normal direction L-R
 and one that goes in the reverse direction
 
-example of R-L junction usage:
+example of R-L junction usage:<br>
 ![ReverseJunction](/ReverseJunction.png)
 
 I tried my best to make the embedded documentation as clear as possible,
