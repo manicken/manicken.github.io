@@ -1,5 +1,5 @@
 Main Screen With my project:
-(https://github.com/manicken/manicken.github.io/blob/master/MainScreenDemo.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/MainScreenDemo.png?raw=true)
 
 I have included my complete Poly Synth Project into the html
 it's available at the rightmost menu -> Examples -> Manicken Poly Synth
@@ -23,7 +23,7 @@ GUI Edit/Run (only used for the UI objects)
 the toolbar can be hidden in the settings
 
 * Drop down Import and Export Menus
-(https://github.com/manicken/manicken.github.io/blob/master/ImportMenu.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/ImportMenu.png?raw=true)
 
 * when exporting/saving the nodes are sorted by the visible major grid columns
 1 4 7
@@ -59,7 +59,7 @@ with descriptions both for the objects and object functions.
 Autocomplete currently don't have support for variables.
 
 example how the autocomplete looks:
-(https://github.com/manicken/manicken.github.io/blob/master/Autocomplete_MultiLevel.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/Autocomplete_MultiLevel.png?raw=true)
 
 Code is edited in CodeFile and Function node types.
 
@@ -126,9 +126,7 @@ I plan to use the group like a exportable class/(seperate object) so that it can
 so the checkbox "Export as class" have no function yet.
 
 example of grouped listboxes:
-Click image for larger version. 
-
-(https://github.com/manicken/manicken.github.io/blob/master/GroupedListBoxes.png ?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/GroupedListBoxes.png ?raw=true)
 
 * UI_Button
 have seperate pressed and release send data fields (the text in the field is the raw data sent)
@@ -140,8 +138,8 @@ have a bottom placed label that can show the current value
 have a "Send Format" field that is also parsed by the eval, example:
 "midisend(0xB0,"+d.midiId+"," + d.val + ");"
 
-(https://github.com/manicken/manicken.github.io/blob/master/H_Slider.png?raw=true)
-(https://github.com/manicken/manicken.github.io/blob/master/V_Slider.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/H_Slider.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/V_Slider.png?raw=true)
 
 * UI_Label
 is a borderless node with a selectable background color
@@ -153,7 +151,7 @@ behaves like a big listbox item (can be used when long list of items need to be 
 sendCommand example:
 "midiSend("+(0xB0+d.midiCh)+","+d.midiId+","+d.sel ectedIndex+")"
 
-(https://github.com/manicken/manicken.github.io/blob/master/ListBox.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/ListBox.png?raw=true)
 
 * UI_Piano (one octave)
 this is the most advanced (by design) node yet
@@ -162,7 +160,7 @@ it's a single octave Piano-part (multiple can be stacked together to form a full
 sendCommand example:
 "midiSend("+(d.keyDown+d.midiCh)+","+(d.octave*12+ d.keyIndex) +",127)"
 
-(https://github.com/manicken/manicken.github.io/blob/master/Piano.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/Piano.png?raw=true)
 
 * UI_ScriptButton
 this is the most fun node type,
@@ -195,7 +193,7 @@ have two variants one that goes in normal direction L-R
 and one that goes in the reverse direction
 
 example of R-L junction usage:
-(https://github.com/manicken/manicken.github.io/blob/master/ReverseJunction.png?raw=true)
+(https://raw.githubusercontent.com/manicken/manicken.github.io/master/ReverseJunction.png?raw=true)
 
 I tried my best to make the embedded documentation as clear as possible,
 but contributions is appreciated.
