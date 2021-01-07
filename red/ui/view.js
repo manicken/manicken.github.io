@@ -4355,8 +4355,12 @@ RED.view = (function() {
 							return; // abort name change if name allready exist
 						} 
 						
-
+						RED.view.dirty(true);
+						var oldLabel = workspace.label;
 						workspace.label = label;
+						RED.nodes.workspaceNameChanged(oldLabel, label); // Jannik add
+
+						
 
 						// update the tab text
 						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
@@ -4367,8 +4371,7 @@ RED.view = (function() {
 						menuItem.attr("title",label);
 						menuItem.text(label);
 
-						RED.view.dirty(true);
-						RED.nodes.workspaceNameChanged(workspace.label, label); // Jannik add end
+						
 					}
 					var exportNew = $( "#node-input-export-workspace" ).prop('checked')
 					if (workspace.export != exportNew)

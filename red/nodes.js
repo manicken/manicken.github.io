@@ -974,7 +974,7 @@ RED.nodes = (function() {
 		addClassTabsToPalette();
 		refreshClassNodes();
 		//RED.palette.remove(oldName);
-		node_defs[oldName] = undefined;
+		delete node_defs[oldName];
 
 		console.log("workspaceNameChanged:" + oldName + " to " + newName + " with " + changedCount + " objects changed");
 
