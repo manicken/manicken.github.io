@@ -121,13 +121,16 @@ RED.main = (function() {
 		//<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
 		html += '<li><a id="btn-manickenPolySynth" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Manicken Poly Synth</a></li>';
 		html += '<li><a id="btn-GroupBasedDesign" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Group Based Design</a></li>';
-		html += '<li><a id="btn-SimpleNonAudioExample" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Simple Non-Audio Example</a></li>';
-		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlow A</a></li>';
-		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlow B</a></li>';
+		html += '<li><a id="btn-SimpleNonAudioExample" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Non-Audio Example</a></li>';
+		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Demo Flow A</a></li>';
+		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Demo Flow B</a></li>';
 		html += '<li><a id="btn-originalFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Original Flow</a></li>';
 		html += '<li><a id="btn-emptyFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Empty Flow</a></li>';
 		$("#menu-demo-flows").append(html);
 	
+		SetButtonPopOver("#btn-originalFlow", "this is the original design that Demo Flow A & B is based on<br>made by kd5rxt-mark @ pjrc forum", "LEFT");
+		SetButtonPopOver("#btn-manickenPolySynth", "this is a \"complete\" example <br>made by Jannik Svensson @ https://github.com/manicken", "LEFT");
+
 		$('#btn-manickenPolySynth').click(function() {
 			var data = $("script[data-container-name|='ManickenPolySynth']").html();
 			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("Manicken PolySynth"), function(okPressed) { 

@@ -1509,8 +1509,8 @@ RED.nodes = (function() {
 					console.error("@refreshClassNodes: node._def is undefined!!!")
 					continue;
 				}
-				else
-					console.error(def);
+				//else
+				//	console.error(def);
 				node._def = def;
 				var newInputCount = getClassNrOfInputs(nodes, ws.id);
 				var newOutputCount = getClassNrOfOutputs(nodes, ws.id); 
@@ -1572,7 +1572,7 @@ RED.nodes = (function() {
 	}
 	function removeUnusedWires(node)
 	{
-		console.warn("removeUnusedWires:" + node.type);
+		//console.log("check and remove Unused Wires: " + node.type);
 		for (var i = 0; i < links.length; i++)
 		{
 			if (links[i].source == node)
