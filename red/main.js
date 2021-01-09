@@ -120,10 +120,11 @@ RED.main = (function() {
 		var html = "";
 		//<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
 		html += '<li><a id="btn-manickenPolySynth" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Manicken Poly Synth</a></li>';
-		html += '<li><a id="btn-GroupBasedDesign" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>GroupBasedDesign</a></li>';
-		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowA</a></li>';
-		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowB</a></li>';
-		html += '<li><a id="btn-originalFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>originalFlow</a></li>';
+		html += '<li><a id="btn-GroupBasedDesign" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Group Based Design</a></li>';
+		html += '<li><a id="btn-SimpleNonAudioExample" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Simple Non-Audio Example</a></li>';
+		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlow A</a></li>';
+		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlow B</a></li>';
+		html += '<li><a id="btn-originalFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Original Flow</a></li>';
 		html += '<li><a id="btn-emptyFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Empty Flow</a></li>';
 		$("#menu-demo-flows").append(html);
 	
@@ -146,6 +147,19 @@ RED.main = (function() {
 				if (okPressed)
 				{
 					console.error("load GroupBasedDesign");
+					console.log("newFlowData:" + data);
+					saveToFile(RED.arduino.settings.ProjectName + ".json");
+					RED.storage.loadContents(data);
+				}
+			});
+		});
+
+		$('#btn-SimpleNonAudioExample').click(function() {
+			var data = $("script[data-container-name|='SimpleNonAudioExample']").html();
+			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("SimpleNonAudioExample"), function(okPressed) { 
+				if (okPressed)
+				{
+					console.error("load SimpleNonAudioExample");
 					console.log("newFlowData:" + data);
 					saveToFile(RED.arduino.settings.ProjectName + ".json");
 					RED.storage.loadContents(data);
