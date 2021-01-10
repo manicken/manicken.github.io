@@ -360,6 +360,12 @@ input.jscolor {
     margin: 0px;
     border: 0px;
 }
+.toolBar_toggle_button {
+    background-color:#e6e6e6;
+}
+.toolBar_toggle_button_pressed {
+    background-color:#808080;
+}
 
 label.settings-item-label {
     font-size: 16px;

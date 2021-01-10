@@ -186,9 +186,17 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn btn-small" id="btn-moveWorkSpaceLeft" href="#"><i class="fa fa-chevron-left"></i> WS</a>
 				<a class="btn btn-small" id="btn-moveWorkSpaceRight" href="#">WS <i class="fa fa-chevron-right"></i></a>
 			</div>
-			<div class="btn-group">
-				<a class="btn btn-small" id="btn-guiEditMode" href="#"><i class="fa fa-cogs fa-lg"></i> gui edit</a>
-				<a class="btn btn-small" id="btn-guiRunMode" href="#"><i class="fa fa-play fa-lg"></i> gui run</a>
+			<div class="btn-group btn-group-toggle" data-toggle="buttons">
+				<label class="btn btn-small btn-secondary">
+					<input type="radio" name="options" id="btn-guiEditMode" autocomplete="off" checked>  <i class="fa fa-cogs fa-lg"></i> gui edit
+				</label>
+				<label class="btn btn-small btn-secondary">
+					<input type="radio" name="options" id="btn-guiRunMode" autocomplete="off" >  <i class="fa fa-play fa-lg"></i> gui run
+				</label>
+				<!--
+				<a class="btn btn-small btn-secondary" id="btn-guiEditMode" href="#"><i class="fa fa-cogs fa-lg"></i> gui edit</a>
+				<a class="btn btn-small btn-secondary" id="btn-guiRunMode" href="#"><i class="fa fa-play fa-lg"></i> gui run</a>
+				-->
 			</div>
 			
 			<div class="btn-group hidden">

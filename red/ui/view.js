@@ -70,7 +70,28 @@ RED.view = (function() {
 		set showNodeToolTip(value) { _settings.showNodeToolTip = value; },
 
 		get guiEditMode() { return _settings.guiEditMode; },
-		set guiEditMode(state) { _settings.guiEditMode = state; $('#' + settingsEditor.otherSubCat.items.guiEditMode.valueId).prop('checked', state); },
+		set guiEditMode(state) { 
+			_settings.guiEditMode = state; 
+			$('#' + settingsEditor.otherSubCat.items.guiEditMode.valueId).prop('checked', state);
+			if (state == true)
+			{
+				RED.notify("gui EDIT mode", "warning", null, 1000);
+				$('#btn-guiEditMode').prop('checked', true);
+				$('#btn-guiRunMode').prop('checked', false);
+				//$('#btn-guiRunMode').prop('disabled', true);
+				//$('#btn-guiEditMode').addClass("toolBar_toggle_button_pressed");
+				//$('#btn-guiRunMode').removeClass("toolBar_toggle_button_pressed");
+			}
+			else
+			{
+				RED.notify("gui RUN mode", "warning", null, 1000);
+				$('#btn-guiEditMode').prop('checked', false);
+				$('#btn-guiRunMode').prop('checked', true);
+				//$('#btn-guiRunMode').prop('disabled', null);
+				//$('#btn-guiEditMode').removeClass("toolBar_toggle_button_pressed");
+				//$('#btn-guiRunMode').addClass("toolBar_toggle_button_pressed");
+			}
+		},
 
 		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
 		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; },
@@ -2429,6 +2450,7 @@ RED.view = (function() {
 	function redraw_init_nodeLabel(nodeRect, d)
 	{
 		var text = nodeRect.append('svg:text')
+		
 							.attr('class','node_label')
 							.attr('style', 'text-size:' + settings.nodeDefaultTextSize + "px;")
 							.attr('x', 38)
@@ -3661,6 +3683,7 @@ RED.view = (function() {
 				.attr("fill",function(d) { return d.bgColor;});
 
 			var itemText = nodeRect.append("text")
+			//.attr("contentEditable", true)
 				.attr("class", "node_label_uiListBoxItem")
 				.attr("text-anchor", "start")
 				.attr("dy", "0.35em")
@@ -4101,7 +4124,7 @@ RED.view = (function() {
 	RED.keyboard.add(/* - */ 189,{ctrl:true},function(){zoomOut();d3.event.preventDefault();});
 	RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
 	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard, null, true);d3.event.preventDefault();});
-	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){showExportNodesDialog();d3.event.preventDefault();});
+	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){/*showExportNodesDialog();*/settings.guiEditMode = !settings.guiEditMode; d3.event.preventDefault();});
 	RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog(true);d3.event.preventDefault();});
 	RED.keyboard.add(/* s */ 83,{ctrl:true},function(){RED.storage.update();  d3.event.preventDefault();});
 	RED.keyboard.add(/* p */ 80,{ctrl:true},function(){RED.main.print();d3.event.preventDefault();});
