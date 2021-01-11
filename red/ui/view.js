@@ -420,7 +420,9 @@ RED.view = (function() {
 	{
 		outer_background.attr('width', settings.space_width)
 							  .attr('height', settings.space_height)
-						      .attr('fill',settings.workspaceBgColor);
+                              .attr('fill',settings.workspaceBgColor);
+                              
+        outer_background.append("foreignObject").attr("x", 10).attr("y",10).attr("width",100).attr("height",150).append("div").attr("xmlns", "http://www.w3.org/1999/xhtml").append("input");               
 	}
 	
 	function initGrid()

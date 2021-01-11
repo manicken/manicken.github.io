@@ -379,7 +379,7 @@ RED.arduino.export = (function () {
     $('#btn-deploy2').click(function () { export_classBased(); });
     $('#btn-deploy2zip').click(function () { export_classBased(true); });
     function export_classBased(generateZip) {
-        var minorIncrement = RED.arduino.settings.CodeIncrementSpaces;
+        var minorIncrement = RED.arduino.settings.CodeIndentations;
         var majorIncrement = minorIncrement * 2;
         const t0 = performance.now();
         RED.storage.update();
@@ -504,7 +504,7 @@ RED.arduino.export = (function () {
                 newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
             }
             if (newWsCpp.isMain == false)
-                newWsCpp.contents += "\nclass " + ws.label + "\n{\n public:\n";
+                newWsCpp.contents += "\nclass " + ws.label + "\n{\npublic:\n";
             if (classVars.trim().length > 0) {
                 if (newWsCpp.isMain == false)
                     newWsCpp.contents += incrementTextLines(classVars, minorIncrement);

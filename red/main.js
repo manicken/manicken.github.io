@@ -79,7 +79,9 @@ RED.main = (function() {
 		element.click();
 	  
 		document.body.removeChild(element);
-	}
+    }
+
+    document.getElementById('file-input').addEventListener('change', readSingleFile, false);
 	function readSingleFile(e) {
 		var file = e.target.files[0];
 		if (!file) {
@@ -124,8 +126,27 @@ RED.main = (function() {
         reader.readAsArrayBuffer(file);
     }
 
-	   
-	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
+    //document.getElementById('file-input-test').addEventListener('change', tryReadFileAtPath, false);
+
+	function tryReadFileAtPath(e)
+    {
+        
+        var file = e.target.files[0];
+        if (!file) {
+            return;
+          }
+          file.webkitRelativePath = "C:\\";
+          file.name = "eula.1028.txt";
+        console.warn(file);
+        
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            var contents = e.target.result;
+            console.warn(contents);
+          };
+          reader.readAsText(file);
+    }
+	
 	
 	$('#btn-saveTofile').click(function() { saveAsFile(); });
 	function saveAsFile()
