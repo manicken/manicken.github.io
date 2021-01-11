@@ -519,7 +519,7 @@ RED.main = (function() {
 		RED.view.init();
 
 		//SetButtonPopOver("#btn-
-		SetButtonPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload");
+		SetButtonPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");
 		SetButtonPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
 		SetButtonPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
 		SetButtonPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
@@ -527,10 +527,10 @@ RED.main = (function() {
 		SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
         SetButtonPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
         
-		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs, CodeFile-nodes and the design JSON to seperate files and then puts them all in a zipfile.","left");
+		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br> then that zip file is downloaded using the browser download function after it asks for the filename.","left");
 		SetButtonPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is the project name set in settings tab","left");
 		SetButtonPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
-		SetButtonPopOver("#btn-deploy2", "Exports all tabs that have the setting (export workspace set)<br><br>When using the IDE Webserver extension the export dialog is not shown and the export is seperated by the individual files,<br> to force that dialog to show use the setting (Force Show export dialog)","left");
+		SetButtonPopOver("#btn-deploy2", "Exports all tabs that have the setting (export workspace set)<br><br>When using the IDE Webserver extension the export dialog is not shown and the export is seperated by the individual files,<br><br> to force that dialog to show use the setting (Arduino-Export-'Force Show export dialog')","left");
 		SetButtonPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON, that is usable when a design is shared on for example a forum.<br><br> tip. if shared the last ] could be on a new line to make it easier to copy the whole line","left");
 		SetButtonPopOver("#btn-deploy", "\"Classic\" export the current tab only,<br>note. this is only intended for exporting simple designs, and have currently no support for Arrays and Tabs(classes)","left");
 		SetButtonPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
