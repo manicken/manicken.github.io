@@ -84,20 +84,46 @@ RED.main = (function() {
 		var file = e.target.files[0];
 		if (!file) {
 		  return;
-		}
-		var reader = new FileReader();
+        }
+        if (file.type == "application/json")
+            readJSONfile(file);
+        else if (file.type == "application/x-zip-compressed")
+            readZIPfile(file);
+        else
+            RED.notify("<strong>Warning</strong>: File type not supported:" + file.type + " @ " + file.name,"warning");
+       
+    }
+    function readJSONfile(file)
+    {
+        var reader = new FileReader();
 		reader.onload = function(e) {
 		  var contents = e.target.result;
-		  // Display file content
-		  displayContents(contents);
+		  RED.storage.loadContents(contents);
 		};
-		reader.readAsText(file);
-	}
-	   
-	function displayContents(contents) {
-		//var element = document.getElementById('file-content');
-		RED.storage.loadContents(contents);
-	}
+        reader.readAsText(file);
+    }
+    function readZIPfile(file)
+    {
+        var reader = new FileReader();
+		reader.onload = function(e) {
+            var rawContents = e.target.result;
+            var zip = new JSZip();
+            zip.loadAsync(rawContents).then(function(contents) {
+                Object.keys(contents.files).forEach(function(filename) {
+
+                    if (filename.toLowerCase() == "gui_tool.json") {
+                        zip.file(filename).async('string').then(function(content) {
+                            //console.warn(content);
+                            RED.storage.loadContents(content);
+                        });
+                    }
+                });
+            });
+            
+		};
+        reader.readAsArrayBuffer(file);
+    }
+
 	   
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
 	
