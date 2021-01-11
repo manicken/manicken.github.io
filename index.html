@@ -60,9 +60,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<ul class="dropdown-menu">
 					<li><a id="btn-import-json" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>JSON</a></li>
 					<li><a id="btn-import-arduino" class="btn action-import" href="#"><i id="btn-icn-download" class="icon-download"></i>Arduino Code</a></li>
-					<li><a id="btn-get-design-json" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From the IDE by JSON</a></li>
-					<input id="file-input" class="btn action-import" type="file" style="display:none;">
-                    <li><label for="file-input" class="btn action-import" ><i id="btn-icn-deploy" class="icon-download"></i> JSON LoadFromFile</label></li>
+					<li><a id="btn-get-design-json" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Load Design From IDE</a></li>
+					<input id="btn-file-import" class="btn action-import" type="file" style="display:none;">
+                    <li><label for="btn-file-import" style="width:87%;" id="lbl-file-import" class="btn action-import" ><i id="btn-icn-deploy" class="icon-download"></i> JSON LoadFromFile</label></li>
                    
 				</ul>
 			</div>
@@ -72,8 +72,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li><a id="btn-deploy" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Simple</a></li>
 					<li><a id="btn-deploy2" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Class-based</a></li>
 					<li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Push JSON to the IDE</a></li>
-					<li><a id="btn-saveTofile" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> JSON SaveToFile</a></li>
-					<li><a id="btn-deploy2zip" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Class-based to Zip</a></li>
+					<li><a id="btn-saveTofile" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="fa fa-sm fa-download"></i> JSON SaveToFile</a></li>
+					<li><a id="btn-deploy2zip" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="fa fa-sm fa-download"></i> Class-based to Zip</a></li>
 					<li><a id="btn-deploy2singleLineJson" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i> Single Line JSON</a></li>
 				</ul>
 				</div>
@@ -99,14 +99,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<div class="btn-group pull-right">
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
 				<ul class="dropdown-menu">
-					<li><a id="btn-sidebar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Sidebar</a></li>
-					<li><a id="btn-sidebar-palette" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i>Palette Sidebar</a></li>
-					<li><a id="btn-bottombar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Bottom Sidebar</a></li>
-					<!--<li><a id="btn-workspace-toolbar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Toolbar</a></li>-->
-					<li class="divider"></li> 
 					
-					
-					<li class="divider"></li>
 					<!-- <li><a id="btn-node-status" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-info-sign"></i> Node Status</a></li>
 					<li class="divider"></li>
 -->
@@ -132,21 +125,34 @@ span.mainfunction {color: #993300; font-weight: bolder}
  <li><a id="btn-config-nodes" tabindex="-1" href="#"><i class="icon-th-list"></i> Configuration nodes...</a></li>
 					<li class="divider"></li>
 -->
-						<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="fa fa-graduation-cap"></i> Examples</a>
-							<ul id="menu-demo-flows" class="dropdown-menu"> </ul>
-						</li>
-						<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-th-large"></i> Workspaces</a>
-							<ul id="workspace-menu-list" class="dropdown-menu">
-								<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
-								<li><a id="btn-workspace-edit" tabindex="-1" href="#"><i class="icon-edit"></i> Rename</a></li>
-								<li><a id="btn-workspace-delete" tabindex="-1" href="#"><i class="icon-minus"></i> Delete</a></li>
-								<li class="divider"></li>
-							</ul>
-						</li>
-					</li>
-					<li class="divider"></li>
-					<li><a id="btn-print" tabindex="-1" href="#"><i class="icon-plus"></i> Print Design</a></li>
-					<li><a id="btn-keyboard-shortcuts" tabindex="-1" href="#"><i class="icon-question-sign"></i> Keyboard Shortcuts</a></li>
+                    <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="fa fa-graduation-cap"></i> Examples</a>
+                        <ul id="menu-demo-flows" class="dropdown-menu"> </ul>
+                    </li>
+                    <li class="divider"></li>
+                    <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-th-large"></i> Workspaces</a>
+                        <ul id="workspace-menu-list" class="dropdown-menu">
+                            <li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
+                            <li><a id="btn-workspace-edit" tabindex="-1" href="#"><i class="icon-edit"></i> Rename</a></li>
+                            <li><a id="btn-workspace-delete" tabindex="-1" href="#"><i class="icon-minus"></i> Delete</a></li>
+                            <li class="divider"></li>
+                        </ul>
+                    </li>
+                    <li class="divider"></li>
+                    <li><a id="btn-print" tabindex="-1" href="#"><i class="icon-plus"></i> Print Design</a></li>
+                    <li class="divider"></li>
+
+                    <li class="divider"></li>
+                    <li><a id="btn-sidebar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Sidebar</a></li>
+					<li><a id="btn-sidebar-palette" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Palette Sidebar</a></li>
+					<li><a id="btn-bottombar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Bottom Sidebar</a></li>
+					<!--<li><a id="btn-workspace-toolbar" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-list-alt"></i> Toolbar</a></li>-->
+					<li class="divider"></li> 
+                    <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="fa fa-cog"></i> Settings</a>
+                        <ul class="dropdown-menu">
+                            <li><a id="btn-reset-settings" tabindex="-1" href="#"><i class="fa fa-refresh"></i> Reset Settings</a></li>
+                        </ul>
+                    </li> 
+                    <li class="divider"></li>
 					<li><a id="btn-help" tabindex="-1" href="help.html" target="_blank"><i class="icon-question-sign"></i> Help...</a></li>
 
 				</ul>

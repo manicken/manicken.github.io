@@ -36,7 +36,7 @@ RED.main = (function() {
 	//var classColor = "#E6E0F8"; // standard
 	var classColor = "#ccffcc"; // new
 	var requirements;
-	$('#btn-keyboard-shortcuts').click(function(){showHelp();});
+	$('#btn-help').click(function(){showHelp();});
 
 	function hideDropTarget() {
 		$("#dropTarget").hide();
@@ -81,7 +81,7 @@ RED.main = (function() {
 		document.body.removeChild(element);
     }
 
-    document.getElementById('file-input').addEventListener('change', readSingleFile, false);
+    document.getElementById('btn-file-import').addEventListener('change', readSingleFile, false);
 	function readSingleFile(e) {
 		var file = e.target.files[0];
 		if (!file) {
@@ -500,7 +500,9 @@ RED.main = (function() {
 	$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
 	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = $('#btn-guiRunEditMode').prop('checked'); });
 
-	$('#btn-save').click(function() { RED.storage.update(); });
+    $('#btn-save').click(function() { RED.storage.update(); });
+    
+    $('#btn-reset-settings').click(function() { RED.storage.update(true); window.location.reload(); }); // true means dontSaveSettings
 
 	//***********************************************/
 	//***********************************************/
@@ -523,16 +525,20 @@ RED.main = (function() {
 		SetButtonPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
 		SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
 		SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
-		SetButtonPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
-		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs, CodeFile-nodes and the design JSON to seperate files and then puts them all in a zipfile.");
-		SetButtonPopOver("#btn-saveTofile", "Used the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is the project name set in settings tab");
-		SetButtonPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.");
-		SetButtonPopOver("#btn-deploy2", "Exports all tabs that have the setting (export workspace set)<br><br>When using the IDE Webserver extension the export dialog is not shown and the export is seperated by the individual files,<br> to force that dialog to show use the setting (Force Show export dialog)");
-		SetButtonPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON, that is usable when a design is shared on for example a forum.<br><br> tip. if shared the last ] could be on a new line to make it easier to copy the whole line");
-		SetButtonPopOver("#btn-deploy", "\"Classic\" export the current tab only,<br>note. this is only intended for exporting simple designs, and have currently no support for Arrays and Tabs(classes)");
-		SetButtonPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.");
+        SetButtonPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
+        
+		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs, CodeFile-nodes and the design JSON to seperate files and then puts them all in a zipfile.","left");
+		SetButtonPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is the project name set in settings tab","left");
+		SetButtonPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
+		SetButtonPopOver("#btn-deploy2", "Exports all tabs that have the setting (export workspace set)<br><br>When using the IDE Webserver extension the export dialog is not shown and the export is seperated by the individual files,<br> to force that dialog to show use the setting (Force Show export dialog)","left");
+		SetButtonPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON, that is usable when a design is shared on for example a forum.<br><br> tip. if shared the last ] could be on a new line to make it easier to copy the whole line","left");
+		SetButtonPopOver("#btn-deploy", "\"Classic\" export the current tab only,<br>note. this is only intended for exporting simple designs, and have currently no support for Arrays and Tabs(classes)","left");
+		SetButtonPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
 		SetButtonPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
-		
+        
+        SetButtonPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br>1. JSON<br>2. exported ZIP file containing a JSON file named GUI_TOOL.json","left");
+        
+        
 
 		jscolor.presets.default = {
 			closeButton:true

@@ -538,9 +538,10 @@ RED.nodes = (function() {
 		return nns;
 	}
 	//TODO: rename this (createCompleteNodeSet)
-	function createCompleteNodeSet() {
+	function createCompleteNodeSet(dontSaveSettings) {
 		var nns = [];
-		var i;
+        var i;
+        if (dontSaveSettings == undefined || dontSaveSettings == false)
 		nns.push({"type":"settings", "data":RED.settings.getAsJSONobj()});
 
 		/*for (i in configNodes) {

@@ -6,8 +6,8 @@ RED.storage = (function() {
 
 	
 
-	function update() {
-		if (RED.main.firstStart() == true) return; // this prevents saves while setting settings
+	function update(dontSaveSettings) {
+		if (RED.main.firstStart() == true) return; // this prevents saves while applying settings
 		 
 		//RED.nodes.addClassTabsToPalette(); //Jannik
 		//RED.nodes.refreshClassNodes(); //Jannik
@@ -20,7 +20,7 @@ RED.storage = (function() {
 		
 		if (localStorage)
 		{
-			var nns = RED.nodes.createCompleteNodeSet();
+			var nns = RED.nodes.createCompleteNodeSet(dontSaveSettings);
 			RED.notify("<strong>Saved..</strong>", "warning", null, 2000);
 			localStorage.setItem("audio_library_guitool",JSON.stringify(nns));
 			//console.trace("localStorage write");
