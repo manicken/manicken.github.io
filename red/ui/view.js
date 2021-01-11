@@ -73,6 +73,7 @@ RED.view = (function() {
 		set guiEditMode(state) { 
 			_settings.guiEditMode = state; 
 			$('#' + settingsEditor.otherSubCat.items.guiEditMode.valueId).prop('checked', state);
+			$('#btn-guiRunEditMode').prop('checked', state);
 			if (state == true)
 			{
 				RED.notify("gui EDIT mode", "warning", null, 1000);

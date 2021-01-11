@@ -451,6 +451,7 @@ RED.main = (function() {
 	}
 	$('#btn-guiEditMode').click(function() { RED.view.settings.guiEditMode = true; });
 	$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
+	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = $('#btn-guiRunEditMode').prop('checked'); });
 
 	$('#btn-save').click(function() { RED.storage.update(); });
 
@@ -473,8 +474,9 @@ RED.main = (function() {
 		SetButtonPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
 		SetButtonPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
 		SetButtonPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
-		SetButtonPopOver("#btn-guiEditMode", "Sets the UI nodes<br>to edit mode");
-		SetButtonPopOver("#btn-guiRunMode", "Sets the UI nodes<br>to Run mode");
+		SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
+		SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
+		SetButtonPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
 		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs, CodeFile-nodes and the design JSON to seperate files and then puts them all in a zipfile.");
 		SetButtonPopOver("#btn-saveTofile", "Used the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is the project name set in settings tab");
 		SetButtonPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.");
