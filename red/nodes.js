@@ -98,9 +98,12 @@ RED.nodes = (function() {
 	function registerType(nt,def) {
 		node_defs[nt] = def;
 
+        try{
 		// TODO: too tightly coupled into palette UI
 		if (def.dontShowInPalette == undefined)
-			RED.palette.add(nt,node_defs[nt]);
+            RED.palette.add(nt,node_defs[nt]);
+        }
+        catch (ex) { RED.notify("<strong>Warning</strong>: Fail to add this type to the palette<br>" + nt,"warning");} // failsafe
 	}
 
 	function getID() {
