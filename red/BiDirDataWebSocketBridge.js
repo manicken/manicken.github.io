@@ -27,7 +27,7 @@ RED.BiDirDataWebSocketBridge = (function() {
 
     var settings = {
         get bddwssPort() { return parseInt(_settings.bddwssPort); },
-		set bddwssPort(value) { _settings.bddwssPort = parseInt(value); StartWebSocketBiDirData_Connection(); },
+		set bddwssPort(value) { _settings.bddwssPort = parseInt(value); StartWebSocketBiDirData_Connection(); RED.storage.update();},
 
         get MidiDeviceIn() { return _settings.MidiDeviceIn; },
 		set MidiDeviceIn(value) { _settings.MidiDeviceIn = parseInt(value); SendToWebSocket("midiSetDeviceIn(" + value + ")"); RED.storage.update();}, // storage update will only run after this program has started

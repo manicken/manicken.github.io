@@ -64,10 +64,10 @@ RED.view = (function() {
 
 	var settings = {
 		get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
-		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); },
+		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); RED.storage.update();},
 
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
-		set showNodeToolTip(value) { _settings.showNodeToolTip = value; },
+		set showNodeToolTip(value) { _settings.showNodeToolTip = value; RED.storage.update();},
 
 		get guiEditMode() { return _settings.guiEditMode; },
 		set guiEditMode(state) { 
@@ -91,20 +91,21 @@ RED.view = (function() {
 				//$('#btn-guiRunMode').prop('disabled', null);
 				//$('#btn-guiEditMode').removeClass("toolBar_toggle_button_pressed");
 				//$('#btn-guiRunMode').addClass("toolBar_toggle_button_pressed");
-			}
+            }
+            RED.storage.update();
 		},
 
 		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
-		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; },
+		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; RED.storage.update();},
 
 		get space_width() { return parseInt(_settings.space_width); },
-		set space_width(value) { _settings.space_width = value; initWorkspace(); initGrid(); },
+		set space_width(value) { _settings.space_width = value; initWorkspace(); initGrid(); RED.storage.update(); },
 
 		get space_height() { return parseInt(_settings.space_height); },
-		set space_height(value) { _settings.space_height = value; initWorkspace(); initGrid(); },
+		set space_height(value) { _settings.space_height = value; initWorkspace(); initGrid(); RED.storage.update();},
 
 		get workspaceBgColor() { return _settings.workspaceBgColor; },
-		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); },
+		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); RED.storage.update();},
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
 		set scaleFactor(value) { value = parseFloat(value);
@@ -113,78 +114,82 @@ RED.view = (function() {
 								 $("#" + settingsEditor.otherSubCat.items.scaleFactor.valueId).val(value.toFixed(2));
 								 redraw(true);
 								 redraw_links_init();
-								 redraw_links(); },
+								 redraw_links(); RED.storage.update();},
 
 		get showGridHminor() { return _settings.showGridHminor; },
-		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); },
+		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); RED.storage.update();},
 
 		get showGridHmajor() { return _settings.showGridHmajor; },
-		set showGridHmajor(state) { _settings.showGridHmajor = state; showHideGridHmajor(state); },
+		set showGridHmajor(state) { _settings.showGridHmajor = state; showHideGridHmajor(state); RED.storage.update();},
 
 		get showGridVminor() { return _settings.showGridVminor; },
-		set showGridVminor(state) { _settings.showGridVminor = state; showHideGridVminor(state); },
+		set showGridVminor(state) { _settings.showGridVminor = state; showHideGridVminor(state); RED.storage.update();},
 
 		get showGridVmajor() { return _settings.showGridVmajor; },
-		set showGridVmajor(state) { _settings.showGridVmajor = state; showHideGridVmajor(state); },
+		set showGridVmajor(state) { _settings.showGridVmajor = state; showHideGridVmajor(state); RED.storage.update();},
 
 		get nodeMouseDownShowGridHminor() { return _settings.nodeMouseDownShowGridHminor; },
-		set nodeMouseDownShowGridHminor(state) { _settings.nodeMouseDownShowGridHminor = state; },
+		set nodeMouseDownShowGridHminor(state) { _settings.nodeMouseDownShowGridHminor = state; RED.storage.update();},
 
 		get nodeMouseDownShowGridHmajor() { return _settings.nodeMouseDownShowGridHmajor; },
-		set nodeMouseDownShowGridHmajor(state) { _settings.nodeMouseDownShowGridHmajor = state; },
+		set nodeMouseDownShowGridHmajor(state) { _settings.nodeMouseDownShowGridHmajor = state; RED.storage.update();},
 
 		get nodeMouseDownShowGridVminor() { return _settings.nodeMouseDownShowGridVminor; },
-		set nodeMouseDownShowGridVminor(state) { _settings.nodeMouseDownShowGridVminor = state; },
+		set nodeMouseDownShowGridVminor(state) { _settings.nodeMouseDownShowGridVminor = state; RED.storage.update();},
 
 		get nodeMouseDownShowGridVmajor() { return _settings.nodeMouseDownShowGridVmajor; },
-		set nodeMouseDownShowGridVmajor(state) { _settings.nodeMouseDownShowGridVmajor = state; },
+		set nodeMouseDownShowGridVmajor(state) { _settings.nodeMouseDownShowGridVmajor = state; RED.storage.update();},
 
 		get gridHminorSize() { return parseInt(_settings.gridHminorSize); },
-		set gridHminorSize(value) { _settings.gridHminorSize = value; initHminorGrid(); },
+		set gridHminorSize(value) { _settings.gridHminorSize = value; initHminorGrid(); RED.storage.update();},
 
 		get gridHmajorSize() { return parseInt(_settings.gridHmajorSize); },
-		set gridHmajorSize(value) { _settings.gridHmajorSize = value; initHmajorGrid(); },
+		set gridHmajorSize(value) { _settings.gridHmajorSize = value; initHmajorGrid(); RED.storage.update();},
 
 		get gridVminorSize() { return parseInt(_settings.gridVminorSize); },
-		set gridVminorSize(value) { _settings.gridVminorSize = value; initVminorGrid(); },
+		set gridVminorSize(value) { _settings.gridVminorSize = value; initVminorGrid(); RED.storage.update();},
 
 		get gridVmajorSize() { return parseInt(_settings.gridVmajorSize); },
-		set gridVmajorSize(value) { _settings.gridVmajorSize = value; initVmajorGrid(); },
+		set gridVmajorSize(value) { _settings.gridVmajorSize = value; initVmajorGrid(); RED.storage.update();},
 
 		get gridMinorColor() { return _settings.gridMinorColor; },
-		set gridMinorColor(value) { _settings.gridMinorColor = value; setMinorGridColor(); },
+		set gridMinorColor(value) { _settings.gridMinorColor = value; setMinorGridColor(); RED.storage.update();},
 
 		get gridMajorColor() { return _settings.gridMajorColor; },
-		set gridMajorColor(value) { _settings.gridMajorColor = value; setMajorGridColor(); },
+		set gridMajorColor(value) { _settings.gridMajorColor = value; setMajorGridColor(); RED.storage.update();},
 
 		get snapToGrid() { return _settings.snapToGrid; },
-		set snapToGrid(state) { _settings.snapToGrid = state; },
+		set snapToGrid(state) { _settings.snapToGrid = state; RED.storage.update();},
 
 		get snapToGridHsize() { return parseInt(_settings.snapToGridHsize); },
-		set snapToGridHsize(value) { _settings.snapToGridHsize = value; },
+		set snapToGridHsize(value) { _settings.snapToGridHsize = value; RED.storage.update();},
 
 		get snapToGridVsize() { return parseInt(_settings.snapToGridVsize); },
-		set snapToGridVsize(value) { _settings.snapToGridVsize = value; },
+		set snapToGridVsize(value) { _settings.snapToGridVsize = value; RED.storage.update();},
 
 		get lineCurveScale() { return parseFloat(_settings.lineCurveScale);},
 		set lineCurveScale(value) { value = parseFloat(value);
 									if (value < 0.01) value = 0.01;
 									_settings.lineCurveScale = value;
 									$("#" + settingsEditor.lineCurveSubCat.items.lineCurveScale.valueId).val(value.toFixed(2));
-									anyLinkEnter=true; redraw_links(); },
+                                    anyLinkEnter=true; redraw_links(); 
+                                    RED.storage.update();
+                                },
 
 		get lineConnectionsScale() { return parseFloat(_settings.lineConnectionsScale);},
 		set lineConnectionsScale(value) { value = parseFloat(value); 
 										  if (value < 0.01) value = 0.01;
 										  _settings.lineConnectionsScale = value;
 										  $("#" + settingsEditor.lineCurveSubCat.items.lineConnectionsScale.valueId).val(value.toFixed(2));
-										  anyLinkEnter=true; redraw_links(); },
+                                          anyLinkEnter=true; redraw_links();
+                                          RED.storage.update();
+                                        },
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; completeRedraw();},
+		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; completeRedraw();RED.storage.update();},
 
 		get nodeDefaultTextSize() { return parseInt(_settings.nodeDefaultTextSize); },
-		set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = value; completeRedraw();},
+		set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = value; completeRedraw();RED.storage.update();},
 	};
 
 	var settingsCategory = { Title:"Workspace", Expanded:false };

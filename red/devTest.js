@@ -30,16 +30,16 @@ RED.devTest = (function() {
 
     var settings = {
         get autoSwitchTabToInfoTab() { return _settings.autoSwitchTabToInfoTab; },
-		set autoSwitchTabToInfoTab(state) { _settings.autoSwitchTabToInfoTab = state; RED.sidebar.info.settings.autoSwitchTabToThis = state; },
+		set autoSwitchTabToInfoTab(state) { _settings.autoSwitchTabToInfoTab = state; RED.sidebar.info.settings.autoSwitchTabToThis = state; RED.storage.update();},
 
         get testPost() { return _settings.testPost; },
-		set testPost(value) { _settings.testPost = value; RED.arduino.httpPostAsync(value); },
+		set testPost(value) { _settings.testPost = value; RED.arduino.httpPostAsync(value); RED.storage.update();},
 
         get testGet() { return _settings.testGet; },
-		set testGet(value) { _settings.testGet = value; RED.arduino.httpGetAsync(value); },
+		set testGet(value) { _settings.testGet = value; RED.arduino.httpGetAsync(value); RED.storage.update();},
 
         get testWsSend() { return _settings.testWsSend; },
-        set testWsSend(value) { _settings.testWsSend = value; RED.BiDirDataWebSocketBridge.SendToWebSocket(value); },
+        set testWsSend(value) { _settings.testWsSend = value; RED.BiDirDataWebSocketBridge.SendToWebSocket(value); RED.storage.update();},
         
         get getFuncHelp() { return _settings.getFuncHelp; },
 		set getFuncHelp(value) { _settings.getFuncHelp = value; console.log(AceAutoComplete.getFromHelp(value)); },

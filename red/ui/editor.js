@@ -21,7 +21,7 @@ RED.editor = (function() {
 	}
 	var settings = {
 		get aceEditorTheme() { return _settings.aceEditorTheme; },
-		set aceEditorTheme(value) { _settings.aceEditorTheme = value; },
+		set aceEditorTheme(value) { _settings.aceEditorTheme = value;  RED.storage.update();},
 	}
 	var settingsCategory = { Title:"Code Editor", Expanded:false };
 

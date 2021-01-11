@@ -25,14 +25,18 @@ RED.palette = (function() {
 	};
 
 	var settings = {
-		set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = size; setCategoryHeaderStyle(); },
-		get categoryHeaderTextSize() {return parseInt(_settings.categoryHeaderTextSize);},
-		set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = size; setCategoryHeaderStyle(); },
-		get categoryHeaderHeight() {return parseInt(_settings.categoryHeaderHeight);},
-		set categoryHeaderBackgroundColor(colorCode) { _settings.categoryHeaderBackgroundColor = colorCode; setCategoryHeaderStyle(); },
-		get categoryHeaderBackgroundColor() {return _settings.categoryHeaderBackgroundColor;},
-		set onlyShowOne(state) { _settings.onlyShowOne = state; },
-		get onlyShowOne() { return _settings.onlyShowOne; },
+		
+        get categoryHeaderTextSize() {return parseInt(_settings.categoryHeaderTextSize);},
+        set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = size; setCategoryHeaderStyle(); RED.storage.update();},
+		
+        get categoryHeaderHeight() {return parseInt(_settings.categoryHeaderHeight);},
+        set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = size; setCategoryHeaderStyle(); RED.storage.update();},
+		
+        get categoryHeaderBackgroundColor() {return _settings.categoryHeaderBackgroundColor;},
+        set categoryHeaderBackgroundColor(colorCode) { _settings.categoryHeaderBackgroundColor = colorCode; setCategoryHeaderStyle(); RED.storage.update();},
+		
+        get onlyShowOne() { return _settings.onlyShowOne; },
+        set onlyShowOne(state) { _settings.onlyShowOne = state; RED.storage.update();},
 	};
 
 	var settingsCategory = { Title:"Palette", Expanded:false };

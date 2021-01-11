@@ -36,28 +36,28 @@ RED.arduino = (function() {
 	}
 	var settings = {
 		get useExportDialog() { return _settings.useExportDialog; },
-		set useExportDialog(state) { _settings.useExportDialog = state; },
+		set useExportDialog(state) { _settings.useExportDialog = state; RED.storage.update();},
 
 		get IOcheckAtExport() { return _settings.IOcheckAtExport; },
-		set IOcheckAtExport(state) { _settings.IOcheckAtExport = state; },
+		set IOcheckAtExport(state) { _settings.IOcheckAtExport = state; RED.storage.update();},
 
 		get WriteJSONtoExportedFile() { return _settings.WriteJSONtoExportedFile; },
-		set WriteJSONtoExportedFile(state) { _settings.WriteJSONtoExportedFile = state; },
+		set WriteJSONtoExportedFile(state) { _settings.WriteJSONtoExportedFile = state; RED.storage.update();},
 
 		get WebServerPort() { return parseInt(_settings.WebServerPort); },
-		set WebServerPort(value) { _settings.WebServerPort = parseInt(value); },
+		set WebServerPort(value) { _settings.WebServerPort = parseInt(value);RED.storage.update(); },
 
 		get WebSocketServerPort() { return parseInt(_settings.WebSocketServerPort); },
-		set WebSocketServerPort(value) { _settings.WebSocketServerPort = parseInt(value); StartWebSocketTerminal_Connection(); },
+		set WebSocketServerPort(value) { _settings.WebSocketServerPort = parseInt(value); StartWebSocketTerminal_Connection(); RED.storage.update();},
 
 		get ProjectName() { return _settings.ProjectName; },
-		set ProjectName(value) { _settings.ProjectName = value; },
+		set ProjectName(value) { _settings.ProjectName = value; RED.storage.update(); },
 
 		get CodeIndentations() { return parseInt(_settings.CodeIndentations); },
-		set CodeIndentations(value) { _settings.CodeIndentations = parseInt(value); },
+		set CodeIndentations(value) { _settings.CodeIndentations = parseInt(value); RED.storage.update();},
 
 		get StandardIncludeHeader() { return _settings.StandardIncludeHeader; },
-		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; },
+		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; RED.storage.update();},
 	};
 
 	var settingsCategory = { Title:"Arduino", Expanded:false, popupText: "Currently only Arduino Export Settings" };
