@@ -27,10 +27,10 @@ RED.palette = (function() {
 	var settings = {
 		
         get categoryHeaderTextSize() {return parseInt(_settings.categoryHeaderTextSize);},
-        set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = size; setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
 		
         get categoryHeaderHeight() {return parseInt(_settings.categoryHeaderHeight);},
-        set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = size; setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
 		
         get categoryHeaderBackgroundColor() {return _settings.categoryHeaderBackgroundColor;},
         set categoryHeaderBackgroundColor(colorCode) { _settings.categoryHeaderBackgroundColor = colorCode; setCategoryHeaderStyle(); RED.storage.update();},

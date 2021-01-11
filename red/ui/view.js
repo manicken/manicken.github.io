@@ -58,7 +58,9 @@ RED.view = (function() {
 		lineCurveScale: 0.75,
 		lineConnectionsScale: 1.5,
 		useCenterBasedPositions: true, // default -> backwards compatible,
-		nodeDefaultTextSize: 14
+        nodeDefaultTextSize: 14,
+        keyboardScrollSpeed:10,
+        guiRunForceScrollSpeed:20,
 	};
 	var uiItemResizeBorderSize= 6;
 
@@ -99,10 +101,10 @@ RED.view = (function() {
 		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; RED.storage.update();},
 
 		get space_width() { return parseInt(_settings.space_width); },
-		set space_width(value) { _settings.space_width = value; initWorkspace(); initGrid(); RED.storage.update(); },
+		set space_width(value) { _settings.space_width = parseInt(value); initWorkspace(); initGrid(); RED.storage.update(); },
 
 		get space_height() { return parseInt(_settings.space_height); },
-		set space_height(value) { _settings.space_height = value; initWorkspace(); initGrid(); RED.storage.update();},
+		set space_height(value) { _settings.space_height = parseInt(value); initWorkspace(); initGrid(); RED.storage.update();},
 
 		get workspaceBgColor() { return _settings.workspaceBgColor; },
 		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); RED.storage.update();},
@@ -141,16 +143,16 @@ RED.view = (function() {
 		set nodeMouseDownShowGridVmajor(state) { _settings.nodeMouseDownShowGridVmajor = state; RED.storage.update();},
 
 		get gridHminorSize() { return parseInt(_settings.gridHminorSize); },
-		set gridHminorSize(value) { _settings.gridHminorSize = value; initHminorGrid(); RED.storage.update();},
+		set gridHminorSize(value) { _settings.gridHminorSize = parseInt(value); initHminorGrid(); RED.storage.update();},
 
 		get gridHmajorSize() { return parseInt(_settings.gridHmajorSize); },
-		set gridHmajorSize(value) { _settings.gridHmajorSize = value; initHmajorGrid(); RED.storage.update();},
+		set gridHmajorSize(value) { _settings.gridHmajorSize = parseInt(value); initHmajorGrid(); RED.storage.update();},
 
 		get gridVminorSize() { return parseInt(_settings.gridVminorSize); },
-		set gridVminorSize(value) { _settings.gridVminorSize = value; initVminorGrid(); RED.storage.update();},
+		set gridVminorSize(value) { _settings.gridVminorSize = parseInt(value); initVminorGrid(); RED.storage.update();},
 
 		get gridVmajorSize() { return parseInt(_settings.gridVmajorSize); },
-		set gridVmajorSize(value) { _settings.gridVmajorSize = value; initVmajorGrid(); RED.storage.update();},
+		set gridVmajorSize(value) { _settings.gridVmajorSize = parseInt(value); initVmajorGrid(); RED.storage.update();},
 
 		get gridMinorColor() { return _settings.gridMinorColor; },
 		set gridMinorColor(value) { _settings.gridMinorColor = value; setMinorGridColor(); RED.storage.update();},
@@ -162,10 +164,10 @@ RED.view = (function() {
 		set snapToGrid(state) { _settings.snapToGrid = state; RED.storage.update();},
 
 		get snapToGridHsize() { return parseInt(_settings.snapToGridHsize); },
-		set snapToGridHsize(value) { _settings.snapToGridHsize = value; RED.storage.update();},
+		set snapToGridHsize(value) { _settings.snapToGridHsize = parseInt(value); RED.storage.update();},
 
 		get snapToGridVsize() { return parseInt(_settings.snapToGridVsize); },
-		set snapToGridVsize(value) { _settings.snapToGridVsize = value; RED.storage.update();},
+		set snapToGridVsize(value) { _settings.snapToGridVsize = parseInt(value); RED.storage.update();},
 
 		get lineCurveScale() { return parseFloat(_settings.lineCurveScale);},
 		set lineCurveScale(value) { value = parseFloat(value);
@@ -186,10 +188,16 @@ RED.view = (function() {
                                         },
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = value; if (value == true) posMode = 2; else posMode = 1; completeRedraw();RED.storage.update();},
+		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = parseInt(value); if (value == true) posMode = 2; else posMode = 1; completeRedraw();RED.storage.update();},
 
 		get nodeDefaultTextSize() { return parseInt(_settings.nodeDefaultTextSize); },
-		set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = value; completeRedraw();RED.storage.update();},
+        set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = parseInt(value); completeRedraw();RED.storage.update();},
+        
+        get keyboardScrollSpeed() { return parseInt(_settings.keyboardScrollSpeed); },
+        set keyboardScrollSpeed(value) { _settings.keyboardScrollSpeed = parseInt(value); RED.storage.update();},
+        
+        get guiRunForceScrollSpeed() { return parseInt(_settings.guiRunForceScrollSpeed); },
+        set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); RED.storage.update();},
 	};
 
 	var settingsCategory = { Title:"Workspace", Expanded:false };
@@ -262,7 +270,9 @@ RED.view = (function() {
 				showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
 				guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
 				lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
-			}
+                keyboardScrollSpeed:  {label:"Keyboard scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when scrolling the workspace with the keyboard arrow-keys"},
+                guiRunForceScrollSpeed:  {label:"Gui run forced scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when forcing scrolling by holding down ctrl, when the shift is also held the scroll is horizontal."},
+            }
 		}
 	}
 
@@ -940,7 +950,7 @@ RED.view = (function() {
 	$('#btn-zoom-zero').click(function() {zoomZero();});
 	$('#btn-zoom-in').click(function() {zoomIn();});
 	$("#chart").on('DOMMouseScroll mousewheel', function (evt) {
-		if (currentUiObject != undefined)
+		if (currentUiObject != undefined && evt.ctrlKey == false)
 		{
 			evt.preventDefault();
 			evt.stopPropagation();
@@ -950,9 +960,31 @@ RED.view = (function() {
 		}
 		if ((settings.guiEditMode == false) && (settings.lockWindowMouseScrollInRunMode == true))
 		{
-			evt.preventDefault();
-			evt.stopPropagation();
-		}
+            evt.preventDefault();
+            if (evt.ctrlKey == false)
+            evt.stopPropagation();
+            
+            if (evt.ctrlKey == true)
+            {
+                var move = -(evt.originalEvent.detail) || evt.originalEvent.wheelDelta;
+                if (evt.shiftKey == false)
+                {
+                    if (move > 0)
+                        moveView(0,-1,settings.guiRunForceScrollSpeed);
+                    else if (move < 0)
+                        moveView(0,1,settings.guiRunForceScrollSpeed);
+                }
+                else
+                {
+                    if (move > 0)
+                        moveView(-1,0,settings.guiRunForceScrollSpeed);
+                    else if (move < 0)
+                        moveView(1,0,settings.guiRunForceScrollSpeed);
+                }
+            }
+        }
+
+        
 		if ( evt.altKey ) {
 			evt.preventDefault();
 			evt.stopPropagation();
@@ -1110,10 +1142,10 @@ RED.view = (function() {
 			RED.keyboard.remove(/* down */ 40);
 			RED.keyboard.remove(/* left */ 37);
 			RED.keyboard.remove(/* right*/ 39);
-			RED.keyboard.add(/* up   */ 38, function() { moveView(0,-1); d3.event.preventDefault(); });
-			RED.keyboard.add(/* down */ 40, function() { moveView(0,1); d3.event.preventDefault(); });
-			RED.keyboard.add(/* left */ 37, function() { moveView(-1,0); d3.event.preventDefault(); });
-			RED.keyboard.add(/* right*/ 39, function() { moveView(1,0); d3.event.preventDefault(); });
+			RED.keyboard.add(/* up   */ 38, function() { moveView(0,-1,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			RED.keyboard.add(/* down */ 40, function() { moveView(0,1,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			RED.keyboard.add(/* left */ 37, function() { moveView(-1,0,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			RED.keyboard.add(/* right*/ 39, function() { moveView(1,0,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
 		} else {
 			
 			RED.keyboard.add(/* up   */ 38, function() { moveSelection_keyboard( 0,-1); d3.event.preventDefault(); }, endKeyboardMove);
@@ -1140,13 +1172,14 @@ RED.view = (function() {
 	}
 	$('#btn-debugShowSelection').click(function() {RED.sidebar.info.showSelection(moving_set);});
 
-	function moveView(dx, dy)
+	function moveView(dx, dy, scrollSpeed)
 	{
-		var chart = $("#chart");
-		if (dx > 0) chart.scrollLeft(chart.scrollLeft() + 10/settings.scaleFactor);
-		else if (dx < 0) chart.scrollLeft(chart.scrollLeft() - 10/settings.scaleFactor);
-		if (dy > 0) chart.scrollTop(chart.scrollTop() + 10/settings.scaleFactor);
-		else if (dy < 0) chart.scrollTop(chart.scrollTop() - 10/settings.scaleFactor);
+        var chart = $("#chart");
+        if (scrollSpeed == undefined) scrollSpeed = 10;
+		if (dx > 0) chart.scrollLeft(chart.scrollLeft() + scrollSpeed/settings.scaleFactor);
+		else if (dx < 0) chart.scrollLeft(chart.scrollLeft() - scrollSpeed/settings.scaleFactor);
+		if (dy > 0) chart.scrollTop(chart.scrollTop() + scrollSpeed/settings.scaleFactor);
+		else if (dy < 0) chart.scrollTop(chart.scrollTop() - scrollSpeed/settings.scaleFactor);
 	}
 	function endKeyboardMove() {
 		var ns = [];
