@@ -4344,11 +4344,56 @@ RED.view = (function() {
 			$( "#node-dialog-rename-workspace").next().find(".leftButton")
 				.prop('disabled',false)
 				.removeClass("ui-state-disabled");
-		}
-		$( "#node-input-export-workspace" ).prop('checked',  ws.export);
-		$( "#node-input-workspace-name" ).val(ws.label);
+        }
+        $( "#node-input-workspace-name" ).val(ws.label);
+
+        $( "#node-input-export-workspace" ).prop('checked',  ws.export);
+        RED.main.SetButtonPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
+
+        RED.main.SetButtonPopOver("#node-input-export-isMain-settings", "This defines which file-name to use when exporting as main.", "left");
+
+        $( "#node-input-export-isMain" ).prop('checked',  ws.isMain);
+        chk_exportIsMain_OnClick();
+
+        var otherMain = getOtherMain(ws)
+        if (otherMain == undefined){
+            $( "#node-input-export-isMain" ).prop('disabled' , false);
+            RED.main.SetButtonPopOver("#node-input-export-isMain-checkbox", "when checked this defines the main file.<br><br>note. there can only be one main in the project", "left");
+            $( "#node-input-export-isMain" ).click(chk_exportIsMain_OnClick);
+            $( "#node-input-export-mainNameType" ).val(ws.mainNameType);
+            $( "#node-input-export-mainNameExt" ).val(ws.mainNameExt);
+            
+        }
+        else {
+            $( "#node-input-export-isMain" ).prop('disabled' , true);
+            RED.main.SetButtonPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
+        }
 		$( "#node-dialog-rename-workspace" ).dialog("open");
-	}
+    }
+    
+    function chk_exportIsMain_OnClick() {
+        // Get the checkbox
+        var isMainChk = document.getElementById("node-input-export-isMain");
+        var isMainSettings = document.getElementById("node-input-export-isMain-settings");
+        if (isMainChk.checked == true)
+            isMainSettings.style.display = "table-row";
+        else
+            isMainSettings.style.display = "none";
+    }
+    function getOtherMain(ws)
+    {
+        for (var i = 0; i < RED.nodes.workspaces.length; i++)
+        {
+            if (RED.nodes.workspaces[i] == ws) continue;
+
+            if (RED.nodes.workspaces[i].isMain == true)
+            {
+                //RED.notify("<strong>Warning</strong> "+RED.nodes.workspaces[i].label  + " is allready defined as the main file.<br> there can only be one main file,<br>If you want this to be the new main first you have to uncheck the 'Main File' of " + RED.nodes.workspaces[i].label,"warning");
+                return RED.nodes.workspaces[i].label;
+            }
+        }
+        return undefined;
+    }
 
 	$("#node-dialog-rename-workspace form" ).submit(function(e) { e.preventDefault();});
 	$( "#node-dialog-rename-workspace" ).dialog({
@@ -4370,14 +4415,51 @@ RED.view = (function() {
 				text: "Ok",
 				click: function() {
 					var workspace = $(this).dialog('option','workspace');
-					var label = $( "#node-input-workspace-name" ).val();
-					if (workspace.label != label) {
+					
+                    var exportNew = $( "#node-input-export-workspace" ).prop('checked')
 
-						if (RED.nodes.workspaceNameCheck(label)) // Jannik add start
+                    workspace.isMain = $( "#node-input-export-isMain" ).prop('checked');
+                    workspace.mainNameType = $( "#node-input-export-mainNameType" ).val();
+                    workspace.mainNameExt = $( "#node-input-export-mainNameExt" ).val();
+					if (workspace.export != exportNew)
+					{
+						workspace.export = exportNew;
+						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
+						if (!exportNew)
+							link.attr("style", "color:#b3b3b3;");
+						else // 
+							link.attr("style", "color:#000000;");
+					}
+                    //console.warn("exportWorkspace:"+workspace.export);
+
+                    var label = $( "#node-input-workspace-name" ).val();
+                    if (workspace.label != label) {
+
+						if (RED.nodes.workspaceNameCheck(label)) // Jannik add
 						{
 							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
 							return; // abort name change if name allready exist
-						} 
+                        }
+                        if (label.endsWith(".")) // Jannik add
+						{
+							RED.notify("<strong>Warning</strong>: Cannot use dots in the end of the name, choose annother name.","warning");
+							return; // abort name change 
+                        }
+                        function isValid(input) {
+                            var result = false;
+                            try {
+                                result = document.createElement(input).toString() != "[object HTMLUnknownElement]";
+                            }
+                            catch { return false;}
+                            return result;
+                        }
+  
+                        if (isValid(label) == false && workspace.isMain == false)
+                        {
+                            RED.notify("<strong>Warning</strong>: Cannot use this name because it contains html specific tags, choose annother name. <br> note. if 'Main File' is checked any name can be choosed as long as it is a valid filename.","warning");
+							return; // abort name change 
+                        }
+                        
 						
 						RED.view.dirty(true);
 						var oldLabel = workspace.label;
@@ -4397,17 +4479,7 @@ RED.view = (function() {
 
 						
 					}
-					var exportNew = $( "#node-input-export-workspace" ).prop('checked')
-					if (workspace.export != exportNew)
-					{
-						workspace.export = exportNew;
-						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
-						if (!exportNew)
-							link.attr("style", "color:#b3b3b3;");
-						else // 
-							link.attr("style", "color:#000000;");
-					}
-					console.warn("exportWorkspace:"+workspace.export);
+                    
 
 					$( this ).dialog( "close" );
 				}

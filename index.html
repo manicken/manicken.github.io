@@ -377,13 +377,41 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<div class="form-row">
 			<label for="node-input-workspace-name" ><i class="icon-tag"></i> Name:</label>
 			<input type="text" id="node-input-workspace-name">
-		</div>
-		<div class="form-row"></div>
-		<label for="node-input-export-workspace" style="font-size: 13px; padding: 2px 0px 0px 4px;">
-			<input style="margin-bottom: 4px; margin-right: 4px;" type="checkbox" id="node-input-export-workspace" checked="checked" class="input-block-level" />
-				&nbsp;Export Workspace <br>(uncheck this if you don't want to export this workspace)
-		</label>
-		</div>
+        </div>
+        <ul>        
+            <li style="display: table-row; height: 30px;" id="node-input-export-workspace-checkbox" >
+                <div style="display: table-cell; "><input type="checkbox" id="node-input-export-workspace"></div>
+                <div style="display: table-cell; vertical-align: middle;"><label for="node-input-export-workspace">&nbsp;Export Workspace Tab</label></div>
+            </li>
+            <script>
+                
+            </script>
+            <li style="display: table-row; height: 30px;" id="node-input-export-isMain-checkbox">
+                <div style="display: table-cell; "><input type="checkbox" id="node-input-export-isMain"></div>
+                <div style="display: table-cell; vertical-align: middle;"><label for="node-input-export-isMain">&nbsp;Main File</label></div>
+            </li>
+            <li style="display: table-row; height: 55px;" id="node-input-export-isMain-settings">
+                <div style="display: table-cell; vertical-align: middle;"></div>
+                <div style="display: table-cell; vertical-align: middle;">
+                    <label for="node-input-export-mainNameType" style="font-size: 14px; padding: 2px 0px 0px 4px;width: 440px;">
+                        &nbsp;exported Main File Name:
+                    </label>
+                    &nbsp;&nbsp;<select id="node-input-export-mainNameType" style="width: 100px;">
+                        <option value="main">main</option>
+                        <option value="tabName">"Tab Name"</option>
+                        <option value="projectName">"Project Name"</option>
+                    </select>                  
+                    <select id="node-input-export-mainNameExt" style="width: 80px;">
+                        <option value=".ino">.ino</option>
+                        <option value=".cpp">.cpp</option>
+                    </select>
+                </div>
+            </li>
+        </ul>
+
+        <div class="form-row">
+            
+        </div>
 	</form>
 </div>
 <div id="node-dialog-delete-workspace" class="hide">
@@ -675,7 +703,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"CodeFile","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"codeFile","nonObject":"","useAceEditor":"c_cpp","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"DontRemoveCodeFiles","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"dontRemoveFiles","nonObject":"","useAceEditor":"c_cpp","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
 		{"type":"IncludeDef","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"includeDef","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"file.png"}},
-		
+		{"type":"ConstructorCode","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"constructor code","nonObject":"","useAceEditor":"c_cpp","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"function.png"}},
+
 		{"type":"ConstValue","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"value":{"value":"0"},"valueType":{"value":"int"}},"shortName":"constValue","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#eb9834","icon":"hash.png"}},
 		{"type":"JunctionLR","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-in.png"}},
 		{"type":"JunctionRL","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-out.png"}},
@@ -1402,6 +1431,29 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 <script type="text/x-red" data-template-name="Function">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+	</div>
+	<div class="form-row-long">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
+		<pre id="aceEditor" style="height: 400px;"></pre>
+	</div>
+</script>
+<script type="text/x-red" data-help-name="ConstructorCode">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This used to put code in the end of the class constructor.<br>
+	</div>
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+<script type="text/x-red" data-template-name="ConstructorCode">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">

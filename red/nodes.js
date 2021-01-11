@@ -42,9 +42,15 @@ RED.nodes = (function() {
 	/**
 	 * this creates a workspace object
 	 */
-	function createWorkspaceObject(id, label, inputs, outputs, _export) // export is a reserved word
+	function createWorkspaceObject(id, label, inputs, outputs, _export, isMain, mainNameType, mainNameExt) // export is a reserved word
 	{
-		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, nodes:[]};
+        // first set all default values if inputs are undefined
+        if (_export == undefined) _export = true;
+        if (isMain == undefined) isMain = false;
+        if (mainNameType == undefined) mainNameType = "tabName";
+        if (mainNameExt == undefined) mainNameExt = ".ino";
+        // return new structure
+		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, nodes:[]};
 	}
 	function moveNodeToEnd(node)
 	{
@@ -603,7 +609,7 @@ RED.nodes = (function() {
 	{
 		console.trace();
 		if (workspaces.length != 0) return;
-		var newWorkspace = createWorkspaceObject("Main","Main",0,0,true);
+		var newWorkspace = createWorkspaceObject("Main","Main",0,0);
 		console.warn("add new default workspace Main");
 		addWorkspace(newWorkspace);
 		RED.view.addWorkspace(newWorkspace);
@@ -617,19 +623,10 @@ RED.nodes = (function() {
 
 		if (ws.inputs != undefined && ws.outputs != undefined) // (no update from GUI yet) see above
 			console.warn("inputs && outputs is defined @ workspace load");
-		
-			var ws_export; //(cannot use var name export)
-		if (ws.export != undefined) {
-			//console.warn("export is defined"); // warn is more visible
-			ws_export = ws.export;
-		} else {
-			//console.error("export is undefined");// error is more visible
-			ws_export = true; // default value 
-		}
 
 		var cIOs = getClassIOportCounts(ws.id, nns);
 
-		return createWorkspaceObject(ws.id, ws.label, cIOs.inCount, cIOs.outCount, ws_export);
+		return createWorkspaceObject(ws.id, ws.label, cIOs.inCount, cIOs.outCount, ws.export, ws.isMain, ws.mainNameType, ws.mainNameExt);
 	}
 
 	function importWorkspaces(newWorkspaces)
@@ -1597,7 +1594,8 @@ RED.nodes = (function() {
 		RED.palette.clearCategory("tabs");
 		for (var i=0; i < workspaces.length; i++)
 		{
-			var ws = workspaces[i];
+            var ws = workspaces[i];
+            if (ws.isMain == true) continue; // never add main file to tabs cat.
 			var inputCount = getClassNrOfInputs(nodes, ws.id);
 			var outputCount = getClassNrOfOutputs(nodes, ws.id);
 
