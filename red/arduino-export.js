@@ -487,6 +487,8 @@ RED.arduino.export = (function () {
                 else if (n.type == "CodeFile") // very special case
                 {
                     var includeName = '#include "' + n.name + '"';
+                    if (includeName.toLowerCase().endsWith(".c") || includeName.toLowerCase().endsWith(".cpp")) continue;
+
                     if (!classIncludes.includes(includeName)) classIncludes.push(includeName);
                 }
                 else if (n.type == "IncludeDef") {
