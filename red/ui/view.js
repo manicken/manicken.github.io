@@ -670,7 +670,7 @@ RED.view = (function() {
 			$('#workspace-menu-list a[href="#'+tab.id+'"]').parent().remove();
 
 		}
-	});
+    });
 
 	var workspaceIndex = 0;
 
@@ -1159,7 +1159,8 @@ RED.view = (function() {
 		} else if (moving_set.length > 1) {
 			RED.sidebar.info.showSelection(moving_set);
 		} else {
-			RED.sidebar.info.clear();
+            RED.sidebar.info.clear();
+            RED.nodes.selectNode("");
 		}
 
 		for (var i = 0; i < moving_set.length; i++)

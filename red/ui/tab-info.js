@@ -15,12 +15,7 @@
  * limitations under the License.
  **/
 RED.sidebar.info = (function() {
-	var _autoSwitchTabToThis = true;
-	var settings = {
-		set autoSwitchTabToThis(state) { _autoSwitchTabToThis = state; },
-		get autoSwitchTabToThis() { return _autoSwitchTabToThis; },
-	}	
-
+	
 	var content = document.createElement("div");
 	content.id = "tab-info";
 	content.style.paddingTop = "4px";
@@ -157,7 +152,7 @@ RED.sidebar.info = (function() {
 	}
 
 	function setHelpContent(prefix, key) {
-		if (_autoSwitchTabToThis)
+		if (RED.sidebar.settings.autoSwitchTabToInfoTab)
 			RED.sidebar.show("info");
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
@@ -243,10 +238,11 @@ RED.sidebar.info = (function() {
 	}
 	
 	return {
-		settings:settings,
 		refresh:refresh,
 		showSelection: showSelection,
 		clear: function() {
+            //if (RED.sidebar.settings.autoSwitchTabToInfoTab == true)
+			//    RED.sidebar.show("info");
 			var standardHelpText = $("script[data-help-name|='WelcomeStandardText']").html();
 			$("#tab-info").html(standardHelpText);
 		},

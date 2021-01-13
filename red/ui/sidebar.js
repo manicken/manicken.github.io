@@ -15,6 +15,17 @@
  * limitations under the License.
  **/
 RED.sidebar = (function() {
+    var _settings = {
+        autoSwitchTabToInfoTab: true
+    }
+    var settings = {
+        get autoSwitchTabToInfoTab() { return _settings.autoSwitchTabToInfoTab; },
+        set autoSwitchTabToInfoTab(state) { _settings.autoSwitchTabToInfoTab = state; RED.storage.update();},
+    }
+    var settingsCategory = { Title:"Right Sidebar", Expanded:false };
+    var settingsEditor = {
+        autoSwitchTabToInfoTab: { label:"Auto switch to info-tab when selecting/deselecting node(s).", type:"boolean"},
+    }
 
 	//$('#sidebar').tabs();
 	var sidebar_tabs = RED.tabs.create({
@@ -149,6 +160,10 @@ RED.sidebar = (function() {
 	}
 	
 	return {
+        settings:settings,
+		settingsCategory:settingsCategory,
+        settingsEditor:settingsEditor,
+        
 		addTab: addTab,
 		show: showSidebar,
 		containsTab: containsTab

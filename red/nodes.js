@@ -206,9 +206,11 @@ RED.nodes = (function() {
 		return node_defs[type];
 	}
 	function selectNode(name) {
+        var info = "";
+        if (name.trim() != "") info = '?info=' + name;
 		if (!((document.origin == 'null') && (window.chrome))) {
 			window.history.pushState(null, null, window.location.protocol + "//"
-				+ window.location.host + window.location.pathname + '?info=' + name);
+				+ window.location.host + window.location.pathname + info);
 		}
 	}
 	/**

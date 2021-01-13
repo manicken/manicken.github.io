@@ -21,7 +21,6 @@
 RED.devTest = (function() {
 
     var _settings = {
-        autoSwitchTabToInfoTab: true,
         testPost: "data",
         testGet: "cmd",
         testWsSend: "data",
@@ -29,9 +28,6 @@ RED.devTest = (function() {
     };
 
     var settings = {
-        get autoSwitchTabToInfoTab() { return _settings.autoSwitchTabToInfoTab; },
-		set autoSwitchTabToInfoTab(state) { _settings.autoSwitchTabToInfoTab = state; RED.sidebar.info.settings.autoSwitchTabToThis = state; RED.storage.update();},
-
         get testPost() { return _settings.testPost; },
 		set testPost(value) { _settings.testPost = value; RED.arduino.httpPostAsync(value); RED.storage.update();},
 
@@ -48,7 +44,6 @@ RED.devTest = (function() {
 
     var settingsCategory = { Title:"Development Tests", Expanded:false };
     var settingsEditor = {
-		autoSwitchTabToInfoTab: { label:"Auto switch to info-tab when selecting node(s).", type:"boolean"},
 		testPost:               { label:"test post", type:"string"},
 		testGet:                { label:"test get", type:"string"},
         testWsSend:             { label:"test ws send", type:"string"},
