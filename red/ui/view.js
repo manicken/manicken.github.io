@@ -669,7 +669,22 @@ RED.view = (function() {
 			}
 			$('#workspace-menu-list a[href="#'+tab.id+'"]').parent().remove();
 
-		}
+        },
+        onreorder: function(fromIndex, toIndex) {
+            console.log("moved " + fromIndex + " to " + toIndex);
+            RED.nodes.moveWorkspace(fromIndex, toIndex);
+            //console.log(newOrder);
+            //RED.history.push({t:'reorder',order:oldOrder,dirty:RED.nodes.dirty()});
+            //RED.nodes.dirty(true);
+            //setWorkspaceOrder(newOrder);
+        },
+        minimumActiveTabWidth: 150,
+        scrollable: true,
+        //collapsible:true,
+        addButton: addWorkspace,
+            //addButtonCaption: "workspace.addFlow",
+            //searchButton: "core:list-flows",
+            //searchButtonCaption: "workspace.listFlows"
     });
 
 	var workspaceIndex = 0;
@@ -689,7 +704,7 @@ RED.view = (function() {
 		//RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
 		
 	}
-	$('#btn-workspace-add-tab').on("click",addWorkspace);
+	//$('#btn-workspace-add-tab').on("click",addWorkspace);
 	$('#btn-workspace-add').on("click",addWorkspace);
 	$('#btn-workspace-edit').on("click",function() {
 		showRenameWorkspaceDialog(activeWorkspace);
@@ -4495,11 +4510,11 @@ RED.view = (function() {
                             return result;
                         }
   
-                        if (isValid(label) == false && workspace.isMain == false)
+                        /*if (isValid(label) == false && workspace.isMain == false)
                         {
                             RED.notify("<strong>Warning</strong>: Cannot use this name because it contains html specific tags, choose annother name. <br> note. if 'Main File' is checked any name can be choosed as long as it is a valid filename.","warning");
 							return; // abort name change 
-                        }
+                        }*/
                         
 						
 						RED.view.dirty(true);
@@ -4518,7 +4533,7 @@ RED.view = (function() {
 						menuItem.attr("title",label);
 						menuItem.text(label);
 
-						
+						workspace_tabs.resize(); // internally it's updateTabWidths
 					}
                     
 
@@ -4663,12 +4678,12 @@ RED.view = (function() {
 		if (state)
 		{
 			$("#workspace-toolbar").show();
-			$("#chart").css("top", 67);
+			$("#chart").css("top", 70);
 		}
 		else
 		{
 			$("#workspace-toolbar").hide();
-			$("#chart").css("top", 31);
+			$("#chart").css("top", 35);
 		}
 	}
 

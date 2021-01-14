@@ -29,6 +29,7 @@
 <link rel="stylesheet" type="text/css" href="orion/built-editor.css"/>
 <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style_tabs.css">
 
 <style>
 table.doc {border-spacing:3px; border-collapse:separate; font-size: 80%}
@@ -182,7 +183,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 	<div id="workspace">
 		<ul id="workspace-tabs"></ul>
-		<div id="workspace-add-tab"><a id="btn-workspace-add-tab" href="#"><i class="icon-plus"></i></a></div>
+		<!--<div id="workspace-add-tab"><a id="btn-workspace-add-tab" href="#"><i class="icon-plus"></i></a></div>-->
 		<div id="chart"></div>
 		<div id="workspace-toolbar">
 			<div class="btn-group">
@@ -190,10 +191,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a class="btn btn-small" id="btn-copy" href="#"><i class="fa fa-copy"></i> copy</a>
 				<a class="btn btn-small" id="btn-paste" href="#"><i class="fa fa-paste"></i> paste</a>
 			</div>
-			<div class="btn-group">
+			<!--<div class="btn-group">
 				<a class="btn btn-small" id="btn-moveWorkSpaceLeft" href="#"><i class="fa fa-chevron-left"></i> WS</a>
 				<a class="btn btn-small" id="btn-moveWorkSpaceRight" href="#">WS <i class="fa fa-chevron-right"></i></a>
-			</div>
+			</div>-->
 			<div class="btn-group btn-group-toggle" data-toggle="buttons">
 				<label class="btn btn-small btn-secondary" id="lbl-guiEditMode">
 					<input type="radio" name="options" id="btn-guiEditMode" autocomplete="off" checked>  <i class="fa fa-cogs fa-lg"></i> gui edit
@@ -505,6 +506,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/nodes.js"></script>
 <script src="red/storage.js"></script>
 <script src="red/history.js"></script>
+<script src="red/text/bidi.js"></script>
+<script src="red/text/format.js"></script>
+<script src="red/ui/popover.js"></script>
 <script src="red/ui/keyboard.js"></script>
 <script src="red/ui/tabs.js"></script>
 <script src="red/ui/view.js"></script>

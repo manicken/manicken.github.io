@@ -86,7 +86,8 @@ RED.nodes = (function() {
 		workspaces[index+1] = workspaces[index];
 		workspaces[index] = wsTemp;
 		RED.storage.update();
-	}
+    }
+    
 	function arraySpliceExample()
 	{
 		var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
@@ -1657,6 +1658,24 @@ RED.nodes = (function() {
 		return name
 	}
 	return {
+        moveWorkspace: function(start, end) {
+            if (start > end)
+            {
+                workspaces.splice(end,0,workspaces[start]);
+                workspaces.splice(start+1,1);
+                RED.storage.update();
+            }
+            else if (start < end)
+            {
+
+                workspaces.splice(end+1,0,workspaces[start]);
+                workspaces.splice(start,1);
+                RED.storage.update();
+            }
+            
+            //workspaces[index+1] = workspaces[index];
+		    //workspaces[index] = wsTemp;
+        },
 		moveNodeToEnd:moveNodeToEnd,
 		createWorkspaceObject:createWorkspaceObject,
 		createNewDefaultWorkspace: createNewDefaultWorkspace,
