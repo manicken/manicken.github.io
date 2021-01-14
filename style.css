@@ -389,10 +389,10 @@ input.settings-item-textInput {
 .settings-category {
     border: 1px solid #999;
     border-radius: 3px;
-    margin-bottom: 5px;
-    margin-top: 5px;
-    margin-left: 3px;
-    margin-right: 3px;
+    margin-bottom: 7px;
+    margin-top: 7px;
+    margin-left: 7px;
+    margin-right: 7px;
 }
 .settings-content {
     background: #fff;
@@ -595,7 +595,7 @@ input.settings-item-textInput {
     font-size: 1.2em;
     overflow-y: auto;
     position: absolute;
-    top: 30px; left: 0px; right: 0; bottom: 1px;
+    top: 34px; left: 0px; right: 0; bottom: 1px;
 }
 
 #sidebar-palette-content {

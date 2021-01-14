@@ -61,6 +61,7 @@ RED.view = (function() {
         nodeDefaultTextSize: 14,
         keyboardScrollSpeed:10,
         guiRunForceScrollSpeed:20,
+        workspaceMinimumTabSize: 50,
 	};
 	var uiItemResizeBorderSize= 6;
 
@@ -81,18 +82,12 @@ RED.view = (function() {
 				RED.notify("gui EDIT mode", "warning", null, 1000);
 				$('#btn-guiEditMode').prop('checked', true);
 				$('#btn-guiRunMode').prop('checked', false);
-				//$('#btn-guiRunMode').prop('disabled', true);
-				//$('#btn-guiEditMode').addClass("toolBar_toggle_button_pressed");
-				//$('#btn-guiRunMode').removeClass("toolBar_toggle_button_pressed");
 			}
 			else
 			{
 				RED.notify("gui RUN mode", "warning", null, 1000);
 				$('#btn-guiEditMode').prop('checked', false);
 				$('#btn-guiRunMode').prop('checked', true);
-				//$('#btn-guiRunMode').prop('disabled', null);
-				//$('#btn-guiEditMode').removeClass("toolBar_toggle_button_pressed");
-				//$('#btn-guiRunMode').addClass("toolBar_toggle_button_pressed");
             }
             RED.storage.update();
 		},
@@ -188,16 +183,25 @@ RED.view = (function() {
                                         },
 
 		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-		set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = parseInt(value); if (value == true) posMode = 2; else posMode = 1; completeRedraw();RED.storage.update();},
+        set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = parseInt(value); 
+                                            if (value == true) posMode=2; else posMode=1;
+                                            completeRedraw(); RED.storage.update(); },
 
 		get nodeDefaultTextSize() { return parseInt(_settings.nodeDefaultTextSize); },
-        set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = parseInt(value); completeRedraw();RED.storage.update();},
+        set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = parseInt(value); completeRedraw();RED.storage.update(); },
         
         get keyboardScrollSpeed() { return parseInt(_settings.keyboardScrollSpeed); },
-        set keyboardScrollSpeed(value) { _settings.keyboardScrollSpeed = parseInt(value); RED.storage.update();},
+        set keyboardScrollSpeed(value) { _settings.keyboardScrollSpeed = parseInt(value); RED.storage.update(); },
         
         get guiRunForceScrollSpeed() { return parseInt(_settings.guiRunForceScrollSpeed); },
-        set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); RED.storage.update();},
+        set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); RED.storage.update(); },
+
+        get workspaceMinimumTabSize() { return parseInt(_settings.workspaceMinimumTabSize); },
+        set workspaceMinimumTabSize(value) { _settings.workspaceMinimumTabSize = parseInt(value); console.warn("set workspaceMinimumTabSize" + value);
+                                            workspace_tabs.setMinimumTabWidth(_settings.workspaceMinimumTabSize);
+                                            RED.storage.update(); },
+        
+        
 	};
 
 	var settingsCategory = { Title:"Workspace", Expanded:false };
@@ -272,6 +276,7 @@ RED.view = (function() {
 				lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
                 keyboardScrollSpeed:  {label:"Keyboard scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when scrolling the workspace with the keyboard arrow-keys"},
                 guiRunForceScrollSpeed:  {label:"Gui run forced scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when forcing scrolling by holding down ctrl, when the shift is also held the scroll is horizontal."},
+                workspaceMinimumTabSize:  {label:"Min Workspace Tab Size", type:"number", valueId:"", popupText: "set the minimum workspace tab size"},
             }
 		}
 	}
@@ -589,53 +594,55 @@ RED.view = (function() {
 			/*$('#grid-v-mi')*/gridVminor.attr("style", "visibility:hidden;");
 		}
 	}
-	
+    
+    function setSelectWorkspace(tab)
+    {
+        setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
+						
+        console.log("workspace_tabs onchange:", tab);
+        var chart = $("#chart");
+        if (activeWorkspace !== 0) {
+            workspaceScrollPositions[activeWorkspace] = {
+                left:chart.scrollLeft(),
+                top:chart.scrollTop()
+            };
+        }
+        var scrollStartLeft = chart.scrollLeft();
+        var scrollStartTop = chart.scrollTop();
+
+        activeWorkspace = tab.id;
+        RED.nodes.selectWorkspace(activeWorkspace);
+
+        if (workspaceScrollPositions[activeWorkspace]) {
+            chart.scrollLeft(workspaceScrollPositions[activeWorkspace].left);
+            chart.scrollTop(workspaceScrollPositions[activeWorkspace].top);
+        } else {
+            chart.scrollLeft(0);
+            chart.scrollTop(0);
+        }
+        var scrollDeltaLeft = chart.scrollLeft() - scrollStartLeft;
+        var scrollDeltaTop = chart.scrollTop() - scrollStartTop;
+        if (mouse_position != null) {
+            mouse_position[0] += scrollDeltaLeft;
+            mouse_position[1] += scrollDeltaTop;
+        }
+
+        clearSelection();
+        RED.nodes.eachNode(function(n) {
+                n.dirty = true;
+        });
+        redraw(true);
+        redraw_links_init();
+        redraw_links();
+    }
 
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
 	$('#btn-paste').click(function() {importNodes(clipboard,null, true)});
-
+    console.warn("view loading...");
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
-		onchange: function(tab) {
-			setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
-						
-			console.log("workspace_tabs onchange:" + tab);
-			var chart = $("#chart");
-			if (activeWorkspace !== 0) {
-				workspaceScrollPositions[activeWorkspace] = {
-					left:chart.scrollLeft(),
-					top:chart.scrollTop()
-				};
-			}
-			var scrollStartLeft = chart.scrollLeft();
-			var scrollStartTop = chart.scrollTop();
-
-			activeWorkspace = tab.id;
-			RED.nodes.selectWorkspace(activeWorkspace);
-
-			if (workspaceScrollPositions[activeWorkspace]) {
-				chart.scrollLeft(workspaceScrollPositions[activeWorkspace].left);
-				chart.scrollTop(workspaceScrollPositions[activeWorkspace].top);
-			} else {
-				chart.scrollLeft(0);
-				chart.scrollTop(0);
-			}
-			var scrollDeltaLeft = chart.scrollLeft() - scrollStartLeft;
-			var scrollDeltaTop = chart.scrollTop() - scrollStartTop;
-			if (mouse_position != null) {
-				mouse_position[0] += scrollDeltaLeft;
-				mouse_position[1] += scrollDeltaTop;
-			}
-
-			clearSelection();
-			RED.nodes.eachNode(function(n) {
-					n.dirty = true;
-			});
-			redraw(true);
-			redraw_links_init();
-			redraw_links();
-		},
+		onchange: setSelectWorkspace,
 		ondblclick: function(tab) {
 			showRenameWorkspaceDialog(tab.id);
 		},
@@ -678,7 +685,7 @@ RED.view = (function() {
             //RED.nodes.dirty(true);
             //setWorkspaceOrder(newOrder);
         },
-        minimumActiveTabWidth: 150,
+        //minimumTabWidth: 100,
         scrollable: true,
         //collapsible:true,
         addButton: addWorkspace,
@@ -700,7 +707,9 @@ RED.view = (function() {
 		workspace_tabs.addTab(ws);
 		workspace_tabs.activateTab(tabId);
 		RED.history.push({t:'add',workspaces:[ws],dirty:dirty});
-		RED.view.dirty(true);
+        RED.view.dirty(true);
+
+        
 		//RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
 		
 	}
@@ -4533,7 +4542,9 @@ RED.view = (function() {
 						menuItem.attr("title",label);
 						menuItem.text(label);
 
-						workspace_tabs.resize(); // internally it's updateTabWidths
+                        workspace_tabs.resize(); // internally it's updateTabWidths
+                        
+                        RED.events.emit("flows:change",workspace);
 					}
                     
 
@@ -4871,6 +4882,58 @@ RED.view = (function() {
 		defaults: {
 			width: node_def.width,
 			height: node_def.height
-		}
+        },
+        reveal: function(id,triggerHighlight) {
+            if (RED.nodes.workspace(id) != undefined/* || RED.nodes.subflow(id)*/) {
+                workspace_tabs.activateTab(id);
+            } else {
+                var node = RED.nodes.node(id) /*|| RED.nodes.group(id)*/;
+                if (node) {
+                    if (node.z && (node.type === "group" || node._def.category !== 'config')) {
+                        node.dirty = true;
+                        //RED.workspaces.show(node.z);
+
+                        var screenSize = [chart.width()/settings.scaleFactor,chart.height()/settings.scaleFactor];
+                        var scrollPos = [chart.scrollLeft()/settings.scaleFactor,chart.scrollTop()/settings.scaleFactor];
+                        var cx = node.x;
+                        var cy = node.y;
+                        if (node.type === "group") {
+                            cx += node.w/2;
+                            cy += node.h/2;
+                        }
+                        if (cx < scrollPos[0] || cy < scrollPos[1] || cx > screenSize[0]+scrollPos[0] || cy > screenSize[1]+scrollPos[1]) {
+                            var deltaX = '-='+(((scrollPos[0] - cx) + screenSize[0]/2)*settings.scaleFactor);
+                            var deltaY = '-='+(((scrollPos[1] - cy) + screenSize[1]/2)*settings.scaleFactor);
+                            chart.animate({
+                                scrollLeft: deltaX,
+                                scrollTop: deltaY
+                            },200);
+                        }
+                        if (triggerHighlight !== false) {
+                            node.highlighted = true;
+                            if (!node._flashing) {
+                                node._flashing = true;
+                                var flash = 22;
+                                var flashFunc = function() {
+                                    flash--;
+                                    node.dirty = true;
+                                    if (flash >= 0) {
+                                        node.highlighted = !node.highlighted;
+                                        setTimeout(flashFunc,100);
+                                    } else {
+                                        node.highlighted = false;
+                                        delete node._flashing;
+                                    }
+                                    RED.view.redraw();
+                                }
+                                flashFunc();
+                            }
+                        }
+                    } else if (node._def.category === 'config') {
+                        RED.sidebar.config.show(id);
+                    }
+                }
+            }
+        },
 	};
 })();

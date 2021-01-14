@@ -423,6 +423,11 @@ RED.tabs = (function() {
                         //if ($(tabs[i]).hasClass("active")) $(labLabels[i]).css('padding-left', '10px');
                         //else $(labLabels[i]).css('padding-left', '12px');
                         totalWidth += textWidth;
+                        if (options.hasOwnProperty("minimumTabWidth"))
+                        {
+                            if (textWidth < options.minimumTabWidth)
+                                textWidth = options.minimumTabWidth;
+                        }
                         $(tabs[i]).css({width: textWidth});
                     }
                     ul.width(totalWidth);
@@ -506,6 +511,7 @@ RED.tabs = (function() {
         }
 
         return {
+            setMinimumTabWidth: function (width) { options.minimumTabWidth = width; updateTabWidths(); },
             addTab: function(tab,targetIndex) {
                 if (options.onselect) {
                     var selection = ul.find("li.red-ui-tab.selected");

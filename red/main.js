@@ -596,8 +596,13 @@ RED.main = (function() {
 			});
 			RED.arduino.StartWebSocketConnection();
 			RED.BiDirDataWebSocketBridge.StartWebSocketConnection();
+            RED.projectStructure.createTab();
+            loadNodes(); // this also loads the settings so it need to be before RED.settings.createTab();
             RED.settings.createTab();
-            loadNodes();
+            
+            
+
+            
             // if the query string has ?info=className, populate info tab
 			var info = getQueryVariable("info");
 			if (info) {

@@ -363,7 +363,8 @@ RED.nodes = (function() {
 	function addWorkspace(ws) {
 		workspaces.push(ws);
 		currentWorkspace = ws;
-		addClassTabsToPalette();
+        addClassTabsToPalette();
+        
 	}
 	function getWorkspaceLabel(id)
 	{
@@ -694,11 +695,13 @@ RED.nodes = (function() {
 					console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
 
 					//if (ws.inputs != 0 || ws.outputs != 0) // this adds workspaces that have inputs and/or outputs to the palette
-					{
+					//{
 						var color = RED.main.classColor;
 						var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
 						RED.nodes.registerType(ws.label, data);
-					}
+                    //}
+                    
+                    RED.events.emit('flows:add',ws);
 				}
 			}
 			if (workspaces.length == 0) {
@@ -711,9 +714,9 @@ RED.nodes = (function() {
 				n = newNodes[i];
 				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
 				else if (n.type == "Array") n.type = "PointerArray"; // type conversion
-				// TODO: remove workspace in next release+1
+				// TODO: remove workspace in next release+1(Node-Red team comment)
 				if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
-					// TODO: get this UI thing out of here! (see below as well)
+					// TODO: get this UI thing out of here! (see below as well) (Node-Red team comment)
 					//n.name = n.type;
 					//n.type = "unknown";
 					//n.unknownType = true;
@@ -740,10 +743,11 @@ RED.nodes = (function() {
 
 			for (i=0;i<newNodes.length;i++) {
 				n = newNodes[i];
-				// TODO: remove workspace in next release+1
+				// TODO: remove workspace in next release+1 (Node-Red team comment)
 				if (n.type === "workspace" || n.type === "tab") continue;
 				if (n.type === "settings")
 				{
+                    console.warn('n.type === "settings"');
 					RED.settings.setFromJSONobj(n.data);
 					continue;
 				}

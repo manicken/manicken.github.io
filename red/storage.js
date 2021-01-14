@@ -46,16 +46,18 @@ RED.storage = (function() {
 			var json_string = localStorage.getItem("audio_library_guitool");
 			console.log("localStorage read: " );//+ json_string);
 
-			if (json_string && (json_string.trim().length != 0))
+			if (json_string != undefined && (json_string.trim().length != 0))
 			{
 				var jsonObj = JSON.parse(json_string);
 				
-				if (jsonObj.settings) 
+				if (jsonObj.settings != undefined) // this is for the future version of structure, not yet implemented
 				{
-					RED.settings.setFromJSONobj(jsonObj.settings);
-				}
+                    RED.settings.setFromJSONobj(jsonObj.settings);
+                }
+                else
+                    console.error("jsonObj.settings is undefined,  this is for the future version of structure, not yet implemented");
 
-				if (jsonObj.workspaces) // new version have this defined
+				if (jsonObj.workspaces != undefined) // new version have this defined, not yet implemented
 				{
 					RED.nodes.importWorkspaces(jsonObj.workspaces);
 				}

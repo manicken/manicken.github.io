@@ -59,7 +59,10 @@ RED.settings = (function() {
             //console.log(settingValueNames);
             for (var svi = 0; svi < settingValueNames.length; svi++)
             {
+                
                 var valueName = settingValueNames[svi];
+
+               // console.warn(valueName);
                 if (RED[json_object].settings[valueName] != undefined) // this skip any removed settings
                 {
                     RED[json_object].settings[valueName] = csettings[json_object][valueName];
