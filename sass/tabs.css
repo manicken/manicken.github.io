@@ -1,0 +1,586 @@
+/**
+ * Copyright JS Foundation and other contributors, http://js.foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
+/**
+ * Copyright JS Foundation and other contributors, http://js.foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
+/**
+ * Copyright JS Foundation and other contributors, http://js.foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
+.button-group-vertical {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.button-group:not(:last-child) {
+  margin-right: 10px;
+}
+
+.red-ui-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(160, 160, 160, 0.5);
+  z-index: 5;
+}
+
+.red-ui-tabs {
+  position: relative;
+  background: #fff;
+  overflow: hidden;
+  height: 35px;
+  box-sizing: border-box;
+}
+.red-ui-tabs .red-ui-tabs-scroll-container {
+  height: 60px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+.red-ui-tabs .red-ui-tabs-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+.red-ui-tabs ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: block;
+  height: 35px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #bbbbbb;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.red-ui-tabs ul li {
+  box-sizing: border-box;
+  display: inline-block;
+  border-left: 1px solid #bbbbbb;
+  border-top: 1px solid #bbbbbb;
+  border-right: 1px solid #bbbbbb;
+  border-bottom: 1px solid #bbbbbb;
+  background: #f0f0f0;
+  margin: 3px 3px 0 3px;
+  height: 32px;
+  line-height: 29px;
+  max-width: 200px;
+  width: 14%;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+}
+.red-ui-tabs ul li.red-ui-tabs-closeable:hover .red-ui-tabs-badges {
+  display: none;
+}
+.red-ui-tabs ul li.red-ui-tabs-closeable:hover .red-ui-tab-close {
+  display: block;
+}
+.red-ui-tabs ul li a.red-ui-tab-label {
+  display: block;
+  font-size: 14px;
+  padding-left: 12px;
+  width: 100%;
+  height: 100%;
+  color: #666;
+}
+.red-ui-tabs ul li a:hover {
+  text-decoration: none;
+}
+.red-ui-tabs ul li a:focus {
+  text-decoration: none;
+}
+.red-ui-tabs ul li:not(.active) a:hover + a.red-ui-tab-close {
+  background: #e6e6e6;
+}
+.red-ui-tabs ul li.active {
+  background: #fff;
+  font-weight: bold;
+  border-bottom: 1px solid #fff;
+  z-index: 2;
+}
+.red-ui-tabs ul li.active a {
+  color: #444;
+}
+.red-ui-tabs ul li.active a.red-ui-tab-close {
+  color: #888;
+  background: #fff;
+}
+.red-ui-tabs ul li.active a.red-ui-tab-close:hover {
+  background: #e6e6e6 !important;
+  color: #666;
+}
+.red-ui-tabs ul li.active img.red-ui-tab-icon {
+  opacity: 0.2;
+}
+.red-ui-tabs ul li.selected {
+  font-weight: bold;
+}
+.red-ui-tabs ul li.selected:not(.active) {
+  background: #efefef;
+}
+.red-ui-tabs ul li.selected .red-ui-tabs-badge-selected {
+  display: inline;
+  background: #fff;
+}
+.red-ui-tabs ul li.selected .red-ui-tabs-badge-changed {
+  display: none;
+}
+.red-ui-tabs ul li:not(.active) a:hover {
+  color: #666;
+  background: #e6e6e6;
+}
+.red-ui-tabs.red-ui-tabs-scrollable {
+  padding-left: 21px;
+  padding-right: 21px;
+}
+.red-ui-tabs.red-ui-tabs-add {
+  padding-right: 35px;
+}
+.red-ui-tabs.red-ui-tabs-add.red-ui-tabs-scrollable {
+  padding-right: 59px;
+}
+.red-ui-tabs.red-ui-tabs-add.red-ui-tabs-search.red-ui-tabs-scrollable {
+  padding-right: 95px;
+}
+.red-ui-tabs.red-ui-tabs-collapsible li:not(.active) {
+  display: none;
+}
+.red-ui-tabs.red-ui-tabs-collapsible li:not(.active).red-ui-tab-pinned {
+  width: 32px;
+}
+.red-ui-tabs.red-ui-tabs-collapsible li:not(.active).red-ui-tab-pinned a {
+  padding-left: 0;
+  text-align: center;
+}
+.red-ui-tabs.red-ui-tabs-collapsible li:not(.active).red-ui-tab-pinned span {
+  display: none;
+}
+.red-ui-tabs.red-ui-tabs-vertical {
+  box-sizing: border-box;
+  height: 100%;
+  border-right: 1px solid #bbbbbb;
+  margin: 0;
+  background: #f7f7f7;
+  overflow: visible;
+}
+.red-ui-tabs.red-ui-tabs-vertical .red-ui-tabs-scroll-container {
+  height: auto;
+  overflow-x: visible;
+  overflow-y: scroll;
+}
+.red-ui-tabs.red-ui-tabs-vertical ul {
+  padding: 0;
+  height: auto;
+  border: none;
+  width: calc(100% + 1px);
+}
+.red-ui-tabs.red-ui-tabs-vertical ul li {
+  width: 100%;
+  display: block;
+  margin: 0;
+  border: none;
+  border-right: 1px solid #bbbbbb;
+  height: auto;
+}
+.red-ui-tabs.red-ui-tabs-vertical ul li:not(:first-child) {
+  border-top: 1px solid #dddddd;
+}
+.red-ui-tabs.red-ui-tabs-vertical ul li:last-child {
+  border-bottom: 1px solid #dddddd;
+}
+.red-ui-tabs.red-ui-tabs-vertical ul li a.red-ui-tab-label {
+  padding: 9px;
+}
+.red-ui-tabs.red-ui-tabs-vertical ul li.active {
+  border-right: 1px solid #fff;
+}
+.red-ui-tabs .red-ui-tabs-select {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0.4;
+  background: red;
+}
+
+.red-ui-tab-button {
+  position: absolute;
+  box-sizing: border-box;
+  top: 0;
+  right: 0;
+  height: 35px;
+  background: #fff;
+  border-bottom: 1px solid #bbbbbb;
+  z-index: 2;
+}
+.red-ui-tab-button a {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #888 !important;
+  background: #fff;
+  text-decoration: none;
+  box-sizing: border-box;
+  display: inline-block;
+  border: 1px solid #ccc;
+  text-align: center;
+  margin: 0;
+  cursor: pointer;
+  line-height: 32px;
+  height: 32px;
+  width: 32px;
+  margin-top: 3px;
+  margin-right: 3px;
+  margin-left: 3px;
+  border: 1px solid #bbbbbb;
+  z-index: 2;
+}
+.red-ui-tab-button a.disabled, .red-ui-tab-button a:disabled {
+  cursor: default;
+  color: #bbb !important;
+}
+.red-ui-tab-button a:hover, .red-ui-tab-button a:focus {
+  text-decoration: none;
+}
+.red-ui-tab-button a:not(.disabled):not(:disabled):hover {
+  color: #666 !important;
+  background: #e6e6e6;
+}
+.red-ui-tab-button a:not(.disabled):not(:disabled):focus {
+  color: #666 !important;
+}
+.red-ui-tab-button a:not(.disabled):not(:disabled):active {
+  color: #666 !important;
+  background: #efefef;
+  text-decoration: none;
+}
+.red-ui-tab-button a.selected:not(.disabled):not(:disabled) {
+  color: #666 !important;
+  background: #efefef;
+}
+.button-group .red-ui-tab-button a:not(:first-child) {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.button-group .red-ui-tab-button a:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.button-group-vertical .red-ui-tab-button a {
+  display: block;
+  min-width: 22px;
+}
+.button-group-vertical .red-ui-tab-button a:not(:first-child) {
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.button-group-vertical .red-ui-tab-button a:not(:last-child) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.button-row .red-ui-tab-button a:not(:first-child) {
+  margin-left: 15px;
+}
+.red-ui-tab-button a:focus {
+  outline: 1px solid rgba(85, 150, 230, 0.8);
+}
+.red-ui-tab-button a.primary {
+  border-color: #AD1625;
+  color: #eee !important;
+  background: #AD1625;
+}
+.red-ui-tab-button a.primary.disabled, .red-ui-tab-button a.primary.ui-state-disabled {
+  background: none;
+  color: #888 !important;
+  border-color: #ccc;
+}
+.red-ui-tab-button a.primary:not(.disabled):not(.ui-button-disabled):hover {
+  border-color: #6E0A1E;
+  background: #6E0A1E;
+  color: #eee !important;
+}
+.red-ui-tab-button a.secondary {
+  background: none;
+}
+.red-ui-tab-button a.secondary:not(:hover) {
+  border-color: transparent;
+}
+
+.red-ui-tab-link-buttons {
+  position: absolute;
+  box-sizing: border-box;
+  top: 0;
+  right: 0;
+  height: 35px;
+  background: #fff;
+  border-bottom: 1px solid #bbbbbb;
+  z-index: 2;
+}
+.red-ui-tab-link-buttons a {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #888 !important;
+  background: #fff;
+  text-decoration: none;
+  box-sizing: border-box;
+  display: inline-block;
+  border: 1px solid #ccc;
+  text-align: center;
+  margin: 0;
+  cursor: pointer;
+  line-height: 26px;
+  height: 28px;
+  width: 28px;
+  margin: 4px 3px 3px;
+  z-index: 2;
+}
+.red-ui-tab-link-buttons a.disabled, .red-ui-tab-link-buttons a:disabled {
+  cursor: default;
+  color: #bbb !important;
+}
+.red-ui-tab-link-buttons a:hover, .red-ui-tab-link-buttons a:focus {
+  text-decoration: none;
+}
+.red-ui-tab-link-buttons a:not(.disabled):not(:disabled):hover {
+  color: #666 !important;
+  background: #e6e6e6;
+}
+.red-ui-tab-link-buttons a:not(.disabled):not(:disabled):focus {
+  color: #666 !important;
+}
+.red-ui-tab-link-buttons a:not(.disabled):not(:disabled):active {
+  color: #666 !important;
+  background: #efefef;
+  text-decoration: none;
+}
+.red-ui-tab-link-buttons a.selected:not(.disabled):not(:disabled) {
+  color: #666 !important;
+  background: #efefef;
+}
+.button-group .red-ui-tab-link-buttons a:not(:first-child) {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.button-group .red-ui-tab-link-buttons a:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.button-group-vertical .red-ui-tab-link-buttons a {
+  display: block;
+  min-width: 22px;
+}
+.button-group-vertical .red-ui-tab-link-buttons a:not(:first-child) {
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.button-group-vertical .red-ui-tab-link-buttons a:not(:last-child) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.button-row .red-ui-tab-link-buttons a:not(:first-child) {
+  margin-left: 15px;
+}
+.red-ui-tab-link-buttons a:focus {
+  outline: 1px solid rgba(85, 150, 230, 0.8);
+}
+.red-ui-tab-link-buttons a.primary {
+  border-color: #AD1625;
+  color: #eee !important;
+  background: #AD1625;
+}
+.red-ui-tab-link-buttons a.primary.disabled, .red-ui-tab-link-buttons a.primary.ui-state-disabled {
+  background: none;
+  color: #888 !important;
+  border-color: #ccc;
+}
+.red-ui-tab-link-buttons a.primary:not(.disabled):not(.ui-button-disabled):hover {
+  border-color: #6E0A1E;
+  background: #6E0A1E;
+  color: #eee !important;
+}
+.red-ui-tab-link-buttons a.secondary {
+  background: none;
+}
+.red-ui-tab-link-buttons a.secondary:not(:hover) {
+  border-color: transparent;
+}
+.red-ui-tab-link-buttons a:not(.single) {
+  margin-bottom: 1px;
+}
+.red-ui-tab-link-buttons a:not(.single).selected:not(.disabled):not(:disabled) {
+  border-bottom-width: 2px;
+  border-bottom-color: #aaa;
+  margin-bottom: 0;
+  cursor: default;
+}
+.red-ui-tab-link-buttons a:not(.single):not(.selected) {
+  margin-top: 1px;
+}
+.red-ui-tab-link-buttons a.red-ui-tab-link-button-menu {
+  border-color: #fff;
+}
+.red-ui-tab-link-buttons a:not(.single):not(.selected) {
+  margin-top: 4px;
+}
+
+.red-ui-tab-scroll {
+  width: 21px;
+  top: 0;
+}
+.red-ui-tab-scroll a {
+  height: 35px;
+  width: 21px;
+  display: block;
+  color: #888;
+  font-size: 22px;
+  text-align: center;
+  margin: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.red-ui-tab-scroll-left {
+  left: 0;
+}
+.red-ui-tab-scroll-left a {
+  border-right: 1px solid #bbbbbb;
+}
+
+.red-ui-tab-scroll-right {
+  right: 0px;
+}
+.red-ui-tab-scroll-right a {
+  border-left: 1px solid #bbbbbb;
+}
+
+.red-ui-tabs.red-ui-tabs-add .red-ui-tab-scroll-right {
+  right: 38px;
+}
+
+.red-ui-tabs.red-ui-tabs-add.red-ui-tabs-search .red-ui-tab-scroll-right {
+  right: 76px;
+}
+
+.red-ui-tabs.red-ui-tabs-add.red-ui-tabs-search .red-ui-tabs-add {
+  right: 38px;
+}
+
+img.red-ui-tab-icon {
+  margin-left: -8px;
+  margin-right: 3px;
+  margin-top: -2px;
+  opacity: 0.1;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+i.red-ui-tab-icon {
+  opacity: 0.7;
+  width: 18px;
+  height: 20px;
+}
+
+.red-ui-tabs-badges {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 20px;
+  pointer-events: none;
+  display: block;
+  height: 30px;
+  line-height: 28px;
+  text-align: center;
+  padding: 0px;
+  color: #aaa;
+}
+
+.red-ui-tabs-badges i {
+  display: none;
+}
+
+.red-ui-tab.node_changed img.node_changed {
+  display: inline-block;
+}
+
+.red-ui-tab.node_error img.node_error {
+  display: inline-block;
+}
+
+.red-ui-tabs-badges img {
+  width: 10px;
+  height: 10px;
+  margin-right: 2px;
+  vertical-align: top;
+}
+
+.red-ui-tab-close {
+  display: none;
+  background: #f0f0f0;
+  opacity: 0.8;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  width: 20px;
+  height: 30px;
+  line-height: 28px;
+  text-align: center;
+  padding: 0px;
+  color: #888;
+}
+.red-ui-tab-close:hover {
+  background: #e6e6e6 !important;
+  color: #666;
+  opacity: 1;
+}

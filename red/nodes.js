@@ -257,7 +257,8 @@ RED.nodes = (function() {
 			if (updatedConfigNode) {
 				RED.sidebar.config.refresh();
 			}*/
-		}
+        }
+        RED.events.emit('nodes:add',n);
 	}
 	function addLink(l) {
 		links.push(l);

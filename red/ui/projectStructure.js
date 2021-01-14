@@ -26,8 +26,9 @@ RED.projectStructure = (function() {
         })
         treeList.on('treelistselect', function(e, item) {
             var node = RED.nodes.node(item.id);// || RED.nodes.group(item.id);
-            if (node) {
+            if (node != undefined) {
                 if (node.type === 'group' || node._def.category !== "config") {
+                    console.log("selected ", node);
                     RED.view.select({ nodes: [node] })
                 } else {
                     RED.view.select({ nodes: [] })
@@ -154,7 +155,7 @@ RED.projectStructure = (function() {
             configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
         }
         objects[n.id].element.toggleClass("red-ui-info-outline-item-disabled", !!n.d)
-        updateSearch();
+        //updateSearch();
     }
     function onWorkspaceClear() {
         treeList.treeList('data',getFlowData());
@@ -287,7 +288,7 @@ RED.projectStructure = (function() {
             existingObject.element.find(".red-ui-info-outline-item-control-users").text(n.users.length);
         }
 
-        updateSearch();
+        //updateSearch();
     }
     function onObjectRemove(n) {
         var existingObject = objects[n.id];
@@ -330,6 +331,37 @@ RED.projectStructure = (function() {
         }
         contentDiv.text(label);
         addControls(n, div);
+        return div;
+    }
+    function getNodeLabelText(n) {
+        var label = n.name || n.type+": "+n.id;
+        if (n._def.label) {
+            try {
+                label = (typeof n._def.label === "function" ? n._def.label.call(n) : n._def.label)||"";
+            } catch(err) {
+                console.log("Definition error: "+n.type+".label",err);
+            }
+        }
+        var newlineIndex = label.indexOf("\\n");
+        if (newlineIndex > -1) {
+            label = label.substring(0,newlineIndex)+"...";
+        }
+        return label;
+    }
+    function getNodeLabel(n) {
+        var div = $('<div>',{class:"red-ui-info-outline-item"});
+        RED.utils.createNodeIcon(n).appendTo(div);
+        var contentDiv = $('<div>',{class:"red-ui-search-result-description"}).appendTo(div);
+        var labelText = getNodeLabelText(n);
+        var label = $('<div>',{class:"red-ui-search-result-node-label red-ui-info-outline-item-label"}).appendTo(contentDiv);
+        if (labelText) {
+            label.text(labelText)
+        } else {
+            label.html("&nbsp;")
+        }
+
+        addControls(n, div);
+
         return div;
     }
     function addControls(n,div) {

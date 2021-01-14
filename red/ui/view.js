@@ -4883,6 +4883,40 @@ RED.view = (function() {
 			width: node_def.width,
 			height: node_def.height
         },
+        select: function(selection) {
+            if (typeof selection !== "undefined") {
+                clearSelection();
+                if (typeof selection == "string") {
+                    var selectedNode = RED.nodes.node(selection);
+                    if (selectedNode) {
+                        selectedNode.selected = true;
+                        selectedNode.dirty = true;
+                        moving_set = [];
+                        moving_set.push(selectedNode);
+                    }
+                } else if (selection != undefined) {
+                    if (selection.nodes != undefined) {
+                        //updateActiveNodes();
+                        moving_set = [];
+                        // TODO: this selection group span groups
+                        //  - if all in one group -> activate the group
+                        //  - if in multiple groups (or group/no-group)
+                        //      -> select the first 'set' of things in the same group/no-group
+                        selection.nodes.forEach(function(n) {
+                           // if (n.type !== "group") {
+                                n.selected = true;
+                                n.dirty = true;
+                                moving_set.push(n);
+                           // } else {
+                           //     selectGroup(n,true);
+                           // }
+                        })
+                    }
+                }
+            }
+            updateSelection();
+            redraw(true);
+        },
         reveal: function(id,triggerHighlight) {
             if (RED.nodes.workspace(id) != undefined/* || RED.nodes.subflow(id)*/) {
                 workspace_tabs.activateTab(id);
@@ -4892,7 +4926,7 @@ RED.view = (function() {
                     if (node.z && (node.type === "group" || node._def.category !== 'config')) {
                         node.dirty = true;
                         //RED.workspaces.show(node.z);
-
+                        var chart = $("#chart");
                         var screenSize = [chart.width()/settings.scaleFactor,chart.height()/settings.scaleFactor];
                         var scrollPos = [chart.scrollLeft()/settings.scaleFactor,chart.scrollTop()/settings.scaleFactor];
                         var cx = node.x;
