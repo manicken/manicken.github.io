@@ -22,7 +22,8 @@ RED.nodes = (function() {
 	var links = []; // link structure {source:,sourcePort:,target:,targetPort:};
 	var workspaces = [];
 	var currentWorkspace = {};
-	
+    var iconSets = {};
+    
 	function getNode()
 	{
 		return {id: id , type:type, name:name, x: xpos, y:ypos, z:ws, wires:[], _def:{}};
@@ -1763,6 +1764,13 @@ RED.nodes = (function() {
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,
 		links: links,  // TODO: exposed for d3 vis
-		node_defs: node_defs
+        node_defs: node_defs,
+        setIconSets: function(sets) {
+            iconSets = sets;
+            iconSets["font-awesome"] = RED.nodes.fontAwesome.getIconList();
+        },
+        getIconSets: function() {
+            return iconSets;
+        }
 	};
 })();

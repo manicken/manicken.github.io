@@ -4924,6 +4924,8 @@ RED.view = (function() {
                 var node = RED.nodes.node(id) /*|| RED.nodes.group(id)*/;
                 if (node) {
                     if (node.z && (node.type === "group" || node._def.category !== 'config')) {
+                        //if (activeWorkspace)
+                        workspace_tabs.activateTab(node.z);
                         node.dirty = true;
                         //RED.workspaces.show(node.z);
                         var chart = $("#chart");

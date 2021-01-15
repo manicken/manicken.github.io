@@ -56,6 +56,6 @@
          on: on,
          off: off,
          emit: emit,
-         DEBUG:true
+         //DEBUG:true
      }
  })();

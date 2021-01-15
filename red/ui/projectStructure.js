@@ -29,9 +29,9 @@ RED.projectStructure = (function() {
             if (node != undefined) {
                 if (node.type === 'group' || node._def.category !== "config") {
                     console.log("selected ", node);
-                    RED.view.select({ nodes: [node] })
+                    //RED.view.select({ nodes: [node] })
                 } else {
-                    RED.view.select({ nodes: [] })
+                    //RED.view.select({ nodes: [] })
                 }
             }
         })
@@ -355,7 +355,7 @@ RED.projectStructure = (function() {
         var labelText = getNodeLabelText(n);
         var label = $('<div>',{class:"red-ui-search-result-node-label red-ui-info-outline-item-label"}).appendTo(contentDiv);
         if (labelText) {
-            label.text(labelText)
+            label.html("&nbsp;" + labelText)
         } else {
             label.html("&nbsp;")
         }

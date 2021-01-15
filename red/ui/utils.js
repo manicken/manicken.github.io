@@ -853,7 +853,7 @@ RED.utils = (function() {
     }
 
     function isIconExists(iconPath) {
-        var iconSets = RED.nodes.getIconSets();
+        var iconSets = RED.nodes.fontAwesome.getIconList();
         var iconFileList = iconSets[iconPath.module];
         if (iconFileList && iconFileList.indexOf(iconPath.file) !== -1) {
             return true;
@@ -874,18 +874,19 @@ RED.utils = (function() {
             // return RED.settings.apiRootUrl+"images/subflow_tab.svg"
         } else if (node && node.type === 'unknown') {
             return RED.settings.apiRootUrl+"icons/node-red/alert.svg"
-        } else if (node && node.icon) {
-            var iconPath = separateIconPath(node.icon);
+        } else if (node && node._def.icon) {
+            return "icons/" + node._def.icon
+            var iconPath = separateIconPath(node._def.icon);
             if (isIconExists(iconPath)) {
                 if (iconPath.module === "font-awesome") {
-                    return node.icon;
+                    return node._def.icon;
                 } else {
-                    return RED.settings.apiRootUrl+"icons/" + node.icon;
+                    return RED.settings.apiRootUrl+"icons/" + node._def.icon;
                 }
             } else if (iconPath.module !== "font-awesome" && /.png$/i.test(iconPath.file)) {
                 iconPath.file = iconPath.file.replace(/.png$/,".svg");
                 if (isIconExists(iconPath)) {
-                    return RED.settings.apiRootUrl+"icons/" + node.icon.replace(/.png$/,".svg");
+                    return RED.settings.apiRootUrl+"icons/" + node._def.icon.replace(/.png$/,".svg");
                 }
             }
         }
@@ -1095,9 +1096,9 @@ RED.utils = (function() {
             }
         }
 
-        //var icon_url = RED.utils.getNodeIcon(def,node);
+        var icon_url = getNodeIcon(def,node);
         var iconContainer = $('<div/>',{class:"red-ui-palette-icon-container"}).appendTo(nodeDiv);
-        //RED.utils.createIconElement(icon_url, iconContainer, true);
+        createIconElement(icon_url, iconContainer, true);
         return nodeDiv;
     }
 
