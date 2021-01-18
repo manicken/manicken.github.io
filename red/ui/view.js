@@ -204,12 +204,12 @@ RED.view = (function() {
         
 	};
 
-	var settingsCategory = { Title:"Workspace", Expanded:false };
+	var settingsCategory = { label:"Workspace", expanded:false, bgColor:"#DDD" };
 
 	var settingsEditor = {
-		gridSubCat: {label:"Grid", expanded:false, popupText: "Change workspace grid appearence.", 
+		gridSubCat: {label:"Grid", expanded:false, bgColor:"#FFFFFF", popupText: "Change workspace grid appearence.", 
 			items: {
-				gridNodeMoveShowSubCat: {label:"Node Move Show", expanded:false, popupText: "if grid is not visible enabling each here makes the grid visible when moving a node.<br><br>note. showing the minor grid can be sluggish specially when the gridsize is small and the workspace big.", 
+				gridNodeMoveShowSubCat: {label:"Node Move Show", expanded:false, bgColor:"#DDD", popupText: "if grid is not visible enabling each here makes the grid visible when moving a node.<br><br>note. showing the minor grid can be sluggish specially when the gridsize is small and the workspace big.", 
 					items: {
 						nodeMouseDownShowGridHminor: {label:"Show minor h-grid.", type:"boolean"},
 						nodeMouseDownShowGridHmajor: {label:"Show major h-grid.", type:"boolean"},
@@ -217,7 +217,7 @@ RED.view = (function() {
 						nodeMouseDownShowGridVmajor: {label:"Show major v-grid.", type:"boolean"},
 					}
 				},
-				gridShowHideSubCat: {label:"Show/Hide", expanded:false,
+				gridShowHideSubCat: {label:"Show/Hide", expanded:false, bgColor:"#DDD",
 					items: {
 						showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
 						showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
@@ -225,13 +225,13 @@ RED.view = (function() {
 						showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
 					}
 				},
-				gridColorsSubCat: {label:"Colors", expanded:false,
+				gridColorsSubCat: {label:"Colors", expanded:false, bgColor:"#DDD",
 					items: {	
 						gridMinorColor: {label:"Minor grid color.", type:"color"},
 						gridMajorColor: {label:"Major grid color.", type:"color"},
 					}
 				},
-				gridSizesSubCat: {label:"Sizes", expanded:false,
+				gridSizesSubCat: {label:"Sizes", expanded:false, bgColor:"#DDD",
 					items: {
 						gridHminorSize: {label:"Minor h-grid Size.", type:"number"},
 						gridHmajorSize: {label:"Major h-grid Size.", type:"number"},
@@ -239,7 +239,7 @@ RED.view = (function() {
 						gridVmajorSize: {label:"Major v-grid Size.", type:"number", popupText:"This also affects the export sorting of nodes<br> that means nodes are first sorted by xpos<br>then in each v-grid-column they are sorted by ypos.<br><br>note. that when using non center-based positioning the sorting is using the node topLeft position instead of the center"},
 					}
 				},
-				gridSnapSubCat: {label:"Snap", expanded:false,
+				gridSnapSubCat: {label:"Snap", expanded:false, bgColor:"#DDD",
 					items: {
 						snapToGrid: {label:"Snap to grid.", type:"boolean", popupText:"Enables/Disables snap node positions to grid<br><br>When this is enabled the snapping can be temporary disabled by holding the shift-key<br><br>When this is disabled the snapping can be temporary enabled by holding the shift-key"},
 						snapToGridHsize: {label:"Snap to grid h-size.", type:"number"},
@@ -248,26 +248,26 @@ RED.view = (function() {
 				},
 			}
 		},
-		wsSizeSubCat: {label:"Workspace size", expanded:false, popupText: "Change the workspace size<br>This can be used to make a bigger or smaller workspace area.<br>Note when changing the size it can be a little sluggish, and sometimes the space is not updated<br> that is fixed by zooming out/in.", 
+		wsSizeSubCat: {label:"Workspace size", expanded:false, bgColor:"#FFFFFF", popupText: "Change the workspace size<br>This can be used to make a bigger or smaller workspace area.<br>Note when changing the size it can be a little sluggish, and sometimes the space is not updated<br> that is fixed by zooming out/in.", 
 			items: {
 				space_width:  {label:"Width.", type:"number"},
 				space_height:  {label:"Height.", type:"number"},
 			}
 		},
-		lineCurveSubCat: {label:"Line Curve Scales", expanded:false, popupText: "adjust the different line curve scales, smaller values means that lines are more straight,<br> and bigger values means more curvy lines.<br>note. this cannot be set to zero.", 
+		lineCurveSubCat: {label:"Line Curve Scales", expanded:false, bgColor:"#FFFFFF", popupText: "adjust the different line curve scales, smaller values means that lines are more straight,<br> and bigger values means more curvy lines.<br>note. this cannot be set to zero.", 
 			items: {
 				lineCurveScale: {label:"Forward", type:"number", popupText: "curve scale of wires going forward"},
 				lineConnectionsScale: {label:"Backward", type:"number", valueId:"", popupText: "curve scale of wires going backward"},
 			}
 		},
-		nodeSubCat: {label:"Nodes", expanded:false,
+		nodeSubCat: {label:"Nodes", expanded:false, bgColor:"#FFFFFF",
 			items: {
 				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
 				nodeDefaultTextSize: {label:"Text Size", type:"number", popupText: "AudioStream-type Node label text size (not used for UI-category nodes as they have their own invidual settings)"},
 				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
 			}
 		},
-		otherSubCat: {label:"Other", expanded:false,
+		otherSubCat: {label:"Other", expanded:false, bgColor:"#FFFFFF",
 			items: {
 				workspaceBgColor:  {label:"BG color.", type:"color"},
 				scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},

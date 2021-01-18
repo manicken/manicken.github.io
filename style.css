@@ -331,11 +331,12 @@ input.jscolor {
     border: 1px solid #333;
 }
 .settings-item {
+    background-color: #fff;
     border: 1px solid #aaa;
     /*border-bottom: 1px solid #aaa;*/
     padding: 2px;
     padding-bottom: 6px;
-    margin: 3px;
+    margin: 6px;
 }
 .settings-item-textwbtn {
     padding: 5px;

@@ -39,7 +39,7 @@ RED.palette = (function() {
         set onlyShowOne(state) { _settings.onlyShowOne = state; RED.storage.update();},
 	};
 
-	var settingsCategory = { Title:"Palette", Expanded:false };
+	var settingsCategory = { label:"Palette", expanded:false, bgColor:"#DDD" };
 
 	var settingsEditor = {
 		categoryHeaderTextSize: {label:"Header Text Size", type:"number" },

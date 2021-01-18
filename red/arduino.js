@@ -60,10 +60,10 @@ RED.arduino = (function() {
 		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; RED.storage.update();},
 	};
 
-	var settingsCategory = { Title:"Arduino", Expanded:false, popupText: "Currently only Arduino Export Settings" };
+	var settingsCategory = { label:"Arduino", expanded:false, popupText: "Currently only Arduino Export Settings", bgColor:"#006468", headerBgColor:"#17A1A5", headerTextColor:"#FFFFFF" };
 
 	var settingsEditor = {
-		exportSubCat: {label:"Export", expanded:true, 
+		exportSubCat: {label:"Export", expanded:true, bgColor:"#17A1A5",
 			items: {
 				useExportDialog:         { label:"Force Show export dialog", type:"boolean"},
 				IOcheckAtExport:         { label:"IO check At Export", type:"boolean"},

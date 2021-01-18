@@ -22,7 +22,7 @@ RED.sidebar = (function() {
         get autoSwitchTabToInfoTab() { return _settings.autoSwitchTabToInfoTab; },
         set autoSwitchTabToInfoTab(state) { _settings.autoSwitchTabToInfoTab = state; RED.storage.update();},
     }
-    var settingsCategory = { Title:"Right Sidebar", Expanded:false };
+    var settingsCategory = { label:"Right Sidebar", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
         autoSwitchTabToInfoTab: { label:"Auto switch to info-tab when selecting/deselecting node(s).", type:"boolean"},
     }

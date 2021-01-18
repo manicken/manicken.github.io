@@ -36,11 +36,11 @@ RED.BiDirDataWebSocketBridge = (function() {
 		set MidiDeviceOut(value) { _settings.MidiDeviceOut = parseInt(value); SendToWebSocket("midiSetDeviceOut(" + value + ")"); RED.storage.update();},
     }
 
-    var settingsCategory = { Title:"BiDirData WebSocketBridge", Expanded:false , popupText: "Currently only used with a midi interface<br><br>(standard raw serial port is planned for a future release)"};
+    var settingsCategory = { label:"BiDirData WebSocketBridge", expanded:false, bgColor:"#DDD", popupText: "Currently only used with a midi interface<br><br>(standard raw serial port is planned for a future release)"};
 
     var settingsEditor = {
         bddwssPort:              { label:"BiDirData Web Socket Server Port", type:"number"},
-        midiSubCat: {label:"MIDI", expanded:true, popupText:"This contains settings for the Web Socket based midi interface", items: {
+        midiSubCat: {label:"MIDI", expanded:true, bgColor:"#FFF", popupText:"This contains settings for the Web Socket based midi interface", items: {
 			MidiDevicesRefresh:      { label:"Refresh midi devices", type:"button", buttonClass:"btn-primary btn-sm", action: function() {SendToWebSocket("midigetdevices"); }},
 			MidiDeviceIn:            { label:"MidiDevice In", type:"combobox", valueId:""}, // valueId is set by the settings generator
 			MidiDeviceOut:           { label:"MidiDevice Out", type:"combobox", valueId:""} 

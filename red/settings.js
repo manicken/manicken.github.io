@@ -120,14 +120,14 @@ RED.settings = (function() {
 				if (RED_SubClass_Name != "settingsEditor")
 					continue;
                 
-				CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, RED_Class.settingsEditor, RED_Class.settingsCategory.Title, RED_Class.settingsCategory.Expanded, RED_Class.settingsCategory.popupText);
+				CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, RED_Class.settingsEditor, RED_Class.settingsCategory);
             }
         }
 	}
 
-	function CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, settings, catTitle, catExpanded, popupText)
+	function CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, settings, settingCatParams)
 	{
-		var catContainerId = createCategory(containerId, RED_Class_Name, catTitle, catExpanded, popupText);
+		var catContainerId = createCategory(containerId, RED_Class_Name, settingCatParams);
 		var settingNames = Object.getOwnPropertyNames(settings);
 		for (let i = 0; i < settingNames.length; i++)
 		{
@@ -136,7 +136,7 @@ RED.settings = (function() {
 
 			if (setting.items != undefined)
 			{
-				CreateSettingsEditorCat(RED_Class, RED_Class_Name + "-" + settingName, catContainerId, setting.items, setting.label, setting.expanded, setting.popupText);
+				CreateSettingsEditorCat(RED_Class, RED_Class_Name + "-" + settingName, catContainerId, setting.items, setting);
 				continue;
 			}
 
@@ -197,23 +197,35 @@ RED.settings = (function() {
 		}
 	}
 
-	function createCategory(containerId, id, headerLabel, expanded, popupText)
+	function createCategory(containerId, id, settingCatParams)
 	{
+        var headerLabel = settingCatParams.label;
+        var expanded = settingCatParams.expanded;
+        var popupText = settingCatParams.popupText;
+        var bgColor = settingCatParams.bgColor;
+        var headerBgColor = settingCatParams.headerBgColor;
+        var headerTextColor = settingCatParams.headerTextColor;
 		if (expanded)
 		{
 			var chevron = '<i class="icon-chevron-down expanded"></i>';
-			var displayStyle = "block";
+			var displayStyle = "block;";
 		}
 		else
 		{
 			var chevron = '<i class="icon-chevron-down"></i>';
-			var displayStyle = "none";
-		}
+			var displayStyle = "none;";
+        }
+        if (bgColor != undefined) bgColor = " background-color:"+bgColor + ";";
+        else bgColor = "";
+        if (headerBgColor != undefined) headerBgColor = " background-color:"+headerBgColor + ";";
+        else headerBgColor = "";
+        if (headerTextColor != undefined) headerTextColor = " color:"+headerTextColor + ";";
+        else headerTextColor = "";
 		var headerId = "set-header-" + id;
 		var catContainerId = "set-content-"  + id;
-		var html = '<div class="settings-category">'+ 
-			'<div id="'+headerId+'" class="settings-header">'+chevron+'<span>'+headerLabel+'</span></div>'+
-			'<div class="settings-content" id="'+catContainerId+'" style="display: '+displayStyle+';">'+
+		var html = '<div class="settings-category" style="'+ bgColor +'">'+ 
+			'<div id="'+headerId+'" class="settings-header" style="'+ headerBgColor + headerTextColor +'">'+chevron+'<span>'+headerLabel+'</span></div>'+
+			'<div class="settings-content" id="'+catContainerId+'" style="display: '+displayStyle+bgColor+'">'+
 			'</div>\n'+
 			'</div>\n'
 		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);

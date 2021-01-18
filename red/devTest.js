@@ -42,7 +42,7 @@ RED.devTest = (function() {
 
     }
 
-    var settingsCategory = { Title:"Development Tests", Expanded:false };
+    var settingsCategory = { label:"Development Tests", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
 		testPost:               { label:"test post", type:"string"},
 		testGet:                { label:"test get", type:"string"},
