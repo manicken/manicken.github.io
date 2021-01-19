@@ -106,6 +106,8 @@
   vertical-align: middle;
   margin: 0;
   position: relative;
+  padding-right:30px;
+  
 }
 .red-ui-treeList-label:hover, .red-ui-treeList-label:hover .red-ui-treeList-sublabel-text {
   background: #e6e6e6;
@@ -129,6 +131,7 @@
 
 .red-ui-treeList-label-text {
   margin-left: 4px;
+
 }
 
 .red-ui-treeList-sublabel-text {
@@ -141,6 +144,15 @@
   color: #888;
   position: absolute;
   background: #fff;
+}
+button.red-ui-button-small
+{
+    height: 20px;
+    min-width: 20px;
+    line-height: 18px;
+    font-size: 10px;
+    border-radius: 2px;
+    padding: 0 5px;
 }
 
 .red-ui-treeList-icon {

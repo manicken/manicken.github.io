@@ -11,7 +11,7 @@ RED.projectStructure = (function() {
 
     var objects = {};
     var missingParents = {};
-    var configNodeTypes;
+    //var configNodeTypes;
 
 
     function createTab() {
@@ -28,7 +28,7 @@ RED.projectStructure = (function() {
             var node = RED.nodes.node(item.id);// || RED.nodes.group(item.id);
             if (node != undefined) {
                 if (node.type === 'group' || node._def.category !== "config") {
-                    console.log("selected ", node);
+                    //console.log("selected ", node);
                     //RED.view.select({ nodes: [node] })
                 } else {
                     //RED.view.select({ nodes: [] })
@@ -61,16 +61,16 @@ RED.projectStructure = (function() {
         RED.sidebar.addTab("project", content);
 
 
-        RED.events.on("projects:load", onProjectLoad)
+        RED.events.on("projects:load", onProjectLoad);
 
-        RED.events.on("flows:add", onFlowAdd)
-        RED.events.on("flows:remove", onObjectRemove)
-        RED.events.on("flows:change", onFlowChange)
-        RED.events.on("flows:reorder", onFlowsReorder)
+        RED.events.on("flows:add", onFlowAdd); // implemented
+        RED.events.on("flows:remove", onObjectRemove); // implemented
+        RED.events.on("flows:change", onFlowChange); // implemented
+        RED.events.on("flows:reorder", onFlowsReorder); // implemented
 
-        RED.events.on("nodes:add",onNodeAdd);
-        RED.events.on("nodes:remove",onObjectRemove);
-        RED.events.on("nodes:change",onNodeChange);
+        RED.events.on("nodes:add",onNodeAdd); // implemented
+        RED.events.on("nodes:remove",onObjectRemove); // implemented
+        RED.events.on("nodes:change",onNodeChange); // implemented
 
         RED.events.on("groups:add",onNodeAdd);
         RED.events.on("groups:remove",onObjectRemove);
@@ -81,7 +81,7 @@ RED.projectStructure = (function() {
 
     function getFlowData() {
         var flowData = [{
-                label: "Flows",
+                label: "Tabs",
                 expanded: true,
                 children: []
             },
@@ -104,9 +104,9 @@ RED.projectStructure = (function() {
         ]
 
         flowList = flowData[0];
-        subflowList = flowData[1];
-        globalConfigNodes = flowData[2];
-        configNodeTypes = { __global__: globalConfigNodes };
+        //subflowList = flowData[1];
+        //globalConfigNodes = flowData[2];
+        //configNodeTypes = { __global__: globalConfigNodes };
 
         return flowData;
     }
@@ -125,7 +125,8 @@ RED.projectStructure = (function() {
             element: getNodeLabel(n),
             gutter: getGutter(n)
         }
-        if (n.type === "group") {
+        if (n.type === "group" || n.type === "UI_ScriptButton") {
+            //console.error("onNodeAdd was group:" + n.name);
             objects[n.id].children = [];
             objects[n.id].deferBuild = true;
             if (missingParents[n.id]) {
@@ -133,9 +134,9 @@ RED.projectStructure = (function() {
                 delete missingParents[n.id]
             }
         }
-        var parent = n.g||n.z||"__global__";
+        var parent = n.parentGroup||n.z||"__global__";
 
-        if (n._def.category !== "config" || n.type === 'group') {
+        if (n._def.category !== "config" || n.type === 'group' || n.type === "UI_ScriptButton") {
             if (objects[parent]) {
                 if (empties[parent]) {
                     empties[parent].treeList.remove();
@@ -151,8 +152,8 @@ RED.projectStructure = (function() {
                 missingParents[parent].push(objects[n.id])
             }
         } else {
-            createFlowConfigNode(parent,n.type);
-            configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
+            //createFlowConfigNode(parent,n.type);
+            //configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
         }
         objects[n.id].element.toggleClass("red-ui-info-outline-item-disabled", !!n.d)
         //updateSearch();
@@ -161,7 +162,7 @@ RED.projectStructure = (function() {
         treeList.treeList('data',getFlowData());
     }
     function onFlowAdd(ws) {
-        console.warn("******************************onFlowAdd");
+        //console.warn("******************************onFlowAdd");
         objects[ws.id] = {
             id: ws.id,
             element: getFlowLabel(ws),
@@ -209,19 +210,31 @@ RED.projectStructure = (function() {
     }
 
     function onNodeChange(n) {
+        //console.warn("hello");
+
         var existingObject = objects[n.id];
-        var parent = n.g||n.z||"__global__";
+        var parent = n.parentGroup||n.z||"__global__";
 
         var nodeLabelText = getNodeLabelText(n);
-        if (nodeLabelText) {
+        if (nodeLabelText != undefined) {
             existingObject.element.find(".red-ui-info-outline-item-label").text(nodeLabelText);
+            var nodeDiv = existingObject.element.find(".red-ui-search-result-node");
+            nodeDiv.css('backgroundColor',n.bgColor);
+            var borderColor = RED.utils.getDarkerColor(n.bgColor);
+            if (borderColor !== n.bgColor) {
+                nodeDiv.css('border-color',borderColor)
+            }
         } else {
+            
             existingObject.element.find(".red-ui-info-outline-item-label").html("&nbsp;");
         }
         var existingParent = existingObject.parent.id;
         if (!existingParent) {
             existingParent = existingObject.parent.parent.flow
+            console.error(existingParent);
         }
+        console.error("parent",parent);
+        console.error("existingParent",existingParent);
         if (parent !== existingParent) {
             var parentItem = existingObject.parent;
             existingObject.treeList.remove(true);
@@ -231,14 +244,14 @@ RED.projectStructure = (function() {
                     parentItem.treeList.remove();
                     // console.log("Removing",n.type,"from",parentItem.parent.id||parentItem.parent.parent.id)
 
-                    delete configNodeTypes[parentItem.parent.id||parentItem.parent.parent.id].types[n.type];
+                    //delete configNodeTypes[parentItem.parent.id||parentItem.parent.parent.id].types[n.type];
 
 
                     if (parentItem.parent.children.length === 0) {
                         if (parentItem.parent.id === "__global__") {
                             parentItem.parent.treeList.addChild(getEmptyItem(parentItem.parent.id));
                         } else {
-                            delete configNodeTypes[parentItem.parent.parent.id];
+                            //delete configNodeTypes[parentItem.parent.parent.id];
                             parentItem.parent.treeList.remove();
                             if (parentItem.parent.parent.children.length === 0) {
                                 parentItem.parent.parent.treeList.addChild(getEmptyItem(parentItem.parent.parent.id));
@@ -250,10 +263,10 @@ RED.projectStructure = (function() {
                     parentItem.treeList.addChild(getEmptyItem(parentItem.id));
                 }
             }
-            if (n._def.category === 'config' && n.type !== 'group') {
+            if (n._def.category === 'config' && n.type !== 'group' && n.type !== "UI_ScriptButton") {
                 // This must be a config node that has been rescoped
-                createFlowConfigNode(parent,n.type);
-                configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
+                //createFlowConfigNode(parent,n.type);
+                //configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
             } else {
                 // This is a node that has moved groups
                 if (empties[parent]) {
@@ -284,7 +297,7 @@ RED.projectStructure = (function() {
         }
         existingObject.element.toggleClass("red-ui-info-outline-item-disabled", !!n.d)
 
-        if (n._def.category === "config" && n.type !== 'group') {
+        if (n._def.category === "config" && n.type !== 'group' &&  n.type !== "UI_ScriptButton") {
             existingObject.element.find(".red-ui-info-outline-item-control-users").text(n.users.length);
         }
 
@@ -304,12 +317,12 @@ RED.projectStructure = (function() {
             if (parent.config) {
                 // this is a config
                 parent.treeList.remove();
-                delete configNodeTypes[parent.parent.id||n.z].types[n.type];
+                //delete configNodeTypes[parent.parent.id||n.z].types[n.type];
                 if (parent.parent.children.length === 0) {
                     if (parent.parent.id === "__global__") {
                         parent.parent.treeList.addChild(getEmptyItem(parent.parent.id));
                     } else {
-                        delete configNodeTypes[n.z];
+                        //delete configNodeTypes[n.z];
                         parent.parent.treeList.remove();
                         if (parent.parent.parent.children.length === 0) {
                             parent.parent.parent.treeList.addChild(getEmptyItem(parent.parent.parent.id));
@@ -355,7 +368,7 @@ RED.projectStructure = (function() {
         var labelText = getNodeLabelText(n);
         var label = $('<div>',{class:"red-ui-search-result-node-label red-ui-info-outline-item-label"}).appendTo(contentDiv);
         if (labelText) {
-            label.html("&nbsp;" + labelText)
+            label.text(labelText)
         } else {
             label.html("&nbsp;")
         }
@@ -367,7 +380,7 @@ RED.projectStructure = (function() {
     function addControls(n,div) {
         var controls = $('<div>',{class:"red-ui-info-outline-item-controls red-ui-info-outline-item-hover-controls"}).appendTo(div);
 
-        if (n._def != undefined && n._def.category === "config" && n.type !== "group") {
+        if (n._def != undefined && n._def.category === "config" && n.type !== "group" && n.type !== "UI_ScriptButton") {
             var userCountBadge = $('<button type="button" class="red-ui-info-outline-item-control-users red-ui-button red-ui-button-small"><i class="fa fa-toggle-right"></i></button>').text(n.users.length).appendTo(controls).on("click",function(evt) {
                 evt.preventDefault();
                 evt.stopPropagation();
@@ -389,7 +402,7 @@ RED.projectStructure = (function() {
         //     evt.stopPropagation();
         //     RED.view.reveal(n.id);
         // })
-        if (n.type !== 'group' && n.type !== 'subflow') {
+        if (n.type !== 'group' && n.type != "UI_ScriptButton" && n.type !== 'subflow') {
             var toggleButton = $('<button type="button" class="red-ui-info-outline-item-control-disable red-ui-button red-ui-button-small"><i class="fa fa-circle-thin"></i><i class="fa fa-ban"></i></button>').appendTo(controls).on("click",function(evt) {
                 evt.preventDefault();
                 evt.stopPropagation();
@@ -440,7 +453,7 @@ RED.projectStructure = (function() {
             evt.stopPropagation();
             RED.view.reveal(n.id);
         })
-        RED.popover.tooltip(revealButton,"sidebar.info.find");
+        RED.popover.tooltip(revealButton,"find");
         return span;
     }
 
@@ -448,7 +461,7 @@ RED.projectStructure = (function() {
     function getEmptyItem(id) {
         var item = {
             empty: true,
-            element: $('<div class="red-ui-info-outline-item red-ui-info-outline-item-empty">').text("sidebar.info.empty"),
+            element: $('<div class="red-ui-info-outline-item red-ui-info-outline-item-empty">').text("empty"),
         }
         empties[id] = item;
         return item;

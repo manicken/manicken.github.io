@@ -97,7 +97,7 @@ RED.palette = (function() {
 	function createCategoryContainer(category, destContainer, expanded, isSubCat, hdrBgColor){ 
         if (hdrBgColor != undefined) hdrBgColor = 'background-color:' + hdrBgColor + ';';
         else hdrBgColor = "";
-        console.error(hdrBgColor);
+        //console.error(hdrBgColor);
 		//console.warn("@createCategoryContainer category:" + category + ", destContainer:" + destContainer + ", isSubCat:" + isSubCat);
 		var chevron = "";
 		var displayStyle = "";

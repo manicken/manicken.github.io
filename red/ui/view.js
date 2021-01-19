@@ -27,7 +27,9 @@ RED.view = (function() {
 	var lastHoveredGroup = undefined; // this contains the last hovered group so that a node can be moved outside a group
 
 	var anyLinkEnter = false;
-	var anyNodeEnter = false;
+    var anyNodeEnter = false;
+    
+    var allowUiItemTextInput = false;
 
 	var _settings = {
 		showWorkspaceToolbar: true,
@@ -81,14 +83,17 @@ RED.view = (function() {
 			{
 				RED.notify("gui EDIT mode", "warning", null, 1000);
 				$('#btn-guiEditMode').prop('checked', true);
-				$('#btn-guiRunMode').prop('checked', false);
+                $('#btn-guiRunMode').prop('checked', false);
+                $('.ui_textbox_textarea').css("pointer-events", "all");
 			}
 			else
 			{
 				RED.notify("gui RUN mode", "warning", null, 1000);
 				$('#btn-guiEditMode').prop('checked', false);
-				$('#btn-guiRunMode').prop('checked', true);
+                $('#btn-guiRunMode').prop('checked', true);
+                $('.ui_textbox_textarea').css("pointer-events", "none");
             }
+            
             RED.storage.update();
 		},
 
@@ -677,9 +682,10 @@ RED.view = (function() {
 			$('#workspace-menu-list a[href="#'+tab.id+'"]').parent().remove();
 
         },
-        onreorder: function(fromIndex, toIndex) {
+        onreorder: function(fromIndex, toIndex, newOrder) {
             console.log("moved " + fromIndex + " to " + toIndex);
             RED.nodes.moveWorkspace(fromIndex, toIndex);
+            RED.events.emit("flows:reorder",newOrder);
             //console.log(newOrder);
             //RED.history.push({t:'reorder',order:oldOrder,dirty:RED.nodes.dirty()});
             //RED.nodes.dirty(true);
@@ -736,6 +742,8 @@ RED.view = (function() {
 	}
 
 	function canvasMouseDown() {
+        if (allowUiItemTextInput == true) return;
+        
 		if (!mousedown_node && !mousedown_link) {
 			clearLinkSelection();
 			updateSelection();
@@ -758,7 +766,8 @@ RED.view = (function() {
 					.attr("y",point[1])
 					.attr("width",0)
 					.attr("height",0)
-					.attr("class","lasso");
+                    .attr("class","lasso");
+
 				d3.event.preventDefault();
 			}
 		}
@@ -908,6 +917,8 @@ RED.view = (function() {
 	
 
 	function canvasMouseUp() {
+        if (allowUiItemTextInput == true) return;
+
 		if (mousedown_node && mouse_mode == RED.state.JOINING) {
 			drag_line.attr("class", "drag_line_hidden");
 		}
@@ -967,7 +978,8 @@ RED.view = (function() {
 		//redraw_links_init();
 		redraw_links();
 		// clear mouse event vars
-		resetMouseVars();
+        resetMouseVars();
+        //RED.notify("canvas mouse up");
 	}
 
 	$('#btn-zoom-out').click(function() {zoomOut();});
@@ -2491,7 +2503,7 @@ RED.view = (function() {
         }
         else if (d.type == "UI_TextBox")
         {
-            mainRect.attr("fill",function(d) { return "rgba(255,255,255,0)";});
+            mainRect.attr("fill",function(d) { return d._def.color;});
             redraw_init_UI_Textbox(nodeRect, d);
         }
 		else
@@ -3353,7 +3365,9 @@ RED.view = (function() {
 			if (group.nodes[i] == node)
 			{
 				node.parentGroup = undefined;
-				group.nodes.splice(i,1);
+                group.nodes.splice(i,1);
+                RED.events.emit("nodes:change",node);
+                //RED.events.emit("nodes:change",group);
 				console.warn(node.name + " was removed from the group " + group.name)
 				RED.notify(node.name + " was removed from the group " + group.name,false,false, 2000);
 			}
@@ -3395,7 +3409,10 @@ RED.view = (function() {
 				if (ifAnyRootParent(currentHoveredGroup, d)){ console.log("(recursive prevention) cannot add " + d.name + " into " + currentHoveredGroup.name); continue; }
 
 				currentHoveredGroup.nodes.push(d);
-				d.parentGroup = currentHoveredGroup;
+                d.parentGroup = currentHoveredGroup;
+                //RED.events.emit("nodes:change",currentHoveredGroup);
+                RED.events.emit("nodes:change",d);
+                
 				console.warn(d.name + " was added to the group " + currentHoveredGroup.name);
 				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name,false,false, 2000);
 			}
@@ -3700,27 +3717,68 @@ RED.view = (function() {
 			mousedown_node.dirty = true;
 		}
     }
-    function redraw_init_UI_Textbox(nodeRect, d)
+    function redraw_init_UI_Textbox(nodeRect, n)
     {
-        /*var textRect = nodeRect.append("rect")
-			.attr("class", "node")
-			.attr("rx", 4)
-			.attr("ry", 4)
-			.on("mouseup",nodeMouseUp)
+
+       var fo = nodeRect.append("foreignObject")
+            .attr("width", n.w-4).attr("height", n.h)
+            .attr("x", 3).attr("y", 3)
+
+       var ta = fo.append("xhtml:textarea")
+            .attr("class","settings-item-multilinetextInput")
+            .attr("id", n.id + "_textArea")
+            .attr("rows", 4).attr("cols", 100)
+            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px")
+            .on("mouseover", function(d,i) {if (settings.guiEditMode == true){ /*nodeMouseOver(d,i);*/ return; } RED.keyboard.disable(); allowUiItemTextInput=true;})
+            .on("mouseout", function(d,i) {if (settings.guiEditMode == true){ /*nodeMouseOut(d,i);*/ return; }RED.keyboard.enable(); allowUiItemTextInput=false; })
+           // .on("resize", function () {})
+            .on("keyup", function(d,i) {
+                if (settings.guiEditMode == true) return;
+                n.comment = this.value;
+                //console.warn("changed by keyup");
+            })
+            .on("paste", function(d,i) {
+                if (settings.guiEditMode == true) return;
+                n.comment = this.value;
+                //console.warn("changed by paste");
+            })
+            .text(n.comment);
+
+            $(ta).resizable({
+                resize: function() {
+                    console.error("textArea resize");
+                    //$("body").append("<pre>resized!</pre>");
+                }
+            });
+
+        var textAreaRect = nodeRect.append("rect")
+            .attr("class", "ui_textbox_textarea")
+            .attr("width", n.w).attr("height", n.h)
+            .attr("x", 0).attr("y", 0)
+            .attr("rx", 6).attr("ry", 6)
+            .attr("fill", "rgba(255,255,255,0)")
+			.on("mouseup", nodeMouseUp)
 			.on("mousedown",nodeMouseDown)
 			.on("mousemove", nodeMouseMove)
 			.on("mouseover", nodeMouseOver)
             .on("mouseout", nodeMouseOut)
-        */
-       nodeRect.append("div").append("textarea")
-                    .attr("id", d.id + "_textArea")
-                    .attr("rows", 4).attr("cols", 10)
-                    .text("hello");
 
+        if (settings.guiEditMode == true)
+            $('.ui_textbox_textarea').css("pointer-events", "all");
+		else
+			$('.ui_textbox_textarea').css("pointer-events", "none");
     }
-    function redraw_update_UI_TextBox(nodeRect, d)
+    function redraw_update_UI_TextBox(nodeRect, n)
     {
-        
+        nodeRect.selectAll(".node").attr("fill", n.bgColor);
+        nodeRect.selectAll("foreignObject")
+            .attr("width", n.w-4).attr("height", n.h)
+        nodeRect.selectAll("textarea")
+            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
+        nodeRect.selectAll(".ui-wrapper")
+            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
+        nodeRect.selectAll(".ui_textbox_textarea")
+            .attr("width", n.w).attr("height", n.h)
     }
 
 	function redraw_init_UI_Slider(nodeRect)

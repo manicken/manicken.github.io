@@ -371,6 +371,7 @@ div.red-ui-info-table {
 }
 .red-ui-info-outline-item {
     display: inline-block;
+
 }
 .red-ui-info-outline .red-ui-info-outline-item, .red-ui-sidebar-help-toc .red-ui-info-outline-item {
   display: inline-block;
@@ -381,7 +382,6 @@ div.red-ui-info-table {
 .red-ui-info-outline .red-ui-info-outline-item .red-ui-palette-icon-fa, .red-ui-sidebar-help-toc .red-ui-info-outline-item .red-ui-palette-icon-fa {
   position: relative;
   top: 1px;
-  left: 0px;
 }
 .red-ui-info-outline .red-ui-info-outline-item:hover, .red-ui-sidebar-help-toc .red-ui-info-outline-item:hover {
   background: inherit;

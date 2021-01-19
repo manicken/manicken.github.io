@@ -98,7 +98,9 @@ RED.nodes = (function() {
 		console.error("modified:" + arr);
 	}		
 	function registerType(nt,def) {
-		node_defs[nt] = def;
+        node_defs[nt] = def;
+        def.defaults.color = {value:def.color};
+       // console.warn(def);
 
         try{
 		// TODO: too tightly coupled into palette UI
@@ -310,7 +312,8 @@ RED.nodes = (function() {
 			delete configNodes[id];
 			RED.sidebar.config.refresh();
 		} else {
-			var node = getNode(id);
+            var node = getNode(id);
+            RED.events.emit('nodes:remove',node);
 			if (!node) return removedLinks; // cannot continue if node don't exists
 
 			if (node.type == "TabInput" || node.type == "TabOutput")
@@ -366,7 +369,7 @@ RED.nodes = (function() {
 		workspaces.push(ws);
 		currentWorkspace = ws;
         addClassTabsToPalette();
-        
+        RED.events.emit('flows:add',ws);
 	}
 	function getWorkspaceLabel(id)
 	{
@@ -397,8 +400,9 @@ RED.nodes = (function() {
 	}
 	function removeWorkspace(id) {
 		console.trace("workspace removed " + id);
-		var index = getWorkspaceIndex(id);
-		var wsLbl = workspaces[index].label;
+        var index = getWorkspaceIndex(id);
+        var ws = workspaces[index];
+		var wsLbl = ws.label;
 		if (index != -1) workspaces.splice(index, 1);
 		
 		var removedNodes = [];
@@ -421,7 +425,8 @@ RED.nodes = (function() {
 		}
 		removeClassNodes(wsLbl);
 		addClassTabsToPalette();
-		refreshClassNodes();
+        refreshClassNodes();
+        RED.events.emit('flows:remove',ws);
 		return {nodes:removedNodes,links:removedLinks};
 	}
 
@@ -468,7 +473,7 @@ RED.nodes = (function() {
 			if (n._def.defaults.hasOwnProperty(d)) {
 				if (d === "nodes")
 					node[d] = getNodesIds(n[d]);
-				else
+				else if (d != "color")
 					node[d] = n[d];
 			}
 		}
@@ -631,8 +636,8 @@ RED.nodes = (function() {
 		// we could insert references to TabInputs/TabOutputs in workspace
 		// that would make some things go faster as well
 
-		if (ws.inputs != undefined && ws.outputs != undefined) // (no update from GUI yet) see above
-			console.warn("inputs && outputs is defined @ workspace load");
+		//if (ws.inputs != undefined && ws.outputs != undefined) // (no update from GUI yet) see above
+		//	console.warn("inputs && outputs is defined @ workspace load");
 
 		var cIOs = getClassIOportCounts(ws.id, nns);
 
@@ -694,7 +699,7 @@ RED.nodes = (function() {
 					var ws = convertWorkspaceToNewVersion(newNodes, n);
 					addWorkspace(ws);
 					RED.view.addWorkspace(ws); // "final" function is in tabs.js
-					console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
+					//console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
 
 					//if (ws.inputs != 0 || ws.outputs != 0) // this adds workspaces that have inputs and/or outputs to the palette
 					//{
@@ -703,7 +708,7 @@ RED.nodes = (function() {
 						RED.nodes.registerType(ws.label, data);
                     //}
                     
-                    RED.events.emit('flows:add',ws);
+                    
 				}
 			}
 			if (workspaces.length == 0) {

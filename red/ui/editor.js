@@ -377,12 +377,14 @@ RED.editor = (function() {
 				if (editing_node._def.defaults.hasOwnProperty(d)) {
 					if (oldValues[d] === null || typeof oldValues[d] === "string" || typeof oldValues[d] === "number") {
 						if (oldValues[d] !== editing_node[d]) {
-							changes[d] = oldValues[d];
+                            changes[d] = oldValues[d];
+                            console.warn(d, "changed");
 							changed = true;
 						}
 					} else {
 						if (JSON.stringify(oldValues[d]) !== JSON.stringify(editing_node[d])) {
-							changes[d] = oldValues[d];
+                            changes[d] = oldValues[d];
+                            console.warn(d, "changed @ stringify");
 							changed = true;
 						}
 					}
@@ -394,12 +396,12 @@ RED.editor = (function() {
 			for (d in editing_node._def.defaults) {
 				if (editing_node._def.defaults.hasOwnProperty(d)) {
 					var input = $("#node-input-"+d);
-					console.warn(input);
+					//console.warn(input);
 					var newValue;
 					if (input.attr('type') === "checkbox") {
 						newValue = input.prop('checked');
 					} else {
-						console.warn("input.attr('type'):" +input.attr('type') + " " + d);
+						//console.warn("input.attr('type'):" +input.attr('type') + " " + d);
 						newValue = input.val();
 					}
 					if (newValue == null) continue;
@@ -436,11 +438,14 @@ RED.editor = (function() {
 							if (newValue.localeCompare(editing_node.itemTextSize) != 0) editing_node.anyItemChanged = true;
 						}
 
-					}
+                    }
+                    if (d == "color")
+                        editing_node.bgColor = newValue;
 					changes[d] = editing_node[d];
 					if (typeof editing_node[d] == "number")
 						newValue = parseFloat(newValue);
-					editing_node[d] = newValue;
+                    editing_node[d] = newValue;
+                    //console.warn(d, "changed ses");
 					changed = true;
 				}
 			}
@@ -452,15 +457,17 @@ RED.editor = (function() {
 			changed = changed || credsChanged;
 		}
 
-		if (editing_node.type == "UI_ListBox")
+		/*if (editing_node.type == "UI_ListBox")
 		{
 			var items = editing_node.items.split("\n");
-		}
+        }*/
+        //if ()
 
 		var removedLinks = updateNodeProperties(editing_node);
-		if (changed) {
+		if (changed != undefined && changed == true) {
 			var wasChanged = editing_node.changed;
-			editing_node.changed = true;
+            editing_node.changed = true;
+            RED.events.emit("nodes:change",editing_node);
 			RED.view.dirty(true);
 			RED.history.push({t:'edit',node:editing_node,changes:changes,links:removedLinks,dirty:wasDirty,changed:wasChanged});
 		}

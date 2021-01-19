@@ -208,9 +208,10 @@ li.selected .red-ui-search-result {
 
 .red-ui-search-result-node {
   display: inline-block;
-  width: 30px;
+  width: 20px;
+  margin-right: 6px;
   float: left;
-  height: 25px;
+  height: 20px;
   border-radius: 3px;
   border: 1px solid #999;
   background-position: 5% 50%;

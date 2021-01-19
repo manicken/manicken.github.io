@@ -684,7 +684,7 @@ RED.tabs = (function() {
                             }
                             updateTabWidths();
                             if (startDragIndex !== tabDragIndex) {
-                                options.onreorder(startDragIndex, tabDragIndex);// originalTabOrder, $.makeArray(ul.children().map(function() { return $(this).data('tabId');})));
+                                options.onreorder(startDragIndex, tabDragIndex, $.makeArray(ul.children().map(function() { return $(this).data('tabId');})));// originalTabOrder, );
                             }
                             activateTab(tabElements[tabDragIndex].el.data('tabId'));
                         }
