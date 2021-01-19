@@ -1086,6 +1086,10 @@ div.node-info {
     z-index: 1000;
 }
 
+.popover{
+    max-width: 100%; /* Max Width of the popover (depending on the container!) */
+}
+
 .popover-title { display: none; }
 
 .ui-autocomplete {

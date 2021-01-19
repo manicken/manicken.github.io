@@ -2042,17 +2042,64 @@ RED.view = (function() {
 		if (color_G < 0) color_G = 0;
 		if (color_B < 0) color_B = 0;
 		return "#" + getTwoHex(color_R) + getTwoHex(color_G) + getTwoHex(color_B);
-	}
+    }
+    function addColors(colorA, colorB, adjLuminance)
+	{
+        var color_R_A = parseInt(colorA.substring(1,3), 16);
+        var color_G_A = parseInt(colorA.substring(3,5), 16);
+        var color_B_A = parseInt(colorA.substring(5), 16);
+        
+        if (adjLuminance != undefined && color_R_A < parseInt(adjLuminance))
+            var color_R = color_R_A + parseInt(colorB.substring(1,3), 16);
+        else
+            var color_R = color_R_A;
+        
+        if (adjLuminance != undefined && color_G_A < parseInt(adjLuminance))
+            var color_G = color_G_A + parseInt(colorB.substring(3,5), 16);
+        else
+            var color_G = color_G_A;
+
+        if (adjLuminance != undefined && color_B_A < parseInt(adjLuminance))
+            var color_B = color_B_A + parseInt(colorB.substring(5), 16);
+        else
+            var color_B = color_B_A;
+		if (color_R > 255) color_R = 255;
+		if (color_G > 255) color_G = 255;
+		if (color_B > 255) color_B = 255;
+		return "#" + getTwoHex(color_R) + getTwoHex(color_G) + getTwoHex(color_B);
+    }
+    function setMinColor(colorA, colorB, adjLuminance)
+	{
+        var color_R_A = parseInt(colorA.substring(1,3), 16);
+        var color_G_A = parseInt(colorA.substring(3,5), 16);
+        var color_B_A = parseInt(colorA.substring(5), 16);
+        var color_R_B = parseInt(colorB.substring(1,3), 16);
+        var color_G_B = parseInt(colorB.substring(3,5), 16);
+        var color_B_B = parseInt(colorB.substring(5), 16);
+        
+        if (color_R_A < color_R_B) color_R_A = color_R_B;
+        if (color_G_A < color_G_B) color_G_A = color_G_B;
+        if (color_B_A < color_B_B) color_B_A = color_B_B;
+
+        if (color_R_A > adjLuminance) color_R_A = adjLuminance;
+        if (color_G_A > adjLuminance) color_G_A = adjLuminance;
+        if (color_B_A > adjLuminance) color_B_A = adjLuminance;
+
+        
+		return "#" + getTwoHex(color_R_A) + getTwoHex(color_G_A) + getTwoHex(color_B_A);
+    }
+    var colorMap = undefined
 	function generateColorMap()
 	{
+        if (colorMap != undefined) return colorMap; // use prev. generated colormap
 		// FF0000 -> FFFF00 upcount   G
 		// FEFF00 -> 00FF00 downcount R
 		// 00FF01 -> 00FFFF upcount   B
 		// 00FEFF -> 0000FF downcount G
 		// 0000FF -> FF00FF upcount   R
 		// FF00FF -> FF0000 downcount B
-
-		var colorMap = [];
+        
+		colorMap = [];
 		var cR = 255;
 		var cG = 0;
 		var cB = 0;
@@ -2441,7 +2488,12 @@ RED.view = (function() {
 		else if (d.type == "UI_Piano")
 		{
 			redraw_init_UI_Piano(nodeRect,d);
-		}
+        }
+        else if (d.type == "UI_TextBox")
+        {
+            mainRect.attr("fill",function(d) { return "rgba(255,255,255,0)";});
+            redraw_init_UI_Textbox(nodeRect, d);
+        }
 		else
 			mainRect.attr("fill",function(d) { return d._def.color;});
 			
@@ -2592,7 +2644,8 @@ RED.view = (function() {
 		//console.warn("textSize:" + textSize.h + ":" + textSize.w);
 		nodeRects.attr('y', function(d) 
 		{
-			if (d.type == "UI_Slider") return parseInt(d.textDimensions.h) - 30;
+            if (d.type == "UI_Slider") return parseInt(d.textDimensions.h) - 30;
+            if (d.type == "UI_TextBox") return parseInt(d.textDimensions.h) - 30;
 			else if (d.type == "UI_ListBox") return parseInt(d.textDimensions.h);
 			else if (d.type == "UI_Piano") return parseInt(d.textDimensions.h);
 			else if (d.type == "group") return parseInt(d.textDimensions.h);
@@ -3646,7 +3699,30 @@ RED.view = (function() {
 			else if (posMode === 2) mousedown_node.y = parseInt(mousedown_node_y - dy/2);
 			mousedown_node.dirty = true;
 		}
-	}
+    }
+    function redraw_init_UI_Textbox(nodeRect, d)
+    {
+        /*var textRect = nodeRect.append("rect")
+			.attr("class", "node")
+			.attr("rx", 4)
+			.attr("ry", 4)
+			.on("mouseup",nodeMouseUp)
+			.on("mousedown",nodeMouseDown)
+			.on("mousemove", nodeMouseMove)
+			.on("mouseover", nodeMouseOver)
+            .on("mouseout", nodeMouseOut)
+        */
+       nodeRect.append("div").append("textarea")
+                    .attr("id", d.id + "_textArea")
+                    .attr("rows", 4).attr("cols", 10)
+                    .text("hello");
+
+    }
+    function redraw_update_UI_TextBox(nodeRect, d)
+    {
+        
+    }
+
 	function redraw_init_UI_Slider(nodeRect)
 	{
 		var sliderRect = nodeRect.append("rect")
@@ -4050,8 +4126,10 @@ RED.view = (function() {
 			} else if (d.type == "UI_ListBox") {
 				redraw_update_UI_ListBox(nodeRect, d);
 			} else if (d.type == "UI_Piano") {
-				redraw_update_UI_Piano(nodeRect, d);
-			} else {
+                redraw_update_UI_Piano(nodeRect, d);
+            } else if (d.type == "UI_TextBox") {
+                redraw_update_UI_TextBox(nodeRect, d);
+            } else {
 				nodeRect.selectAll(".node").attr("fill", d.bgColor);
 			}
 			if (d.resize == true) {
@@ -4674,7 +4752,7 @@ RED.view = (function() {
 			html: htmlMode,
 			container:'body',
 			rootClose:true, // failsafe
-			content : content
+            content : content,
 		};
 		$(rect).popover(options).popover("show");
 		//console.warn("content type:" + typeof content);
@@ -4822,6 +4900,10 @@ RED.view = (function() {
 		redraw_links();
 	}
 	return {
+        generateColorMap:generateColorMap,
+        addColors:addColors,
+        subtractColor:subtractColor,
+        setMinColor:setMinColor,
 		evalHere: function(string,d) { eval(string); },
 		settings:settings,
 		settingsCategory:settingsCategory,

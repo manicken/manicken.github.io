@@ -20,7 +20,10 @@ RED.palette = (function() {
 	var _settings = {
 		categoryHeaderTextSize: 12,
 		categoryHeaderHeight: 14,
-		categoryHeaderBackgroundColor: "#f3f3f3",
+        categoryHeaderBackgroundColor: "#f3f3f3",
+        categoryHeaderShowAsRainBow: false,
+        categoryHeaderShowAsRainBowAlt: false,
+        categoryHeaderShowAsRainBowMinVal: 64,
 		onlyShowOne: true,
 	};
 
@@ -37,6 +40,16 @@ RED.palette = (function() {
 		
         get onlyShowOne() { return _settings.onlyShowOne; },
         set onlyShowOne(state) { _settings.onlyShowOne = state; RED.storage.update();},
+
+        get categoryHeaderShowAsRainBow() { return _settings.categoryHeaderShowAsRainBow; },
+        set categoryHeaderShowAsRainBow(state) { _settings.categoryHeaderShowAsRainBow = state; setCategoryHeaderStyle(); RED.storage.update();},
+        
+        get categoryHeaderShowAsRainBowAlt() { return _settings.categoryHeaderShowAsRainBowAlt; },
+        set categoryHeaderShowAsRainBowAlt(state) { _settings.categoryHeaderShowAsRainBowAlt = state; setCategoryHeaderStyle(); RED.storage.update();},
+        
+        get categoryHeaderShowAsRainBowMinVal() {return parseInt(_settings.categoryHeaderShowAsRainBowMinVal);},
+        set categoryHeaderShowAsRainBowMinVal(size) { _settings.categoryHeaderShowAsRainBowMinVal = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
+        
 	};
 
 	var settingsCategory = { label:"Palette", expanded:false, bgColor:"#DDD" };
@@ -45,20 +58,46 @@ RED.palette = (function() {
 		categoryHeaderTextSize: {label:"Header Text Size", type:"number" },
 		categoryHeaderHeight: {label:"Header Height", type:"number" },
 		categoryHeaderBackgroundColor: {label:"Header BG color", type:"color" },
-		onlyShowOne: {label:"Only show one category at a time.", type:"boolean" },
-	};
+        onlyShowOne: {label:"Only show one category at a time.", type:"boolean" },
+        categoryHeaderShowAsRainBow: {label:"Header BG color rainbow", type:"boolean", popupText:"Shows each category in one different color,<br><br>note. when this is checked the bgColor is used as the additive component" },
+        categoryHeaderShowAsRainBowAlt: {label:"Header BG color rainbow Alternative", type:"boolean", popupText:"when checked the above bgColor defines the min values used,<br>and the following luminence defines the max values."},
+        categoryHeaderShowAsRainBowMinVal: {label:"Header BG color rainbow min/max luminence", type:"number", popupText:"when alt mode is inactive the following is used:<br>Header BG color rainbow min luminence value calculated by the following formula<br>(adjLuminance is this value)<br><br>if (adjLuminance != undefined && color_R_A < parseInt(adjLuminance))<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A + parseInt(colorB.substring(1,3), 16);<br>else<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A; <br><br>when alt mode in active this defines the max color values." },
+    };
+    
+    var exclusion = ['config','unknown','deprecated'];
 
 	function setCategoryHeaderStyle() // this is to make above "setter" cleaner
 	{
 		var font_size = settings.categoryHeaderTextSize;
 		var height = settings.categoryHeaderHeight;
-		var bgColor = settings.categoryHeaderBackgroundColor;
-		$(".palette-header").each( function(i,e) { $(e).attr("style", "font-size:" + font_size + "px;background-color:" + bgColor + ";height:" + height +"px;");});
+        
+        if (settings.categoryHeaderShowAsRainBow == true)
+        {
+            var colorMap = RED.view.generateColorMap();
+            var colorMapDeltaIndex = parseInt(colorMap.length/($(".palette-header").length));
+            var minVal = settings.categoryHeaderShowAsRainBowMinVal;
+        }
+        var bgColor = settings.categoryHeaderBackgroundColor;
+
+        $(".palette-header").each( function(i,e) {
+            $(e).css('font-size', font_size)
+                .css('height', height)
+            if (settings.categoryHeaderShowAsRainBow == true)
+            {
+                if (settings.categoryHeaderShowAsRainBowAlt == true)
+                    $(e).css('background-color', RED.view.setMinColor(colorMap[colorMapDeltaIndex*i], bgColor, minVal));
+                else
+                    $(e).css('background-color', RED.view.addColors(colorMap[colorMapDeltaIndex*i], bgColor, minVal));
+            }
+            else
+                $(e).css('background-color', bgColor);
+            });
 	}
 
-	var exclusion = ['config','unknown','deprecated'];
-
-	function createCategoryContainer(category, destContainer, expanded, isSubCat){ 
+	function createCategoryContainer(category, destContainer, expanded, isSubCat, hdrBgColor){ 
+        if (hdrBgColor != undefined) hdrBgColor = 'background-color:' + hdrBgColor + ';';
+        else hdrBgColor = "";
+        console.error(hdrBgColor);
 		//console.warn("@createCategoryContainer category:" + category + ", destContainer:" + destContainer + ", isSubCat:" + isSubCat);
 		var chevron = "";
 		var displayStyle = "";
@@ -89,7 +128,7 @@ RED.palette = (function() {
 			}
 		//}
 		$("#" + destContainer).append('<div class="' + palette_category + '">'+
-			'<div class="'+palette_header_class+'" id="header-'+category+'"><div class="'+palette_header_class+'-contents">'+chevron+'<span>'+header+'</span></div></div>'+
+			'<div class="'+palette_header_class+'" id="header-'+category+'" style="'+hdrBgColor+'"><div class="'+palette_header_class+'-contents">'+chevron+'<span>'+header+'</span></div></div>'+
 			'<div class="palette-content" id="palette-base-category-'+category+'" style="display: '+displayStyle+';">'+
 			 // '<div id="palette-'+category+'-input" class="palette-sub-category"><div class="palette-sub-category-label">in</div></div>'+ // theese are never used
 			 // '<div id="palette-'+category+'-output" class="palette-sub-category"><div class="palette-sub-category-label">out</div></div>'+ // theese are never used
@@ -100,13 +139,17 @@ RED.palette = (function() {
 	}
 	function doInit(categories)
 	{
-		for (var i = 0; i < categories.length; i++)
+        var names = Object.getOwnPropertyNames(categories);
+        
+
+		for (var i = 0; i < names.length; i++)
 		{
-			var cat = categories[i];
-			createCategoryContainer(cat.name, "palette-container", cat.expanded, false); 
-			setCategoryClickFunction(cat.name, "palette-container", "palette-header");
+            var name = names[i];
+			var cat = categories[name];
+			createCategoryContainer(name, "palette-container", cat.expanded, false); 
+			setCategoryClickFunction(name, "palette-container", "palette-header");
 			if (cat.subcats != undefined)
-				addSubCats("palette-base-category-" + cat.name , cat.name + "-", cat.subcats);
+				addSubCats("palette-base-category-" + name , name + "-", cat.subcats);
 		}
 		//setCategoryClickFunction('input');
 		//setCategoryClickFunction('output');
@@ -114,10 +157,13 @@ RED.palette = (function() {
 	}
 	function addSubCats(destContainer, catPreName, categories)
 	{
-		for (var i = 0; i < categories.length; i++)
+        var names = Object.getOwnPropertyNames(categories);
+		for (var i = 0; i < names.length; i++)
 		{
-			createCategoryContainer(catPreName + categories[i],destContainer, false, true);
-			setCategoryClickFunction(catPreName + categories[i], destContainer, "palette-header-sub-cat");
+            var name = names[i];
+            var cat = categories[name];
+			createCategoryContainer(catPreName + name,destContainer, false, true, cat.hdrBgColor);
+			setCategoryClickFunction(catPreName + name, destContainer, "palette-header-sub-cat");
 		}
 	}
 

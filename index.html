@@ -84,9 +84,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li><a id="btn-deploy" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
                     <li><a id="btn-deploy2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class-based</a></li>
                     <li><a id="btn-deploy2zip" class="btn action-deploy" href="#"><i class="fa fa-database"></i>&nbsp;&nbsp;&nbsp;<i class="fa fa-file-zip-o"></i> Class-based to Zip</a></li>
-					<li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
-					<li><a id="btn-saveTofile" class="btn action-deploy" href="#"><i class="fa fa-sm fa-download"></i> JSON SaveToFile</a></li>
-					<li><a id="btn-deploy2singleLineJson" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-h"></i> Single Line JSON</a></li>
+                    <li><a id="btn-saveTofile" class="btn action-deploy" href="#"><i class="fa fa-sm fa-download"></i> JSON SaveToFile</a></li>
+                    <li><a id="btn-deploy2singleLineJson" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-h"></i> Single Line JSON</a></li>
+                    <li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
 				</ul>
 				</div>
 				<div class="btn-group pull-left">
@@ -699,23 +699,22 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </script>
 
 <script  type="text/x-red" data-container-name="NodeCategories">
-	{"categories":[
-		
-		{"name":"used",      "expanded":false},
-		{"name":"tabs",      "expanded":false},
-		{"name":"special",   "expanded":false},
-		{"name":"ui",        "expanded":false},
-		{"name":"input",     "expanded":false, "subcats":["i2s1","i2s2","spdif","adc","other"]},
-		{"name":"output",    "expanded":false, "subcats":["i2s1","i2s2","spdif","adc","other"]},
-		{"name":"mixer",     "expanded":false},
-		{"name":"play",      "expanded":false},
-		{"name":"record",    "expanded":false},
-		{"name":"synth",     "expanded":false},
-		{"name":"effect",    "expanded":false},
-		{"name":"filter",    "expanded":false},
-		{"name":"analyze",   "expanded":false},
-		{"name":"control",   "expanded":false}
-	]}
+	{
+		"used":{      "expanded":false},
+		"tabs":{      "expanded":false},
+		"special":{   "expanded":false},
+		"ui":{        "expanded":false},
+		"input":{     "expanded":false, "subcats":{"i2s1":{"hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000"},"i2s2":{"hdrBgColor":"#E3E3E3", "hdrTxtColor":"#000"},"spdif":{"hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000"},"adc":{"hdrBgColor":"#E3E3E3", "hdrTxtColor":"#000"},"other":{"hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000"}}},
+		"output":{    "expanded":false, "subcats":{"i2s1":{"hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000"},"i2s2":{"hdrBgColor":"#E3E3E3", "hdrTxtColor":"#000"},"spdif":{"hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000"},"adc":{"hdrBgColor":"#E3E3E3", "hdrTxtColor":"#000"},"other":{"hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000"}}},
+		"mixer":{     "expanded":false},
+		"play":{      "expanded":false},
+		"record":{    "expanded":false},
+		"synth":{     "expanded":false},
+		"effect":{    "expanded":false},
+		"filter":{    "expanded":false},
+		"analyze":{   "expanded":false},
+		"control":{   "expanded":false}
+	}
 </script>
 
 <script  type="text/x-red" data-container-name="NodeDefinitions">
@@ -736,7 +735,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 		{"type":"ConstValue","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"value":{"value":"0"},"valueType":{"value":"int"}},"shortName":"constValue","nonObject":"","inputs":0,"outputs":0,"category":"special","color":"#eb9834","icon":"hash.png"}},
 		{"type":"JunctionLR","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-in.png"}},
-		{"type":"JunctionRL","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-out.png"}},
+        {"type":"JunctionRL","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-out.png"}},
+        
+        {"type":"JunctionRL","data":{"defaults":{"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},"shortName":"Junction","nonObject":"","inputs":1,"outputs":1,"category":"ui","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-out.png"}},
 
 		{"type":"UI_Button",
 		 "data":{
