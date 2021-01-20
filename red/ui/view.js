@@ -4174,7 +4174,7 @@ RED.view = (function() {
 				d.resize = true;
 			}
             if (d.dirty == false) { return;}
-            console.log("was dirty"+d.name);
+            //console.log("was dirty"+d.name);
 			d.dirty = false;
 
 			if (d.bgColor == null)
