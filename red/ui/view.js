@@ -3774,7 +3774,7 @@ RED.view = (function() {
         nodeRect.selectAll("foreignObject")
             .attr("width", n.w-4).attr("height", n.h)
         nodeRect.selectAll("textarea")
-            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
+            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px").text(n.comment);
         nodeRect.selectAll(".ui-wrapper")
             .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
         nodeRect.selectAll(".ui_textbox_textarea")
@@ -4173,7 +4173,8 @@ RED.view = (function() {
 				d.dirty = true;
 				d.resize = true;
 			}
-			if (d.dirty == false) return;
+            if (d.dirty == false) { return;}
+            console.log("was dirty"+d.name);
 			d.dirty = false;
 
 			if (d.bgColor == null)
