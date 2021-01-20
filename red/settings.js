@@ -59,7 +59,6 @@ RED.settings = (function() {
             //console.log(settingValueNames);
             for (var svi = 0; svi < settingValueNames.length; svi++)
             {
-                
                 var valueName = settingValueNames[svi];
 
                // console.warn(valueName);
@@ -92,14 +91,27 @@ RED.settings = (function() {
                 let RED_SubClass_Name = RED_Class_SubClasses[i];
                 if (RED_SubClass_Name == "settings")
                 {
-                    settings.push({[RED_Class_Name]:RED_Class.settings});
+
+                    settings.push({[RED_Class_Name]:getChangedSettings(RED_Class)}); //RED_Class.settings});
                     //RED.console_ok("found settings@" + RED_Class_Name);
                 }
                 
             }
 		}
 		return settings;
-	}
+    }
+    function getChangedSettings(RED_Class)
+    {
+        var cs = {}; // changed settings
+        var settingNames = Object.getOwnPropertyNames(RED_Class.settings);
+        for (var i = 0; i < settingNames.length; i++)
+        {
+            var name = settingNames[i];
+            if (RED_Class.settings[name].toString() !== RED_Class.defSettings[name].toString())
+                cs[name] = RED_Class.settings[name];
+        }
+        return cs;
+    }
 
 	function generateSettingsFromClasses(containerId)
 	{

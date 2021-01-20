@@ -18,9 +18,8 @@
 RED.arduino = (function() {
 	var serverIsActive = false;
 	
-
-	var _settings = {
-		useExportDialog: false,
+    var defSettings = {
+        useExportDialog: false,
 		IOcheckAtExport: true,
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
@@ -33,6 +32,17 @@ RED.arduino = (function() {
 							  + "#include <SPI.h>\n"
 							  + "#include <SD.h>\n"
 							  + "#include <SerialFlash.h>\n",
+    }
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+	var _settings = {
+		useExportDialog: defSettings.useExportDialog,
+		IOcheckAtExport: defSettings.IOcheckAtExport,
+		WriteJSONtoExportedFile: defSettings.WriteJSONtoExportedFile,
+		WebServerPort: defSettings.WebServerPort,
+		WebSocketServerPort: defSettings.WebSocketServerPort,
+		ProjectName: defSettings.ProjectName,
+		CodeIndentations: defSettings.CodeIndentations,
+		StandardIncludeHeader: defSettings.StandardIncludeHeader,
 	}
 	var settings = {
 		get useExportDialog() { return _settings.useExportDialog; },
@@ -172,10 +182,12 @@ RED.arduino = (function() {
 	function NOtresponse(text) {console.log("GetGUI_TOOL_JSON_ not response"); }
     
     return {
-		serverIsActive: function() { return serverIsActive;},
+        defSettings:defSettings,
 		settings:settings,
 		settingsCategory:settingsCategory,
-		settingsEditor:settingsEditor,
+        settingsEditor:settingsEditor,
+        
+        serverIsActive: function() { return serverIsActive;},
 		startConnectedChecker:startConnectedChecker,
 		httpPostAsync:httpPostAsync,
 		httpGetAsync:httpGetAsync,

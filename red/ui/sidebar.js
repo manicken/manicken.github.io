@@ -15,8 +15,13 @@
  * limitations under the License.
  **/
 RED.sidebar = (function() {
-    var _settings = {
+
+    var defSettings = {
         autoSwitchTabToInfoTab: true
+    }
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+    var _settings = {
+        autoSwitchTabToInfoTab: defSettings.autoSwitchTabToInfoTab
     }
     var settings = {
         get autoSwitchTabToInfoTab() { return _settings.autoSwitchTabToInfoTab; },
@@ -161,6 +166,7 @@ RED.sidebar = (function() {
 	}
 	
 	return {
+        defSettings:defSettings,
         settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,

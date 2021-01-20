@@ -16,8 +16,12 @@
  **/
 RED.editor = (function() {
 
-	var _settings = {
+    var defSettings = {
         aceEditorTheme: "theme-chrome",
+    }
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+	var _settings = {
+        aceEditorTheme: defSettings.aceEditorTheme,
 	}
 	var settings = {
 		get aceEditorTheme() { return _settings.aceEditorTheme; },
@@ -1041,9 +1045,11 @@ RED.editor = (function() {
 
 
 	return {
+        defSettings:defSettings,
 		settings:settings,
 		settingsCategory:settingsCategory,
-		settingsEditor:settingsEditor,
+        settingsEditor:settingsEditor,
+        
 		init_edit_dialog:init_edit_dialog,
 		edit: showEditDialog,
 		editConfig: showEditConfigNodeDialog,

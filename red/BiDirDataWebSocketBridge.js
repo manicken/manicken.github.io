@@ -18,11 +18,16 @@
 
 RED.BiDirDataWebSocketBridge = (function() {
     
-    
-    var _settings = {
+    var defSettings = {
         MidiDeviceIn: 0,
         MidiDeviceOut: 0,
-        bddwssPort: 3001, // BiDirWebSocketServer
+        bddwssPort: 3001, // BiDirWebSocketServer Port
+    }
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+    var _settings = {
+        MidiDeviceIn: defSettings.MidiDeviceIn,
+        MidiDeviceOut: defSettings.MidiDeviceOut,
+        bddwssPort:  defSettings.bddwssPort, // BiDirWebSocketServer Port
     }
 
     var settings = {
@@ -212,9 +217,11 @@ RED.BiDirDataWebSocketBridge = (function() {
 	}
 
     return {
+        defSettings:defSettings,
 		settings:settings,
 		settingsCategory:settingsCategory,
-		settingsEditor:settingsEditor,
+        settingsEditor:settingsEditor,
+        
 		StartWebSocketConnection:StartWebSocketBiDirData_Connection,
         SendToWebSocket:SendToWebSocket
 	};

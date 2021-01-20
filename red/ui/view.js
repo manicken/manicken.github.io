@@ -30,8 +30,10 @@ RED.view = (function() {
     var anyNodeEnter = false;
     
     var allowUiItemTextInput = false;
+    var uiItemResizeBorderSize= 6;
 
-	var _settings = {
+
+    var defSettings = {
 		showWorkspaceToolbar: true,
 		showNodeToolTip:true,
 		guiEditMode: true,
@@ -65,8 +67,41 @@ RED.view = (function() {
         guiRunForceScrollSpeed:20,
         workspaceMinimumTabSize: 50,
 	};
-	var uiItemResizeBorderSize= 6;
-
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+	var _settings = {
+		showWorkspaceToolbar: defSettings.showWorkspaceToolbar,
+		showNodeToolTip: defSettings.showNodeToolTip,
+		guiEditMode: defSettings.guiEditMode,
+		lockWindowMouseScrollInRunMode: defSettings.lockWindowMouseScrollInRunMode,
+		space_width: defSettings.space_width,
+		space_height: defSettings.space_height,
+		workspaceBgColor: defSettings.workspaceBgColor,
+		scaleFactor: defSettings.scaleFactor,	
+		showGridHminor: defSettings.showGridHminor,
+		showGridHmajor: defSettings.showGridHmajor,
+		showGridVminor: defSettings.showGridVminor,
+		showGridVmajor: defSettings.showGridVmajor,
+		nodeMouseDownShowGridHminor: defSettings.nodeMouseDownShowGridHminor,
+		nodeMouseDownShowGridHmajor: defSettings.nodeMouseDownShowGridHmajor,
+		nodeMouseDownShowGridVminor: defSettings.nodeMouseDownShowGridVminor,
+		nodeMouseDownShowGridVmajor: defSettings.nodeMouseDownShowGridVmajor,
+		gridHminorSize: defSettings.gridHminorSize,
+		gridHmajorSize: defSettings.gridHmajorSize,
+		gridVminorSize: defSettings.gridVminorSize,
+		gridVmajorSize: defSettings.gridVmajorSize,
+		gridMinorColor: defSettings.gridMinorColor,
+		gridMajorColor: defSettings.gridMajorColor,
+		snapToGrid: defSettings.snapToGrid, // this is allready implemented with shift button, this locks that mode
+	    snapToGridHsize: defSettings.snapToGridHsize,
+	    snapToGridVsize: defSettings.snapToGridVsize,
+		lineCurveScale: defSettings.lineCurveScale,
+		lineConnectionsScale: defSettings.lineConnectionsScale,
+		useCenterBasedPositions: defSettings.useCenterBasedPositions,
+        nodeDefaultTextSize: defSettings.nodeDefaultTextSize,
+        keyboardScrollSpeed: defSettings.keyboardScrollSpeed,
+        guiRunForceScrollSpeed: defSettings.guiRunForceScrollSpeed,
+        workspaceMinimumTabSize: defSettings.workspaceMinimumTabSize, // this should not be here (workspace should have it's own .js file just like new Node-Red)
+	};	
 	var settings = {
 		get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
 		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); RED.storage.update();},
@@ -4959,14 +4994,16 @@ RED.view = (function() {
 		redraw_links();
 	}
 	return {
+        defSettings:defSettings,
+		settings:settings,
+		settingsCategory:settingsCategory,
+        settingsEditor:settingsEditor,
+        
         generateColorMap:generateColorMap,
         addColors:addColors,
         subtractColor:subtractColor,
         setMinColor:setMinColor,
-		evalHere: function(string,d) { eval(string); },
-		settings:settings,
-		settingsCategory:settingsCategory,
-		settingsEditor:settingsEditor,
+        evalHere: function(string,d) { eval(string); },
 		init:initView,
 		AddNewNode:AddNewNode,
 		resetMouseVars:resetMouseVars, // exposed for editor

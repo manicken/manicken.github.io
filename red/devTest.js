@@ -20,11 +20,18 @@
 
 RED.devTest = (function() {
 
-    var _settings = {
+    var defSettings = {
         testPost: "data",
         testGet: "cmd",
         testWsSend: "data",
         getFuncHelp: "AudioEffectFade"
+    };
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+    var _settings = {
+        testPost: defSettings.testPost,
+        testGet: defSettings.testGet,
+        testWsSend: defSettings.testWsSend,
+        getFuncHelp: defSettings.getFuncHelp
     };
 
     var settings = {
@@ -140,6 +147,7 @@ RED.devTest = (function() {
     }*/
 
     return {
+        defSettings:defSettings,
         settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,

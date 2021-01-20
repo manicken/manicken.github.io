@@ -17,7 +17,7 @@
  
 RED.palette = (function() {
 
-	var _settings = {
+    var defSettings = {
 		categoryHeaderTextSize: 12,
 		categoryHeaderHeight: 14,
         categoryHeaderBackgroundColor: "#f3f3f3",
@@ -25,6 +25,16 @@ RED.palette = (function() {
         categoryHeaderShowAsRainBowAlt: false,
         categoryHeaderShowAsRainBowMinVal: 64,
 		onlyShowOne: true,
+	};
+    // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
+	var _settings = {
+		categoryHeaderTextSize: defSettings.categoryHeaderTextSize,
+		categoryHeaderHeight: defSettings.categoryHeaderHeight,
+        categoryHeaderBackgroundColor: defSettings.categoryHeaderBackgroundColor,
+        categoryHeaderShowAsRainBow: defSettings.categoryHeaderShowAsRainBow,
+        categoryHeaderShowAsRainBowAlt: defSettings.categoryHeaderShowAsRainBowAlt,
+        categoryHeaderShowAsRainBowMinVal: defSettings.categoryHeaderShowAsRainBowMinVal,
+		onlyShowOne: defSettings.onlyShowOne,
 	};
 
 	var settings = {
@@ -407,9 +417,11 @@ RED.palette = (function() {
 	});
 	
 	return {
+        defSettings:defSettings,
 		settings:settings,
 		settingsCategory:settingsCategory,
-		settingsEditor:settingsEditor,
+        settingsEditor:settingsEditor,
+        
 		doInit:doInit,
 		add:addNodeType,
 		clearCategory:clearCategory,
