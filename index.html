@@ -62,7 +62,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </style>
 </head>
 <body spellcheck="false">
-<div class="navbar navbar-inverse navbar-fixed-top">
+
+<div id="navbarId" class="navbar navbar-inverse navbar-fixed-top"> <!---->
 	<div class="navbar-inner">
 		<div class="container-fluid">
 			<span class="brand">Audio System Design Tool for <a href="http://www.pjrc.com/teensy/td_libs_Audio.html" target="_blank">Teensy Audio Library</a></span>
@@ -78,7 +79,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
                    
 				</ul>
 			</div>
-				<div class="btn-group pull-left">
+			<div class="btn-group pull-left">
 				<a id="menu-export" class="btn dropdown-toggle btn-danger disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
@@ -88,55 +89,19 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     <li><a id="btn-deploy2singleLineJson" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-h"></i> Single Line JSON</a></li>
                     <li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
 				</ul>
-				</div>
-				<div class="btn-group pull-left">
+			</div>
+			<div class="btn-group pull-left">
 				<a id="menu-ide" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-verify-compile" class="btn action-deploy" href="#"><i class="fa fa-refresh"></i> Verify/Compile</a></li>
 					<li><a id="btn-compile-upload" class="btn action-deploy" href="#"><i class="fa fa-send"></i> Upload</a></li>
 				</ul>
 			</div>
-			
-			<!--<div class="btn-group pull-left">
-				<a id="btn-deploy" class="btn action-deploy disabled" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>Export</a>
-				<a id="btn-deploy2" class="btn action-deploy " href="#"><i id="btn-icn-deploy" class="icon-upload"></i>ExportAsClass(es)</a>
-				<a id="btn-import-arduino" class="btn action-import disabled" href="#"><i id="btn-icn-download" class="icon-download"></i>Import</a>
-			</div>-->
-			
-			<!--<div class="btn-group pull-right">
-				<a id="btn-demoFlowA" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowA</a>
-				<a id="btn-demoFlowB" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>DemoFlowB</a>
-				<a id="btn-originalFlow" class="btn action-import enabled" href="#"><i id="btn-icn-download" class="icon-download"></i>originalFlow</a>
-			</div>-->
+
 			<div class="btn-group pull-right">
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
 				<ul class="dropdown-menu">
-					
-					<!-- <li><a id="btn-node-status" tabindex="-1" href="#"><i class="icon-ok pull-right"></i><i class="icon-info-sign"></i> Node Status</a></li>
-					<li class="divider"></li>
--->
-					<!--
-<li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="icon-edit"></i> Import from...</a>
-						<ul class="dropdown-menu">
-							<li><a id="btn-import" tabindex="-1" href="#"><i class="icon-edit"></i> Clipboard...</a></li>
-							<li id="flow-menu-parent" class="dropdown-submenu pull-left">
-								<a tabindex="-1" href="#"><i class="icon-book"></i> Library</a>
-								<ul class="dropdown-menu"></ul>
-							</li>
-						</ul>
-					</li>
-					<li id="li-menu-export" class="dropdown-submenu disabled pull-left"><a tabindex="-1" href="#"><i class="icon-share"></i> Export to...</a>
-						<ul class="dropdown-menu">
-							<li id="li-menu-export-clipboard" class="disabled"><a id="btn-export-clipboard" tabindex="-1" href="#"><i class="icon-share"></i> Clipboard...</a></li>
-							<li id="li-menu-export-library" class="disabled"><a id="btn-export-library" tabindex="-1" href="#"><i class="icon-book"></i> Library...</a></li>
-						</ul>
-					</li>
-					<li class="divider"></li>
--->
-					<!--
- <li><a id="btn-config-nodes" tabindex="-1" href="#"><i class="icon-th-list"></i> Configuration nodes...</a></li>
-					<li class="divider"></li>
--->
+
                     <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#"><i class="fa fa-graduation-cap"></i> Examples</a>
                         <ul id="menu-demo-flows" class="dropdown-menu"> </ul>
                     </li>
