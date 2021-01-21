@@ -561,18 +561,7 @@ RED.nodes = (function() {
 				nns.push(convertNode(configNodes[i], true));
 			}
 		}*/
-		var absoluteXposMax = 0;
-		var absoluteYposMax = 0;
-		var workspaceColSize = RED.view.settings.gridVmajorSize;
-		for (var ni = 0; ni < nodes.length; ni++)
-		{
-			var n = nodes[ni];
-			if (n.x > absoluteXposMax) absoluteXposMax = n.x;
-			if (n.y > absoluteYposMax) absoluteYposMax = n.y;
-		}
-		// ensure that every node is included 
-		absoluteXposMax += workspaceColSize*2; 
-		absoluteYposMax += RED.view.node_def.height*2;
+		
 
 		// development debug
 		//console.warn("@createCompleteNodeSet\n  absoluteXposMax:" + absoluteXposMax +
@@ -583,15 +572,27 @@ RED.nodes = (function() {
 		for (wsi=0;wsi<workspaces.length;wsi++)
 		{
 			ws = workspaces[wsi];
-			nns.push(ws);
+            nns.push(ws);
+            
+            var absoluteXposMax = 0;
+            var absoluteYposMax = 0;
+            var workspaceColSize = RED.view.defSettings.gridVmajorSize;
+            
+            // if the ws.settings.gridVmajorSize is defined then use that instead
+            if (ws.settings.gridVmajorSize != undefined) workspaceColSize = ws.settings.gridVmajorSize;
+            
+            for (var ni = 0; ni < nodes.length; ni++)
+            {
+                var n = nodes[ni];
+                if (node.z != ws.id) continue; // workspace filter
+                if (n.x > absoluteXposMax) absoluteXposMax = n.x;
+                if (n.y > absoluteYposMax) absoluteYposMax = n.y;
+            }
+            // ensure that every node is included 
+            absoluteXposMax += workspaceColSize*2; 
+            absoluteYposMax += RED.view.node_def.height*2;
 
-			for (ni=0;ni<nodes.length;ni++)
-			{
-				var node = nodes[ni];
-				if (node.z != ws.id) continue; // workspace filter
-				if (node._def.uiObject == undefined) continue; // skip non ui nodes
-				nns.push(convertNode(node, true)); // just add ui nodes as is
-			}
+            
 			// sort nodes by columns (xpos)
 			for (var xPosMin = 0; xPosMin < absoluteXposMax; xPosMin+=workspaceColSize)
 			{
@@ -615,6 +616,14 @@ RED.nodes = (function() {
 				{
 					nns.push(nnsCol[nni]);
 				}
+            }
+            // add ui nodes last and as they are in draw order
+			for (ni=0;ni<nodes.length;ni++)
+			{
+				var node = nodes[ni];
+				if (node.z != ws.id) continue; // workspace filter
+				if (node._def.uiObject == undefined) continue; // skip non ui nodes
+				nns.push(convertNode(node, true)); // just add ui nodes as is
 			}
 		}
 		return nns;
