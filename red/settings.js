@@ -124,6 +124,20 @@ RED.settings = (function() {
         }
         return cs;
     }
+    $('#btn-reset-settings').click(resetAllSettings);
+
+    function resetAllSettings()
+    {
+        RED.main.verifyDialog("Confirm Settings Restore", "!!warning!!", "this will restore <b>ALL</b> settings to the default values.<br><br> Are you sure?", function(okPressed) { 
+            if (okPressed)
+            {
+                // theese will be replaced by proper reset functionality later
+                RED.storage.update(true); // true means dontSaveSettings
+                window.location.reload();
+            }
+        }, "Yes", "No");
+        
+    }
     function resetClassSettings(RED_Class)
     {
         RED.storage.dontSave = true; // prevent save while setting settings
@@ -566,6 +580,7 @@ RED.settings = (function() {
         getChangedSettings:getChangedSettings,
         resetClassSettings:resetClassSettings,
         restoreSettings:restoreSettings,
+        resetAllSettings:resetAllSettings,
         UpdateSettingsEditorCat:UpdateSettingsEditorCat
 	};
 })();

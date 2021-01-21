@@ -525,7 +525,7 @@ RED.main = (function() {
 
     $('#btn-save').click(function() { RED.storage.update(); });
     
-    $('#btn-reset-settings').click(function() { RED.storage.update(true); window.location.reload(); }); // true means dontSaveSettings
+    
 
 	//***********************************************/
 	//***********************************************/
