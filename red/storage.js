@@ -4,10 +4,10 @@
 
 RED.storage = (function() {
 
-	
+	var dontSave = false;
 
 	function update(dontSaveSettings) {
-		if (RED.main.firstStart() == true) return; // this prevents saves while applying settings
+		if (dontSave == true) return; // this prevents saves while applying settings
 		 
 		//RED.nodes.addClassTabsToPalette(); //Jannik
 		//RED.nodes.refreshClassNodes(); //Jannik
@@ -23,7 +23,7 @@ RED.storage = (function() {
 			var nns = RED.nodes.createCompleteNodeSet(dontSaveSettings);
 			RED.notify("<strong>Saved..</strong>", "warning", null, 2000);
 			localStorage.setItem("audio_library_guitool",JSON.stringify(nns));
-			//console.trace("localStorage write");
+			console.trace("localStorage write");
 		}
 	}
 	function allStorage() {
@@ -91,7 +91,8 @@ RED.storage = (function() {
 		}
 	}
 	return {
-		
+		get dontSave() { return dontSave; },
+		set dontSave(state) { dontSave = state; },
 		update: update,
 		load: load,
 		loadContents:loadContents, 

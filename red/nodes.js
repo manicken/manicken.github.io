@@ -43,15 +43,16 @@ RED.nodes = (function() {
 	/**
 	 * this creates a workspace object
 	 */
-	function createWorkspaceObject(id, label, inputs, outputs, _export, isMain, mainNameType, mainNameExt) // export is a reserved word
+	function createWorkspaceObject(id, label, inputs, outputs, _export, isMain, mainNameType, mainNameExt, settings) // export is a reserved word
 	{
         // first set all default values if inputs are undefined
         if (_export == undefined) _export = true;
         if (isMain == undefined) isMain = false;
         if (mainNameType == undefined) mainNameType = "tabName";
         if (mainNameExt == undefined) mainNameExt = ".ino";
+        if (settings == undefined){ settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
         // return new structure
-		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, nodes:[]};
+		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, nodes:[], settings:settings};
 	}
 	function moveNodeToEnd(node)
 	{
@@ -639,9 +640,9 @@ RED.nodes = (function() {
 		//if (ws.inputs != undefined && ws.outputs != undefined) // (no update from GUI yet) see above
 		//	console.warn("inputs && outputs is defined @ workspace load");
 
-		var cIOs = getClassIOportCounts(ws.id, nns);
+		
 
-		return createWorkspaceObject(ws.id, ws.label, cIOs.inCount, cIOs.outCount, ws.export, ws.isMain, ws.mainNameType, ws.mainNameExt);
+		
 	}
 
 	function importWorkspaces(newWorkspaces)
@@ -686,31 +687,39 @@ RED.nodes = (function() {
 				console.warn("@ !$.isArray(newNodes)");
 				newNodes = [newNodes];
 			}
-
-			// scan and load workspaces first
+            var newWorkspaces = [];
+			// scan and load workspaces and settings first
 			for (i=0;i<newNodes.length;i++) { 
 				n = newNodes[i];
 				// TODO: not remove workspace because it's now used
-				if (n.type === "workspace" || n.type === "tab") {
+				if (n.type === "tab" || n.type === "workspace") {
 					if (n.type === "workspace") {
 						n.type = "tab";
 					}
+                    var cIOs = getClassIOportCounts(n.id, newNodes);
+                    var ws = createWorkspaceObject(n.id, n.label, cIOs.inCount, cIOs.outCount, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.settings);
+                    
+                    addWorkspace(ws);
+                    newWorkspaces.push(ws);
 					
-					var ws = convertWorkspaceToNewVersion(newNodes, n);
-					addWorkspace(ws);
-					RED.view.addWorkspace(ws); // "final" function is in tabs.js
 					//console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
-
-					//if (ws.inputs != 0 || ws.outputs != 0) // this adds workspaces that have inputs and/or outputs to the palette
-					//{
-						var color = RED.main.classColor;
-						var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
-						RED.nodes.registerType(ws.label, data);
-                    //}
-                    
-                    
+                    var color = RED.main.classColor;
+					var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+					RED.nodes.registerType(ws.label, data);
+                }
+                else if (n.type === "settings")
+				{
+                    console.warn('Loading Project Settings');
+					RED.settings.setFromJSONobj(n.data);
+					continue;
 				}
-			}
+            }
+            RED.storage.dontSave = true; // prevent save between tab switch
+            for (i=0; i < newWorkspaces.length; i++) {
+                RED.view.addWorkspace(newWorkspaces[i]); // "final" function is in tabs.js
+            }
+            RED.storage.dontSave = false;
+
 			if (workspaces.length == 0) {
 				createNewDefaultWorkspace(); // jannik changed to function
 			}
@@ -750,14 +759,11 @@ RED.nodes = (function() {
 
 			for (i=0;i<newNodes.length;i++) {
 				n = newNodes[i];
-				// TODO: remove workspace in next release+1 (Node-Red team comment)
+                
+                // not TODO: remove workspace in next release+1 (Node-Red team comment)
+                
 				if (n.type === "workspace" || n.type === "tab") continue;
-				if (n.type === "settings")
-				{
-                    console.warn('n.type === "settings"');
-					RED.settings.setFromJSONobj(n.data);
-					continue;
-				}
+				else if (n.type === "settings") continue
 					
 				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
 				//console.warn(n);
@@ -1763,9 +1769,10 @@ RED.nodes = (function() {
 			if (ws != undefined)
 			{
 				currentWorkspace = ws;
-				console.warn("workspace selected:"+ id);
+				console.warn("workspace selected: "+ ws.label + " " + ws.id);
 			}
-		},
+        },
+        getCurrentWorkspace: function() { return currentWorkspace},
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,
 		links: links,  // TODO: exposed for d3 vis

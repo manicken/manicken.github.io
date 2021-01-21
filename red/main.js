@@ -29,7 +29,7 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
  * node RED main - here the main entry function exist
  */
 RED.main = (function() {
-	var firstStart = true; // this is set to false when whole "program" has started once
+	
 
 	//NOTE: code generation save function have moved to arduino-export.js
 	
@@ -272,15 +272,17 @@ RED.main = (function() {
 	// function save(force)
 	//NOTE: code generation save function have moved to arduino-export.js
 	
-	function verifyDialog(dialogTitle, textTitle, text, cb) {
+	function verifyDialog(dialogTitle, textTitle, text, cb, okBtnTxt, cancelBtnTxt) {
+        if (okBtnTxt == undefined) okBtnTxt = "Ok";
+        if (cancelBtnTxt == undefined) cancelBtnTxt = "Cancel";
 		$( "#node-dialog-verify" ).dialog({
 			modal: true,
 			autoOpen: false,
 			width: 500,
 			title: dialogTitle,
 			buttons: [
-				{ text: "Ok", click: function() { cb(true); $( this ).dialog( "close" );	} },
-				{ text: "Cancel", click: function() { cb(false); $( this ).dialog( "close" ); }	}
+				{ text: okBtnTxt, click: function() { cb(true); $( this ).dialog( "close" );	} },
+				{ text: cancelBtnTxt, click: function() { cb(false); $( this ).dialog( "close" ); }	}
 			],
 			open: function(e) { RED.keyboard.disable();	},
 			close: function(e) { RED.keyboard.enable();	}
@@ -517,9 +519,9 @@ RED.main = (function() {
           };
 
     });
-	$('#btn-guiEditMode').click(function() { RED.view.settings.guiEditMode = true; });
-	$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
-	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = $('#btn-guiRunEditMode').prop('checked'); });
+	//$('#btn-guiEditMode').click(function() { RED.view.settings.guiEditMode = true; });
+	//$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
+	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = !$('#btn-guiRunEditMode').prop('checked'); });
 
     $('#btn-save').click(function() { RED.storage.update(); });
     
@@ -532,6 +534,7 @@ RED.main = (function() {
 	//***********************************************/
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
+        console.warn("main $(function() {...}) exec"); // to see load order
 		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
 		RED.arduino.startConnectedChecker();
 		
@@ -544,8 +547,8 @@ RED.main = (function() {
 		SetButtonPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
 		SetButtonPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
 		SetButtonPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
-		SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
-		SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
+		//SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
+		//SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
         SetButtonPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
         
         SetButtonPopOver("#btn-deploy", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
@@ -559,8 +562,6 @@ RED.main = (function() {
 		SetButtonPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
         
         SetButtonPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
-        
-        
 
 		jscolor.presets.default = {
 			closeButton:true
@@ -568,7 +569,7 @@ RED.main = (function() {
 		jscolor.trigger('input change');
 		jscolor.installByClassName("jscolor");
 		
-		console.warn("main $(function() {...}); is executed after page load!"); // to see load order
+		
 		$(".palette-spinner").show();
 		
 		// server test switched off - test purposes only
@@ -599,8 +600,9 @@ RED.main = (function() {
 			RED.BiDirDataWebSocketBridge.StartWebSocketConnection();
             RED.projectStructure.createTab();
             loadNodes(); // this also loads the settings so it need to be before RED.settings.createTab();
+            RED.storage.dontSave = true;
             RED.settings.createTab();
-            
+            RED.storage.dontSave = false;
             
 
             
@@ -635,16 +637,16 @@ RED.main = (function() {
 				$(".palette-spinner").hide();
 			})
 		}
-		firstStart = false;
 	});
 
 	return {
-		firstStart: function () {return firstStart;},
+		
 		classColor:classColor,
 		requirements:requirements,
 		print:PrintElem,
 		download:download,
 		showSelectNameDialog:showSelectNameDialog,
-		SetButtonPopOver:SetButtonPopOver
+        SetButtonPopOver:SetButtonPopOver,
+        verifyDialog:verifyDialog
 	};
 })();

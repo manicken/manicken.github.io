@@ -409,8 +409,22 @@ input.settings-item-textInput {
     cursor: pointer;
     text-align: center;
     padding: 3px;
+    height: 21px;
 }
-.settings-header i {
+#btn-guiRunEditMode {
+    margin-top: 0px;
+}
+.settings-category div .settings-menu {
+    position: relative;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    top:2px;
+    left:2px
+}
+
+.settings-header i.icon-chevron-down {
     float: right;
     -webkit-transition: all 0.2s ease-in-out;
     -moz-transition: all 0.2s ease-in-out;

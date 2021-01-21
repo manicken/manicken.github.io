@@ -20,7 +20,7 @@
 
 
 RED.settings = (function() {
-
+    
     function createTab()
 	{
 		var content = document.createElement("div");
@@ -48,30 +48,38 @@ RED.settings = (function() {
         var psettings = projectSettings_jsonObj;
         for (let i = 0; i < psettings.length; i++)
         {
-            var csettings = psettings[i];
-            var json_object = Object.getOwnPropertyNames(csettings)[0]; // there is only one item
-            //console.log(json_object);
-            //console.log(csettings[json_object]);
-            
-            //RED[json_object].settings = csettings[json_object];// this don't run setters 
-            var settingValueNames = Object.getOwnPropertyNames(csettings[json_object]);
-            //console.log("@testSettingLoad:");
-            //console.log(settingValueNames);
-            for (var svi = 0; svi < settingValueNames.length; svi++)
-            {
-                var valueName = settingValueNames[svi];
-
-               // console.warn(valueName);
-                if (RED[json_object].settings[valueName] != undefined) // this skip any removed settings
-                {
-                    RED[json_object].settings[valueName] = csettings[json_object][valueName];
-                    //console.warn("typeof " + valueName + ":" + typeof csettings[json_object][valueName])
-				}
-				else
-					console.error("setting removed typeof " + valueName + ":" + typeof csettings[json_object][valueName] + ":" + json_object)
-            }
+            var ClassSettings = psettings[i];
+            var RED_Class_Name = Object.getOwnPropertyNames(ClassSettings)[0]; // there is only one item
+            var RED_Class = RED[RED_Class_Name];
+            var ClassSetting = ClassSettings[RED_Class_Name];
+            restoreSettings(RED_Class, ClassSetting)
         }
-	}
+    }
+    function restoreSettings(RED_Class, ClassSetting)
+    {
+        RED.storage.dontSave = true; // prevent save while setting settings
+        RED.view.preventRedraw = true;
+        //console.log(typeof RED_Class);
+        //console.log(ClassSetting);
+        var settingValueNames = Object.getOwnPropertyNames(ClassSetting);
+        //console.log("@testSettingLoad:");
+        //console.log(settingValueNames);
+        for (var svi = 0; svi < settingValueNames.length; svi++)
+        {
+            var valueName = settingValueNames[svi];
+
+            // console.warn(valueName);
+            if (RED_Class.settings[valueName] != undefined) // this skip any removed settings
+            {
+                RED_Class.settings[valueName] = ClassSetting[valueName];
+                //console.warn("typeof " + valueName + ":" + typeof csetting[valueName])
+            }
+            else
+                console.error("setting removed typeof " + valueName + ":" + typeof ClassSetting[valueName] + ":" + typeof RED_Class)
+        }
+        RED.storage.dontSave = false; // prevent save while setting settings
+        RED.view.preventRedraw = false;
+    }
 	function getAsJSONobj()
 	{
 		// get all settings that is defined
@@ -91,7 +99,9 @@ RED.settings = (function() {
                 let RED_SubClass_Name = RED_Class_SubClasses[i];
                 if (RED_SubClass_Name == "settings")
                 {
-
+                    if (RED_Class.settingsCategory.dontSave != undefined && RED_Class.settingsCategory.dontSave == true)
+                        continue;
+                        
                     settings.push({[RED_Class_Name]:getChangedSettings(RED_Class)}); //RED_Class.settings});
                     //RED.console_ok("found settings@" + RED_Class_Name);
                 }
@@ -107,10 +117,49 @@ RED.settings = (function() {
         for (var i = 0; i < settingNames.length; i++)
         {
             var name = settingNames[i];
-            if (RED_Class.settings[name].toString() !== RED_Class.defSettings[name].toString())
+            var str1 = RED_Class.settings[name].toString();
+            var str2 = RED_Class.defSettings[name].toString();
+            if (str1.localeCompare(str2) != 0)
                 cs[name] = RED_Class.settings[name];
         }
         return cs;
+    }
+    function resetClassSettings(RED_Class)
+    {
+        RED.storage.dontSave = true; // prevent save while setting settings
+        RED.view.preventRedraw = true;
+        var settingNames = Object.getOwnPropertyNames(RED_Class.settings);
+        
+        for (var i = 0; i < settingNames.length; i++)
+        {
+            var name = settingNames[i];
+            RED_Class.settings[name] = RED_Class.defSettings[name];
+        }
+        RED.storage.dontSave = false;
+        RED.view.preventRedraw = false;
+    }
+
+    function UpdateSettingsEditorCat(RED_Class, settings)
+	{
+		var settingNames = Object.getOwnPropertyNames(settings);
+		for (let i = 0; i < settingNames.length; i++)
+		{
+			var settingName = settingNames[i];
+			var setting = settings[settingName];
+
+			if (setting.items != undefined)
+			{
+				UpdateSettingsEditorCat(RED_Class, setting.items);
+				continue;
+			}
+			var typeOf = setting.type;
+            //console.warn("UpdateSettingsEditorCat @ " + setting.label + " " + RED_Class.settings[settingName] + " >>>" + setting.valueId + "<<<");
+			if (typeOf === "boolean") {
+				$("#" + setting.valueId).prop('checked', RED_Class.settings[settingName]);
+            } else if (typeOf !== "button") { // buttons only don't have settings
+                $("#" + setting.valueId).val(RED_Class.settings[settingName]);
+            }
+        }
     }
 
 	function generateSettingsFromClasses(containerId)
@@ -132,14 +181,14 @@ RED.settings = (function() {
 				if (RED_SubClass_Name != "settingsEditor")
 					continue;
                 
-				CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, RED_Class.settingsEditor, RED_Class.settingsCategory);
+				CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, RED_Class.settingsEditor, RED_Class.settingsCategory, true);
             }
         }
 	}
 
-	function CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, settings, settingCatParams)
+	function CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, settings, settingCatParams, isRoot)
 	{
-		var catContainerId = createCategory(containerId, RED_Class_Name, settingCatParams);
+		var catContainerId = createCategory(RED_Class, containerId, RED_Class_Name, settingCatParams, isRoot);
 		var settingNames = Object.getOwnPropertyNames(settings);
 		for (let i = 0; i < settingNames.length; i++)
 		{
@@ -148,7 +197,7 @@ RED.settings = (function() {
 
 			if (setting.items != undefined)
 			{
-				CreateSettingsEditorCat(RED_Class, RED_Class_Name + "-" + settingName, catContainerId, setting.items, setting);
+				CreateSettingsEditorCat(RED_Class, RED_Class_Name + "-" + settingName, catContainerId, setting.items, setting, false);
 				continue;
 			}
 
@@ -187,11 +236,13 @@ RED.settings = (function() {
 			else if (typeOf === "multiline")
 			{
 				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText);
-			}
+                setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
+            }
 			else if (typeOf === "color")
 			{
 				createColorSel(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, setting.popupText);
-			}
+                setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
+            }
 			else if (typeOf === "string")
 			{
 				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText);
@@ -209,7 +260,7 @@ RED.settings = (function() {
 		}
 	}
 
-	function createCategory(containerId, id, settingCatParams)
+	function createCategory(RED_Class, containerId, id, settingCatParams, isRoot)
 	{
         var headerLabel = settingCatParams.label;
         var expanded = settingCatParams.expanded;
@@ -234,14 +285,46 @@ RED.settings = (function() {
         if (headerTextColor != undefined) headerTextColor = " color:"+headerTextColor + ";";
         else headerTextColor = "";
 		var headerId = "set-header-" + id;
-		var catContainerId = "set-content-"  + id;
-		var html = '<div class="settings-category" style="'+ bgColor +'">'+ 
-			'<div id="'+headerId+'" class="settings-header" style="'+ headerBgColor + headerTextColor +'">'+chevron+'<span>'+headerLabel+'</span></div>'+
-			'<div class="settings-content" id="'+catContainerId+'" style="display: '+displayStyle+bgColor+'">'+
-			'</div>\n'+
-			'</div>\n'
+        var catContainerId = "set-content-"  + id;
+        var headerMenuBtnResetId = "set-menu-btnReset-" + id;
+        var html = "";
+        html += '<div class="settings-category" style="'+ bgColor +'">';
+        if (isRoot != undefined && isRoot == true) {
+            html += '<div class="btn-group pull-left settings-menu">';
+			html += '<a class="btn dropdown-toggle settings-menu" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i></a>';
+            html += '<ul class="dropdown-menu">';
+            html += '<li><a id="'+headerMenuBtnResetId+'" ><i class="fa fa-refresh"></i> Reset Settings</a></li>';
+            html += '</ul>';
+			html += '</div>';
+        }
+        html += '<div id="'+headerId+'" class="settings-header" style="'+ headerBgColor + headerTextColor +'">';
+        
+        html += '<span>'+headerLabel+'</span>';
+        html += chevron;
+        html += '</div>';
+		html += '<div class="settings-content" id="'+catContainerId+'" style="display: '+displayStyle+bgColor+'">';
+		html += '</div>\n';
+		html += '</div>\n';
 		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
-		$("#"+containerId).append(html);
+        $("#"+containerId).append(html);
+        
+        $("#" + headerMenuBtnResetId).on('click', function(e) {
+            RED.main.verifyDialog("Confirm Settings Restore", "!warning!", "this will restore the <b>"+ headerLabel + "</b> settings to the default values.<br><br> Are you sure?", function(okPressed) { 
+				if (okPressed)
+				{
+					resetClassSettings(RED_Class);
+                    UpdateSettingsEditorCat(RED_Class, RED_Class.settingsEditor);
+                    if (RED_Class == RED.view) {
+                        console.error("reset settings for RED.view");
+                        RED.nodes.getCurrentWorkspace().settings = {};
+                        RED.view.redraw();
+                    }
+                    //generateSettingsFromClasses("tab-settings"); // don't work
+                    RED.storage.update();
+                    console.error($(this) ,"headerMenuBtnResetId menu clicked");
+				}
+			}, "Yes", "No");
+        });
 		$("#" + headerId).off('click').on('click', function(e) {
 			
 			var displayStyle = $(this).next().css('display');
@@ -261,7 +344,8 @@ RED.settings = (function() {
 			RED.main.SetButtonPopOver("#" + headerId, popupText, "left");
 		}
 		return catContainerId;
-	}
+    }
+   
 
 	/**
 	 * creates and returns html code for a checkbox with label
@@ -478,7 +562,11 @@ RED.settings = (function() {
     return {
 		createTab:createTab,
 		getAsJSONobj:getAsJSONobj,
-		setFromJSONobj:setFromJSONobj
+        setFromJSONobj:setFromJSONobj,
+        getChangedSettings:getChangedSettings,
+        resetClassSettings:resetClassSettings,
+        restoreSettings:restoreSettings,
+        UpdateSettingsEditorCat:UpdateSettingsEditorCat
 	};
 })();
 

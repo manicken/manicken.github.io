@@ -18,7 +18,8 @@
 
 RED.view = (function() {
 	var redrawTotalTime = 0.0;
-	var redrawCount = 0;
+    var redrawCount = 0;
+    var preventRedraw = false;
 
 	var posMode = 2; // position mode (1 = topLeft, 2 = center)
 
@@ -65,7 +66,7 @@ RED.view = (function() {
         nodeDefaultTextSize: 14,
         keyboardScrollSpeed:10,
         guiRunForceScrollSpeed:20,
-        workspaceMinimumTabSize: 50,
+        
 	};
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
@@ -100,49 +101,50 @@ RED.view = (function() {
         nodeDefaultTextSize: defSettings.nodeDefaultTextSize,
         keyboardScrollSpeed: defSettings.keyboardScrollSpeed,
         guiRunForceScrollSpeed: defSettings.guiRunForceScrollSpeed,
-        workspaceMinimumTabSize: defSettings.workspaceMinimumTabSize, // this should not be here (workspace should have it's own .js file just like new Node-Red)
+        
 	};	
 	var settings = {
 		get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
 		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); RED.storage.update();},
 
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
-		set showNodeToolTip(value) { _settings.showNodeToolTip = value; RED.storage.update();},
+		set showNodeToolTip(state) { _settings.showNodeToolTip = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get guiEditMode() { return _settings.guiEditMode; },
 		set guiEditMode(state) { 
 			_settings.guiEditMode = state; 
 			$('#' + settingsEditor.otherSubCat.items.guiEditMode.valueId).prop('checked', state);
-			$('#btn-guiRunEditMode').prop('checked', state);
+            saveSettingsToActiveWorkspace();
+            RED.storage.update();
 			if (state == true)
 			{
-				RED.notify("gui EDIT mode", "warning", null, 1000);
-				$('#btn-guiEditMode').prop('checked', true);
-                $('#btn-guiRunMode').prop('checked', false);
+                RED.notify("gui EDIT mode", "warning", null, 500);
+                $('#btn-guiRunEditMode').prop('checked', false);
                 $('.ui_textbox_textarea').css("pointer-events", "all");
+                
 			}
 			else
 			{
-				RED.notify("gui RUN mode", "warning", null, 1000);
-				$('#btn-guiEditMode').prop('checked', false);
-                $('#btn-guiRunMode').prop('checked', true);
+                RED.notify("gui RUN mode", "warning", null, 500);
+                $('#btn-guiRunEditMode').prop('checked', true);
                 $('.ui_textbox_textarea').css("pointer-events", "none");
+               
             }
             
-            RED.storage.update();
+            
 		},
 
 		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
-		set lockWindowMouseScrollInRunMode(value) { _settings.lockWindowMouseScrollInRunMode = value; RED.storage.update();},
+		set lockWindowMouseScrollInRunMode(state) { _settings.lockWindowMouseScrollInRunMode = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get space_width() { return parseInt(_settings.space_width); },
-		set space_width(value) { _settings.space_width = parseInt(value); initWorkspace(); initGrid(); RED.storage.update(); },
+		set space_width(value) { _settings.space_width = parseInt(value); initWorkspace(); initGrid(); saveSettingsToActiveWorkspace(); RED.storage.update(); },
 
 		get space_height() { return parseInt(_settings.space_height); },
-		set space_height(value) { _settings.space_height = parseInt(value); initWorkspace(); initGrid(); RED.storage.update();},
+		set space_height(value) { _settings.space_height = parseInt(value); initWorkspace(); initGrid(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get workspaceBgColor() { return _settings.workspaceBgColor; },
-		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); RED.storage.update();},
+		set workspaceBgColor(value) { _settings.workspaceBgColor = value; initWorkspace(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get scaleFactor() { return parseFloat(_settings.scaleFactor); },
 		set scaleFactor(value) { value = parseFloat(value);
@@ -151,65 +153,68 @@ RED.view = (function() {
 								 $("#" + settingsEditor.otherSubCat.items.scaleFactor.valueId).val(value.toFixed(2));
 								 redraw(true);
 								 redraw_links_init();
-								 redraw_links(); RED.storage.update();},
+                                 redraw_links();
+                                 saveSettingsToActiveWorkspace();
+                                 RED.storage.update();},
 
 		get showGridHminor() { return _settings.showGridHminor; },
-		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); RED.storage.update();},
+		set showGridHminor(state) { _settings.showGridHminor = state; showHideGridHminor(state); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get showGridHmajor() { return _settings.showGridHmajor; },
-		set showGridHmajor(state) { _settings.showGridHmajor = state; showHideGridHmajor(state); RED.storage.update();},
+		set showGridHmajor(state) { _settings.showGridHmajor = state; showHideGridHmajor(state); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get showGridVminor() { return _settings.showGridVminor; },
-		set showGridVminor(state) { _settings.showGridVminor = state; showHideGridVminor(state); RED.storage.update();},
+		set showGridVminor(state) { _settings.showGridVminor = state; showHideGridVminor(state); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get showGridVmajor() { return _settings.showGridVmajor; },
-		set showGridVmajor(state) { _settings.showGridVmajor = state; showHideGridVmajor(state); RED.storage.update();},
+		set showGridVmajor(state) { _settings.showGridVmajor = state; showHideGridVmajor(state); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get nodeMouseDownShowGridHminor() { return _settings.nodeMouseDownShowGridHminor; },
-		set nodeMouseDownShowGridHminor(state) { _settings.nodeMouseDownShowGridHminor = state; RED.storage.update();},
+		set nodeMouseDownShowGridHminor(state) { _settings.nodeMouseDownShowGridHminor = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get nodeMouseDownShowGridHmajor() { return _settings.nodeMouseDownShowGridHmajor; },
-		set nodeMouseDownShowGridHmajor(state) { _settings.nodeMouseDownShowGridHmajor = state; RED.storage.update();},
+		set nodeMouseDownShowGridHmajor(state) { _settings.nodeMouseDownShowGridHmajor = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get nodeMouseDownShowGridVminor() { return _settings.nodeMouseDownShowGridVminor; },
-		set nodeMouseDownShowGridVminor(state) { _settings.nodeMouseDownShowGridVminor = state; RED.storage.update();},
+		set nodeMouseDownShowGridVminor(state) { _settings.nodeMouseDownShowGridVminor = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get nodeMouseDownShowGridVmajor() { return _settings.nodeMouseDownShowGridVmajor; },
-		set nodeMouseDownShowGridVmajor(state) { _settings.nodeMouseDownShowGridVmajor = state; RED.storage.update();},
+		set nodeMouseDownShowGridVmajor(state) { _settings.nodeMouseDownShowGridVmajor = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get gridHminorSize() { return parseInt(_settings.gridHminorSize); },
-		set gridHminorSize(value) { _settings.gridHminorSize = parseInt(value); initHminorGrid(); RED.storage.update();},
+		set gridHminorSize(value) { _settings.gridHminorSize = parseInt(value); initHminorGrid(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get gridHmajorSize() { return parseInt(_settings.gridHmajorSize); },
-		set gridHmajorSize(value) { _settings.gridHmajorSize = parseInt(value); initHmajorGrid(); RED.storage.update();},
+		set gridHmajorSize(value) { _settings.gridHmajorSize = parseInt(value); initHmajorGrid(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get gridVminorSize() { return parseInt(_settings.gridVminorSize); },
-		set gridVminorSize(value) { _settings.gridVminorSize = parseInt(value); initVminorGrid(); RED.storage.update();},
+		set gridVminorSize(value) { _settings.gridVminorSize = parseInt(value); initVminorGrid(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get gridVmajorSize() { return parseInt(_settings.gridVmajorSize); },
-		set gridVmajorSize(value) { _settings.gridVmajorSize = parseInt(value); initVmajorGrid(); RED.storage.update();},
+		set gridVmajorSize(value) { _settings.gridVmajorSize = parseInt(value); initVmajorGrid(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get gridMinorColor() { return _settings.gridMinorColor; },
-		set gridMinorColor(value) { _settings.gridMinorColor = value; setMinorGridColor(); RED.storage.update();},
+		set gridMinorColor(value) { _settings.gridMinorColor = value; setMinorGridColor(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get gridMajorColor() { return _settings.gridMajorColor; },
-		set gridMajorColor(value) { _settings.gridMajorColor = value; setMajorGridColor(); RED.storage.update();},
+		set gridMajorColor(value) { _settings.gridMajorColor = value; setMajorGridColor(); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get snapToGrid() { return _settings.snapToGrid; },
-		set snapToGrid(state) { _settings.snapToGrid = state; RED.storage.update();},
+		set snapToGrid(state) { _settings.snapToGrid = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get snapToGridHsize() { return parseInt(_settings.snapToGridHsize); },
-		set snapToGridHsize(value) { _settings.snapToGridHsize = parseInt(value); RED.storage.update();},
+		set snapToGridHsize(value) { _settings.snapToGridHsize = parseInt(value); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get snapToGridVsize() { return parseInt(_settings.snapToGridVsize); },
-		set snapToGridVsize(value) { _settings.snapToGridVsize = parseInt(value); RED.storage.update();},
+		set snapToGridVsize(value) { _settings.snapToGridVsize = parseInt(value); saveSettingsToActiveWorkspace(); RED.storage.update();},
 
 		get lineCurveScale() { return parseFloat(_settings.lineCurveScale);},
 		set lineCurveScale(value) { value = parseFloat(value);
 									if (value < 0.01) value = 0.01;
 									_settings.lineCurveScale = value;
 									$("#" + settingsEditor.lineCurveSubCat.items.lineCurveScale.valueId).val(value.toFixed(2));
-                                    anyLinkEnter=true; redraw_links(); 
+                                    anyLinkEnter=true; redraw_links();
+                                    saveSettingsToActiveWorkspace(); 
                                     RED.storage.update();
                                 },
 
@@ -219,50 +224,49 @@ RED.view = (function() {
 										  _settings.lineConnectionsScale = value;
 										  $("#" + settingsEditor.lineCurveSubCat.items.lineConnectionsScale.valueId).val(value.toFixed(2));
                                           anyLinkEnter=true; redraw_links();
+                                          saveSettingsToActiveWorkspace(); 
                                           RED.storage.update();
                                         },
 
-		get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-        set useCenterBasedPositions(value) { _settings.useCenterBasedPositions = parseInt(value); 
-                                            if (value == true) posMode=2; else posMode=1;
-                                            completeRedraw(); RED.storage.update(); },
+		
 
 		get nodeDefaultTextSize() { return parseInt(_settings.nodeDefaultTextSize); },
-        set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = parseInt(value); completeRedraw();RED.storage.update(); },
+        set nodeDefaultTextSize(value) { _settings.nodeDefaultTextSize = parseInt(value); completeRedraw(); saveSettingsToActiveWorkspace(); RED.storage.update(); },
         
         get keyboardScrollSpeed() { return parseInt(_settings.keyboardScrollSpeed); },
-        set keyboardScrollSpeed(value) { _settings.keyboardScrollSpeed = parseInt(value); RED.storage.update(); },
+        set keyboardScrollSpeed(value) { _settings.keyboardScrollSpeed = parseInt(value); saveSettingsToActiveWorkspace(); RED.storage.update(); },
         
         get guiRunForceScrollSpeed() { return parseInt(_settings.guiRunForceScrollSpeed); },
-        set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); RED.storage.update(); },
+        set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); saveSettingsToActiveWorkspace(); RED.storage.update(); },
 
-        get workspaceMinimumTabSize() { return parseInt(_settings.workspaceMinimumTabSize); },
-        set workspaceMinimumTabSize(value) { _settings.workspaceMinimumTabSize = parseInt(value); console.warn("set workspaceMinimumTabSize" + value);
-                                            workspace_tabs.setMinimumTabWidth(_settings.workspaceMinimumTabSize);
-                                            RED.storage.update(); },
-        
-        
+        get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
+        set useCenterBasedPositions(state) { _settings.useCenterBasedPositions = state; 
+                                            if (state == true) posMode=2; else posMode=1;
+                                            completeRedraw();
+                                            saveSettingsToActiveWorkspace(); 
+                                            RED.storage.update();
+                                            },
 	};
 
-	var settingsCategory = { label:"Workspace", expanded:false, bgColor:"#DDD" };
+	var settingsCategory = { label:"Workspace/View", expanded:false, bgColor:"#DDD", dontSave:true }; // don't save is special now when we have individual settings for each tab
 
 	var settingsEditor = {
 		gridSubCat: {label:"Grid", expanded:false, bgColor:"#FFFFFF", popupText: "Change workspace grid appearence.", 
 			items: {
-				gridNodeMoveShowSubCat: {label:"Node Move Show", expanded:false, bgColor:"#DDD", popupText: "if grid is not visible enabling each here makes the grid visible when moving a node.<br><br>note. showing the minor grid can be sluggish specially when the gridsize is small and the workspace big.", 
-					items: {
-						nodeMouseDownShowGridHminor: {label:"Show minor h-grid.", type:"boolean"},
-						nodeMouseDownShowGridHmajor: {label:"Show major h-grid.", type:"boolean"},
-						nodeMouseDownShowGridVminor: {label:"Show minor v-grid.", type:"boolean"},
-						nodeMouseDownShowGridVmajor: {label:"Show major v-grid.", type:"boolean"},
-					}
-				},
 				gridShowHideSubCat: {label:"Show/Hide", expanded:false, bgColor:"#DDD",
 					items: {
 						showGridHminor: {label:"Show minor h-grid.", type:"boolean"},
 						showGridHmajor: {label:"Show major h-grid.", type:"boolean"},
 						showGridVminor: {label:"Show minor v-grid.", type:"boolean"},
 						showGridVmajor: {label:"Show major v-grid.", type:"boolean"},
+					}
+                },
+                gridNodeMoveShowSubCat: {label:"Node Move Show", expanded:false, bgColor:"#DDD", popupText: "if grid is not visible enabling each here makes the grid visible when moving a node.<br><br>note. showing the minor grid can be sluggish specially when the gridsize is small and the workspace big.", 
+					items: {
+						nodeMouseDownShowGridHminor: {label:"Show minor h-grid.", type:"boolean"},
+						nodeMouseDownShowGridHmajor: {label:"Show major h-grid.", type:"boolean"},
+						nodeMouseDownShowGridVminor: {label:"Show minor v-grid.", type:"boolean"},
+						nodeMouseDownShowGridVmajor: {label:"Show major v-grid.", type:"boolean"},
 					}
 				},
 				gridColorsSubCat: {label:"Colors", expanded:false, bgColor:"#DDD",
@@ -316,7 +320,7 @@ RED.view = (function() {
 				lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
                 keyboardScrollSpeed:  {label:"Keyboard scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when scrolling the workspace with the keyboard arrow-keys"},
                 guiRunForceScrollSpeed:  {label:"Gui run forced scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when forcing scrolling by holding down ctrl, when the shift is also held the scroll is horizontal."},
-                workspaceMinimumTabSize:  {label:"Min Workspace Tab Size", type:"number", valueId:"", popupText: "set the minimum workspace tab size"},
+                
             }
 		}
 	}
@@ -547,7 +551,7 @@ RED.view = (function() {
 	function initVminorGrid()
 	{
 		gridScaleTicks = [];
-		for (var i = settings.gridVminorSize; i <= settings.space_height; i+=settings.gridVminorSize)
+		for (var i = settings.gridVminorSize; i <= settings.space_width; i+=settings.gridVminorSize)
 			gridScaleTicks.push(i);
 		//console.log("gridScaleTicks:"+gridScaleTicks);
 		gridVminor.selectAll("line.vertical").remove();
@@ -570,7 +574,7 @@ RED.view = (function() {
 	function initVmajorGrid()
 	{
 		var gridScaleTicks = [];
-		for (var i = settings.gridVmajorSize; i <= settings.space_height; i+=settings.gridVmajorSize)
+		for (var i = settings.gridVmajorSize; i <= settings.space_width; i+=settings.gridVmajorSize)
 			gridScaleTicks.push(i);
 		//console.log("gridScaleTicks:"+gridScaleTicks);
 		gridVmajor.selectAll("line.vertical").remove();
@@ -633,24 +637,45 @@ RED.view = (function() {
 		} else {
 			/*$('#grid-v-mi')*/gridVminor.attr("style", "visibility:hidden;");
 		}
-	}
-    
+    }
+    // this makes it possible to have different settings for each tab
+    var preventSaveActiveWorkspaceSettings = false;
+    function saveSettingsToActiveWorkspace()
+    {
+        if (preventSaveActiveWorkspaceSettings == true) return;
+        if (activeWorkspace === 0) return;
+        RED.nodes.getWorkspace(activeWorkspace).settings = RED.settings.getChangedSettings(RED.view);
+    }
+
     function setSelectWorkspace(tab)
     {
-        setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
-						
-        console.log("workspace_tabs onchange:", tab);
         var chart = $("#chart");
         if (activeWorkspace !== 0) {
+            //var awsLabel = RED.nodes.getWorkspace(activeWorkspace).label	
+            //console.log("workspace_tabs onchange from:",awsLabel ," to ", tab.label);
             workspaceScrollPositions[activeWorkspace] = {
                 left:chart.scrollLeft(),
                 top:chart.scrollTop()
             };
         }
+        activeWorkspace = tab.id;
+
+        // restore the settings for the tab
+        if (RED.nodes.getWorkspace(tab.id).settings != undefined) { // failsafe check should never happen
+            preventSaveActiveWorkspaceSettings = true;
+            console.warn("Restoring tab settings");
+            RED.settings.resetClassSettings(RED.view); // this first resets all settings to default
+            RED.settings.restoreSettings(RED.view, tab.settings);  // this then apply what is changed
+            RED.settings.UpdateSettingsEditorCat(RED.view, RED.view.settingsEditor); // finally update settings editor tab cat
+            preventSaveActiveWorkspaceSettings = false;
+        }
+
+        setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
+        //
         var scrollStartLeft = chart.scrollLeft();
         var scrollStartTop = chart.scrollTop();
 
-        activeWorkspace = tab.id;
+        
         RED.nodes.selectWorkspace(activeWorkspace);
 
         if (workspaceScrollPositions[activeWorkspace]) {
@@ -674,6 +699,7 @@ RED.view = (function() {
         redraw(true);
         redraw_links_init();
         redraw_links();
+        //RED.storage.update();
     }
 
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
@@ -1524,7 +1550,7 @@ RED.view = (function() {
 		//console.error("@calculateTextSize str type:" + typeof str);
 		if (calculateTextSizeElement == undefined)
 		{
-			console.error("@calculateTextSize created new");
+			//console.error("@calculateTextSize created new");
 			var sp = document.createElement("span");
 			sp.className = "node_label";
 			sp.style.position = "absolute";
@@ -2848,6 +2874,7 @@ RED.view = (function() {
 	}
 	function redraw_links_init()
 	{
+        if (preventRedraw == true) return;
 		//const t0 = performance.now();
 		var wsLinks = RED.nodes.links.filter(function(d)
 		{ 
@@ -2864,7 +2891,7 @@ RED.view = (function() {
 		linkEnter.each(function(d,i) {
 			anyLinkEnter = true;
 			
-			console.log("link enter" + Object.getOwnPropertyNames(d));
+			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
 			l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
@@ -2904,6 +2931,7 @@ RED.view = (function() {
 
 	function redraw_links()
 	{
+        if (preventRedraw == true) return;
 		//const t0 = performance.now();
 		// only redraw links that is selected and where the node is moving
 		if (anyLinkEnter)
@@ -4250,6 +4278,7 @@ RED.view = (function() {
 	 * @param {boolean} fullUpdate 
 	 */
 	function redraw(fullUpdate) {
+        if (preventRedraw == true) return;
 		const t0 = performance.now();
 		//console.trace("redraw");
 		/*var chart = $("#chart");
@@ -4985,6 +5014,7 @@ RED.view = (function() {
 	}
 	function completeRedraw()
 	{
+        if (preventRedraw == true) return;
 		vis.attr("transform","scale("+settings.scaleFactor+")");
 		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
 		redraw_nodes(true,true);
@@ -4998,6 +5028,9 @@ RED.view = (function() {
 		settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
+
+        get preventRedraw() { return preventRedraw; },
+		set preventRedraw(state) { preventRedraw = state; },
         
         generateColorMap:generateColorMap,
         addColors:addColors,
@@ -5095,6 +5128,7 @@ RED.view = (function() {
             updateSelection();
             redraw(true);
         },
+        workspace_tabs:workspace_tabs,
         reveal: function(id,triggerHighlight) {
             if (RED.nodes.workspace(id) != undefined/* || RED.nodes.subflow(id)*/) {
                 workspace_tabs.activateTab(id);
