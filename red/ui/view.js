@@ -33,7 +33,13 @@ RED.view = (function() {
     var allowUiItemTextInput = false;
     var uiItemResizeBorderSize= 6;
 
-    
+    window.addEventListener('resize', function() {
+        console.error("do this happen");
+        var nb = document.getElementById("navbarId");
+        var nbh = nb.offsetHeight;
+        $("#main-container").css("top", nbh);
+        //mc.style.top = nbh;
+    });
 
     var defSettings = {
 		showWorkspaceToolbar: true,
@@ -472,13 +478,10 @@ RED.view = (function() {
 	
 	function initView() // called from main.js - document ready function
 	{
-        window.addEventListener('resize', function() {
-            console.error("do this happen");
-            var nb = document.getElementById("navbarId");
-            var nbh = nb.offsetHeight;
-            $("#main-container").css("top", nbh);
-            //mc.style.top = nbh;
-        });
+        console.error("do this happen");
+        var nb = document.getElementById("navbarId");
+        var nbh = nb.offsetHeight;
+        $("#main-container").css("top", nbh);
 
 		initWorkspace();
 		initGrid();
