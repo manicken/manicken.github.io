@@ -33,13 +33,7 @@ RED.view = (function() {
     var allowUiItemTextInput = false;
     var uiItemResizeBorderSize= 6;
 
-    window.addEventListener('resize', function() {
-        console.error("do this happen");
-        var nb = document.getElementById("navbarId");
-        var nbh = nb.offsetHeight;
-        $("#main-container").css("top", nbh);
-        //mc.style.top = nbh;
-    });
+    
 
     var defSettings = {
 		showWorkspaceToolbar: true,
@@ -475,13 +469,18 @@ RED.view = (function() {
 	var drag_line = vis.append("svg:path").attr("class", "drag_line");
 
 	var visNodes = vis.append('g').attr("class", "workspace-chart-nodes");
-	
-	function initView() // called from main.js - document ready function
-	{
-        console.error("do this happen");
+    
+    function resizeMainContainerBasedOnNavBar()
+    {
         var nb = document.getElementById("navbarId");
         var nbh = nb.offsetHeight;
         $("#main-container").css("top", nbh);
+    }
+    
+	function initView() // called from main.js - document ready function
+	{
+        window.addEventListener('resize', resizeMainContainerBasedOnNavBar);
+        resizeMainContainerBasedOnNavBar(); // run it once
 
 		initWorkspace();
 		initGrid();
