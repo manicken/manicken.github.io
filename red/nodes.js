@@ -583,10 +583,10 @@ RED.nodes = (function() {
             
             for (var ni = 0; ni < nodes.length; ni++)
             {
-                var n = nodes[ni];
+                var node = nodes[ni];
                 if (node.z != ws.id) continue; // workspace filter
-                if (n.x > absoluteXposMax) absoluteXposMax = n.x;
-                if (n.y > absoluteYposMax) absoluteYposMax = n.y;
+                if (node.x > absoluteXposMax) absoluteXposMax = node.x;
+                if (node.y > absoluteYposMax) absoluteYposMax = node.y;
             }
             // ensure that every node is included 
             absoluteXposMax += workspaceColSize*2; 

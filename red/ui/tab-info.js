@@ -78,7 +78,7 @@ RED.sidebar.info = (function() {
 			//else
 				val += currIncr + incr /*+ i + ":&nbsp;"*/ + node.nodes[i].name + "<br/>";
 
-			if (node.nodes[i].nodes != undefined && !d3.event.shiftKey) // shiftkey don't allow sub groups (good when there exists recursive group loops)
+			if (node.nodes[i].nodes != undefined && (d3.event != undefined && d3.event.shiftKey == false)) // shiftkey don't allow sub groups (good when there exists recursive group loops)
 				val += getGroupTree(node.nodes[i], incr, level);
 		}
 		
