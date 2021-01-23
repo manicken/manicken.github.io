@@ -81,9 +81,10 @@ RED.projectStructure = (function() {
 
     function getFlowData() {
         var flowData = [{
+                id: "project-tree",
                 label: "Tabs",
                 expanded: true,
-                children: []
+                children: [],
             },
            /* {
                 id: "__subflow__",
@@ -112,52 +113,29 @@ RED.projectStructure = (function() {
     }
 
     function onProjectLoad(activeProject) {
-        objects = {};
-        var newFlowData = getFlowData();
-        projectInfoLabel.empty();
+        //objects = {};
+        //var newFlowData = getFlowData();
+        //projectInfoLabel.empty();
         getProjectLabel(activeProject).appendTo(projectInfoLabel);
         projectInfo.show();
-        treeList.treeList('data',newFlowData);
+        //treeList.treeList('data',newFlowData);
     }
-    function onNodeAdd(n) {
-        objects[n.id] = {
-            id: n.id,
-            element: getNodeLabel(n),
-            gutter: getGutter(n)
-        }
-        if (n.type === "group" || n.type === "UI_ScriptButton") {
-            //console.error("onNodeAdd was group:" + n.name);
-            objects[n.id].children = [];
-            objects[n.id].deferBuild = true;
-            if (missingParents[n.id]) {
-                objects[n.id].children = missingParents[n.id];
-                delete missingParents[n.id]
-            }
-        }
-        var parent = n.parentGroup||n.z||"__global__";
-
-        if (n._def.category !== "config" || n.type === 'group' || n.type === "UI_ScriptButton") {
-            if (objects[parent]) {
-                if (empties[parent]) {
-                    empties[parent].treeList.remove();
-                    delete empties[parent];
-                }
-                if (objects[parent].treeList) {
-                    objects[parent].treeList.addChild(objects[n.id]);
-                } else {
-                    objects[parent].children.push(objects[n.id])
-                }
-            } else {
-                missingParents[parent] = missingParents[parent]||[];
-                missingParents[parent].push(objects[n.id])
-            }
-        } else {
-            //createFlowConfigNode(parent,n.type);
-            //configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
-        }
-        objects[n.id].element.toggleClass("red-ui-info-outline-item-disabled", !!n.d)
-        //updateSearch();
+    function getProjectLabel(p) {
+        var div = $('<div>',{class:"red-ui-info-outline-item red-ui-info-outline-item-flow"});
+        div.css("width", "calc(100% - 40px)");
+        var contentDiv = $('<div>',{class:"red-ui-search-result-description red-ui-info-outline-item-label"}).appendTo(div);
+        contentDiv.text(p.name);
+        var controls = $('<div>',{class:"red-ui-info-outline-item-controls"}).appendTo(div);
+        var editProjectButton = $('<button class="red-ui-button red-ui-button-small" style="position:absolute;right:5px;top: 3px;"><i class="fa fa-ellipsis-h"></i></button>')
+            .appendTo(controls)
+            .on("click", function(evt) {
+                evt.preventDefault();
+                RED.projects.editProject();
+            });
+        RED.popover.tooltip(editProjectButton,'sidebar.project.showProjectSettings');
+        return div;
     }
+    
     function onWorkspaceClear() {
         treeList.treeList('data',getFlowData());
     }
@@ -178,8 +156,8 @@ RED.projectStructure = (function() {
             objects[ws.id].children.push(getEmptyItem(ws.id));
         }
         flowList.treeList.addChild(objects[ws.id])
-        objects[ws.id].element.toggleClass("red-ui-info-outline-item-disabled", !!ws.disabled)
-        objects[ws.id].treeList.container.toggleClass("red-ui-info-outline-item-disabled", !!ws.disabled)
+        objects[ws.id].element.toggleClass("red-ui-info-outline-item-disabled", !ws.export)
+        objects[ws.id].treeList.container.toggleClass("red-ui-info-outline-item-disabled", !ws.export)
         //updateSearch();
 
     }
@@ -192,8 +170,8 @@ RED.projectStructure = (function() {
             label = label.substring(0,newlineIndex)+"...";
         }
         existingObject.element.find(".red-ui-info-outline-item-label").text(label);
-        existingObject.element.toggleClass("red-ui-info-outline-item-disabled", !!n.disabled)
-        existingObject.treeList.container.toggleClass("red-ui-info-outline-item-disabled", !!n.disabled)
+        existingObject.element.toggleClass("red-ui-info-outline-item-disabled", !n.export)
+        existingObject.treeList.container.toggleClass("red-ui-info-outline-item-disabled", !n.export)
         //updateSearch();
     }
     function onFlowsReorder(order) {
@@ -208,12 +186,52 @@ RED.projectStructure = (function() {
             return indexMap[A.id] - indexMap[B.id]
         })
     }
+    function onNodeAdd(n) {
+        objects[n.id] = {
+            id: n.id,
+            element: getNodeLabel(n),
+            gutter: getGutter(n)
+        }
+        if (n.type === "group" || n.type === "UI_ScriptButton") {
+            //console.error("onNodeAdd was group:" + n.name);
+            objects[n.id].children = [];
+            objects[n.id].deferBuild = true;
+            if (missingParents[n.id]) {
+                objects[n.id].children = missingParents[n.id];
+                delete missingParents[n.id]
+            }
+        }
+        var parent = n.parentGroup||n.z||"__global__";
+        //console.warn("onNodeAdd parent:", parent, "child:" + n.name);
 
+        if (n._def.category !== "config" || n.type === 'group' || n.type === "UI_ScriptButton") {
+            if (objects[parent]) {
+                if (empties[parent]) {
+                    empties[parent].treeList.remove();
+                    delete empties[parent];
+                }
+                if (objects[parent].treeList) {
+                    objects[parent].treeList.addChild(objects[n.id]);
+                } else {
+                    objects[parent].children.push(objects[n.id])
+                }
+            } else {
+                missingParents[parent] = missingParents[parent]||[];
+                missingParents[parent].push(objects[n.id])
+            }
+        } else {
+            //createFlowConfigNode(parent,n.type);
+            //configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
+        }
+        objects[n.id].element.toggleClass("red-ui-info-outline-item-disabled", !!n.disabled)
+        //updateSearch();
+    }
     function onNodeChange(n) {
         //console.warn("hello");
 
         var existingObject = objects[n.id];
         var parent = n.parentGroup||n.z||"__global__";
+        console.warn("onNodeChange n.parentGroup: " , n.parentGroup , " " + n.name);
 
         var nodeLabelText = getNodeLabelText(n);
         if (nodeLabelText != undefined) {
@@ -237,7 +255,8 @@ RED.projectStructure = (function() {
         console.error("existingParent",existingParent);
         if (parent !== existingParent) {
             var parentItem = existingObject.parent;
-            existingObject.treeList.remove(true);
+            if (existingObject.treeList != undefined)
+                existingObject.treeList.remove(true);
             if (parentItem.children.length === 0) {
                 if (parentItem.config) {
                     // this is a config
@@ -260,7 +279,10 @@ RED.projectStructure = (function() {
                         }
                     }
                 } else {
-                    parentItem.treeList.addChild(getEmptyItem(parentItem.id));
+                    if (parentItem.treeList != undefined)
+                        parentItem.treeList.addChild(getEmptyItem(parentItem.id));
+                    else
+                        parentItem.children.addChild(getEmptyItem(parentItem.id));
                 }
             }
             if (n._def.category === 'config' && n.type !== 'group' && n.type !== "UI_ScriptButton") {
@@ -273,6 +295,8 @@ RED.projectStructure = (function() {
                     empties[parent].treeList.remove();
                     delete empties[parent];
                 }
+                console.warn("parent: ", parent)
+                if (objects[parent] != undefined)
                 objects[parent].treeList.addChild(existingObject)
             }
 
@@ -305,9 +329,11 @@ RED.projectStructure = (function() {
     }
     function onObjectRemove(n) {
         var existingObject = objects[n.id];
-        existingObject.treeList.remove();
+        if (existingObject.treeList != undefined)
+            existingObject.treeList.remove();
         delete objects[n.id]
 
+        //console.warn("onObjectRemove " + n.name);
         // If this is a group being removed, it may have an empty item
         if (empties[n.id]) {
             delete empties[n.id];
@@ -348,6 +374,7 @@ RED.projectStructure = (function() {
     }
     function getNodeLabelText(n) {
         var label = n.name || n.type+": "+n.id;
+        label = label.toString();
         if (n._def.label) {
             try {
                 label = (typeof n._def.label === "function" ? n._def.label.call(n) : n._def.label)||"";
@@ -355,6 +382,7 @@ RED.projectStructure = (function() {
                 console.log("Definition error: "+n.type+".label",err);
             }
         }
+        
         var newlineIndex = label.indexOf("\\n");
         if (newlineIndex > -1) {
             label = label.substring(0,newlineIndex)+"...";
@@ -407,10 +435,12 @@ RED.projectStructure = (function() {
                 evt.preventDefault();
                 evt.stopPropagation();
                 if (n.type === 'tab') {
-                    if (n.disabled) {
-                        RED.workspaces.enable(n.id)
-                    } else {
+                    if (n.export == true) {
+                        n.export = false;
                         RED.workspaces.disable(n.id)
+                    } else {
+                        n.export = true;
+                        RED.workspaces.enable(n.id)
                     }
                 } else {
                     // TODO: this ought to be a utility function in RED.nodes
@@ -436,7 +466,7 @@ RED.projectStructure = (function() {
                 }
             });
             RED.popover.tooltip(toggleButton,function() {
-                return "common.label."+(((n.type==='tab' && n.disabled) || (n.type!=='tab' && n.d))?"enable":"disable");
+                return "common.label."+(((n.type==='tab' && n.export==true) || (n.type!=='tab' && n.d))?"enable":"disable");
             });
         } else {
             $('<div class="red-ui-info-outline-item-control-spacer">').appendTo(controls)

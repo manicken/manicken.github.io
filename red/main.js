@@ -619,7 +619,11 @@ RED.main = (function() {
             else
                 RED.sidebar.info.clear(); // shows the welcome text
             
-			$(".palette-spinner").hide();
+            $(".palette-spinner").hide();
+            
+            RED.events.emit("projects:load",{name:RED.arduino.settings.ProjectName});
+
+            RED.sidebar.show("project");
 			//
 		} else {
 			$.ajaxSetup({beforeSend: function(xhr){

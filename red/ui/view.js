@@ -739,11 +739,10 @@ RED.view = (function() {
 				$('#btn-workspace-delete').parent().removeClass("disabled");
 			}
 
-			var link = $("#workspace-tabs a[href='#"+tab.id+"']");
-			if (!tab.export)
-				link.attr("style", "color:#b3b3b3;");
+			if (tab.export)
+				RED.workspaces.enable(tab.id);
 			else // 
-				link.attr("style", "color:#000000;");
+                RED.workspaces.disable(tab.id);
 		},
 		onremove: function(tab) {
 			if (workspace_tabs.count() == 1) {
@@ -3433,19 +3432,25 @@ RED.view = (function() {
 	
 	function removeNodeFromGroup(group, node)
 	{
-		
+		console.warn(" try remove " + node.name + " from the group " + group.name)
 		for (var i = 0; i < group.nodes.length; i++)
 		{
-			if (group.nodes[i] == node)
+            if (group.nodes[i] == node)
 			{
-				node.parentGroup = undefined;
+                
+                node.parentGroup = undefined;
+                //RED.events.emit("nodes:remove",node);
                 group.nodes.splice(i,1);
-                RED.events.emit("nodes:change",node);
-                //RED.events.emit("nodes:change",group);
+                //RED.events.emit("nodes:add",node);
+
 				console.warn(node.name + " was removed from the group " + group.name)
-				RED.notify(node.name + " was removed from the group " + group.name,false,false, 2000);
+                RED.notify(node.name + " was removed from the group " + group.name,false,false, 2000);
+
+                
 			}
-		}
+        }
+        //RED.events.emit("groups:change",group);
+        RED.events.emit("nodes:change",node);
 	}
 	function moveSelectionToFromGroupMouseUp()
 	{
@@ -3458,10 +3463,10 @@ RED.view = (function() {
 			//console.log("lastHoveredGroupDef == true");
 			for (var i = 0; i < moving_set.length; i++)
 			{
-				var d = moving_set[i].n;
-				if (lastHoveredGroup == d) continue;
+				let node = moving_set[i].n;
+				if (lastHoveredGroup == node) continue;
 
-				removeNodeFromGroup(lastHoveredGroup, d);
+				removeNodeFromGroup(lastHoveredGroup, node);
 			}
 			lastHoveredGroup.hovered = false;
 			lastHoveredGroup = undefined;
@@ -3472,25 +3477,32 @@ RED.view = (function() {
 			for (var i = 0; i < moving_set.length; i++)
 			{
 				//moveToFromGroupMouseUp(moving_set[i].n);
-				var d = moving_set[i].n;
-				if (currentHoveredGroup == d) continue;
-				if (currentHoveredGroup.nodes.includes(d)) continue;
-				if (d.parentGroup != undefined) continue;
+				let node = moving_set[i].n;
+				if (currentHoveredGroup == node) continue;
+				if (currentHoveredGroup.nodes.includes(node)) continue;
+				if (node.parentGroup != undefined) continue;
 				
 				// here a parent "recursive prevention" root check needs to be done
 				// if any parent of currentHoveredGroup is equal to d
 				// then that parent should never be added
-				if (ifAnyRootParent(currentHoveredGroup, d)){ console.log("(recursive prevention) cannot add " + d.name + " into " + currentHoveredGroup.name); continue; }
+				if (ifAnyRootParent(currentHoveredGroup, node)){ console.log("(recursive prevention) cannot add " + node.name + " into " + currentHoveredGroup.name); continue; }
 
-				currentHoveredGroup.nodes.push(d);
-                d.parentGroup = currentHoveredGroup;
-                //RED.events.emit("nodes:change",currentHoveredGroup);
-                RED.events.emit("nodes:change",d);
+                //RED.events.emit("nodes:remove", node);
+                currentHoveredGroup.nodes.push(node);
+                //RED.events.emit("groups:change", currentHoveredGroup);
+                node.parentGroup = currentHoveredGroup;
+                //RED.events.emit("nodes:add", node);
+
+				console.warn(node.name + " was added to the group " + currentHoveredGroup.name);
+                RED.notify(node.name + " was added to the group " + currentHoveredGroup.name,false,false, 2000);
+
                 
-				console.warn(d.name + " was added to the group " + currentHoveredGroup.name);
-				RED.notify(d.name + " was added to the group " + currentHoveredGroup.name,false,false, 2000);
-			}
-			currentHoveredGroup.hovered = false;
+                RED.events.emit("nodes:change",node);
+                
+            }
+            //RED.events.emit("groups:change",currentHoveredGroup);
+
+            currentHoveredGroup.hovered = false;
 			currentHoveredGroup = undefined;
 		}
 		 
@@ -3613,8 +3625,9 @@ RED.view = (function() {
 			if (currentHoveredGroup != undefined) // used when hovering from child-to-parent or parent-to-child
 			{
 				if (groupAt == currentHoveredGroup) return;
-				currentHoveredGroup.hovered = false;
-				restoreOldSizeAndPos(currentHoveredGroup);
+                currentHoveredGroup.hovered = false;
+                if (RED.workspaces.settings.addToGroupAutosize == true)
+				    restoreOldSizeAndPos(currentHoveredGroup);
 				lastHoveredGroup = currentHoveredGroup;
 				console.warn("group leave2:" + currentHoveredGroup.name);
 			}
@@ -3629,7 +3642,7 @@ RED.view = (function() {
 					moveGroupToFront(mousedown_node);
 			}
 			// prevents child group to be resized outside parent
-			if (currentHoveredGroup.parentGroup !== mousedown_node)
+			if (currentHoveredGroup.parentGroup !== mousedown_node && RED.workspaces.settings.addToGroupAutosize == true)
 			{
 				var selExtents = getSelectionExtents();
 				var chgExtents = getNodeExtents(currentHoveredGroup);
@@ -3648,7 +3661,8 @@ RED.view = (function() {
 			lastHoveredGroup = currentHoveredGroup;
 			console.warn("group leave1:" + currentHoveredGroup.name);
 			currentHoveredGroup.hovered = false;
-			restoreOldSizeAndPos(currentHoveredGroup);
+            if (RED.workspaces.settings.addToGroupAutosize == true)
+                restoreOldSizeAndPos(currentHoveredGroup);
 			currentHoveredGroup = undefined;
 			redraw_groups(true);
 		}
@@ -4623,6 +4637,7 @@ RED.view = (function() {
 				.removeClass("ui-state-disabled");
         }
         $( "#node-input-workspace-name" ).val(ws.label);
+        $( "#node-input-workspace-id" ).val(ws.id);
 
         $( "#node-input-export-workspace" ).prop('checked',  ws.export);
         RED.main.SetButtonPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
@@ -4694,18 +4709,17 @@ RED.view = (function() {
 					var workspace = $(this).dialog('option','workspace');
 					
                     var exportNew = $( "#node-input-export-workspace" ).prop('checked')
-
+                    // TODO proper changed check
                     workspace.isMain = $( "#node-input-export-isMain" ).prop('checked');
                     workspace.mainNameType = $( "#node-input-export-mainNameType" ).val();
                     workspace.mainNameExt = $( "#node-input-export-mainNameExt" ).val();
 					if (workspace.export != exportNew)
 					{
 						workspace.export = exportNew;
-						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
-						if (!exportNew)
-							link.attr("style", "color:#b3b3b3;");
-						else // 
-							link.attr("style", "color:#000000;");
+                        if (exportNew == true)
+                            RED.workspaces.enable(workspace.id);
+                        else
+                            RED.workspaces.disable(workspace.id);
 					}
                     //console.warn("exportWorkspace:"+workspace.export);
 
@@ -4756,9 +4770,9 @@ RED.view = (function() {
 
                         workspace_tabs.resize(); // internally it's updateTabWidths
                         
-                        RED.events.emit("flows:change",workspace);
+                        
 					}
-                    
+                    RED.events.emit("flows:change",workspace);
 
 					$( this ).dialog( "close" );
 				}
