@@ -116,7 +116,9 @@ RED.settings = (function() {
         var settingNames = Object.getOwnPropertyNames(RED_Class.settings);
         for (var i = 0; i < settingNames.length; i++)
         {
+            
             var name = settingNames[i];
+            console.warn("getChangedSettings: " + name);
             var str1 = RED_Class.settings[name].toString();
             var str2 = RED_Class.defSettings[name].toString();
             if (str1.localeCompare(str2) != 0)

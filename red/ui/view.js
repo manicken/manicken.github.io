@@ -241,7 +241,8 @@ RED.view = (function() {
         set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); saveSettingsToActiveWorkspace(); RED.storage.update(); },
 
         get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-        set useCenterBasedPositions(state) { _settings.useCenterBasedPositions = state; 
+        set useCenterBasedPositions(state) { if (state == null) state = defSettings.useCenterBasedPositions;
+                                             _settings.useCenterBasedPositions = state; 
                                             if (state == true) posMode=2; else posMode=1;
                                             completeRedraw();
                                             saveSettingsToActiveWorkspace(); 
