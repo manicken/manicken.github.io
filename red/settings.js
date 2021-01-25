@@ -21,6 +21,8 @@
 
 RED.settings = (function() {
     
+    var globalMenuItems = [{label:"Reset Settings",iconClass:"fa fa-refresh", func:resetCatSettings}];
+
     function createTab()
 	{
 		var content = document.createElement("div");
@@ -52,10 +54,10 @@ RED.settings = (function() {
             var RED_Class_Name = Object.getOwnPropertyNames(ClassSettings)[0]; // there is only one item
             var RED_Class = RED[RED_Class_Name];
             var ClassSetting = ClassSettings[RED_Class_Name];
-            restoreSettings(RED_Class, ClassSetting)
+            restoreSettings(RED_Class, ClassSetting, RED_Class_Name)
         }
     }
-    function restoreSettings(RED_Class, ClassSetting)
+    function restoreSettings(RED_Class, ClassSetting, RED_Class_Name)
     {
         RED.storage.dontSave = true; // prevent save while setting settings
         RED.view.preventRedraw = true;
@@ -71,6 +73,12 @@ RED.settings = (function() {
             // console.warn(valueName);
             if (RED_Class.settings[valueName] != undefined) // this skip any removed settings
             {
+                // this makes sure that any settings bugs are eliminated
+                // to make it easier to recover from null value settings
+                if (ClassSetting[valueName] == null) {
+                    ClassSetting[valueName] = RED_Class.defSettings[valueName];
+                    RED.notify(["setting @ ", RED_Class_Name, valueName, "was null, used default value:", RED_Class.defSettings[valueName]].join(" "), "warning", null, 4000);
+                }
                 RED_Class.settings[valueName] = ClassSetting[valueName];
                 //console.warn("typeof " + valueName + ":" + typeof csetting[valueName])
             }
@@ -153,6 +161,27 @@ RED.settings = (function() {
         }
         RED.storage.dontSave = false;
         RED.view.preventRedraw = false;
+    }
+
+    function resetCatSettings(e, RED_Class)
+    {
+        var headerLabel = $(e.currentTarget).parent().parent().parent().parent().find(".settings-header").text();
+        RED.main.verifyDialog("Confirm Settings Restore", "!warning!", "this will restore the <b>"+ headerLabel + "</b> settings to the default values.<br><br> Are you sure?", function(okPressed) { 
+            if (okPressed)
+            {
+                resetClassSettings(RED_Class);
+                UpdateSettingsEditorCat(RED_Class, RED_Class.settingsEditor);
+                if (RED_Class == RED.view) {
+                    console.error("reset settings for RED.view");
+                    RED.nodes.getCurrentWorkspace().settings = {};
+                    RED.view.redraw();
+                }
+                //generateSettingsFromClasses("tab-settings"); // don't work
+                RED.storage.update();
+                console.error($(this) ,"headerMenuBtnResetId menu clicked");
+            }
+        }, "Yes", "No");
+        
     }
 
     function UpdateSettingsEditorCat(RED_Class, settings)
@@ -284,6 +313,7 @@ RED.settings = (function() {
         var bgColor = settingCatParams.bgColor;
         var headerBgColor = settingCatParams.headerBgColor;
         var headerTextColor = settingCatParams.headerTextColor;
+        var menuItems = settingCatParams.menuItems;
 		if (expanded)
 		{
 			var chevron = '<i class="icon-chevron-down expanded"></i>';
@@ -310,6 +340,12 @@ RED.settings = (function() {
 			html += '<a class="btn dropdown-toggle settings-menu" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i></a>';
             html += '<ul class="dropdown-menu">';
             html += '<li><a id="'+headerMenuBtnResetId+'" ><i class="fa fa-refresh"></i> Reset Settings</a></li>';
+            if (menuItems != undefined && Array.isArray(menuItems)) {
+                for (var mii = 0; mii < menuItems.length; mii++) {
+                    var mi = menuItems[mii];
+                    html += '<li><a id="set-mnu-item-'+id+'" ><i class="'+mi.iconClass+'"></i> '+mi.label+'</a></li>';
+                }
+            }
             html += '</ul>';
 			html += '</div>';
         }
@@ -324,23 +360,16 @@ RED.settings = (function() {
 		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
         $("#"+containerId).append(html);
         
-        $("#" + headerMenuBtnResetId).on('click', function(e) {
-            RED.main.verifyDialog("Confirm Settings Restore", "!warning!", "this will restore the <b>"+ headerLabel + "</b> settings to the default values.<br><br> Are you sure?", function(okPressed) { 
-				if (okPressed)
-				{
-					resetClassSettings(RED_Class);
-                    UpdateSettingsEditorCat(RED_Class, RED_Class.settingsEditor);
-                    if (RED_Class == RED.view) {
-                        console.error("reset settings for RED.view");
-                        RED.nodes.getCurrentWorkspace().settings = {};
-                        RED.view.redraw();
-                    }
-                    //generateSettingsFromClasses("tab-settings"); // don't work
-                    RED.storage.update();
-                    console.error($(this) ,"headerMenuBtnResetId menu clicked");
-				}
-			}, "Yes", "No");
-        });
+        if (isRoot != undefined && isRoot == true) {
+            $("#" + headerMenuBtnResetId).on('click', function(e) { resetCatSettings(e, RED_Class); });
+
+            if (menuItems != undefined && Array.isArray(menuItems)) {
+                for (var mii = 0; mii < menuItems.length; mii++) {
+                    var mi = menuItems[mii];
+                    $('#set-mnu-item-'  + id).on('click', mi.action);
+                }
+            }
+        }
 		$("#" + headerId).off('click').on('click', function(e) {
 			
 			var displayStyle = $(this).next().css('display');

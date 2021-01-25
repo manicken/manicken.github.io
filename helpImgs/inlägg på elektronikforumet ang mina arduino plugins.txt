@@ -1,0 +1,161 @@
+manicken var mitt smeknamn i grundskolan.
+
+Här kommer en sammanfatting på svenska:
+
+Det började med att jag sökte på Arduino Plugin.
+Och det var svårt i början då det inte finns så mycket information
+om hur man gör plugins
+(egentligen heter det "Tool" och härstammar ifrån 
+Processing, alltså den platform som Arduino IDE baserats på)
+
+Då i början fanns det bara ett simpelt exempel som finns i 
+"Arduino installationskatalog"\tools\Mangler\src\Mangler.java
+
+Det första "riktiga" jag skapade var en WebServer
+och här implementerade jag den första funktionaliteten.
+
+Men "Tool" funktionaliteten är egentligen tänkt att bara köras ifrån menyn.
+och då anropas "Tool"-interfacets
+void run() { } 
+
+Övriga funktioner som är definerade av "interfacet" är:
+
+Denna körs precis i början då editorn startar och direkt efter att "Tool".jar har laddas (i Editor.java konstruktorn)
+[code]
+public void init(Editor editor) {
+    this.editor = editor;
+}
+[/code]
+denna körs också i början och bestämmer vilken text som ska visas i menyn
+[code]
+public String getMenuTitle() {
+    return "Tool Meny Item";
+}
+[/code]
+
+Men det visade sig att om man gör vissa saker i init som tex att skriva ut på terminalen
+System.out.println("Hello");
+så visades ingenting.
+
+Detta ledde till att jag var helt enkelt tvungen att kolla i Arduino IDE källkod
+och då i början var det dessutom massa "funktioner" och "varabler" som var
+icke publika, och för att komma vidare med den funktionalitet jag ville ha
+så var jag tvungen att lägga till vissa funktioner i Arduino IDE:s källkod,
+så som att kunna ladda in "Tool" efter att "Editorn" startas,
+jag skrev då ett förslag på Arduinos forum att de skulle ta med ändringarna,
+men det är svårt då de ha mycket att göra.
+
+Då kom jag på att jag kunde använda Reflect för att komma åt 
+de icke publika "funktioner" och "varabler",
+detta ledde till att jag kunde göra en "Tool" som inte längre behövde de ändringar 
+som jag gjort i Arduino IDE:s källkod.
+Samt fixade "load"-order med hjälp av (detta fixar så att jag kan köra min init() funktion efter att editorn öppnas)
+[code]
+public void init(Editor editor) { // required by tool loader
+    this.editor = editor;
+    // workaround to make sure that init is run after the Arduino IDE gui has loaded
+    // otherwise any System.out(will never be shown at the init phase) 
+    editor.addWindowListener(new java.awt.event.WindowAdapter() {
+        public void windowOpened(java.awt.event.WindowEvent e) {
+          init();
+        }
+    });
+}
+[/code]
+detta gjorde att mitt "Tool" nu istället kan kallas "extension" eller "plugin"
+då laddningen kan ske automatiskt.
+
+Senare behövde jag även fler alternativ på menyn och detta "hackade" 
+jag med hjälp av reflect samt Arduino ide:s källkod.
+Först så försökte jag lägga till fler alternativ i "Tools"-menyn men detta var buggigt
+så jag ersatte jag den befintliga "tool menu item" med en submeny istället,
+detta fungerade bättre, men det var egentligen inte ett "Tool" längre
+så jag valde att göra en egen Sub-Meny på "Main Menu Bar" istället
+denna kallar jag Extensions och däri lägger jag till alla mina "extensions"
+och tänker att det kanske blir standard i framtiden
+(om inte Pro IDE tar över helt)
+
+Detta ovan har lett till att jag kunde utveckla flera "extensions",
+mest för att det var kul att kunna se hur långt man kan gå.
+
+Alla mina "extensions" har nu och använder två klasser:
+CustomMenu.java ("wrapper" för att enkelt kunna skapa sin egen meny)
+Reflect.java (innehåller statiska funktioner för att enkelt kunna anropa och komma åt icke publika "funktioner"/"variabler")
+
+
+[b]1. https://github.com/manicken/arduinoAPIwebserver[/b]
+denna är utvecklad mestadels för "min" utökade version av
+"Audio System Design Tool for Teensy Audio Library"
+@ https://github.com/manicken/manicken.github.io (har readme)
+"statiska" websida som hostas av github @ https://manicken.github.io/
+
+funktioner:
+* WebServer körs på port 8080 (valbart)
+  för POST(ning) av JSON
+  som innehåller de exporterade filerna,
+  den använder it GET förfrågningar för att anropa
+  "Verify" och "Upload" funktionerna.
+
+* WebSocketServer körs på port 3000 (valbart)
+  för Arduino Terminal/Console "Capture"
+  används för att skicka utskrifterna som skrivs ut i Arduino IDE "Terminal"-fönstret
+  tillbaka till "Design Tool" websidan.
+
+* WebSocketServer (seperat ifrån ovan) körs på port 3001 (valbart)
+  används för att skicka övrig data till/ifrån de speciella UI-item noder
+  används för tillfälligt bara för att skicka/ta emot midi meddelande
+  men jag har planerat för att även använda serieporten för projekt 
+  som inte använder midi.
+
+ här är en tråd (på engelska) som beskriver "mitt" utökade vektyg (samma innehåll som i readme):
+https://forum.pjrc.com/threads/65740-Audio-System-Design-Tool-update
+
+2. https://github.com/manicken/arduinoPrefsSaver
+  gör det möjligt att spara och använda seperata "board"-inställningar
+  för varje "Skiss" (Sketch/Projekt)
+
+3. https://github.com/manicken/arduinoIDEpluginTemplate
+  en "extension"-mall som inte har någon direkt funktionalitet.
+  men har klassen IDEhelper.java som innehåller funktioner som tex 
+  att ta bort/lägga till filer i sketchen plus massa annat.  
+
+4. https://github.com/manicken/arduinoIDEsketchBuildPath
+gör så att kompilatorn använder en underkatalog som är placerad i sketch katalogen
+det innebär att när man laddar in sketch:en igen så finns de tidigare kompilerade filerna kvar 
+och det då inte behöver göras en full kompilation varje gång man har stängt ner sin sketch,
+(detta sparar tid för stora projekt, som tar massa tid at kompilera)
+
+det finns även en clear funktion, då man vill säkerställa en fullständig åter-kompillation
+denna clear fungerar även på de normala temporära filer som skapas,
+alltså då denna "extension" är inaktiverad.
+
+5. https://github.com/manicken/arduinoUploadOnly
+  ändrar funktionen för upload knappen så att 
+  ingen kompilation görs
+  det finns även en inställning för hur många återförsök
+  som ska göras.
+  (detta sparar tid då man har kiviga projekt)
+
+6. https://github.com/manicken/arduinoExtendedPrint
+  gör det möjligt att skriva ut koden i färg med eller utan "linenumbers"
+  det finns också möjlighet att skriva ut i svart/vitt med eller utan "linenumbers"
+  
+  i menyn finns det två alternativ
+  det andra alternativet är främst till för mac os då man vill komma åt den inbyggda PDF print funktionen
+
+7. https://github.com/manicken/arduinoAutoComplete
+  eftersom Arduino IDE:s text editor är baserat på RSyntaxTextArea
+  och samma utvecklare har gjort en 
+  kod-kompleterare som är tänkt at användas mestadels till RSyntaxTextArea
+  
+  så har jag nu gjort en plugin av denna kod-kompleterare
+
+  det har för nuvarande inga syntax för Arduino 
+  men jag planerar att göra en automatisk parser som ska använda den inbyggda arduino hjälpen
+  för att autgenerera den c.xml fil som används av kompleteraren.
+
+  och man måste också manuellt aktivera den med ctrl+space
+
+Det var alla extensions plus lite bakgrundsfakta.
+
+/Jannik

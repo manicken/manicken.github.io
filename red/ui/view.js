@@ -36,7 +36,7 @@ RED.view = (function() {
     
 
     var defSettings = {
-		showWorkspaceToolbar: true,
+		
 		showNodeToolTip:true,
 		guiEditMode: true,
 		lockWindowMouseScrollInRunMode: true,
@@ -71,7 +71,7 @@ RED.view = (function() {
 	};
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
-		showWorkspaceToolbar: defSettings.showWorkspaceToolbar,
+
 		showNodeToolTip: defSettings.showNodeToolTip,
 		guiEditMode: defSettings.guiEditMode,
 		lockWindowMouseScrollInRunMode: defSettings.lockWindowMouseScrollInRunMode,
@@ -105,9 +105,7 @@ RED.view = (function() {
         
 	};	
 	var settings = {
-		get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
-		set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; setShowWorkspaceToolbarVisible(state); RED.storage.update();},
-
+		
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
 		set showNodeToolTip(state) { _settings.showNodeToolTip = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 
@@ -119,14 +117,14 @@ RED.view = (function() {
             RED.storage.update();
 			if (state == true)
 			{
-                RED.notify("gui EDIT mode", "warning", null, 500);
+                //RED.notify("gui EDIT mode", "warning", null, 500);
                 $('#btn-guiRunEditMode').prop('checked', false);
                 $('.ui_textbox_textarea').css("pointer-events", "all");
                 
 			}
 			else
 			{
-                RED.notify("gui RUN mode", "warning", null, 500);
+                //RED.notify("gui RUN mode", "warning", null, 500);
                 $('#btn-guiRunEditMode').prop('checked', true);
                 $('.ui_textbox_textarea').css("pointer-events", "none");
                
@@ -241,16 +239,23 @@ RED.view = (function() {
         set guiRunForceScrollSpeed(value) { _settings.guiRunForceScrollSpeed = parseInt(value); saveSettingsToActiveWorkspace(); RED.storage.update(); },
 
         get useCenterBasedPositions() { return _settings.useCenterBasedPositions;},
-        set useCenterBasedPositions(state) { if (state == null) state = defSettings.useCenterBasedPositions;
-                                             _settings.useCenterBasedPositions = state; 
+        set useCenterBasedPositions(state) {_settings.useCenterBasedPositions = state; 
                                             if (state == true) posMode=2; else posMode=1;
                                             completeRedraw();
                                             saveSettingsToActiveWorkspace(); 
                                             RED.storage.update();
                                             },
-	};
+    };
+    
+    function applySettingToOtherTabs()
+    {
+        for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++)
+            RED.nodes.workspaces[wsi].settings = RED.settings.getChangedSettings(RED.view); // using getChangedSettings ensure that every tab gets it's own settings
 
-	var settingsCategory = { label:"Workspace/View", expanded:false, bgColor:"#DDD", dontSave:true }; // don't save is special now when we have individual settings for each tab
+        RED.notify("current tab settings was applied to other tabs", "warning", null, 2000);
+    }
+
+	var settingsCategory = { label:"Workspace/View", expanded:false, bgColor:"#DDD", dontSave:true, menuItems:[{label:"apply to other tabs",iconClass:"fa fa-copy", action:applySettingToOtherTabs}] }; // don't save is special now when we have individual settings for each tab
 
 	var settingsEditor = {
 		gridSubCat: {label:"Grid", expanded:false, bgColor:"#FFFFFF", popupText: "Change workspace grid appearence.", 
@@ -310,14 +315,13 @@ RED.view = (function() {
 			items: {
 				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
 				nodeDefaultTextSize: {label:"Text Size", type:"number", popupText: "AudioStream-type Node label text size (not used for UI-category nodes as they have their own invidual settings)"},
-				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>When this is unchecked everything is drawn from that previous center point and it's using the top-left corner as the object position reference,<br><br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
+				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>Center based locations:<br><img src=\"helpImgs/CenterBasedLocations_sm.png\"><br><br>Top Left based locations:<br><img src=\"helpImgs/TopLeftBasedLocations_sm.png\"><br><br>When this is unchecked everything is drawn from that previous center point<br>and it's using the top-left corner as the object position reference (and vice versa),<br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
 			}
 		},
 		otherSubCat: {label:"Other", expanded:false, bgColor:"#FFFFFF",
 			items: {
 				workspaceBgColor:  {label:"BG color.", type:"color"},
 				scaleFactor:  {label:"Workspace Zoom.", type:"number", valueId:"", popupText: "fine adjust of the current zoomlevel"},
-				showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
 				guiEditMode:  {label:"GUI edit mode.", type:"boolean", valueId:""},
 				lockWindowMouseScrollInRunMode:  {label:"Lock Window MouseScroll In Run Mode", type:"boolean", popupText: "when enabled and in GUI run mode<br>this locks the default window scroll,<br> when enabled it makes it easier to scroll on sliders."},
                 keyboardScrollSpeed:  {label:"Keyboard scroll speed", type:"number", valueId:"", popupText: "the scrollspeed used when scrolling the workspace with the keyboard arrow-keys"},
@@ -681,8 +685,9 @@ RED.view = (function() {
             RED.settings.UpdateSettingsEditorCat(RED.view, RED.view.settingsEditor); // finally update settings editor tab cat
             preventSaveActiveWorkspaceSettings = false;
         }
-
-        setShowWorkspaceToolbarVisible(_settings.showWorkspaceToolbar);
+        RED.storage.dontSave = true;
+        RED.workspaces.settings.showWorkspaceToolbar = RED.workspaces.settings.showWorkspaceToolbar; // this updates
+        RED.storage.dontSave = false;
         //
         var scrollStartLeft = chart.scrollLeft();
         var scrollStartTop = chart.scrollTop();
@@ -4911,19 +4916,7 @@ RED.view = (function() {
 		//console.warn("showPopOver retVal.length:" + retVal.length); // debug
 	}
 
-	function setShowWorkspaceToolbarVisible(state)
-	{
-		if (state)
-		{
-			$("#workspace-toolbar").show();
-			$("#chart").css("top", 70);
-		}
-		else
-		{
-			$("#workspace-toolbar").hide();
-			$("#chart").css("top", 35);
-		}
-	}
+	
 
 	function canvasTouchEnd()
 	{
