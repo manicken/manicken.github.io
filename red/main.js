@@ -469,7 +469,7 @@ RED.main = (function() {
 	//$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
 	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = !$('#btn-guiRunEditMode').prop('checked'); });
 
-    $('#btn-save').click(function() { RED.storage.update(); });
+    $('#btn-save').click(function() { RED.storage.update(); updateProjectsMenu(); });
     
     
 
