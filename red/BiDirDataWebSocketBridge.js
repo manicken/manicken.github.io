@@ -165,8 +165,8 @@ RED.BiDirDataWebSocketBridge = (function() {
 			$("#node-input-midiInputdevice").val(midiDeviceInIndex);
 			$("#node-input-midiOutputdevice").val(midiDeviceOutIndex);*/
 			
-			setOptionList(settingsEditor.midiSubCat.items.MidiDeviceIn.valueId, midiDevicesIn);
-			setOptionList(settingsEditor.midiSubCat.items.MidiDeviceOut.valueId, midiDevicesOut);
+			RED.settings.setOptionList(settingsEditor.midiSubCat.items.MidiDeviceIn.valueId, midiDevicesIn);
+			RED.settings.setOptionList(settingsEditor.midiSubCat.items.MidiDeviceOut.valueId, midiDevicesOut);
 			
 			if (midiDeviceInIndex == -1)
 			{
@@ -190,18 +190,7 @@ RED.BiDirDataWebSocketBridge = (function() {
 			//console.log(midiDevicesOut);
 		}
 	}
-	function setOptionList(selectId, options)
-	{
-		var select = $("#"+ selectId);
-		select.empty();
-
-		for (var i = 0; i < options.length; i++)
-		{
-			select.append( $("<option>")
-    			.val(i)
-    			.html(options[i]));
-		}
-	}
+	
 	function getSubStringOf(string, startToken, endToken)
 	{
 		var beginIndex = string.indexOf(startToken);

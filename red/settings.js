@@ -275,12 +275,12 @@ RED.settings = (function() {
 			}
 			else if (typeOf === "number")
 			{
-				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "40px", setting.popupText);
+				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "40px", setting.popupText, setting.readOnly);
 				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
 			}
 			else if (typeOf === "multiline")
 			{
-				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText);
+				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.rows, setting.popupText, setting.readOnly);
                 setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
             }
 			else if (typeOf === "color")
@@ -290,7 +290,7 @@ RED.settings = (function() {
             }
 			else if (typeOf === "string")
 			{
-				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText);
+				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText, setting.readOnly);
 				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
 			}
 			else if (typeOf === "combobox")
@@ -429,9 +429,10 @@ RED.settings = (function() {
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
 		}
 	}
-	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
+	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText, readOnly)
 	{
-		
+        if (readOnly == undefined) readOnly = false;
+        
 		var html = "";
 		html += '<div class="settings-item" id="divSetting-'+id+'">';
 
@@ -446,32 +447,40 @@ RED.settings = (function() {
 			html += '</div>';
 			
 			html += '<div class="settings-item-multiline-btn">';
-		}
-		html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+        }
+        if (readOnly == false)
+        {
+            html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+        }
 		html += '</div>';
 
 		html += '</div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id + popupText);
-		$("#" + containerId).append(html);
-		if (typeof cb === "function")
-		{
-			$('#btn-' + id).click(function() { cb($('#' + id).val());});
-			$('#' + id).val(param);
-		}
-		else if(typeof cb == "object")
-		{
-			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-			$('#' + id).val(cb[param]);
-		}
+        $("#" + containerId).append(html);
+        if (readOnly == false)
+        {
+            if (typeof cb === "function")
+            {
+                $('#btn-' + id).click(function() { cb($('#' + id).val());});
+                $('#' + id).val(param);
+            }
+            else if(typeof cb == "object")
+            {
+                $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
+                $('#' + id).val(cb[param]);
+            }
+        }
 		if (popupText != undefined)
 		{
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
 		}
 	}
-	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText)
+	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, textRows, popupText, readOnly)
 	{
-		if (textInputWidth == undefined) textInputWidth = 40;
+        if (textInputWidth == undefined) textInputWidth = 40;
+        if (textRows == undefined) textRows = 8;
+        if (readOnly == undefined) readOnly = false;
 		var html = "";
 		html += '<div class="settings-item" id="divSetting-'+id+'">';
 
@@ -480,27 +489,33 @@ RED.settings = (function() {
 		html += '</div>';
 
 		html += '<div class="center">';
-		html += '<textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="8" cols="50" style="width: '+textInputWidth+'px;"/>';
+		html += '<textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="'+textRows+'" cols="50" style="width: '+textInputWidth+'px;"/>';
 		html += '</div>';
 
-		html += '<div class="settings-item-multiline-btn">';
-		html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
-		html += '</div>';
+        if (readOnly == false)
+        {
+            html += '<div class="settings-item-multiline-btn">';
+            html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+            html += '</div>';
+        }
 
 		html += '</div>';
 
 		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
-		$("#" + containerId).append(html);
-		if (typeof cb === "function")
-		{
-			$('#btn-' + id).click(function() { cb($('#' + id).val());});
-			$('#' + id).val(param);
-		}
-		else if(typeof cb == "object")
-		{
-			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-			$('#' + id).val(cb[param]);
-		}
+        $("#" + containerId).append(html);
+        if (readOnly == false)
+        {
+            if (typeof cb === "function")
+            {
+                $('#btn-' + id).click(function() { cb($('#' + id).val());});
+                $('#' + id).val(param);
+            }
+            else if(typeof cb == "object")
+            {
+                $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
+                $('#' + id).val(cb[param]);
+            }
+        }
 		if (popupText != undefined)
 		{
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
@@ -550,6 +565,20 @@ RED.settings = (function() {
 		if (popupText != undefined)
 		{
 			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+		}
+    }
+    function setOptionList(selectId, options, valIsText)
+	{
+		var select = $("#"+ selectId);
+        select.empty();
+        if (valIsText == undefined) valIsText = false;
+
+		for (var i = 0; i < options.length; i++)
+		{
+            if (valIsText == false)
+                select.append( $("<option>").val(i).html(options[i]));
+            else
+                select.append( $("<option>").val(options[i]).html(options[i]));
 		}
 	}
 	function createColorSel(containerId, id, label, cb, param, popupText)
@@ -612,7 +641,8 @@ RED.settings = (function() {
         resetClassSettings:resetClassSettings,
         restoreSettings:restoreSettings,
         resetAllSettings:resetAllSettings,
-        UpdateSettingsEditorCat:UpdateSettingsEditorCat
+        UpdateSettingsEditorCat:UpdateSettingsEditorCat,
+        setOptionList:setOptionList
 	};
 })();
 

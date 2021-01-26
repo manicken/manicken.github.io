@@ -161,113 +161,82 @@ RED.main = (function() {
 			   "<p>Are you sure you want to load?</p><br>" +
 			   "<p>Note. your current design will be automatically downloaded as <b>" + RED.arduino.settings.ProjectName + ".json</b></p><br>"+
 			   "If you want a different filename,<br>then use the<b> export menu - SaveToFile</b> instead.";
-	}
+    }
+    
+    function addMenuItem(menuId, id, className, label, popupText, action) {
+        var html = "";
+        var uid = menuId+'-btn-'+id;
+        html += '<li><a id="'+uid+'" tabindex="-1" href="#"><i class="'+className+'"></i> '+label+'</a></li>';
+        $("#" + menuId).append(html);
+        $("#"+ uid).click(function() { action(id, label); });
+
+        SetButtonPopOver("#" + uid, popupText, "left");
+    }
 	function addDemoFlowsToMenu()
 	{
-		var html = "";
-		//<li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="icon-plus"></i> Add</a></li>
-		html += '<li><a id="btn-manickenPolySynth" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Manicken Poly Synth</a></li>';
-		html += '<li><a id="btn-GroupBasedDesign" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Group Based Design</a></li>';
-		html += '<li><a id="btn-SimpleNonAudioExample" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Non-Audio Example</a></li>';
-		html += '<li><a id="btn-demoFlowA" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Demo Flow A</a></li>';
-		html += '<li><a id="btn-demoFlowB" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Demo Flow B</a></li>';
-		html += '<li><a id="btn-originalFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Original Flow</a></li>';
-		html += '<li><a id="btn-emptyFlow" tabindex="-1" href="#"><i id="btn-icn-download" class="icon-download"></i>Empty Flow</a></li>';
-		$("#menu-demo-flows").append(html);
-	
-		SetButtonPopOver("#btn-originalFlow", "this is the original design that Demo Flow A & B is based on<br>made by kd5rxt-mark @ pjrc forum", "LEFT");
-		SetButtonPopOver("#btn-manickenPolySynth", "this is a \"complete\" example <br>made by Jannik Svensson @ https://github.com/manicken", "LEFT");
+        var menuName = "menu-demo-flows";
+        var data = JSON.parse($("script[data-container-name|='ExamplesList']").html());
+        var names = Object.getOwnPropertyNames(data);
+        console.log(names);
+        $("#"+menuName).empty();
+        for(var mi = 0; mi < names.length; mi++)
+        {
+            var name = names[mi];
+            var item = data[name];
+            addMenuItem(menuName, name, "fa fa-file", item.label, item.description, function(id) {
+                var contents = $("script[data-container-name|='"+id+"']").html();
+                var parsedContents = JSON.parse(contents);
+                // failsafe checks before loading data
+                if (parsedContents == undefined || contents == undefined || contents.trim().length == 0) {
+                    RED.notify("Error could not read example " + id, "danger", null, 10000);
+                    return;
+                }
+			    verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(item.label), function(okPressed) { 
+                    if (okPressed)
+                    {
+                        console.error("load " + id);
+                        //console.log("newFlowData:" + contents);
+                        saveToFile(RED.arduino.settings.ProjectName + ".json");
+                        RED.storage.loadContents(contents);
+                    }
+                });
+			});
+        }
 
-		$('#btn-manickenPolySynth').click(function() {
-			var data = $("script[data-container-name|='ManickenPolySynth']").html();
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("Manicken PolySynth"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.error("load ManickenPolySynth");
-					console.log("newFlowData:" + data);
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(data);
-				}
-			});
-		});
-
-		$('#btn-GroupBasedDesign').click(function() {
-			var data = $("script[data-container-name|='GroupBasedDesign']").html();
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("GroupBasedDesign"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.error("load GroupBasedDesign");
-					console.log("newFlowData:" + data);
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(data);
-				}
-			});
-		});
-
-		$('#btn-SimpleNonAudioExample').click(function() {
-			var data = $("script[data-container-name|='SimpleNonAudioExample']").html();
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("SimpleNonAudioExample"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.error("load SimpleNonAudioExample");
-					console.log("newFlowData:" + data);
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(data);
-				}
-			});
-		});
-
-		$('#btn-demoFlowA').click(function() {
-			var data = $("script[data-container-name|='DemoFlowA']").html();
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowA"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.error("load demo A");
-					console.log("newFlowData:" + data);
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(data);
-				}
-			});
-		});
-		$('#btn-demoFlowB').click(function() {
-			var data = $("script[data-container-name|='DemoFlowB']").html();
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("DemoFlowB"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.warn("load demo B");
-					console.log("newFlowData:" + data);
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(data);
-				}
-			});
-			
-		});
-		$('#btn-originalFlow').click(function() {
-			var data = $("script[data-container-name|='FlowOriginal']").html();
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("FlowOriginal"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.warn("load demo original");
-					console.log("newFlowData:" + data);
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(data);
-				}
-			});
-			
-		});
-		$('#btn-emptyFlow').click(function() {
-
-			verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText("FlowOriginal"), function(okPressed) { 
-				if (okPressed)
-				{
-					console.warn("load empty flow")
-					saveToFile(RED.arduino.settings.ProjectName + ".json");
-					RED.storage.loadContents(""); // [{"type":"tab","id":"Main","label":"Main","inputs":0,"outputs":0,"export":true,"nodes":[]}]
-				}
-			});
-			
-		});
-	}
+    }
+    function updateProjectsMenu()
+    {
+        RED.IndexedDBfiles.listFiles("projects", function(items) {
+            if (items == undefined) { RED.notify("error<br>no project files found<br>", "warning", null, 3000); return; }
+            
+            var menuName = "menu-projects";
+            $("#" + menuName).empty();
+            for(var mi = 0; mi < items.length; mi++)
+            {
+                var item = items[mi];
+                addMenuItem(menuName, item.replace('.', '-'), "fa fa-file", item, "", function(id, label) {
+                    console.warn("project clicked:" + label)
+                    RED.IndexedDBfiles.fileRead("projects", label, function(name, contents) {
+                        if (contents == undefined) { RED.notify("error<br>file not found:<br>" + name, "warning", null, 3000); return; }
+            
+                        var parsedContents = JSON.parse(contents);
+                        // failsafe checks before loading data
+                        if (parsedContents == undefined || contents == undefined || contents.trim().length == 0) {
+                            RED.notify("Error could not read project " + id, "danger", null, 10000);
+                            return;
+                        }
+                        console.error("load " + label);
+                        //console.log("newFlowData:" + contents);
+                        var nns = RED.nodes.createCompleteNodeSet();
+                        RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json",JSON.stringify(nns), function(dirName,fileName) {
+                            saveToFile(RED.arduino.settings.ProjectName + ".json");
+                            RED.storage.loadContents(contents);
+                        });
+                    });
+                });
+            }
+        });
+    }
 	
 	// function save(force)
 	//NOTE: code generation save function have moved to arduino-export.js
@@ -321,8 +290,8 @@ RED.main = (function() {
 	{
 		try
 		{
-			var nns = RED.nodes.createCompleteNodeSet();
-			var jsonString  = JSON.stringify(nns, null, 4);
+            var nns = RED.nodes.createCompleteNodeSet();
+            var jsonString  = JSON.stringify(nns, null, 4);
 			download(name, jsonString);
 		}catch (err)
 		{
@@ -554,7 +523,8 @@ RED.main = (function() {
 		var server = false && patt.test(location.protocol);
 
 		if (!server) {
-			
+            updateProjectsMenu();
+            
 			var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
 			// RED.main.requirements is needed because $(function() executes at global scope, 
 			// if we just set requirements without RED.main. it's gonna be located in global scope
@@ -600,6 +570,7 @@ RED.main = (function() {
 
             RED.sidebar.show(RED.devTest.settings.startupTabRightSidebar);
 
+
             //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
 			//
 		} else {
@@ -628,6 +599,7 @@ RED.main = (function() {
 		download:download,
 		showSelectNameDialog:showSelectNameDialog,
         SetButtonPopOver:SetButtonPopOver,
-        verifyDialog:verifyDialog
+        verifyDialog:verifyDialog,
+        updateProjectsMenu:updateProjectsMenu
 	};
 })();

@@ -21,9 +21,12 @@ RED.storage = (function() {
 		if (localStorage)
 		{
 			var nns = RED.nodes.createCompleteNodeSet(dontSaveSettings);
-			RED.notify("<strong>Saved..</strong>", "warning", null, 2000);
-			localStorage.setItem("audio_library_guitool",JSON.stringify(nns));
-			console.trace("localStorage write");
+			RED.notify("<strong>Saved..</strong>", "success", null, 2000, 30);
+            localStorage.setItem("audio_library_guitool",JSON.stringify(nns));
+            RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON.stringify(nns));
+            console.trace("localStorage write");
+            
+            
 		}
 	}
 	function allStorage() {

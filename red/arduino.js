@@ -61,7 +61,7 @@ RED.arduino = (function() {
 		set WebSocketServerPort(value) { _settings.WebSocketServerPort = parseInt(value); StartWebSocketTerminal_Connection(); RED.storage.update();},
 
 		get ProjectName() { return _settings.ProjectName; },
-		set ProjectName(value) { _settings.ProjectName = value; RED.storage.update(); },
+		set ProjectName(value) { _settings.ProjectName = value;  RED.storage.update(); RED.main.updateProjectsMenu();},
 
 		get CodeIndentations() { return parseInt(_settings.CodeIndentations); },
 		set CodeIndentations(value) { _settings.CodeIndentations = parseInt(value); RED.storage.update();},
