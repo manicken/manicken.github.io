@@ -24,14 +24,17 @@ RED.arduino = (function() {
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
 		WebSocketServerPort: 3000,
-		ProjectName: "TeensyAudioDesign",
+        ProjectName: "TeensyAudioDesign",
+        Board: {},
 		CodeIndentations: 4,
 		StandardIncludeHeader: "#include <Arduino.h>\n"
 							  +	"#include <Audio.h>\n"
 							  + "#include <Wire.h>\n"
 							  + "#include <SPI.h>\n"
 							  + "#include <SD.h>\n"
-							  + "#include <SerialFlash.h>\n",
+                              + "#include <SerialFlash.h>\n",
+                              
+                
     }
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
@@ -40,10 +43,31 @@ RED.arduino = (function() {
 		WriteJSONtoExportedFile: defSettings.WriteJSONtoExportedFile,
 		WebServerPort: defSettings.WebServerPort,
 		WebSocketServerPort: defSettings.WebSocketServerPort,
-		ProjectName: defSettings.ProjectName,
+        ProjectName: defSettings.ProjectName,
+        Board: {Platform: "", Board: "", UsbType: "", CpuSpeed: "", Optimize: "", Keyboard: "",},
+        
 		CodeIndentations: defSettings.CodeIndentations,
 		StandardIncludeHeader: defSettings.StandardIncludeHeader,
-	}
+    }
+    var boardSettings = { 
+        get Platform() { return _settings.Board.Platform; },
+        set Platform(value) { _settings.Board.Platform = value; RED.storage.update(); },
+
+        get Board() { return _settings.Board.Board; },
+        set Board(value) { _settings.Board.Board = value; RED.storage.update(); },
+
+        get UsbType() { return _settings.Board.UsbType; },
+        set UsbType(value) { _settings.Board.UsbType = value; RED.storage.update();},
+
+        get CpuSpeed() { return _settings.Board.CpuSpeed; },
+        set CpuSpeed(value) { _settings.Board.CpuSpeed = value; RED.storage.update();},
+
+        get Optimize() { return _settings.Board.Optimize; },
+        set Optimize(value) { _settings.Board.Optimize = value; RED.storage.update();},
+
+        get Keyboard() { return _settings.Board.Keyboard; },
+        set Keyboard(value) { _settings.Board.Keyboard = value; RED.storage.update(); },
+    }
 	var settings = {
 		get useExportDialog() { return _settings.useExportDialog; },
 		set useExportDialog(state) { _settings.useExportDialog = state; RED.storage.update();},
@@ -67,19 +91,43 @@ RED.arduino = (function() {
 		set CodeIndentations(value) { _settings.CodeIndentations = parseInt(value); RED.storage.update();},
 
 		get StandardIncludeHeader() { return _settings.StandardIncludeHeader; },
-		set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; RED.storage.update();},
+        set StandardIncludeHeader(value) { _settings.StandardIncludeHeader = value; RED.storage.update();},
+        
+        get Board() { return boardSettings; },
+        set Board(value) { boardSettings = value; console.error(" set boardSettings(value)");},
+
 	};
 
-	var settingsCategory = { label:"Arduino", expanded:false, popupText: "Currently only Arduino Export Settings", bgColor:"#006468", headerBgColor:"#17A1A5", headerTextColor:"#FFFFFF" };
+	var settingsCategory = { label:"Arduino", expanded:false, popupText: "Currently only Arduino Export Settings", bgColor:"#006468", headerBgColor:"#17A1A5", headerTextColor:"#FFFFFF", menuItems:[{label:"saveSettingsEditorAsJson",iconClass:"fa fa-copy", action:saveSettingsEditorAsJson}] };
 
 	var settingsEditor = {
-		exportSubCat: {label:"Export", expanded:true, bgColor:"#17A1A5",
+		export: {label:"Export", expanded:true, bgColor:"#17A1A5",
 			items: {
+                servers: {label:"Server settings", expanded:false, bgColor:"#006468", 
+                    items: {
+                        WebServerPort:           { label:"Web Server Port", type:"number"},
+				        WebSocketServerPort:     { label:"Terminal Capture Web Socket Server Port", type:"number"},
+                    },
+                },
+                board: {label:"Board settings", expanded:false, bgColor:"#006468", 
+                    items: {
+                        "Board.Platform":           { label:"Platform", type:"combobox", options:["teensy", "arduino", "esp"], optionTexts:["Teensy", "Arduino", "Espressif"], popupText:"currently only teensy is supported,<br> as there is no real interface<br>to upload the different boards.txt files needed" },
+                        uploadBoardsFile:        { label:"Upload Boards File", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: uploadBoardFileCurrentPlatform},
+                        "Board.Board":           { label:"Board", type:"combobox", options:["teensy30", "teensy40", "teensy41"], optionTexts:["Teensy 3.0", "Teensy 4.0", "Teensy 4.1"] },
+                        options: {label:"Options", expanded:true, bgColor:"#17A1A5", 
+                            items: {
+                                "Board.UsbType":         { label:"USB Type", type:"combobox", options:["Serial", "Midi"], popupText: "this is just a demo and have no functionality" },
+                                "Board.CpuSpeed":        { label:"CPU Speed", type:"combobox", options:["600", "500"] , popupText: "this is just a demo and have no functionality"},
+                                "Board.Optimize":        { label:"Optimize", type:"combobox", options:["o2std", "osstd"], optionTexts:["Faster", "Smallest Code"], popupText: "this is just a demo and have no functionality"},
+                                "Board.Keyboard":        { label:"Keyboard Layout", type:"combobox", popupText: "this is just a demo and have no functionality"},
+                            },
+                        },
+                    },
+                },
 				useExportDialog:         { label:"Force Show export dialog", type:"boolean"},
 				IOcheckAtExport:         { label:"IO check At Export", type:"boolean"},
 				WriteJSONtoExportedFile: { label:"Write JSON at exported file", type:"boolean"},
-				WebServerPort:           { label:"Web Server Port", type:"number"},
-				WebSocketServerPort:     { label:"Terminal Capture Web Socket Server Port", type:"number"},
+				
 				CodeIndentations:        { label:"export code indentations", type:"number", popupText: "Defines the 'base' number of indentations that is used when exporting to class structure."},
 				ProjectName:             { label:"Project Name", type:"string", popupText: "Project Name is used as the default file names for zip-file export and JSON-save to file.<br>"+
 																						"It's also used at the default savename for the autosave function,<br>when replacing the whole design with a template design.<br>"+
@@ -88,7 +136,26 @@ RED.arduino = (function() {
 			}
 		},
 		
-	};
+    };
+
+    function uploadBoardFileCurrentPlatform(e)
+    {
+        var file = e.target.files[0];
+		if (!file) {
+		  return;
+        }
+        var reader = new FileReader();
+		reader.onload = function(e) {
+          var contents = e.target.result;
+          console.warn(file);
+          RED.arduino.boardsParser.writeToIndexedDB(settings.Board.Platform + "." + file.name, contents);
+		};
+        reader.readAsText(file);
+    }
+    
+    function saveSettingsEditorAsJson() {
+        RED.main.download("arduino.settingsEditor.json", JSON.stringify(settingsEditor, null, 4));
+    }
 
 	function startConnectedChecker()
 	{

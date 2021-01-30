@@ -63,7 +63,7 @@ RED.IndexedDBfiles = (function() {
         listFiles(settings.testDir, function(data) {
             if (data == undefined) { RED.notify("error<br>file not found:<br>", "warning", null, 3000); return; }
 
-            RED.settings.setOptionList(settingsEditor.testFileNames.valueId, data, true);
+            RED.settings.editor.setOptionList(settingsEditor.testFileNames.valueId, data, true);
             //$("#" + settingsEditor.testFileDataOut.valueId).val(data.join("\n"));
         });
     }
@@ -81,18 +81,11 @@ RED.IndexedDBfiles = (function() {
             console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
             return;
         }
-        
-        // Let us open our database
         var request = window.indexedDB.open("AudioSystemDesignTool", 1);
-        request.onerror = function(event) {
-            // Do something with request.errorCode!
-            console.error("indexDB request onerror: " + event.errorCode);
-        };
-        // This event is only implemented in recent browsers
         request.onupgradeneeded = function(event) {
             // Save the IDBDatabase interface
-            var db = event.target.result;
-            console.error("Database onupgradeneeded: " + event.target.errorCode);
+            let db = event.target.result;
+            //console.error("Database onupgradeneeded: " + event.target.errorCode);
             // Create an objectStore for this database
             var objectStore = db.createObjectStore("projects", { keyPath: "name" });
             objectStore.createIndex("name", "name", { unique: true });
@@ -103,10 +96,29 @@ RED.IndexedDBfiles = (function() {
             objectStore = db.createObjectStore("images", { keyPath: "name" });
             objectStore.createIndex("name", "name", { unique: true });
             objectStore.createIndex("data", "data", { unique: false });
+            db.close();
+        };
+        
+        // Let us open our database
+        request = window.indexedDB.open("AudioSystemDesignTool", 2);
+        request.onerror = function(event) {
+            // Do something with request.errorCode!
+            console.error("indexDB request onerror: " + event.errorCode);
+        };
+        // This event is only implemented in recent browsers
+        request.onupgradeneeded = function(event) {
+            // Save the IDBDatabase interface
+            var db = event.target.result;
+            //console.error("Database onupgradeneeded: " + event.target.errorCode);
+            // Create an objectStore for this database
+            
+            var objectStore = db.createObjectStore("otherFiles", { keyPath: "name" });
+            objectStore.createIndex("name", "name", { unique: true });
+            objectStore.createIndex("data", "data", { unique: false });
         };
         request.onsuccess = function(event) {
             db = event.target.result; 
-            console.error("indexDB request onsuccess: ", db );
+            console.warn("indexDB request onsuccess: ", db );
             db.onerror = function(event) {
                 // Generic error handler for all errors targeted at this database's
                 // requests!

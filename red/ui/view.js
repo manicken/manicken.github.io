@@ -254,8 +254,8 @@ RED.view = (function() {
 
         RED.notify("current tab settings was applied to other tabs", "warning", null, 2000);
     }
-
-	var settingsCategory = { label:"Workspace/View", expanded:false, bgColor:"#DDD", dontSave:true, menuItems:[{label:"apply to other tabs",iconClass:"fa fa-copy", action:applySettingToOtherTabs}] }; // don't save is special now when we have individual settings for each tab
+    var catLabel = "Workspace/View"; // so that this can be used in the "apply to other tabs" popuptext
+	var settingsCategory = { label:catLabel, expanded:false, bgColor:"#DDD", dontSave:true, menuItems:[{label:"apply to other tabs",iconClass:"fa fa-copy",popupText: "uses the current "+catLabel+" settings for all other tabs", action:applySettingToOtherTabs}] }; // don't save is special now when we have individual settings for each tab
 
 	var settingsEditor = {
 		gridSubCat: {label:"Grid", expanded:false, bgColor:"#FFFFFF", popupText: "Change workspace grid appearence.", 
@@ -681,7 +681,7 @@ RED.view = (function() {
             preventSaveActiveWorkspaceSettings = true;
             console.warn("Restoring tab settings");
             RED.settings.resetClassSettings(RED.view); // this first resets all settings to default
-            RED.settings.restoreSettings(RED.view, tab.settings);  // this then apply what is changed
+            RED.settings.restoreSettings(RED.view.settings, RED.view.defSettings, tab.settings);  // this then apply what is changed
             RED.settings.UpdateSettingsEditorCat(RED.view, RED.view.settingsEditor); // finally update settings editor tab cat
             preventSaveActiveWorkspaceSettings = false;
         }

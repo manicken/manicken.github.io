@@ -523,7 +523,9 @@ RED.main = (function() {
 		var server = false && patt.test(location.protocol);
 
 		if (!server) {
-            updateProjectsMenu();
+            // running init makes sure that the database is upgraded before acessing it
+            
+            
             
 			var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
 			// RED.main.requirements is needed because $(function() executes at global scope, 
@@ -570,7 +572,10 @@ RED.main = (function() {
 
             RED.sidebar.show(RED.devTest.settings.startupTabRightSidebar);
 
-
+            RED.IndexedDBfiles.init( function() { 
+                RED.arduino.boardsParser.readFromIndexedDB();
+                updateProjectsMenu();
+            });
             //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
 			//
 		} else {

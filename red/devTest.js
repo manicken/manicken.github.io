@@ -63,10 +63,12 @@ RED.devTest = (function() {
         getFuncHelp:            { label:"get func help", type:"string"},
         printNewWsStruct:       { label:"print new ws struct", type:"button", buttonClass:"btn-primary btn-sm", action: createAndPrintNewWsStruct},
         consoleColorTest:       { label:"console color test", type:"button", buttonClass:"btn-primary btn-sm", action: function() {RED.devTest.console_logColor("Hello World"); RED.console_ok("Test of console_ok"); }},
-        getHelpAtServer:        { label:"get help @ github server", type:"button", buttonClass:"btn-primary btn-sm", action: testGetHelpFromServer},
+        getHelpAtServer:        { label:"get help @ github server", type:"button",  buttonClass:"btn-primary btn-sm", action: testGetHelpFromServer},
         
         
-	};
+    };
+    
+    
     
     function console_logColor(data)
     {

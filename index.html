@@ -487,9 +487,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script src="red/main.js"></script> <!-- main must be first because it defines Root var: RED -->
 <script src="red/settings.js"></script>
+<script src="red/settings-editor.js"></script>
 <script src="red/arduino.js"></script>
 <script src="red/arduino-import.js"></script>
 <script src="red/arduino-export.js"></script>
+<script src="red/arduino-boardsParser.js"></script>
 <script src="red/BiDirDataWebSocketBridge.js"></script>
 <script src="red/ui/state.js"></script>
 <script src="red/nodes.js"></script>
@@ -690,7 +692,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioOutputAnalogStereo","resource":"DAC1",         "shareable":false},
 		{"type":"AudioOutputAnalogStereo","resource":"DAC2",         "shareable":false},
 		{"type":"AudioOutputAnalogStereo","resource":"Sample Rate",  "shareable":true,  "setting":"Teensy Control"},
-		{"type":"AudioOutputPWM",        "resource":"DAC1",          "shareable":false},
+		{"type":"AudioOutputPWM",        "resource":"PWM",          "shareable":false},
 		{"type":"AudioOutputPWM",        "resource":"Sample Rate",   "shareable":true,  "setting":"Teensy Control"},
 		{"type":"AudioOutputMQS",        "resource":"MSQ Device",    "shareable":false},
 		{"type":"AudioOutputMQS",        "resource":"Sample Rate",   "shareable":true,  "setting":"Teensy Control"},

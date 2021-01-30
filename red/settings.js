@@ -54,15 +54,15 @@ RED.settings = (function() {
             var RED_Class_Name = Object.getOwnPropertyNames(ClassSettings)[0]; // there is only one item
             var RED_Class = RED[RED_Class_Name];
             var ClassSetting = ClassSettings[RED_Class_Name];
-            restoreSettings(RED_Class, ClassSetting, RED_Class_Name)
+            restoreSettings(RED_Class.settings, RED_Class.defSettings, ClassSetting, RED_Class_Name)
         }
     }
-    function restoreSettings(RED_Class, ClassSetting, RED_Class_Name)
+    function restoreSettings(RED_Class_settings, RED_Class_defSettings, ClassSetting, RED_Class_Name)
     {
         RED.storage.dontSave = true; // prevent save while setting settings
         RED.view.preventRedraw = true;
         //console.log(typeof RED_Class);
-        //console.log(ClassSetting);
+        //console.log(RED_Class_Name, ClassSetting);
         var settingValueNames = Object.getOwnPropertyNames(ClassSetting);
         //console.log("@testSettingLoad:");
         //console.log(settingValueNames);
@@ -71,19 +71,28 @@ RED.settings = (function() {
             var valueName = settingValueNames[svi];
 
             // console.warn(valueName);
-            if (RED_Class.settings[valueName] != undefined) // this skip any removed settings
-            {
-                // this makes sure that any settings bugs are eliminated
-                // to make it easier to recover from null value settings
-                if (ClassSetting[valueName] == null) {
-                    ClassSetting[valueName] = RED_Class.defSettings[valueName];
-                    RED.notify(["setting @ ", RED_Class_Name, valueName, "was null, used default value:", RED_Class.defSettings[valueName]].join(" "), "warning", null, 4000);
-                }
-                RED_Class.settings[valueName] = ClassSetting[valueName];
-                //console.warn("typeof " + valueName + ":" + typeof csetting[valueName])
+            if (RED_Class_settings[valueName] == undefined) {// this skip any removed settings
+                console.error("setting removed typeof " + valueName + ":" + typeof ClassSetting[valueName] + ":" + typeof RED_Class_settings);
+                continue;
             }
-            else
-                console.error("setting removed typeof " + valueName + ":" + typeof ClassSetting[valueName] + ":" + typeof RED_Class)
+            
+            if (typeof RED_Class_settings[valueName] === "object") {
+                //console.warn(valueName, " is object");
+                //var settingValueSubNames = Object.getOwnPropertyNames(RED_Class.settings[valueName]);
+                restoreSettings(RED_Class_settings[valueName], RED_Class_defSettings, ClassSetting[valueName], valueName);
+
+                RED.storage.dontSave = true; // continue prevent save while setting settings
+                RED.view.preventRedraw = true;
+                continue;
+            }
+            // this makes sure that any settings bugs are eliminated
+            // to make it easier to recover from null value settings
+            if (ClassSetting[valueName] == null) {
+                ClassSetting[valueName] = RED_Class_defSettings[valueName];
+                RED.notify(["setting @ ", RED_Class_Name, valueName, "was null, used default value:", RED_Class_defSettings[valueName]].join(" "), "warning", null, 4000);
+            }
+            RED_Class_settings[valueName] = ClassSetting[valueName];
+            //console.warn("typeof " + valueName + ":" + typeof csetting[valueName])
         }
         RED.storage.dontSave = false; // prevent save while setting settings
         RED.view.preventRedraw = false;
@@ -126,9 +135,14 @@ RED.settings = (function() {
         {
             
             var name = settingNames[i];
-            console.warn("getChangedSettings: " + name);
-            var str1 = RED_Class.settings[name].toString();
-            var str2 = RED_Class.defSettings[name].toString();
+            console.warn("getChangedSettings: " + name + " " + typeof RED_Class.settings[name]);
+            if (typeof RED_Class.settings[name] !== "object") {
+                var str1 = RED_Class.settings[name].toString();
+                var str2 = RED_Class.defSettings[name].toString();
+            } else {
+                var str1 = JSON.stringify(RED_Class.settings[name]);
+                var str2 = JSON.stringify(RED_Class.defSettings[name]);
+            }
             if (str1.localeCompare(str2) != 0)
                 cs[name] = RED_Class.settings[name];
         }
@@ -233,7 +247,7 @@ RED.settings = (function() {
 
 	function CreateSettingsEditorCat(RED_Class, RED_Class_Name, containerId, settings, settingCatParams, isRoot)
 	{
-		var catContainerId = createCategory(RED_Class, containerId, RED_Class_Name, settingCatParams, isRoot);
+		var catContainerId = RED.settings.editor.createCategory(RED_Class, containerId, RED_Class_Name, settingCatParams, isRoot);
 		var settingNames = Object.getOwnPropertyNames(settings);
 		for (let i = 0; i < settingNames.length; i++)
 		{
@@ -244,394 +258,63 @@ RED.settings = (function() {
 			{
 				CreateSettingsEditorCat(RED_Class, RED_Class_Name + "-" + settingName, catContainerId, setting.items, setting, false);
 				continue;
-			}
-
-			if (RED_Class.settings[settingName] == undefined)
-			{
-				// this is a special case, when there are not any setting for this settingsEditor item
-				// that means it can have a button only for special commands
-				if (setting.type === "button" && setting.action != undefined)
-				{
-					if ((typeof setting.action) === "function")
-					{
-						if (setting.buttonClass != undefined)
-							createButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, setting.buttonClass, setting.action, setting.popupText);
-						else
-							createButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, "btn-primary btn-sm", setting.action, setting.popupText);
-					}
-					else
-						console.error("generateSettingsFromClasses, " + settingName + " have no action callback function");
-				}
-				else
-					console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting");
-				continue;
-			}
-			var typeOf = setting.type;
-
-			if (typeOf === "boolean")
-			{
-				createCheckBox(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, setting.popupText);
-				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
-			}
-			else if (typeOf === "number")
-			{
-				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "40px", setting.popupText, setting.readOnly);
-				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
-			}
-			else if (typeOf === "multiline")
-			{
-				createMultiLineTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.rows, setting.popupText, setting.readOnly);
-                setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
             }
-			else if (typeOf === "color")
-			{
-				createColorSel(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, setting.popupText);
-                setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
-            }
-			else if (typeOf === "string")
-			{
-				createTextInputWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText, setting.readOnly);
-				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
-			}
-			else if (typeOf === "combobox")
-			{
-				createComboBoxWithApplyButton(catContainerId, RED_Class_Name+"-"+settingName, setting.label, RED_Class.settings, settingName, "100%", setting.popupText, setting.options);
-				setting.valueId = RED_Class_Name+"-"+settingName; // this allows for changing the value programmability
-			}
-			else
-			{
-				console.error("******************\ngenerateSettingsFromClasses unknown type of:" + settingName + " " + typeOf + "******************\n");
-			}
-		}
-	}
-
-	function createCategory(RED_Class, containerId, id, settingCatParams, isRoot)
-	{
-        var headerLabel = settingCatParams.label;
-        var expanded = settingCatParams.expanded;
-        var popupText = settingCatParams.popupText;
-        var bgColor = settingCatParams.bgColor;
-        var headerBgColor = settingCatParams.headerBgColor;
-        var headerTextColor = settingCatParams.headerTextColor;
-        var menuItems = settingCatParams.menuItems;
-		if (expanded)
-		{
-			var chevron = '<i class="icon-chevron-down expanded"></i>';
-			var displayStyle = "block;";
-		}
-		else
-		{
-			var chevron = '<i class="icon-chevron-down"></i>';
-			var displayStyle = "none;";
-        }
-        if (bgColor != undefined) bgColor = " background-color:"+bgColor + ";";
-        else bgColor = "";
-        if (headerBgColor != undefined) headerBgColor = " background-color:"+headerBgColor + ";";
-        else headerBgColor = "";
-        if (headerTextColor != undefined) headerTextColor = " color:"+headerTextColor + ";";
-        else headerTextColor = "";
-		var headerId = "set-header-" + id;
-        var catContainerId = "set-content-"  + id;
-        var headerMenuBtnResetId = "set-menu-btnReset-" + id;
-        var html = "";
-        html += '<div class="settings-category" style="'+ bgColor +'">';
-        if (isRoot != undefined && isRoot == true) {
-            html += '<div class="btn-group pull-left settings-menu">';
-			html += '<a class="btn dropdown-toggle settings-menu" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i></a>';
-            html += '<ul class="dropdown-menu">';
-            html += '<li><a id="'+headerMenuBtnResetId+'" ><i class="fa fa-refresh"></i> Reset Settings</a></li>';
-            if (menuItems != undefined && Array.isArray(menuItems)) {
-                for (var mii = 0; mii < menuItems.length; mii++) {
-                    var mi = menuItems[mii];
-                    html += '<li><a id="set-mnu-item-'+id+'" ><i class="'+mi.iconClass+'"></i> '+mi.label+'</a></li>';
-                }
-            }
-            html += '</ul>';
-			html += '</div>';
-        }
-        html += '<div id="'+headerId+'" class="settings-header" style="'+ headerBgColor + headerTextColor +'">';
-        
-        html += '<span>'+headerLabel+'</span>';
-        html += chevron;
-        html += '</div>';
-		html += '<div class="settings-content" id="'+catContainerId+'" style="display: '+displayStyle+bgColor+'">';
-		html += '</div>\n';
-		html += '</div>\n';
-		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
-        $("#"+containerId).append(html);
-        
-        if (isRoot != undefined && isRoot == true) {
-            $("#" + headerMenuBtnResetId).on('click', function(e) { resetCatSettings(e, RED_Class); });
-
-            if (menuItems != undefined && Array.isArray(menuItems)) {
-                for (var mii = 0; mii < menuItems.length; mii++) {
-                    var mi = menuItems[mii];
-                    $('#set-mnu-item-'  + id).on('click', mi.action);
-                }
-            }
-        }
-		$("#" + headerId).off('click').on('click', function(e) {
-			
-			var displayStyle = $(this).next().css('display');
-			if (displayStyle == "block")
-			{
-				$(this).next().slideUp();
-				$(this).children("i").removeClass("expanded"); // chevron
-			}
-			else
-			{
-				$(this).next().slideDown();
-				$(this).children("i").addClass("expanded"); // chevron
-			}
-		});
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#" + headerId, popupText, "left");
-		}
-		return catContainerId;
-    }
-   
-
-	/**
-	 * creates and returns html code for a checkbox with label
-	 * @param {string} id 
-	 * @param {string} label 
-	 */
-	function createCheckBox(containerId, id, label, cb, param, popupText)
-	{
-		var html = "";
-		html += '<div class="settings-item" id="divSetting-'+id+'">';
-
-		html += '<div class="center">';
-		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'</label>';
-		html +=	'</div>';
-
-		html += '<div class="center">';
-		html +=	'<input style="margin-bottom: 0px; margin-top: 0px;" type="checkbox" id="'+id+'" checked="checked" />';
-		html +=	'</div>';
-
-		html +=	'</div>';
-
-		//RED.console_ok("create complete checkbox @ " + containerId + " = " + label + " : " + id);
-		$("#" + containerId).append(html);
-		if (typeof cb === "function")
-		{
-			$('#' + id).click(function() { cb($('#' + id).prop('checked')); });
-			$('#' + id).prop('checked', param);
-		}
-		else if(typeof cb == "object")
-		{
-			$('#' + id).click(function() { cb[param] = $('#' + id).prop('checked'); });
-			$('#' + id).prop('checked', cb[param]);
-		}
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-	}
-	function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText, readOnly)
-	{
-        if (readOnly == undefined) readOnly = false;
-        
-		var html = "";
-		html += '<div class="settings-item" id="divSetting-'+id+'">';
-
-		html += '<div class="center">';
-		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
-		html += '</div>';
-
-		html += '<div class="center">';
-		html += '<input class="settings-item-textInput" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+';"/>';
-		if (textInputWidth.endsWith("%"))
-		{
-			html += '</div>';
-			
-			html += '<div class="settings-item-multiline-btn">';
-        }
-        if (readOnly == false)
-        {
-            html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
-        }
-		html += '</div>';
-
-		html += '</div>';
-
-		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id + popupText);
-        $("#" + containerId).append(html);
-        if (readOnly == false)
-        {
-            if (typeof cb === "function")
+            
+            if (settingName.includes('.') == true)
             {
-                $('#btn-' + id).click(function() { cb($('#' + id).val());});
-                $('#' + id).val(param);
+                var nameSplit = settingName.split('.');
+                var settingNamesSplit = Object.getOwnPropertyNames(RED_Class.settings[nameSplit[0]]);
+                //console.warn(nameSplit[1],settingNamesSplit);
+
+                createSetting(catContainerId, RED_Class_Name, RED_Class.settings[nameSplit[0]], nameSplit[1], setting);
             }
-            else if(typeof cb == "object")
-            {
-                $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-                $('#' + id).val(cb[param]);
-            }
-        }
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-	}
-	function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, textRows, popupText, readOnly)
-	{
-        if (textInputWidth == undefined) textInputWidth = 40;
-        if (textRows == undefined) textRows = 8;
-        if (readOnly == undefined) readOnly = false;
-		var html = "";
-		html += '<div class="settings-item" id="divSetting-'+id+'">';
-
-		html += '<div class="center">';
-		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
-		html += '</div>';
-
-		html += '<div class="center">';
-		html += '<textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="'+textRows+'" cols="50" style="width: '+textInputWidth+'px;"/>';
-		html += '</div>';
-
-        if (readOnly == false)
-        {
-            html += '<div class="settings-item-multiline-btn">';
-            html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
-            html += '</div>';
-        }
-
-		html += '</div>';
-
-		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
-        $("#" + containerId).append(html);
-        if (readOnly == false)
-        {
-            if (typeof cb === "function")
-            {
-                $('#btn-' + id).click(function() { cb($('#' + id).val());});
-                $('#' + id).val(param);
-            }
-            else if(typeof cb == "object")
-            {
-                $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-                $('#' + id).val(cb[param]);
-            }
-        }
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-	}
-	function createComboBoxWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText, options)
-	{
-		if (textInputWidth == undefined) textInputWidth = 40;
-		var html = ""
-		html += '<div class="settings-item" id="divSetting-'+id+'">';
-
-		html += '<div class="center" id="divSetting-'+id+'">';
-		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
-		html += '</div>';
-		
-		html += '<div class="center">';
-		html += '<select class="settings-item-combobox" type="text" id="'+id+'" name="'+id+'" style="width: '+textInputWidth+';">';
-		if (options != undefined && Array.isArray(options))
-		{
-			for (var oi = 0; oi < options.length; oi++)
-			{
-				html += '<option value="' + options[oi] + '">' + options[oi] + '</option>'
-			}
-		}
-		html += '</select>';
-		html += '</div>';
-
-		html += '<div class="settings-item-multiline-btn">';
-		html += '<button class="btn btn-success settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
-		html += '</div>';
-
-		html += '</div>';
-		
-
-		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
-		$("#" + containerId).append(html);
-		if (typeof cb === "function")
-		{
-			$('#btn-' + id).click(function() { cb($('#' + id).val());});
-			$('#' + id).val(param);
-		}
-		else if(typeof cb == "object")
-		{
-			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-			$('#' + id).val(cb[param]);
-		}
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-    }
-    function setOptionList(selectId, options, valIsText)
-	{
-		var select = $("#"+ selectId);
-        select.empty();
-        if (valIsText == undefined) valIsText = false;
-
-		for (var i = 0; i < options.length; i++)
-		{
-            if (valIsText == false)
-                select.append( $("<option>").val(i).html(options[i]));
             else
-                select.append( $("<option>").val(options[i]).html(options[i]));
+            {
+                createSetting(catContainerId, RED_Class_Name, RED_Class.settings, settingName, setting);
+            }
 		}
-	}
-	function createColorSel(containerId, id, label, cb, param, popupText)
-	{
-		var html = "";
-		html += '<div class="settings-item" id="divSetting-'+id+'">';
-
-		html += '<div class="center">';
-		html += '<label class="settings-item-label" for="'+id+'">&nbsp;'+label+'&nbsp;</label>';
-		html += '</div>';
-
-		html += '<div class="center">';
-		html += '<input id="'+id+'" data-jscolor=""/>';
-		html += '<button class="btn btn-success btn-sm settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
-		html += '</div>';
-
-		html += '</div>';
-
-		//RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
-		$("#" + containerId).append(html);
-		if (typeof cb === "function")
-		{
-			$('#btn-' + id).click(function() { cb($('#' + id).val());});
-			$('#' + id).val(param);
-		}
-		else if(typeof cb == "object")
-		{
-			$('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-			$('#' + id).val(cb[param]);
-		}
-		//<div class="form-row">
-		//<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		//<input id="node-input-color" data-jscolor="">
-		//</div>
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-	}
-	function createButton(containerId, id, label, buttonClass, cb, popupText)
-	{
-		var html = "";
-		html += '<div class="settings-item center" id="divSetting-'+id+'">';
-		html += '<button class="btn '+buttonClass+'" type="button" id="btn-'+id+'">'+label+'</button>';
-		html += '</div>';
-		//RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
-		$("#" + containerId).append(html);
-		$('#btn-' + id).click(cb);
-		if (popupText != undefined)
-		{
-			RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
-		}
-	}
+    }
+    
+    function createSetting(catContainerId, RED_Class_Name, RED_Class_settings, settingName, setting)
+    {
+        if (RED_Class_settings[settingName] == undefined)
+        {
+            // this is a special case, when there are not any setting for this settingsEditor item
+            // that means it can have a button only for special commands
+            if (setting.type === "button" && setting.action != undefined)
+            {
+                if ((typeof setting.action) === "function")
+                {
+                    if (setting.buttonClass != undefined)
+                        RED.settings.editor.createButton(catContainerId, RED_Class_Name+"-"+settingName.replace('.', '_'), setting.label, setting.buttonClass, setting.action, setting.popupText, setting.isFileInput);
+                    else
+                        RED.settings.editor.createButton(catContainerId, RED_Class_Name+"-"+settingName.replace('.', '_'), setting.label, "btn-primary btn-sm", setting.action, setting.popupText, setting.isFileInput);
+                }
+                else
+                    console.error("generateSettingsFromClasses, " + settingName + " have no action callback function");
+            }
+            else
+                console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting");
+            return;
+        }
+        var typeOf = setting.type;
+        var uid = RED_Class_Name+"-"+settingName.replace('.', '_');
+        setting.valueId = uid;// this allows for changing the value programmability
+        if (typeOf === "boolean")
+            RED.settings.editor.createCheckBox(catContainerId, uid, setting.label, RED_Class_settings, settingName, setting.popupText);
+        else if (typeOf === "number")
+            RED.settings.editor.createTextInputWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "40px", setting.popupText, setting.readOnly);
+        else if (typeOf === "multiline")
+            RED.settings.editor.createMultiLineTextInputWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "100%", setting);
+        else if (typeOf === "color")
+            RED.settings.editor.createColorSel(catContainerId, uid, setting.label, RED_Class_settings, settingName, setting.popupText);
+        else if (typeOf === "string")
+            RED.settings.editor.createTextInputWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "100%", setting.popupText, setting.readOnly);
+        else if (typeOf === "combobox")
+            RED.settings.editor.createComboBoxWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "100%", setting);
+        else
+            console.error("******************\ngenerateSettingsFromClasses unknown type of:" + settingName + " " + typeOf + "******************\n");
+    }
 
     return {
 		createTab:createTab,
@@ -642,7 +325,6 @@ RED.settings = (function() {
         restoreSettings:restoreSettings,
         resetAllSettings:resetAllSettings,
         UpdateSettingsEditorCat:UpdateSettingsEditorCat,
-        setOptionList:setOptionList
 	};
 })();
 

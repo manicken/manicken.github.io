@@ -165,8 +165,8 @@ RED.BiDirDataWebSocketBridge = (function() {
 			$("#node-input-midiInputdevice").val(midiDeviceInIndex);
 			$("#node-input-midiOutputdevice").val(midiDeviceOutIndex);*/
 			
-			RED.settings.setOptionList(settingsEditor.midiSubCat.items.MidiDeviceIn.valueId, midiDevicesIn);
-			RED.settings.setOptionList(settingsEditor.midiSubCat.items.MidiDeviceOut.valueId, midiDevicesOut);
+			RED.settings.editor.setOptionList(settingsEditor.midiSubCat.items.MidiDeviceIn.valueId, midiDevicesIn);
+			RED.settings.editor.setOptionList(settingsEditor.midiSubCat.items.MidiDeviceOut.valueId, midiDevicesOut);
 			
 			if (midiDeviceInIndex == -1)
 			{
