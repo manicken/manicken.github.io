@@ -1,17 +1,19 @@
 
 
-RED.arduino.boardsParser = (function () {
+RED.arduino.board = (function () {
 
     function readFromIndexedDB() {
-        RED.IndexedDBfiles.fileRead("otherFiles", "teensy.boards.txt", function (name, contents) {
+        RED.IndexedDBfiles.fileRead("otherFiles", RED.arduino.settings.Board.Platform + ".boards.txt", function (name, contents) {
             parse(contents);
-            generateMenu();
+            platformSelected();
+            boardSelected(); // this rebuilds the options
         });
     }
     function writeToIndexedDB(name, contents) {
         RED.IndexedDBfiles.fileWrite("otherFiles", name, contents, function (dir, name) {
             console.warn("writeToIndexedDB " + name + " [OK]");
             readFromIndexedDB();
+           
         });
     }
 
@@ -26,7 +28,7 @@ RED.arduino.boardsParser = (function () {
             if (line.length == 0) continue; // empty line
             if (line[0] == '#') continue; // comment line
             var lio = line.indexOf('=');
-            if (lio == -1) continue; // invalid line
+            if (lio == -1) continue; // line don't contain any value
             var key = line.substring(0, lio);
             var value = line.substring(lio + 1);
 
@@ -51,10 +53,8 @@ RED.arduino.boardsParser = (function () {
         //console.warn(treeData);
     }
 
-    function generateMenu() {
+    function platformSelected() {
         var brdCmbBoxId = RED.arduino.settingsEditor.export.items.board.items["Board.Board"].valueId;
-        var brdOptionsId = RED.arduino.settingsEditor.export.items.board.items.options.valueId;
-        
 
         var boardNames = [];
         var boardLabels = [];
@@ -71,10 +71,70 @@ RED.arduino.boardsParser = (function () {
         RED.settings.editor.setOptionList(brdCmbBoxId, boardNames, null, boardLabels);
     }
 
+    
+
+    function boardSelected() {
+        // the following can be uncommented to download and see the structure easier when debugging or adding functionality
+        //RED.main.download("tree."+RED.arduino.settings.Board.Platform+".boards.json", JSON.stringify(treeData, null, 4));
+
+        var boardId = RED.arduino.settings.Board.Board;
+        var brdOptionsId = RED.arduino.settingsEditor.export.items.board.items.options.valueId;
+        $("#"+ brdOptionsId).empty();
+        
+        var board = treeData[boardId];
+        if (board == undefined) {RED.notify("error could not select board " + boardId, "warning", null, 3000); return; }
+        if (board.menu == undefined) {RED.notify("board have no options " + boardId, "warning", null, 3000); return; }
+        
+        options = RED.arduino.settings.Board.Options;
+
+        var menuIds = Object.getOwnPropertyNames(board.menu);
+        for (var mi = 0; mi < menuIds.length; mi++) {
+            var menuId = menuIds[mi];
+            var menuLabel = treeData.menu[menuId].value;
+            var menuOptions = Object.getOwnPropertyNames(board.menu[menuId]);
+            var menuOptionLabels = [];
+            for (var moi = 0; moi < menuOptions.length; moi++) {
+                menuOptionLabels.push(board.menu[menuId][menuOptions[moi]].value);
+            }
+            //console.warn(menuOptions, menuOptionLabels);
+            if (options[menuId] == undefined)
+                options[menuId] = menuOptions[0];
+
+            RED.settings.editor.createComboBoxWithApplyButton(brdOptionsId, "cmb-arduino-export-board-options-" + menuId, menuLabel, function(value, id) {
+                var mid = id.replace("cmb-arduino-export-board-options-", "");
+                //console.warn(mid + " new value: " + value);
+                options[mid] = value;
+                RED.storage.update();
+            }, options[menuId], "100%", {options:menuOptions, optionTexts:menuOptionLabels, actionOnChange:true});
+
+            //RED.settings.editor.setOptionList("arduino.export.board.options." + menuId, menuOptions, null, menuOptionLabels);
+        }
+       
+        //RED.arduino.settings.Board.Options = options;
+    }
+    function export_platformIO() {
+
+    }
+    function export_arduinoIDE() {
+        var prefs = "target_package=arduino\n" + 
+                    "target_platform=avr\n" + 
+                    "board=nano\n" + 
+                    "custom_usb=teensy40_serial\n";
+        var boardId = RED.arduino.settings.Board.Board;
+
+    }
+    function export_makeFile() {
+
+    }
+
     return {
         
         readFromIndexedDB:readFromIndexedDB,
         writeToIndexedDB:writeToIndexedDB,
+        boardSelected:boardSelected,
+        export_platformIO:export_platformIO,
+        export_arduinoIDE:export_arduinoIDE,
+        export_makeFile:export_makeFile,
 	};
 })();
 

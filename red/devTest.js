@@ -55,8 +55,8 @@ RED.devTest = (function() {
 
     var settingsCategory = { label:"Development Tests", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
-        startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", options:["info", "settings", "project"] },
-        
+        startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
+        testImportFiles:        { label:"test import file(s)", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: testImportFiles},
 		testPost:               { label:"test post", type:"string"},
 		testGet:                { label:"test get", type:"string"},
         testWsSend:             { label:"test ws send", type:"string"},
@@ -68,7 +68,19 @@ RED.devTest = (function() {
         
     };
     
-    
+    function testImportFiles(e)
+    {
+        for (var fi = 0; fi < e.target.files.length; fi++) {
+            var file = e.target.files[fi];
+            console.warn("test Import File:", file);
+            if (!file) { return; }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var contents = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+    }
     
     function console_logColor(data)
     {

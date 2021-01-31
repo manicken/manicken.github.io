@@ -245,27 +245,36 @@ RED.settings.editor = (function() {
         }*/
         html += '</select>';
         html += '</div>';
-
-        html += '<div class="settings-item-multiline-btn">';
-        html += '<button class="btn btn-success settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
-        html += '</div>';
-
+        if (options.actionOnChange == undefined || options.actionOnChange == false) {
+            html += '<div class="settings-item-multiline-btn">';
+            html += '<button class="btn btn-success settings-item-applyBtn" type="button" id="btn-'+id+'">Apply</button>';
+            html += '</div>';
+        }
         html += '</div>';
         $("#" + containerId).append(html);
+
+        try {
         if (options.options != undefined)
             setOptionList(id, options.options, options.valIsText, options.optionTexts);
+        } catch (ex) {console.error(ex);}
 
         if (typeof cb === "function")
         {
             //console.warn(label , " is function  hardcoded");
-            $('#btn-' + id).click(function() { cb($('#' + id).val());});
+            if (options.actionOnChange == undefined || options.actionOnChange == false)
+                $('#btn-' + id).click(function() { cb($('#' + id).val(), id);});
+            else
+                $('#' + id).change(function() { cb($('#' + id).val(), id);});
+
             $('#' + id).val(param);
         }
         else if(typeof cb == "object")
         {
             //console.warn(label , " is object hardcoded");
-            
-            $('#btn-' + id).click(function() {console.warn(id,cb, param, cb[param]); cb[param] = $('#' + id).val(); });
+            if (options.actionOnChange == undefined || options.actionOnChange == false)
+                $('#btn-' + id).click(function() {console.warn(id,cb, param, cb[param]); cb[param] = $('#' + id).val(); });
+            else
+                $('#' + id).change(function() {console.warn(id,cb, param, cb[param]); cb[param] = $('#' + id).val(); });
             $('#' + id).val(cb[param]);
         }
         else
@@ -283,6 +292,8 @@ RED.settings.editor = (function() {
         select.empty();
         if (valIsText == undefined) valIsText = false;
         var haveOptionTexts = (optionTexts != undefined) && (Array.isArray(optionTexts));
+
+        //console.log("setOptionList",selectId,options);
         for (var i = 0; i < options.length; i++)
         {
             if (haveOptionTexts == true)
@@ -337,14 +348,21 @@ RED.settings.editor = (function() {
         if (isFileInput == undefined)
             html += '<button class="btn '+buttonClass+'" type="button" id="btn-'+id+'">'+label+'</button>';
         else if (isFileInput == true) {
-            html += '<input id="btn-'+id+'" class="btn action-import" type="file" style="display:none;"/>'
+            html += '<div>';
+            html += '<input id="btn-'+id+'" class="btn action-import" type="file" multiple style="display:none;"/>'
             html += '<label for="btn-'+id+'" style="width:87%;" " class="btn action-import" ><i class="fa fa-folder-open"></i>'+label+'</label>'
+            html += '</div>';
         }
         html += '</div>';
 
         //RED.console_ok("create complete Button @ " + containerId + " = " + label + " : " + id);
         $("#" + containerId).append(html);
-        $('#btn-' + id).click(cb);
+
+        if (isFileInput == undefined)
+            $('#btn-' + id).click(cb);
+        else if (isFileInput == true)
+            $('#btn-' + id).change(cb); // note file input uses the change event
+
         if (popupText != undefined)
         {
             RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");

@@ -47,8 +47,8 @@ RED.BiDirDataWebSocketBridge = (function() {
         bddwssPort:              { label:"BiDirData Web Socket Server Port", type:"number"},
         midiSubCat: {label:"MIDI", expanded:true, bgColor:"#FFF", popupText:"This contains settings for the Web Socket based midi interface", items: {
 			MidiDevicesRefresh:      { label:"Refresh midi devices", type:"button", buttonClass:"btn-primary btn-sm", action: function() {SendToWebSocket("midigetdevices"); }},
-			MidiDeviceIn:            { label:"MidiDevice In", type:"combobox", valueId:""}, // valueId is set by the settings generator
-			MidiDeviceOut:           { label:"MidiDevice Out", type:"combobox", valueId:""} 
+			MidiDeviceIn:            { label:"MidiDevice In", type:"combobox", actionOnChange:true, valueId:""}, // valueId is set by the settings generator
+			MidiDeviceOut:           { label:"MidiDevice Out", type:"combobox", actionOnChange:true, valueId:""} 
 		}},
     }
 

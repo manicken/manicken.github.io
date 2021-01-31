@@ -573,7 +573,7 @@ RED.main = (function() {
             RED.sidebar.show(RED.devTest.settings.startupTabRightSidebar);
 
             RED.IndexedDBfiles.init( function() { 
-                RED.arduino.boardsParser.readFromIndexedDB();
+                RED.arduino.board.readFromIndexedDB();
                 updateProjectsMenu();
             });
             //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));

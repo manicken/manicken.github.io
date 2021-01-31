@@ -15,7 +15,7 @@ RED.IndexedDBfiles = (function() {
     };
     var settings = {
         get testDir() { return _settings.testDir; },
-        set testDir(value) { _settings.testDir = value; RED.storage.update();},
+        set testDir(value) { _settings.testDir = value; testListFiles(); RED.storage.update();},
 
         get testFileName() { return _settings.testFileName; },
         set testFileName(value) { _settings.testFileName = value; RED.storage.update();},
@@ -31,10 +31,10 @@ RED.IndexedDBfiles = (function() {
     };
     var settingsCategory = { label:"IndexedDB files", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
-        testDir:          { label:"test dir", type:"combobox", options:["projects", "codeFiles", "images"]},
+        testDir:          { label:"test dir", type:"combobox", actionOnChange:true, options:["projects", "codeFiles", "images", "otherFiles"], valIsText:true},
+        testFileNames:          { label:"test file names", type:"combobox", actionOnChange:true},
         testFileName:          { label:"test file name", type:"string"},
-        testFileNames:          { label:"test file names", type:"combobox"},
-        testListFiles:        { label:"list files", type:"button", action:testListFiles},
+        //testListFiles:        { label:"list files", type:"button", action:testListFiles},
         testFileDataIn:          { label:"test file data input", type:"multiline", rows:4},
         testFileDataOut:          { label:"test file data output", type:"multiline", rows:4, readOnly:true},
         testFileWrite:        { label:"test file write", type:"button", action:testFileWrite},
@@ -55,7 +55,7 @@ RED.IndexedDBfiles = (function() {
             if (data == undefined) { RED.notify("error<br>file not found:<br>" + name, "warning", null, 3000); return; }
 
             $("#" + settingsEditor.testFileDataOut.valueId).val(data);
-        });
+        }, function(err) { RED.notify(err, "danger", null, 3000);});
     }
 
     function testListFiles()
@@ -63,12 +63,14 @@ RED.IndexedDBfiles = (function() {
         listFiles(settings.testDir, function(data) {
             if (data == undefined) { RED.notify("error<br>file not found:<br>", "warning", null, 3000); return; }
 
+            console.warn("testListFiles:", data);
+
             RED.settings.editor.setOptionList(settingsEditor.testFileNames.valueId, data, true);
             //$("#" + settingsEditor.testFileDataOut.valueId).val(data.join("\n"));
-        });
+        }, function(err) { RED.notify(err, "danger", null, 3000);});
     }
 
-    function init(cb)
+    function init(cbOk)
     {
         // In the following line, you should include the prefixes of implementations you want to test.
         window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
@@ -124,7 +126,12 @@ RED.IndexedDBfiles = (function() {
                 // requests!
                 console.error("Database Error: " + event.target.errorCode);
             };
-            cb();
+            if (cbOk != undefined)
+                cbOk();
+            else {
+                db.close();
+                RED.notify("cbOk was not defined in IndexedDBfiles init", "danger", null, 3000);
+            }
         };
     }
 
@@ -168,19 +175,20 @@ RED.IndexedDBfiles = (function() {
         });
     }
 
-    function fileRead(dir, name, cb) {
+    function fileRead(dir, name, cbOk, cbError) {
         init(function() {
-            var tx = db.transaction(dir, "readwrite");
+            try { var tx = db.transaction(dir, "readwrite"); }
+            catch(ex) { cbError("fileReadError: " + dir + "\\" + name + "<br>" + ex); db.close(); return; }
             var store = tx.objectStore(dir);
             var get = store.get(name);
             get.onsuccess = function () {
                 db.close();
-                if (get.result == undefined) cb(name, undefined);
-                else cb(name, get.result.data);
+                if (get.result == undefined){ if (cbError != undefined) cbError("file read error:" +  dir + "\\" + name); }
+                else cbOk(name, get.result.data);
             };
             get.onerror = function () {
                 db.close();
-                cb(name, undefined);
+                if (cbError != undefined) cbError("getAllKeys error" + get.result.error);
             };
         });
     }
@@ -189,19 +197,22 @@ RED.IndexedDBfiles = (function() {
 
     }
 
-    function listFiles(dir, cb) {
+    function listFiles(dir, cbOk, cbError) {
         init(function() {
-            var tx = db.transaction(dir, "readwrite");
+            //console.log("listFiles:",dir);
+            var tx;
+            try { tx = db.transaction(dir, "readwrite"); }
+            catch(ex) { if (cbError != undefined) cbError("directory not found:" + dir +"<br>"+ ex); db.close(); return; }
             var store = tx.objectStore(dir);
             var get = store.getAllKeys();
             get.onsuccess = function () { 
-                if (get.result == undefined) cb(undefined);
-                else cb(get.result);
                 db.close();
+                if (get.result == undefined){ if (cbError != undefined) cbError("no files found in " + dir);}
+                else cbOk(get.result);
             };
             get.onerror = function () {
-                cb(undefined);
                 db.close();
+                if (cbError != undefined) cbError("getAllKeys error" + get.result.error);
             };
         });
     }
