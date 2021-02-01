@@ -407,6 +407,8 @@ RED.arduino.export = (function () {
         // because when replacing constant def with values destroys the design
         var jsonString = JSON.stringify(nns); // one liner JSON
         wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
+        wsCppFiles.push(getNewWsCppFile("preferences.txt", RED.arduino.board.export_arduinoIDE()));
+        wsCppFiles.push(getNewWsCppFile("platformio.ini", RED.arduino.board.export_platformIO()));
         // first scan for code files to include them first
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];

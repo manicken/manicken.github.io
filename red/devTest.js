@@ -57,6 +57,9 @@ RED.devTest = (function() {
     var settingsEditor = {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
         testImportFiles:        { label:"test import file(s)", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: testImportFiles},
+        testExportArduinoPref:  { label:"test export arduino pref file", type:"button", action: testExportArduinoPref},
+        testExportPlatformIOini:{ label:"test export PlatformIO.ini file", type:"button", action: testExportPlatformIOini},
+        testExportMakeFile:     { label:"test export make file", type:"button", action: testExportMakeFile},
 		testPost:               { label:"test post", type:"string"},
 		testGet:                { label:"test get", type:"string"},
         testWsSend:             { label:"test ws send", type:"string"},
@@ -67,7 +70,19 @@ RED.devTest = (function() {
         
         
     };
-    
+
+    function testExportArduinoPref() {
+        RED.main.download("preferences.txt", RED.arduino.board.export_arduinoIDE() ); 
+    }
+
+    function testExportPlatformIOini() {
+        RED.main.download("platformio.ini", RED.arduino.board.export_platformIO() );
+    }
+
+    function testExportMakeFile() {
+        RED.main.download("Makefile", RED.arduino.board.export_makeFile() );
+    }
+
     function testImportFiles(e)
     {
         for (var fi = 0; fi < e.target.files.length; fi++) {

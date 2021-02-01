@@ -114,18 +114,80 @@ RED.arduino.board = (function () {
         //RED.arduino.settings.Board.Options = options;
     }
     function export_platformIO() {
+        var platform = RED.arduino.settings.Board.Platform;
+        var boardId = RED.arduino.settings.Board.Board;
+        var pioini = "";
+        pioini += "[env:teensy]\n";
+        pioini += "platform = " + platform + "\n";
+        pioini += "framework = arduino\n";
+        pioini += "board = " + boardId + "\n";
+        pioini += "build_flags = ";
 
+        if (platform == "teensy") {
+            var options = RED.arduino.settings.Board.Options;
+            
+            pioini += " -D " + treeData[boardId].menu.usb[options.usb].build.usbtype.value;
+            
+            if (options.opt == "o2std")
+                pioini += " -D TEENSY_OPT_FASTER";
+            else if (options.opt == "o1std")
+                pioini += " -D TEENSY_OPT_FAST";
+            else if (options.opt == "o3std")
+                pioini += " -D TEENSY_OPT_FASTEST";
+            else if (options.opt == "ogstd")
+                pioini += " -D TEENSY_OPT_DEBUG";
+            else if (options.opt == "osstd")
+                pioini += " -D TEENSY_OPT_SMALLEST_CODE";
+            //pioini += " -D " + treeData[boardId].menu.opt[options.opt].build.flags.optimize.value;
+        
+            
+
+            //prefs += "custom_" + on + "=" + boardId + "_" + options[on] + "\n";
+        }
+
+        pioini += "\n";
+        //
+        return pioini;
     }
     function export_arduinoIDE() {
-        var prefs = "target_package=arduino\n" + 
-                    "target_platform=avr\n" + 
-                    "board=nano\n" + 
-                    "custom_usb=teensy40_serial\n";
+        var prefs = "";
         var boardId = RED.arduino.settings.Board.Board;
+        prefs += "board=" + boardId + "\n";
+        var platform = RED.arduino.settings.Board.Platform;
 
+        if (platform == "teensy") {
+            prefs += "target_package=teensy\n";
+            prefs += "target_platform=avr\n";
+        }
+        else if (platform == "arduino") {
+            prefs += "target_package=arduino\n";
+            prefs += "target_platform=avr\n";
+        }
+        else if (platform.startsWith("esp")) {
+            prefs += "target_package="+platform+"\n";
+            prefs += "target_platform="+platform+"\n";
+        }
+        else if (platform == "stm32f1") {
+            prefs += "target_package=stm32duino\n";
+            prefs += "target_platform=STM32F1\n";
+        }
+        else if (platform == "stm32f4") {
+            prefs += "target_package=stm32duino\n";
+            prefs += "target_platform=STM32F4\n";
+        }
+        var options = RED.arduino.settings.Board.Options;
+        var ons = Object.getOwnPropertyNames(options); // option name s
+        for (var i = 0; i < ons.length; i++) {
+            var on = ons[i]; // option name
+            prefs += "custom_" + on + "=" + boardId + "_" + options[on] + "\n";
+        }
+        //
+        return prefs;
     }
     function export_makeFile() {
+        var makeFile = "";
 
+        return makeFile;
     }
 
     return {
