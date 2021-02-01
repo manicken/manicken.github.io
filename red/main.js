@@ -163,15 +163,20 @@ RED.main = (function() {
 			   "If you want a different filename,<br>then use the<b> export menu - SaveToFile</b> instead.";
     }
     
-    function addMenuItem(menuId, id, className, label, popupText, action) {
+    function addMenuItem(menuId, id, className, item, action) {
         var html = "";
         var uid = menuId+'-btn-'+id;
-        html += '<li><a id="'+uid+'" tabindex="-1" href="#"><i class="'+className+'"></i> '+label+'</a></li>';
+        if (item.dividerBefore != undefined && item.dividerBefore == true)
+            html += '<li class="divider"></li>';
+        html += '<li><a id="'+uid+'" tabindex="-1" href="#"><i class="'+className+'"></i> '+item.label+'</a></li>';
+        if (item.dividerAfter != undefined && item.dividerAfter == true)
+            html += '<li class="divider"></li>';
         $("#" + menuId).append(html);
-        $("#"+ uid).click(function() { action(id, label); });
+        $("#"+ uid).click(function() { action(id, item.label); });
 
-        SetButtonPopOver("#" + uid, popupText, "left");
+        SetButtonPopOver("#" + uid, item.description, "left");
     }
+
 	function addDemoFlowsToMenu()
 	{
         var menuName = "menu-demo-flows";
@@ -183,22 +188,23 @@ RED.main = (function() {
         {
             var name = names[mi];
             var item = data[name];
-            addMenuItem(menuName, name, "fa fa-file", item.label, item.description, function(id) {
-                var contents = $("script[data-container-name|='"+id+"']").html();
-                var parsedContents = JSON.parse(contents);
-                // failsafe checks before loading data
-                if (parsedContents == undefined || contents == undefined || contents.trim().length == 0) {
-                    RED.notify("Error could not read example " + id, "danger", null, 10000);
-                    return;
-                }
-			    verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(item.label), function(okPressed) { 
-                    if (okPressed)
-                    {
-                        console.error("load " + id);
-                        //console.log("newFlowData:" + contents);
-                        saveToFile(RED.arduino.settings.ProjectName + ".json");
-                        RED.storage.loadContents(contents);
+            addMenuItem(menuName, name, "fa fa-file", item, function(id) {
+                verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(id), function(okPressed) { 
+                    if (okPressed == false) return;
+                    
+                    var contents = $("script[data-container-name|='"+id+"']").html();
+                    var parsedContents = JSON.parse(contents);
+                    // failsafe checks before loading data
+                    if (parsedContents == undefined || contents == undefined) {
+                        RED.notify("Error could not read example " + id, "danger", null, 10000);
+                        return;
                     }
+            
+                    console.warn("load " + id);
+                    //console.log("newFlowData:" + contents);
+                    saveToFile(RED.arduino.settings.ProjectName + ".json");
+                    RED.storage.loadContents(contents);
+                    
                 });
 			});
         }
@@ -213,8 +219,8 @@ RED.main = (function() {
             $("#" + menuName).empty();
             for(var mi = 0; mi < items.length; mi++)
             {
-                var item = items[mi];
-                addMenuItem(menuName, item.replace('.', '-'), "fa fa-file", item, "", function(id, label) {
+                var item = {label:items[mi], description:"Load " + items[mi]};
+                addMenuItem(menuName, item.label.replace('.', '-'), "fa fa-file", item, function(id, label) {
                     console.warn("project clicked:" + label)
                     RED.IndexedDBfiles.fileRead("projects", label, function(name, contents) {
                         if (contents == undefined) { RED.notify("error<br>file not found:<br>" + name, "warning", null, 3000); return; }

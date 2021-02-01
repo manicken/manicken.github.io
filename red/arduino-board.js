@@ -49,6 +49,7 @@ RED.arduino.board = (function () {
         const t1 = performance.now();
         console.warn("parse took " + (t1-t0) + " milliseconds");
 
+        //RED.main.download(RED.arduino.settings.Board.Platform+".boards.singleline.json", JSON.stringify(fileData)); // only used to update the embedded board files
         //RED.main.download("tree.teensy.boards.json", JSON.stringify(treeData, null, 4));
         //console.warn(treeData);
     }
