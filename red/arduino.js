@@ -118,7 +118,7 @@ RED.arduino = (function() {
                 board: {label:"Board settings", expanded:true, bgColor:"#006468", 
                     items: {
                         "Board.Platform":           { label:"Platform", type:"combobox", actionOnChange:true, options:["teensy", "arduino", "esp"], optionTexts:["Teensy", "Arduino", "Espressif"], popupText:"to use this functionality,<br> first the different board files needs to 'imported' into the tool,<br>the files are then stored into the browser indexedDB<br>so that they can be easly read when the tool starts." },
-                        uploadBoardsFile:        { label:"Upload Boards File", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: uploadBoardFileCurrentPlatform},
+                        importBoardsFile:        { label:"Import Boards File", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: importBoardFileCurrentPlatform},
                         "Board.Board":           { label:"Board", type:"combobox", actionOnChange:true, options:["teensy30", "teensy40", "teensy41"], optionTexts:["Teensy 3.0", "Teensy 4.0", "Teensy 4.1"] },
                         options: {label:"Options", expanded:true, bgColor:"#17A1A5", 
                             items: {
@@ -148,7 +148,7 @@ RED.arduino = (function() {
 		
     };
 
-    function uploadBoardFileCurrentPlatform(e)
+    function importBoardFileCurrentPlatform(e)
     {
         for (var fi = 0; fi < e.target.files.length; fi++) {
             var file = e.target.files[fi];
