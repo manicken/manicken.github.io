@@ -60,6 +60,7 @@ RED.devTest = (function() {
         testExportArduinoPref:  { label:"test export arduino pref file", type:"button", action: testExportArduinoPref},
         testExportPlatformIOini:{ label:"test export PlatformIO.ini file", type:"button", action: testExportPlatformIOini},
         testExportMakeFile:     { label:"test export make file", type:"button", action: testExportMakeFile},
+        convertFileToOneLiner:  { label:"convert file to<br>one liner string<br>in new file", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: convertFileToOneLineString},
 		testPost:               { label:"test post", type:"string"},
 		testGet:                { label:"test get", type:"string"},
         testWsSend:             { label:"test ws send", type:"string"},
@@ -81,6 +82,17 @@ RED.devTest = (function() {
 
     function testExportMakeFile() {
         RED.main.download("Makefile", RED.arduino.board.export_makeFile() );
+    }
+
+    function convertFileToOneLineString(e) {
+        var file = e.target.files[0];
+        if (!file) { return; }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var contents = e.target.result;
+            RED.main.download(file.name, JSON.stringify(contents) );
+        };
+        reader.readAsText(file);
     }
 
     function testImportFiles(e)

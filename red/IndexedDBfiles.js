@@ -83,12 +83,12 @@ RED.IndexedDBfiles = (function() {
             console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
             return;
         }
+        console.log(window.indexedDB);
+        // initial initiation
         var request = window.indexedDB.open("AudioSystemDesignTool", 1);
-        request.onupgradeneeded = function(event) {
-            // Save the IDBDatabase interface
+        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); }; // this also happen when upgrade is needed
+        request.onupgradeneeded = function(event) { // This event is only implemented in recent browsers
             let db = event.target.result;
-            //console.error("Database onupgradeneeded: " + event.target.errorCode);
-            // Create an objectStore for this database
             var objectStore = db.createObjectStore("projects", { keyPath: "name" });
             objectStore.createIndex("name", "name", { unique: true });
             objectStore.createIndex("data", "data", { unique: false });
@@ -100,24 +100,31 @@ RED.IndexedDBfiles = (function() {
             objectStore.createIndex("data", "data", { unique: false });
             db.close();
         };
-        
-        // Let us open our database
+        // upgrade to version 2 if needed
         request = window.indexedDB.open("AudioSystemDesignTool", 2);
-        request.onerror = function(event) {
-            // Do something with request.errorCode!
-            console.error("indexDB request onerror: " + event.errorCode);
-        };
-        // This event is only implemented in recent browsers
+        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); };// this also happen when upgrade is needed
         request.onupgradeneeded = function(event) {
-            // Save the IDBDatabase interface
             var db = event.target.result;
-            //console.error("Database onupgradeneeded: " + event.target.errorCode);
-            // Create an objectStore for this database
-            
             var objectStore = db.createObjectStore("otherFiles", { keyPath: "name" });
             objectStore.createIndex("name", "name", { unique: true });
             objectStore.createIndex("data", "data", { unique: false });
+            db.close();
         };
+        // updgrade to version 3 if needed
+        request = window.indexedDB.open("AudioSystemDesignTool", 3);
+        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); };// this also happen when upgrade is needed
+        request.onupgradeneeded = function(event) {
+            var db = event.target.result;
+            var upgradeTransaction = event.target.transaction;
+            
+            addCreateIndex(upgradeTransaction, "projects", "DateTime");
+            addCreateIndex(upgradeTransaction, "codeFiles", "DateTime");
+            addCreateIndex(upgradeTransaction, "images", "DateTime");
+            addCreateIndex(upgradeTransaction, "otherFiles", "DateTime");
+            console.warn("upgrade to version 3 completed");
+            
+        };
+
         request.onsuccess = function(event) {
             db = event.target.result; 
             console.warn("indexDB request onsuccess: ", db );
@@ -135,13 +142,28 @@ RED.IndexedDBfiles = (function() {
         };
     }
 
+    function addCreateIndex(transaction, dir, name) {
+        var objectStore = transaction.objectStore(dir);
+        objectStore.createIndex(name, name, { unique: false });
+    }
+
+    function getFileDateTime(currentdate) {
+        var datetime = currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+        return datetime;
+    }
+
     function fileWrite(dir, name, data, cb) {
         init(function() {
             var html = "";
 
             //console.log("data" + data + ">>>" + String.fromCharCode(data.charCodeAt(3)+0x30) + "<<<");
             // Create a new object ready to insert into the IDB
-            var newItem = [ { name: name, data: data} ];
+            var newItem = [ { name: name, data: data, DateTime: getFileDateTime(new Date())} ];
         
             // open a read/write db transaction, ready for adding the data
             var transaction = db.transaction(dir, "readwrite");

@@ -544,9 +544,23 @@ RED.main = (function() {
 
 
 			var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
-			$.each(nodeDefinitions["nodes"], function (key, val) {
-				RED.nodes.registerType(val["type"], val["data"]);
-			});
+            if (nodeDefinitions["nodes"] != undefined) {
+                $.each(nodeDefinitions["nodes"], function (key, val) {
+                    RED.nodes.registerType(val["type"], val["data"]);
+                });
+            }
+            else if (nodeDefinitions["types"] != undefined) {
+                var types = nodeDefinitions["types"];
+                var typesNames = Object.getOwnPropertyNames(types);
+                for (var ti = 0; ti < typesNames.length; ti++) {
+                    var typeName = typesNames[ti];
+                    var type = types[typeName];
+                    RED.nodes.registerType(typeName, type);
+                }
+            }
+            else RED.notify("could not find nodedefinitions", "error", true, 10000);
+
+			
 			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
 				showHelp();
 				d3.event.preventDefault();

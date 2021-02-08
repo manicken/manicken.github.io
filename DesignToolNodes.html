@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<!--
+	This is a template file for importing node-extensions
+-->
+<head>
+</head>
+<body>
+
+<!-- this is used to define which IO resources that can be shared or not-->
+<script  type="text/x-red" data-container-name="InputOutputCompatibilityMetadata">
+	{"requirements":[
+		{"type":"AudioInputI2S_Custom",         "resource":"I2S Device",    "shareable":true,  "setting":"I2S Master"},
+		{"type":"AudioInputI2S_Custom",         "resource":"Sample Rate",   "shareable":true,  "setting":"Teensy Control"},
+		{"type":"AudioInputI2S_Custom",         "resource":"IN1 Pin",       "shareable":false},
+		{"type":"AudioInputI2SQuad_Custom",     "resource":"I2S Device",    "shareable":true,  "setting":"I2S Master"},
+		{"type":"AudioInputI2SQuad_Custom",     "resource":"Sample Rate",   "shareable":true,  "setting":"Teensy Control"},
+		{"type":"AudioInputI2SQuad_Custom",     "resource":"IN1 Pin",       "shareable":false},
+	]}
+</script>
+
+<!-- this is just the different categories available
+     in a future version theese could be used to create custom categories
+	 but for now that functionality is not implemented
+	 "hdrBgColor":"#FAFAFA", "hdrTxtColor":"#000" 
+	 can be used to select the colors of the category header 
+<script  type="text/x-red" data-container-name="NodeCategories">
+	{
+		"used":{      "expanded":false},
+		"tabs":{      "expanded":false},
+		"special":{   "expanded":false},
+		"ui":{        "expanded":false},
+		"input":{     "expanded":false, "subcats":{"i2s1":{},"i2s2":{},"spdif":{},"adc":{},"other":{}}},
+		"output":{    "expanded":false, "subcats":{"i2s1":{},"i2s2":{},"spdif":{},"adc":{},"other":{}}},
+		"mixer":{     "expanded":false},
+		"play":{      "expanded":false},
+		"record":{    "expanded":false},
+		"synth":{     "expanded":false},
+		"effect":{    "expanded":false},
+		"filter":{    "expanded":false},
+		"analyze":{   "expanded":false},
+		"control":{   "expanded":false}
+	}
+</script>
+-->
+<!-- here the node-types are defined
+     please change the uid, label and description
+     the uid is a unique definer, 
+     the label is the text shown in the filter/show node-types
+	 the description is shown when hover over the filter selection
+	 the actual node-type def. 
+	 have 5 items that should be changed
+	 1. the actual type "AudioInputI2S_Custom"  this is the class name defined in the library
+	 2. shortName this is the label shown in the left palette
+	 3-4. inputs and outputs respective defines the amount of I/O the AudioObject have
+	 5. category defines which palette category the node is placed in 
+	 -->
+<script  type="text/x-red" data-container-name="NodeDefinitions">
+{
+    "uid":"customNodes",
+	"label":"CustomNodes",
+	"description":"Template Custom Nodes",
+	"types":{
+	    "AudioInputI2S_Custom":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":0,"outputs":2,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"},
+	    "AudioInputI2SQuad_Custom":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s_quad","inputs":0,"outputs":4,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"},
+	    "AudioMixer4_Custom":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"inputs":{"value":"4"}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
+	}
+}
+</script>
+
+<!-- this is just provided both as a template for custom editors
+     and to see how the global editor is implemented.
+	 Note the global editor is used for all node-types that don't
+	 heve the 
+	 <script type="text/x-red" data-template-name="AudioMixer4_Custom">
+	 defined
+<script type="text/x-red" data-template-name="NodesGlobalEdit">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row hidden">
+		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
+		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+	</div>
+</script>
+-->
+<!-- data-help-name defines the help documentation shown in the right panel, it's pure html 
+     a good thing to do is to use the <br> for linebreaks to make the text easier to read
+	 otherwise the <p></p> (paragraph can be used)-->
+<script type="text/x-red" data-help-name="AudioInputI2S_Custom">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>Receive 16 bit stereo audio from the
+	<a href="http://www.pjrc.com/store/teensy3_audio.html" target="_blank">audio shield</a>
+		or another I2S device, using I2S master mode.</p>
+	<p align=center><img src="img/audioshield_inputs.jpg"></p>
+	</div>
+	<h3>Boards Supported</h3>
+	<ul>
+	<li>Teensy 3.2
+	<li>Teensy 3.5
+	<li>Teensy 3.6
+	<li>Teensy 4.0
+	<li>Teensy 4.1
+	</ul>
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>Out 0</td><td>Left Channel</td></tr>
+		<tr class=odd><td align=center>Out 1</td><td>Right Channel</td></tr>
+	</table>
+	<h3>Functions</h3>
+	<p>This object has no functions to call from the Arduino sketch.  It
+		simply streams data from the I2S hardware to its 2 output ports.</p>
+	<h3>Hardware</h3>
+	<p align=center><img src="img/audioshield_backside.jpg"></p>
+	<p>The I2S signals are used in "master" mode, where Teensy creates
+		all 3 clock signals and controls all data timing.</p>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>T3.x<br>Pin</th><th>T4.x<br>Pin</th><th>Signal</th><th>Direction</th></tr>
+		<tr class=odd><td align=center>9</td><td align=center>21</td><td>BCLK</td><td>Output</td></tr>
+		<tr class=odd><td align=center>11</td><td align=center>23</td><td>MCLK</td><td>Output</td></tr>
+		<tr class=odd><td align=center>13</td><td align=center>8</td><td>RX</td><td>Input</td></tr>
+		<tr class=odd><td align=center>23</td><td align=center>20</td><td>LRCLK</td><td>Output</td></tr>
+	</table>
+	<p>Audio from
+		master mode I2S may be used in the same project as ADC, DAC and
+		PWM signals, because all remain in sync to Teensy's timing</p>
+	<p>Compatible CODEC Chips:
+		<ul>
+		<li><a href="https://www.pjrc.com/store/teensy3_audio.html">STGL5000</a>
+		<li><a href="https://forum.pjrc.com/threads/42665-New-Audio-Board!-TI-TLV320AIC3206">TLV320AIC3206</a>
+		<li><a href="https://forum.pjrc.com/threads/32276-HiFi-Audio-CODEC-Module-AK4558-evaluation-board-in-a-square-inch-PCB">AK4558</a>
+		<li>WM8731
+		</ul>
+	</p>
+	<p>Compatible ADC Chips:
+		<ul>
+		</ul>
+	</p>
+	<p>Compatible Microphones:
+		<ul>
+		<li><a href="https://forum.pjrc.com/threads/47010-I2S-Microphone-(SPH0645LM4H-B)?p=157101&viewfull=1#post157101">SPH0645LM4H-B</a>
+		<li><a href="https://forum.pjrc.com/threads/50534-Why-MEMS-i2s-microphone-ICS-43432-with-teensy-audio-library-not-working?p=173279&viewfull=1#post173279">ICS43432</a>
+		<li><a href="https://forum.pjrc.com/threads/49065-ICS43434-I2S-Digital-Microphone-and-Teensy-3-2">ICS43434</a>
+		</ul>
+	</p>
+	<h3>Examples</h3>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; HardwareTesting &gt; PassThroughStereo
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Recorder
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; PeakMeterStereo
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; FFT
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; SpectrumAnalyzerBasic
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Effects &gt; Chorus
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Effects &gt; Flange
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Effects &gt; Filter
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Effects &gt; Filter_FIR
+	</p>
+	<h3>Notes</h3>
+	<p>Normally, this object is used with the Audio Shield, which
+		is controlled separately by the "sgtl5000" object.</p>
+	<p>Only one I2S input and one I2S output object may be used.  Master
+		and slave modes may not be mixed (both must be of the same type).
+	</p>
+	<p>I2S master objects can be used together with non-I2S input and output
+		objects, for simultaneous audio streaming on different hardware.</p>
+</script>
+
+<script type="text/x-red" data-help-name="AudioInputI2SQuad_Custom">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>Receive 16 bit quad (4) channel audio from two
+	<a href="http://www.pjrc.com/store/teensy3_audio.html" target="_blank">audio shields</a>
+		or another I2S devices, using I2S master mode.</p>
+	<p align=center><img src="img/audioshield_quad_in.jpg"></p>
+	</div>
+	<h3>Boards Supported</h3>
+	<ul>
+	<li>Teensy 3.2
+	<li>Teensy 3.5
+	<li>Teensy 3.6
+	<li>Teensy 4.0
+	<li>Teensy 4.1
+	</ul>
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>Out 0</td><td>Channel #1</td></tr>
+		<tr class=odd><td align=center>Out 1</td><td>Channel #2</td></tr>
+		<tr class=odd><td align=center>Out 2</td><td>Channel #3</td></tr>
+		<tr class=odd><td align=center>Out 3</td><td>Channel #4</td></tr>
+	</table>
+	<h3>Functions</h3>
+	<p>This object has no functions to call from the Arduino sketch.  It
+		simply streams data from the I2S hardware to its 4 output ports.</p>
+	<h3>Hardware</h3>
+	<p>See this Sparkfun blog for <a href="https://www.sparkfun.com/news/2055" target="_blank">how
+		to connect two audio adaptors for 4 channel audio</a>.</p>
+	<p>For Teensy 4 and Rev D audio shields, see
+		<a href="https://forum.pjrc.com/threads/61123?p=242054&viewfull=1#post242054">this forum thread</a>.</p>
+	<p>The I2S signals are used in "master" mode, where Teensy creates
+		all 3 clock signals and controls all data timing.</p>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Teensy<br>3.2<br>Pin</th><th>Teensy<br>3.5/3.6<br>Pin</th><th>Teensy<br>4.x<br>Pin</th><th>Signal</th><th>Direction</th></tr>
+		<tr class=odd><td align=center>9</td><td align=center>9</td><td align=center>21</td><td>BCLK</td><td>Output</td></tr>
+		<tr class=odd><td align=center>11</td><td align=center>11</td><td align=center>23</td><td>MCLK</td><td>Output</td></tr>
+		<tr class=odd><td align=center>13</td><td align=center>13</td><td align=center>8</td><td>RX</td><td>Input</td></tr>
+		<tr class=odd><td align=center>30</td><td align=center>38</td><td align=center>6</td><td>RX</td><td>Input</td></tr>
+		<tr class=odd><td align=center>23</td><td align=center>23</td><td align=center>20</td><td>LRCLK</td><td>Output</td></tr>
+	</table>
+	<p>Audio from
+		master mode I2S may be used in the same project as ADC, DAC and
+		PWM signals, because all remain in sync to Teensy's timing</p>
+	<h3>Examples</h3>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; HardwareTesting &gt; PassThroughQuad
+	</p>
+	<h3>Notes</h3>
+	<p>On Teensy 3.x, the BCLK/LRCLK ratio is 32, which is not compatible with
+		most MEMS microphones.  Teensy 4.x uses BCLK/LRCLK ratio, which can
+		be used with I2S MEMS microphones.</p>
+	<p>Normally, this object is used with two Audio Shield, which
+		are controlled separately by a pair "sgtl5000" object.</p>
+</script>
+
+<script type="text/x-red" data-help-name="AudioMixer4_Custom">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>Combine up to 4 audio signals together, each with adjustable gain.
+		All channels support signal attenuation or amplification.</p>
+	</div>
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>In 0</td><td>Input signal #1</td></tr>
+		<tr class=odd><td align=center>In 1</td><td>Input signal #2</td></tr>
+		<tr class=odd><td align=center>In 2</td><td>Input signal #3</td></tr>
+		<tr class=odd><td align=center>In 3</td><td>Input signal #4</td></tr>
+		<tr class=odd><td align=center>Out 0</td><td>Sum of all inputs</td></tr>
+	</table>
+	<h3>Functions</h3>
+	<p class=func><span class=keyword>gain</span>(channel, level);</p>
+	<p class=desc>Adjust the amplification or attenuation.  "channel" must
+		be 0 to 3.  "level" may be any floating point number from 0 to 32767.0.
+		1.0 passes the signal through directly.  Level of 0 shuts the channel
+		off completely.  Between 0 to 1.0 attenuates the signal, and above
+		1.0 amplifies it.  Negative numbers may also be used, to invert the
+		signal.  All 4 channels have separate gain settings.
+	</p>
+	<h3>Examples</h3>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; SamplePlayer
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Synthesis &gt; PlaySynthMusic
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; SpectrumAnalyzerBasic
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; Analysis &gt; DialTone_Serial
+	</p>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; MemoryAndCpuUsage
+	</p>
+	<h3>Notes</h3>
+	<p>Signal clipping can occur when any channel has gain greater than 1.0,
+		or when multiple signals add together to greater than 1.0.</p>
+	<p>More than 4 channels may be combined by connecting multiple mixers
+		in tandem.  For example, a 16 channel mixer may be built using 5
+		mixers, where the fifth mixer combines the outputs of the first 4.
+	</p>
+</script>
+<!-- here AudioMixer4 have a custom editor, to make it possible to select how many input pins that are shown (visually) -->
+<script type="text/x-red" data-template-name="AudioMixer4_Custom">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs (visual):</label>
+		<select name="node-input-inputs" id="node-input-inputs">
+			<option value="4">4</option>
+			<option value="3">3</option>
+			<option value="2">2</option>
+			<option value="1">1</option>
+	    </select>
+	</div>
+</script>
+
+</body>
+</html>
