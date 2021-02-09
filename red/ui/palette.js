@@ -25,6 +25,7 @@ RED.palette = (function() {
         categoryHeaderShowAsRainBowAlt: false,
         categoryHeaderShowAsRainBowMinVal: 64,
 		onlyShowOne: true,
+        hideHeadersWhenSearch: true,
 	};
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
@@ -35,6 +36,7 @@ RED.palette = (function() {
         categoryHeaderShowAsRainBowAlt: defSettings.categoryHeaderShowAsRainBowAlt,
         categoryHeaderShowAsRainBowMinVal: defSettings.categoryHeaderShowAsRainBowMinVal,
 		onlyShowOne: defSettings.onlyShowOne,
+        hideHeadersWhenSearch: defSettings.hideHeadersWhenSearch,
 	};
 
 	var settings = {
@@ -50,6 +52,9 @@ RED.palette = (function() {
 		
         get onlyShowOne() { return _settings.onlyShowOne; },
         set onlyShowOne(state) { _settings.onlyShowOne = state; RED.storage.update();},
+
+        get hideHeadersWhenSearch() { return _settings.hideHeadersWhenSearch; },
+        set hideHeadersWhenSearch(state) { _settings.hideHeadersWhenSearch = state; filterChange(); RED.storage.update();},
 
         get categoryHeaderShowAsRainBow() { return _settings.categoryHeaderShowAsRainBow; },
         set categoryHeaderShowAsRainBow(state) { _settings.categoryHeaderShowAsRainBow = state; setCategoryHeaderStyle(); RED.storage.update();},
@@ -69,6 +74,7 @@ RED.palette = (function() {
 		categoryHeaderHeight: {label:"Header Height", type:"number" },
 		categoryHeaderBackgroundColor: {label:"Header BG color", type:"color" },
         onlyShowOne: {label:"Only show one category at a time.", type:"boolean" },
+        hideHeadersWhenSearch: {label:"Hide category headers at search", type:"boolean" },
         categoryHeaderShowAsRainBow: {label:"Header BG color rainbow", type:"boolean", popupText:"Shows each category in one different color,<br><br>note. when this is checked the bgColor is used as the additive component" },
         categoryHeaderShowAsRainBowAlt: {label:"Header BG color rainbow Alternative", type:"boolean", popupText:"when checked the above bgColor defines the min values used,<br>and the following luminence defines the max values."},
         categoryHeaderShowAsRainBowMinVal: {label:"Header BG color rainbow min/max luminence", type:"number", popupText:"when alt mode is inactive the following is used:<br>Header BG color rainbow min luminence value calculated by the following formula<br>(adjLuminance is this value)<br><br>if (adjLuminance != undefined && color_R_A < parseInt(adjLuminance))<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A + parseInt(colorB.substring(1,3), 16);<br>else<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A; <br><br>when alt mode in active this defines the max color values." },
@@ -211,7 +217,7 @@ RED.palette = (function() {
 		//console.error(otherCat);
 		for (var i = 0; i < otherCat.length; i++)
 		{
-			if (otherCat[i].id.startsWith("set-")){ continue; }// never collapse settings
+			
 			//console.warn("setShownStateForAll:" + otherCat[i].id);
 			if (state)
 			{
@@ -377,8 +383,18 @@ RED.palette = (function() {
 		var val = $("#palette-search-input").val();
 		if (val === "") {
 			$("#palette-search-clear").hide();
+            setShownStateForAll(false, "palette-container", "palette-header");
+            setShownStateForAll(false, "palette-container", "palette-header-sub-cat");
+            if (settings.hideHeadersWhenSearch == true)
+                showAllHeaders();
 		} else {
 			$("#palette-search-clear").show();
+            setShownStateForAll(true, "palette-container", "palette-header");
+            setShownStateForAll(true, "palette-container", "palette-header-sub-cat");
+            if (settings.hideHeadersWhenSearch == true)
+                hideAllHeaders();
+            else
+                showAllHeaders();
 		}
 		
 		var re = new RegExp(val, "i");
@@ -390,6 +406,41 @@ RED.palette = (function() {
 				$(this).hide();
 		});
 	}
+
+    function hideAllHeaders() {
+        // hide headers
+        var otherCat = $("#palette-container").find(".palette-header");
+        otherCat.push($("#palette-container").find(".palette-header-sub-cat"));
+		for (var i = 0; i < otherCat.length; i++)
+		{
+            $(otherCat[i]).addClass("hidden");
+        }
+        // hide borders
+        otherCat = $("#palette-container").find(".palette-category");
+        otherCat.push($("#palette-container").find(".palette-category-sub-cat"));
+        otherCat.push($("#palette-container").find(".palette-content"));
+        for (var i = 0; i < otherCat.length; i++)
+		{
+            $(otherCat[i]).addClass("palette-category-no-border");
+        }
+    }
+    function showAllHeaders() {
+        // show headers
+        var otherCat = $("#palette-container").find(".palette-header");
+        otherCat.push($("#palette-container").find(".palette-header-sub-cat"));
+		for (var i = 0; i < otherCat.length; i++)
+		{
+            $(otherCat[i]).removeClass("hidden");
+        }
+        // show borders
+        otherCat = $("#palette-container").find(".palette-category");
+        otherCat.push($("#palette-container").find(".palette-category-sub-cat"));
+        otherCat.push($("#palette-container").find(".palette-content"));
+        for (var i = 0; i < otherCat.length; i++)
+		{
+            $(otherCat[i]).removeClass("palette-category-no-border");
+        }
+    }
 	
 	$("#palette-search-input").focus(function(e) {
 		RED.keyboard.disable();

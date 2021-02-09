@@ -56,6 +56,7 @@ RED.devTest = (function() {
     var settingsCategory = { label:"Development Tests", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
+        testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
         testImportFiles:        { label:"test import file(s)", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: testImportFiles},
         testExportArduinoPref:  { label:"test export arduino pref file", type:"button", action: testExportArduinoPref},
         testExportPlatformIOini:{ label:"test export PlatformIO.ini file", type:"button", action: testExportPlatformIOini},
@@ -71,6 +72,17 @@ RED.devTest = (function() {
         
         
     };
+    function testSelectFileByApi_OK(responseText) {
+        console.warn("testSelectFileByApi_OK",responseText);
+    }
+
+    function testSelectFileByApi_Error(responseText) {
+        console.warn("testSelectFileByApi_Error",responseText);
+    }
+
+    function testSelectFileByApi() {
+        RED.arduino.httpGetAsync("cmd=selectFile", testSelectFileByApi_OK, testSelectFileByApi_Error, 240000);
+    }
 
     function testExportArduinoPref() {
         RED.main.download("preferences.txt", RED.arduino.board.export_arduinoIDE() ); 

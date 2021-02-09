@@ -119,10 +119,10 @@
   .palette-scroll {
       display: none;
       position: absolute;
-      top: 0;
+      top: 35px;
       left:0;
       right: 0;
-      bottom: 35px;
+      bottom: 0px;
       padding: 5px;
       overflow-y: auto;
       box-sizing:border-box;
@@ -134,15 +134,16 @@
   #palette-search {
       position: absolute;
       display: none;
-      bottom: 0;
+      top: 0;
       left:0;
       right:0;
       overflow: hidden;
       background: #f3f3f3;
+      border-bottom: 1px solid #000;
       text-align: center;
       height: 35px;
       padding: 3px;
-      border-top: 1px solid #999;
+      /*border-top: 1px solid #999;*/
       box-sizing:border-box;
       -moz-box-sizing: border-box;    
   }
@@ -184,6 +185,12 @@
       border: 1px solid #999;
       border-radius: 3px;
       margin-bottom: 5px;
+  }
+  .palette-category-no-border {
+    border: 0px !important;
+    border-radius: 0px !important;
+    margin: 0px !important;
+    padding: 0px !important;
   }
   .palette-category-sub-cat {
       margin: 2px;
