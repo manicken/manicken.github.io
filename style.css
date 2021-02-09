@@ -135,10 +135,10 @@
       position: absolute;
       display: none;
       top: 0;
-      left:0;
+      left:0px;
       right:0;
       overflow: hidden;
-      background: #f3f3f3;
+      background: #ffffff;
       border-bottom: 1px solid #000;
       text-align: center;
       height: 35px;
@@ -147,16 +147,24 @@
       box-sizing:border-box;
       -moz-box-sizing: border-box;    
   }
-  #palette-search i.icon-search {
+  #palette i.icon-search {
       position: absolute;
       pointer-events: none;
       left: 3px;
       top: 10px;
   }
-  #palette-search i.icon-remove {
+  #palette i.icon-remove {
       position: absolute;
       right: 3px;
       top: 10px;
+  }
+  #palette-search-icon {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 20px;
+    height: 33px;
+    
   }
   
   #palette-search-clear {
@@ -164,12 +172,14 @@
   }
   
   #palette-search input {
+      position: absolute;
+      left: 20px;
       border-radius: 0;
       border: none;
       width: 100%;
       box-shadow: none;
       -webkit-box-shadow: none;
-      padding: 3px 17px;
+      padding: 3px 3px;
       margin: 0px;
       height: 30px;
       box-sizing:border-box;
@@ -181,6 +191,48 @@
       box-shadow: none;
       -webkit-box-shadow: none;
   }
+
+  /* The popup form - hidden by default */
+.palette-filter-form-popup {
+    display: none;
+    position: relative;
+    top: 32px;
+    left: 0px;
+    border: 2px solid #000;
+    z-index: 20;
+  }
+  
+  /* Add styles to the form container */
+  .palette-filter-form-container {
+    max-width: 300px;
+    padding-top: 5px;
+    background-color: white;
+  }
+  #palette-filters input {
+
+    padding-left: 10px;
+}
+  #palette-filters label {
+      padding-top: 10px;
+      padding-left: 5px;
+  }
+ 
+  #palette-filters td {
+    text-align:left;
+    vertical-align: center;
+  }
+  
+  /* Full-width input fields
+  .palette-filter-form-container input[type=checkbox]{
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    border: none;
+    background: #f1f1f1;
+  }*/
+
+
+
   .palette-category {
       border: 1px solid #999;
       border-radius: 3px;

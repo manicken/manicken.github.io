@@ -448,6 +448,18 @@ RED.palette = (function() {
 	$("#palette-search-input").blur(function(e) {
 		RED.keyboard.enable();
 	});
+    var filterFormVisible = false;
+    $("#palette-search-icon").click(function(e) {
+        console.warn("search icon clicked");
+        if (filterFormVisible == true) {
+            document.getElementById("myForm").style.display = "none";
+            filterFormVisible = false;
+        }
+        else {
+            document.getElementById("myForm").style.display = "block";
+            filterFormVisible = true;
+        }
+    });
 	
 	$("#palette-search-clear").on("click",function(e) {
 		e.preventDefault();

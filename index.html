@@ -241,9 +241,36 @@ span.mainfunction {color: #993300; font-weight: bolder}
             
 			<div id="palette">
 				<img src="img/spin.svg" class="palette-spinner"/>
+                
 				<div id="palette-search">
-                    <i class="icon-search"></i><input id="palette-search-input" type="text" placeholder="filter"><a href="#" id="palette-search-clear"><i class="icon-remove"></i></a></input>
+                    <div id="palette-search-icon"><i class="icon-search"></i></div>
+                    <input id="palette-search-input" type="text" placeholder="filter"><a href="#" id="palette-search-clear"><i class="icon-remove"></i></a></input>
                 </div>
+                <div class="palette-filter-form-popup" id="myForm">
+                    <form class="palette-filter-form-container">
+                        <table id="palette-filters">
+                            <tr> 
+                                <td></td>
+                                <td>&nbsp;&nbsp;<b>Show</b></td>
+                            </tr>
+                            <tr>                      
+                                <td>&nbsp;<input type="checkbox" id="palette-official-lib" name="palette-official-lib"></input></td>
+                                <td><label for="palette-official-lib">Official Lib</label></td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;<input type="checkbox" id="palette-template-lib" name="palette-template-lib"></input></td>
+                                <td><label for="palette-template-lib">Template Lib</label></td>
+                            </tr>
+                        
+                            <tr>
+                                <td>&nbsp;<input type="checkbox" id="palette-f32-lib" name="palette-f32-lib"></input></td>
+                                <td><label for="palette-f32-lib">F32 Lib</label></td>
+                            </tr>
+
+                        </table>
+                      
+                    </form>
+                  </div>
 				<div id="palette-container" class="palette-scroll"></div>
 			</div><!-- /palette -->
 		</div>
