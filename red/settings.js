@@ -293,25 +293,35 @@ RED.settings = (function() {
                 else
                     console.error("generateSettingsFromClasses, " + settingName + " have no action callback function");
             }
-            else
-                console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting");
-            return;
+            else if (setting.action == undefined) {
+                console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting and don't have action defined");
+                return;
+            }
         }
         var typeOf = setting.type;
         var uid = RED_Class_Name+"-"+settingName.replace('.', '_');
         setting.valueId = uid;// this allows for changing the value programmability
+        
+        if (setting.action != undefined) {
+            var cb  =setting.action;
+            var param = setting.defValue;
+        } else {
+            var cb = RED_Class_settings;
+            var param = settingName;
+        }
+        
         if (typeOf === "boolean")
-            RED.settings.editor.createCheckBox(catContainerId, uid, setting.label, RED_Class_settings, settingName, setting.popupText);
+            RED.settings.editor.createCheckBox(catContainerId, uid, setting.label, cb, param, setting.popupText);
         else if (typeOf === "number")
-            RED.settings.editor.createTextInputWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "40px", setting.popupText, setting.readOnly);
+            RED.settings.editor.createTextInputWithApplyButton(catContainerId, uid, setting.label, cb, param, "40px", setting.popupText, setting.readOnly);
         else if (typeOf === "multiline")
-            RED.settings.editor.createMultiLineTextInputWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "100%", setting);
+            RED.settings.editor.createMultiLineTextInputWithApplyButton(catContainerId, uid, setting.label, cb, param, "100%", setting);
         else if (typeOf === "color")
-            RED.settings.editor.createColorSel(catContainerId, uid, setting.label, RED_Class_settings, settingName, setting.popupText);
+            RED.settings.editor.createColorSel(catContainerId, uid, setting.label, cb, param, setting.popupText);
         else if (typeOf === "string")
-            RED.settings.editor.createTextInputWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "100%", setting.popupText, setting.readOnly);
+            RED.settings.editor.createTextInputWithApplyButton(catContainerId, uid, setting.label, cb, param, "100%", setting.popupText, setting.readOnly);
         else if (typeOf === "combobox")
-            RED.settings.editor.createComboBoxWithApplyButton(catContainerId, uid, setting.label, RED_Class_settings, settingName, "100%", setting);
+            RED.settings.editor.createComboBoxWithApplyButton(catContainerId, uid, setting.label, cb, param, "100%", setting);
         else
             console.error("******************\ngenerateSettingsFromClasses unknown type of:" + settingName + " " + typeOf + "******************\n");
     }

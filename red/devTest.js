@@ -57,6 +57,8 @@ RED.devTest = (function() {
     var settingsEditor = {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
         testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
+        testGithubNodeAddonsParser: { label:"test github node addons .h file GUI tag parser", type:"string", action: testGithubNodeAddonsParser, defValue: "https://api.github.com/repos/chipaudette/OpenAudio_ArduinoLibrary/contents/"},
+        testGithubNodeAddonsParser2: { label:"test github node addons .h file GUI tag parser2", type:"string", action: testGithubNodeAddonsParser, defValue: "https://api.github.com/repos/PaulStoffregen/Audio/contents/"},
         testImportFiles:        { label:"test import file(s)", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: testImportFiles},
         testExportArduinoPref:  { label:"test export arduino pref file", type:"button", action: testExportArduinoPref},
         testExportPlatformIOini:{ label:"test export PlatformIO.ini file", type:"button", action: testExportPlatformIOini},
@@ -72,6 +74,109 @@ RED.devTest = (function() {
         
         
     };
+    var filesToDownload = [];
+    var filesToDownload_index = 0;
+    var GithubNodeAddonsUrl = "";
+    var timeStart = 0;
+    var timeEnd = 0;
+    var testGithubNodeAddonsParser_window;
+    var testGithubNodeAddonsParser_table;
+
+    function testGithubNodeAddonsParser(url) {
+        timeStart = performance.now();
+        GithubNodeAddonsUrl = url;
+        filesToDownload = [];
+        testGithubNodeAddonsParser_window = window.open('', '', 'height=800,width=800');
+        if (testGithubNodeAddonsParser_window == undefined) {RED.notify("could not open testGithubNodeAddonsParser_window<br>please try again", "warning", null, 4000); return;}
+        
+        var rawHtml = '<html>';
+        rawHtml += '<head><style>';
+        //rawHtml += 'tr {outline: thin solid;}';
+        rawHtml += 'td {border: 1px solid #000; padding:10px;}';
+        rawHtml += 'table {height:100%; width:100%}';
+        rawHtml += '.tableDiv {position:absolute; top:30px; bottom:10px; overflow:auto;}';
+        rawHtml += '#divDownloadTime {border: 2px solid #F00;}';
+        rawHtml += '</style></head>';
+        rawHtml += '<body><div id="divDownloadTime">downloading...</div>';
+        rawHtml += '<div class="tableDiv"><table id="filesTable">';
+        rawHtml += '</div></table></body></html>';
+        testGithubNodeAddonsParser_window.document.write(rawHtml);
+        testGithubNodeAddonsParser_window.document.close(); // necessary for IE >= 10
+        testGithubNodeAddonsParser_window.focus();
+        testGithubNodeAddonsParser_table = testGithubNodeAddonsParser_window.document.getElementById("filesTable");
+        
+        httpDownloadAsync(url, function(responseText) {
+            var files = JSON.parse(responseText);
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (file.name.endsWith(".h") == false) continue; // skip non .h files
+                filesToDownload.push(file);
+            }
+            filesToDownload_index = 0;
+            downloadfilesTask();
+        });
+    }
+    function downloadfilesTask()
+    {
+        if (filesToDownload_index < filesToDownload.length) {
+            var file = filesToDownload[filesToDownload_index];
+            console.log("downloading file:" + file.name);
+            httpDownloadAsync(file.download_url, function(contents) {
+                var file = filesToDownload[filesToDownload_index];
+                console.log("download completed file:" + file.name);
+                
+                file.contents = parseFile(contents);
+
+                var nodeRow = testGithubNodeAddonsParser_window.document.createElement("TR");
+                nodeRow.innerHTML = "<tr><td>" + file.name + "</td><td>" + file.contents + "</td></tr>";
+                testGithubNodeAddonsParser_table.appendChild(nodeRow);
+
+                filesToDownload_index++;
+                downloadfilesTask();
+            },
+            function(error){
+                var file = filesToDownload[filesToDownload_index];
+                console.log("download fail file:" + file.name);
+                
+                file.contents = "[download failure]";
+
+                var nodeRow = testGithubNodeAddonsParser_window.document.createElement("TR");
+                nodeRow.innerHTML = "<tr><td>" + file.name + "</td><td>" + file.contents + "</td></tr>";
+                testGithubNodeAddonsParser_table.appendChild(nodeRow);
+
+                filesToDownload_index++;
+                downloadfilesTask();
+            });
+        } else {
+            testGithubNodeAddonsParser_allFilesDownloadedAndParsed();
+        }            
+    }
+
+    function parseFile(contents) {
+        var lines = contents.split('\n');
+        var parse = "";
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            var lineSplit = line.split(':');
+            //console.log(lineSplit.length);
+            if (line.startsWith("class") && (lineSplit.length > 1) && (lineSplit[1].includes("AudioStream")||lineSplit[1].includes("AudioOutput")||lineSplit[1].includes("AudioInput"))) { parse += lineSplit[0] + "<br>"; }
+            else if (line.startsWith("class AudioConfig") || line.startsWith("class AudioControl")) { parse += lineSplit[0] + "<br>"; }
+            else if (line.startsWith("class")) { parse+= '<br><span style="color:orange">class is not AudioStream, AudioConfig, AudioControl, AudioOutput or AudioInput<br>' + line + "</span><br><br>"; }
+            else if (line.startsWith("//GUI:")) { parse += line.split('//')[1] + "<br>"; }
+        }
+        if (parse.trim().length == 0)
+            return '<span style="color:orange">don\'t contain any class</span>';
+        return parse;
+    }
+
+    function testGithubNodeAddonsParser_allFilesDownloadedAndParsed()
+    {
+        timeEnd = performance.now();
+        var totalDownloadTime = Math.round(((timeEnd - timeStart) + Number.EPSILON) * 100) / 100
+        var totalDownloadTimeStr = "download and parse all took: " + totalDownloadTime + " ms";
+        testGithubNodeAddonsParser_window.document.getElementById("divDownloadTime").innerHTML = totalDownloadTimeStr;
+
+    }
     function testSelectFileByApi_OK(responseText) {
         console.warn("testSelectFileByApi_OK",responseText);
     }
@@ -160,34 +265,43 @@ RED.devTest = (function() {
         var projectLoadTest = JSON.parse(project_jsonString);
         RED.settings.setFromJSONobj(projectLoadTest.settings);
     }
+    function httpDownloadAsync(url, cbOnOk, cbOnError, timeout)
+	{
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.onreadystatechange = function () {
+			if (xmlHttp.readyState != 4) return; // wait for timeout or response
+			if (xmlHttp.status == 200)
+			{
+				if (cbOnOk != undefined)
+					cbOnOk(xmlHttp.responseText);
+				else
+					console.warn(cbOnOk + "response @ " + queryString + ":\n" + xmlHttp.responseText);
+			}
+			else if (cbOnError != undefined)
+				cbOnError(xmlHttp.status);
+			else
+				console.warn(queryString + " did not response = " + xmlHttp.status);
+		};
+		xmlHttp.open("GET", url, true); // true for asynchronous 
+        if (timeout != undefined)
+		    xmlHttp.timeout = timeout;
+        else
+            xmlHttp.timeout = 2000;
+		xmlHttp.send(null);
+	}
 
     function testGetHelpFromServer()
     {
         var url = "https://raw.githubusercontent.com/PaulStoffregen/Audio/master/gui/index.html";
 
-        var jsonFile = new XMLHttpRequest();
-            jsonFile.open("GET",url,true);
-            jsonFile.send();
-
-        jsonFile.onreadystatechange = function() {
-            if (jsonFile.readyState== 4 && jsonFile.status == 200) {
-                var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
-                var rawHtml = jsonFile.responseText;
-                localStorage.setItem("audio_library_guitool_help",rawHtml);
-                mywindow.document.write(rawHtml);
-                /*
-                mywindow.document.write('<html><head>');
-                mywindow.document.write("Hello World")
-                mywindow.document.write('</head><body >');
-                mywindow.document.write('</body></html>');
-                */
-                mywindow.document.close(); // necessary for IE >= 10
-		        mywindow.focus();
-            }
-        }
-        //RED.bottombar.info.addContent("imageExists:" + imageExists(""));
-
-        checkImage("img/adccircuit_.png", function(){ alert("good"); }, function(){ alert("bad"); } );
+        httpDownloadAsync(url, function(responseText) {
+            var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
+            var rawHtml = jsonFile.responseText;
+            localStorage.setItem("audio_library_guitool_help",rawHtml);
+            mywindow.document.write(rawHtml);
+            mywindow.document.close(); // necessary for IE >= 10
+            mywindow.focus();
+        });
     }
     function checkImage(imageSrc, good, bad) {
         var img = new Image();
