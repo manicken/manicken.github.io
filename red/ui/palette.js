@@ -68,7 +68,7 @@ RED.palette = (function() {
         set categoryHeaderShowAsRainBowMinVal(size) { _settings.categoryHeaderShowAsRainBowMinVal = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
         
         get NodeTypeAddons() { return _settings.NodeTypeAddons; },
-        set NodeTypeAddons(value) { _settings.NodeTypeAddons = value; RED.storage.update();},
+        set NodeTypeAddons(value) { _settings.NodeTypeAddons = value; updateNodeTypeAddons(); RED.storage.update();},
 	};
 
 	var settingsCategory = { label:"Palette", expanded:false, bgColor:"#DDD" };
@@ -86,6 +86,55 @@ RED.palette = (function() {
     };
     
     var exclusion = ['config','unknown','deprecated'];
+
+    var filesToDownload = [];
+    var filesToDownload_index = 0;
+    function updateNodeTypeAddons()
+    {
+        var fileUrls = settings.NodeTypeAddons.split('\n');
+        for (var i = 0; i < fileUrls.length; i++) {
+            var fileUrl = fileUrls[i];
+            if (fileUrl.startsWith("https://github.com")) {
+                fileUrl = fileUrl.replace("https://github.com", "https://raw.githubusercontent.com");
+                fileUrl = fileUrl.replace("/blob/", "/");
+            }
+            filesToDownload.push({url:fileUrl});
+        }
+        filesToDownload_index = 0;
+        downloadfilesTask();
+    }
+    function downloadfilesTask()
+    {
+        if (filesToDownload_index < filesToDownload.length) {
+            var file = filesToDownload[filesToDownload_index];
+            console.log("downloading file:" + file.url);
+            RED.main.httpDownloadAsync(file.url, function(contents) {
+                var file = filesToDownload[filesToDownload_index];
+                console.log("download completed file:" + file.url);
+                file.contents = contents;
+                filesToDownload_index++;
+                downloadfilesTask();
+            },
+            function(error){
+                RED.notify("could not download:" + "bajskorv","warning", null, 4000);
+                filesToDownload_index++;
+                downloadfilesTask();
+            });
+        }
+        else { // download all finished
+            console.log("download completed allfilafie");
+
+            for (var i = 0; i < filesToDownload.length; i++) {
+                var file = filesToDownload[i];
+                if (file.contents == undefined) continue;
+                let parser = new DOMParser();
+                let parsedHtml = parser.parseFromString(file.contents, 'text/html');
+                let liElements = parsedHtml.getElementsByTagName("script[data-container-name|='NodeDefinitions']")[0];
+                console.log(liElements);
+                //var metaData = $.parseJSON($(liElements).html());
+            }
+        }  
+    }  
 
 	function setCategoryHeaderStyle() // this is to make above "setter" cleaner
 	{

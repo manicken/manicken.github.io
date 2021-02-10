@@ -105,7 +105,7 @@ RED.devTest = (function() {
         testGithubNodeAddonsParser_window.focus();
         testGithubNodeAddonsParser_table = testGithubNodeAddonsParser_window.document.getElementById("filesTable");
         
-        httpDownloadAsync(url, function(responseText) {
+        RED.main.httpDownloadAsync(url, function(responseText) {
             var files = JSON.parse(responseText);
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
@@ -121,7 +121,7 @@ RED.devTest = (function() {
         if (filesToDownload_index < filesToDownload.length) {
             var file = filesToDownload[filesToDownload_index];
             console.log("downloading file:" + file.name);
-            httpDownloadAsync(file.download_url, function(contents) {
+            RED.main.httpDownloadAsync(file.download_url, function(contents) {
                 var file = filesToDownload[filesToDownload_index];
                 console.log("download completed file:" + file.name);
                 
@@ -265,36 +265,13 @@ RED.devTest = (function() {
         var projectLoadTest = JSON.parse(project_jsonString);
         RED.settings.setFromJSONobj(projectLoadTest.settings);
     }
-    function httpDownloadAsync(url, cbOnOk, cbOnError, timeout)
-	{
-		var xmlHttp = new XMLHttpRequest();
-		xmlHttp.onreadystatechange = function () {
-			if (xmlHttp.readyState != 4) return; // wait for timeout or response
-			if (xmlHttp.status == 200)
-			{
-				if (cbOnOk != undefined)
-					cbOnOk(xmlHttp.responseText);
-				else
-					console.warn(cbOnOk + "response @ " + queryString + ":\n" + xmlHttp.responseText);
-			}
-			else if (cbOnError != undefined)
-				cbOnError(xmlHttp.status);
-			else
-				console.warn(queryString + " did not response = " + xmlHttp.status);
-		};
-		xmlHttp.open("GET", url, true); // true for asynchronous 
-        if (timeout != undefined)
-		    xmlHttp.timeout = timeout;
-        else
-            xmlHttp.timeout = 2000;
-		xmlHttp.send(null);
-	}
+    
 
     function testGetHelpFromServer()
     {
         var url = "https://raw.githubusercontent.com/PaulStoffregen/Audio/master/gui/index.html";
 
-        httpDownloadAsync(url, function(responseText) {
+        RED.main.httpDownloadAsync(url, function(responseText) {
             var mywindow = window.open('Audio System Design Tool for Teensy Audio Library', 'PRINT', 'height=400,width=600');
             var rawHtml = jsonFile.responseText;
             localStorage.setItem("audio_library_guitool_help",rawHtml);

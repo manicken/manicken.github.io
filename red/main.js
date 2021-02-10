@@ -616,6 +616,30 @@ RED.main = (function() {
 		}
 	});
 
+    function httpDownloadAsync(url, cbOnOk, cbOnError, timeout)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState != 4) return; // wait for timeout or response
+            if (xmlHttp.status == 200)
+            {
+                if (cbOnOk != undefined)
+                    cbOnOk(xmlHttp.responseText);
+                else
+                    console.warn(cbOnOk + "response @ " + queryString + ":\n" + xmlHttp.responseText);
+            }
+            else if (cbOnError != undefined)
+                cbOnError(xmlHttp.status);
+            else
+                console.warn(queryString + " did not response = " + xmlHttp.status);
+        };
+        xmlHttp.open("GET", url, true); // true for asynchronous 
+        if (timeout != undefined)
+            xmlHttp.timeout = timeout;
+        else
+            xmlHttp.timeout = 2000;
+        xmlHttp.send(null);
+    }
 	return {
 		
 		classColor:classColor,
@@ -625,6 +649,7 @@ RED.main = (function() {
 		showSelectNameDialog:showSelectNameDialog,
         SetButtonPopOver:SetButtonPopOver,
         verifyDialog:verifyDialog,
-        updateProjectsMenu:updateProjectsMenu
+        updateProjectsMenu:updateProjectsMenu,
+        httpDownloadAsync:httpDownloadAsync,
 	};
 })();
