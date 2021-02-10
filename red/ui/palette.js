@@ -26,6 +26,7 @@ RED.palette = (function() {
         categoryHeaderShowAsRainBowMinVal: 64,
 		onlyShowOne: true,
         hideHeadersWhenSearch: true,
+        NodeTypeAddons: "",
 	};
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
@@ -37,6 +38,7 @@ RED.palette = (function() {
         categoryHeaderShowAsRainBowMinVal: defSettings.categoryHeaderShowAsRainBowMinVal,
 		onlyShowOne: defSettings.onlyShowOne,
         hideHeadersWhenSearch: defSettings.hideHeadersWhenSearch,
+        NodeTypeAddons: defSettings.NodeTypeAddons,
 	};
 
 	var settings = {
@@ -65,6 +67,8 @@ RED.palette = (function() {
         get categoryHeaderShowAsRainBowMinVal() {return parseInt(_settings.categoryHeaderShowAsRainBowMinVal);},
         set categoryHeaderShowAsRainBowMinVal(size) { _settings.categoryHeaderShowAsRainBowMinVal = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
         
+        get NodeTypeAddons() { return _settings.NodeTypeAddons; },
+        set NodeTypeAddons(value) { _settings.NodeTypeAddons = value; RED.storage.update();},
 	};
 
 	var settingsCategory = { label:"Palette", expanded:false, bgColor:"#DDD" };
@@ -75,6 +79,7 @@ RED.palette = (function() {
 		categoryHeaderBackgroundColor: {label:"Header BG color", type:"color" },
         onlyShowOne: {label:"Only show one category at a time.", type:"boolean" },
         hideHeadersWhenSearch: {label:"Hide category headers at search", type:"boolean" },
+        NodeTypeAddons:   { label:"Node Type Addons", type:"multiline", popupText: "(not implemented yet)<br>This make it possible to include external node types<br>that is used by additional libraries<br><br>similar function as Arduino IDE 'Additional Boards Manager URLs'<br><br>each link should be on a seperate line.<br><br>Each link should point to html file with:<br>&lt;script  type=\"text/x-red\" data-container-name=\"NodeDefinitions\"&gt;<br>&lt;script type=\"text/x-red\" data-help-name=\"classname\"&gt;<br>&lt;script type=\"text/x-red\" data-template-name=\"classname\"&gt;<br>entries just like the original index.htm<br><br>A template/example file is available at<br>https://github.com/manicken/manicken.github.io/blob/master/DesignToolNodes.html<br><br>Because of CORS limitations<br>the link cannot be a local file and must be placed on a server<br>for example github<br>https://raw.githubusercontent.com/manicken/manicken.github.io/master/DesignToolNodes.html<br><br>Note. the html files are stored in the browser indexedDB to be used when internet is not available."},
         categoryHeaderShowAsRainBow: {label:"Header BG color rainbow", type:"boolean", popupText:"Shows each category in one different color,<br><br>note. when this is checked the bgColor is used as the additive component" },
         categoryHeaderShowAsRainBowAlt: {label:"Header BG color rainbow Alternative", type:"boolean", popupText:"when checked the above bgColor defines the min values used,<br>and the following luminence defines the max values."},
         categoryHeaderShowAsRainBowMinVal: {label:"Header BG color rainbow min/max luminence", type:"number", popupText:"when alt mode is inactive the following is used:<br>Header BG color rainbow min luminence value calculated by the following formula<br>(adjLuminance is this value)<br><br>if (adjLuminance != undefined && color_R_A < parseInt(adjLuminance))<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A + parseInt(colorB.substring(1,3), 16);<br>else<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A; <br><br>when alt mode in active this defines the max color values." },
