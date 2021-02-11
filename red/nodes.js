@@ -716,12 +716,7 @@ RED.nodes = (function() {
 					var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
 					RED.nodes.registerType(ws.label, data);
                 }
-                else if (n.type === "settings")
-				{
-                    console.warn('Loading Project Settings');
-					RED.settings.setFromJSONobj(n.data);
-					continue;
-				}
+                
             }
             RED.storage.dontSave = true; // prevent save between tab switch
             for (i=0; i < newWorkspaces.length; i++) {
@@ -800,14 +795,6 @@ RED.nodes = (function() {
 					{
 						node.parentGroup = n.parentGroup;
 					}
-					//console.log(node);
-					
-						/*Object.defineProperty(node, 'selected', {
-							_selected: false,
-							set: function(value) { console.trace(value); this._selected = value;  },
-							get: function() { return this._selected; }
-							})*/
-					//console.log("new node:" + n.name + ":" + n.id);
 
 					if (!node._def) {
 						
@@ -866,18 +853,6 @@ RED.nodes = (function() {
 					if (n.bgColor == undefined)	node.bgColor = node._def.color; 
 					else node.bgColor = n.bgColor;
 
-					/*if (n.type == "Ui_ListBox")
-					{
-						if (n.itemBGcolor == undefined)	node.itemBGcolor = node._def.color; 
-						else node.itemBGcolor = n.itemBGcolor;
-					}
-					else if (n.type == "Ui_Piano")
-					{
-						if (n.whiteKeysColor == undefined)	node.whiteKeysColor = node._def.color; 
-						else node.whiteKeysColor = n.whiteKeysColor;
-						if (n.blackKeysColor == undefined)	node.blackKeysColor = node._def.color; 
-						else node.blackKeysColor = n.blackKeysColor;
-					}*/
 					node.outputs = n.outputs||node._def.outputs;
 
 					addNode(node);
@@ -887,7 +862,6 @@ RED.nodes = (function() {
 					node_map[n.id] = node; // node_map is used for simple access to destinations when generating wires
 					new_nodes.push(node);
 				}
-				
 			}
 			// adding the links (wires)
 			for (i=0;i<new_nodes.length;i++)

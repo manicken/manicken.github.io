@@ -91,6 +91,7 @@ RED.palette = (function() {
     var filesToDownload_index = 0;
     function updateNodeTypeAddons()
     {
+        filesToDownload = [];
         var fileUrls = settings.NodeTypeAddons.split('\n');
         for (var i = 0; i < fileUrls.length; i++) {
             var fileUrl = fileUrls[i];
@@ -116,20 +117,22 @@ RED.palette = (function() {
                 downloadfilesTask();
             },
             function(error){
-                RED.notify("could not download:" + "bajskorv","warning", null, 4000);
+                var file = filesToDownload[filesToDownload_index];
+                RED.notify("could not download:" + file.url,"warning", null, 4000);
                 filesToDownload_index++;
                 downloadfilesTask();
             });
         }
         else { // download all finished
-            console.log("download completed allfilafie");
+            console.log("download completed fileCount:" + filesToDownload.length);
 
             for (var i = 0; i < filesToDownload.length; i++) {
                 var file = filesToDownload[i];
                 if (file.contents == undefined) continue;
+                RED.IndexedDBfiles.fileWrite("otherFiles", "NodeAddons_" + file.url, file.contents);
                 let parser = new DOMParser();
                 let parsedHtml = parser.parseFromString(file.contents, 'text/html');
-                let liElements = parsedHtml.getElementsByTagName("script[data-container-name|='NodeDefinitions']")[0];
+                let liElements = parsedHtml.querySelector("script[data-container-name|='NodeDefinitions']");
                 console.log(liElements);
                 //var metaData = $.parseJSON($(liElements).html());
             }
@@ -348,7 +351,7 @@ RED.palette = (function() {
 			if (def.outputs > 0) {
 				var portOut = document.createElement("div");
 				portOut.className = "palette_port palette_port_output";
-				def.palettePortOut = portOut;
+				//def.palettePortOut = portOut; // not used anywhere
 				d.appendChild(portOut);
 			}
 
@@ -360,7 +363,7 @@ RED.palette = (function() {
 			if (def.inputs > 0) {
 				var portIn = document.createElement("div");
 				portIn.className = "palette_port palette_port_input";
-				def.palettePortIn = portIn;
+				//def.palettePortIn = portIn; // not used anywhere
 				d.appendChild(portIn);
 			}
 			

@@ -66,6 +66,10 @@ RED.storage = (function() {
 				}
 				else
 				{
+                    loadAndApplySettings(jsonObj);
+                    // here the new node addons loading should happen
+                    // i belive the easiest way is to store the node defs inside the project instead of the indexedDB
+                    // this should happen after the addons loading is complete 
 					RED.nodes.import(jsonObj, false, true);
 				}
 				
@@ -78,6 +82,17 @@ RED.storage = (function() {
 		const t1 = performance.now();
 		console.log('storage-load took: ' + (t1-t0) +' milliseconds.');
 	}
+    function loadAndApplySettings(jsonObj) {
+        for (i=0;i<jsonObj.length;i++) { 
+            n = jsonObj[i];
+            if (n.type !== "settings") continue;
+			
+            console.warn('Loading Project Settings');
+			RED.settings.setFromJSONobj(n.data);
+			return;
+        }
+    }
+
 	function loadContents(json_string) {
 		console.log("loadContents:" +json_string);
 		localStorage.setItem("audio_library_guitool", json_string);

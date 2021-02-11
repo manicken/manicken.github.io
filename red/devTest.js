@@ -57,6 +57,7 @@ RED.devTest = (function() {
     var settingsEditor = {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
         testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
+        testDownloadCurrentNodeDefs:    { label:"testDownloadCurrentNodeDefs", type:"button", action: testDownloadCurrentNodeDefs},
         testGithubNodeAddonsParser: { label:"test github node addons .h file GUI tag parser", type:"string", action: testGithubNodeAddonsParser, defValue: "https://api.github.com/repos/chipaudette/OpenAudio_ArduinoLibrary/contents/"},
         testGithubNodeAddonsParser2: { label:"test github node addons .h file GUI tag parser2", type:"string", action: testGithubNodeAddonsParser, defValue: "https://api.github.com/repos/PaulStoffregen/Audio/contents/"},
         testImportFiles:        { label:"test import file(s)", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: testImportFiles},
@@ -74,6 +75,15 @@ RED.devTest = (function() {
         
         
     };
+
+    function testDownloadCurrentNodeDefs() {
+        var names = Object.getOwnPropertyNames(RED.nodes.node_defs)
+        var audioObjectCount = 0;
+        for (var i = 0; i < names.length; i++)
+            if (names[i].startsWith("Audio"))
+                audioObjectCount++;
+        RED.main.download("NodeDefs.json","Total count: " + Object.getOwnPropertyNames(RED.nodes.node_defs).length + "\nTotal Audio objects: " + audioObjectCount + "\n"+  JSON.stringify(RED.nodes.node_defs, null, 4) );
+    }
     var filesToDownload = [];
     var filesToDownload_index = 0;
     var GithubNodeAddonsUrl = "";
