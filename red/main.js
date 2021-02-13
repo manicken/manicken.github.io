@@ -489,7 +489,17 @@ RED.main = (function() {
         console.warn("main $(function() {...}) exec"); // to see load order
 		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
 		RED.arduino.startConnectedChecker();
-		
+		if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().then(function(persistent) {
+                if (persistent)
+                    RED.notify("Storage will not be cleared except by explicit user action", "info", null, 4000);
+                else
+                    RED.notify("Storage may be cleared by the UA under storage pressure.", "info", null, 4000);
+            });
+        }
+        else {
+            RED.notify("This browser don't support persistent storage!!!", "warning", null, 4000);
+        }
 
 		addDemoFlowsToMenu();
 		RED.view.init();
