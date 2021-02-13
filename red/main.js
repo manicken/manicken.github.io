@@ -233,7 +233,7 @@ RED.main = (function() {
                         }
                         console.error("load " + label);
                         //console.log("newFlowData:" + contents);
-                        var nns = RED.nodes.createCompleteNodeSet();
+                        var nns = RED.nodes.createCompleteNodeSet(false, true);
                         RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json",JSON.stringify(nns), function(dirName,fileName) {
                             saveToFile(RED.arduino.settings.ProjectName + ".json");
                             RED.storage.loadContents(contents);
@@ -296,7 +296,7 @@ RED.main = (function() {
 	{
 		try
 		{
-            var nns = RED.nodes.createCompleteNodeSet();
+            var nns = RED.nodes.createCompleteNodeSet(false, true);
             var jsonString  = JSON.stringify(nns, null, 4);
 			download(name, jsonString);
 		}catch (err)
@@ -492,7 +492,7 @@ RED.main = (function() {
 		if (navigator.storage && navigator.storage.persist) {
             navigator.storage.persist().then(function(persistent) {
                 if (persistent)
-                    RED.notify("Storage will not be cleared except by explicit user action", "info", null, 4000);
+                    RED.notify("Storage will not be cleared except by explicit user action<br>or automatic/manually cache clear<br>on firefox this automatic clear<br>can be put into a exception list for permanent data storage.<br>note the data will still be removed by manually cache clear.", "info", null, 10000);
                 else
                     RED.notify("Storage may be cleared by the UA under storage pressure.", "info", null, 4000);
             });

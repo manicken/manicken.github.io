@@ -52,7 +52,7 @@ RED.nodes = (function() {
         if (mainNameExt == undefined) mainNameExt = ".ino";
         if (settings == undefined){ settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
         // return new structure
-		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, nodes:[], settings:settings};
+		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt/*, nodes:[]*/, settings:settings}; // nodes is for future version
 	}
 	function moveNodeToEnd(node)
 	{
@@ -549,39 +549,46 @@ RED.nodes = (function() {
 		}
 		return nns;
 	}
-	//TODO: rename this (createCompleteNodeSet)
-	function createCompleteNodeSet(dontSaveSettings) {
-		var nns = [];
-        var i;
-        if (dontSaveSettings == undefined || dontSaveSettings == false)
-		nns.push({"type":"settings", "data":RED.settings.getAsJSONobj()});
+	
+	function createCompleteNodeSet(newVersion) {
+        if (newVersion == undefined) newVersion = false;
+       
+		if(newVersion == true) var project = {version:1};
+        else var nns = [];
 
-		/*for (i in configNodes) {
-			if (configNodes.hasOwnProperty(i)) {
-				nns.push(convertNode(configNodes[i], true));
-			}
-		}*/
-		
-
+        
+        if (newVersion == true)
+            project.settings = RED.settings.getAsJSONobj();
+        else
+            nns.push({"type":"settings", "data":RED.settings.getAsJSONobj()});
+        
 		// development debug
 		//console.warn("@createCompleteNodeSet\n  absoluteXposMax:" + absoluteXposMax +
 		//								  "\n  absoluteYposMax:" + absoluteYposMax +
 		//								  "\n  workspaceColSize:" + workspaceColSize);
+        // first add all workspaces/tabs to the nns
+        if (newVersion == false) {
+            for (wsi=0;wsi<workspaces.length;wsi++) {
+                nns.push(workspaces[wsi]);
+            }
+        }
 		var ws = {};
 		// sort nodes by workspace
 		for (wsi=0;wsi<workspaces.length;wsi++)
 		{
 			ws = workspaces[wsi];
-            nns.push(ws);
-            
+            if (newVersion == true)
+                ws.nodes = []; // clear this
+
             var absoluteXposMax = 0;
             var absoluteYposMax = 0;
             var workspaceColSize = RED.view.defSettings.gridVmajorSize;
             
             // if the ws.settings.gridVmajorSize is defined then use that instead
             if (ws.settings.gridVmajorSize != undefined) workspaceColSize = ws.settings.gridVmajorSize;
-            
-            for (var ni = 0; ni < nodes.length; ni++)
+            var ni;
+            // calculate absolute node max and min positions
+            for (ni = 0; ni < nodes.length; ni++)
             {
                 var node = nodes[ni];
                 if (node.z != ws.id) continue; // workspace filter
@@ -614,7 +621,10 @@ RED.nodes = (function() {
 				// push the "new" nodes to final array
 				for (var nni = 0; nni < nnsCol.length; nni++)
 				{
-					nns.push(nnsCol[nni]);
+                    if (newVersion == true)
+                        ws.nodes.push(nnsCol[nni]);
+                    else
+					    nns.push(nnsCol[nni]);
 				}
             }
             // add ui nodes last and as they are in draw order
@@ -623,10 +633,19 @@ RED.nodes = (function() {
 				var node = nodes[ni];
 				if (node.z != ws.id) continue; // workspace filter
 				if (node._def.uiObject == undefined) continue; // skip non ui nodes
-				nns.push(convertNode(node, true)); // just add ui nodes as is
+                // just add ui nodes as is to preserve draw order
+                if (newVersion == true)
+                    ws.nodes.push(convertNode(node, true));
+                else
+				    nns.push(convertNode(node, true)); 
 			}
 		}
-		return nns;
+        if (newVersion == true) {
+            project.workspaces = workspaces;
+            return project;
+        }
+        else
+		    return nns;
 	}
 	
 	
@@ -639,34 +658,77 @@ RED.nodes = (function() {
 		addWorkspace(newWorkspace);
 		RED.view.addWorkspace(newWorkspace);
 	}
-	function convertWorkspaceToNewVersion(nns, ws)
+
+	function importWorkspaces(newNodes, createNewIds)
 	{
-		// TODO: fix so that getClassIOportCounts is only used on old versions, so that load time is increased
-		// but in order to do that wee need the workspace inputs and outputs to update when adding/removing workspace IO:s
-		// we could insert references to TabInputs/TabOutputs in workspace
-		// that would make some things go faster as well
+		var newWorkspaces = [];
+        // scan and load workspaces and settings first
+        for (i=0;i<newNodes.length;i++) { 
+            n = newNodes[i];
+            
+            // filter for workspace and tab types
+            if (n.type !== "tab" && n.type !== "workspace") continue;
 
-		//if (ws.inputs != undefined && ws.outputs != undefined) // (no update from GUI yet) see above
-		//	console.warn("inputs && outputs is defined @ workspace load");
+            if (n.type === "workspace") n.type = "tab"; // type conversion
 
-		
-
-		
+            var cIOs = getClassIOportCounts(n.id, newNodes);
+            var ws = createWorkspaceObject(n.id, n.label, cIOs.inCount, cIOs.outCount, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.settings);
+            
+            addWorkspace(ws);
+            newWorkspaces.push(ws);
+            
+            //console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
+            
+            // this creates types for the workspaces
+            var color = RED.main.classColor;
+            var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
+            RED.nodes.registerType(ws.label, data);
+        }
+        RED.storage.dontSave = true; // prevent save between tab switch
+        for (i=0; i < newWorkspaces.length; i++) {
+            RED.view.addWorkspace(newWorkspaces[i]); // "final" function is in tabs.js
+        }
+        RED.storage.dontSave = false;
 	}
 
-	function importWorkspaces(newWorkspaces)
-	{
-		for (var i = 0; i < newWorkspaces.length; i++)
-		{
-			currentWorkspace = newWorkspaces[i];
-			importNodes(newWorkspaces[i].nodes, false);
-		}
-	}
+    // new version import workspace nodes
+    function importWorkspaceNodes(workspaces, createNewIds) {
+        for (var i = 0; i < workspaces.length; i++) {
+            var ws = workspaces[i];
+            // failsafe check
+            if (ws.nodes != undefined && ws.nodes.length != 0) {
+                importNewNodes(ws.nodes, createNewIds);
+            }
+        }
+    }
 
-	function importNodes(newNodesObj,createNewIds,clearCurrentFlow) {
+    function loadAndApplySettings(jsonObj) {
+        for (i=0;i<jsonObj.length;i++) { 
+            n = jsonObj[i];
+            if (n.type !== "settings") continue;
+			
+            console.warn('Loading Project Settings');
+			RED.settings.setFromJSONobj(n.data);
+			return;
+        }
+    }
+
+    function isNewVersion(newNodes) {
+        // new version have either of theese defined
+        if (newNodes.version != undefined)
+            return true;
+        else if (newNodes.workspaces != undefined)
+            return true;
+        else if (newNodes.settings != undefined)
+            return true;
+        else if (newNodes.nodeAddons != undefined)
+            return true;
+        return false;
+    }
+
+	function importNodes(newNodesObj, createNewIds, clearCurrentFlow) {
 		console.trace("@ importNodes - createNewIds:" + createNewIds);
-		var i;
-		var n;
+		
 		var newNodes;
 		if (createNewIds == undefined)
 			createNewIds = false; // not really necessary?
@@ -692,216 +754,46 @@ RED.nodes = (function() {
 				newNodes = newNodesObj;
 			}
 
-			if (!$.isArray(newNodes)) { // if only one node is imported
-				console.warn("@ !$.isArray(newNodes)");
-				newNodes = [newNodes];
-			}
-            var newWorkspaces = [];
-			// scan and load workspaces and settings first
-			for (i=0;i<newNodes.length;i++) { 
-				n = newNodes[i];
-				// TODO: not remove workspace because it's now used
-				if (n.type === "tab" || n.type === "workspace") {
-					if (n.type === "workspace") {
-						n.type = "tab";
-					}
-                    var cIOs = getClassIOportCounts(n.id, newNodes);
-                    var ws = createWorkspaceObject(n.id, n.label, cIOs.inCount, cIOs.outCount, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.settings);
-                    
-                    addWorkspace(ws);
-                    newWorkspaces.push(ws);
-					
-					//console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
-                    var color = RED.main.classColor;
-					var data = $.parseJSON("{\"defaults\":{\"name\":{\"value\":\"new\"},\"id\":{\"value\":\"new\"}},\"shortName\":\"" + ws.label + "\",\"inputs\":" + ws.inputs + ",\"outputs\":" + ws.outputs + ",\"category\":\"tabs\",\"color\":\"" + color + "\",\"icon\":\"arrow-in.png\"}");
-					RED.nodes.registerType(ws.label, data);
+            if (isNewVersion(newNodes) == true) // this is for the future versions of structure, not yet implemented
+            {
+                RED.notify("new json structure detected, ver: " + newNodes.version, "info", null, 2000);
+                if (newNodes.settings != undefined) {
+                    RED.settings.setFromJSONobj(newNodes.settings);
                 }
+                else
+                    RED.notify("newNodes.settings is undefined, using defaults", "warning", null, 2000); //  this is for the future version of structure, not yet implemented
                 
+                if (newNodes.nodeAddons != undefined) {
+                    // here the new node addons loading should happen
+                    // I belive the easiest way is to store the node defs inside the project instead of the indexedDB
+
+                }
+
+                if (newNodes.workspaces != undefined)
+                {
+                    importWorkspaces(newNodes.workspaces, createNewIds);
+                    // import the workspace nodes can only be done 
+                    // after all workspaces have been loaded in importWorkspaces function above
+                    importWorkspaceNodes(newNodes.workspaces, createNewIds);
+                }
+                else {
+                    RED.notify("newNodes.workspaces is undefined, cannot import workspaces", "warning", null, 2000);
+                    return;
+                }
             }
-            RED.storage.dontSave = true; // prevent save between tab switch
-            for (i=0; i < newWorkspaces.length; i++) {
-                RED.view.addWorkspace(newWorkspaces[i]); // "final" function is in tabs.js
+            else // old version or single node(s) import
+            {
+                if (!$.isArray(newNodes)) { // if only one node is imported
+                    console.warn("@ !$.isArray(newNodes)");
+                    newNodes = [newNodes];
+                }
+                loadAndApplySettings(newNodes);
+                importWorkspaces(newNodes);
+                if (workspaces.length == 0) {
+                    createNewDefaultWorkspace(); // jannik changed to function
+                }
+                return importNewNodes(newNodes, createNewIds);
             }
-            RED.storage.dontSave = false;
-
-			if (workspaces.length == 0) {
-				createNewDefaultWorkspace(); // jannik changed to function
-			}
-
-			// scan and display list of unknown types
-			var unknownTypes = [];
-			for (i=0;i<newNodes.length;i++) {
-				n = newNodes[i];
-				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
-				else if (n.type == "Array") n.type = "PointerArray"; // type conversion
-				// TODO: remove workspace in next release+1(Node-Red team comment)
-				if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
-					// TODO: get this UI thing out of here! (see below as well) (Node-Red team comment)
-					//n.name = n.type;
-					//n.type = "unknown";
-					//n.unknownType = true;
-					if (unknownTypes.indexOf(n.type + ":" + n.name)==-1) {
-						unknownTypes.push(n.type + ":" + n.name);
-					}
-					if (n.x == null && n.y == null) {
-						// config node - remove it
-						newNodes.splice(i,1);
-						i--;
-					}
-				}
-			}
-			if (unknownTypes.length > 0) {
-				var typeList = "<ul><li>"+unknownTypes.join("</li><li>")+"</li></ul>";
-				var type = "type"+(unknownTypes.length > 1?"s":"");
-				RED.notify("<strong>Imported unrecognised "+type+":</strong>"+typeList,"error",false,10000);
-				//"DO NOT DEPLOY while in this state.<br/>Either, add missing types to Node-RED, restart and then reload page,<br/>or delete unknown "+n.name+", rewire as required, and then deploy.","error");
-			}
-
-			var node_map = {};
-			var new_nodes = [];
-			var new_links = [];
-
-			for (i=0;i<newNodes.length;i++) {
-				n = newNodes[i];
-                
-                // not TODO: remove workspace in next release+1 (Node-Red team comment)
-                
-				if (n.type === "workspace" || n.type === "tab") continue;
-				else if (n.type === "settings") continue
-					
-				if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
-				//console.warn(n);
-
-				var def = getType(n.type);
-				if (def && def.category == "config") {
-					if (!RED.nodes.node(n.id)) {
-						var configNode = {id:n.id,type:n.type,users:[]};
-						for (var d in def.defaults) {
-							if (def.defaults.hasOwnProperty(d)) {
-								configNode[d] = n[d];
-							}
-						}
-						configNode.label = def.label;
-						configNode._def = def;
-						RED.nodes.add(configNode);
-					}
-				} else if (def != undefined) {
-					if (def.uiObject == undefined)
-						var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
-					else
-						var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,changed:false};
-
-					if (n.parentGroup != undefined)
-					{
-						node.parentGroup = n.parentGroup;
-					}
-
-					if (!node._def) {
-						
-						node._def = {
-							color:"#fee",
-							defaults: {"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},
-							label: n.name,
-							labelStyle: "node_label_italic",
-							icon:"arrow-in.png",
-							outputs: n.outputs||n.wires.length,
-							inputs: getNodeInputCount(newNodes, n.z, n.id)
-						}
-						node.unknownType = true;
-						n.bgColor = undefined;
-						node.name = n.name;
-					}
-
-					if (createNewIds) { // this is only used by import dialog and paste function
-						node.name = n.name; // set temporary
-						//console.log("@createNewIds srcnode: " + n.id + ":" + n.name);
-						if (n.z == RED.view.getWorkspace())	{ // only generate new names on currentWorkspace
-							node.name = createUniqueCppName(node, n.z); // jannik add
-							//console.warn("make new name: n.name=" + node.name);
-						}
-						else {// this allow different workspaces to have nodes that have same name
-							node.name = n.name;
-							//console.trace("keep name:" + n.name);
-						}
-						// allways create unique id:s
-						node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
-
-					} else {
-						node.name = n.name;
-						node.id = n.id;
-						if (node.z == null || node.z == "0") { //!workspaces[node.z]) {
-							var currentWorkspaceId = RED.view.getWorkspace();
-							console.warn('node.z == null || node.z == "0" -> add node to current workspace ' + currentWorkspaceId);
-							
-							node.z = currentWorkspaceId; // failsafe to set node workspace as current
-						}
-						else if (getWorkspaceIndex(node.z) == -1)
-						{
-							var currentWorkspaceId = RED.view.getWorkspace();
-							console.warn("getWorkspaceIndex("+node.z+") == -1 -> add node to current workspace " + currentWorkspaceId);
-							//console.error(workspaces);
-							node.z = currentWorkspaceId; // failsafe to set node workspace as current
-						}
-					}
-					for (var d2 in node._def.defaults) {
-						if (node._def.defaults.hasOwnProperty(d2)) {
-							if (d2 == "name" || d2 == "id") continue;
-							node[d2] = n[d2];
-							
-						}
-					}
-					if (n.bgColor == undefined)	node.bgColor = node._def.color; 
-					else node.bgColor = n.bgColor;
-
-					node.outputs = n.outputs||node._def.outputs;
-
-					addNode(node);
-					//if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
-					RED.editor.validateNode(node);
-					//if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
-					node_map[n.id] = node; // node_map is used for simple access to destinations when generating wires
-					new_nodes.push(node);
-				}
-			}
-			// adding the links (wires)
-			for (i=0;i<new_nodes.length;i++)
-			{
-				n = new_nodes[i];
-				for (var w1=0;w1<n.wires.length;w1++)
-				{
-					var wires = (n.wires[w1] instanceof Array)?n.wires[w1]:[n.wires[w1]]; // if not array then convert to array
-
-					for (var w2=0;w2<wires.length;w2++)
-					{
-						if (wires[w2] != null) {
-							var parts = wires[w2].split(":");
-							if (parts.length == 2 && parts[0] in node_map) {
-								var dst = node_map[parts[0]];
-								var link = {source:n,sourcePort:w1,target:dst,targetPort:parts[1]};
-								addLink(link);
-								new_links.push(link);
-							}
-						}
-					}
-				}
-				if (n.nodes != undefined)
-				{
-					var newNodesList = [];
-					for (var ni = 0; ni < n.nodes.length; ni++)
-					{
-						var nodeRef = node_map[n.nodes[ni]];
-						if (nodeRef != undefined) newNodesList.push(nodeRef);
-					}
-					n.nodes = newNodesList;
-				}
-				if (n.parentGroup != undefined)
-				{
-					n.parentGroup = node_map[n.parentGroup]; // convert id to ref
-				}
-				
-				delete n.wires;
-			}
-			return [new_nodes,new_links];
 		}
 		catch(error) { // hijack import errors so that a notification can be shown to the user
 			createNewDefaultWorkspace();
@@ -911,6 +803,186 @@ RED.nodes = (function() {
 		}
 
 	}
+
+    function importNewNodes(newNodes, createNewIds) {
+        var i;
+		var n;
+        // scan and display list of unknown types
+        var unknownTypes = [];
+        for (i=0;i<newNodes.length;i++) {
+            n = newNodes[i];
+            if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
+            else if (n.type == "Array") n.type = "PointerArray"; // type conversion
+            // TODO: remove workspace in next release+1(Node-Red team comment)
+            if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
+                // TODO: get this UI thing out of here! (see below as well) (Node-Red team comment)
+                //n.name = n.type;
+                //n.type = "unknown";
+                //n.unknownType = true;
+                if (unknownTypes.indexOf(n.type + ":" + n.name)==-1) {
+                    unknownTypes.push(n.type + ":" + n.name);
+                }
+                if (n.x == null && n.y == null) {
+                    // config node - remove it
+                    newNodes.splice(i,1);
+                    i--;
+                }
+            }
+        }
+        if (unknownTypes.length > 0) {
+            var typeList = "<ul><li>"+unknownTypes.join("</li><li>")+"</li></ul>";
+            var type = "type"+(unknownTypes.length > 1?"s":"");
+            RED.notify("<strong>Imported unrecognised "+type+":</strong>"+typeList,"error",false,10000);
+            //"DO NOT DEPLOY while in this state.<br/>Either, add missing types to Node-RED, restart and then reload page,<br/>or delete unknown "+n.name+", rewire as required, and then deploy.","error");
+        }
+
+        var node_map = {};
+        var new_nodes = [];
+        var new_links = [];
+
+        for (i=0;i<newNodes.length;i++) {
+            n = newNodes[i];
+            
+            // not TODO: remove workspace in next release+1 (Node-Red team comment)
+            
+            // theese two are for backward compatibility
+            if (n.type === "workspace" || n.type === "tab") continue;
+            else if (n.type === "settings") continue
+                
+            if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
+            //console.warn(n);
+
+            var def = getType(n.type);
+            if (def && def.category == "config") {
+                if (!RED.nodes.node(n.id)) {
+                    var configNode = {id:n.id,type:n.type,users:[]};
+                    for (var d in def.defaults) {
+                        if (def.defaults.hasOwnProperty(d)) {
+                            configNode[d] = n[d];
+                        }
+                    }
+                    configNode.label = def.label;
+                    configNode._def = def;
+                    RED.nodes.add(configNode);
+                }
+            } else if (def != undefined) {
+                if (def.uiObject == undefined)
+                    var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
+                else
+                    var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,changed:false};
+
+                if (n.parentGroup != undefined)
+                {
+                    node.parentGroup = n.parentGroup;
+                }
+
+                if (!node._def) {
+                    
+                    node._def = {
+                        color:"#fee",
+                        defaults: {"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},
+                        label: n.name,
+                        labelStyle: "node_label_italic",
+                        icon:"arrow-in.png",
+                        outputs: n.outputs||n.wires.length,
+                        inputs: getNodeInputCount(newNodes, n.z, n.id)
+                    }
+                    node.unknownType = true;
+                    n.bgColor = undefined;
+                    node.name = n.name;
+                }
+
+                if (createNewIds) { // this is only used by import dialog and paste function
+                    node.name = n.name; // set temporary
+                    //console.log("@createNewIds srcnode: " + n.id + ":" + n.name);
+                    if (n.z == RED.view.getWorkspace())	{ // only generate new names on currentWorkspace
+                        node.name = createUniqueCppName(node, n.z); // jannik add
+                        //console.warn("make new name: n.name=" + node.name);
+                    }
+                    else {// this allow different workspaces to have nodes that have same name
+                        node.name = n.name;
+                        //console.trace("keep name:" + n.name);
+                    }
+                    // allways create unique id:s
+                    node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
+
+                } else {
+                    node.name = n.name;
+                    node.id = n.id;
+                    if (node.z == null || node.z == "0") { //!workspaces[node.z]) {
+                        var currentWorkspaceId = RED.view.getWorkspace();
+                        console.warn('node.z == null || node.z == "0" -> add node to current workspace ' + currentWorkspaceId);
+                        
+                        node.z = currentWorkspaceId; // failsafe to set node workspace as current
+                    }
+                    else if (getWorkspaceIndex(node.z) == -1)
+                    {
+                        var currentWorkspaceId = RED.view.getWorkspace();
+                        console.warn("getWorkspaceIndex("+node.z+") == -1 -> add node to current workspace " + currentWorkspaceId);
+                        //console.error(workspaces);
+                        node.z = currentWorkspaceId; // failsafe to set node workspace as current
+                    }
+                }
+                for (var d2 in node._def.defaults) {
+                    if (node._def.defaults.hasOwnProperty(d2)) {
+                        if (d2 == "name" || d2 == "id") continue;
+                        node[d2] = n[d2];
+                        
+                    }
+                }
+                if (n.bgColor == undefined)	node.bgColor = node._def.color; 
+                else node.bgColor = n.bgColor;
+
+                node.outputs = n.outputs||node._def.outputs;
+
+                addNode(node);
+                //if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
+                RED.editor.validateNode(node);
+                //if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
+                node_map[n.id] = node; // node_map is used for simple access to destinations when generating wires
+                new_nodes.push(node);
+            }
+        }
+        // adding the links (wires)
+        for (i=0;i<new_nodes.length;i++)
+        {
+            n = new_nodes[i];
+            for (var w1=0;w1<n.wires.length;w1++)
+            {
+                var wires = (n.wires[w1] instanceof Array)?n.wires[w1]:[n.wires[w1]]; // if not array then convert to array
+
+                for (var w2=0;w2<wires.length;w2++)
+                {
+                    if (wires[w2] != null) {
+                        var parts = wires[w2].split(":");
+                        if (parts.length == 2 && parts[0] in node_map) {
+                            var dst = node_map[parts[0]];
+                            var link = {source:n,sourcePort:w1,target:dst,targetPort:parts[1]};
+                            addLink(link);
+                            new_links.push(link);
+                        }
+                    }
+                }
+            }
+            if (n.nodes != undefined)
+            {
+                var newNodesList = [];
+                for (var ni = 0; ni < n.nodes.length; ni++)
+                {
+                    var nodeRef = node_map[n.nodes[ni]];
+                    if (nodeRef != undefined) newNodesList.push(nodeRef);
+                }
+                n.nodes = newNodesList;
+            }
+            if (n.parentGroup != undefined)
+            {
+                n.parentGroup = node_map[n.parentGroup]; // convert id to ref
+            }
+            
+            delete n.wires;
+        }
+        return [new_nodes,new_links];
+    }
 	function findNodeById(newNodes, id)
 	{
 		for (var i = 0; i < newNodes.length; i++)

@@ -31,6 +31,7 @@ RED.IndexedDBfiles = (function() {
     };
     var settingsCategory = { label:"IndexedDB files", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
+        downloadAll:      { label:"download all as zip", type:"button", action:downloadAll},
         testDir:          { label:"test dir", type:"combobox", actionOnChange:true, options:["projects", "codeFiles", "images", "otherFiles"], valIsText:true},
         testFileNames:          { label:"test file names", type:"combobox", actionOnChange:true},
         testFileName:          { label:"test file name", type:"string"},
@@ -254,6 +255,63 @@ RED.IndexedDBfiles = (function() {
             };
         });
     }
+    function getFiles(dir, cbOk, cbError) {
+        init(function() {
+            //console.log("listFiles:",dir);
+            var tx;
+            try { tx = db.transaction(dir, "readwrite"); }
+            catch(ex) { if (cbError != undefined) cbError("directory not found:" + dir +"<br>"+ ex); db.close(); return; }
+            var store = tx.objectStore(dir);
+            var get = store.getAll();
+            get.onsuccess = function () { 
+                db.close();
+                if (get.result == undefined){ if (cbError != undefined) cbError("no files found in " + dir);}
+                else cbOk(get.result);
+            };
+            get.onerror = function () {
+                db.close();
+                if (cbError != undefined) cbError("getAllKeys error" + get.result.error);
+            };
+        });
+    }
+    var timeStart = 0;
+    var timeMid = 0;
+    var timeSelect = 0;
+    var timeEnd = 0;
+    function downloadAll(showNameSelectDialog) {
+        timeStart = performance.now();
+        var dirs = ['codeFiles', 'images', 'otherFiles', 'projects'];
+        var zip = new JSZip();
+        getFiles(dirs[0], function(files) {
+            addFilesToZip(zip, files, dirs[0]);
+            getFiles(dirs[1], function(files) {
+                addFilesToZip(zip, files, dirs[1]);
+                getFiles(dirs[2], function(files) {
+                    addFilesToZip(zip, files, dirs[2]);
+                    getFiles(dirs[3], function(files) {
+                        addFilesToZip(zip, files, dirs[3]);
+                        zip.generateAsync({ type: "blob"}).then(function (blob) {
+                            
+                            if (showNameSelectDialog != undefined && showNameSelectDialog == true) {
+                                timeMid = performance.now();
+                                RED.main.showSelectNameDialog("projects.zip", function (fileName) { timeSelect = performance.now(); saveAs(blob, fileName); timeEnd = performance.now(); console.log(timeEnd-timeSelect + timeMid-timeStart, " ms");});
+                            }
+                            else {
+                                saveAs(blob, "projects.zip");
+                                timeEnd = performance.now();
+                                console.log(timeEnd-timeStart, " ms");
+                            }
+                        });
+                    });
+                });
+            });
+        });
+    }
+    function addFilesToZip(zip, files, dir) {
+        for (var i = 0; i < files.length; i++) {
+            zip.file(dir + "/" + files[i].name.split('/').join("_").split(':').join('_'), files[i].data);
+        }
+    }
 
     return {
         defSettings:defSettings,
@@ -265,7 +323,7 @@ RED.IndexedDBfiles = (function() {
         fileWrite:fileWrite,
         fileRead:fileRead,
         fileDelete:fileDelete,
-        listFiles:listFiles
-        
+        listFiles:listFiles,
+        downloadAll:downloadAll
 	};
 })();

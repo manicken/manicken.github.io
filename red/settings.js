@@ -45,8 +45,16 @@ RED.settings = (function() {
 		console.error("colorSelTest:"+value);
 	}
 
-	function setFromJSONobj(projectSettings_jsonObj)
-    {
+	function setFromJSONobj(projectSettings_jsonObj) {
+        if (Array.isArray(projectSettings_jsonObj) == true) {
+            console.warn("reading old version of settings");
+            setFromJSONobj_oldVersion(projectSettings_jsonObj);
+        }
+        else {
+            setFromJSONobj_newVersion(projectSettings_jsonObj);
+        }
+    }
+    function setFromJSONobj_oldVersion(projectSettings_jsonObj) {
         var psettings = projectSettings_jsonObj;
         for (let i = 0; i < psettings.length; i++)
         {
@@ -57,6 +65,17 @@ RED.settings = (function() {
             restoreSettings(RED_Class.settings, RED_Class.defSettings, ClassSetting, RED_Class_Name)
         }
     }
+    function setFromJSONobj_newVersion(ClassSettings) {
+        var RED_Class_Names = Object.getOwnPropertyNames(ClassSettings);
+        for (let i = 0; i < RED_Class_Names.length; i++)
+        {
+            var RED_Class_Name = RED_Class_Names[i];
+            var RED_Class = RED[RED_Class_Name];
+            var ClassSetting = ClassSettings[RED_Class_Name];
+            restoreSettings(RED_Class.settings, RED_Class.defSettings, ClassSetting, RED_Class_Name)
+        }
+    }
+
     function restoreSettings(RED_Class_settings, RED_Class_defSettings, ClassSetting, RED_Class_Name)
     {
         RED.storage.dontSave = true; // prevent save while setting settings
@@ -100,33 +119,25 @@ RED.settings = (function() {
 	function getAsJSONobj()
 	{
 		// get all settings that is defined
-        var settings = [];
+        var settings = {};
         var RED_Classes = Object.getOwnPropertyNames(RED);
         for (let rci = 0; rci < RED_Classes.length; rci++)
         {
             var RED_Class_Name = RED_Classes[rci];
             var RED_Class = RED[RED_Class_Name];
-            var RED_Class_SubClasses = Object.getOwnPropertyNames(RED_Class);
 
-            //RED.console_ok("@" + RED_Class_Name);
-            //console.log(Object.getOwnPropertyNames(RED_Class));
+            if (RED_Class.settings == undefined) continue;
 
-            for (let i = 0; i < RED_Class_SubClasses.length; i++)
-            {
-                let RED_SubClass_Name = RED_Class_SubClasses[i];
-                if (RED_SubClass_Name == "settings")
-                {
-                    if (RED_Class.settingsCategory.dontSave != undefined && RED_Class.settingsCategory.dontSave == true)
-                        continue;
+            // don't save is currently only used by the RED.view "class"
+            if (RED_Class.settingsCategory != undefined && (RED_Class.settingsCategory.dontSave != undefined && RED_Class.settingsCategory.dontSave == true))
+                continue;
                         
-                    settings.push({[RED_Class_Name]:getChangedSettings(RED_Class)}); //RED_Class.settings});
-                    //RED.console_ok("found settings@" + RED_Class_Name);
-                }
-                
-            }
+            // save in new format
+            settings[RED_Class_Name] = getChangedSettings(RED_Class);
 		}
 		return settings;
     }
+    
     function getChangedSettings(RED_Class)
     {
         var cs = {}; // changed settings
@@ -148,22 +159,30 @@ RED.settings = (function() {
         }
         return cs;
     }
-    $('#btn-reset-settings').click(resetAllSettings);
-
-    function resetAllSettings()
-    {
+    $('#btn-reset-settings').click(function () {
         RED.main.verifyDialog("Confirm Settings Restore", "!!warning!!", "this will restore <b>ALL</b> settings to the default values.<br><br> Are you sure?", function(okPressed) { 
             if (okPressed)
             {
-                // theese will be replaced by proper reset functionality later
-                RED.storage.update(true); // true means dontSaveSettings
-                window.location.reload();
+                resetAllSettings();
             }
         }, "Yes", "No");
-        
+    });
+    function resetAllSettings()
+	{
+        var RED_Classes = Object.getOwnPropertyNames(RED);
+        for (let rci = 0; rci < RED_Classes.length; rci++)
+        {
+            var RED_Class_Name = RED_Classes[rci];
+            var RED_Class = RED[RED_Class_Name];
+
+            if (RED_Class.settings == undefined) continue;
+            resetClassSettings(RED_Class);
+		}
     }
     function resetClassSettings(RED_Class)
     {
+        if (RED_Class.settings == undefined) return; // have no settings
+
         RED.storage.dontSave = true; // prevent save while setting settings
         RED.view.preventRedraw = true;
         var settingNames = Object.getOwnPropertyNames(RED_Class.settings);

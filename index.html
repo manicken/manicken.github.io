@@ -497,7 +497,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		</label>
 		<label for="node-input-replace-flow" style="font-size: 13px; padding: 2px 0px 0px 4px;">
 			<input style="margin-bottom: 4px; margin-right: 4px;" type="checkbox" id="node-input-replace-flow" checked="" class="input-block-level" />
-				&nbsp;Replace flow (uncheck to add to the current flow)
+				&nbsp;Replace flow (uncheck to add to the current flow)<br>
 		</label>
 	</div>
 </script>
@@ -900,8 +900,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioInputAnalog","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"adc","inputs":0,"outputs":1,"category":"input-adc","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputAnalogStereo","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"adcs","inputs":0,"outputs":2,"category":"input-adc","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputPDM","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"pdm","inputs":0,"outputs":1,"category":"input-other","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioInputTDM","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"tdm","inputs":0,"outputs":16,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioInputTDM2","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"tdm2","inputs":0,"outputs":16,"category":"input-i2s2","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioInputTDM","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"outputs":{"value":"16"}},"shortName":"tdm","inputs":0,"outputs":16,"category":"input-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioInputTDM2","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"outputs":{"value":"16"}},"shortName":"tdm2","inputs":0,"outputs":16,"category":"input-i2s2","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioInputUSB","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"usb","inputs":0,"outputs":2,"category":"input-other","color":"#E6E0F8","icon":"arrow-in.png"}},
 
 		{"type":"AudioOutputI2S","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"i2s","inputs":2,"outputs":0,"category":"output-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
@@ -919,8 +919,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		{"type":"AudioOutputAnalogStereo","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"dacs","inputs":2,"outputs":0,"category":"output-adc","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioOutputPWM","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"pwm","inputs":1,"outputs":0,"category":"output-other","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioOutputMQS","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"mqs","inputs":2,"outputs":0,"category":"output-other","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioOutputTDM","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"tdm","inputs":16,"outputs":0,"category":"output-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
-		{"type":"AudioOutputTDM2","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"tdm2","inputs":16,"outputs":0,"category":"output-i2s2","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioOutputTDM","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"inputs":{"value":"16"}},"shortName":"tdm","inputs":16,"outputs":0,"category":"output-i2s1","color":"#E6E0F8","icon":"arrow-in.png"}},
+		{"type":"AudioOutputTDM2","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""},"inputs":{"value":"16"}},"shortName":"tdm2","inputs":16,"outputs":0,"category":"output-i2s2","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioOutputADAT","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"adat","inputs":8,"outputs":0,"category":"output-other","color":"#E6E0F8","icon":"arrow-in.png"}},
 		{"type":"AudioOutputUSB","data":{"defaults":{"name":{"value":"new"},"comment":{"value":""}},"shortName":"usb","inputs":2,"outputs":0,"category":"output-other","color":"#E6E0F8","icon":"arrow-in.png"}},
 
@@ -2644,10 +2644,27 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		unused, this TDM object will need to allocate 16 blocks of
 		memory.</p>
 </script>
-<script type="text/x-red" data-template-name="_AudioInputTDM">
+<script type="text/x-red" data-template-name="AudioInputTDM">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs (visual):</label>
+		<select name="node-input-outputs" id="node-input-outputs">
+			<option value="16">16</option>
+			<option value="14">14</option>
+			<option value="12">12</option>
+			<option value="10">10</option>
+            <option value="8">8</option>
+            <option value="6">6</option>
+            <option value="4">4</option>
+            <option value="2">2</option>
+	    </select>
 	</div>
 </script>
 
@@ -2702,10 +2719,27 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		unused, this TDM object will need to allocate 16 blocks of
 		memory.</p>
 </script>
-<script type="text/x-red" data-template-name="_AudioInputTDM2">
+<script type="text/x-red" data-template-name="AudioInputTDM2">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+    <div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs (visual):</label>
+		<select name="node-input-outputs" id="node-input-outputs">
+			<option value="16">16</option>
+			<option value="14">14</option>
+			<option value="12">12</option>
+			<option value="10">10</option>
+            <option value="8">8</option>
+            <option value="6">6</option>
+            <option value="4">4</option>
+            <option value="2">2</option>
+	    </select>
 	</div>
 </script>
 
@@ -3683,10 +3717,27 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 	<p>When used with TDM devices which receive 32 bit audio, the
 		even numbered channels are used for the top 16 bits.</p>
 </script>
-<script type="text/x-red" data-template-name="_AudioOutputTDM">
+<script type="text/x-red" data-template-name="AudioOutputTDM">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+    <div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row">
+		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs (visual):</label>
+		<select name="node-input-inputs" id="node-input-inputs">
+			<option value="16">16</option>
+			<option value="14">14</option>
+			<option value="12">12</option>
+			<option value="10">10</option>
+            <option value="8">8</option>
+            <option value="6">6</option>
+            <option value="4">4</option>
+            <option value="2">2</option>
+	    </select>
 	</div>
 </script>
 
@@ -3737,10 +3788,23 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 	<p>When used with TDM devices which receive 32 bit audio, the
 		even numbered channels are used for the top 16 bits.</p>
 </script>
-<script type="text/x-red" data-template-name="_AudioOutputTDM2">
+<script type="text/x-red" data-template-name="AudioOutputTDM2">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+    <div class="form-row">
+		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs (visual):</label>
+		<select name="node-input-inputs" id="node-input-inputs">
+			<option value="16">16</option>
+			<option value="14">14</option>
+			<option value="12">12</option>
+			<option value="10">10</option>
+            <option value="8">8</option>
+            <option value="6">6</option>
+            <option value="4">4</option>
+            <option value="2">2</option>
+	    </select>
 	</div>
 </script>
 

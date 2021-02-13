@@ -6,7 +6,7 @@ RED.storage = (function() {
 
 	var dontSave = false;
 
-	function update(dontSaveSettings) {
+	function update() {
 		if (dontSave == true) return; // this prevents saves while applying settings
 		 
 		//RED.nodes.addClassTabsToPalette(); //Jannik
@@ -20,13 +20,12 @@ RED.storage = (function() {
 		
 		if (localStorage)
 		{
-			var nns = RED.nodes.createCompleteNodeSet(dontSaveSettings);
-			RED.notify("<strong>Saved..</strong>", "success", null, 2000, 30);
-            localStorage.setItem("audio_library_guitool",JSON.stringify(nns));
-            RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON.stringify(nns));
+			var nns = RED.nodes.createCompleteNodeSet(true);
+            var JSON_string = JSON.stringify(nns);
+            localStorage.setItem("audio_library_guitool", JSON_string);
+            RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON_string);
             console.trace("localStorage write");
-            
-            
+            RED.notify("<strong>Saved..</strong>", "success", null, 2000, 30);
 		}
 	}
 	function allStorage() {
@@ -51,28 +50,7 @@ RED.storage = (function() {
 
 			if (json_string != undefined && (json_string.trim().length != 0))
 			{
-				var jsonObj = JSON.parse(json_string);
-				
-				if (jsonObj.settings != undefined) // this is for the future version of structure, not yet implemented
-				{
-                    RED.settings.setFromJSONobj(jsonObj.settings);
-                }
-                else
-                    console.error("jsonObj.settings is undefined,  this is for the future version of structure, not yet implemented");
-
-				if (jsonObj.workspaces != undefined) // new version have this defined, not yet implemented
-				{
-					RED.nodes.importWorkspaces(jsonObj.workspaces);
-				}
-				else
-				{
-                    loadAndApplySettings(jsonObj);
-                    // here the new node addons loading should happen
-                    // i belive the easiest way is to store the node defs inside the project instead of the indexedDB
-                    // this should happen after the addons loading is complete 
-					RED.nodes.import(jsonObj, false, true);
-				}
-				
+				RED.nodes.import(json_string, false, true);
 			}
 			else
 			{
@@ -82,16 +60,7 @@ RED.storage = (function() {
 		const t1 = performance.now();
 		console.log('storage-load took: ' + (t1-t0) +' milliseconds.');
 	}
-    function loadAndApplySettings(jsonObj) {
-        for (i=0;i<jsonObj.length;i++) { 
-            n = jsonObj[i];
-            if (n.type !== "settings") continue;
-			
-            console.warn('Loading Project Settings');
-			RED.settings.setFromJSONobj(n.data);
-			return;
-        }
-    }
+    
 
 	function loadContents(json_string) {
 		console.log("loadContents:" +json_string);
@@ -108,6 +77,8 @@ RED.storage = (function() {
 			//console.log("localStorage write");
 		}
 	}
+
+    
 	return {
 		get dontSave() { return dontSave; },
 		set dontSave(state) { dontSave = state; },

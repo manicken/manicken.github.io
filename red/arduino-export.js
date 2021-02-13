@@ -276,7 +276,7 @@ RED.arduino.export = (function () {
             showExportErrorDialog();
             return;
         }
-        var nns = RED.nodes.createCompleteNodeSet();
+        var nns = RED.nodes.createCompleteNodeSet(false);
         // sort is made inside createCompleteNodeSet
         var wsCppFiles = [];
         wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
@@ -390,7 +390,7 @@ RED.arduino.export = (function () {
         }
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 
-        var nns = RED.nodes.createCompleteNodeSet();
+        var nns = RED.nodes.createCompleteNodeSet(false);
         // sort is made inside createCompleteNodeSet
 
         var tabNodes = RED.nodes.getClassIOportsSorted();
