@@ -307,19 +307,67 @@ RED.editor = (function() {
 		if ("required" in definition[property] && definition[property].required) {
 			valid = value !== "";
 		}
-		if (valid && "validate" in definition[property]) {
+		/*if (valid && "validate" in definition[property]) {
 			valid = definition[property].validate.call(node,value);
-		}
-		if (valid && definition[property].type && RED.nodes.getType(definition[property].type) && !("validate" in definition[property])) {
-			if (!value || value == "_ADD_") {
-				valid = false;
-			} else {
-				var v = RED.nodes.node(value).valid;
-				valid = (v==null || v);
-			}
+		}*/
+		if (valid && definition[property].type) { // RED.nodes.getType(definition[property].type) && !("validate" in definition[property])) {
+			if (definition[property].type == "int") {
+                var val = parseInt(value);
+                if (isNaN(val)) valid = false;
+                else {
+                    if (definition[property].minval) {
+                        var minVal = parseInt(definition[property].minval);
+                        if (isNaN(minVal)) valid = false;
+                        if (value < minVal) valid = false;
+                    }
+                    if (definition[property].maxval) {
+                        var maxVal = parseInt(definition[property].maxval);
+                        if (isNaN(maxVal)) valid = false;
+                        if (value > maxVal) valid = false;
+                    }
+                }
+            }
+            else if (definition[property].type == "float" && isNaN(parseFloat(value))) valid = false;
+            else if (definition[property].type == "hexdec" && isNaN(parseInt(value, 16))) valid = false;
+            else if (definition[property].type == "c_cpp_name" && isVarName(value,node) == false) valid = false;
 		}
 		return valid;
 	}
+    function isVarName(str,node) {
+        if (typeof str !== 'string') {
+            return false;
+        }
+    
+        if (str.trim() !== str) {
+            return false;
+        }
+
+        var splitStarting = str.split('[');
+        var splitEnding = str.split(']');
+        
+        if (splitStarting.length > 2 || splitEnding.length > 2) {
+            RED.notify("array def. can only have one dimension ", "warning", null, 4000);
+            return false;
+        }
+
+        if (splitStarting.length != splitEnding.length) {
+            RED.notify("missing any of [ ] in array def.", "warning", null, 4000);
+            return false;
+        }
+        str = splitStarting[0];
+
+        try {
+            new Function(str, 'var ' + str);
+        } catch (_) {
+            RED.notify("not a valid c/cpp name: " + str, "warning", null, 4000);
+            return false;
+        }
+        if (RED.nodes.checkName(str, node.z, node)) {
+            RED.notify("this name is allready used: " + str, "warning", null, 4000);
+            return false;
+        }
+        return true;
+    }
 
 	/**
 	 * Called when the node's properties have changed.
@@ -411,22 +459,6 @@ RED.editor = (function() {
 					if (newValue == null) continue;
 					if (editing_node[d] == newValue)  continue;
 
-					if (editing_node._def.defaults[d].type) {
-						if (newValue == "_ADD_") {
-							newValue = "";
-						}
-						/*
-						// Change to a related config node
-						var configNode = RED.nodes.node(editing_node[d]);
-						if (configNode) {
-							var users = configNode.users;
-							users.splice(users.indexOf(editing_node),1);
-						}
-						configNode = RED.nodes.node(newValue);
-						if (configNode) {
-							configNode.users.push(editing_node);
-						}*/
-					}
 					if (editing_node.type == "UI_ListBox")
 					{
 						if (d == "items")
@@ -541,12 +573,15 @@ RED.editor = (function() {
 					},
 					{
 						id: "btnEditorApply",
+                        class:"btn",
 						text: "Apply",
 						click: function() {
 							edit_dialog_apply();
 						}
 					},
 					{
+                        id: "btnEditorOk",
+                        class:"btn",
 						text: "Ok",
 						click: function() {
 							edit_dialog_apply();
@@ -685,8 +720,16 @@ RED.editor = (function() {
 		$("#"+prefix+"-"+property).change(function() {
 			if (!validateNodeProperty(node, definition, property,this.value)) {
 				$(this).addClass("input-error");
+                document.getElementById("btnEditorApply").disabled = true;
+                document.getElementById("btnEditorOk").disabled = true;
+                $("#btnEditorApply").addClass("unclickablebutton");
+                $("#btnEditorOk").addClass("unclickablebutton");
 			} else {
 				$(this).removeClass("input-error");
+                document.getElementById("btnEditorApply").disabled = false;
+                document.getElementById("btnEditorOk").disabled = false;
+                $("#btnEditorApply").removeClass("unclickablebutton");
+                $("#btnEditorOk").removeClass("unclickablebutton");
 			}
 		});
 	}
@@ -772,11 +815,11 @@ RED.editor = (function() {
 		
 		for (var d in definition.defaults) {
 			if (definition.defaults.hasOwnProperty(d)) {
-				if (definition.defaults[d].type) {
+				/*if (definition.defaults[d].type) {
 					prepareConfigNodeSelect(node,d,definition.defaults[d].type);
 				} else {
-					preparePropertyEditor(node,d,prefix);
-				}
+					*/preparePropertyEditor(node,d,prefix);
+				//}
 				attachPropertyChangeHandler(node,definition.defaults,d,prefix);
 			}
 		}

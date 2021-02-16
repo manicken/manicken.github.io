@@ -509,11 +509,19 @@ RED.palette = (function() {
     $("#palette-search-icon").click(function(e) {
         console.warn("search icon clicked");
         if (filterFormVisible == true) {
-            document.getElementById("myForm").style.display = "none";
+            document.getElementById("palette-filters-form").style.display = "none";
             filterFormVisible = false;
         }
         else {
-            document.getElementById("myForm").style.display = "block";
+            $("#palette-filters").empty();
+            var nodeDefNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
+            for (var ndi = 0; ndi < nodeDefNames.length; ndi++) {
+                var ndn = nodeDefNames[ndi];
+                var nd = RED.nodes.node_defs[ndn];
+                $("#palette-filters").append('<tr><td><input type="checkbox" checked="true" id="palette-filter-'+ndn+'"></input></td><td><div id="palette-filter-div-'+ndn+'"><label for="palette-filter-'+ndn+'">'+nd.label+'</label></div></td></tr>');
+                RED.main.SetButtonPopOver("palette-filter-div-"+ndn, nd.description, "right");
+            }
+            document.getElementById("palette-filters-form").style.display = "block";
             filterFormVisible = true;
         }
     });

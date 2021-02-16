@@ -555,21 +555,23 @@ RED.main = (function() {
 
 			var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
             if (nodeDefinitions["nodes"] != undefined) {
+                RED.nodes.initNodeDefinitions({
+                    "label":"Official Nodes (old type version)",
+                    "description":"The node types provided by the official Audio Library",
+                    "url":"https://github.com/PaulStoffregen/Audio"
+                }, "officialNodes");
                 $.each(nodeDefinitions["nodes"], function (key, val) {
-                    RED.nodes.registerType(val["type"], val["data"]);
+                    RED.nodes.registerType(val["type"], val["data"], "officialNodes");
                 });
             }
-            else if (nodeDefinitions["types"] != undefined) {
-                var types = nodeDefinitions["types"];
-                var typesNames = Object.getOwnPropertyNames(types);
-                for (var ti = 0; ti < typesNames.length; ti++) {
-                    var typeName = typesNames[ti];
-                    var type = types[typeName];
-                    RED.nodes.registerType(typeName, type);
+            else {
+                var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(nodeDefinitions);
+                for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
+                    var catName = nodeDefinitionCategoryNames[i];
+                    var cat = nodeDefinitions[catName];
+                    RED.nodes.registerTypes(cat, catName);
                 }
             }
-            else RED.notify("could not find nodedefinitions", "error", true, 10000);
-
 			
 			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
 				showHelp();
@@ -608,7 +610,7 @@ RED.main = (function() {
             });
             //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
 			//
-		} else {
+		} else { // this can be removed as it's never used and never will be
 			$.ajaxSetup({beforeSend: function(xhr){
 				if (xhr.overrideMimeType) {
 					xhr.overrideMimeType("application/json");
@@ -617,7 +619,7 @@ RED.main = (function() {
 			$.getJSON( "resources/nodes_def.json", function( data ) {
 				var nodes = data["nodes"];
 				$.each(nodes, function(key, val) {
-					RED.nodes.registerType(val["type"], val["data"]);
+					RED.nodes.registerType(val["type"], val["data"],"officialNodes");
 				});
 				RED.keyboard.add(/* ? */ 191,{shift:true},function(){showHelp();d3.event.preventDefault();});
 				loadNodes();

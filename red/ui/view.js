@@ -1160,7 +1160,11 @@ RED.view = (function() {
 				// (otherwise all new nodes uses the same instance see note below)
 				if (nn.type == "group" && d == "nodes") { nn.nodes = []; continue;} 
 
-				nn[d] = nn._def.defaults[d].value;
+                // this makes it possible to exclude value at node definitions
+                if (nn._def.defaults[d].value != undefined) 
+				    nn[d] = nn._def.defaults[d].value;
+                else
+                    nn[d] = "";
 			}
 		}
 		// note. 

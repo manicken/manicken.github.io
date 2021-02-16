@@ -222,7 +222,10 @@
     text-align:left;
     vertical-align: center;
   }
-  
+
+  .unclickablebutton {
+      cursor: not-allowed !important;
+  }
   /* Full-width input fields
   .palette-filter-form-container input[type=checkbox]{
     width: 100%;
@@ -1128,7 +1131,7 @@
   }
   
   .input-error {
-      border-color: rgb(214, 97, 95) !important;
+      border: 2px dashed rgb(214, 97, 95) !important;
   }
   
   .hidden {
