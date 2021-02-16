@@ -104,6 +104,7 @@ RED.devTest = (function() {
             label:urlSplit[5],
             description:urlSplit[4] + " " + urlSplit[5] +" node addons",
             url:url,
+            isAddon:true,
             types:{}
         };
         testGithubNodeAddonsParser_window = window.open('', '', 'height=800,width=1024');
@@ -270,7 +271,7 @@ RED.devTest = (function() {
         var totalDownloadTime = Math.round(((timeEnd - timeStart) + Number.EPSILON) * 100) / 100
         var totalDownloadTimeStr = "download and parse all took: " + totalDownloadTime + " ms";
         testGithubNodeAddonsParser_window.document.getElementById("divDownloadTime").innerHTML = totalDownloadTimeStr;
-
+        RED.nodes.registerTypes(nodeAddons, nodeAddons.label.split(" ").join("_"));
         RED.main.download("NodeAddons.json", JSON.stringify(nodeAddons, null, 4))
 
     }

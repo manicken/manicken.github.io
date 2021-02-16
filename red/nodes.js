@@ -112,6 +112,8 @@ RED.nodes = (function() {
         }
     }
     function registerTypes(nodeDefinitionsCategory, uid) {
+        if (nodeDefinitionsCategory.disabled != undefined && nodeDefinitionsCategory.disabled == true)
+            return;
         initNodeDefinitions(nodeDefinitionsCategory, uid);
         var types = nodeDefinitionsCategory["types"];
         if (types == undefined) {
@@ -130,6 +132,7 @@ RED.nodes = (function() {
             label:nodeDefinitions.label, 
             description:nodeDefinitions.description,
             url:nodeDefinitions.url,
+            isAddon:nodeDefinitions.isAddon,
             types:{}
         };
     }
@@ -661,11 +664,26 @@ RED.nodes = (function() {
 		}
         if (newVersion == true) {
             project.workspaces = workspaces;
+            project.nodeAddons = getNodeAddons();
             return project;
         }
         else
 		    return nns;
 	}
+
+    function getNodeAddons() {
+        var naddons = {};
+        var ndcn = Object.getOwnPropertyNames(node_defs);
+        for (var ndi = 0; ndi < ndcn.length; ndi++) {
+            var ndn = ndcn[ndi];
+            var nd = node_defs[ndn];
+            if (nd.isAddon != undefined && nd.isAddon == true) {
+                naddons[ndn] = nd;
+            }
+            else console.warn("skippin ", nd);
+        }
+        return naddons;
+    }
 	
 	
 	function createNewDefaultWorkspace() // Jannik Add function
@@ -786,7 +804,7 @@ RED.nodes = (function() {
                     var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(newNodes.nodeAddons);
                     for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
                         var catName = nodeDefinitionCategoryNames[i];
-                        var cat = nodeDefinitions[catName];
+                        var cat = newNodes.nodeAddons[catName];
                         RED.nodes.registerTypes(cat, catName);
                     }
                 }
