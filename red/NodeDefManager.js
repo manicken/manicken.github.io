@@ -71,7 +71,7 @@ RED.NodeDefManager = (function() {
             }
         }
         var rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel')
-        textArea = rightPanel.append('textarea').attr('type', 'text').attr('id','outputPreview').attr('style', 'width: 95%; height: 95%');
+        textArea = rightPanel.append('textarea').attr('type', 'text').attr('id','outputPreview').attr('wrap', 'off').attr('style', 'width: 95%; height: 95%');
 
         var toggler = document.getElementsByClassName("caret2");
 
@@ -123,8 +123,8 @@ RED.NodeDefManager = (function() {
 	$( "#node-dialog-node-definitions-manager" ).dialog({
 		modal: true,
 		autoOpen: false,
-		width: 1070,
-        height:768,
+		width: 800,
+        height:600,
 		title: "Node Definitions Manager",
 		buttons: [
 			{
