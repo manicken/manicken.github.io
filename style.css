@@ -1251,5 +1251,62 @@
       background-size: contain
   }
       
-      
+
+ /* Node Definitions Manager Form */ 
+  #leftPanel {
+    position: absolute;
+    top: 20px; bottom: 0;
+    left: 5px; width: 300px;
+    border: 1px solid #900;
+    padding-left: 5px;
+    padding-top: 5px;
+    overflow: auto;
+}
+#rightPanel {
+    position: absolute;
+    top: 20px; bottom: 0;
+    left: 320px; right: 0;
+}
+  /* Remove default bullets */
+ul, #myUL2 {
+    list-style-type: none;
+  }
   
+  /* Remove margins and padding from the parent ul */
+  #myUL2 {
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Style the caret/arrow */
+  .caret2 {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+  }
+  .item2 {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+  }
+  
+  /* Create the caret/arrow with a unicode, and style it */
+  .caret2::before {
+    content: "\25B6";
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  
+  /* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+  .caret2-down::before {
+    transform: rotate(90deg);
+  }
+  
+  /* Hide the nested list */
+  .nested2 {
+    display: none;
+  }
+  
+  /* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+  .active2 {
+    display: block;
+  }

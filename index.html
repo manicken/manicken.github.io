@@ -121,6 +121,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
                         </ul>
                     </li>
                     <li class="divider"></li>
+                    <li><a id="btn-node-def-manager" tabindex="-1" href="#">&nbsp;&nbsp;<i class="fa fa-database"></i>&nbsp;&nbsp;Node definitions manager</a></li>
+                    <li class="divider"></li>
                     <li><a id="btn-print" tabindex="-1" href="#">&nbsp;&nbsp;<i class="fa fa-print"></i>&nbsp;&nbsp;Print Design</a></li>
                     <li class="divider"></li>
                     <li><a id="btn-reloadWindow" tabindex="-1" href="#">&nbsp;&nbsp;<i class="fa fa-refresh"></i>&nbsp;&nbsp;Reload Window</a></li>
@@ -398,6 +400,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		</div>
 	</form>
 </div>
+<div id="node-dialog-node-definitions-manager" class="hide">
+	<form id="dialog-form-node-definitions-manager" class="form-horizontal">
+    </form>
+</div>
+
 <div id="node-dialog-rename-workspace" class="hide">
 	<form class="form-horizontal">
 		<div class="form-row">
@@ -555,6 +562,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/touch/radialMenu.js"></script>
 <script src="red/devTest.js"></script>
 <script src="red/IndexedDBfiles.js"></script>
+<script src="red/NodeDefGenerator.js"></script>
+<script src="red/NodeDefManager.js"></script>
 
 <!--
  TODO: generate some or all of this automatically from the C++ source

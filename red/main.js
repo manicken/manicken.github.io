@@ -652,6 +652,71 @@ RED.main = (function() {
             xmlHttp.timeout = 2000;
         xmlHttp.send(null);
     }
+
+    var filesToDownload = [];
+    var filesToDownload_index = 0;
+    var filesToDownload_cbProcess;
+    var filesToDownload_cbDone;
+    function updateNodeTypeAddons()
+    {
+        filesToDownload = [];
+        var fileUrls = settings.NodeTypeAddons.split('\n');
+        for (var i = 0; i < fileUrls.length; i++) {
+            var fileUrl = fileUrls[i];
+            if (fileUrl.startsWith("https://github.com")) {
+                fileUrl = fileUrl.replace("https://github.com", "https://raw.githubusercontent.com");
+                fileUrl = fileUrl.replace("/blob/", "/");
+            }
+            filesToDownload.push({url:fileUrl});
+        }
+        filesToDownload_index = 0;
+        httpDownloadFilesTask();
+    }
+    function httpDownloadAsyncFiles(files, cbProcess, cbDone) {
+        filesToDownload = files;
+        filesToDownload_cbProcess = cbProcess;
+        filesToDownload_cbDone = cbDone;
+        filesToDownload_index = 0;
+        httpDownloadFilesTask();
+    }
+
+    function httpDownloadFilesTask()
+    {
+        if (filesToDownload_index < filesToDownload.length) {
+            var file = filesToDownload[filesToDownload_index];
+            console.log("downloading file: " + file.url);
+            httpDownloadAsync(file.url, function(contents) {
+                var file = filesToDownload[filesToDownload_index];
+                console.log("download completed file: " + file.url);
+                file.contents = contents;
+                if (filesToDownload_cbProcess != undefined) filesToDownload_cbProcess(file);
+                filesToDownload_index++;
+                httpDownloadFilesTask();
+            },
+            function(error){
+                var file = filesToDownload[filesToDownload_index];
+                if (filesToDownload_cbProcess != undefined) filesToDownload_cbProcess(file);
+                console.log("could not download: " + file.url);
+                filesToDownload_index++;
+                httpDownloadFilesTask();
+            });
+        }
+        else { // download all finished
+            console.log("download completed fileCount: " + filesToDownload.length);
+            if (filesToDownload_cbDone != undefined) filesToDownload_cbDone(filesToDownload);
+            
+            /*for (var i = 0; i < filesToDownload.length; i++) {
+                var file = filesToDownload[i];
+                if (file.contents == undefined) continue;
+                RED.IndexedDBfiles.fileWrite("otherFiles", "NodeAddons_" + file.url, file.contents);
+                let parser = new DOMParser();
+                let parsedHtml = parser.parseFromString(file.contents, 'text/html');
+                let liElements = parsedHtml.querySelector("script[data-container-name|='NodeDefinitions']");
+                console.log(liElements);
+                //var metaData = $.parseJSON($(liElements).html());
+            }*/
+        }  
+    }  
 	return {
 		
 		classColor:classColor,
@@ -663,5 +728,6 @@ RED.main = (function() {
         verifyDialog:verifyDialog,
         updateProjectsMenu:updateProjectsMenu,
         httpDownloadAsync:httpDownloadAsync,
+        httpDownloadAsyncFiles:httpDownloadAsyncFiles
 	};
 })();
