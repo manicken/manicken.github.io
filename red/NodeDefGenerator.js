@@ -36,7 +36,7 @@ RED.NodeDefGenerator = (function() {
             isAddon:true,
             types:{}
         };
-        testGithubNodeAddonsParser_window = window.open('', '', 'height=800,width=1024');
+        testGithubNodeAddonsParser_window = window.open('', '', 'height=800,width=1070');
         if (testGithubNodeAddonsParser_window == undefined) {RED.notify("could not open testGithubNodeAddonsParser_window<br>please try again", "warning", null, 4000); return;}
         
         var rawHtml = '<html>';
@@ -69,7 +69,7 @@ RED.NodeDefGenerator = (function() {
                     if (file.contents != undefined) {
                         file = parseFile(file);
                         var nodeRow = testGithubNodeAddonsParser_window.document.createElement("TR");
-                        console.log(file.classes);
+                        //console.log(file.classes);
                         nodeRow.innerHTML = ["<tr><td>", file.name, "</td><td>", JSON.stringify(file.classes, null, 4).split("\n").join("<br>").split(" ").join("&nbsp;"), "<br><br>unsorted GUI items:<br>", file.unsortedGUIitems, "</td></tr>"].join(" ");
                         testGithubNodeAddonsParser_table.appendChild(nodeRow);
                     }
@@ -105,15 +105,27 @@ RED.NodeDefGenerator = (function() {
                 if ((lineSplit.length > 1) && (lineSplit[1].includes("AudioStream") || lineSplit[1].includes("AudioOutput") || lineSplit[1].includes("AudioInput")))
                 {
                     className = lineSplit[0].replace("class ", "").replace("{", "").replace(";", "").trim();
-                    if (lineSplit[1].includes("AudioStream")) category = "unsorted";
-                    else if (lineSplit[1].includes("AudioOutput")) category = "output";
-                    else if (lineSplit[1].includes("AudioInput")) category = "input";
+                    if (className.startsWith("AudioOutput")) category = "output";
+                    else if (className.startsWith("AudioInput")) category = "input";
+                    else if (className.startsWith("AudioEffect")) category = "effect";
+                    else if (className.startsWith("AudioFilter")) category = "filter";
+                    else if (className.startsWith("AudioConvert")) category = "convert";
+                    else if (className.startsWith("AudioMixer")) category = "mixer";
+                    else if (className.startsWith("AudioAnalyze")) category = "analyze";
+                    else if (className.startsWith("AudioSwitch")) category = "mixer";
+                    else if (className.startsWith("AudioSynth")) category = "synth";
+                    else if (className.startsWith("AudioPlay")) category = "play";
+                    else if (className.startsWith("AudioRecord")) category = "record";
+                    else if (className.startsWith("AudioTest")) category = "synth";
+                    else if (className.startsWith("AudioCalc")) category = "analyze";
+                    else if (className.startsWith("AudioMultiply")) category = "effect";
+                    else category = "unsorted";
                 }
                 else if (line.startsWith("class AudioConfig") || line.startsWith("class AudioControl"))
                 {
                     className = lineSplit[0].replace("class ", "").replace("{", "").replace(";", "").trim();
-                    if (line.startsWith("class AudioConfig")) category = "config";
-                    else if (line.startsWith("class AudioControl")) category = "control";
+                    if (className.startsWith("AudioConfig")) category = "config";
+                    else if (className.startsWith("AudioControl")) category = "control";
                 } 
                 else
                 {

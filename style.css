@@ -1253,27 +1253,34 @@
       
 
  /* Node Definitions Manager Form */ 
-  #leftPanel {
+#nodeDefMgr-LeftPanel {
     position: absolute;
-    top: 20px; bottom: 0;
+    top: 50px; bottom: 0px;
     left: 5px; width: 300px;
     border: 1px solid #900;
     padding-left: 5px;
     padding-top: 5px;
     overflow: auto;
 }
-#rightPanel {
+#nodeDefMgr-LeftPanel-buttons {
     position: absolute;
-    top: 20px; bottom: 0;
+    top: 5px; height: 30px;
+    left: 0px; width: 300px;
+    padding-left: 5px;
+    padding-top: 5px;
+}
+#nodeDefMgr-RightPanel {
+    position: absolute;
+    top: 50px; bottom: 0px;
     left: 320px; right: 0;
 }
   /* Remove default bullets */
-ul, #myUL2 {
+ul, #nodeDefCatTree {
     list-style-type: none;
   }
   
   /* Remove margins and padding from the parent ul */
-  #myUL2 {
+  #nodeDefCatTree {
     margin: 0;
     padding: 0;
   }
@@ -1283,9 +1290,13 @@ ul, #myUL2 {
     cursor: pointer;
     user-select: none; /* Prevent text selection */
   }
-  .item2 {
+  .nodeDefItem {
     cursor: pointer;
     user-select: none; /* Prevent text selection */
+  }
+
+  .nodeDefItemSelected {
+      border: 1px solid #dd1616;
   }
   
   /* Create the caret/arrow with a unicode, and style it */
