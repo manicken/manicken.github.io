@@ -252,7 +252,7 @@ RED.palette = (function() {
 	 * @param {*} nt  node type
 	 * @param {*} def node type def
 	 * 	 */
-	function addNodeType(nt,def, category) { // externally RED.palettte.add
+	function addNodeType(nt,def, category, nodeDefGroupName) { // externally RED.palettte.add
 
 		//if (exclusion.indexOf(def.category)!=-1) return;
 		var defCategory = "";
@@ -324,7 +324,7 @@ RED.palette = (function() {
 			//$("#palette-"+defCategory).append(d);
 			d.onmousedown = function(e) { e.preventDefault(); };
 
-			setTooltipContent('', nt, d);
+			setTooltipContent('', nt, d, " @ " + nodeDefGroupName);
 
 		    $(d).click(function() {
 			  	console.warn("palette node click:" + d.type);
@@ -348,7 +348,7 @@ RED.palette = (function() {
 	
 	
 
-	function setTooltipContent(prefix, key, elem) {
+	function setTooltipContent(prefix, key, elem, preInfo, postInfo) {
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
 		var server = false && patt.test(location.protocol);
@@ -364,9 +364,16 @@ RED.palette = (function() {
 		};
 
 		if (!server) {
+           // console.warn($("script[data-help-name|='" + key + "']").html());
 			data = $("script[data-help-name|='" + key + "']").html();
 			var firstP = $("<div/>").append(data).children("div").first().html();
-			options.content = firstP;
+            var content = '<b>'+key+'</b>';
+            if (preInfo != undefined) content += preInfo;
+            if (firstP != undefined) content += '<br><br>' + firstP;
+            else content += '<br><br>no help availabe'
+            if (postInfo != undefined) content += '<br>' + postInfo;
+
+			options.content = content;
 			$(elem).popover(options);
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {

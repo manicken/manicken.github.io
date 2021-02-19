@@ -136,8 +136,8 @@ RED.nodes = (function() {
             types:{}
         };
     }
-	function registerType(nt,def,nodeDefinitions) {
-        node_defs[nodeDefinitions].types[nt] = def;
+	function registerType(nt,def,nodeDefGroupName) {
+        node_defs[nodeDefGroupName].types[nt] = def;
 
         def.defaults.color = {value:def.color};
        // console.warn(def);
@@ -145,7 +145,7 @@ RED.nodes = (function() {
         try{
 		// TODO: too tightly coupled into palette UI
 		if (def.dontShowInPalette == undefined)
-            RED.palette.add(nt,def);
+            RED.palette.add(nt,def,undefined,nodeDefGroupName);
         }
         catch (ex) { console.error(ex);RED.notify("<strong>Warning</strong>: Fail to add this type to the palette<br>" + nt,"warning");} // failsafe
 	}
