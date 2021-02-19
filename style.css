@@ -1274,13 +1274,20 @@
     top: 50px; bottom: 0px;
     left: 320px; right: 0;
 }
+#nodeDefMgr-RightPanel-buttons {
+    position: absolute;
+    top: 5px; height: 30px;
+    left: 320px; right: 0px;
+    padding-left: 5px;
+    padding-top: 5px;
+}
   /* Remove default bullets */
-ul, #nodeDefCatTree {
+ul, #nodeDefGroupTree {
     list-style-type: none;
   }
   
   /* Remove margins and padding from the parent ul */
-  #nodeDefCatTree {
+  #nodeDefGroupTree {
     margin: 0;
     padding: 0;
   }
