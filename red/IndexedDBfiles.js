@@ -86,62 +86,50 @@ RED.IndexedDBfiles = (function() {
         }
         console.log(window.indexedDB);
         // initial initiation
-        var request = window.indexedDB.open("AudioSystemDesignTool", 1);
-        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); }; // this also happen when upgrade is needed
+        var request = window.indexedDB.open("AudioSystemDesignTool", 4);
+        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); };
         request.onupgradeneeded = function(event) { // This event is only implemented in recent browsers
             let db = event.target.result;
-            var objectStore = db.createObjectStore("projects", { keyPath: "name" });
-            objectStore.createIndex("name", "name", { unique: true });
-            objectStore.createIndex("data", "data", { unique: false });
-            objectStore = db.createObjectStore("codeFiles", { keyPath: "name" });
-            objectStore.createIndex("name", "name", { unique: true });
-            objectStore.createIndex("data", "data", { unique: false });
-            objectStore = db.createObjectStore("images", { keyPath: "name" });
-            objectStore.createIndex("name", "name", { unique: true });
-            objectStore.createIndex("data", "data", { unique: false });
-            console.warn("indexedDB initialized to version 1 completed");
-            db.close();
-        };
-        // upgrade to version 2 if needed
-        request = window.indexedDB.open("AudioSystemDesignTool", 2);
-        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); };// this also happen when upgrade is needed
-        request.onupgradeneeded = function(event) {
-            var db = event.target.result;
-            var objectStore = db.createObjectStore("otherFiles", { keyPath: "name" });
-            objectStore.createIndex("name", "name", { unique: true });
-            objectStore.createIndex("data", "data", { unique: false });
-            console.warn("indexedDB upgrade to version 2 completed");
-            db.close();
-        };
-        // updgrade to version 3 if needed
-        request = window.indexedDB.open("AudioSystemDesignTool", 3);
-        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); };// this also happen when upgrade is needed
-        request.onupgradeneeded = function(event) {
-            var db = event.target.result;
-            var upgradeTransaction = event.target.transaction;
+            if (event.oldVersion < 1) {
+                var objectStore = db.createObjectStore("projects", { keyPath: "name" });
+                objectStore.createIndex("name", "name", { unique: true });
+                objectStore.createIndex("data", "data", { unique: false });
+                objectStore = db.createObjectStore("codeFiles", { keyPath: "name" });
+                objectStore.createIndex("name", "name", { unique: true });
+                objectStore.createIndex("data", "data", { unique: false });
+                objectStore = db.createObjectStore("images", { keyPath: "name" });
+                objectStore.createIndex("name", "name", { unique: true });
+                objectStore.createIndex("data", "data", { unique: false });
+                console.warn("indexedDB initialized to version 1 completed");
+            }
+            if (event.oldVersion < 2) {
+                var objectStore = db.createObjectStore("otherFiles", { keyPath: "name" });
+                objectStore.createIndex("name", "name", { unique: true });
+                objectStore.createIndex("data", "data", { unique: false });
+                console.warn("indexedDB upgrade to version 2 completed");
+            }
+            if (event.oldVersion < 3) {
+                var upgradeTransaction = event.target.transaction;
             
-            addCreateIndex(upgradeTransaction, "projects", "DateTime");
-            addCreateIndex(upgradeTransaction, "codeFiles", "DateTime");
-            addCreateIndex(upgradeTransaction, "images", "DateTime");
-            addCreateIndex(upgradeTransaction, "otherFiles", "DateTime");
-            console.warn("indexedDB upgrade to version 3 completed");
-            db.close();
-        };
-        // updgrade to version 3 if needed
-        request = window.indexedDB.open("AudioSystemDesignTool", 4);
-        request.onerror = function(event) { console.warn("indexDB request onerror: ", event.target.error); };// this also happen when upgrade is needed
-        request.onupgradeneeded = function(event) {
-            var db = event.target.result;
-            var upgradeTransaction = event.target.transaction;
+                addCreateIndex(upgradeTransaction, "projects", "DateTime");
+                addCreateIndex(upgradeTransaction, "codeFiles", "DateTime");
+                addCreateIndex(upgradeTransaction, "images", "DateTime");
+                addCreateIndex(upgradeTransaction, "otherFiles", "DateTime");
+                console.warn("indexedDB upgrade to version 3 completed");
+            }
+            if (event.oldVersion < 4) {
+                var upgradeTransaction = event.target.transaction;
             
-            addCreateIndex(upgradeTransaction, "projects", "checksum");
-            addCreateIndex(upgradeTransaction, "codeFiles", "checksum");
-            addCreateIndex(upgradeTransaction, "images", "checksum");
-            addCreateIndex(upgradeTransaction, "otherFiles", "checksum");
-            console.warn("indexedDB upgrade to version 4 completed");
-            
-        };
+                addCreateIndex(upgradeTransaction, "projects", "checksum");
+                addCreateIndex(upgradeTransaction, "codeFiles", "checksum");
+                addCreateIndex(upgradeTransaction, "images", "checksum");
+                addCreateIndex(upgradeTransaction, "otherFiles", "checksum");
+                console.warn("indexedDB upgrade to version 4 completed");
+            }
 
+            db.close();
+        };
+    
         request.onsuccess = function(event) {
             db = event.target.result; 
             console.warn("indexDB request onsuccess: ", db );

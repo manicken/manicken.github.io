@@ -174,7 +174,7 @@ RED.main = (function() {
         $("#" + menuId).append(html);
         $("#"+ uid).click(function() { action(id, item.label); });
 
-        SetButtonPopOver("#" + uid, item.description, "left");
+        SetPopOver("#" + uid, item.description, "left");
     }
 
 	function addDemoFlowsToMenu()
@@ -458,7 +458,7 @@ RED.main = (function() {
 
 		return true;
 	}
-	function SetButtonPopOver(buttonId, htmlText, location)
+	function SetPopOver(buttonId, htmlText, location)
 	{
 		//console.error("setting popover for:" + buttonId + "  " + htmlText);
 		if (location == undefined) location = "bottom";
@@ -505,25 +505,25 @@ RED.main = (function() {
 		RED.view.init();
 
 		//SetButtonPopOver("#btn-
-		SetButtonPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");
-		SetButtonPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
-		SetButtonPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
-		SetButtonPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
+		SetPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");
+		SetPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
+		SetPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
+		SetPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
 		//SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
 		//SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
-        SetButtonPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
+        SetPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
         
-        SetButtonPopOver("#btn-deploy", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
-		SetButtonPopOver("#btn-deploy2", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");
-		SetButtonPopOver("#btn-deploy2zip", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function.","left");
-		SetButtonPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is <br>the project name set in settings tab","left");
-        SetButtonPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON,<br>that is usable when a design is shared,<br> for example on a forum.<br><br> tip. if shared the last ] could be on a new line <br>to make it easier to copy the whole line","left");
-        SetButtonPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
+        SetPopOver("#btn-deploy", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
+		SetPopOver("#btn-deploy2", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");
+		SetPopOver("#btn-deploy2zip", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function.","left");
+		SetPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is <br>the project name set in settings tab","left");
+        SetPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON,<br>that is usable when a design is shared,<br> for example on a forum.<br><br> tip. if shared the last ] could be on a new line <br>to make it easier to copy the whole line","left");
+        SetPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
 
-        SetButtonPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
-		SetButtonPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
+        SetPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
+		SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
         
-        SetButtonPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
+        SetPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
 
 		jscolor.presets.default = {
 			closeButton:true
@@ -724,7 +724,7 @@ RED.main = (function() {
 		print:PrintElem,
 		download:download,
 		showSelectNameDialog:showSelectNameDialog,
-        SetButtonPopOver:SetButtonPopOver,
+        SetPopOver:SetPopOver,
         verifyDialog:verifyDialog,
         updateProjectsMenu:updateProjectsMenu,
         httpDownloadAsync:httpDownloadAsync,

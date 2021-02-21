@@ -4650,9 +4650,9 @@ RED.view = (function() {
         $( "#node-input-workspace-id" ).val(ws.id);
 
         $( "#node-input-export-workspace" ).prop('checked',  ws.export);
-        RED.main.SetButtonPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
+        RED.main.SetPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
 
-        RED.main.SetButtonPopOver("#node-input-export-isMain-settings", "This defines which file-name to use when exporting as main.", "left");
+        RED.main.SetPopOver("#node-input-export-isMain-settings", "This defines which file-name to use when exporting as main.", "left");
 
         $( "#node-input-export-isMain" ).prop('checked',  ws.isMain);
         chk_exportIsMain_OnClick();
@@ -4660,7 +4660,7 @@ RED.view = (function() {
         var otherMain = getOtherMain(ws)
         if (otherMain == undefined){
             $( "#node-input-export-isMain" ).prop('disabled' , false);
-            RED.main.SetButtonPopOver("#node-input-export-isMain-checkbox", "when checked this defines the main file.<br><br>note. there can only be one main in the project", "left");
+            RED.main.SetPopOver("#node-input-export-isMain-checkbox", "when checked this defines the main file.<br><br>note. there can only be one main in the project", "left");
             $( "#node-input-export-isMain" ).click(chk_exportIsMain_OnClick);
             $( "#node-input-export-mainNameType" ).val(ws.mainNameType);
             $( "#node-input-export-mainNameExt" ).val(ws.mainNameExt);
@@ -4668,7 +4668,7 @@ RED.view = (function() {
         }
         else {
             $( "#node-input-export-isMain" ).prop('disabled' , true);
-            RED.main.SetButtonPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
+            RED.main.SetPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
         }
 		$( "#node-dialog-rename-workspace" ).dialog("open");
     }

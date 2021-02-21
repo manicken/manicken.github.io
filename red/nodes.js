@@ -128,13 +128,13 @@ RED.nodes = (function() {
         }
     }
     function initNodeDefinitions(nodeDefinitions, uid) {
-        node_defs[uid] = {
+        node_defs[uid] = nodeDefinitions; /*{
             label:nodeDefinitions.label, 
             description:nodeDefinitions.description,
             url:nodeDefinitions.url,
             isAddon:nodeDefinitions.isAddon,
             types:{}
-        };
+        };*/
     }
 	function registerType(nt,def,nodeDefGroupName) {
         node_defs[nodeDefGroupName].types[nt] = def;
@@ -805,7 +805,7 @@ RED.nodes = (function() {
                     for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
                         var catName = nodeDefinitionCategoryNames[i];
                         var cat = newNodes.nodeAddons[catName];
-                        RED.nodes.registerTypes(cat, catName);
+                        registerTypes(cat, catName);
                     }
                 }
 

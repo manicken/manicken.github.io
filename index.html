@@ -400,8 +400,12 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		</div>
 	</form>
 </div>
-<div id="node-dialog-node-definitions-manager" class="hide">
-	<form id="dialog-form-node-definitions-manager" class="form-horizontal">
+<div id="node-definitions-manager-dialog" class="hide">
+	<form id="node-definitions-manager-dialog" class="form-horizontal">
+    </form>
+</div>
+<div id="node-def-manager-new-item-dialog" class="hide">
+	<form id="node-def-manager-new-item-dialog" class="form-horizontal">
     </form>
 </div>
 
@@ -564,6 +568,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/IndexedDBfiles.js"></script>
 <script src="red/NodeDefGenerator.js"></script>
 <script src="red/NodeDefManager.js"></script>
+
 
 <!--
  TODO: generate some or all of this automatically from the C++ source
@@ -797,7 +802,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
     "manickenNodes": {
         "label":"Manicken Nodes",
         "description":"The node types embedded into this tool by manicken (Jannik LF Svensson)",
-        "url":"https://github.com/manicken",
+        "credits":"Jannik LF Svensson",
+        "homepage":"https://github.com/manicken",
+        "url":"",
         "types":{
             "TabOutput":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"Out","nonObject":"","inputs":1,"outputs":0,"category":"special","color":"#cce6ff","icon":"arrow-in.png"},
             "TabInput":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"In","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
@@ -907,7 +914,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	"officialNodes": {
         "label":"Official Nodes",
         "description":"The official Audio node types embedded into this tool, that is used by the official Audio Library ",
-        "url":"https://github.com/PaulStoffregen/Audio",
+        "credits":"Paul Stoffregen",
+        "homepage":"https://www.pjrc.com/",
+        "url":"https://api.github.com/repos/PaulStoffregen/Audio/contents",
         "types":{
             
 
@@ -1008,799 +1017,6 @@ span.mainfunction {color: #993300; font-weight: bolder}
             "AudioControlWM8731master":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"wm8731m","inputs":0,"outputs":0,"category":"control","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioControlCS42448":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"cs42448","inputs":0,"outputs":0,"category":"control","color":"#E6E0F8","icon":"arrow-in.png"}
 	    }
-    },
-    "OpenAudio_ArduinoLibrary":{
-        "disabled":true,
-        "isAddon":true,
-        "label": "OpenAudio ArduinoLibrary",
-        "description": "chipaudette OpenAudio_ArduinoLibrary node addons",
-        "url": "https://api.github.com/repos/chipaudette/OpenAudio_ArduinoLibrary/contents/",
-        "types": {
-            "AudioAnalyzePhase_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AnalyzePhase F32",
-                "inputs": "2",
-                "outputs": "1",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioCalcEnvelope_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "calc_envelope F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioCalcGainWDRC_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "calc_WDRCGain F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioConfigFIRFilterBank_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "config_FIRbank F32",
-                "inputs": "0",
-                "outputs": "0",
-                "category": "config",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlSGTL5000_Extended": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioControlSGTL5000_Extended",
-                "inputs": "0",
-                "outputs": "0",
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlSignalTesterInterface_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioControlSignalTesterInterface_F32;",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlSignalTester_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioControlSignalTester_F32;",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlTestAmpSweep_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioControlTestAmpSweep_F32;",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlTestFreqSweep_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioControlTestFreqSweep_F32;",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioTestSignalGenerator_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "testSignGen F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioTestSignalMeasurement_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "testSigMeas F32",
-                "inputs": "2",
-                "outputs": "0",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioTestSignalMeasurementMulti_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "testSigMeas F32",
-                "inputs": "10",
-                "outputs": "0",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlSignalTesterInterface_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioControlSignalTesterInterface_F32",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlSignalTester_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "sigTest(Abstract) F32",
-                "inputs": "0",
-                "outputs": "0",
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlTestAmpSweep_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "ampSweepTester F32",
-                "inputs": "0",
-                "outputs": "0",
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioControlTestFreqSweep_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "freqSweepTester F32",
-                "inputs": "0",
-                "outputs": "0",
-                "category": "control",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioConvert_I16toF32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioConvert_I16toF32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "convert",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioConvert_F32toI16": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioConvert_F32toI16",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "convert",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectCompWDRC_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "CompressWDRC F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectCompressor2_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "Compressor2 F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectCompressor_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioEffectCompressor_F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectDelay_OA_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "delay F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectEmpty_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "empty F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectFreqShiftFD_OA_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "freq_shift",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectGain_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioEffectGain_F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioEffectWDRC2_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "CompressWDRC2 F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioFilter90Deg_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "90DegPhase",
-                "inputs": "2",
-                "outputs": "2",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioFilterBiquad_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "IIR F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioFilterEqualizer_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "filter_Equalizer F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioFilterFIRGeneral_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "filter_Equalizer F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioFilterFIR_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioFilterFIR_F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioFilterIIR_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "IIR",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioMixer4_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "Mixer4 F32",
-                "inputs": "4",
-                "outputs": "1",
-                "category": "mixer",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioMixer8_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "Mixer8",
-                "inputs": "8",
-                "outputs": "1",
-                "category": "mixer",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioMultiply_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioMultiply_F32",
-                "inputs": "2",
-                "outputs": "1",
-                "category": "effect",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSwitch4_OA_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "Switch4 F32",
-                "inputs": "1",
-                "outputs": "4",
-                "category": "mixer",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSwitch8_OA_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "Switch8 F32",
-                "inputs": "1",
-                "outputs": "8",
-                "category": "mixer",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "RadioFMDetector_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "FMDetector F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "RadioIQMixer_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "IQMixer F32",
-                "inputs": "2",
-                "outputs": "2",
-                "category": "mixer",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioInputUSB_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "usbAudioIn F32",
-                "inputs": "0",
-                "outputs": "2",
-                "category": "input",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioOutputUSB_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "usbAudioOut F32",
-                "inputs": "2",
-                "outputs": "0",
-                "category": "output",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioAnalyzePeak_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AnalyzePeak F32",
-                "inputs": "1",
-                "outputs": "0",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioAnalyzeRMS_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AnalyzeRMS F32",
-                "inputs": "1",
-                "outputs": "0",
-                "category": "analyze",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioInputI2S_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioInputI2S_F32",
-                "inputs": "0",
-                "outputs": "2",
-                "category": "input",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioInputI2Sslave_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioInputI2Sslave_F32",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "input",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioOutputI2S_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioOutputI2S_F32",
-                "inputs": "2",
-                "outputs": "0",
-                "category": "output",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioOutputI2Sslave_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioOutputI2Sslave_F32",
-                "inputs": 0,
-                "outputs": 0,
-                "category": "output",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioPlayQueue_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioPlayQueue_F32",
-                "inputs": "0",
-                "outputs": "1",
-                "category": "play",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "radioNoiseBlanker_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "NoiseBlanker F32",
-                "inputs": "1",
-                "outputs": "1",
-                "category": "filter",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioRecordQueue_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioRecordQueue_F32",
-                "inputs": "1",
-                "outputs": "0",
-                "category": "record",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSynthGaussian_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "Gaussianwhitenoise F32",
-                "inputs": "0",
-                "outputs": "1",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSynthNoisePink_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "pinknoise F32",
-                "inputs": "0",
-                "outputs": "1",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSynthSineCosine_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "SineCosine F32",
-                "inputs": "0",
-                "outputs": "2",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSynthWaveformSine_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "sine F32",
-                "inputs": "0",
-                "outputs": "1",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSynthWaveform_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "AudioSynthWaveform_F32",
-                "inputs": "0",
-                "outputs": "1",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            },
-            "AudioSynthNoiseWhite_F32": {
-                "defaults": {
-                    "name": {
-                        "type": "c_cpp_name"
-                    },
-                    "id": {}
-                },
-                "shortName": "whitenoise F32",
-                "inputs": "0",
-                "outputs": "1",
-                "category": "synth",
-                "color": "#E6E0F8",
-                "icon": "arrow-in.png"
-            }
-        }
     }
 }
 </script>
@@ -1837,7 +1053,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 </script>
 
@@ -1854,7 +1070,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
@@ -1879,9 +1095,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
 		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
 	</div>
-	<div class="form-row-long">
+	<div class="form-row-full">
 		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
-		<input style="width:100%" type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
+		<input type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
 	</div>
 	<div class="form-row hidden">
         <label for="node-input-repeatPressAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
@@ -1889,9 +1105,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
         <input type="checkbox" id="node-input-repeatPressAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Press Action</span>
         </label>
     </div>
-	<div class="form-row-long">
+	<div class="form-row-full">
 		<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
-		<input style="width:100%" type="text" id="node-input-releaseAction" placeholder="releaseAction" autocomplete="off">
+		<input type="text" id="node-input-releaseAction" placeholder="releaseAction" autocomplete="off">
 	</div>
 	<div class="form-row hidden">
         <label for="node-input-repeatReleaseAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
@@ -1925,11 +1141,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Bar BG Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-barFGcolor"><i class="fa fa-tag"></i> Bar FG Color</label>
-		<a class="node-input-color-bg"><input id="node-input-barFGcolor" data-jscolor=""></a>
+		<input id="node-input-barFGcolor" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label style="width:150px" for="node-input-orientation"><i class="fa fa-tag"></i> Orientation</label>
@@ -2041,7 +1257,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
     </div>
     <div class="form-row-mid">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
@@ -2063,7 +1279,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
@@ -2108,11 +1324,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-itemBGcolor"><i class="fa fa-tag"></i> Item BG Color</label>
-		<a class="node-input-color-bg"><input id="node-input-itemBGcolor" data-jscolor=""></a>
+		<input id="node-input-itemBGcolor" data-jscolor="">
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-textSize"><i class="fa fa-tag"></i> Header Text Size</label>
@@ -2173,15 +1389,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-whiteKeysColor"><i class="fa fa-tag"></i> White Keys Color</label>
-		<a class="node-input-color-bg"><input id="node-input-whiteKeysColor" data-jscolor=""></a>
+		<input id="node-input-whiteKeysColor" data-jscolor="">
 	</div>
 	<div class="form-row-mid">
 		<label for="node-input-blackKeysColor"><i class="fa fa-tag"></i> Black Keys Color</label>
-		<a class="node-input-color-bg"><input id="node-input-blackKeysColor" data-jscolor=""></a>
+		<input id="node-input-blackKeysColor" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
@@ -2262,7 +1478,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
@@ -2368,7 +1584,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
@@ -2391,7 +1607,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
@@ -2423,7 +1639,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> File contents:</label>
@@ -2459,7 +1675,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row-long">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> File contents:</label>
@@ -2499,7 +1715,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label for="node-input-value"><i class="fa fa-tag"></i> Value</label>
@@ -2577,7 +1793,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
@@ -2660,7 +1876,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<!-- this is only for debugging of the output pins change so i choose MixerX because it's allready dynamic -->
 	<!-- <div class="form-row"> 
@@ -2700,7 +1916,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<a class="node-input-color-bg"><input id="node-input-color" data-jscolor=""></a>
+		<input id="node-input-color" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Variable contents:</label>
@@ -4818,7 +4034,7 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 <script type="text/x-red" data-template-name="AudioMixer4">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-		<input type="text" id="node-input-name" placeholder="Name">
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>

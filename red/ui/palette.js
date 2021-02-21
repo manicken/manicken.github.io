@@ -471,7 +471,7 @@ RED.palette = (function() {
                 var ndn = nodeDefNames[ndi];
                 var nd = RED.nodes.node_defs[ndn];
                 $("#palette-filters").append('<tr><td><input type="checkbox" checked="true" id="palette-filter-'+ndn+'"></input></td><td><div id="palette-filter-div-'+ndn+'"><label for="palette-filter-'+ndn+'">'+nd.label+'</label></div></td></tr>');
-                RED.main.SetButtonPopOver("palette-filter-div-"+ndn, nd.description, "right");
+                RED.main.SetPopOver("palette-filter-div-"+ndn, nd.description, "right");
             }
             document.getElementById("palette-filters-form").style.display = "block";
             filterFormVisible = true;

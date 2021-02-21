@@ -66,7 +66,7 @@ RED.settings.editor = (function() {
                     var mi = menuItems[mii];
                     $('#set-mnu-item-'  + id).on('click', mi.action);
                     if (mi.popupText != undefined)
-                        RED.main.SetButtonPopOver('#set-mnu-item-'  + id, mi.popupText, "left");
+                        RED.main.SetPopOver('#set-mnu-item-'  + id, mi.popupText, "left");
                 }
             }
         }
@@ -86,7 +86,7 @@ RED.settings.editor = (function() {
         });
         if (popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#" + headerId, popupText, "left");
+            RED.main.SetPopOver("#" + headerId, popupText, "left");
         }
         return catContainerId;
     }
@@ -126,7 +126,7 @@ RED.settings.editor = (function() {
         }
         if (popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+            RED.main.SetPopOver("#divSetting-" + id, popupText, "left");
         }
     }
     function createTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, popupText, readOnly)
@@ -173,7 +173,7 @@ RED.settings.editor = (function() {
         }
         if (popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+            RED.main.SetPopOver("#divSetting-" + id, popupText, "left");
         }
     }
     function createMultiLineTextInputWithApplyButton(containerId, id, label, cb, param,textInputWidth, options)
@@ -221,7 +221,7 @@ RED.settings.editor = (function() {
         }
         if (popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+            RED.main.SetPopOver("#divSetting-" + id, popupText, "left");
         }
     }
     function createComboBoxWithApplyButton(containerId, id, label, cb, param, textInputWidth, options)
@@ -282,7 +282,7 @@ RED.settings.editor = (function() {
 
         if (options.popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#divSetting-" + id, options.popupText, "left");
+            RED.main.SetPopOver("#divSetting-" + id, options.popupText, "left");
         }
     }
     function setOptionList(selectId, options, valIsText, optionTexts)
@@ -338,7 +338,7 @@ RED.settings.editor = (function() {
         //</div>
         if (popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+            RED.main.SetPopOver("#divSetting-" + id, popupText, "left");
         }
     }
     function createButton(containerId, id, label, buttonClass, cb, popupText, isFileInput)
@@ -365,7 +365,7 @@ RED.settings.editor = (function() {
 
         if (popupText != undefined)
         {
-            RED.main.SetButtonPopOver("#divSetting-" + id, popupText, "left");
+            RED.main.SetPopOver("#divSetting-" + id, popupText, "left");
         }
     }
     return {
