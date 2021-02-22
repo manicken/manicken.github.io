@@ -1067,17 +1067,22 @@
 
   .form-row-full label {
     width: 100%;
-}
-.form-row-full input {
-    width: calc(100% - 15px);
-}
+  }
+  .form-row-full input {
+      width: calc(100% - 15px);
+  }
   
+  .form-row-ndm {
+      clear: both;
+      margin-bottom: 7px;
+  }
   .form-row-ndm label {
-    width: 100%;
-
+    display: inline-block;
+    width: 100px;
   }
   .form-row-ndm input {
-    width: calc(100% - 15px);
+      left: 100px;
+        width: calc(100% - 100px);
   }
   
   /*#node-input-itemBGcolor {

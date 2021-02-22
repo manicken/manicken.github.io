@@ -19,7 +19,32 @@ RED.NodeDefManager = (function() {
         homepage:"(optional)<br>the main homepage of the main author",
         url:"(optional)<br>the url to the github repository (not yet used)<br> but should be used when updating the current node def. list<br>and in the future for automatic download of the used library files.<br><br>the form should be as follows:<br>" + groupPropertyDefaults.url
     }
-    
+    var newNodeTypeClassNameTooltip = "(mandatory) The type(classname) of the new item.<br><br>note. cannot include spaces or special characters when a template-type class is used the &gt; and &lt; should not be included in the name. <br><br>A template should be defined by using the property templateType=&gt;I,O&lt;"
+    var newItemDialogOk_cb;
+
+    var newItemUid = "";
+    var newGroup = {
+        isAddon: true,
+        label:"",
+        description:"",
+        credits:"",
+        homepage:"",
+        url:"",
+        types:newTypes()
+    }
+    var newNodeType = {
+        defaults:{"name":{"type":"c_cpp_name"},comment:{}},
+        shortName:"peak",
+        inputs:1,
+        outputs:0,
+        category:"analyze",
+        color:"#E6E0F8",
+        icon:"arrow-in.png"
+    }
+    function newTypes()
+    {
+        return {};
+    }
 
     var tooltips = {
         addMenu:"add new group or node type",
@@ -82,7 +107,7 @@ RED.NodeDefManager = (function() {
         var leftPanelButtons = form.append('div').attr('id', "nodeDefMgr-LeftPanel-buttons");
         var rightPanelButtons = form.append('div').attr('id', "nodeDefMgr-RightPanel-buttons");
 
-        var nodeDefGroupTree = leftPanel.append('ul').attr('id', "nodeDefGroupTree");
+        
         
         addMenu = CreateMenu(leftPanelButtons, "add", tooltips["addMenu"], [{label:'group', cb:addGroup}, {label:'node type', cb:addNodeType}]);
         importMenu = CreateMenu(leftPanelButtons, "import", tooltips["importMenu"], [{label:'from file', cb:importFromFile}, {label:'from url', cb:importFromUrl}, {label:'refresh', tooltip:tooltips["importRefresh"], cb:refreshFromUrl}]);
@@ -90,7 +115,25 @@ RED.NodeDefManager = (function() {
         CreateButton(leftPanelButtons, "export", tooltips["exportButton"], DownloadCurrentNodeDefs);
         applyButton = CreateButton(rightPanelButtons, "apply","apply the changes of the selected item", applyCurrent);
         
+        BuildTree();        
 
+        var toggler = document.getElementsByClassName("caret2");
+        for (var i = 0; i < toggler.length; i++) {
+        toggler[i].addEventListener("click", function() {
+            this.parentElement.querySelector(".nested2").classList.toggle("active2");
+            this.classList.toggle("caret2-down");
+        });
+        }
+
+        $( "#node-definitions-manager-dialog" ).dialog("open");
+
+        SetEditableState(); // puts everything in a default state
+    }
+
+    function BuildTree()
+    {
+        leftPanel.html("");
+        var nodeDefGroupTree = leftPanel.append('ul').attr('id', "nodeDefGroupTree");
         var defGroupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
         for (var i = 0; i < defGroupNames.length; i++) {
             var defGroupName = defGroupNames[i];
@@ -104,19 +147,6 @@ RED.NodeDefManager = (function() {
                 nodeDefGroupItems.append('li').append('span').attr('class', 'nodeDefItem').attr('nodeDefGroupName', defGroupName).text(defNames[i2]).on("click", NodeDefMouse_Click);
             }
         }
-        
-
-        var toggler = document.getElementsByClassName("caret2");
-        for (var i = 0; i < toggler.length; i++) {
-        toggler[i].addEventListener("click", function() {
-            this.parentElement.querySelector(".nested2").classList.toggle("active2");
-            this.classList.toggle("caret2-down");
-        });
-        }
-
-        $( "#node-definitions-manager-dialog" ).dialog("open");
-
-        SetEditableState(); // puts everything in a default state
     }
 
     function SetEditableState(nodeDefGroupName) {
@@ -179,19 +209,44 @@ RED.NodeDefManager = (function() {
         RED.notify("apply current clicked " + currentSelectedItem.groupName + " " + currentSelectedItem.name + " (not yet implemented)", "info", null, 2000);
     }
     function addGroup() {
+        newItemUid = "";
         var newItemForm = d3.select('#node-def-manager-new-item-dialog');
         SetNewGroupFormContents(newItemForm);
         $( "#node-def-manager-new-item-dialog" ).dialog("option", "title", "Add New Group");
         $( "#node-def-manager-new-item-dialog" ).dialog("open");
         RED.notify("add group clicked (not yet implemented)", "info", null, 2000);
+        newItemDialogOk_cb = function() {
+            if (VerifyGroupUid(newItemUid)) {
+                RED.notify("new group added " + newItemUid, "info", null, 2000);
+                RED.nodes.node_defs[newItemUid] = newGroup;
+                RED.storage.update();
+                BuildTree();
+                return true; // this makes the form close
+            }
+            return false;
+        };
     }
     function addNodeType() {
+        newItemUid = "";
         if ( d3.select(this).classed("disabled") == true) return;
-
+        var newItemForm = d3.select('#node-def-manager-new-item-dialog');
+        SetNewNodeTypeFormContents(newItemForm);
         var newItemForm = d3.select('#node-def-manager-new-item-dialog');
         $( "#node-def-manager-new-item-dialog" ).dialog("option", "title", "Add New Node Type");
         $( "#node-def-manager-new-item-dialog" ).dialog("open");
         RED.notify("add node type clicked (not yet implemented)", "info", null, 2000);
+
+        newItemDialogOk_cb = function() {
+            if (VerifyNodeType(newItemUid)) {
+                var groupName = currentSelectedItem.groupName;
+                RED.notify("new node type added " + newItemUid + " @ " + groupName, "info", null, 2000);
+                RED.nodes.node_defs[groupName].types[newItemUid] = newNodeType;
+                RED.storage.update();
+                BuildTree();
+                return true; // this makes the form close
+            }
+            return false;
+        };
     }
     function importFromFile() {
         RED.notify("import from file clicked (not yet implemented)", "info", null, 2000);
@@ -225,7 +280,7 @@ RED.NodeDefManager = (function() {
             if (pname == "isAddon")
                 CreateInputBoxWithLabel(rightPanel, pname, pname, nodeDefGroup[pname], "bool", groupPropertyTooltips[pname], undefined); // this creates a read only checkbox
             else
-                CreateInputBoxWithLabel(rightPanel, pname, pname, nodeDefGroup[pname], (typeof nodeDefGroup[pname]), groupPropertyTooltips[pname], function(label, value) { console.warn(label, value); });
+                CreateInputBoxWithLabel(rightPanel, pname, pname, nodeDefGroup[pname], (typeof nodeDefGroup[pname]), groupPropertyTooltips[pname], function(value, label) { console.warn(label, value); });
         }
         
     }
@@ -246,12 +301,81 @@ RED.NodeDefManager = (function() {
 
     function SetNewGroupFormContents(form) {
         form.html("");
-        CreateInputBoxWithLabel(form, "UID", "uid", groupPropertyDefaults.uid, "string", groupPropertyTooltips.uid, function(label, value) { console.warn(label, value); })
-        CreateInputBoxWithLabel(form, "Label", "label", groupPropertyDefaults.label, "string", groupPropertyTooltips.label, function(label, value) { console.warn(label, value); });
-        CreateInputBoxWithLabel(form, "Description","description", groupPropertyDefaults.description, "string", groupPropertyTooltips.description, function(label, value) { console.warn(label, value); });
-        CreateInputBoxWithLabel(form, "Credits","credits", groupPropertyDefaults.credits, "string", groupPropertyTooltips.credits, function(label, value) { console.warn(label, value); });
-        CreateInputBoxWithLabel(form, "Homepage","homepage", groupPropertyDefaults.homepage, "string", groupPropertyTooltips.homepage, function(label, value) { console.warn(label, value); });
-        CreateInputBoxWithLabel(form, "URL", "url", groupPropertyDefaults.url, "string", groupPropertyTooltips.url, function(label, value) { console.warn(label, value); })
+        CreateInputBoxWithLabel(form, "UID", "uid", groupPropertyDefaults.uid, "string", groupPropertyTooltips.uid, function(value) { if (VerifyGroupUid(value)) {$("#input-ndmgr-UID").removeClass("input-error");} else {$("#input-ndmgr-UID").addClass("input-error");} newItemUid = value; })
+        var names = Object.getOwnPropertyNames(newGroup);
+        for (var i = 0; i < names.length; i++) {
+            var n = names[i];
+            if (n == "isAddon" || n == "types") continue;
+            newGroup[n] = groupPropertyDefaults[n];
+            CreateInputBoxWithLabel(form, n, n, groupPropertyDefaults[n], "string", groupPropertyTooltips[n], function(value, propertyName) { console.warn("changed",propertyName, value); newGroup[propertyName] = value; });
+        }
+    }
+    function VerifyGroupUid(uid) {
+        if (uid.length == 0) {
+            RED.notify("Group UID cannot be empty", "warning", null, 4000);
+            //$(this).addClass("input-error");
+            DisableNewItemOk();
+            return false;
+        }
+        if (uid.includes(' ') == true) {
+            RED.notify("Group UID cannot include spaces", "warning", null, 4000);
+            
+            DisableNewItemOk();
+            return false;
+        }
+        var names = Object.getOwnPropertyNames(RED.nodes.node_defs);
+        for (var i = 0; i < names; i++) {
+            if (names[i] == uid) {
+                RED.notify("Group UID "+uid + " is allready used", "warning", null, 4000);
+                //$(this).addClass("input-error");
+                DisableNewItemOk();
+                return false;
+            }
+        }
+        
+        EnableNewItemOk();
+        return true;
+    }
+    function DisableNewItemOk() {
+        document.getElementById("btn-new-item-dialog-ok").disabled = true;
+        $("#btn-new-item-dialog-ok").addClass("unclickablebutton");
+    }
+    function EnableNewItemOk() {
+        document.getElementById("btn-new-item-dialog-ok").disabled = false;
+        $("#btn-new-item-dialog-ok").removeClass("unclickablebutton");
+    }
+
+    function SetNewNodeTypeFormContents(form) {
+        form.html("");
+        CreateInputBoxWithLabel(form, "Type", "type", "", "string", newNodeTypeClassNameTooltip, function(value) { if (VerifyNodeType(value)) {$("#input-ndmgr-type").removeClass("input-error");} else {$("#input-ndmgr-type").addClass("input-error");} newItemUid = value; } );
+
+    }
+
+    function VerifyNodeType(type) {
+        if (type.length == 0) {
+            RED.notify("Node type cannot be empty", "warning", null, 4000);
+            //$(this).addClass("input-error");
+            DisableNewItemOk();
+            return false;
+        }
+        if (type.includes(' ') == true) {
+            RED.notify("Node type cannot include spaces", "warning", null, 4000);
+            
+            DisableNewItemOk();
+            return false;
+        }
+        var names = Object.getOwnPropertyNames(RED.nodes.node_defs[currentSelectedItem.groupName].types);
+        for (var i = 0; i < names; i++) {
+            if (names[i] == type) {
+                RED.notify("Node Type "+type + " is allready defined", "warning", null, 4000);
+                //$(this).addClass("input-error");
+                DisableNewItemOk();
+                return false;
+            }
+        }
+        
+        EnableNewItemOk();
+        return true;
     }
 
     $("#node-definitions-manager-dialog form" ).submit(function(e) { e.preventDefault();});
@@ -275,8 +399,16 @@ RED.NodeDefManager = (function() {
 		title: "New item",
 		buttons: [
             {
+                id: "btn-new-item-dialog-ok",
 				text: "Ok",
-				click: function() {	$( this ).dialog( "close" ); }
+				click: function() {
+                    if (newItemDialogOk_cb != undefined) {
+                        if (newItemDialogOk_cb())
+                            $( this ).dialog( "close" );
+                    }
+                    else
+                        $( this ).dialog( "close" );
+                }
 			},
 			{
 				text: "Cancel",
@@ -318,22 +450,22 @@ RED.NodeDefManager = (function() {
     }
     function CreateInputBoxWithLabel(container, label, propertyName, value, type, tooltip, cb) {
         var uid = "input-ndmgr-"+label.split(' ').join('-').split('.').join('-');
-        var group = container.append('div').attr('class','form-row-ndm');
+        var group = container.append('div').attr('class','form-row');
         var labelItem = group.append('label').attr('for', uid);
         labelItem.append('i').attr('class', 'fa fa-tag');
         labelItem.text(label + " ");
-        var group2 = container.append('div').attr('class','form-row-ndm');
+        //var group2 = container.append('div').attr('class','form-row-ndm');
         if (type == "bool")
-            var input = group2.append('input').attr('type','checkbox').attr('id', uid).attr('checked',value);
+            var input = group.append('input').attr('type','checkbox').attr('id', uid).attr('checked',value);
         else
-            var input = group2.append('input').attr('type','text').attr('id', uid).attr('value',value);
+            var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value);
         
         RED.main.SetPopOver(input[0], tooltip, "right");
         if (cb == undefined) {
             //input.attr("readonly", '');
             input.attr('disabled', '');
         } else {
-            input.on('change', function() {cb(propertyName, $("#" + uid).val()); } );
+            input.on('change', function() {cb($("#" + uid).val(),propertyName); } );
         }
         
         //<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
