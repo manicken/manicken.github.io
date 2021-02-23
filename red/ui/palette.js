@@ -324,12 +324,16 @@ RED.palette = (function() {
 			//$("#palette-"+defCategory).append(d);
 			d.onmousedown = function(e) { e.preventDefault(); };
 
-			setTooltipContent('', nt, d, " @ " + nodeDefGroupName);
-
+            if (def.help != undefined && def.help.trim().length != 0) setTooltipContent('', def.help, d, " @ " + nodeDefGroupName);
+            else setTooltipContent('', nt, d, " @ " + nodeDefGroupName);
+			
 		    $(d).click(function() {
 			  	console.warn("palette node click:" + d.type);
 				RED.nodes.selectNode(d.type);
-			  	RED.sidebar.info.setHelpContent('', d.type);
+			  	//RED.sidebar.info.setHelpContent('', d.type);
+
+                if (def.help != undefined && def.help.trim().length != 0) RED.sidebar.info.setHelpContent("<h3>" + d.type + "</h3>", def.help);
+                else RED.sidebar.info.setHelpContent('', d.type);
 		    });
 		    $(d).draggable({
 			   helper: 'clone',

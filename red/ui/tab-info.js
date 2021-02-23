@@ -148,7 +148,8 @@ RED.sidebar.info = (function() {
 			}
 		}
 		table += "</tbody></table><br/>";
-		this.setHelpContent(table, node.type);
+        if (node._def.help != undefined && node._def.help.trim().length != 0) this.setHelpContent(table, node._def.help);
+        else this.setHelpContent(table, node.type);
 	}
 
 	function setHelpContent(prefix, key) {

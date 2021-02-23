@@ -139,6 +139,8 @@ RED.nodes = (function() {
 	function registerType(nt,def,nodeDefGroupName) {
         node_defs[nodeDefGroupName].types[nt] = def;
 
+        if (def.defaults == undefined) return; // discard this node def
+
         def.defaults.color = {value:def.color};
        // console.warn(def);
 
