@@ -55,10 +55,13 @@ RED.NodeDefManager = (function() {
 
     var tooltips = {
         addMenu:"add new group or node type",
-        importMenu:"imports into the current selected node definition group",
+        importMenu:"imports into the current selected node definition group (not yet implemented)",
         removeButton:"remove current selected group or node definition",
         exportButton:"exports all node definitions as a json file",
-        importRefresh:"updates the current addon from the url given"
+        importFromFile: "(not yet implemented)",
+        importFromUrl: "(not yet implemented)",
+        importRefresh:"updates the current addon from the url given (not yet implemented)",
+        applyButton:"apply the changes of the selected item (not yet implemented)"
     }
     var treeList;
 
@@ -116,11 +119,11 @@ RED.NodeDefManager = (function() {
 
         
         
-        addMenu = CreateMenu(leftPanelButtons, "add", tooltips["addMenu"], [{label:'group', cb:addGroup}, {label:'node type', cb:addNodeType}]);
-        importMenu = CreateMenu(leftPanelButtons, "import", tooltips["importMenu"], [{label:'from file', cb:importFromFile}, {label:'from url', cb:importFromUrl}, {label:'refresh', tooltip:tooltips["importRefresh"], cb:refreshFromUrl}]);
-        removeButton = CreateButton(leftPanelButtons, "remove", tooltips["removeButton"], removeItem);
+        addMenu = CreateMenu(leftPanelButtons, "add", tooltips.addMenu, [{label:'group', cb:addGroup}, {label:'node type', cb:addNodeType}]);
+        importMenu = CreateMenu(leftPanelButtons, "import", tooltips.importMenu, [{label:'from file', tooltip:tooltips.importFromFile, cb:importFromFile}, {label:'from url', tooltip:tooltips.importFromUrl, cb:importFromUrl}, {label:'refresh', tooltip:tooltips.importRefresh, cb:refreshFromUrl}]);
+        removeButton = CreateButton(leftPanelButtons, "remove", tooltips.removeButton, removeItem);
         CreateButton(leftPanelButtons, "export", tooltips["exportButton"], DownloadCurrentNodeDefs);
-        applyButton = CreateButton(rightPanelButtons, "apply","apply the changes of the selected item", applyCurrent);
+        applyButton = CreateButton(rightPanelButtons, "apply",tooltips.applyButton, applyCurrent);
         
         BuildTree();        
 
