@@ -144,6 +144,13 @@ RED.nodes = (function() {
         def.defaults.color = {value:def.color};
        // console.warn(def);
 
+        if (def.inputTypes != undefined) {
+            def.inputTypes = convertPortTypeRange(def.inputTypes);
+        }
+        if (def.outputTypes != undefined) {
+            def.outputTypes = convertPortTypeRange(def.outputTypes);
+        }
+
         try{
 		// TODO: too tightly coupled into palette UI
 		if (def.dontShowInPalette == undefined)
@@ -151,6 +158,22 @@ RED.nodes = (function() {
         }
         catch (ex) { console.error(ex);RED.notify("<strong>Warning</strong>: Fail to add this type to the palette<br>" + nt,"warning");} // failsafe
 	}
+
+    function convertPortTypeRange(types) {
+        var newList = {};
+        var ti = 0;
+        var typeNames = Object.getOwnPropertyNames(types);
+        for (var i = 0; i < typeNames.length; i++) {
+            var tn = typeNames[i];
+            if (tn.startsWith('x')) {
+                var count = parseInt(tn.substring(1));
+                for (var ci = 0; ci < count; ci++, ti++)
+                    newList[ti] = types[tn];
+            }
+            else newList[tn] = types[tn];
+        }
+        return newList;
+    }
 
 	function getID() {
 		var str = (1+Math.random()*4294967295).toString(16);

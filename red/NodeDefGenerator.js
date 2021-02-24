@@ -144,8 +144,8 @@ RED.NodeDefGenerator = (function() {
                         },
                         shortName: className,
                         inputs:0, outputs:0,
-                        inputTypes:{"n":"f32"},
-                        outputTypes:{"n":"f32"},
+                        //inputTypes:{"n":"f32"},
+                        //outputTypes:{"n":"f32"},
                         category:category,
                         color: "#E6E0F8" ,icon:"arrow-in.png"
                     };
@@ -164,7 +164,19 @@ RED.NodeDefGenerator = (function() {
                     for (var glsi = 0; glsi < split2.length; glsi++) {
                         var split3 = split2[glsi].trim().split(":");
                         if (split3.length != 2) continue;
-                        currClass.guiDefs[split3[0].trim()] = split3[1].trim();
+                        var propertyName = split3[0].trim();
+                        var propertyValue = split3[1].trim();
+                        if (propertyName == "inputs") {
+                            currClass.guiDefs.inputTypes = {};
+                            currClass.guiDefs.inputTypes["x"+propertyValue] = "f32";
+                        }
+                        else if (propertyName == "outputs") {
+                            currClass.guiDefs.outputTypes = {};
+                            currClass.guiDefs.outputTypes["x"+propertyValue] = "f32";
+                        }
+                            
+
+                        currClass.guiDefs[propertyName] = propertyValue;
                     }
                 }
                 else
