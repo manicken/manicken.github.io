@@ -142,7 +142,12 @@ RED.NodeDefGenerator = (function() {
                             name:{type:"c_cpp_name"},
                             id:{}
                         },
-                        shortName: className,inputs:0, outputs:0 ,category:category,color: "#E6E0F8" ,icon:"arrow-in.png"
+                        shortName: className,
+                        inputs:0, outputs:0,
+                        inputTypes:{"n":"f32"},
+                        outputTypes:{"n":"f32"},
+                        category:category,
+                        color: "#E6E0F8" ,icon:"arrow-in.png"
                     };
                     nodeAddons.types[className] = currClass.guiDefs;
                 }

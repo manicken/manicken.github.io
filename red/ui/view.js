@@ -1641,8 +1641,7 @@ RED.view = (function() {
 			} else {
 				mouseup_node = d;
 			}
-			// TODO: fix so that a Junction cannot be used to
-			// override mouseup_node === mousedown_node
+
 			if (mouseup_node === mousedown_node ) { 
 				stopDragLine();
 				RED.notify("<strong>A connection cannot be made directly to itself!!!</strong>" + portType + mousedown_port_type, "warning", false, 2000);
@@ -1652,7 +1651,8 @@ RED.view = (function() {
 			{
 				stopDragLine(); return;
 			}
-			
+
+			// makes (src allways a output) and (dst allways a input)
 			var src,dst,src_port,dst_port;
 			if (mousedown_port_type === 0) {
 				src = mousedown_node;
@@ -1697,6 +1697,15 @@ RED.view = (function() {
 					RED.notify("<strong>" + src.name  + "->" + newSrc.name +  ":" + dst.name  + "</strong>", "warning", false, 5000);
 				}
 			}
+            var srcPortType = getOutputPortType(src, src_port);
+            var dstPortType = getInputPortType(dst, dst_port);
+          
+            if (srcPortType != dstPortType) {
+                stopDragLine();
+				RED.notify("<strong> srcPortType: " + srcPortType + " != dstPortType:" + dstPortType + "!!!</strong>", "warning", false, 4000);
+				return;
+            }
+
 			var existingLink = false;
 			RED.nodes.eachLink(function(d) {
 					existingLink = existingLink || (d.source === src && d.target === dst && d.sourcePort == src_port && d.targetPort == dst_port);
@@ -1723,6 +1732,26 @@ RED.view = (function() {
 			redraw_links();
 		}
 	}
+    function getInputPortType(node, portIndex) {
+        if (node._def.inputTypes != undefined)
+        {
+            if (node._def.inputTypes.n != undefined)
+                return node._def.inputTypes.n;
+            else if (node._def.inputTypes[portIndex] != undefined)
+                return node._def.inputTypes[portIndex];
+        }
+        return "i16";
+    }
+    function getOutputPortType(node, portIndex) {
+        if (node._def.outputTypes != undefined)
+        {
+            if (node._def.outputTypes.n != undefined)
+                return node._def.outputTypes.n;
+            else if (node._def.outputTypes[portIndex] != undefined)
+                return node._def.outputTypes[portIndex];
+        }
+        return "i16";
+    }
 	function stopDragLine()
 	{
 		drag_line.attr("class", "drag_line_hidden");
@@ -2867,6 +2896,7 @@ RED.view = (function() {
 		d._ports.enter().append("rect")
 		    .attr("class","port port_output").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
 			.attr("nodeType",d.type)
+            .attr("nodeId",d.id)
 			.on("mousedown",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseDown(node,0,i);}})() )
 			.on("mouseup",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseUp(node,0,i);}})() )
 			//.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
@@ -4841,24 +4871,24 @@ RED.view = (function() {
 	{
 		var classAttr = pinRect.getAttribute("class");
 		//console.log("classAttr:"+classAttr); // development debug
-		var portType;
+		var portDir;
 		var nodeType;
 		if (classAttr == "port port_input")
 		{
 			nodeType = node.type;
-			portType = "In";
+			portDir = "In";
 		}
 		else if (classAttr == "port port_output")
 		{
 			nodeType = pinRect.getAttribute("nodeType");
-			portType = "Out";
-			
+			portDir = "Out";
+			var node = RED.nodes.node(pinRect.getAttribute("nodeId"));
 		}
 		
 		var data = $("script[data-help-name|='" + nodeType + "']");
 		var data2 = $("<div/>").append(data.html()).children("table").first().children("tbody").html();
 		
-		var portName = portType + " " + index;
+		var portName = portDir + " " + index;
 
 		if (!data2 || (data2 == null)) // shows workspace user custom class io
 		{
@@ -4866,7 +4896,7 @@ RED.view = (function() {
 			if (RED.nodes.isClass(nodeType))
 			{
 				var wsId = RED.nodes.getWorkspaceIdFromClassName(nodeType);
-				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, "Tab"+portType+ "put", index);
+				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, "Tab"+portDir+ "put", index);
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}
@@ -4897,6 +4927,12 @@ RED.view = (function() {
 			console.log("table contens: type("+ typeof data2 + "):\n"+ data2); // development debug
 		}
 		//console.log(data2); // development debug
+        
+        if (portDir == "Out") {
+            return data2 + getOutputPortType(node, index);
+        }else if (portDir == "In") {
+            return data2 + getInputPortType(node, index);
+        }
 		return data2;
 	}
 
