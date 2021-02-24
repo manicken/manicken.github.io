@@ -146,9 +146,11 @@ RED.nodes = (function() {
 
         if (def.inputTypes != undefined) {
             def.inputTypes = convertPortTypeRange(def.inputTypes);
+            def.inputs = Object.getOwnPropertyNames(def.inputTypes).length;
         }
         if (def.outputTypes != undefined) {
             def.outputTypes = convertPortTypeRange(def.outputTypes);
+            def.outputs = Object.getOwnPropertyNames(def.outputTypes).length;
         }
 
         try{
@@ -169,6 +171,9 @@ RED.nodes = (function() {
                 var count = parseInt(tn.substring(1));
                 for (var ci = 0; ci < count; ci++, ti++)
                     newList[ti] = types[tn];
+            }
+            else if (tn == "n") {
+                return {"n":types.n}; // type n will override everything
             }
             else newList[tn] = types[tn];
         }
