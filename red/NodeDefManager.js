@@ -3,6 +3,19 @@
 
 RED.NodeDefManager = (function() {
 
+    var tooltips = {
+        addMenu:"add new group or node type",
+        importMenu:"imports into the current selected node definition group (not yet implemented)",
+        removeButton:"remove current selected group or node definition",
+        exportButton:"exports all node definitions as a json file",
+        importFromFile: "(not yet implemented)",
+        importFromUrl: "(not yet implemented)",
+        importRefresh:"updates the current addon from the url given (not yet implemented)",
+        applyButton:"apply the changes of the selected item",
+        importFromUrl: "the url to the library, <br>can either be .json .html or github path",
+        importMode:""
+    }
+
     var groupPropertyDefaults = {
         uid: "",
         label:"",
@@ -53,16 +66,7 @@ RED.NodeDefManager = (function() {
         return {};
     }
 
-    var tooltips = {
-        addMenu:"add new group or node type",
-        importMenu:"imports into the current selected node definition group (not yet implemented)",
-        removeButton:"remove current selected group or node definition",
-        exportButton:"exports all node definitions as a json file",
-        importFromFile: "(not yet implemented)",
-        importFromUrl: "(not yet implemented)",
-        importRefresh:"updates the current addon from the url given (not yet implemented)",
-        applyButton:"apply the changes of the selected item (not yet implemented)"
-    }
+    
     var treeList;
 
     var defSettings = {
@@ -111,7 +115,7 @@ RED.NodeDefManager = (function() {
 
         leftPanel = form.append('div').attr('id', "nodeDefMgr-LeftPanel");
         rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel');
-        textArea = rightPanel.append('textarea').attr('type', 'text').attr('id','outputPreview').attr('wrap', 'off').attr('style', 'width: 95%; height: 95%');
+        textArea = rightPanel.append('textarea').attr('type', 'text').attr('id','nodeDefEditor').attr('wrap', 'off').attr('style', 'width: 95%; height: 95%');
 
 
         var leftPanelButtons = form.append('div').attr('id', "nodeDefMgr-LeftPanel-buttons");
@@ -120,7 +124,7 @@ RED.NodeDefManager = (function() {
         
         
         addMenu = CreateMenu(leftPanelButtons, "add", tooltips.addMenu, [{label:'group', cb:addGroup}, {label:'node type', cb:addNodeType}]);
-        importMenu = CreateMenu(leftPanelButtons, "import", tooltips.importMenu, [{label:'from file', tooltip:tooltips.importFromFile, cb:importFromFile}, {label:'from url', tooltip:tooltips.importFromUrl, cb:importFromUrl}, {label:'refresh', tooltip:tooltips.importRefresh, cb:refreshFromUrl}]);
+        importMenu = CreateMenu(leftPanelButtons, "import", tooltips.importMenu, [{label:'from url', tooltip:tooltips.importFromUrl, cb:importFromUrl},{label:'from file', tooltip:tooltips.importFromFile, cb:importFromFile}, {label:'refresh', tooltip:tooltips.importRefresh, cb:refreshFromUrl}]);
         removeButton = CreateButton(leftPanelButtons, "remove", tooltips.removeButton, removeItem);
         CreateButton(leftPanelButtons, "export", tooltips["exportButton"], DownloadCurrentNodeDefs);
         applyButton = CreateButton(rightPanelButtons, "apply",tooltips.applyButton, applyCurrent);
@@ -168,7 +172,7 @@ RED.NodeDefManager = (function() {
             //importMenu.group.style("visibility","visible");
             applyButton.classed("disabled",false);
             removeButton.classed("disabled",false);
-            importMenu.dropDown.classed("disabled",false);
+            //importMenu.dropDown.classed("disabled",false);
             addMenu.items[1].classed("disabled",false);
         }
         else
@@ -178,7 +182,7 @@ RED.NodeDefManager = (function() {
             //importMenu.group.style("visibility","hidden");
             applyButton.classed("disabled",true);
             removeButton.classed("disabled",true);
-            importMenu.dropDown.classed("disabled",true);
+            //importMenu.dropDown.classed("disabled",true);
             
             addMenu.items[1].classed("disabled",true);
         }
@@ -192,7 +196,8 @@ RED.NodeDefManager = (function() {
         //rightPanel.html("");
         //EditDefGroup(nodeDefGroupName);
         var editable = GetEditableDefGroup(nodeDefGroupName);
-        textArea.text(JSON.stringify(editable,null,4));
+        $("#" + textArea.attr('id')).val(JSON.stringify(editable,null,4));
+        //textArea.text();
         //textArea.text(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName],null,4));
         SetEditableState(nodeDefGroupName);
         currentSelectedItem = {groupName:nodeDefGroupName};
@@ -207,7 +212,8 @@ RED.NodeDefManager = (function() {
         item.classed('nodeDefItemSelected', true);
         var nodeDefName = item.text();
         var nodeDefGroupName = item.attr("nodeDefGroupName");
-        textArea.text(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName].types[nodeDefName],null,4));
+        $("#" + textArea.attr('id')).val(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName].types[nodeDefName],null,4));
+        //textArea.text(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName].types[nodeDefName],null,4));
         //rightPanel.append(textArea);
         SetEditableState(nodeDefGroupName);
         currentSelectedItem = {groupName:nodeDefGroupName, name:nodeDefName };
@@ -216,9 +222,40 @@ RED.NodeDefManager = (function() {
 
     function applyCurrent() {
         if ( d3.select(this).classed("disabled") == true) return;
+        if (verifyCurrentEdit() == false) return;
+        var id = textArea.attr('id');
+        var text = $("#" + id).val();
+        var obj = JSON.parse(text);
+        if (currentSelectedItem.name != undefined) { // Node Type Selected
+            RED.nodes.registerType(currentSelectedItem.name, obj, currentSelectedItem.groupName);
+            RED.notify("apply current " + currentSelectedItem.name + " @ " + currentSelectedItem.groupName + " OK", "info", null, 2000);
+        } else { // node def. group selected
 
-        RED.notify("apply current clicked " + currentSelectedItem.groupName + " " + currentSelectedItem.name + " (not yet implemented)", "info", null, 2000);
+            var pnames = Object.getOwnPropertyNames(obj);
+            var node_def_group = RED.nodes.node_defs[currentSelectedItem.groupName];
+            for (var i = 0; i < pnames.length; i++) {
+                var pname = pnames[i];
+                node_def_group[pname] = obj[pname];
+            }
+            RED.notify("apply current " + currentSelectedItem.groupName + " OK", "info", null, 2000);
+        }
+        RED.storage.update();
     }
+    function verifyCurrentEdit() {
+        var id = textArea.attr('id');
+        var text = $("#" + id).val();
+        try {
+            JSON.parse(text);
+            $("#"+id).removeClass("input-error");
+            return true;
+        } catch (ex) {
+            RED.notify(ex, "warn", null, 4000);
+            $("#"+id).addClass("input-error");
+            return false;
+        }
+        //console.log(id, text);
+    }
+
     function addGroup() {
         newItemUid = "";
         var newItemForm = d3.select('#node-def-manager-new-item-dialog');
@@ -242,7 +279,6 @@ RED.NodeDefManager = (function() {
         if ( d3.select(this).classed("disabled") == true) return;
         var newItemForm = d3.select('#node-def-manager-new-item-dialog');
         SetNewNodeTypeFormContents(newItemForm);
-        var newItemForm = d3.select('#node-def-manager-new-item-dialog');
         $( "#node-def-manager-new-item-dialog" ).dialog("option", "title", "Add New Node Type");
         $( "#node-def-manager-new-item-dialog" ).dialog("open");
         //RED.notify("add node type clicked (not yet implemented)", "info", null, 2000);
@@ -265,6 +301,10 @@ RED.NodeDefManager = (function() {
         RED.notify("import from file clicked (not yet implemented)", "info", null, 2000);
     }
     function importFromUrl() {
+        var importFromUrlForm = d3.select('#node-def-manager-new-item-dialog');
+        SetImportUrlFormContents(importFromUrlForm);
+        $( "#node-def-manager-new-item-dialog" ).dialog("option", "title", "Import node types from URL");
+        $( "#node-def-manager-new-item-dialog" ).dialog("open");
         RED.notify("import from url clicked (not yet implemented)", "info", null, 2000);
     }
     function refreshFromUrl() {
@@ -300,21 +340,74 @@ RED.NodeDefManager = (function() {
         form.selectAll('.nodeDefItem').classed('nodeDefItemSelected', false);
     }
 
-    function EditDefGroup(nodeDefGroupName) {
-        var nodeDefGroup = RED.nodes.node_defs[nodeDefGroupName];
-        var propertyNames = Object.getOwnPropertyNames(nodeDefGroup);
-        //console.warn(nodeDefGroup, propertyNames);
-        for (var i = 0; i < propertyNames.length; i++) {
-            var pname = propertyNames[i];
-            if (pname == "types") continue; // skip this
-            console.warn("EditDefGroup item: " + pname + " type " + typeof nodeDefGroup[pname] + " " + nodeDefGroup[pname]);
-            var type = "";
-            if (pname == "isAddon")
-                CreateInputBoxWithLabel(rightPanel, pname, pname, nodeDefGroup[pname], "bool", groupPropertyTooltips[pname], undefined); // this creates a read only checkbox
-            else
-                CreateInputBoxWithLabel(rightPanel, pname, pname, nodeDefGroup[pname], (typeof nodeDefGroup[pname]), groupPropertyTooltips[pname], function(value, label) { console.warn(label, value); });
-        }
+    var importUrlParamsDiv;
+    function SetImportUrlFormContents(form) {
+        form.html("");
+        CreateInputBoxWithLabel(form, "URL", "url", "", "string", tooltips.importFromUrl, function(value) {
+            
+            if (value.endsWith('.json') == true) {
+                $("#node-def-mgr-import-url-info").text("is json");
+
+            } else if (value.endsWith('.html') == true) {
+                $("#node-def-mgr-import-url-info").text("is html");
+
+            } else if (value.startsWith("https://github.com") == true) {
+                var apiUrl = GetAsGithubApiUrl(value);
+                $("#node-def-mgr-import-url-info").text("is github " + apiUrl);
+
+            } else if (value.startsWith("https://api.github.com") == true) {
+                $("#node-def-mgr-import-url-info").text("is github api " + value);
+
+            }
+            else {
+                $("#node-def-mgr-import-url-info").text("unknown format");
+
+            }
+            //console.warn(value);
+        });
+        CreateLabel(form, "node-def-mgr-import-url-info");
+        var modeItems = [{label:"Create New Group", value:"new"}, {label:"Import into existing group", value:"import"}];
+        CreateComboboxWithLabel(form, "node-def-mgr-import-url-mode", "Mode",modeItems, tooltips.importMode, function(value) { 
+            if (value == "new") {
+                importUrlParamsDiv.html("");
+                CreateInputBoxWithLabel(importUrlParamsDiv, "UID", "uid", groupPropertyDefaults.uid, "string", groupPropertyTooltips.uid, function(value) {
+                    VerifyGroupUid(value);
+                    newItemUid = value;
+                });
         
+
+            } else if (value == "import") {
+                importUrlParamsDiv.html("");
+                var groupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
+                var groupItems = [];
+                for (var gi = 0; gi < groupNames.length; gi++) {
+                    var defGrp = RED.nodes.node_defs[groupNames[gi]];
+                    if (defGrp.isAddon == undefined || defGrp.isAddon == "false") continue;
+                    groupItems.push(groupNames[gi]);
+                }
+                CreateComboboxWithLabel(importUrlParamsDiv, "node-def-mgr-import-url-mode-existing", "Node Def. Group" , groupItems, "", function(value) {
+
+                });
+                CreateInputBoxWithLabel(importUrlParamsDiv, "Replace", 'replace', false, 'bool', "If any existing objects with the same type should be replaced", function (value) {
+
+                });
+            }
+        } );
+
+        importUrlParamsDiv = form.append('div');
+    }
+    function GetAsGithubApiUrl(url) {
+        var split = url.split("/");
+        return "https://api.github.com/repos/" + split[3] + "/" + split[4] + "/contents/"+ JoinFrom(split, 7, "/");
+    }
+
+    function JoinFrom(array, startIndex, seperator) {
+        var str = "";
+        for (var i = startIndex; i < array.length; i++) {
+            str += array[i];
+            if (i < (array.length - 1)) str += seperator;
+        }
+        return str;
     }
 
     function GetEditableDefGroup(nodeDefGroupName) {
@@ -504,6 +597,33 @@ RED.NodeDefManager = (function() {
         RED.main.SetPopOver(btn[0], tooltip, "top");
         return btn;
     }
+    function CreateLabel(container, id) {
+        var lbl = container.append('div').attr('class','form-row').append('a').attr("id", id).text(" ");
+        return lbl;
+    }
+    function CreateComboboxWithLabel(container, id, label, items, tooltip, cb) {
+        var group = container.append('div').attr('class','form-row');
+        var labelItem = group.append('label').attr('for', id);
+        labelItem.append('i').attr('class', 'fa fa-tag');
+        labelItem.text(label + " ");
+        var select = group.append('select').attr('id', id);
+
+        for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            if (typeof item == "object")
+                select.append('option').attr('value', item.value).text(item.label);
+            else
+                select.append('option').attr('value', item).text(item);
+        }
+
+        RED.main.SetPopOver(select[0], tooltip, "right");
+        if (cb == undefined) {
+            //input.attr("readonly", '');
+            select.attr('disabled', '');
+        } else {
+            select.on('change', function() {cb($("#" + id).val()); } );
+        }
+    }
     function CreateInputBoxWithLabel(container, label, propertyName, value, type, tooltip, cb) {
         var uid = "input-ndmgr-"+propertyName;// label.split(' ').join('-').split('.').join('-');
         var group = container.append('div').attr('class','form-row');
@@ -512,11 +632,11 @@ RED.NodeDefManager = (function() {
         labelItem.text(label + " ");
         //var group2 = container.append('div').attr('class','form-row-ndm');
         if (type == "bool")
-            var input = group.append('input').attr('type','checkbox').attr('id', uid).attr('checked',value);
+            var input = group.append('input').attr('type','checkbox').attr('id', uid).attr('checked',value == true?'checked':undefined);
         else if (type == "multiline")
             var input = group.append('textarea').attr('type', 'text').attr('id', uid).attr('wrap', 'off').attr('rows', 14).attr('style', 'width: 95%; height: 95%').text(value);
         else
-            var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value);
+            var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value).attr('autocomplete','off');
         
         RED.main.SetPopOver(input[0], tooltip, "right");
         if (cb == undefined) {

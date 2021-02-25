@@ -1019,6 +1019,10 @@
     width:calc(100% - 120px);
     left:100px;
   }
+  .form-row select {
+    width:calc(100% - 120px);
+    left:100px;
+  }
 
   .form-row-mid {
       clear: both;
