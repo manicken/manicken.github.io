@@ -810,6 +810,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             "TabInput":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"In","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
             "PointerArray":{"defaults":{"name":{},"id":{},"objectType":{},"arrayItems":{}},"shortName":"pArray","nonObject":"","dontShowInPalette":"","category":"special","color":"#aaffdd","icon":"range.png"},
             "AudioMixer":{"defaults":{"name":{"type":"c_cpp_name"},"id":{},"inputs":{"value":"1"},"comment":{}},"shortName":"mixer","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
+            "AudioCrossPointSwitch":{"defaults":{"name":{"type":"c_cpp_name"},"id":{},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{}},"shortName":"crossSwitch","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
             "ClassComment":{"defaults":{"name":{},"id":{}},"shortName":"ClassComment","nonObject":"","category":"special","color":"#ccffcc","icon":"comment.png"},
             "Comment":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"Comment","nonObject":"","category":"special","color":"#ddffbb","icon":"comment.png"},
             "Function":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
@@ -1883,6 +1884,57 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
 		<input type="text" id="node-input-outputs" placeholder="outputs" autocomplete="off">
 	</div> --> 
+	<div class="form-row">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
+		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea>-->
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="AudioCrossPointSwitch">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p></p>
+	</div>
+	<h3>Audio Connections</h3>
+	<table id='table-AudioMixer' class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>In n</td><td>Input signals</td></tr>
+		<tr class=odd><td align=center>Out n</td><td>Output signals</td></tr>
+	</table>
+	
+	<h3>Functions</h3>
+	<p class=func><span class=keyword>setOutChannel</span>(out, in);</p>
+	<p class=desc>
+	</p>
+	
+	<h3>Examples</h3>
+	
+	<h3>Notes</h3>
+	<p></p>
+</script>
+<script type="text/x-red" data-template-name="AudioCrossPointSwitch">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
+		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
+		<input type="text" id="node-input-inputs" placeholder="Inputs" autocomplete="off">
+	</div>
+    <div class="form-row"> 
+		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
+		<input type="text" id="node-input-outputs" placeholder="outputs" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	
 	<div class="form-row">
 		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
 		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">

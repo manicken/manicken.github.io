@@ -1702,7 +1702,7 @@ RED.view = (function() {
           
             if (srcPortType != dstPortType) {
                 stopDragLine();
-				RED.notify("<strong> srcPortType: " + srcPortType + " != dstPortType:" + dstPortType + "!!!</strong>", "warning", false, 4000);
+				RED.notify("<strong> srcPortType: " + srcPortType + " != dstPortType:" + dstPortType + "</strong>", "warning", false, 4000);
 				return;
             }
 
