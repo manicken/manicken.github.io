@@ -672,16 +672,19 @@ RED.main = (function() {
         filesToDownload_index = 0;
         httpDownloadFilesTask();
     }
+    var downloading = false;
     function httpDownloadAsyncFiles(files, cbProcess, cbDone) {
         filesToDownload = files;
         filesToDownload_cbProcess = cbProcess;
         filesToDownload_cbDone = cbDone;
         filesToDownload_index = 0;
+        downloading = true;
         httpDownloadFilesTask();
     }
 
     function httpDownloadFilesTask()
     {
+        if (downloading == false) return;
         if (filesToDownload_index < filesToDownload.length) {
             var file = filesToDownload[filesToDownload_index];
             console.log("downloading file: " + file.url);
@@ -728,6 +731,9 @@ RED.main = (function() {
         verifyDialog:verifyDialog,
         updateProjectsMenu:updateProjectsMenu,
         httpDownloadAsync:httpDownloadAsync,
-        httpDownloadAsyncFiles:httpDownloadAsyncFiles
+        httpDownloadAsyncFiles:httpDownloadAsyncFiles,
+        abortDownloadAsyncFiles: function() { downloading = false;
+
+        }
 	};
 })();

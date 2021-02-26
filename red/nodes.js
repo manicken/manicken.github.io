@@ -111,7 +111,7 @@ RED.nodes = (function() {
             };
         }
     }
-    function registerTypes(nodeDefinitionsCategory, uid) {
+    function registerTypes(nodeDefinitionsCategory, uid, dontReplaceExisting) {
         if (nodeDefinitionsCategory.disabled != undefined && nodeDefinitionsCategory.disabled == true)
             return;
         initNodeDefinitions(nodeDefinitionsCategory, uid);
@@ -124,11 +124,15 @@ RED.nodes = (function() {
         for (var ti = 0; ti < typesNames.length; ti++) {
             var typeName = typesNames[ti];
             var type = types[typeName];
-            registerType(typeName, type, uid);
+            registerType(typeName, type, uid, dontReplaceExisting);
         }
     }
     function initNodeDefinitions(nodeDefinitions, uid) {
-        node_defs[uid] = nodeDefinitions; /*{
+        if (node_defs[uid] == undefined) {
+            node_defs[uid] = nodeDefinitions;
+        }
+        
+             /*{
             label:nodeDefinitions.label, 
             description:nodeDefinitions.description,
             url:nodeDefinitions.url,
@@ -136,7 +140,11 @@ RED.nodes = (function() {
             types:{}
         };*/
     }
-	function registerType(nt,def,nodeDefGroupName) {
+	function registerType(nt,def,nodeDefGroupName,dontReplaceExisting) {
+        if (dontReplaceExisting != undefined && dontReplaceExisting == "true") {
+            return;
+        }
+        
         node_defs[nodeDefGroupName].types[nt] = def;
 
         if (def.defaults == undefined) return; // discard this node def

@@ -1019,6 +1019,7 @@
     width:calc(100% - 120px);
     left:100px;
   }
+
   .form-row select {
     width:calc(100% - 120px);
     left:100px;
@@ -1358,3 +1359,23 @@ ul, #nodeDefGroupTree {
   .active2 {
     display: block;
   }
+
+
+#filesTable table {
+    height:100%;
+    width:100%;
+}
+#filesTable td {
+    border: 1px solid #000;
+    padding:10px;
+}
+
+.tableDiv {
+    position:absolute;
+    top:30px;
+    bottom:10px;
+    overflow:auto;
+}
+#divDownloadTime {
+    border: 2px solid #F00;
+}

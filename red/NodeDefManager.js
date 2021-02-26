@@ -12,7 +12,7 @@ RED.NodeDefManager = (function() {
         importFromUrl: "(not yet implemented)",
         importRefresh:"updates the current addon from the url given (not yet implemented)",
         applyButton:"apply the changes of the selected item",
-        importFromUrl: "the url to the library, <br>can either be .json .html or github path",
+        importFromUrl_url: "the url to the library, <br>can either be .json .html or github path",
         importMode:""
     }
 
@@ -167,23 +167,14 @@ RED.NodeDefManager = (function() {
     function SetEditableState(nodeDefGroupName) {
         if (nodeDefGroupName != undefined && RED.nodes.node_defs[nodeDefGroupName].isAddon != undefined && RED.nodes.node_defs[nodeDefGroupName].isAddon == true)
         {
-            //applyButton.style("visibility","visible");
-            //removeButton.style("visibility","visible");
-            //importMenu.group.style("visibility","visible");
             applyButton.classed("disabled",false);
             removeButton.classed("disabled",false);
-            //importMenu.dropDown.classed("disabled",false);
             addMenu.items[1].classed("disabled",false);
         }
         else
         {
-            //applyButton.style("visibility","hidden");
-            //removeButton.style("visibility","hidden");
-            //importMenu.group.style("visibility","hidden");
             applyButton.classed("disabled",true);
             removeButton.classed("disabled",true);
-            //importMenu.dropDown.classed("disabled",true);
-            
             addMenu.items[1].classed("disabled",true);
         }
     }
@@ -304,6 +295,7 @@ RED.NodeDefManager = (function() {
         var importFromUrlForm = d3.select('#node-def-manager-new-item-dialog');
         SetImportUrlFormContents(importFromUrlForm);
         $( "#node-def-manager-new-item-dialog" ).dialog("option", "title", "Import node types from URL");
+        $( "#node-def-manager-new-item-dialog" ).dialog("option", "width", "600");
         $( "#node-def-manager-new-item-dialog" ).dialog("open");
         RED.notify("import from url clicked (not yet implemented)", "info", null, 2000);
     }
@@ -339,66 +331,142 @@ RED.NodeDefManager = (function() {
     {
         form.selectAll('.nodeDefItem').classed('nodeDefItemSelected', false);
     }
-
+    var downloadUrl = "";
     var importUrlParamsDiv;
+    var downloadMode = "";
+    var importReplaceExisting = true;
+    var downloadButton;
     function SetImportUrlFormContents(form) {
+        downloadUrl = "";
+        downloadMode = "";
+        importReplaceExisting = true;
         form.html("");
-        CreateInputBoxWithLabel(form, "URL", "url", "", "string", tooltips.importFromUrl, function(value) {
+        DisableNewItemOk();
+        
+        CreateInputBoxWithLabel(form, "URL", "url", "", "string", tooltips.importFromUrl_url, function(value) {
             
             if (value.endsWith('.json') == true) {
-                $("#node-def-mgr-import-url-info").text("is json");
-
+                $("#node-def-mgr-import-url-info").text("is json file url (not implemented)");
+                $("#node-def-mgr-import-download-url").text(value);
+                downloadUrl = value;
+                downloadMode = "json";
+                Set_d3_Button_Enabled(downloadButton, true);
             } else if (value.endsWith('.html') == true) {
-                $("#node-def-mgr-import-url-info").text("is html");
-
+                $("#node-def-mgr-import-url-info").text("is html file url (not implemented)");
+                $("#node-def-mgr-import-download-url").text(value);
+                downloadUrl = value;
+                downloadMode = "html";
+                Set_d3_Button_Enabled(downloadButton, true);
             } else if (value.startsWith("https://github.com") == true) {
                 var apiUrl = GetAsGithubApiUrl(value);
-                $("#node-def-mgr-import-url-info").text("is github " + apiUrl);
-
+                downloadUrl = apiUrl.url;
+                $("#node-def-mgr-import-url-info").text("is github url");
+                $("#node-def-mgr-import-download-url").text(apiUrl.url);
+                $("#input-ndmgr-uid").val(apiUrl.uid);
+                downloadMode = "githubapi";
+                Set_d3_Button_Enabled(downloadButton, true);
             } else if (value.startsWith("https://api.github.com") == true) {
-                $("#node-def-mgr-import-url-info").text("is github api " + value);
-
+                $("#node-def-mgr-import-url-info").text("is github api url");
+                $("#node-def-mgr-import-download-url").text(value);
+                $("#input-ndmgr-uid").val(GetUidFromGithubApiUrl(value));
+                downloadUrl = value;
+                downloadMode = "githubapi";
+                Set_d3_Button_Enabled(downloadButton, true);
             }
             else {
                 $("#node-def-mgr-import-url-info").text("unknown format");
-
+                Set_d3_Button_Enabled(downloadButton, false);
             }
             //console.warn(value);
-        });
-        CreateLabel(form, "node-def-mgr-import-url-info");
+        }, 'on');
+        CreateLabel(form, "node-def-mgr-import-url-info", "100px");
         var modeItems = [{label:"Create New Group", value:"new"}, {label:"Import into existing group", value:"import"}];
         CreateComboboxWithLabel(form, "node-def-mgr-import-url-mode", "Mode",modeItems, tooltips.importMode, function(value) { 
             if (value == "new") {
-                importUrlParamsDiv.html("");
-                CreateInputBoxWithLabel(importUrlParamsDiv, "UID", "uid", groupPropertyDefaults.uid, "string", groupPropertyTooltips.uid, function(value) {
-                    VerifyGroupUid(value);
-                    newItemUid = value;
-                });
-        
-
-            } else if (value == "import") {
-                importUrlParamsDiv.html("");
-                var groupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
-                var groupItems = [];
-                for (var gi = 0; gi < groupNames.length; gi++) {
-                    var defGrp = RED.nodes.node_defs[groupNames[gi]];
-                    if (defGrp.isAddon == undefined || defGrp.isAddon == "false") continue;
-                    groupItems.push(groupNames[gi]);
-                }
-                CreateComboboxWithLabel(importUrlParamsDiv, "node-def-mgr-import-url-mode-existing", "Node Def. Group" , groupItems, "", function(value) {
-
-                });
-                CreateInputBoxWithLabel(importUrlParamsDiv, "Replace", 'replace', false, 'bool', "If any existing objects with the same type should be replaced", function (value) {
-
-                });
+                init_ImportFromUrlNewGroup();
             }
-        } );
+            else if (value == "import") {
+                init_ImportFromUrlExistingGroup();
+            }
+        });
 
         importUrlParamsDiv = form.append('div');
+        init_ImportFromUrlNewGroup(); // default
+        CreateLabel(form, "node-def-mgr-import-download-url");
+        downloadButton = CreateButton(form, "Download", "Downloads the contents given by url", function() {
+            if (downloadMode == "json") {
+
+            } else if (downloadMode == "html") {
+
+            } else if (downloadMode == "githubapi") {
+                RED.NodeDefGenerator.GithubNodeAddonsParser(downloadUrl, function() {
+
+                    $("#node-def-mgr-import-download-result").text("new node Addons count:" + RED.NodeDefGenerator.nodeAddons().count());
+                    
+                    newItemDialogOk_cb = function() {
+                        
+                        RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), newItemUid, !importReplaceExisting);
+                        RED.storage.update();
+                        BuildTree();
+                        RED.main.download(newItemUid + "_NodeAddons.json", JSON.stringify(RED.NodeDefGenerator.nodeAddons(), null, 4));
+                        return true;
+                    };
+                    EnableNewItemOk();
+                    return true;
+                }, function() { RED.main.abortDownloadAsyncFiles();});
+            }
+        });
+        Set_d3_Button_Enabled(downloadButton, false);
+        CreateLabel(form, "node-def-mgr-import-download-result");
+    }
+
+    function init_ImportFromUrlNewGroup() {
+        importUrlParamsDiv.html("");
+        CreateInputBoxWithLabel(importUrlParamsDiv, "UID", "uid", GetUidFromGithubApiUrl(downloadUrl), "string", groupPropertyTooltips.uid, function(value) {
+            VerifyGroupUid(value);
+            newItemUid = value;
+        });
+        newItemUid = GetUidFromGithubApiUrl(downloadUrl);
+        importReplaceExisting = true;
+    }
+    function init_ImportFromUrlExistingGroup() {
+        importUrlParamsDiv.html("");
+        var groupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
+        var groupItems = [];
+        for (var gi = 0; gi < groupNames.length; gi++) {
+            var defGrp = RED.nodes.node_defs[groupNames[gi]];
+            if (defGrp.isAddon == undefined || defGrp.isAddon == "false") continue;
+            groupItems.push(groupNames[gi]);
+        }
+        if (groupItems.length != 0) {
+            newItemUid = groupItems[0];
+        }
+        else {
+            newItemUid = undefined;
+            DisableNewItemOk();
+        }
+        CreateComboboxWithLabel(importUrlParamsDiv, "node-def-mgr-import-url-mode-existing", "Node Def. Group" , groupItems, "", function(value) {
+            newItemUid = value;
+        });
+        CreateInputBoxWithLabel(importUrlParamsDiv, "Replace", 'replace', false, 'bool', "If any existing objects with the same type should be replaced", function (value) {
+            console.warn(value);
+            importReplaceExisting = value;
+        });
     }
     function GetAsGithubApiUrl(url) {
         var split = url.split("/");
-        return "https://api.github.com/repos/" + split[3] + "/" + split[4] + "/contents/"+ JoinFrom(split, 7, "/");
+        var uidDir = JoinFrom(split, 7, "_");
+        if (uidDir.length != 0) uidDir = "_" + uidDir;
+        return {
+            url:"https://api.github.com/repos/" + split[3] + "/" + split[4] + "/contents/" + JoinFrom(split, 7, "/"), 
+            uid:split[3] + "_" + split[4] + uidDir
+        };
+    }
+    function GetUidFromGithubApiUrl(url) {
+        var split = url.split("/");
+        var uidDir = JoinFrom(split, 7, "_");
+        if (uidDir.length != 0) uidDir = "_" + uidDir;
+        return split[4] + "_" + split[5] + uidDir;
     }
 
     function JoinFrom(array, startIndex, seperator) {
@@ -467,10 +535,19 @@ RED.NodeDefManager = (function() {
         document.getElementById("btn-new-item-dialog-ok").disabled = true;
         $("#btn-new-item-dialog-ok").addClass("unclickablebutton");
     }
-    function EnableNewItemOk() {
+    function EnableNewItemOk(d3Object) {
         document.getElementById("btn-new-item-dialog-ok").disabled = false;
         $("#btn-new-item-dialog-ok").removeClass("unclickablebutton");
     }
+
+    function Set_d3_Button_Enabled(btn, state) {
+        if (state == true)
+            btn.attr("disabled", undefined);
+        else
+            btn.attr("disabled", 'true');
+        btn.classed("unclickablebutton", !state);
+    }
+    
 
     function SetNewNodeTypeFormContents(form) {
         form.html("");
@@ -552,8 +629,11 @@ RED.NodeDefManager = (function() {
 				text: "Ok",
 				click: function() {
                     if (newItemDialogOk_cb != undefined) {
-                        if (newItemDialogOk_cb())
+                        if (newItemDialogOk_cb()) {
+                            newItemDialogOk_cb = undefined;
                             $( this ).dialog( "close" );
+                        }
+                            
                     }
                     else
                         $( this ).dialog( "close" );
@@ -597,10 +677,12 @@ RED.NodeDefManager = (function() {
         RED.main.SetPopOver(btn[0], tooltip, "top");
         return btn;
     }
-    function CreateLabel(container, id) {
-        var lbl = container.append('div').attr('class','form-row').append('a').attr("id", id).text(" ");
+    function CreateLabel(container, id, leftPos) {
+        var lbl = container.append('div').attr('class','form-row').append('a').attr("id", id).html("&nbsp;");
+        if (leftPos != undefined) lbl.attr('style', "position:relative; left:" + leftPos +";");
         return lbl;
     }
+    
     function CreateComboboxWithLabel(container, id, label, items, tooltip, cb) {
         var group = container.append('div').attr('class','form-row');
         var labelItem = group.append('label').attr('for', id);
@@ -624,7 +706,7 @@ RED.NodeDefManager = (function() {
             select.on('change', function() {cb($("#" + id).val()); } );
         }
     }
-    function CreateInputBoxWithLabel(container, label, propertyName, value, type, tooltip, cb) {
+    function CreateInputBoxWithLabel(container, label, propertyName, value, type, tooltip, cb, autocomplete) {
         var uid = "input-ndmgr-"+propertyName;// label.split(' ').join('-').split('.').join('-');
         var group = container.append('div').attr('class','form-row');
         var labelItem = group.append('label').attr('for', uid);
@@ -636,14 +718,17 @@ RED.NodeDefManager = (function() {
         else if (type == "multiline")
             var input = group.append('textarea').attr('type', 'text').attr('id', uid).attr('wrap', 'off').attr('rows', 14).attr('style', 'width: 95%; height: 95%').text(value);
         else
-            var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value).attr('autocomplete','off');
+            var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value).attr('autocomplete', (autocomplete != undefined)?autocomplete:'off');
         
         RED.main.SetPopOver(input[0], tooltip, "right");
         if (cb == undefined) {
             //input.attr("readonly", '');
             input.attr('disabled', '');
         } else {
-            input.on('change', function() {cb($("#" + uid).val(),propertyName); } );
+            if (type == "bool")
+                input.on('change', function() {cb($("#" + uid).prop('checked'),propertyName); } );
+            else
+                input.on('change', function() {cb($("#" + uid).val(),propertyName); } );
         }
         
         //<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>

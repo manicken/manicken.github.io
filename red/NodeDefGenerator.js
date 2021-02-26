@@ -24,37 +24,47 @@ RED.NodeDefGenerator = (function() {
     var testGithubNodeAddonsParser_table;
     var nodeAddons;
 
+    var form;
+    var table;
+    var dialogOk_cb;
+    var dialogCancel_cb;
+
+    var dialogOk_cb_default = function() {
+        RED.nodes.registerTypes(nodeAddons, nodeAddons.label.split(" ").join("_"));
+        RED.main.download("NodeAddons.json", JSON.stringify(nodeAddons, null, 4));
+        return true;
+    }
+
     function testGithubNodeAddonsParser(url) {
+        GithubNodeAddonsParser(url, dialogOk_cb_default);
+    }
+
+    function GithubNodeAddonsParser(url, okPressed_cb, cancelPressed_cb) {
+        dialogOk_cb = okPressed_cb;
+        dialogCancel_cb = cancelPressed_cb;
+        DisableDialogOk();
         timeStart = performance.now();
         GithubNodeAddonsUrl = url;
         filesToDownload = [];
         var urlSplit = url.split("/");
         nodeAddons = {
+            count: function() {
+                return Object.getOwnPropertyNames(this.types).length;
+            },
             label:urlSplit[5],
-            description:urlSplit[4] + " " + urlSplit[5] +" node addons",
+            description:urlSplit[4] + " " + urlSplit[5] + " node addons",
             url:url,
             isAddon:true,
             types:{}
         };
-        testGithubNodeAddonsParser_window = window.open('', '', 'height=800,width=1070');
-        if (testGithubNodeAddonsParser_window == undefined) {RED.notify("could not open testGithubNodeAddonsParser_window<br>please try again", "warning", null, 4000); return;}
-        
-        var rawHtml = '<html>';
-        rawHtml += '<head><style>';
-        //rawHtml += 'tr {outline: thin solid;}';
-        rawHtml += 'td {border: 1px solid #000; padding:10px;}';
-        rawHtml += 'table {height:100%; width:100%}';
-        rawHtml += '.tableDiv {position:absolute; top:30px; bottom:10px; overflow:auto;}';
-        rawHtml += '#divDownloadTime {border: 2px solid #F00;}';
-        rawHtml += '</style></head>';
-        rawHtml += '<body><div id="divDownloadTime">downloading...</div>';
-        rawHtml += '<div class="tableDiv"><table id="filesTable">';
-        rawHtml += '</div></table></body></html>';
-        testGithubNodeAddonsParser_window.document.write(rawHtml);
-        testGithubNodeAddonsParser_window.document.close(); // necessary for IE >= 10
-        testGithubNodeAddonsParser_window.focus();
-        testGithubNodeAddonsParser_table = testGithubNodeAddonsParser_window.document.getElementById("filesTable");
-        
+        form = d3.select('#node-def-generator-dialog');
+        $( "#node-def-generator-dialog" ).dialog("option", "title", "Import - downloader");
+        $( "#node-def-generator-dialog" ).dialog("open");
+        form.html("");
+
+        form.append('div').attr('id', 'divDownloadTime').text("downloading...");
+        table = form.append('div').attr('class', 'tableDiv').append('table').attr('id', 'filesTable');
+
         RED.main.httpDownloadAsync(url, function(responseText) {
             var files = JSON.parse(responseText);
             var filesToDownload = [];
@@ -66,24 +76,28 @@ RED.NodeDefGenerator = (function() {
             }
             RED.main.httpDownloadAsyncFiles(filesToDownload, 
                 function(file) { // one file completed
+                    var row = table.append('tr');
+                    row.append('td').text(file.name);
+
                     if (file.contents != undefined) {
                         file = parseFile(file);
-                        var nodeRow = testGithubNodeAddonsParser_window.document.createElement("TR");
-                        //console.log(file.classes);
-                        nodeRow.innerHTML = ["<tr><td>", file.name, "</td><td>", JSON.stringify(file.classes, null, 4).split("\n").join("<br>").split(" ").join("&nbsp;"), "<br><br>unsorted GUI items:<br>", file.unsortedGUIitems, "</td></tr>"].join(" ");
-                        testGithubNodeAddonsParser_table.appendChild(nodeRow);
+                        var str = JSON.stringify(file.classes, null, 4) + "\n\nunsorted GUI items:\n"+ file.unsortedGUIitems;
+                        row.append('td').html( convertToHtml(str));
                     }
                     else {
-                        var nodeRow = testGithubNodeAddonsParser_window.document.createElement("TR");
-                        nodeRow.innerHTML = "<tr><td>" + file.name + "</td><td>[download failure]</td></tr>";
-                        testGithubNodeAddonsParser_table.appendChild(nodeRow);
+                        row.append('td').text("[download failure]");
                     }
                 },
                 function(files) { // all files completed
+                    
                     testGithubNodeAddonsParser_allFilesDownloadedAndParsed();
                 }
             );
         });
+    }
+
+    function convertToHtml(text) {
+        return text.split("\n").join("<br>").split(" ").join("&nbsp;")
     }
     
     function parseFile(file) {
@@ -193,15 +207,52 @@ RED.NodeDefGenerator = (function() {
         timeEnd = performance.now();
         var totalDownloadTime = Math.round(((timeEnd - timeStart) + Number.EPSILON) * 100) / 100
         var totalDownloadTimeStr = "download and parse all took: " + totalDownloadTime + " ms";
-        testGithubNodeAddonsParser_window.document.getElementById("divDownloadTime").innerHTML = totalDownloadTimeStr;
-        RED.nodes.registerTypes(nodeAddons, nodeAddons.label.split(" ").join("_"));
-        RED.main.download("NodeAddons.json", JSON.stringify(nodeAddons, null, 4));
+        document.getElementById("divDownloadTime").innerHTML = totalDownloadTimeStr;
+        EnableDialogOk();
     }
+
+    function DisableDialogOk() {
+        document.getElementById("btn-def-generator-dialog-ok").disabled = true;
+        $("#btn-def-generator-dialog-ok").addClass("unclickablebutton");
+    }
+    function EnableDialogOk() {
+        document.getElementById("btn-def-generator-dialog-ok").disabled = false;
+        $("#btn-def-generator-dialog-ok").removeClass("unclickablebutton");
+    }
+
+    $("#node-def-generator-dialog form" ).submit(function(e) { e.preventDefault();});
+	$( "#node-def-generator-dialog" ).dialog({
+		modal: true, autoOpen: false,// if modal set to true then its parent is gonna be disabled
+		width: 1070, height:800,
+		title: "node def generator",
+		buttons: [
+            {
+                id: "btn-def-generator-dialog-ok",
+				text: "Ok",
+				click: function() {
+                    if (dialogOk_cb != undefined) {
+                        if (dialogOk_cb())
+                            $( this ).dialog( "close" );
+                    }
+                    else
+                        $( this ).dialog( "close" );
+                }
+			},
+			{
+				text: "Cancel",
+				click: function() {	if (dialogCancel_cb != undefined) dialogCancel_cb(); $( this ).dialog( "close" ); }
+			}
+		],
+		open: function(e) { RED.keyboard.disable();	},
+		close: function(e) { RED.keyboard.enable(); }
+	});
 
     return {
         defSettings:defSettings,
         settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
+        GithubNodeAddonsParser:GithubNodeAddonsParser,
+        nodeAddons: function() { return nodeAddons;}
     };
 })();
