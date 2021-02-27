@@ -1382,10 +1382,11 @@ ul, .nodeDefGroupTree {
 
 .tableDiv {
     position:absolute;
-    top:30px;
-    bottom:10px;
+    top:50px;
+    bottom:0px;
     overflow:auto;
 }
 #divDownloadTime {
     border: 2px solid #F00;
+    padding: 10px;
 }

@@ -77,7 +77,7 @@ RED.NodeDefGenerator = (function() {
             RED.main.httpDownloadAsyncFiles(filesToDownload, 
                 function(file, currFileIndex, totalFileCount) { // one file completed
 
-                    document.getElementById("divDownloadTime").innerHTML = "downloading file " + currFileIndex + " of " + totalFileCount;
+                    document.getElementById("divDownloadTime").innerHTML = "downloading file " + (currFileIndex+1) + " of " + totalFileCount;
 
                     var row = table.append('tr');
                     row.append('td').text(file.name);
