@@ -141,26 +141,26 @@ RED.NodeDefManager = (function() {
     function BuildTree()
     {
         leftPanel.html("");
-        var nodeDefGroupTree = leftPanel.append('ul').attr('id', "nodeDefGroupTree");
+        var nodeDefGroupTree = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
         var defGroupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
         for (var i = 0; i < defGroupNames.length; i++) {
             var defGroupName = defGroupNames[i];
             var nodeDefGroup = nodeDefGroupTree.append('li');
-            nodeDefGroup.append('span').attr('class', 'caret2');
+            var caret = nodeDefGroup.append('span').attr('class', 'caret2');
+
             nodeDefGroup.append('span').attr('class', 'nodeDefItem').text(defGroupName).on("click", NodeDefGroupMouse_Click);
             var nodeDefGroupItems = nodeDefGroup.append('ul').attr('class', 'nested2');
+            
+            caret.on('click', function() {
+                this.parentElement.querySelector(".nested2").classList.toggle("active2");
+                this.classList.toggle("caret2-down");
+            });
+            
             var defCat = RED.nodes.node_defs[defGroupName];
             var defNames = Object.getOwnPropertyNames(defCat.types);
             for (var i2 = 0; i2 < defNames.length; i2++) {
                 nodeDefGroupItems.append('li').append('span').attr('class', 'nodeDefItem').attr('nodeDefGroupName', defGroupName).text(defNames[i2]).on("click", NodeDefMouse_Click);
             }
-        }
-        var toggler = document.getElementsByClassName("caret2");
-        for (var i = 0; i < toggler.length; i++) {
-            toggler[i].addEventListener("click", function() {
-                this.parentElement.querySelector(".nested2").classList.toggle("active2");
-                this.classList.toggle("caret2-down");
-            });
         }
     }
 

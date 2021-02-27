@@ -1313,12 +1313,12 @@
     padding-top: 5px;
 }
   /* Remove default bullets */
-ul, #nodeDefGroupTree {
+ul, .nodeDefGroupTree {
     list-style-type: none;
   }
   
   /* Remove margins and padding from the parent ul */
-  #nodeDefGroupTree {
+  .nodeDefGroupTree {
     margin: 0;
     padding: 0;
   }
@@ -1331,6 +1331,16 @@ ul, #nodeDefGroupTree {
   .nodeDefItem {
     cursor: pointer;
     user-select: none; /* Prevent text selection */
+  }
+
+  .isNotNodeDefItem {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+    color: #dd1616;
+  }
+  .unsortedGuiItems {
+    color: #dd1616;
+    padding: 6px;
   }
 
   .nodeDefItemSelected {

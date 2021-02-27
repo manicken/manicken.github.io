@@ -692,13 +692,13 @@ RED.main = (function() {
                 var file = filesToDownload[filesToDownload_index];
                 console.log("download completed file: " + file.url);
                 file.contents = contents;
-                if (filesToDownload_cbProcess != undefined) filesToDownload_cbProcess(file);
+                if (filesToDownload_cbProcess != undefined) filesToDownload_cbProcess(file, filesToDownload_index, filesToDownload.length);
                 filesToDownload_index++;
                 httpDownloadFilesTask();
             },
             function(error){
                 var file = filesToDownload[filesToDownload_index];
-                if (filesToDownload_cbProcess != undefined) filesToDownload_cbProcess(file);
+                if (filesToDownload_cbProcess != undefined) filesToDownload_cbProcess(file, filesToDownload_index, filesToDownload.length);
                 console.log("could not download: " + file.url);
                 filesToDownload_index++;
                 httpDownloadFilesTask();

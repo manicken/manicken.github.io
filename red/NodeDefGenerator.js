@@ -75,14 +75,40 @@ RED.NodeDefGenerator = (function() {
                 filesToDownload.push(file);
             }
             RED.main.httpDownloadAsyncFiles(filesToDownload, 
-                function(file) { // one file completed
+                function(file, currFileIndex, totalFileCount) { // one file completed
+
+                    document.getElementById("divDownloadTime").innerHTML = "downloading file " + currFileIndex + " of " + totalFileCount;
+
                     var row = table.append('tr');
                     row.append('td').text(file.name);
 
                     if (file.contents != undefined) {
                         file = parseFile(file);
-                        var str = JSON.stringify(file.classes, null, 4) + "\n\nunsorted GUI items:\n"+ file.unsortedGUIitems;
-                        row.append('td').html( convertToHtml(str));
+                        var tdContents = row.append('td');
+
+                        for (var ci = 0; ci < file.classes.length; ci++) {
+                            var nodeDefGroupTree = tdContents.append('ul').attr('class', "nodeDefGroupTree");//.html( convertToHtml(str));
+                            var nodeDefGroup = nodeDefGroupTree.append('li');
+                            var caret = nodeDefGroup.append('span').attr('class', 'caret2');
+
+                            if (file.classes[ci].description != undefined)
+                                nodeDefGroup.append('span').attr('class', 'isNotNodeDefItem').text(file.classes[ci].name);
+                            else
+                                nodeDefGroup.append('span').attr('class', 'nodeDefItem').text(file.classes[ci].name);
+                            
+                            var nodeDefGroupItems = nodeDefGroup.append('ul').attr('class', 'nested2');
+                            
+                            caret.on('click', function() {
+                                this.parentElement.querySelector(".nested2").classList.toggle("active2");
+                                this.classList.toggle("caret2-down");
+                            });
+
+                            var str = JSON.stringify(file.classes[ci], null, 4);
+                            nodeDefGroupItems.html(convertToHtml(str));
+                        }
+                        
+                        if (file.unsortedGUIitems.length != 0)
+                            tdContents.append('div').attr('class', 'unsortedGuiItems').text("<br>unsorted GUI items:" + file.unsortedGUIitems);
                     }
                     else {
                         row.append('td').text("[download failure]");
