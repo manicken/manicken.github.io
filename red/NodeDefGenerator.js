@@ -64,6 +64,10 @@ RED.NodeDefGenerator = (function() {
 
         form.append('div').attr('id', 'divDownloadTime').text("downloading...");
         table = form.append('div').attr('class', 'tableDiv').append('table').attr('id', 'filesTable');
+        var hrow = table.append('tr');
+        hrow.append('th').text("file name");
+        hrow.append('th').text("status");
+        hrow.append('th').text("contents");
 
         RED.main.httpDownloadAsync(url, function(responseText) {
             var files = JSON.parse(responseText);
@@ -79,23 +83,40 @@ RED.NodeDefGenerator = (function() {
 
                     document.getElementById("divDownloadTime").innerHTML = "downloading file " + (currFileIndex+1) + " of " + totalFileCount;
 
-                    var row = table.append('tr');
-                    row.append('td').text(file.name);
+                    //var row = table.append('tr');
+                   
 
                     if (file.contents != undefined) {
                         file = parseFile(file);
-                        var tdContents = row.append('td');
+
+                        
+                        
 
                         for (var ci = 0; ci < file.classes.length; ci++) {
+                            var row = table.append('tr');
+                            if (ci == 0) {
+                                row.append('td').attr('rowspan', file.classes.length).text(file.name);
+                            }
+
+                            var tdStatus = row.append('td');
+                            var tdContents = row.append('td');
+                            
+
                             var nodeDefGroupTree = tdContents.append('ul').attr('class', "nodeDefGroupTree");//.html( convertToHtml(str));
                             var nodeDefGroup = nodeDefGroupTree.append('li');
                             var caret = nodeDefGroup.append('span').attr('class', 'caret2');
 
-                            if (file.classes[ci].description != undefined)
+                            if (file.classes[ci].description != undefined) {
+                                tdStatus.text("is not node def");
                                 nodeDefGroup.append('span').attr('class', 'isNotNodeDefItem').text(file.classes[ci].name);
-                            else
+                            }
+                            else {
                                 nodeDefGroup.append('span').attr('class', 'nodeDefItem').text(file.classes[ci].name);
-                            
+                                if (RED.nodes.getType(file.classes[ci].name) == undefined)
+                                    tdStatus.text("OK");
+                                else
+                                    tdStatus.text("Allready exists");
+                            }
                             var nodeDefGroupItems = nodeDefGroup.append('ul').attr('class', 'nested2');
                             
                             caret.on('click', function() {
