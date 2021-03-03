@@ -149,8 +149,8 @@ RED.nodes = (function() {
 
         if (def.defaults == undefined) return; // discard this node def
 
-        def.defaults.color = {value:def.color};
-       // console.warn(def);
+        if (def.defaults.color == undefined) def.defaults.color = {};
+        if (def.defaults.color.value == undefined) def.defaults.color.value = def.color;
 
         if (def.inputTypes != undefined) {
             def.inputTypes = convertPortTypeRange(def.inputTypes);
@@ -499,7 +499,7 @@ RED.nodes = (function() {
 	/**
 	 * Converts a node to an exportable JSON Object
 	 **/
-	function convertNode(n, exportCreds) {
+	function convertNode(n) {
         
 		var node = {};
 		node.id = n.id;

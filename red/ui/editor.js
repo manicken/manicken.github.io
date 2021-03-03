@@ -34,232 +34,6 @@ RED.editor = (function() {
 	}
 
 	var editing_node = null;
-	// TODO: should IMPORT/EXPORT get their own dialogs?
-
-	var aceLangTools = ace.require("ace/ext/language_tools");
-	var lang = ace.require("../lib/lang");
-	var rootCompletions = [];
-	var classCompletions = []; // TODO: replace static typed @ AceAutoCompleteKeywords.js to fetch data from built in help @ index.html
-	var defaultCompleters = {};
-	
-	
-	completer= {
-		getCompletions: function(editor, session, pos, prefix, callback) {
-				callback(null, rootCompletions);
-			},
-		getDocTooltip: function(item) {
-			var caption = "";
-			if (item.type != undefined) caption = item.type;			
-			else if (item.name == undefined) caption = item.caption;
-			else caption = item.name;
-			item.docHTML = [
-				"<b>", caption, "</b>", "<hr></hr>",
-				item.html
-			].join("");
-			item.toolTipFixedWidth = "500px";
-		}
-	}
-	classCompleter= {
-		getCompletions: function(editor, session, pos, prefix, callback) {
-			callback(null, classCompletions);
-		},
-		getDocTooltip: function(item) {
-			var name = "";
-			if (item.name == undefined) name = item.caption;
-			else name = item.name;
-			item.docHTML = [
-				"<b>", name, "</b>", "<hr></hr>",
-				item.meta
-			].join("");
-			item.toolTipFixedWidth = "300px";
-		}
-	}
-	
-	aceLangTools.addCompleter(completer);
-
-	function initAceCodeEditor(node)
-	{
-		rootCompletions = RED.nodes.getWorkspaceNodesAsCompletions(node.z);
-			
-		classCompletions = AceAutoComplete.Extension;
-		//classCompletions = ; // clear array, this also works: completionsSub.splice(0,completionsSub.length);
-		//AceAutoCompleteKeywords.forEach(function(kw) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
-		//	classCompletions.push(kw);
-		//}); // this is only development test it could search help for functions
-		// of could have global function def list with typenames 
-		// this global def could be used by the help tab to make sure
-		// that there is only one text for each type
-
-		currentCompletions = rootCompletions; // default
-
-		var aceEditor = ace.edit("aceEditor");
-		
-		//aceEditor.completers = [completer];
-
-		var aceTheme = "ace/theme/" + settings.aceEditorTheme
-		console.log("setting ace editor theme to:" + aceTheme)
-		aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
-		//$(".ui-dialog").css('background-color', "#282a36"); 
-		//$(".ui-dialog").css('color', "#f8f8f2"); 
-		
-		aceEditor.setOptions({
-			enableBasicAutocompletion: true,
-            enableSnippets: true,
-            tabSize: RED.arduino.settings.CodeIndentations,
-			enableLiveAutocompletion: true,
-		});
-		
-		
-		if (node._def.useAceEditor == "javascript")
-		{
-			aceEditor.session.setMode("ace/mode/javascript", function() { console.log("ace mode changed to javascript");});
-			console.warn("ace editor in javascript mode");
-		}
-		else if (node._def.useAceEditor == "c_cpp")
-		{
-			aceEditor.session.setMode("ace/mode/c_cpp", function() { console.log("ace mode changed to c_cpp");});
-			init_aceEditor_c_cpp_mode(aceEditor);
-			console.warn("ace editor in c_cpp mode");
-		}
-
-		if (node.comment == undefined) node.comment = new String("");
-		aceEditor.setValue(node.comment);
-		aceEditor.session.selection.clearSelection();
-	}
-
-	function init_aceEditor_c_cpp_mode(aceEditor)
-	{
-		defaultCompleters = aceEditor.completers;
-		console.warn("aceEditor.completers:");
-				console.warn(aceEditor.completers);
-
-		aceEditor.commands.addCommand({
-			name: "dotCommand",
-			bindKey: { win: ".", mac: "." },
-			exec: function () {
-				var pos = aceEditor.selection.getCursor();
-				var session = aceEditor.session;
-				console.log(pos);
-				var curLine = (session.getDocument().getLine(pos.row)).trim();
-				var curTokens = curLine.slice(0, pos.column).split(/\s+/);
-				var curCmd = curTokens[0];
-				if (!curCmd) return;
-				var lastToken = curTokens[curTokens.length - 1];
-		
-				aceEditor.insert(".");            
-				lastToken = RED.nodes.getArrayDeclarationWithoutSizeSyntax(lastToken);
-				var split = lastToken.split(".");
-				console.error(split);
-				if (split.length > 1) lastToken = split[split.length-1];
-
-				// here it need also need to check the type
-				// to get correct function list
-				var tokenType = "";
-				for (var i = 0; i < rootCompletions.length; i++) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
-					var kw = rootCompletions[i];
-					if (kw.name == lastToken)
-					{
-						tokenType = kw.type;
-						break;
-					}
-					else
-					{
-						console.warn("kw.name:" + kw.name);
-					}
-				}
-				if (tokenType == "")
-				{
-					for (var i = 0; i < classCompletions.length; i++) { // AceAutoCompleteKeywords is in AceAutoCompleteKeywords.js
-						var kw = classCompletions[i];
-						if (kw.name == lastToken)
-						{
-							tokenType = kw.type;
-							break;
-						}
-						else
-						{
-							console.warn("kw.name:" + kw.name);
-						}
-					}
-				}
-				console.log("lastToken:" + lastToken + " @ " + tokenType);
-				defaultCompleters = aceEditor.completers; // save default
-				
-				var byToken = [];
-				var wsId = RED.nodes.isClass(tokenType);
-				if (wsId)
-				{
-					//byToken = RED.nodes.getAllFunctionNodeFunctions(wsId);
-					byToken = RED.nodes.getWorkspaceNodesAsCompletions(wsId);
-					// TODO: also make it fetch AudioObjects
-				}
-				else
-				{
-					// here we get data from html
-					byToken = AceAutoComplete.getFromHelp(tokenType);
-				}
-
-				if (byToken == undefined) return;
-
-				if (byToken.length != 0) // AceAutoComplete.ClassFunctions[tokenType] != null)
-				{
-					classCompletions = byToken;//AceAutoComplete.ClassFunctions[tokenType];
-				}
-				else
-				{
-					classCompletions = AceAutoComplete.Extension;
-				}
-
-				aceEditor.completers = [classCompleter]; // only show class objects
-
-				aceEditor.execCommand("startAutocomplete");
-				return lastToken;
-			}
-		});
-		aceEditor.commands.on("afterExec", function (e) {
-			//console.log("afterExec:" + e.command.name + ":" + e.args + ":" + e.returnValue);
-			if (e.command.name == "insertstring")
-			{
-				if (/^[\w.]$/.test(e.args)) {
-					//RED.console_ok("hello");
-					aceEditor.execCommand("startAutocomplete");
-				}
-				if (e.args.endsWith(";"))
-				{
-					//RED.console_ok("insertString ended");
-					aceEditor.completers = defaultCompleters; // reset to default
-				}
-				else if (e.args == "\n")
-				{
-					//console.log("newline");
-				}
-			}
-			else if (e.command.name == "backspace")
-			{
-				aceEditor.completers = defaultCompleters; // reset to default
-			}
-			else if (e.command.name == "Return")
-			{
-				aceEditor.completers = defaultCompleters; // reset to default
-			}
-			else if (e.command.name == "Esc")
-			{
-				aceEditor.completers = defaultCompleters; // reset to default
-			}
-			else if (e.command.name == "dotCommand")
-			{
-				// e.returnValue is the last token
-				//console.log(e.returnValue);
-				//console.trace("dotCommand trace");
-			}
-			//
-		});
-	}
-
-	function getCredentialsURL(nodeType, nodeID) {
-		var dashedType = nodeType.replace(/\s+/g, '-');
-		return  'credentials/' + dashedType + "/" + nodeID;
-	}
 
 	/**
 	 * Validate a node 
@@ -269,9 +43,9 @@ RED.editor = (function() {
 	function validateNode(node) {
 		var oldValue = node.valid;
 		node.valid = validateNodeProperties(node, node._def.defaults, node);
-		if (node._def._creds) {
+		/*if (node._def._creds) {
 			node.valid = node.valid && validateNodeProperties(node, node._def.credentials, node._def._creds);
-		}
+		}*/
 		if (oldValue != node.valid) {
 			node.dirty = true;
 		}
@@ -307,9 +81,7 @@ RED.editor = (function() {
 		if ("required" in definition[property] && definition[property].required) {
 			valid = value !== "";
 		}
-		/*if (valid && "validate" in definition[property]) {
-			valid = definition[property].validate.call(node,value);
-		}*/
+
 		if (valid && definition[property].type) { // RED.nodes.getType(definition[property].type) && !("validate" in definition[property])) {
 			if (definition[property].type == "int") {
                 var val = parseInt(value);
@@ -335,10 +107,12 @@ RED.editor = (function() {
 	}
     function isVarName(str,node) {
         if (typeof str !== 'string') {
+            RED.notify("is not a string: " + str, "warning", null, 4000);
             return false;
         }
     
-        if (str.trim() !== str) {
+        if (str.includes(' ') == true) {
+            RED.notify("cannot contain any spaces: >>>" + str + "<<<", "warning", null, 4000);
             return false;
         }
 
@@ -408,42 +182,6 @@ RED.editor = (function() {
 		var wasDirty = RED.view.dirty();
 		var d;
 
-		if (editing_node._def.oneditsave) {
-			console.warn("editing_node._def.oneditsave");
-			var oldValues = {};
-			for (d in editing_node._def.defaults) {
-				if (editing_node._def.defaults.hasOwnProperty(d)) {
-					if (typeof editing_node[d] === "string" || typeof editing_node[d] === "number") {
-						oldValues[d] = editing_node[d];
-					} else {
-						oldValues[d] = $.extend(true,{},{v:editing_node[d]}).v;
-					}
-				}
-			}
-			var rc = editing_node._def.oneditsave.call(editing_node);
-			if (rc === true) {
-				changed = true;
-			}
-
-			for (d in editing_node._def.defaults) {
-				if (editing_node._def.defaults.hasOwnProperty(d)) {
-					if (oldValues[d] === null || typeof oldValues[d] === "string" || typeof oldValues[d] === "number") {
-						if (oldValues[d] !== editing_node[d]) {
-                            changes[d] = oldValues[d];
-                            console.warn(d, "changed");
-							changed = true;
-						}
-					} else {
-						if (JSON.stringify(oldValues[d]) !== JSON.stringify(editing_node[d])) {
-                            changes[d] = oldValues[d];
-                            console.warn(d, "changed @ stringify");
-							changed = true;
-						}
-					}
-				}
-			}
-		}
-
 		if (editing_node._def.defaults) {
 			for (d in editing_node._def.defaults) {
 				if (editing_node._def.defaults.hasOwnProperty(d)) {
@@ -486,18 +224,6 @@ RED.editor = (function() {
 				}
 			}
 		}
-		if (editing_node._def.credentials) {
-			var prefix = 'node-input';
-			var credDefinition = editing_node._def.credentials;
-			var credsChanged = updateNodeCredentials(editing_node,credDefinition,prefix);
-			changed = changed || credsChanged;
-		}
-
-		/*if (editing_node.type == "UI_ListBox")
-		{
-			var items = editing_node.items.split("\n");
-        }*/
-        //if ()
 
 		var removedLinks = updateNodeProperties(editing_node);
 		if (changed != undefined && changed == true) {
@@ -515,9 +241,7 @@ RED.editor = (function() {
 			var editor = ace.edit("aceEditor");
 			editing_node.comment = editor.getValue();
 		}
-		
-		
-		
+
 		editing_node.bgColor = $("#node-input-color").val();
 		if (editing_node.type == "UI_ListBox")
 			editing_node.itemBGcolor = $("#node-input-itemBGcolor").val();
@@ -601,8 +325,8 @@ RED.editor = (function() {
 						$(this).dialog('option',"sizeCache-"+editing_node.type,ui.size);
 						//RED.console_ok("editor height:" + ui.size.height);
 						//RED.console_ok("editor this height:"+$(this).height())
-						var aceEditor = $("#aceEditor");
-						if (aceEditor != undefined)
+						var aceEditorExist = document.getElementById("aceEditor");
+                        if (aceEditorExist != null)
 						{
 							//console.log("editor window height:"+$(this).height());
 							$("#aceEditor").height($(this).height() - 120);
@@ -660,36 +384,6 @@ RED.editor = (function() {
 	}
 
 	/**
-	 * Create a config-node select box for this property
-	 * @param node - the node being edited
-	 * @param property - the name of the field
-	 * @param type - the type of the config-node
-	 */
-	/*function prepareConfigNodeSelect(node,property,type) {
-		var input = $("#node-input-"+property);
-		var node_def = RED.nodes.getType(type);
-
-		input.replaceWith('<select style="width: 60%;" id="node-input-'+property+'"></select>');
-		updateConfigNodeSelect(property,type,node[property]);
-		var select = $("#node-input-"+property);
-		select.after(' <a id="node-input-lookup-'+property+'" class="btn"><i class="icon icon-pencil"></i></a>');
-		$('#node-input-lookup-'+property).click(function(e) {
-			showEditConfigNodeDialog(property,type,select.find(":selected").val());
-			e.preventDefault();
-		});
-		var label = "";
-		var configNode = RED.nodes.node(node[property]);
-		if (configNode != undefined && node_def.label) {
-			if (typeof node_def.label == "function") {
-				label = node_def.label.call(configNode);
-			} else {
-				label = node_def.label;
-			}
-		}
-		input.val(label);
-	}*/
-
-	/**
 	 * Populate the editor dialog input field for this property
 	 * @param node - the node being edited
 	 * @param property - the name of the field
@@ -716,9 +410,9 @@ RED.editor = (function() {
 	 * @param property - the name of the field
 	 * @param prefix - the prefix to use in the input element ids (node-input|node-config-input)
 	 */
-	function attachPropertyChangeHandler(node,definition,property,prefix) {
+	function attachPropertyChangeHandler(node,property,prefix) {
 		$("#"+prefix+"-"+property).change(function() {
-			if (!validateNodeProperty(node, definition, property,this.value)) {
+			if (!validateNodeProperty(node, node._def.defaults , property,this.value)) {
 				$(this).addClass("input-error");
                 document.getElementById("btnEditorApply").disabled = true;
                 document.getElementById("btnEditorOk").disabled = true;
@@ -735,119 +429,25 @@ RED.editor = (function() {
 	}
 
 	/**
-	 * Assign the value to each credential field
-	 * @param node
-	 * @param credDef
-	 * @param credData
-	 * @param prefix
-	 */
-	function populateCredentialsInputs(node, credDef, credData, prefix) {
-		var cred;
-		for (cred in credDef) {
-			if (credDef.hasOwnProperty(cred)) {
-				if (credDef[cred].type == 'password') {
-					if (credData[cred]) {
-						$('#' + prefix + '-' + cred).val(credData[cred]);
-					} else if (credData['has_' + cred]) {
-						$('#' + prefix + '-' + cred).val('__PWRD__');
-					}
-					else {
-						$('#' + prefix + '-' + cred).val('');
-					}
-				} else {
-					preparePropertyEditor(credData, cred, prefix);
-				}
-				attachPropertyChangeHandler(node, credDef, cred, prefix);
-			}
-		}
-		for (cred in credDef) {
-			if (credDef.hasOwnProperty(cred)) {
-				$("#" + prefix + "-" + cred).change();
-			}
-		}
-	}
-	
-	/**
-	 * Update the node credentials from the edit form
-	 * @param node - the node containing the credentials
-	 * @param credDefinition - definition of the credentials
-	 * @param prefix - prefix of the input fields
-	 * @return {boolean} whether anything has changed
-	 */
-	function updateNodeCredentials(node, credDefinition, prefix) {
-		var changed = false;
-		if(!node.credentials) {
-			node.credentials = {_:{}};
-		}
-
-		for (var cred in credDefinition) {
-			if (credDefinition.hasOwnProperty(cred)) {
-				var input = $("#" + prefix + '-' + cred);
-				var value = input.val();
-				if (credDefinition[cred].type == 'password') {
-					node.credentials['has_' + cred] = (value !== "");
-					if (value == '__PWRD__') {
-						continue;
-					}
-					changed = true;
-					
-				}
-				if (value != node.credentials._[cred]) {
-					node.credentials[cred] = value;
-					changed = true;
-				}
-			}
-		}
-		return changed;
-	}
-
-	/**
 	 * Prepare all of the editor dialog fields
 	 * @param node - the node being edited
 	 * @param definition - the node definition
 	 * @param prefix - the prefix to use in the input element ids (node-input|node-config-input)
 	 */
-	function prepareEditDialog(node,definition,prefix) {
-		if (node._def.useAceEditor != undefined)
-		{ 
-			initAceCodeEditor(node);
+	function prepareEditDialog(node,prefix) {
+		if (node._def.useAceEditor != undefined) { 
+			RED.editor.ace.init(node);
 		}
 		
-		for (var d in definition.defaults) {
-			if (definition.defaults.hasOwnProperty(d)) {
-				/*if (definition.defaults[d].type) {
-					prepareConfigNodeSelect(node,d,definition.defaults[d].type);
-				} else {
-					*/preparePropertyEditor(node,d,prefix);
-				//}
-				attachPropertyChangeHandler(node,definition.defaults,d,prefix);
+		for (var d in node._def.defaults) {
+			if (node._def.defaults.hasOwnProperty(d)) {
+				preparePropertyEditor(node,d,prefix);
+				attachPropertyChangeHandler(node,d,prefix);
 			}
-		}
-		var completePrepare = function() {
-			if (definition.oneditprepare) {
-				definition.oneditprepare.call(node);
-			}
-			for (var d in definition.defaults) {
-				if (definition.defaults.hasOwnProperty(d)) {
-					$("#"+prefix+"-"+d).change();
-				}
-			}
-		};
-		
-		if (definition.credentials) {
-			if (node.credentials) {
-				populateCredentialsInputs(node, definition.credentials, node.credentials, prefix);
-				completePrepare();
-			} else {
-				$.getJSON(getCredentialsURL(node.type, node.id), function (data) {
-					node.credentials = data;
-					node.credentials._ = $.extend(true,{},data);
-					populateCredentialsInputs(node, definition.credentials, node.credentials, prefix);
-					completePrepare();
-				});
-			}
-		} else {
-			completePrepare();
+            else
+            {
+                console.warn("have no own property:" + d);
+            }
 		}
 	}
 
@@ -871,34 +471,62 @@ RED.editor = (function() {
 			};
 		}
 		RED.view.state(RED.state.EDITING);
-		//$("#dialog-form").html(RED.view.getForm(node.type));
-		//console.log("get form for type:" + node.type);
-		var editorType = "";
-		
-		//console.log("showEditDialog"); // just to make it easier to find this function
-		
-		// Jannik add start
-		// (this method is better because then we can define special edit for some types)
-		// but we don't need to define for each new type we add, all those new types use
-		// global edit by default
-		var ifHaveOwnEditor = $("script[data-template-name|='" + node.type + "']");
-		//console.warn("ifHaveOwnEditor:" + Object.getOwnPropertyNames(ifHaveOwnEditor.length)); // see properties of object
-		//console.warn("ifHaveOwnEditor:" + ifHaveOwnEditor.length);
-		if (ifHaveOwnEditor.length != 0) 
-		{	editorType = node.type; console.log("use type editor:" + editorType);}
-		else
-		{	editorType = "NodesGlobalEdit"; console.log("use global editor");}
-		// Jannik add end
 
 		editing_node = node;
 		
-		//RED.view.getForm("dialog-form", node.type, function (d, f) {// Jannik remove
-		RED.view.getForm("dialog-form", editorType, function (d, f) { // Jannik add (because see above)
-			//console.log("node._def " + node._def.defaults);
-			prepareEditDialog(node,node._def,"node-input");
-			$( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
-		});
+
+        if (node._def.editor != undefined && node._def.editor === "autogen") {
+            // autogenerate editor-form from node._def.defaults
+            // this makes it easier when having arbitrary inputs/outputs or other special cases
+            // usually only used for node def. addons (as no space consuming html is needed)
+            var data = "";
+            for (var d in node._def.defaults) {
+                if (!node._def.defaults.hasOwnProperty(d)) continue;
+                var propEditor = node._def.defaults[d].editor;
+                if (propEditor == undefined) continue; // edit disabled
+                data += GetEditorLine_Input(propEditor, d);
+            }
+            var form = $("#dialog-form");
+			$(form).html(data);
+            prepareEditDialog(node, "node-input");
+            $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
+        }
+        else // use advanced raw-html custom editors
+        {
+            var editorType = "";
+            // first check if have own editor
+            var ifHaveOwnEditor = $("script[data-template-name|='" + node.type + "']");
+            if (ifHaveOwnEditor.length != 0) 
+            {	editorType = node.type; console.log("use type editor:" + editorType);}
+            else // use global editor
+            {	editorType = "NodesGlobalEdit"; console.log("use global editor");}
+            
+            RED.view.getForm("dialog-form", editorType, function (d, f) {
+                prepareEditDialog(node, "node-input");
+                $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
+            });
+        }
 	}
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+
+    function GetEditorLine_Input(editor, propName) {
+        var type=(editor.type!=undefined)?editor.type:"text";
+        var rowClass=(editor.rowClass!=undefined)?editor.rowClass:"form-row";
+        var label=(editor.label!=undefined)?editor.label:capitalizeFirstLetter(propName);
+
+        var html = '<div class="'+rowClass+'">\n';
+        html += '<label for="node-input-'+propName+'"><i class="fa fa-tag"></i> '+label+'</label>\n';
+        if (type == 'text')
+            html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off">\n';
+        else if (type == 'color')
+            html += '<a class="node-input-color-group-bg"><input id="node-input-'+propName+'" data-jscolor=""></a>\n';
+
+        
+        html += '</div>\n'
+        return html;
+    }
 
 	return {
         defSettings:defSettings,
