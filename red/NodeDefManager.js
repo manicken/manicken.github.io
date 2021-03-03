@@ -275,6 +275,20 @@ RED.NodeDefManager = (function() {
         }
         //console.log(id, text);
     }
+    function verifyNewNodeDefJson() {
+        var id = "aceEditor3";
+        var text = ace.edit("aceEditor3").getValue();
+        try {
+            JSON.parse(text);
+            $("#"+id).removeClass("input-error");
+            return true;
+        } catch (ex) {
+            RED.notify(ex, "warn", null, 4000);
+            $("#"+id).addClass("input-error");
+            return false;
+        }
+        //console.log(id, text);
+    }
 
     function addGroup() {
         newItemUid = "";
@@ -645,9 +659,9 @@ RED.NodeDefManager = (function() {
 			}
 		],
         resize: function(e,ui) {
-            resizeAceJsonEditor(this);
+            resizeAceJsonEditor("aceEditor2", this, 40);
         },
-		open: function(e) { RED.keyboard.disable(); resizeAceJsonEditor(this);},
+		open: function(e) { RED.keyboard.disable(); resizeAceJsonEditor("aceEditor2", this, 40);},
 		close: function(e) { RED.keyboard.enable();	}
 	});
     $("#node-def-manager-new-item-dialog form" ).submit(function(e) { e.preventDefault();});
@@ -676,17 +690,20 @@ RED.NodeDefManager = (function() {
 				click: function() {	$( this ).dialog( "close" ); }
 			}
 		],
-		open: function(e) { RED.keyboard.disable();	},
+        resize: function(e,ui) {
+            resizeAceJsonEditor("aceEditor3", this, 85);
+        },
+		open: function(e) { RED.keyboard.disable();	 resizeAceJsonEditor("aceEditor3", this, 85);},
 		close: function(e) { RED.keyboard.enable(); }
 	});
 
-    function resizeAceJsonEditor(thisRef)
+    function resizeAceJsonEditor(aceEditId, thisRef, heightAdj)
     {
-        var aceEditorExist = document.getElementById("aceEditor2");
+        var aceEditorExist = document.getElementById(aceEditId);
         if (aceEditorExist != null)
         {
-            $("#aceEditor2").height($(thisRef).height() - 40 );
-            var aceEditor = ace.edit("aceEditor2");
+            $("#"+aceEditId).height($(thisRef).height() - heightAdj );
+            var aceEditor = ace.edit(aceEditId);
             aceEditor.resize(true);
             $(thisRef).scrollTop(aceEditor.scrollHeight);
         }
@@ -759,9 +776,24 @@ RED.NodeDefManager = (function() {
         //var group2 = container.append('div').attr('class','form-row-ndm');
         if (type == "bool")
             var input = group.append('input').attr('type','checkbox').attr('id', uid).attr('checked',value == true?'checked':undefined);
-        else if (type == "multiline")
-            var input = group.append('textarea').attr('type', 'text').attr('id', uid).attr('wrap', 'off').attr('rows', 14).attr('style', 'width: 95%; height: 95%').text(value);
-        else
+        else if (type == "multiline") {
+            var input = group.append('pre').attr('id', 'aceEditor3').attr('style', "height: 400px;");
+            //var input = group.append('textarea').attr('type', 'text').attr('id', uid).attr('wrap', 'off').attr('rows', 14).attr('style', 'width: 95%; height: 95%').text(value);
+            var aceEditor = ace.edit("aceEditor3");
+            var aceTheme = "ace/theme/" + settings.aceEditorTheme
+            aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
+            
+            aceEditor.setOptions({
+                enableBasicAutocompletion: true,
+                enableSnippets: true,
+                tabSize: RED.arduino.settings.CodeIndentations,
+                enableLiveAutocompletion: true,
+            });
+            aceEditor.session.setMode("ace/mode/json", function() { console.log("ace mode changed to json");});
+            ace.edit("aceEditor3").setValue(value);
+		    ace.edit("aceEditor3").session.selection.clearSelection();
+        }
+         else
             var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value).attr('autocomplete', (autocomplete != undefined)?autocomplete:'off');
         
         RED.main.SetPopOver(input[0], tooltip, "right");
@@ -771,6 +803,10 @@ RED.NodeDefManager = (function() {
         } else {
             if (type == "bool")
                 input.on('change', function() {cb($("#" + uid).prop('checked'),propertyName); } );
+            else if (type == "multiline")
+            {
+                input.on('change', function() {cb(ace.edit("aceEditor3").getValue(),propertyName); } );
+            }
             else
                 input.on('change', function() {cb($("#" + uid).val(),propertyName); } );
         }
