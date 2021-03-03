@@ -5194,7 +5194,7 @@ RED.view = (function() {
             } else {
                 var node = RED.nodes.node(id) /*|| RED.nodes.group(id)*/;
                 if (node) {
-                    if (node.z && (node.type === "group" || node._def.category !== 'config')) {
+                    if (node.z && (node.type === "group")) {
                         //if (activeWorkspace)
                         workspace_tabs.activateTab(node.z);
                         node.dirty = true;
@@ -5236,8 +5236,6 @@ RED.view = (function() {
                                 flashFunc();
                             }
                         }
-                    } else if (node._def.category === 'config') {
-                        RED.sidebar.config.show(id);
                     }
                 }
             }

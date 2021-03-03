@@ -653,7 +653,7 @@ RED.editor = (function() {
 						RED.view.resetMouseVars();
 						console.log("edit node done!");
 					}
-					RED.sidebar.config.refresh();
+					//RED.sidebar.config.refresh();
 					editing_node = null;
 				}
 		});
@@ -665,7 +665,7 @@ RED.editor = (function() {
 	 * @param property - the name of the field
 	 * @param type - the type of the config-node
 	 */
-	function prepareConfigNodeSelect(node,property,type) {
+	/*function prepareConfigNodeSelect(node,property,type) {
 		var input = $("#node-input-"+property);
 		var node_def = RED.nodes.getType(type);
 
@@ -687,7 +687,7 @@ RED.editor = (function() {
 			}
 		}
 		input.val(label);
-	}
+	}*/
 
 	/**
 	 * Populate the editor dialog input field for this property
@@ -900,193 +900,6 @@ RED.editor = (function() {
 		});
 	}
 
-	function showEditConfigNodeDialog(name,type,id) {
-		var adding = (id == "_ADD_");
-		var node_def = RED.nodes.getType(type);
-
-		var configNode = RED.nodes.node(id);
-		if (configNode == null) {
-			configNode = {
-				id: (1+Math.random()*4294967295).toString(16),
-				_def: node_def,
-				type: type
-			};
-			for (var d in node_def.defaults) {
-				if (node_def.defaults[d].value) {
-					configNode[d] = node_def.defaults[d].value;
-				}
-			}
-		}
-
-		//$("#dialog-config-form").html(RED.view.getForm(type));
-		RED.view.getForm("dialog-config-form", type, function (d, f) {
-
-		prepareEditDialog(configNode,node_def,"node-config-input");
-
-		var buttons = $( "#node-config-dialog" ).dialog("option","buttons");
-		if (adding) {
-			if (buttons.length == 3) {
-				buttons = buttons.splice(1);
-			}
-			buttons[0].text = "Add";
-			$("#node-config-dialog-user-count").html("").hide();
-		} else {
-			if (buttons.length == 2) {
-				buttons.unshift({
-						class: 'leftButton',
-						text: "Delete",
-						click: function() {
-							var configProperty = $(this).dialog('option','node-property');
-							var configId = $(this).dialog('option','node-id');
-							var configType = $(this).dialog('option','node-type');
-							var configNode = RED.nodes.node(configId);
-							var configTypeDef = RED.nodes.getType(configType);
-
-							if (configTypeDef.ondelete) {
-								configTypeDef.ondelete.call(RED.nodes.node(configId));
-							}
-							RED.nodes.remove(configId);
-							for (var i=0;i<configNode.users.length;i++) {
-								var user = configNode.users[i];
-								for (var d in user._def.defaults) {
-									if (user._def.defaults.hasOwnProperty(d) && user[d] == configId) {
-										user[d] = "";
-									}
-								}
-								validateNode(user);
-							}
-							updateConfigNodeSelect(configProperty,configType,"");
-							RED.view.dirty(true);
-							$( this ).dialog( "close" );
-							RED.view.redraw();
-						}
-				});
-			}
-			buttons[1].text = "Update";
-			$("#node-config-dialog-user-count").html(configNode.users.length+" node"+(configNode.users.length==1?" uses":"s use")+" this config").show();
-		}
-		$( "#node-config-dialog" ).dialog("option","buttons",buttons);
-
-		$( "#node-config-dialog" )
-			.dialog("option","node-adding",adding)
-			.dialog("option","node-property",name)
-			.dialog("option","node-id",configNode.id)
-			.dialog("option","node-type",type)
-			.dialog("option","title",(adding?"Add new ":"Edit ")+type+" config node")
-			.dialog( "open" );
-		});
-	}
-
-	function updateConfigNodeSelect(name,type,value) {
-		var select = $("#node-input-"+name);
-		var node_def = RED.nodes.getType(type);
-		select.children().remove();
-		RED.nodes.eachConfig(function(config) {
-			if (config.type == type) {
-				var label = "";
-				if (typeof node_def.label == "function") {
-					label = node_def.label.call(config);
-				} else {
-					label = node_def.label;
-				}
-				select.append('<option value="'+config.id+'"'+(value==config.id?" selected":"")+'>'+label+'</option>');
-			}
-		});
-
-		select.append('<option value="_ADD_"'+(value===""?" selected":"")+'>Add new '+type+'...</option>');
-		window.setTimeout(function() { select.change();},50);
-	}
-
-	$( "#node-config-dialog" ).dialog({
-			modal: true,
-			autoOpen: false,
-			width: 500,
-			closeOnEscape: false,
-			buttons: [
-				{
-					text: "Ok",
-					click: function() {
-						var configProperty = $(this).dialog('option','node-property');
-						var configId = $(this).dialog('option','node-id');
-						var configType = $(this).dialog('option','node-type');
-						var configAdding = $(this).dialog('option','node-adding');
-						var configTypeDef = RED.nodes.getType(configType);
-						var configNode;
-						var d;
-						
-						if (configAdding) {
-							configNode = {type:configType,id:configId,users:[]};
-							for (d in configTypeDef.defaults) {
-								if (configTypeDef.defaults.hasOwnProperty(d)) {
-									configNode[d] = $("#node-config-input-"+d).val();
-								}
-							}
-							configNode.label = configTypeDef.label;
-							configNode._def = configTypeDef;
-							RED.nodes.add(configNode);
-							updateConfigNodeSelect(configProperty,configType,configNode.id);
-						} else {
-							configNode = RED.nodes.node(configId);
-							for (d in configTypeDef.defaults) {
-								if (configTypeDef.defaults.hasOwnProperty(d)) {
-									configNode[d] = $("#node-config-input-"+d).val();
-								}
-							}
-							updateConfigNodeSelect(configProperty,configType,configId);
-						}
-						if (configTypeDef.credentials) {
-							updateNodeCredentials(configNode,configTypeDef.credentials,"node-config-input");
-						}
-						if (configTypeDef.oneditsave) {
-							configTypeDef.oneditsave.call(RED.nodes.node(configId));
-						}
-						validateNode(configNode);
-
-						RED.view.dirty(true);
-						$(this).dialog("close");
-
-					}
-				},
-				{
-					text: "Cancel",
-					click: function() {
-						var configType = $(this).dialog('option','node-type');
-						var configId = $(this).dialog('option','node-id');
-						var configAdding = $(this).dialog('option','node-adding');
-						var configTypeDef = RED.nodes.getType(configType);
-
-						if (configTypeDef.oneditcancel) {
-							// TODO: what to pass as this to call
-							if (configTypeDef.oneditcancel) {
-								var cn = RED.nodes.node(configId);
-								if (cn) {
-									configTypeDef.oneditcancel.call(cn,false);
-								} else {
-									configTypeDef.oneditcancel.call({id:configId},true);
-								}
-							}
-						}
-						$( this ).dialog( "close" );
-					}
-				}
-			],
-			resize: function(e,ui) {
-			},
-			open: function(e) {
-				if (RED.view.state() != RED.state.EDITING) {
-					RED.keyboard.disable();
-				}
-			},
-			close: function(e) {
-				$("#dialog-config-form").html("");
-				if (RED.view.state() != RED.state.EDITING) {
-					RED.keyboard.enable();
-				}
-				RED.sidebar.config.refresh();
-			}
-	});
-
-
 	return {
         defSettings:defSettings,
 		settings:settings,
@@ -1095,7 +908,7 @@ RED.editor = (function() {
         
 		init_edit_dialog:init_edit_dialog,
 		edit: showEditDialog,
-		editConfig: showEditConfigNodeDialog,
+		//editConfig: showEditConfigNodeDialog,
 		validateNode: validateNode,
 		updateNodeProperties: updateNodeProperties, // TODO: only exposed for edit-undo
 		editing_node:editing_node

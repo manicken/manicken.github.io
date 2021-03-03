@@ -208,6 +208,7 @@ RED.NodeDefGenerator = (function() {
                         //inputTypes:{"n":"f32"},
                         //outputTypes:{"n":"f32"},
                         category:category,
+                        sourceFile:file.name,
                         color: "#E6E0F8" ,icon:"arrow-in.png"
                     };
                     nodeAddons.types[className] = currClass.guiDefs;

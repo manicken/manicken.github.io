@@ -26,23 +26,13 @@ RED.projectStructure = (function() {
         })
         treeList.on('treelistselect', function(e, item) {
             var node = RED.nodes.node(item.id);// || RED.nodes.group(item.id);
-            if (node != undefined) {
-                if (node.type === 'group' || node._def.category !== "config") {
-                    //console.log("selected ", node);
-                    //RED.view.select({ nodes: [node] })
-                } else {
-                    //RED.view.select({ nodes: [] })
-                }
-            }
+            if (node == undefined)  return;
+
         })
         treeList.on('treelistconfirm', function(e, item) {
             var node = RED.nodes.node(item.id);
             if (node) {
-                if (node._def.category === "config") {
-                    RED.editor.editConfig("", node.type, node.id);
-                } else {
-                    RED.editor.edit(node);
-                }
+                RED.editor.edit(node);
             }
         })
 
@@ -204,7 +194,7 @@ RED.projectStructure = (function() {
         var parent = n.parentGroup||n.z||"__global__";
         //console.warn("onNodeAdd parent:", parent, "child:" + n.name);
 
-        if (n._def.category !== "config" || n.type === 'group' || n.type === "UI_ScriptButton") {
+        if (n.type === 'group' || n.type === "UI_ScriptButton") {
             if (objects[parent]) {
                 if (empties[parent]) {
                     empties[parent].treeList.remove();
@@ -285,11 +275,7 @@ RED.projectStructure = (function() {
                         parentItem.children.addChild(getEmptyItem(parentItem.id));
                 }
             }
-            if (n._def.category === 'config' && n.type !== 'group' && n.type !== "UI_ScriptButton") {
-                // This must be a config node that has been rescoped
-                //createFlowConfigNode(parent,n.type);
-                //configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
-            } else {
+            if (n.type === 'group' || n.type === "UI_ScriptButton") {
                 // This is a node that has moved groups
                 if (empties[parent]) {
                     empties[parent].treeList.remove();
@@ -299,32 +285,9 @@ RED.projectStructure = (function() {
                 if (objects[parent] != undefined)
                 objects[parent].treeList.addChild(existingObject)
             }
-
-            // if (parent === "__global__") {
-            //     // Global always exists here
-            //     if (!configNodeTypes[parent][n.type]) {
-            //         configNodeTypes[parent][n.type] = {
-            //             config: true,
-            //             label: n.type,
-            //             children: []
-            //         }
-            //         globalConfigNodes.treeList.addChild(configNodeTypes[parent][n.type])
-            //     }
-            //     configNodeTypes[parent][n.type].treeList.addChild(existingObject);
-            // } else {
-            //     if (empties[parent]) {
-            //         empties[parent].treeList.remove();
-            //         delete empties[parent];
-            //     }
-            //     objects[parent].treeList.addChild(existingObject)
-            // }
         }
         existingObject.element.toggleClass("red-ui-info-outline-item-disabled", !!n.d)
-
-        if (n._def.category === "config" && n.type !== 'group' &&  n.type !== "UI_ScriptButton") {
-            existingObject.element.find(".red-ui-info-outline-item-control-users").text(n.users.length);
-        }
-
+        
         //updateSearch();
     }
     function onObjectRemove(n) {
@@ -407,16 +370,8 @@ RED.projectStructure = (function() {
     }
     function addControls(n,div) {
         var controls = $('<div>',{class:"red-ui-info-outline-item-controls red-ui-info-outline-item-hover-controls"}).appendTo(div);
-
-        if (n._def != undefined && n._def.category === "config" && n.type !== "group" && n.type !== "UI_ScriptButton") {
-            var userCountBadge = $('<button type="button" class="red-ui-info-outline-item-control-users red-ui-button red-ui-button-small"><i class="fa fa-toggle-right"></i></button>').text(n.users.length).appendTo(controls).on("click",function(evt) {
-                evt.preventDefault();
-                evt.stopPropagation();
-                RED.search.show("uses:"+n.id);
-            })
-            RED.popover.tooltip(userCountBadge,function() { return RED._('editor.nodesUse',{count:n.users.length})});
-        }
-
+        
+        /*
         if (n._def != undefined && n._def.button) {
             var triggerButton = $('<button type="button" class="red-ui-info-outline-item-control-action red-ui-button red-ui-button-small"><i class="fa fa-toggle-right"></i></button>').appendTo(controls).on("click",function(evt) {
                 evt.preventDefault();
@@ -424,7 +379,7 @@ RED.projectStructure = (function() {
                 RED.view.clickNodeButton(n);
             })
             RED.popover.tooltip(triggerButton,RED._("sidebar.info.triggerAction"));
-        }
+        }*/
         // $('<button type="button" class="red-ui-info-outline-item-control-reveal red-ui-button red-ui-button-small"><i class="fa fa-eye"></i></button>').appendTo(controls).on("click",function(evt) {
         //     evt.preventDefault();
         //     evt.stopPropagation();

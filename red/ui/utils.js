@@ -867,8 +867,6 @@ RED.utils = (function() {
             return "font-awesome/fa-object-ungroup";
         } else if (node && node.type === 'group') {
             return "font-awesome/fa-object-group"
-        } else if (def.category === 'config') {
-            return RED.settings.apiRootUrl+"icons/node-red/cog.svg"
         } else if (node && node.type === 'tab') {
             return "red-ui-icons/red-ui-icons-flow"
             // return RED.settings.apiRootUrl+"images/subflow_tab.svg"

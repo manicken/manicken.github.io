@@ -315,8 +315,7 @@ RED.nodes = (function() {
 			if (!n.inputs)
 				n.inputs = n._def.inputs;
 		}
-        if (n._def.category == "config") return; // config nodes is not used in this GUI but kept here as failsafe
-		
+        		
         n.dirty = true;
         if (index == undefined)
             nodes.push(n);
@@ -367,47 +366,24 @@ RED.nodes = (function() {
 
 	function removeNode(id) {
 		var removedLinks = [];
-		/*if (id in configNodes) {
-			delete configNodes[id];
-			RED.sidebar.config.refresh();
-		} else {*/
-            var node = getNode(id);
-            RED.events.emit('nodes:remove',node);
-			if (!node) return removedLinks; // cannot continue if node don't exists
+		
+        var node = getNode(id);
+        RED.events.emit('nodes:remove',node);
+        if (!node) return removedLinks; // cannot continue if node don't exists
 
-			if (node.type == "TabInput" || node.type == "TabOutput")
-			{
-				//TODO: do the removal of external connected wires
-				console.warn("TODO: do the removal of external connected wires");
-				var wsLabel = getWorkspaceLabel(RED.view.getWorkspace());
-				RED.console_ok("workspace label:" + wsLabel);
-				refreshClassNodes();
-			}
-			nodes.splice(nodes.indexOf(node),1);
-			removedLinks = links.filter(function(l) { return (l.source === node) || (l.target === node); });
-			removedLinks.map(function(l) {links.splice(links.indexOf(l), 1); });
+        if (node.type == "TabInput" || node.type == "TabOutput")
+        {
+            //TODO: do the removal of external connected wires
+            console.warn("TODO: do the removal of external connected wires");
+            var wsLabel = getWorkspaceLabel(RED.view.getWorkspace());
+            RED.console_ok("workspace label:" + wsLabel);
+            refreshClassNodes();
+        }
+        nodes.splice(nodes.indexOf(node),1);
+        removedLinks = links.filter(function(l) { return (l.source === node) || (l.target === node); });
+        removedLinks.map(function(l) {links.splice(links.indexOf(l), 1); });
 			
-			/*var updatedConfigNode = false;
-			for (var d in node._def.defaults) {
-				if (node._def.defaults.hasOwnProperty(d)) {
-					var property = node._def.defaults[d];
-					if (property.type) {
-						var type = getType(property.type);
-						if (type && type.category == "config") {
-							var configNode = configNodes[node[d]];
-							if (configNode) {
-								updatedConfigNode = true;
-								var users = configNode.users;
-								users.splice(users.indexOf(node),1);
-							}
-						}
-					}
-				}
-			}
-			if (updatedConfigNode) {
-				RED.sidebar.config.refresh();
-			}*/
-		//}
+			
 		return removedLinks;
 	}
 
@@ -524,8 +500,7 @@ RED.nodes = (function() {
 	 * Converts a node to an exportable JSON Object
 	 **/
 	function convertNode(n, exportCreds) {
-        //if (n._def.category == "config") return null;
-		//exportCreds = exportCreds || false;
+        
 		var node = {};
 		node.id = n.id;
 		node.type = n.type;
@@ -542,39 +517,28 @@ RED.nodes = (function() {
 		{
 			node.parentGroup = n.parentGroup.id;
 		}
-		/*if(exportCreds && n.credentials) {
-			node.credentials = {};
-			for (var cred in n._def.credentials) {
-				if (n._def.credentials.hasOwnProperty(cred)) {
-					if (n.credentials[cred] != null) {
-						node.credentials[cred] = n.credentials[cred];
-					}
-				}
-			}
-		}*/
-		//if (n._def.category != "config") {
-			node.x = n.x;
-			node.y = n.y;
-			node.z = n.z;
-			node.bgColor = n.bgColor;
-			node.wires = [];
-			for(var i=0;i<n.outputs;i++) {
-				node.wires.push([]);
-			}
-			var wires = links.filter(function(d){return d.source === n;});
-			for (var j=0;j<wires.length;j++) {
-				var w = wires[j];
-				try{
-				node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
-				}
-				catch (e)
-				{
-					// when a TabInput/TabOutput is removed and that pin is connected to parent flow
-
-				}
-			}
-		//}
 		
+        node.x = n.x;
+        node.y = n.y;
+        node.z = n.z;
+        node.bgColor = n.bgColor;
+        node.wires = [];
+        for(var i=0;i<n.outputs;i++) {
+            node.wires.push([]);
+        }
+        var wires = links.filter(function(d){return d.source === n;});
+        for (var j=0;j<wires.length;j++) {
+            var w = wires[j];
+            try{
+            node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
+            }
+            catch (e)
+            {
+                // when a TabInput/TabOutput is removed and that pin is connected to parent flow
+
+            }
+        }
+
 		//console.warn("convert node: " + n.name);
 		//console.warn("from:" + Object.getOwnPropertyNames(n._def));
 		//console.warn("to:" + Object.getOwnPropertyNames(node));
@@ -920,9 +884,7 @@ RED.nodes = (function() {
 
         for (i=0;i<newNodes.length;i++) {
             n = newNodes[i];
-            
-            // not TODO: remove workspace in next release+1 (Node-Red team comment)
-            
+
             // theese two are for backward compatibility
             if (n.type === "workspace" || n.type === "tab") continue;
             else if (n.type === "settings") continue
@@ -931,19 +893,7 @@ RED.nodes = (function() {
             //console.warn(n);
 
             var def = getType(n.type);
-            if (def && def.category == "config") {
-                if (!RED.nodes.node(n.id)) {
-                    var configNode = {id:n.id,type:n.type,users:[]};
-                    for (var d in def.defaults) {
-                        if (def.defaults.hasOwnProperty(d)) {
-                            configNode[d] = n[d];
-                        }
-                    }
-                    configNode.label = def.label;
-                    configNode._def = def;
-                    RED.nodes.add(configNode);
-                }
-            } else if (def != undefined) {
+            if (def != undefined) {
                 if (def.uiObject == undefined)
                     var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
                 else

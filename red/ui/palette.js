@@ -79,10 +79,6 @@ RED.palette = (function() {
         categoryHeaderShowAsRainBowAlt: {label:"Header BG color rainbow Alternative", type:"boolean", popupText:"when checked the above bgColor defines the min values used,<br>and the following luminence defines the max values."},
         categoryHeaderShowAsRainBowMinVal: {label:"Header BG color rainbow min/max luminence", type:"number", popupText:"when alt mode is inactive the following is used:<br>Header BG color rainbow min luminence value calculated by the following formula<br>(adjLuminance is this value)<br><br>if (adjLuminance != undefined && color_R_A < parseInt(adjLuminance))<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A + parseInt(colorB.substring(1,3), 16);<br>else<br>&nbsp;&nbsp;&nbsp;&nbsp;var color_R = color_R_A; <br><br>when alt mode in active this defines the max color values." },
     };
-    
-    var exclusion = ['config','unknown','deprecated'];
-
-    
 
 	function setCategoryHeaderStyle() // this is to make above "setter" cleaner
 	{
