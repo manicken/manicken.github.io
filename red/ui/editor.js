@@ -30,7 +30,7 @@ RED.editor = (function() {
 	var settingsCategory = { label:"Code Editor", expanded:false, bgColor:"#DDD"};
 
 	var settingsEditor = {
-		aceEditorTheme:         { label:"Ace Theme", type:"combobox", actionOnChange:true, options:["ambiance","chaos","chrome","clouds","clouds_midnight","cobalt","crimson_editor","dawn","dracula","dreamweaver","eclipse","github","gob","gruvbox","idle_fingers","iplastic","katzenmilch","kr_theme","kuroir","merbivore","merbivore_soft","mono_industrial","monokai","nord_dark","pastel_on_dark","solarized_dark","solarized_light","sqlserver","terminal","textmate","tomorrow","tomorrow_night","tomorrow_night_blue","tomorrow_night_bright","tomorrow_night_eighties","twilight","vibrant_ink","xcode"]},
+		aceEditorTheme:         { label:"Ace Theme", type:"combobox", actionOnChange:true, valIsText:true, options:aceThemeList},
 	}
 
 	var editing_node = null;
@@ -482,6 +482,7 @@ RED.editor = (function() {
             var data = "";
             for (var d in node._def.defaults) {
                 if (!node._def.defaults.hasOwnProperty(d)) continue;
+
                 var propEditor = node._def.defaults[d].editor;
                 if (propEditor == undefined) continue; // edit disabled
                 data += GetEditorLine_Input(propEditor, d);

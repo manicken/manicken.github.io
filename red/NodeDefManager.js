@@ -70,15 +70,20 @@ RED.NodeDefManager = (function() {
     var treeList;
 
     var defSettings = {
+        aceEditorTheme: "theme-chrome",
     };
     var _settings = {
+        aceEditorTheme: defSettings.aceEditorTheme,
     };
     var settings = {
+        get aceEditorTheme() { return _settings.aceEditorTheme; },
+		set aceEditorTheme(value) { _settings.aceEditorTheme = value;  RED.storage.update();},
     };
     var settingsCategory = { label:"Node Def Manager", expanded:true, bgColor:"#DDD" };
 
     var settingsEditor = {
         DownloadCurrentNodeDefs:    { label:"Download Current NodeDefs", type:"button", action: DownloadCurrentNodeDefs},
+        aceEditorTheme:         { label:"Ace Theme (JSON editor)", type:"combobox", actionOnChange:true, valIsText:true, options:aceThemeList},
     };
     $('#btn-node-def-manager').click(function(){showForm();});
     
@@ -109,15 +114,30 @@ RED.NodeDefManager = (function() {
     var addMenu;
     function showForm()
     {
+        
         form = d3.select('#node-definitions-manager-dialog');
 
         form.html(""); // TODO: make use of data driven update
 
         leftPanel = form.append('div').attr('id', "nodeDefMgr-LeftPanel");
         rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel');
-        textArea = rightPanel.append('textarea').attr('type', 'text').attr('id','nodeDefEditor').attr('wrap', 'off').attr('style', 'width: 95%; height: 95%');
+        //textArea = rightPanel.append('textarea').attr('type', 'text').attr('id','nodeDefEditor').attr('wrap', 'off').attr('style', 'width: 95%; height: 95%');
 
-
+        textArea = rightPanel.append('pre').attr('id', 'aceEditor2').attr('style', "height: 400px;");
+        
+        var aceEditor = ace.edit("aceEditor2");
+		var aceTheme = "ace/theme/" + settings.aceEditorTheme
+        aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
+        
+        aceEditor.setOptions({
+			enableBasicAutocompletion: true,
+            enableSnippets: true,
+            tabSize: RED.arduino.settings.CodeIndentations,
+			enableLiveAutocompletion: true,
+		});
+        aceEditor.session.setMode("ace/mode/json", function() { console.log("ace mode changed to json");});
+        setTextAreaText("");
+        
         var leftPanelButtons = form.append('div').attr('id', "nodeDefMgr-LeftPanel-buttons");
         var rightPanelButtons = form.append('div').attr('id', "nodeDefMgr-RightPanel-buttons");
 
@@ -136,6 +156,17 @@ RED.NodeDefManager = (function() {
         $( "#node-definitions-manager-dialog" ).dialog("open");
 
         SetEditableState(); // puts everything in a default state
+    }
+
+    function setTextAreaText(text) {
+        ace.edit("aceEditor2").setValue(text);
+		ace.edit("aceEditor2").session.selection.clearSelection();
+
+        //$("#" + textArea.attr('id')).val(text);
+    }
+    function getTextAreaText() {
+        return ace.edit("aceEditor2").getValue();
+        //return $("#" + textArea.attr('id')).val();
     }
 
     function BuildTree()
@@ -187,9 +218,9 @@ RED.NodeDefManager = (function() {
         //rightPanel.html("");
         //EditDefGroup(nodeDefGroupName);
         var editable = GetEditableDefGroup(nodeDefGroupName);
-        $("#" + textArea.attr('id')).val(JSON.stringify(editable,null,4));
-        //textArea.text();
-        //textArea.text(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName],null,4));
+        
+        setTextAreaText(JSON.stringify(editable,null,4));
+        
         SetEditableState(nodeDefGroupName);
         currentSelectedItem = {groupName:nodeDefGroupName};
         console.log(currentSelectedItem);
@@ -203,9 +234,8 @@ RED.NodeDefManager = (function() {
         item.classed('nodeDefItemSelected', true);
         var nodeDefName = item.text();
         var nodeDefGroupName = item.attr("nodeDefGroupName");
-        $("#" + textArea.attr('id')).val(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName].types[nodeDefName],null,4));
-        //textArea.text(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName].types[nodeDefName],null,4));
-        //rightPanel.append(textArea);
+        setTextAreaText(JSON.stringify(RED.nodes.node_defs[nodeDefGroupName].types[nodeDefName],null,4));
+        
         SetEditableState(nodeDefGroupName);
         currentSelectedItem = {groupName:nodeDefGroupName, name:nodeDefName };
         console.log(currentSelectedItem);
@@ -214,8 +244,7 @@ RED.NodeDefManager = (function() {
     function applyCurrent() {
         if ( d3.select(this).classed("disabled") == true) return;
         if (verifyCurrentEdit() == false) return;
-        var id = textArea.attr('id');
-        var text = $("#" + id).val();
+        var text = getTextAreaText();
         var obj = JSON.parse(text);
         if (currentSelectedItem.name != undefined) { // Node Type Selected
             RED.nodes.registerType(currentSelectedItem.name, obj, currentSelectedItem.groupName);
@@ -234,7 +263,7 @@ RED.NodeDefManager = (function() {
     }
     function verifyCurrentEdit() {
         var id = textArea.attr('id');
-        var text = $("#" + id).val();
+        var text = getTextAreaText();
         try {
             JSON.parse(text);
             $("#"+id).removeClass("input-error");
@@ -615,7 +644,10 @@ RED.NodeDefManager = (function() {
 				click: function() {	$( this ).dialog( "close" ); }
 			}
 		],
-		open: function(e) { RED.keyboard.disable(); },
+        resize: function(e,ui) {
+            resizeAceJsonEditor(this);
+        },
+		open: function(e) { RED.keyboard.disable(); resizeAceJsonEditor(this);},
 		close: function(e) { RED.keyboard.enable();	}
 	});
     $("#node-def-manager-new-item-dialog form" ).submit(function(e) { e.preventDefault();});
@@ -647,6 +679,18 @@ RED.NodeDefManager = (function() {
 		open: function(e) { RED.keyboard.disable();	},
 		close: function(e) { RED.keyboard.enable(); }
 	});
+
+    function resizeAceJsonEditor(thisRef)
+    {
+        var aceEditorExist = document.getElementById("aceEditor2");
+        if (aceEditorExist != null)
+        {
+            $("#aceEditor2").height($(thisRef).height() - 40 );
+            var aceEditor = ace.edit("aceEditor2");
+            aceEditor.resize(true);
+            $(thisRef).scrollTop(aceEditor.scrollHeight);
+        }
+    }
     
     function CreateMenu(container, label, tooltip, items) {
         var menuGroup = container.append('div').attr('class','btn-group');
