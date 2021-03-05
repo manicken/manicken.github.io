@@ -4699,8 +4699,8 @@ RED.view = (function() {
 			var node = RED.nodes.node(pinRect.getAttribute("nodeId"));
 		}
 		
-		var data = $("script[data-help-name|='" + nodeType + "']");
-		var data2 = $("<div/>").append(data.html()).children("table").first().children("tbody").html();
+		var data = RED.NodeHelpManager.getHelp(nodeType); //$("script[data-help-name|='" + nodeType + "']");
+		var data2 = $("<div/>").append(data).children("table").first().children("tbody").html();
 		
 		var portName = portDir + " " + index;
 

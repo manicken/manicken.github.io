@@ -1467,7 +1467,7 @@ RED.nodes = (function() {
 				getFunctions(n, items);
 			}
 			if (n._def.nonObject != undefined) continue;
-			var data = $("script[data-help-name|='" + n.type + "']").html();
+			var data = RED.NodeHelpManager.getHelp(n.type); //  $("script[data-help-name|='" + n.type + "']").html();
 			//var firstP = $("<div/>").append(data).children("div").first().html();
 			if (data == undefined) data = n.type;
 			else

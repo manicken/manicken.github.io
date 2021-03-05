@@ -312,6 +312,7 @@ RED.IndexedDBfiles = (function() {
         fileRead:fileRead,
         fileDelete:fileDelete,
         listFiles:listFiles,
+        getFiles:getFiles,
         downloadAll:downloadAll
 	};
 })();

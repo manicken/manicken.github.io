@@ -608,6 +608,7 @@ RED.main = (function() {
                 RED.arduino.board.readFromIndexedDB();
                 updateProjectsMenu();
             });
+            RED.NodeHelpManager.init();
             //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
 			//
 		} else { // this can be removed as it's never used and never will be

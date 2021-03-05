@@ -365,7 +365,7 @@ RED.palette = (function() {
 
 		if (!server) {
            // console.warn($("script[data-help-name|='" + key + "']").html());
-			data = $("script[data-help-name|='" + key + "']").html();
+			data = RED.NodeHelpManager.getHelp(key); // $("script[data-help-name|='" + key + "']").html();
 			var firstP = $("<div/>").append(data).children("div").first().html();
             var content = '<b>'+key+'</b>';
             if (preInfo != undefined) content += preInfo;

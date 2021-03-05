@@ -83,14 +83,8 @@ RED.NodeDefGenerator = (function() {
 
                     document.getElementById("divDownloadTime").innerHTML = "downloading file " + (currFileIndex+1) + " of " + totalFileCount;
 
-                    //var row = table.append('tr');
-                   
-
                     if (file.contents != undefined) {
                         file = parseFile(file);
-
-                        
-                        
 
                         for (var ci = 0; ci < file.classes.length; ci++) {
                             var row = table.append('tr');
@@ -101,7 +95,6 @@ RED.NodeDefGenerator = (function() {
                             var tdStatus = row.append('td');
                             var tdContents = row.append('td');
                             
-
                             var nodeDefGroupTree = tdContents.append('ul').attr('class', "nodeDefGroupTree");//.html( convertToHtml(str));
                             var nodeDefGroup = nodeDefGroupTree.append('li');
                             var caret = nodeDefGroup.append('span').attr('class', 'caret2');

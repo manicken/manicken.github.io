@@ -596,19 +596,25 @@ RED.NodeDefManager = (function() {
         form.html("");
         newNodeTypeJSON = JSON.stringify(newNodeTypeTemplate, null, 4);
         CreateInputBoxWithLabel(form, "Type", "type", "", "string", newNodeTypeClassNameTooltip, function(value) { VerifyNodeType(value); newItemUid = value; } );
-        CreateInputBoxWithLabel(form, "JSON", "json", newNodeTypeJSON, "multiline", newNodeTypeJSONTooltip, function(value) { VerifyNodeTypeJSON(value); newNodeTypeJSON = value; } );
+        CreateAceEditor(form, "newTypeAceEditor", newNodeTypeJSON, settings.aceEditorTheme, "json", function(value, id) {
+            console.warn(value);
+            VerifyNodeTypeJSON(value,id);
+            newNodeTypeJSON = value;
+        });
     }
 
-    function VerifyNodeTypeJSON(jsonString) {
+    function VerifyNodeTypeJSON(jsonString,id) {
         try {
             var parsedJSON = JSON.parse(jsonString);
             newNodeTypeParsed = parsedJSON;
-            $("#input-ndmgr-json").removeClass("input-error");
+            $("#" + id).removeClass("input-error");
+            EnableNewItemOk();
             return true;
         }
         catch (ex) {
             RED.notify(ex, "warn", null, 10000);
-            $("#input-ndmgr-json").addClass("input-error");
+            $("#"+id).addClass("input-error");
+            DisableNewItemOk();
             return false;
         }
     }
@@ -691,9 +697,9 @@ RED.NodeDefManager = (function() {
 			}
 		],
         resize: function(e,ui) {
-            resizeAceJsonEditor("aceEditor3", this, 85);
+            resizeAceJsonEditor("newTypeAceEditor", this, 50);
         },
-		open: function(e) { RED.keyboard.disable();	 resizeAceJsonEditor("aceEditor3", this, 85);},
+		open: function(e) { RED.keyboard.disable();	 resizeAceJsonEditor("newTypeAceEditor", this, 50);},
 		close: function(e) { RED.keyboard.enable(); }
 	});
 
@@ -777,23 +783,9 @@ RED.NodeDefManager = (function() {
         if (type == "bool")
             var input = group.append('input').attr('type','checkbox').attr('id', uid).attr('checked',value == true?'checked':undefined);
         else if (type == "multiline") {
-            var input = group.append('pre').attr('id', 'aceEditor3').attr('style', "height: 400px;");
-            //var input = group.append('textarea').attr('type', 'text').attr('id', uid).attr('wrap', 'off').attr('rows', 14).attr('style', 'width: 95%; height: 95%').text(value);
-            var aceEditor = ace.edit("aceEditor3");
-            var aceTheme = "ace/theme/" + settings.aceEditorTheme
-            aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
-            
-            aceEditor.setOptions({
-                enableBasicAutocompletion: true,
-                enableSnippets: true,
-                tabSize: RED.arduino.settings.CodeIndentations,
-                enableLiveAutocompletion: true,
-            });
-            aceEditor.session.setMode("ace/mode/json", function() { console.log("ace mode changed to json");});
-            ace.edit("aceEditor3").setValue(value);
-		    ace.edit("aceEditor3").session.selection.clearSelection();
+            var input = group.append('textarea').attr('type', 'text').attr('id', uid).attr('wrap', 'off').attr('rows', 14).attr('style', 'width: 95%; height: 95%').text(value);
         }
-         else
+        else
             var input = group.append('input').attr('type','text').attr('id', uid).attr('value',value).attr('autocomplete', (autocomplete != undefined)?autocomplete:'off');
         
         RED.main.SetPopOver(input[0], tooltip, "right");
@@ -803,16 +795,40 @@ RED.NodeDefManager = (function() {
         } else {
             if (type == "bool")
                 input.on('change', function() {cb($("#" + uid).prop('checked'),propertyName); } );
-            else if (type == "multiline")
-            {
-                input.on('change', function() {cb(ace.edit("aceEditor3").getValue(),propertyName); } );
-            }
             else
                 input.on('change', function() {cb($("#" + uid).val(),propertyName); } );
         }
         
         //<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		//<input type="text" id="node-input-name" placeholder="Name"></input>
+    }
+
+    function CreateAceEditor(container,id,initialValue,theme,mode,onchange_cb) {
+        var input = container.append('pre').attr('id', id).attr('style', "height: 100%; margin-bottom: 0px");
+        var aceEditor = ace.edit(id);
+        aceEditor.setTheme("ace/theme/" + theme, function() { console.log(id + " theme changed");});
+        
+        aceEditor.setOptions({
+            enableBasicAutocompletion: true,
+            enableSnippets: true,
+            tabSize: RED.arduino.settings.CodeIndentations,
+            enableLiveAutocompletion: true,
+        });
+        aceEditor.session.setMode("ace/mode/" + mode, function() { console.log(id + " mode changed to " + mode);});
+        SetAceEditorValue(id, initialValue);
+
+        aceEditor.session.on('change', function() {
+            onchange_cb(GetAceEditorValue(id), id);
+          });
+
+        //input.on('change', function() { onchange_cb(GetAceEditorValue(id), id); } );
+    }
+    function SetAceEditorValue(id, value) {
+        ace.edit(id).setValue(value);
+        ace.edit(id).session.selection.clearSelection();
+    }
+    function GetAceEditorValue(id) {
+        return ace.edit(id).getValue();
     }
 
     

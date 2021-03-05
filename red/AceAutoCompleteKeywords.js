@@ -15,7 +15,7 @@ var AceAutoComplete  = (function() {
 
     function getFromHelp(nodeType)
     {
-        var data = $("script[data-help-name|='" + nodeType + "']").html();
+        var data = RED.NodeHelpManager.getHelp(nodeType); // $("script[data-help-name|='" + nodeType + "']").html();
         if (data == undefined) { RED.notify("data == undefined @ getFromHelp:" + nodeType, "warning", false, 10000); return null;}
         var div = document.createElement('div');
         div.innerHTML = data.trim();

@@ -162,7 +162,7 @@ RED.sidebar.info = (function() {
 
 		prefix = prefix == "" ? "<h3>" + key + "</h3>" : prefix;
 		if (!server) {
-			data = $("script[data-help-name|='" + key + "']").html();
+			data = RED.NodeHelpManager.getHelp(key); //$("script[data-help-name|='" + key + "']").html();
 			if (data)
 				finalHtml = '<div class="node-help">' + data + '</div>';
 			else
