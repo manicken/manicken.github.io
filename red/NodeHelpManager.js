@@ -43,7 +43,7 @@ RED.NodeHelpManager = (function() {
         return primaryHelp;
     }
 
-    function loadAllFromIndexedDB() {
+    function loadAllFromIndexedDB(cbDone) {
         addonHelp = [];
         RED.IndexedDBfiles.getFiles("otherFiles", function (files) {
             for (var i = 0; i < files.length; i++) {
@@ -53,9 +53,11 @@ RED.NodeHelpManager = (function() {
                 let parsedHtml = parser.parseFromString(files[i].data, 'text/html');
                 addonHelp.push(parsedHtml);
             }
+            cbDone();
         }, 
         function (err) {
             RED.notify("no files found in others", "info", null, 2000);
+            cbDone();
         });
     }
 
@@ -73,7 +75,7 @@ RED.NodeHelpManager = (function() {
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
 
-        init: function() { loadAllFromIndexedDB(); },
+        init: loadAllFromIndexedDB,
         getHelp:getHelp
     };
 

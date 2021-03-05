@@ -487,9 +487,18 @@ RED.main = (function() {
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
         console.warn("main $(function() {...}) exec"); // to see load order
-		//RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
-		RED.arduino.startConnectedChecker();
-		if (navigator.storage && navigator.storage.persist) {
+		RED.NodeHelpManager.init(function() { // this makes sure that the addon help is loaded before anything else
+            init();
+        });
+        
+		
+	});
+
+    function init()
+    {
+        //RED.arduino.httpGetAsync("getJSON"); // load project from arduino if available
+        RED.arduino.startConnectedChecker();
+        if (navigator.storage && navigator.storage.persist) {
             navigator.storage.persist().then(function(persistent) {
                 if (persistent)
                     RED.notify("Storage will not be cleared except by explicit user action<br>or automatic/manually cache clear<br>on firefox this automatic clear<br>can be put into a exception list for permanent data storage.<br>note the data will still be removed by manually cache clear.", "info", null, 10000);
@@ -501,133 +510,107 @@ RED.main = (function() {
             RED.notify("This browser don't support persistent storage!!!", "warning", null, 4000);
         }
 
-		addDemoFlowsToMenu();
-		RED.view.init();
+        addDemoFlowsToMenu();
+        RED.view.init();
 
-		//SetButtonPopOver("#btn-
-		SetPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");
-		SetPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
-		SetPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
-		SetPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
-		//SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
-		//SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
+        //SetButtonPopOver("#btn-
+        SetPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");
+        SetPopOver("#btn-save", "Save to localstorage<br>(shortcut CTRL+S)");
+        SetPopOver("#btn-moveWorkSpaceLeft", "Move the current<br>workspace tab<br>one step to the left");
+        SetPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
+        //SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
+        //SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
         SetPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
-        
+
         SetPopOver("#btn-deploy", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
-		SetPopOver("#btn-deploy2", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");
-		SetPopOver("#btn-deploy2zip", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function.","left");
-		SetPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is <br>the project name set in settings tab","left");
+        SetPopOver("#btn-deploy2", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");
+        SetPopOver("#btn-deploy2zip", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function.","left");
+        SetPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is <br>the project name set in settings tab","left");
         SetPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON,<br>that is usable when a design is shared,<br> for example on a forum.<br><br> tip. if shared the last ] could be on a new line <br>to make it easier to copy the whole line","left");
         SetPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
 
         SetPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
-		SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
-        
+        SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
+
         SetPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
 
-		jscolor.presets.default = {
-			closeButton:true
-		};
-		jscolor.trigger('input change');
-		jscolor.installByClassName("jscolor");
-		
-		
-		$(".palette-spinner").show();
-		
-		// server test switched off - test purposes only
-		var patt = new RegExp(/^[http|https]/);
-		var server = false && patt.test(location.protocol);
+        jscolor.presets.default = {
+            closeButton:true
+        };
+        jscolor.trigger('input change');
+        jscolor.installByClassName("jscolor");
 
-		if (!server) {
-            // running init makes sure that the database is upgraded before acessing it
-            
-            
-            
-			var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
-			// RED.main.requirements is needed because $(function() executes at global scope, 
-			// if we just set requirements without RED.main. it's gonna be located in global scope
-			// and in that case later we cannot use RED.main.requirements because that is unassigned.
-			RED.main.requirements = metaData["requirements"]; // RED.main. is used to clarify the location of requirements
-			
-			var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
-			RED.palette.doInit(nodeCategories);//["categories"]);
+        $(".palette-spinner").show();
+
+        var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
+        // RED.main.requirements is needed because $(function() executes at global scope, 
+        // if we just set requirements without RED.main. it's gonna be located in global scope
+        // and in that case later we cannot use RED.main.requirements because that is unassigned.
+        RED.main.requirements = metaData["requirements"]; // RED.main. is used to clarify the location of requirements
+
+        var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
+        RED.palette.doInit(nodeCategories);//["categories"]);
 
 
-			var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
-            if (nodeDefinitions["nodes"] != undefined) {
-                RED.nodes.initNodeDefinitions({
-                    "label":"Official Nodes (old type version)",
-                    "description":"The node types provided by the official Audio Library",
-                    "url":"https://github.com/PaulStoffregen/Audio"
-                }, "officialNodes");
-                $.each(nodeDefinitions["nodes"], function (key, val) {
-                    RED.nodes.registerType(val["type"], val["data"], "officialNodes");
-                });
+        var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
+        if (nodeDefinitions["nodes"] != undefined) {
+            RED.nodes.initNodeDefinitions({
+                "label":"Official Nodes (old type version)",
+                "description":"The node types provided by the official Audio Library",
+                "url":"https://github.com/PaulStoffregen/Audio"
+            }, "officialNodes");
+            $.each(nodeDefinitions["nodes"], function (key, val) {
+                RED.nodes.registerType(val["type"], val["data"], "officialNodes");
+            });
+        }
+        else {
+            var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(nodeDefinitions);
+            for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
+                var catName = nodeDefinitionCategoryNames[i];
+                var cat = nodeDefinitions[catName];
+                RED.nodes.registerTypes(cat, catName);
             }
-            else {
-                var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(nodeDefinitions);
-                for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
-                    var catName = nodeDefinitionCategoryNames[i];
-                    var cat = nodeDefinitions[catName];
-                    RED.nodes.registerTypes(cat, catName);
-                }
-            }
-			
-			RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
-				showHelp();
-				d3.event.preventDefault();
-			});
-			RED.arduino.StartWebSocketConnection();
-			RED.BiDirDataWebSocketBridge.StartWebSocketConnection();
-            RED.projectStructure.createTab();
-            loadNodes(); // this also loads the settings so it need to be before RED.settings.createTab();
-            RED.storage.dontSave = true;
-            RED.settings.createTab();
-            RED.storage.dontSave = false;
-            
+        }
 
-            
-            // if the query string has ?info=className, populate info tab
-			var info = getQueryVariable("info");
-			if (info) {
-                if (info.trim() != "")
-                    RED.sidebar.info.setHelpContent('', info);
-                else
-                    RED.sidebar.info.clear(); // shows the welcome text
-            }
+        RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
+            showHelp();
+            d3.event.preventDefault();
+        });
+        RED.arduino.StartWebSocketConnection();
+        RED.BiDirDataWebSocketBridge.StartWebSocketConnection();
+        RED.projectStructure.createTab();
+        loadNodes(); // this also loads the settings so it need to be before RED.settings.createTab();
+        RED.storage.dontSave = true;
+        RED.settings.createTab();
+        RED.storage.dontSave = false;
+
+
+
+        // if the query string has ?info=className, populate info tab
+        var info = getQueryVariable("info");
+        if (info) {
+            if (info.trim() != "")
+                RED.sidebar.info.setHelpContent('', info);
             else
                 RED.sidebar.info.clear(); // shows the welcome text
-            
-            $(".palette-spinner").hide();
-            
-            RED.events.emit("projects:load",{name:RED.arduino.settings.ProjectName});
+        }
+        else
+            RED.sidebar.info.clear(); // shows the welcome text
 
-            RED.sidebar.show(RED.devTest.settings.startupTabRightSidebar);
+        $(".palette-spinner").hide();
 
-            RED.IndexedDBfiles.init( function() { 
-                RED.arduino.board.readFromIndexedDB();
-                updateProjectsMenu();
-            });
-            RED.NodeHelpManager.init();
-            //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
-			//
-		} else { // this can be removed as it's never used and never will be
-			$.ajaxSetup({beforeSend: function(xhr){
-				if (xhr.overrideMimeType) {
-					xhr.overrideMimeType("application/json");
-				}
-			}});
-			$.getJSON( "resources/nodes_def.json", function( data ) {
-				var nodes = data["nodes"];
-				$.each(nodes, function(key, val) {
-					RED.nodes.registerType(val["type"], val["data"],"officialNodes");
-				});
-				RED.keyboard.add(/* ? */ 191,{shift:true},function(){showHelp();d3.event.preventDefault();});
-				loadNodes();
-				$(".palette-spinner").hide();
-			})
-		}
-	});
+        RED.events.emit("projects:load",{name:RED.arduino.settings.ProjectName});
+
+        RED.sidebar.show(RED.devTest.settings.startupTabRightSidebar);
+
+        RED.IndexedDBfiles.init( function() { 
+            RED.arduino.board.readFromIndexedDB();
+            updateProjectsMenu();
+        });
+        
+        //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
+        //
+    }
 
     function httpDownloadAsync(url, cbOnOk, cbOnError, timeout)
     {
