@@ -9,7 +9,7 @@ RED.NodeDefManager = (function() {
         removeButton:"remove current selected group or node definition",
         exportButton:"exports all node definitions as a json file",
         importFromFile: "(not yet implemented)",
-        importFromUrl: "(not yet implemented)",
+        importFromUrl: "",
         importRefresh:"updates the current addon from the url given (not yet implemented)",
         applyButton:"apply the changes of the selected item",
         importFromUrl_url: "the url to the library, <br>can either be .json .html or github path",
@@ -364,7 +364,7 @@ RED.NodeDefManager = (function() {
         $( "#node-def-manager-new-item-dialog" ).dialog("option", "title", "Import node types from URL");
         $( "#node-def-manager-new-item-dialog" ).dialog("option", "width", "600");
         $( "#node-def-manager-new-item-dialog" ).dialog("open");
-        RED.notify("import from url clicked (not yet implemented)", "info", null, 2000);
+        RED.notify("import from url clicked", "info", null, 2000);
     }
     function refreshFromUrl() {
         RED.notify("refresh from current url clicked (not yet implemented)", "info", null, 2000);
@@ -425,7 +425,7 @@ RED.NodeDefManager = (function() {
                         value = githubUrl.url;
                         $("#input-ndmgr-uid").val(githubUrl.uid);
                     }
-                $("#node-def-mgr-import-url-info").text("is html file url (not implemented)");
+                $("#node-def-mgr-import-url-info").text("is html file url");
                 $("#node-def-mgr-import-download-url").text(value);
                 downloadUrl = value;
                 downloadMode = "html";
