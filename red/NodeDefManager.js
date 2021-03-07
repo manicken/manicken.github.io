@@ -483,7 +483,7 @@ RED.NodeDefManager = (function() {
                             // to make the help part usable
                             RED.IndexedDBfiles.fileWrite("otherFiles", "help_" + downloadUrl, data, function (dir, name) {console.log("file write ok");});
 
-                            RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), newItemUid, !importReplaceExisting);
+                            RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), $("#input-ndmgr-uid").val(), !importReplaceExisting);
                             RED.storage.update();
                             BuildTree();
                             return true;
