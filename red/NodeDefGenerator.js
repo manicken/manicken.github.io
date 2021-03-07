@@ -243,6 +243,41 @@ RED.NodeDefGenerator = (function() {
         return file;
     }
 
+    function parseHtml(data,uid) {
+        let parser = new DOMParser();
+        let parsedHtml = parser.parseFromString(data, 'text/html');
+        let newNodeDefs = parsedHtml.querySelector("script[data-container-name|='NodeDefinitions']"); // data-container-name="NodeDefinitions"
+        if (newNodeDefs == undefined) { return; }
+
+        let parsedNodeDefs = JSON.parse(newNodeDefs.innerText);
+        if (parsedNodeDefs == undefined) { return; }
+        
+        if (parsedNodeDefs.nodes != undefined) { // old structure
+            //let newParsedNodeDefs = parsedNodeDefs.nodes;
+            
+            nodeAddons = {
+                count: function() {
+                    return Object.getOwnPropertyNames(this.types).length;
+                },
+                label:"Addon Nodes",
+                description:"Addon Nodes (old type version)",
+                url:"",
+                isAddon:true,
+                types:{}
+            };
+            $.each(parsedNodeDefs.nodes, function (key, val) {
+                //RED.nodes.registerType(val["type"], val["data"], uid);
+                if (val.data.category.endsWith("-function")) val.data.category = val.data.category.replace("-function", "");
+                nodeAddons.types[val.type] = val.data;
+            });
+        }
+        else { // new structure
+
+        }
+        
+
+    }
+
     function testGithubNodeAddonsParser_allFilesDownloadedAndParsed()
     {
         timeEnd = performance.now();
@@ -294,6 +329,7 @@ RED.NodeDefGenerator = (function() {
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
         GithubNodeAddonsParser:GithubNodeAddonsParser,
+        parseHtml:parseHtml,
         nodeAddons: function() { return nodeAddons;}
     };
 })();

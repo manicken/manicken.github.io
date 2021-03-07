@@ -11,15 +11,29 @@ RED.NodeHelpManager = (function() {
 
     var settingsEditor = {
         downloadNodeAddonsHelp: { label:"downloadNodeAddonsHelp", type:"string", action: downloadNodeAddonsHelp, defValue: "https://raw.githubusercontent.com/manicken/justSomeFiles/main/index.html"},
+
+        downloadNodeAddonsHelpCorsErr: { label:"downloadNodeAddonsHelpCorsErr", type:"string", action: downloadNodeAddonsHelpCorsErr, defValue: "http://www.janbob.com/electron/OpenAudio_Design_Tool/index.html"},
     }
 
     function downloadNodeAddonsHelp(url) {
         RED.main.httpDownloadAsync(url, 
             function(data) {
                 RED.IndexedDBfiles.fileWrite("otherFiles", "help_OpenAudioF32.html", data, function (dir, name) {console.log("file write ok");});
+                window.location.reload();
             }, 
             function(err) {
-                RED.notify("could not download help addon", "info", null, 3000);
+                RED.notify("could not download help addon" + err, "info", null, 3000);
+            }
+        );
+    }
+
+    function downloadNodeAddonsHelpCorsErr(url) {
+        RED.main.httpDownloadAsync(url, 
+            function(data) {
+                RED.notify("could download help addon" + err, "info", null, 3000);
+            }, 
+            function(err) {
+                RED.notify("could not download help addon" + err, "info", null, 3000);
             }
         );
     }
@@ -59,6 +73,12 @@ RED.NodeHelpManager = (function() {
             RED.notify("no files found in others", "info", null, 2000);
             cbDone();
         });
+
+        // returns HTMLScriptElement
+        var first = $("script[data-help-name]")[0];
+        //var name = first.substring(first.indexOf("data-help-name=\""));
+        console.warn(first.getAttribute("data-help-name"));
+        console.warn(first.innerText);
     }
 
     function parseRawHtml(html) {

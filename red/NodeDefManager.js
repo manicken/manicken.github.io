@@ -103,6 +103,30 @@ RED.NodeDefManager = (function() {
         }
         RED.main.download("NodeDefs.json","Total count: " + totalCount + "\nTotal Audio objects: " + audioObjectCount + "\n"+  JSON.stringify(RED.nodes.node_defs, null, 4) );
     }
+
+    
+    function RegisterTypesFromString(str) {
+        var nodeDefinitions = $.parseJSON(str);
+        /*if (nodeDefinitions["nodes"] != undefined) {
+            RED.nodes.initNodeDefinitions({
+                "label":"Addon Nodes",
+                "description":"Addon Nodes (old type version)",
+                "url":""
+            }, "officialNodes");
+            $.each(nodeDefinitions["nodes"], function (key, val) {
+                RED.nodes.registerType(val["type"], val["data"], "officialNodes");
+            });
+        }
+        else {*/
+            var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(nodeDefinitions);
+            for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
+                var catName = nodeDefinitionCategoryNames[i];
+                var cat = nodeDefinitions[catName];
+                RED.nodes.registerTypes(cat, catName);
+            }
+        //}
+    }
+
     var form;
     var textArea;
     var leftPanel;
@@ -395,11 +419,18 @@ RED.NodeDefManager = (function() {
                 downloadMode = "json";
                 Set_d3_Button_Enabled(downloadButton, true);
             } else if (value.endsWith('.html') == true) {
+                if (value.startsWith("https://github.com"))
+                    {
+                        var githubUrl = GetAsGithubRawUrl(value);
+                        value = githubUrl.url;
+                        $("#input-ndmgr-uid").val(githubUrl.uid);
+                    }
                 $("#node-def-mgr-import-url-info").text("is html file url (not implemented)");
                 $("#node-def-mgr-import-download-url").text(value);
                 downloadUrl = value;
                 downloadMode = "html";
                 Set_d3_Button_Enabled(downloadButton, true);
+                
             } else if (value.startsWith("https://github.com") == true) {
                 var apiUrl = GetAsGithubApiUrl(value);
                 downloadUrl = apiUrl.url;
@@ -440,6 +471,30 @@ RED.NodeDefManager = (function() {
             if (downloadMode == "json") {
 
             } else if (downloadMode == "html") {
+
+                RED.main.httpDownloadAsync(downloadUrl, 
+                    function(data) {
+                        
+                        RED.NodeDefGenerator.parseHtml(data, $("#input-ndmgr-uid").val());
+                        $("#node-def-mgr-import-download-result").text("new node Addons count:" + RED.NodeDefGenerator.nodeAddons().count());
+                       
+                        newItemDialogOk_cb = function() {
+                            // here the html need to be saved to the indexexDB as well
+                            // to make the help part usable
+                            RED.IndexedDBfiles.fileWrite("otherFiles", "help_" + downloadUrl, data, function (dir, name) {console.log("file write ok");});
+
+                            RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), newItemUid, !importReplaceExisting);
+                            RED.storage.update();
+                            BuildTree();
+                            return true;
+                        };
+                        EnableNewItemOk();
+
+                    }, 
+                    function(err) {
+                        RED.notify("could not download help addon" + err, "info", null, 3000);
+                    }
+                );
 
             } else if (downloadMode == "githubapi") {
                 RED.NodeDefGenerator.GithubNodeAddonsParser(downloadUrl, function() {
@@ -503,6 +558,16 @@ RED.NodeDefManager = (function() {
         return {
             url:"https://api.github.com/repos/" + split[3] + "/" + split[4] + "/contents/" + JoinFrom(split, 7, "/"), 
             uid:split[3] + "_" + split[4] + uidDir
+        };
+    }
+    function GetAsGithubRawUrl(url) {
+        var split = url.split("/");
+        var uidDir = JoinFrom(split, 6, "_").replace('.','_');
+        if (uidDir.length != 0) uidDir = "_" + uidDir;
+        return {
+            url:"https://raw.githubusercontent.com/" + split[3] + "/" + split[4] + "/" + JoinFrom(split, 6, "/"), 
+            uid:split[3] + "_" + split[4] + uidDir,
+            fileName:split[split.length-1]
         };
     }
     function GetUidFromGithubApiUrl(url) {
@@ -837,5 +902,6 @@ RED.NodeDefManager = (function() {
         settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
+        RegisterTypesFromString:RegisterTypesFromString
     };
 })();

@@ -551,27 +551,9 @@ RED.main = (function() {
         var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
         RED.palette.doInit(nodeCategories);//["categories"]);
 
-
-        var nodeDefinitions = $.parseJSON($("script[data-container-name|='NodeDefinitions']").html());
-        if (nodeDefinitions["nodes"] != undefined) {
-            RED.nodes.initNodeDefinitions({
-                "label":"Official Nodes (old type version)",
-                "description":"The node types provided by the official Audio Library",
-                "url":"https://github.com/PaulStoffregen/Audio"
-            }, "officialNodes");
-            $.each(nodeDefinitions["nodes"], function (key, val) {
-                RED.nodes.registerType(val["type"], val["data"], "officialNodes");
-            });
-        }
-        else {
-            var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(nodeDefinitions);
-            for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
-                var catName = nodeDefinitionCategoryNames[i];
-                var cat = nodeDefinitions[catName];
-                RED.nodes.registerTypes(cat, catName);
-            }
-        }
-
+        // register built in node types
+        RED.NodeDefManager.RegisterTypesFromString($("script[data-container-name|='NodeDefinitions']").html());
+        
         RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
             showHelp();
             d3.event.preventDefault();
@@ -625,7 +607,7 @@ RED.main = (function() {
                     console.warn(cbOnOk + "response @ " + queryString + ":\n" + xmlHttp.responseText);
             }
             else if (cbOnError != undefined)
-                cbOnError(xmlHttp.status);
+                cbOnError(xmlHttp.status + xmlHttp.responseText);
             else
                 console.warn(queryString + " did not response = " + xmlHttp.status);
         };
