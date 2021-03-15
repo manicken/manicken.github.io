@@ -4302,6 +4302,7 @@ RED.view = (function() {
 			if (nodesJSON.count <= 0) {
 				var note = "No nodes imported!";
 				RED.notify("<strong>Note</strong>: " + note, "warning");
+                console.warn("No nodes imported", newNodesStr);
 			}
 
 			newNodesStr = nodesJSON.data;

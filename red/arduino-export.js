@@ -715,7 +715,7 @@ RED.arduino.export = (function () {
         for (var i = 0; i < wsCppFiles.length; i++) {
             // don't include beautified json string here
             // and only append to cpp when useExportDialog
-            if (!wsCppFiles[i].name.endsWith(".json") && showExportDialog)
+            if (isCodeFile(wsCppFiles[i].name) && showExportDialog)
                 cpp += wsCppFiles[i].contents;
 
             wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
@@ -757,6 +757,16 @@ RED.arduino.export = (function () {
                 RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
             });
         }
+    }
+
+    function isCodeFile(fileName) {
+        if (fileName.endsWith(".h")) return true;
+        else if (fileName.endsWith(".cpp")) return true;
+        else if (fileName.endsWith(".tpp")) return true;
+        else if (fileName.endsWith(".hpp")) return true;
+        else if (fileName.endsWith(".c")) return true;
+        else if (fileName.endsWith(".t")) return true;
+        return false;
     }
 
     function getJunctionFinalDestinations(junctionNode, dstNodes) {

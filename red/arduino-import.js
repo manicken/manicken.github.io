@@ -198,9 +198,11 @@ RED.arduino.import = (function() {
  */
 		function startImport() {
 			words = Array(NODE_AC);
-			$.each(RED.nodes.node_defs, function (key, obj) {
-				words.push(key);
-				console.log(key);
+			$.each(RED.nodes.node_defs, function (defGroupName, obj) {
+				$.each(RED.nodes.node_defs[defGroupName].types, function (key, obj) {
+                    words.push(key);
+                    console.log(key);
+                });
 			});
 			traverseLines(newNodesStr);
 			linkCables(cables);
