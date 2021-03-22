@@ -20,23 +20,22 @@ RED.NodeDefGenerator = (function() {
     var GithubNodeAddonsUrl = "";
     var timeStart = 0;
     var timeEnd = 0;
-    var testGithubNodeAddonsParser_window;
-    var testGithubNodeAddonsParser_table;
+
+    var nodeAddonGroups;
     var nodeAddons;
+    var nodeAddonsCount = 0;
 
     var form;
     var table;
     var dialogOk_cb;
     var dialogCancel_cb;
 
-    var dialogOk_cb_default = function() {
-        RED.nodes.registerTypes(nodeAddons, nodeAddons.label.split(" ").join("_"));
-        RED.main.download("NodeAddons.json", JSON.stringify(nodeAddons, null, 4));
-        return true;
-    }
-
     function testGithubNodeAddonsParser(url) {
-        GithubNodeAddonsParser(url, dialogOk_cb_default);
+        GithubNodeAddonsParser(url, function() {
+            RED.nodes.registerTypes(nodeAddons, nodeAddons.label.split(" ").join("_"));
+            RED.main.download("NodeAddons.json", JSON.stringify(nodeAddons, null, 4));
+            return true;
+        });
     }
 
     function GithubNodeAddonsParser(url, okPressed_cb, cancelPressed_cb) {
@@ -48,9 +47,6 @@ RED.NodeDefGenerator = (function() {
         filesToDownload = [];
         var urlSplit = url.split("/");
         nodeAddons = {
-            count: function() {
-                return Object.getOwnPropertyNames(this.types).length;
-            },
             label:urlSplit[5],
             description:urlSplit[4] + " " + urlSplit[5] + " node addons",
             url:url,
@@ -243,7 +239,7 @@ RED.NodeDefGenerator = (function() {
         return file;
     }
 
-    function parseHtml(data,uid) {
+    function parseHtml(data,uid, url) {
         let parser = new DOMParser();
         let parsedHtml = parser.parseFromString(data, 'text/html');
         let newNodeDefs = parsedHtml.querySelector("script[data-container-name|='NodeDefinitions']"); // data-container-name="NodeDefinitions"
@@ -252,30 +248,34 @@ RED.NodeDefGenerator = (function() {
         let parsedNodeDefs = JSON.parse(newNodeDefs.innerText);
         if (parsedNodeDefs == undefined) { return; }
         
+        nodeAddons = {
+            label:"Addon Nodes",
+            description:"Addon Nodes",
+            url:url,
+            isAddon:true,
+            types:{}
+        };
+
         if (parsedNodeDefs.nodes != undefined) { // old structure
-            //let newParsedNodeDefs = parsedNodeDefs.nodes;
+            nodeAddons.description += " (old type version)",
             
-            nodeAddons = {
-                count: function() {
-                    return Object.getOwnPropertyNames(this.types).length;
-                },
-                label:"Addon Nodes",
-                description:"Addon Nodes (old type version)",
-                url:"",
-                isAddon:true,
-                types:{}
-            };
             $.each(parsedNodeDefs.nodes, function (key, val) {
-                //RED.nodes.registerType(val["type"], val["data"], uid);
-                if (val.data.category.endsWith("-function")) val.data.category = val.data.category.replace("-function", "");
                 nodeAddons.types[val.type] = val.data;
             });
+            nodeAddonsCount = Object.getOwnPropertyNames(nodeAddons.types).length;
+            nodeAddonGroups = undefined;
         }
         else { // new structure
+            nodeAddonGroups = parsedNodeDefs;
 
+            nodeAddonsCount = 0;
+            var groupNames = Object.getOwnPropertyNames(nodeAddonGroups);
+            for (var gi = 0; gi < groupNames.length; gi++) {
+                var groupName = groupNames[gi];
+                var group = parsedNodeDefs[groupName];
+                nodeAddonsCount += Object.getOwnPropertyNames(group.types).length;
+            }
         }
-        
-
     }
 
     function testGithubNodeAddonsParser_allFilesDownloadedAndParsed()
@@ -330,6 +330,8 @@ RED.NodeDefGenerator = (function() {
         settingsEditor:settingsEditor,
         GithubNodeAddonsParser:GithubNodeAddonsParser,
         parseHtml:parseHtml,
-        nodeAddons: function() { return nodeAddons;}
+        nodeAddons: function() { return nodeAddons;},
+        nodeAddonGroups: function() { return nodeAddonGroups;},
+        nodeAddonsCount: function() { return nodeAddonsCount;}
     };
 })();

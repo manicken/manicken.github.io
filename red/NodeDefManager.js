@@ -105,27 +105,6 @@ RED.NodeDefManager = (function() {
     }
 
     
-    function RegisterTypesFromString(str) {
-        var nodeDefinitions = $.parseJSON(str);
-        /*if (nodeDefinitions["nodes"] != undefined) {
-            RED.nodes.initNodeDefinitions({
-                "label":"Addon Nodes",
-                "description":"Addon Nodes (old type version)",
-                "url":""
-            }, "officialNodes");
-            $.each(nodeDefinitions["nodes"], function (key, val) {
-                RED.nodes.registerType(val["type"], val["data"], "officialNodes");
-            });
-        }
-        else {*/
-            var nodeDefinitionCategoryNames = Object.getOwnPropertyNames(nodeDefinitions);
-            for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
-                var catName = nodeDefinitionCategoryNames[i];
-                var cat = nodeDefinitions[catName];
-                RED.nodes.registerTypes(cat, catName);
-            }
-        //}
-    }
 
     var form;
     var textArea;
@@ -475,15 +454,36 @@ RED.NodeDefManager = (function() {
                 RED.main.httpDownloadAsync(downloadUrl, 
                     function(data) {
                         
-                        RED.NodeDefGenerator.parseHtml(data, $("#input-ndmgr-uid").val());
-                        $("#node-def-mgr-import-download-result").text("new node Addons count:" + RED.NodeDefGenerator.nodeAddons().count());
-                       
+                        RED.NodeDefGenerator.parseHtml(data, $("#input-ndmgr-uid").val(), downloadUrl);
+                        var nodeAddonGroups = RED.NodeDefGenerator.nodeAddonGroups();
+                        if (nodeAddonGroups == undefined) {
+                            $("#node-def-mgr-import-download-result").text("new node Addons (old structure) count:" + RED.NodeDefGenerator.nodeAddonsCount());
+                            $("#node-def-mgr-import-url-mode-row").removeClass("hidden");
+                            $("#node-def-mgr-import-url-mode-existing-row").removeClass("hidden");
+                            $("#input-ndmgr-uid-row").removeClass("hidden");
+                            
+                        }
+                        else {
+                            $("#node-def-mgr-import-download-result").text("new node Addons (new structure) count:" + RED.NodeDefGenerator.nodeAddonsCount());
+                            $("#node-def-mgr-import-url-mode-row").addClass("hidden");
+                            $("#node-def-mgr-import-url-mode-existing-row").addClass("hidden");
+                            $("#input-ndmgr-uid-row").addClass("hidden");
+                            
+                        }
                         newItemDialogOk_cb = function() {
                             // here the html need to be saved to the indexexDB as well
                             // to make the help part usable
                             RED.IndexedDBfiles.fileWrite("otherFiles", "help_" + downloadUrl, data, function (dir, name) {console.log("file write ok");});
-
-                            RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), $("#input-ndmgr-uid").val(), !importReplaceExisting);
+                            
+                            var nodeAddonGroups = RED.NodeDefGenerator.nodeAddonGroups();
+                            if (nodeAddonGroups == undefined) {
+                                nodeAddonGroups = {};
+                                var uid = $("#input-ndmgr-uid").val();
+                                nodeAddonGroups[uid] = RED.NodeDefGenerator.nodeAddons();
+                                //RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), $("#input-ndmgr-uid").val(), !importReplaceExisting); // old style
+                            }
+                            RED.nodes.registerGroups(nodeAddonGroups);
+                            
                             RED.storage.update();
                             BuildTree();
                             return true;
@@ -499,7 +499,7 @@ RED.NodeDefManager = (function() {
             } else if (downloadMode == "githubapi") {
                 RED.NodeDefGenerator.GithubNodeAddonsParser(downloadUrl, function() {
 
-                    $("#node-def-mgr-import-download-result").text("new node Addons count:" + RED.NodeDefGenerator.nodeAddons().count());
+                    $("#node-def-mgr-import-download-result").text("new node Addons count:" + Object.getOwnPropertyNames(RED.NodeDefGenerator.nodeAddons().types).length);
                     
                     newItemDialogOk_cb = function() {
                         
@@ -816,7 +816,7 @@ RED.NodeDefManager = (function() {
     }
     
     function CreateComboboxWithLabel(container, id, label, items, tooltip, cb) {
-        var group = container.append('div').attr('class','form-row');
+        var group = container.append('div').attr('class','form-row').attr('id', id + '-row');
         var labelItem = group.append('label').attr('for', id);
         labelItem.append('i').attr('class', 'fa fa-tag');
         labelItem.text(label + " ");
@@ -840,7 +840,7 @@ RED.NodeDefManager = (function() {
     }
     function CreateInputBoxWithLabel(container, label, propertyName, value, type, tooltip, cb, autocomplete) {
         var uid = "input-ndmgr-"+propertyName;// label.split(' ').join('-').split('.').join('-');
-        var group = container.append('div').attr('class','form-row');
+        var group = container.append('div').attr('class','form-row').attr('id', uid + '-row');
         var labelItem = group.append('label').attr('for', uid);
         labelItem.append('i').attr('class', 'fa fa-tag');
         labelItem.text(label + " ");
@@ -902,6 +902,5 @@ RED.NodeDefManager = (function() {
         settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
-        RegisterTypesFromString:RegisterTypesFromString
     };
 })();

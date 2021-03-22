@@ -111,14 +111,28 @@ RED.nodes = (function() {
             };
         }
     }
-    function registerTypes(nodeDefinitionsCategory, uid, dontReplaceExisting) {
-        if (nodeDefinitionsCategory.disabled != undefined && nodeDefinitionsCategory.disabled == true)
+    function Init_BuiltIn_NodeDefinitions() {
+        var str = $("script[data-container-name|='NodeDefinitions']").html();
+        var nodeDefinitions = $.parseJSON(str);
+        if (nodeDefinitions == undefined) return;
+        registerGroups(nodeDefinitions);
+    }
+    function registerGroups(nodeDefinitionsGroups) {
+        var nodeDefGroupNames = Object.getOwnPropertyNames(nodeDefinitionsGroups);
+        for (var i = 0; i < nodeDefGroupNames.length; i++) {
+            var catName = nodeDefGroupNames[i];
+            var cat = nodeDefinitionsGroups[catName];
+            RED.nodes.registerTypes(cat, catName);
+        }
+    }
+    function registerTypes(nodeDefinitionsGroup, uid, dontReplaceExisting) {
+        if (nodeDefinitionsGroup.disabled != undefined && nodeDefinitionsGroup.disabled == true)
             return;
-        initNodeDefinitions(nodeDefinitionsCategory, uid);
-        var types = nodeDefinitionsCategory["types"];
+        initNodeDefinitions(nodeDefinitionsGroup, uid);
+        var types = nodeDefinitionsGroup["types"];
         if (types == undefined) {
             RED.notify("error @ RED.nodes.registerTypes " + uid + " don't contain a types object", "error", null, 6000);
-            console.warn(nodeDefinitionsCategory);
+            console.warn(nodeDefinitionsGroup);
         }
         var typesNames = Object.getOwnPropertyNames(types);
         for (var ti = 0; ti < typesNames.length; ti++) {
@@ -131,14 +145,6 @@ RED.nodes = (function() {
         if (node_defs[uid] == undefined) {
             node_defs[uid] = nodeDefinitions;
         }
-        
-             /*{
-            label:nodeDefinitions.label, 
-            description:nodeDefinitions.description,
-            url:nodeDefinitions.url,
-            isAddon:nodeDefinitions.isAddon,
-            types:{}
-        };*/
     }
 	function registerType(nt,def,nodeDefGroupName,dontReplaceExisting) {
         if (dontReplaceExisting != undefined && dontReplaceExisting == "true") {
@@ -146,6 +152,9 @@ RED.nodes = (function() {
         }
         
         node_defs[nodeDefGroupName].types[nt] = def;
+
+        // fix old type of category def.
+        if (def.category.endsWith("-function")) def.category = def.category.replace("-function", "");
 
         if (def.defaults == undefined) return; // discard this node def
 
@@ -1778,6 +1787,8 @@ RED.nodes = (function() {
 		moveNodeToEnd:moveNodeToEnd,
 		createWorkspaceObject:createWorkspaceObject,
 		createNewDefaultWorkspace: createNewDefaultWorkspace,
+        Init_BuiltIn_NodeDefinitions:Init_BuiltIn_NodeDefinitions,
+        registerGroups:registerGroups,
         registerTypes:registerTypes,
 		registerType: registerType,
         initNodeDefinitions:initNodeDefinitions,

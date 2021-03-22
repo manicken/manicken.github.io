@@ -309,7 +309,9 @@ RED.palette = (function() {
 			}
 			
 			if ($("#palette-base-category-"+category).length === 0){
+                console.warn("create missing palette category:" + category);
 				createCategoryContainer(category, "palette-container");
+                setCategoryClickFunction(category, "palette-container", "palette-header");
 			}
 			
 			/*if ($("#palette-"+defCategory).length === 0) {          
@@ -346,8 +348,6 @@ RED.palette = (function() {
 		
 	}
 	
-	
-
 	function setTooltipContent(prefix, key, elem, preInfo, postInfo) {
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
