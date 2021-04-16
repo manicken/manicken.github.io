@@ -520,7 +520,7 @@ RED.main = (function() {
         SetPopOver("#btn-moveWorkSpaceRight", "Move the current<br>workspace tab<br>one step to the right");
         //SetButtonPopOver("#lbl-guiEditMode", "Sets the UI nodes<br>to edit mode");
         //SetButtonPopOver("#lbl-guiRunMode", "Sets the UI nodes<br>to Run mode");
-        SetPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between Edit and Run mode<br>When it's checked that means it's edit mode.");
+        SetPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between <b>Edit</b> and <b>Run</b> mode<br>When it's <b>unchecked</b> that means it's <b>edit</b> mode.");
 
         SetPopOver("#btn-deploy", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
         SetPopOver("#btn-deploy2", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");

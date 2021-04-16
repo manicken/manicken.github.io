@@ -5,7 +5,7 @@ RED.NodeDefManager = (function() {
 
     var tooltips = {
         addMenu:"add new group or node type",
-        importMenu:"imports into the current selected node definition group (not yet implemented)",
+        importMenu:"imports into the current selected node definition group",
         removeButton:"remove current selected group or node definition",
         exportButton:"exports all node definitions as a json file",
         importFromFile: "(not yet implemented)",
@@ -396,7 +396,7 @@ RED.NodeDefManager = (function() {
                 $("#node-def-mgr-import-download-url").text(value);
                 downloadUrl = value;
                 downloadMode = "json";
-                Set_d3_Button_Enabled(downloadButton, true);
+                Set_d3_Button_Enabled(downloadButton, false);
             } else if (value.endsWith('.html') == true) {
                 if (value.startsWith("https://github.com"))
                     {
@@ -433,18 +433,10 @@ RED.NodeDefManager = (function() {
             //console.warn(value);
         }, 'on');
         CreateLabel(form, "node-def-mgr-import-url-info", "100px");
-        var modeItems = [{label:"Create New Group", value:"new"}, {label:"Import into existing group", value:"import"}];
-        CreateComboboxWithLabel(form, "node-def-mgr-import-url-mode", "Mode",modeItems, tooltips.importMode, function(value) { 
-            if (value == "new") {
-                init_ImportFromUrlNewGroup();
-            }
-            else if (value == "import") {
-                init_ImportFromUrlExistingGroup();
-            }
-        });
+        
 
-        importUrlParamsDiv = form.append('div');
-        init_ImportFromUrlNewGroup(); // default
+        
+        
         CreateLabel(form, "node-def-mgr-import-download-url");
         downloadButton = CreateButton(form, "Download", "Downloads the contents given by url", function() {
             if (downloadMode == "json") {
@@ -458,16 +450,12 @@ RED.NodeDefManager = (function() {
                         var nodeAddonGroups = RED.NodeDefGenerator.nodeAddonGroups();
                         if (nodeAddonGroups == undefined) {
                             $("#node-def-mgr-import-download-result").text("new node Addons (old structure) count:" + RED.NodeDefGenerator.nodeAddonsCount());
-                            $("#node-def-mgr-import-url-mode-row").removeClass("hidden");
-                            $("#node-def-mgr-import-url-mode-existing-row").removeClass("hidden");
-                            $("#input-ndmgr-uid-row").removeClass("hidden");
+                            show_import_UIDstuff();
                             
                         }
                         else {
                             $("#node-def-mgr-import-download-result").text("new node Addons (new structure) count:" + RED.NodeDefGenerator.nodeAddonsCount());
-                            $("#node-def-mgr-import-url-mode-row").addClass("hidden");
-                            $("#node-def-mgr-import-url-mode-existing-row").addClass("hidden");
-                            $("#input-ndmgr-uid-row").addClass("hidden");
+                            //hide_import_UIDstuff();
                             
                         }
                         newItemDialogOk_cb = function() {
@@ -516,6 +504,31 @@ RED.NodeDefManager = (function() {
         });
         Set_d3_Button_Enabled(downloadButton, false);
         CreateLabel(form, "node-def-mgr-import-download-result");
+
+        importUrlParamsDiv = form.append('div');
+        var modeItems = [{label:"Create New Group", value:"new"}, {label:"Import into existing group", value:"import"}];
+        CreateComboboxWithLabel(form, "node-def-mgr-import-url-mode", "Mode",modeItems, tooltips.importMode, function(value) { 
+            if (value == "new") {
+                init_ImportFromUrlNewGroup();
+            }
+            else if (value == "import") {
+                init_ImportFromUrlExistingGroup();
+            }
+        });
+        init_ImportFromUrlNewGroup(); // default
+        hide_import_UIDstuff();
+    }
+    function hide_import_UIDstuff()
+    {
+        $("#node-def-mgr-import-url-mode-row").addClass("hidden");
+        $("#node-def-mgr-import-url-mode-existing-row").addClass("hidden");
+        $("#input-ndmgr-uid-row").addClass("hidden");
+    }
+    function show_import_UIDstuff()
+    {
+        $("#node-def-mgr-import-url-mode-row").removeClass("hidden");
+        $("#node-def-mgr-import-url-mode-existing-row").removeClass("hidden");
+        $("#input-ndmgr-uid-row").removeClass("hidden");
     }
 
     function init_ImportFromUrlNewGroup() {
