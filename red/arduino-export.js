@@ -457,6 +457,7 @@ RED.arduino.export = (function () {
             // first go through special types
             var classComment = "";
             var classConstructorCode = "";
+            var classDestructorCode = "";
             var classFunctions = "";
             var classVars = "";
             var classAdditional = [];
@@ -503,12 +504,16 @@ RED.arduino.export = (function () {
                 else if (n.type == "ConstructorCode") {
                     classConstructorCode += n.comment + "\n";
                 }
+                else if (n.type == "DestructorCode") {
+                    classDestructorCode += n.comment + "\n";
+                }
             }
             if (classComment.length > 0) {
                 newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
             }
-            if (newWsCpp.isMain == false)
-                newWsCpp.contents += "\nclass " + ws.label + "\n{\npublic:\n";
+            if (newWsCpp.isMain == false) {
+                newWsCpp.contents += "\nclass " + ws.label + " " + ws.extraClassDeclarations +"\n{\npublic:\n";
+            }
             if (classVars.trim().length > 0) {
                 if (newWsCpp.isMain == false)
                     newWsCpp.contents += incrementTextLines(classVars, minorIncrement);
@@ -660,7 +665,7 @@ RED.arduino.export = (function () {
                     newWsCpp.contents += "*" + arrayNode.name + ";\n";
                 }
 
-
+                // generate constructor code
                 newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + ws.label + "() { // constructor (this is called when class-object is created)\n";
                 if (ac.totalCount != 0)
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "int pci = 0; // used only for adding new patchcords\n\n"
@@ -685,6 +690,8 @@ RED.arduino.export = (function () {
                 newWsCpp.contents += incrementTextLines(classConstructorCode, majorIncrement);
                 newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
 
+                
+                // generate destructor code if enabled
                 if (ws.generateCppDestructor == true) {
                     newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + "~" + ws.label + "() { // destructor (this is called when the class-object is deleted)\n";
                     if (ac.totalCount != 0) {
@@ -693,8 +700,10 @@ RED.arduino.export = (function () {
                         newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "delete patchCord[i];\n"
                         newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
                     }
+                    newWsCpp.contents += incrementTextLines(classDestructorCode, majorIncrement);
                     newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
                 }
+                
             } // don't generate constructor in main file END
 
             if (classFunctions.trim().length > 0) {
@@ -768,6 +777,10 @@ RED.arduino.export = (function () {
                 RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
             });
         }
+    }
+
+    function getCppClassName(wsLabel) {
+        return wsLabel.split(':')[0].split(' ')[0];
     }
 
     function isCodeFile(fileName) {

@@ -419,6 +419,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<input type="text" id="node-input-workspace-name" autocomplete="off">
         </div>
         <div class="form-row">
+			<label for="node-input-workspace-extraClassDeclarations" ><i class="icon-tag"></i> extra Class declarations:</label>
+			<input type="text" id="node-input-workspace-extraClassDeclarations" autocomplete="off">
+        </div>
+        <div class="form-row">
 			<label for="node-input-workspace-id" ><i class="icon-tag"></i> Id:</label>
 			<input type="text" readonly="true" id="node-input-workspace-id" autocomplete="off">
         </div>
@@ -827,6 +831,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             "DontRemoveCodeFiles":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"dontRemoveFiles","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
             "IncludeDef":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"includeDef","nonObject":"","category":"special","color":"#ddffbb","icon":"file.png"},
             "ConstructorCode":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"constructor code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
+            "DestructorCode":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"destructor code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
 
             "ConstValue":{"defaults":{"name":{},"id":{},"value":{"value":"0"},"valueType":{"value":"int"}},"shortName":"constValue","nonObject":"","category":"special","color":"#eb9834","icon":"hash.png"},
             "JunctionLR":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"JunctionLR","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-in.png"},
@@ -1607,6 +1612,29 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 <script type="text/x-red" data-template-name="ConstructorCode">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row-long">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
+		<pre id="aceEditor" style="height: 400px;"></pre>
+	</div>
+</script>
+<script type="text/x-red" data-help-name="DestructorCode">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This used to put code in the end of the class destructor.<br>
+	</div>
+	<h3>Notes</h3>
+	<p>To use the destructor functionality you must enable it on rename tab/workspace/class dialog, i.e. dubble click on the tab.</p>
+	<p></p>
+</script>
+<script type="text/x-red" data-template-name="DestructorCode">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">

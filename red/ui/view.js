@@ -4496,6 +4496,9 @@ RED.view = (function() {
 
         $( "#node-input-export-workspace" ).prop('checked',  ws.export);
         $("#node-input-generateCppDestructor-workspace").prop('checked', ws.generateCppDestructor);
+        $("#node-input-workspace-extraClassDeclarations").val(ws.extraClassDeclarations);
+
+        RED.main.SetPopOver("#node-input-workspace-extraClassDeclarations", "sets the extra class declarations <br> example (everything after the class name):<br>class ClassName final : Inheritance")
 
         RED.main.SetPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
 
@@ -4568,6 +4571,7 @@ RED.view = (function() {
                     var exportNew = $( "#node-input-export-workspace" ).prop('checked')
                     // TODO proper changed check
                     workspace.generateCppDestructor = $("#node-input-generateCppDestructor-workspace").prop('checked');
+                    workspace.extraClassDeclarations = $("#node-input-workspace-extraClassDeclarations").val();
                     workspace.isMain = $( "#node-input-export-isMain" ).prop('checked');
                     workspace.mainNameType = $( "#node-input-export-mainNameType" ).val();
                     workspace.mainNameExt = $( "#node-input-export-mainNameExt" ).val();
@@ -4631,6 +4635,8 @@ RED.view = (function() {
                         
 					}
                     RED.events.emit("flows:change",workspace);
+
+                    RED.storage.update();
 
 					$( this ).dialog( "close" );
 				}
