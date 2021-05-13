@@ -43,16 +43,17 @@ RED.nodes = (function() {
 	/**
 	 * this creates a workspace object
 	 */
-	function createWorkspaceObject(id, label, inputs, outputs, _export, isMain, mainNameType, mainNameExt, settings) // export is a reserved word
+	function createWorkspaceObject(id, label, inputs, outputs, _export, isMain, mainNameType, mainNameExt, settings, generateCppDestructor) // export is a reserved word
 	{
         // first set all default values if inputs are undefined
         if (_export == undefined) _export = true;
         if (isMain == undefined) isMain = false;
         if (mainNameType == undefined) mainNameType = "tabName";
         if (mainNameExt == undefined) mainNameExt = ".ino";
+        if (generateCppDestructor == undefined) generateCppDestructor = false;
         if (settings == undefined){ settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
         // return new structure
-		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt/*, nodes:[]*/, settings:settings}; // nodes is for future version
+		return { type:"tab", id:id, label:label, inputs:inputs, outputs:outputs, export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt/*, nodes:[]*/,generateCppDestructor:generateCppDestructor, settings:settings}; // nodes is for future version
 	}
 	function moveNodeToEnd(node)
 	{
@@ -720,7 +721,7 @@ RED.nodes = (function() {
             if (n.type === "workspace") n.type = "tab"; // type conversion
 
             var cIOs = getClassIOportCounts(n.id, newNodes);
-            var ws = createWorkspaceObject(n.id, n.label, cIOs.inCount, cIOs.outCount, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.settings);
+            var ws = createWorkspaceObject(n.id, n.label, cIOs.inCount, cIOs.outCount, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.settings, n.generateCppDestructor);
             
             addWorkspace(ws);
             newWorkspaces.push(ws);

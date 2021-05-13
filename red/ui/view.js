@@ -4495,10 +4495,12 @@ RED.view = (function() {
         $( "#node-input-workspace-id" ).val(ws.id);
 
         $( "#node-input-export-workspace" ).prop('checked',  ws.export);
+        $("#node-input-generateCppDestructor-workspace").prop('checked', ws.generateCppDestructor);
+
         RED.main.SetPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
 
         RED.main.SetPopOver("#node-input-export-isMain-settings", "This defines which file-name to use when exporting as main.", "left");
-
+        RED.main.SetPopOver("#node-input-generateCppDestructor-workspace", "This autogenerates the C++ destructor function that will disconnect and destroy all AudioConnections", "left");
         $( "#node-input-export-isMain" ).prop('checked',  ws.isMain);
         chk_exportIsMain_OnClick();
 
@@ -4565,6 +4567,7 @@ RED.view = (function() {
 					
                     var exportNew = $( "#node-input-export-workspace" ).prop('checked')
                     // TODO proper changed check
+                    workspace.generateCppDestructor = $("#node-input-generateCppDestructor-workspace").prop('checked');
                     workspace.isMain = $( "#node-input-export-isMain" ).prop('checked');
                     workspace.mainNameType = $( "#node-input-export-mainNameType" ).val();
                     workspace.mainNameExt = $( "#node-input-export-mainNameExt" ).val();

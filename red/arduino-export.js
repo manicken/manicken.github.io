@@ -684,6 +684,17 @@ RED.arduino.export = (function () {
                 }
                 newWsCpp.contents += incrementTextLines(classConstructorCode, majorIncrement);
                 newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
+
+                if (ws.generateCppDestructor == true) {
+                    newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + "~" + ws.label + "() { // destructor (this is called when the class-object is deleted)\n";
+                    if (ac.totalCount != 0) {
+                        newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.totalCount + "; i++) {\n";
+                        newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "patchCord[i]->disconnect();\n"
+                        newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "delete patchCord[i];\n"
+                        newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
+                    }
+                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
+                }
             } // don't generate constructor in main file END
 
             if (classFunctions.trim().length > 0) {
