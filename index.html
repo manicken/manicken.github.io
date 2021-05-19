@@ -832,6 +832,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             "IncludeDef":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"includeDef","nonObject":"","category":"special","color":"#ddffbb","icon":"file.png"},
             "ConstructorCode":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"constructor code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
             "DestructorCode":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"destructor code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
+            "EndOfFileCode":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"eof code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
 
             "ConstValue":{"defaults":{"name":{},"id":{},"value":{"value":"0"},"valueType":{"value":"int"}},"shortName":"constValue","nonObject":"","category":"special","color":"#eb9834","icon":"hash.png"},
             "JunctionLR":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"JunctionLR","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#4D54FF","textColor":"#FFFFFF","icon":"arrow-in.png"},
@@ -1566,7 +1567,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-help-name="Function">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
-	<p>This used to make a Function, <br>
+	<p>This used to make/include additonal <b>functions</b>, <br>
 		all function contents in the workspace is added at end of class seperated by newlines,  <br>
 		only the contents of the function is added, the name is only used in this tool.<br>
 		you can also write multiple functions together if you want.
@@ -1635,6 +1636,31 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 <script type="text/x-red" data-template-name="DestructorCode">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+		<input id="node-input-color" data-jscolor="">
+	</div>
+	<div class="form-row-long">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
+		<pre id="aceEditor" style="height: 400px;"></pre>
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="EndOfFileCode">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>This used to put code in the end of the file after any class declarations.<br>
+        i.e. when you for example need to have static assigments <br>
+        ClassName::someVar[] = {0,1,2};<br>
+	</div>
+	<h3>Notes</h3>
+	<p>The code is only included for non <b>main</b> files,<br> as when having a main file you should use simple <b>code</b> node type (Function object) instead.</p>
+</script>
+<script type="text/x-red" data-template-name="EndOfFileCode">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">

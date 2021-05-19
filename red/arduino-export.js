@@ -458,6 +458,7 @@ RED.arduino.export = (function () {
             var classComment = "";
             var classConstructorCode = "";
             var classDestructorCode = "";
+            var class_eofCode = "";
             var classFunctions = "";
             var classVars = "";
             var classAdditional = [];
@@ -506,6 +507,9 @@ RED.arduino.export = (function () {
                 }
                 else if (n.type == "DestructorCode") {
                     classDestructorCode += n.comment + "\n";
+                }
+                else if (n.type == "EndOfFileCode") {
+                    class_eofCode += n.comment + "\n";
                 }
             }
             if (classComment.length > 0) {
@@ -713,8 +717,10 @@ RED.arduino.export = (function () {
                     newWsCpp.contents += "\n" + classFunctions;
             }
 
-            if (newWsCpp.isMain == false) // don't include end of class marker when doing main.cpp 
+            if (newWsCpp.isMain == false) {// don't include end of class marker when doing main.cpp 
                 newWsCpp.contents += "};\n"; // end of class
+                newWsCpp.contents += class_eofCode; // after end of class
+            }
 
 
             newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n") + "\n" + classIncludes.join("\n") + "\n ");
