@@ -87,7 +87,15 @@ RED.IndexedDBfiles = (function() {
         console.log(window.indexedDB);
         // initial initiation
         var request = window.indexedDB.open("AudioSystemDesignTool", 4);
-        request.onerror = function(event) { console.trace("indexDB request onerror: ", event.target.error); };
+        request.onerror = function(event) {
+                console.trace("indexDB request onerror: ", event.target.error);
+                if (cbOk != undefined)
+                    cbOk();
+                else {
+                    db.close();
+                    RED.notify("cbOk was not defined in IndexedDBfiles init", "danger", null, 3000);
+                }
+            };
         request.onupgradeneeded = function(event) { // This event is only implemented in recent browsers
             db = event.target.result;
             console.warn("indexDB request onupgradeneeded: ", db );
