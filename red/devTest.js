@@ -63,6 +63,7 @@ RED.devTest = (function() {
         testExportArduinoPref:  { label:"test export arduino pref file", type:"button", action: testExportArduinoPref},
         testExportPlatformIOini:{ label:"test export PlatformIO.ini file", type:"button", action: testExportPlatformIOini},
         testExportMakeFile:     { label:"test export make file", type:"button", action: testExportMakeFile},
+        testWebKitSound:        { label:"testWebKitSound", type:"button",  buttonClass:"btn-primary btn-sm", action: testWebKitSound},
         convertFileToOneLiner:  { label:"convert file to<br>one liner string<br>in new file", type:"button", isFileInput:true, buttonClass:"btn-primary btn-sm", action: convertFileToOneLineString},
 		testPost:               { label:"test post", type:"string"},
 		testGet:                { label:"test get", type:"string"},
@@ -74,6 +75,100 @@ RED.devTest = (function() {
         
         
     };
+
+    var isPlaying = false;
+    var testWebKitSound_scope = undefined;
+    
+    function testWebKitSound() {
+        //var c = document.getElementById('divSetting-devTest-testWebKitSound');
+        if (testWebKitSound_scope == undefined) {
+            testWebKitSound_scope = document.createElement("canvas");
+            testWebKitSound_scope.id = "scope";
+            var scd = document.createElement("div");
+            scd.className = "settings-content";
+            var cd = document.createElement("div");
+            cd.className = "center";
+            cd.appendChild(testWebKitSound_scope);
+            scd.appendChild(cd);
+
+            var scdb = document.createElement("div");
+            scdb.className = "center";
+
+            scdb.appendChild(document.getElementById('btn-devTest-testWebKitSound'));
+            var dsdt_twks = document.getElementById('divSetting-devTest-testWebKitSound')
+            dsdt_twks.appendChild(scdb);
+
+            dsdt_twks.className = "settings-item";
+            
+            dsdt_twks.appendChild(scd);
+            
+        }
+        ctx = testWebKitSound_scope.getContext("2d");
+    
+        testWebKitSound_scope.height = 200;
+        testWebKitSound_scope.width = 400;
+        
+        // make 0-line permanent as background
+        ctx.moveTo(0, 100.5);
+        ctx.lineTo(testWebKitSound_scope.width, 100.5);
+        ctx.stroke();
+        testWebKitSound_scope.style.backgroundImage = "url(" + testWebKitSound_scope.toDataURL() + ")";
+    
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+        var ac = new window.AudioContext();
+        var masterGain = ac.createGain();
+        var analyser = ac.createAnalyser();
+
+        masterGain.connect(analyser);
+        analyser.connect(ac.destination);
+
+        var numCoeffs = 128; // The more coefficients you use, the better the approximation
+        var realCoeffs = new Float32Array(numCoeffs);
+        var imagCoeffs = new Float32Array(numCoeffs);
+
+        //realCoeffs[0] = 0.5;
+        for (var i = 1; i < numCoeffs; i++) { // note i starts at 1
+            imagCoeffs[i] = 1 / ((i) * Math.PI);
+           // realCoeffs[i] = 0.5;
+        }
+        var wave = ac.createPeriodicWave(realCoeffs, imagCoeffs); // will be a simple sine wave
+
+        var osc = ac.createOscillator();
+        osc.setPeriodicWave(wave);
+        osc.frequency.value = 220;
+        //osc.connect(ac.destination);
+        osc.connect(masterGain);
+        osc.start(ac.currentTime);
+        
+        isPlaying = true;
+        osc.stop(ac.currentTime + 1);
+        drawWave(analyser, ctx);
+        
+    }
+    //draw function for canvas
+function drawWave(analyser, ctx) {
+  
+    var buffer = new Float32Array(1024),
+        w = ctx.canvas.width;
+    
+    ctx.strokeStyle = "#777";
+    ctx.setTransform(1,0,0,-1,0,100.5); // flip y-axis and translate to center
+    ctx.lineWidth = 2;
+    
+    (function loop() {
+      analyser.getFloatTimeDomainData(buffer);
+      
+      ctx.clearRect(0, -100, w, ctx.canvas.height);
+  
+      ctx.beginPath();
+      ctx.moveTo(0, buffer[0] * 90);
+      for (var x = 2; x < w; x += 2) ctx.lineTo(x, buffer[x] * 90);
+      ctx.stroke();
+      
+      if (isPlaying) requestAnimationFrame(loop)
+    })();
+  }
 
     
     function testSelectFileByApi_OK(responseText) {
