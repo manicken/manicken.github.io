@@ -1,5 +1,5 @@
 Main Screen With my project:<br>
-![MainScreenDemo](/MainScreenDemo.png)
+![MainScreenDemo](/helpImgs/MainScreenDemo.png)
 
 I have included my complete Poly Synth Project into the html<br>
 it's available at the rightmost menu -> Examples -> Manicken Poly Synth<br>
@@ -20,7 +20,7 @@ GUI Edit/Run (only used for the UI objects)<br>
 the toolbar can be hidden in the settings<br>
 
 * Drop down Import and Export Menus<br>
-![ImportMenu](/ImportMenu.png)
+![ImportMenu](/helpImgs/ImportMenu.png)
 
 * when exporting/saving the nodes are sorted by the visible major grid columns<br>
 1 4 7<br>
@@ -56,7 +56,7 @@ with descriptions both for the objects and object functions.<br>
 Autocomplete currently don't have support for variables.<br>
 
 example how the autocomplete looks:<br>
-![Autocomplete_MultiLevel](/Autocomplete_MultiLevel.png)
+![Autocomplete_MultiLevel](/helpImgs/Autocomplete_MultiLevel.png)
 
 Code is edited in CodeFile and Function node types.<br>
 
@@ -123,7 +123,7 @@ I plan to use the group like a exportable class/(seperate object) so that it can
 so the checkbox "Export as class" have no function yet.<br>
 
 example of grouped listboxes:<br>
-![GroupedListBoxes](/GroupedListBoxes.png)
+![GroupedListBoxes](/helpImgs/GroupedListBoxes.png)
 
 * UI_Button<br>
 have seperate pressed and release send data fields (the text in the field is the raw data sent)<br>
@@ -135,8 +135,8 @@ have a bottom placed label that can show the current value<br>
 have a "Send Format" field that is also parsed by the eval, example:<br>
 "midisend(0xB0,"+d.midiId+"," + d.val + ");"<br>
 
-![H Slider](/H_Slider.png)
-![V Slider](/V_Slider.png)
+![H Slider](/helpImgs/H_Slider.png)
+![V Slider](/helpImgs/V_Slider.png)
 
 * UI_Label<br>
 is a borderless node with a selectable background color<br>
@@ -148,7 +148,7 @@ behaves like a big listbox item (can be used when long list of items need to be 
 sendCommand example:<br>
 "midiSend("+(0xB0+d.midiCh)+","+d.midiId+","+d.sel ectedIndex+")"<br>
 
-![ListBox](/ListBox.png)
+![ListBox](/helpImgs/ListBox.png)
 
 * UI_Piano (one octave)<br>
 this is the most advanced (by design) node yet<br>
@@ -157,7 +157,7 @@ it's a single octave Piano-part (multiple can be stacked together to form a full
 sendCommand example:<br>
 "midiSend("+(d.keyDown+d.midiCh)+","+(d.octave*12+ d.keyIndex) +",127)"<br>
 
-![Piano](/Piano.png)
+![Piano](/helpImgs/Piano.png)
 
 * UI_ScriptButton<br>
 this is the most fun node type,<br>
@@ -190,7 +190,7 @@ have two variants one that goes in normal direction L-R<br>
 and one that goes in the reverse direction<br>
 
 example of R-L junction usage:<br>
-![ReverseJunction](/ReverseJunction.png)
+![ReverseJunction](/helpImgs/ReverseJunction.png)
 
 I tried my best to make the embedded documentation as clear as possible,<br>
 but contributions is appreciated.<br>
