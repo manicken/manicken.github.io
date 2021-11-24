@@ -56,6 +56,8 @@ RED.devTest = (function() {
     var settingsCategory = { label:"Development Tests", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
+
+        exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList},
         testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
 
         
@@ -147,28 +149,43 @@ RED.devTest = (function() {
         
     }
     //draw function for canvas
-function drawWave(analyser, ctx) {
-  
-    var buffer = new Float32Array(1024),
-        w = ctx.canvas.width;
+    function drawWave(analyser, ctx) {
     
-    ctx.strokeStyle = "#777";
-    ctx.setTransform(1,0,0,-1,0,100.5); // flip y-axis and translate to center
-    ctx.lineWidth = 2;
+        var buffer = new Float32Array(1024),
+            w = ctx.canvas.width;
+        
+        ctx.strokeStyle = "#777";
+        ctx.setTransform(1,0,0,-1,0,100.5); // flip y-axis and translate to center
+        ctx.lineWidth = 2;
+        
+        (function loop() {
+        analyser.getFloatTimeDomainData(buffer);
+        
+        ctx.clearRect(0, -100, w, ctx.canvas.height);
     
-    (function loop() {
-      analyser.getFloatTimeDomainData(buffer);
-      
-      ctx.clearRect(0, -100, w, ctx.canvas.height);
-  
-      ctx.beginPath();
-      ctx.moveTo(0, buffer[0] * 90);
-      for (var x = 2; x < w; x += 2) ctx.lineTo(x, buffer[x] * 90);
-      ctx.stroke();
-      
-      if (isPlaying) requestAnimationFrame(loop)
-    })();
-  }
+        ctx.beginPath();
+        ctx.moveTo(0, buffer[0] * 90);
+        for (var x = 2; x < w; x += 2) ctx.lineTo(x, buffer[x] * 90);
+        ctx.stroke();
+        
+        if (isPlaying) requestAnimationFrame(loop)
+        })();
+    }
+    function exportCompleteFunctionList() {
+    
+        var node_defs = RED.nodes.node_defs["officialNodes"].types;
+        var node_def_names = Object.getOwnPropertyNames(node_defs);
+        var result = "";
+        //console.warn(node_def_names.length);
+        for (var i = 0; i < node_def_names.length; i++) {
+            result += node_def_names[i] + "\n";
+            var funcs = AceAutoComplete.getFromHelp(node_def_names[i]);
+            for (var fi = 0; fi < funcs.length; fi++) {
+                result += "  " + funcs[fi].name + "\n";
+            }
+        }
+        RED.arduino.export.showExportDialog("All official functions", result, "list");
+    }
 
     
     function testSelectFileByApi_OK(responseText) {
