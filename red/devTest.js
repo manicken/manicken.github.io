@@ -179,10 +179,8 @@ RED.devTest = (function() {
         //console.warn(node_def_names.length);
         for (var i = 0; i < node_def_names.length; i++) {
             result += i +  " " + node_def_names[i] + "\n";
-            var funcs = AceAutoComplete.getFromHelp(node_def_names[i]);
-            for (var fi = 0; fi < funcs.length; fi++) {
-                result += "  " + funcs[fi].name + "\n";
-            }
+            result += RED.arduino.export.generate_OSC_function_decode(node_def_names[i]);
+            
         }
         RED.arduino.export.showExportDialog("All official functions", result, "list");
     }

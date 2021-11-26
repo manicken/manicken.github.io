@@ -785,6 +785,26 @@ RED.arduino.export = (function () {
         }
     }
 
+    function generate_OSC_function_decode(className) {
+        var result = "void decode_osc_functions_" + className + "(AudioStream *as, const char *func_name, const char *func_value) {\n";
+        result += "    float val = std:stod(func_value);\n";
+        result += "    " + className + "* cn = static_cast<" + className + "*>(as);\n";
+        var funcs = AceAutoComplete.getFromHelp(className);
+        for (var fi = 0; fi < funcs.length; fi++) {
+            if (funcs[fi].name.includes(","))
+                continue;
+            var funcName = funcs[fi].name.substring(0, funcs[fi].name.indexOf("("));
+            result += "    ";
+            if (fi != 0) result += "else ";
+
+            if (funcs[fi].name.includes("()")) val = ""; // no function parameters
+
+            result += "if (strcmp(func_name, \""+funcName+"\") == 0) cn->" + funcName + "(" + val + ");\n";
+        }
+        result += "}\n";
+        return result;
+    }
+
     function getCppClassName(wsLabel) {
         return wsLabel.split(':')[0].split(' ')[0];
     }
@@ -839,5 +859,6 @@ RED.arduino.export = (function () {
         //isSpecialNode:isSpecialNode,
         showExportDialog: showExportDialog,
         pushJSON: pushJSON,
+        generate_OSC_function_decode:generate_OSC_function_decode,
     };
 })();
