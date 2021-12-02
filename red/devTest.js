@@ -58,6 +58,9 @@ RED.devTest = (function() {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
 
         exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList},
+        
+        refreshComports:      { label:"Refresh serial ports", type:"button", buttonClass:"btn-primary btn-sm", action: refreshComports},
+		comports:            { label:"Serial Ports", type:"combobox", actionOnChange:true, valueId:""}, // valueId is se
         testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
 
         
@@ -80,6 +83,18 @@ RED.devTest = (function() {
 
     var isPlaying = false;
     var testWebKitSound_scope = undefined;
+
+    function refreshComports() {
+        console.log("available serial ports");
+        var ser = navigator.serial;
+        console.log(ser);
+        /*navigator.serial.getPorts()
+.then((ports) => {
+  // Initialize the list of available ports with `ports` on page load.
+  console.log(ports);
+});*/
+       
+    }
     
     function testWebKitSound() {
         //var c = document.getElementById('divSetting-devTest-testWebKitSound');
