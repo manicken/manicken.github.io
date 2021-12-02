@@ -85,14 +85,15 @@ RED.devTest = (function() {
     var testWebKitSound_scope = undefined;
 
     function refreshComports() {
-        console.log("available serial ports");
+        console.log("Web Serial Port Test");
         var ser = navigator.serial;
         console.log(ser);
-        /*navigator.serial.getPorts()
+        console.log("available serial ports");
+        navigator.serial.getPorts()
 .then((ports) => {
   // Initialize the list of available ports with `ports` on page load.
   console.log(ports);
-});*/
+});
        
     }
     
