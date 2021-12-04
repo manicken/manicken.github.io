@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)https://unjavascripter-web-serial-example.glitch.me/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Serial</title>
+  <meta http-equiv="origin-trial" content="AiM0rMslVx2jumsJjQ144QeZTScNmGVMYzBuXoaMQwCd7UHWbQH8Rg20adCN7XWaTMai4HvsUIyx3+blPPiupwEAAABreyJvcmlnaW4iOiJodHRwczovL3VuamF2YXNjcmlwdGVyLXdlYi1zZXJpYWwtZXhhbXBsZS5nbGl0Y2gubWU6NDQzIiwiZmVhdHVyZSI6IlNlcmlhbCIsImV4cGlyeSI6MTU5Njk3OTA1NX0=">
+  <style>
+    .repo-link {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      margin: 0 1rem 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="connect-to-serial">Connect to serial port</button>
+  <button id="get-serial-messages">Get serial messages</button>
+  <div>
+    <form id="message-form">
+      <input type="text" id="message-input" disabled="true">
+      <button type="submit" id="submit-button" disabled="true">Send</button>
+    </form>
+  </div>
+  <div id="serial-messages-container"></div>
+  
+  <div class="repo-link">
+    <a href="https://github.com/UnJavaScripter/web-serial-example">GitHub Repo</a>
+  </div>
+
+  <script src="./Web Serial_files/app.js.download"></script>
+  <script>
+    const serialLEDController = new SerialLEDController();
+    const connect = document.getElementById('connect-to-serial');
+    const getSerialMessages = document.getElementById('get-serial-messages');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const submitButton = document.getElementById('submit-button');
+    const serialMessagesContainer = document.getElementById('serial-messages-container');
+
+    connect.addEventListener('pointerdown', () => {
+      serialLEDController.init();
+
+      serialMessagesContainer.removeAttribute('disabled');
+      messageInput.removeAttribute('disabled');
+      submitButton.removeAttribute('disabled');
+    });
+
+    messageForm.addEventListener('submit', event => {
+      event.preventDefault();
+      serialLEDController.write(event.target.firstElementChild.value);
+      getSerialMessage();
+    });
+
+    getSerialMessages.addEventListener('pointerdown', async () => {
+      getSerialMessage();
+    });
+
+    async function getSerialMessage() {
+      serialMessagesContainer.innerText += await serialLEDController.read() + '\n';
+    }
+
+  </script>
+
+</body></html>

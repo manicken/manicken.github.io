@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!-- saved from url=(0035)https://webmidi-examples.glitch.me/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>WebMIDI examples</title>
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="./WebMIDI examples_files/css" rel="stylesheet">
+    <link rel="stylesheet" href="./WebMIDI examples_files/style.css">
+    <script src="./WebMIDI examples_files/script.js.download" defer=""></script>
+    
+    <!-- Highlight.js -->
+    <script src="./WebMIDI examples_files/highlight.min.js.download"></script>
+    <link rel="stylesheet" href="./WebMIDI examples_files/github-gist.min.css">
+    
+    <!-- Polyfill -->
+    <script src="./WebMIDI examples_files/WebMIDIAPI.min.js.download"></script>
+  <link rel="stylesheet" href="./WebMIDI examples_files/button.css"></head>  
+  <body>
+    <h1>WebMIDI Examples</h1>
+    <p>
+      The Web MIDI API lets your browser talk to MIDI devices. This page gives you a bunch of copy pasteable snippets
+      for these basic interactions, that I basically collected from one of the below links.
+    </p>
+    <p>
+      <a href="https://webaudio.github.io/web-midi-api/">Spec</a> |
+      <a href="https://developer.mozilla.org/en-US/docs/Web/API/MIDIAccess">MDN</a> |
+      <a href="http://cwilso.github.io/WebMIDIAPIShim/">Polyfill</a> (read the fine print re: its dependencies)
+    </p>
+    
+    <h2>Connecting</h2>
+    
+    <button class="copy" onclick="copy(event)">Copy</button>
+    <pre><code class="js hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connect</span>(<span class="hljs-params"></span>) </span>{
+  navigator.requestMIDIAccess()
+  .then(
+    <span class="hljs-function">(<span class="hljs-params">midi</span>) =&gt;</span> midiReady(midi),
+    (err) =&gt; <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Something went wrong'</span>, err));
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">midiReady</span>(<span class="hljs-params">midi</span>) </span>{
+  <span class="hljs-comment">// Also react to device changes.</span>
+  midi.addEventListener(<span class="hljs-string">'statechange'</span>, (event) =&gt; initDevices(event.target));
+  initDevices(midi); <span class="hljs-comment">// see the next section!</span>
+}
+</code></pre>
+    
+    <h2>Devices</h2>
+    <p>If you have any MIDI devices connected, they will appear here. You can also simulate them
+    if you don't have any, but this depends on OS/what you have installed, so you need to figure it out.</p>
+    <b>Inputs:</b> <select id="selectIn"><option>Teensy MIDI/Audio</option></select><br>
+    <b>Outputs:</b> <select id="selectOut"><option>Teensy MIDI/Audio</option></select>
+    
+    <button class="copy" onclick="copy(event)">Copy</button>
+    <pre><code class="js hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">initDevices</span>(<span class="hljs-params">midi</span>) </span>{
+  <span class="hljs-comment">// Reset.</span>
+  midiIn = [];
+  midiOut = [];
+  
+  <span class="hljs-comment">// MIDI devices that send you data.</span>
+  <span class="hljs-keyword">const</span> inputs = midi.inputs.values();
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> input = inputs.next(); input &amp;&amp; !input.done; input = inputs.next()) {
+    midiIn.push(input.value);
+  }
+  
+  <span class="hljs-comment">// MIDI devices that you send data to.</span>
+  <span class="hljs-keyword">const</span> outputs = midi.outputs.values();
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> output = outputs.next(); output &amp;&amp; !output.done; output = outputs.next()) {
+    midiOut.push(output.value);
+  }
+  
+  displayDevices();
+  startListening();
+}
+
+
+<span class="hljs-comment">// Start listening to MIDI messages.</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">startListening</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> input <span class="hljs-keyword">of</span> midiIn) {
+    input.addEventListener(<span class="hljs-string">'midimessage'</span>, midiMessageReceived);
+  }
+}</code></pre>    
+    
+    <h2>Listening to messages from an input device</h2>
+    <p>To test this, start mashing on the buttons/keys of a connected input device.</p>
+    <p class="output" id="outputIn"></p>
+    
+    <button class="copy" onclick="copy(event)">Copy</button>
+    <pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">midiMessageReceived</span>(<span class="hljs-params">event</span>) </span>{
+  <span class="hljs-comment">// MIDI commands we care about. See</span>
+  <span class="hljs-comment">// http://webaudio.github.io/web-midi-api/#a-simple-monophonic-sine-wave-midi-synthesizer.</span>
+  <span class="hljs-keyword">const</span> NOTE_ON = <span class="hljs-number">9</span>;
+  <span class="hljs-keyword">const</span> NOTE_OFF = <span class="hljs-number">8</span>;
+
+  <span class="hljs-keyword">const</span> cmd = event.data[<span class="hljs-number">0</span>] &gt;&gt; <span class="hljs-number">4</span>;
+  <span class="hljs-keyword">const</span> pitch = event.data[<span class="hljs-number">1</span>];
+  <span class="hljs-keyword">const</span> velocity = (event.data.length &gt; <span class="hljs-number">2</span>) ? event.data[<span class="hljs-number">2</span>] : <span class="hljs-number">1</span>;
+  
+  <span class="hljs-comment">// You can use the timestamp to figure out the duration of each note.</span>
+  <span class="hljs-keyword">const</span> timestamp = <span class="hljs-built_in">Date</span>.now();
+  
+  <span class="hljs-comment">// Note that not all MIDI controllers send a separate NOTE_OFF command for every NOTE_ON.</span>
+  <span class="hljs-keyword">if</span> (cmd === NOTE_OFF || (cmd === NOTE_ON &amp;&amp; velocity === <span class="hljs-number">0</span>)) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`🎧 from <span class="hljs-subst">${event.srcElement.name}</span> note off: pitch:<span class="hljs-subst">${pitch}</span>, velocity: <span class="hljs-subst">${velocity}</span>`</span>);
+  
+    <span class="hljs-comment">// Complete the note!</span>
+    <span class="hljs-keyword">const</span> note = notesOn.get(pitch);
+    <span class="hljs-keyword">if</span> (note) {
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`🎵 pitch:<span class="hljs-subst">${pitch}</span>, duration:<span class="hljs-subst">${timestamp - note}</span> ms.`</span>);
+      notesOn.delete(pitch);
+    }
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (cmd === NOTE_ON) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`🎧 from <span class="hljs-subst">${event.srcElement.name}</span> note off: pitch:<span class="hljs-subst">${pitch}</span>, velocity: {velocity}`</span>);
+    
+    <span class="hljs-comment">// One note can only be on at once.</span>
+    notesOn.set(pitch, timestamp);
+  }
+}</code></pre>
+    
+    <h2>Sending a message to an output device</h2>
+    <p>To test this, press one of these buttons and listen to the audio coming out of your output device.</p>
+    <b>Pitch:</b> <input id="inputPitch" value="60"><br>
+    <b>Velocity:</b> <input id="inputVelocity" value="100"><br>
+    <b>Duration:</b> <input id="inputDuration" value="100"> <b>ms.</b><br>
+    <br>
+    <button onclick="sendMidiMessage(inputPitch.value, inputVelocity.value, inputDuration.value)">Send!</button>
+    
+    <button class="copy" onclick="copy(event)">Copy</button>
+    <pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">sendMidiMessage</span>(<span class="hljs-params">pitch, velocity, duration</span>) </span>{
+  <span class="hljs-keyword">const</span> NOTE_ON = <span class="hljs-number">0x90</span>;
+  <span class="hljs-keyword">const</span> NOTE_OFF = <span class="hljs-number">0x80</span>;
+  
+  <span class="hljs-keyword">const</span> device = midiOut[selectOut.selectedIndex];
+  <span class="hljs-keyword">const</span> msgOn = [NOTE_ON, pitch, velocity];
+  <span class="hljs-keyword">const</span> msgOff = [NOTE_ON, pitch, velocity];
+  
+  <span class="hljs-comment">// First send the note on;</span>
+  device.send(msgOn); 
+    
+  <span class="hljs-comment">// Then send the note off. You can send this separately if you want </span>
+  <span class="hljs-comment">// (i.e. when the button is released)</span>
+  device.send(msgOff, <span class="hljs-built_in">Date</span>.now() + duration); 
+}</code></pre>
+    
+    <p class="footer">
+      // made with a 🎹 and 🎧 by <a href="https://twitter.com/notwaldorf">monica</a> who has been
+      copy pasting this code a lot recently.
+    </p>
+    
+    <div class="glitchButton" style="position:fixed;top:20px;right:20px;"><button class="glitchButtonElement"><img alt="This is a Glitch app!" width="50px" src="./WebMIDI examples_files/1973df30-22e4-49d9-94b0-9a3b017066bc_GlitchLogo_Color.svg"></button><div class="glitchOpenWindowElement" style="display: none;"><div class="project">
+          <div class="projectInfo" style="display: block;">
+            <div class="name"><a href="https://glitch.com/~webmidi-examples?utm_source=button&amp;utm_medium=button&amp;utm_campaign=glitchButton&amp;utm_content=webmidi-examples">webmidi-examples</a></div>
+            <p class="description">Copy pasteable examples of interacting with the Web MIDI API</p>
+            <div class="users">
+              <ul><li><a href="https://glitch.com/@notwaldorf?utm_source=button&amp;utm_medium=button&amp;utm_campaign=glitchButton&amp;utm_contnet=webmidi-examples"><img width="25px" src="./WebMIDI examples_files/bf62f926-f598-46d5-9b9c-056b0a2bbdc8-small.png" alt="avatar of notwaldorf"> <span class="name">notwaldorf</span></a></li></ul>
+            </div>
+          </div>
+          <div class="projectActions" style="display: block;"><a class="buttonLinks remix" href="https://glitch.com/edit?utm_source=button&amp;utm_medium=button&amp;utm_campaign=glitchButton&amp;utm_content=webmidi-examples/#!/remix/webmidi-examples">Remix on Glitch</a><br> <a class="buttonLinks viewCode" href="https://glitch.com/edit?utm_source=button&amp;utm_medium=button&amp;utm_campaign=glitchButton&amp;utm_content=webmidi-examples/#!/webmidi-examples">View Source</a><br> <button class="buttonLinks embed">Embed This App</button></div>
+          <div class="projectEmbed" style="display: none;"><div class="embedGlitchCode"><label>Copy and paste this code anywhere you want to embed this app.<textarea>&lt;div class="glitch-embed-wrap" style="height: 486px; width: 100%;"&gt;
+  &lt;iframe
+    allow="geolocation; microphone; camera; midi; encrypted-media"
+    src="https://glitch.com/embed/#!/embed/webmidi-examples?previewSize=100&amp;previewFirst=true&amp;sidebarCollapsed=true"
+    alt="webmidi-examples on Glitch"
+    style="height: 100%; width: 100%; border: 0;"&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;</textarea><a class="buttonLinks viewCode" href="https://glitch.com/edit?utm_source=button&amp;utm_medium=button&amp;utm_campaign=glitchButton&amp;utm_content=webmidi-examples/#!/webmidi-examples">View Source</a> to customize the embed under the "Share" menu.</label></div></div>
+        </div> <span class="tooltip border"></span><span class="tooltip fill"></span></div></div>
+    <script src="./WebMIDI examples_files/button.js.download"></script>
+  
+
+</body></html>

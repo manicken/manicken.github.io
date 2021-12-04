@@ -579,6 +579,19 @@ RED.main = (function() {
         else
             RED.sidebar.info.clear(); // shows the welcome text
 
+        var queryCmd = getQueryVariable("cmd");
+        if (queryCmd && (queryCmd.trim() != "")) {
+            queryCmd = queryCmd.trim();
+            for (var i = 0; i < RED.settings.urlcmds.length; i++) {
+                if (RED.settings.urlcmds[i].name == queryCmd) {
+                    RED.settings.urlcmds[i].cb();
+                    break;
+                }
+            }
+                
+        }
+            
+
         $(".palette-spinner").hide();
 
         RED.events.emit("projects:load",{name:RED.arduino.settings.ProjectName});

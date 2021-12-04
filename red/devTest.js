@@ -57,7 +57,7 @@ RED.devTest = (function() {
     var settingsEditor = {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
 
-        exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList},
+        exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList, urlCmd:"exportCompleteFunctionList"},
         
         refreshComports:      { label:"Refresh serial ports", type:"button", buttonClass:"btn-primary btn-sm", action: refreshComports},
 		comports:            { label:"Serial Ports", type:"combobox", actionOnChange:true, valueId:""}, // valueId is se
@@ -86,15 +86,29 @@ RED.devTest = (function() {
 
     function refreshComports() {
         console.log("Web Serial Port Test");
-        var ser = navigator.serial;
-        console.log(ser);
-        console.log("available serial ports");
-        navigator.serial.getPorts()
-.then((ports) => {
-  // Initialize the list of available ports with `ports` on page load.
-  console.log(ports);
-});
-       
+        
+
+        port = navigator.serial.requestPort();
+        // - Wait for the port to open.
+        //port.open({ baudrate: 9600 });
+        connect(port);
+        writeToStream('\x03', 'echo(false);');
+    }
+
+    function connect() {
+        // CODELAB: Add code setup the output stream here.
+        const encoder = new TextEncoderStream();
+        outputDone = encoder.readable.pipeTo(port.writable);
+        outputStream = encoder.writable;
+    }
+    function writeToStream(lines) {
+        // CODELAB: Write to output stream
+        const writer = outputStream.getWriter();
+        lines.forEach((line) => {
+        console.log('[SEND]', line);
+        writer.write(line + '\n');
+        });
+        writer.releaseLock();
     }
     
     function testWebKitSound() {

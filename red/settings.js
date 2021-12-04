@@ -20,7 +20,8 @@
 
 
 RED.settings = (function() {
-    
+    var urlcmds = [];
+
     var globalMenuItems = [{label:"Reset Settings",iconClass:"fa fa-refresh", func:resetCatSettings}];
 
     function createTab()
@@ -308,6 +309,9 @@ RED.settings = (function() {
                         RED.settings.editor.createButton(catContainerId, RED_Class_Name+"-"+settingName.replace('.', '_'), setting.label, setting.buttonClass, setting.action, setting.popupText, setting.isFileInput);
                     else
                         RED.settings.editor.createButton(catContainerId, RED_Class_Name+"-"+settingName.replace('.', '_'), setting.label, "btn-primary btn-sm", setting.action, setting.popupText, setting.isFileInput);
+                    if (setting.urlCmd != undefined) {
+                        urlcmds.push({name:setting.urlCmd, cb:setting.action});
+                    }
                 }
                 else
                     console.error("generateSettingsFromClasses, " + settingName + " have no action callback function");
@@ -356,6 +360,7 @@ RED.settings = (function() {
         restoreSettings:restoreSettings,
         resetAllSettings:resetAllSettings,
         UpdateSettingsEditorCat:UpdateSettingsEditorCat,
+        urlcmds:urlcmds
 	};
 })();
 
