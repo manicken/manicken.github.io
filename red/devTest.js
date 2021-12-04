@@ -205,14 +205,15 @@ RED.devTest = (function() {
     
         var node_defs = RED.nodes.node_defs["officialNodes"].types;
         var node_def_names = Object.getOwnPropertyNames(node_defs);
-        var result = "";
+        var defines = "";
+        var functions = "";
         //console.warn(node_def_names.length);
         for (var i = 0; i < node_def_names.length; i++) {
-            result += i +  " " + node_def_names[i] + "\n";
-            result += RED.arduino.export.generate_OSC_function_decode(node_def_names[i]);
+            defines += "#define OSC_TYPE_" + node_def_names[i]  + " " + i + "\n";
+            functions += RED.arduino.export.generate_OSC_function_decode(node_def_names[i]);
             
         }
-        RED.arduino.export.showExportDialog("All official functions", result, "list");
+        RED.arduino.export.showExportDialog("All official functions", defines + "\n" + functions, "list");
     }
 
     

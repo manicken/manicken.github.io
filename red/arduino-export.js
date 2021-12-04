@@ -786,14 +786,18 @@ RED.arduino.export = (function () {
     }
 
     function generate_OSC_function_decode(className) {
+        var funcs = AceAutoComplete.getFromHelp(className);
+        if (funcs.length == 0) return "";
         var result = "void decode_osc_functions_" + className + "(AudioStream *as, const char *func_name, const char *func_value) {\n";
         result += "    float val = std:stod(func_value);\n";
         result += "    " + className + "* cn = static_cast<" + className + "*>(as);\n";
-        var funcs = AceAutoComplete.getFromHelp(className);
+        
         for (var fi = 0; fi < funcs.length; fi++) {
-            if (funcs[fi].name.includes(","))
+            if (funcs[fi].name.includes(",")) // only support one parameter functions at the moment
                 continue;
             var funcName = funcs[fi].name.substring(0, funcs[fi].name.indexOf("("));
+            var val = "val"; //funcs[fi].name.substring(funcs[fi].name.indexOf("(") + 1, funcs[fi].name.indexOf(")"));
+            
             result += "    ";
             if (fi != 0) result += "else ";
 
