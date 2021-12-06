@@ -2100,27 +2100,10 @@ RED.view = (function() {
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
 			if (d.sendMode == "m")
-				sendUiSliderValue(d);
+				RED.ControlGUI.sendUiSliderValue(d);
 		}
 	}
-	function sendUiSliderValue(d)
-	{
-		if (d.lastSentValue != undefined)
-		{
-			if (d.lastSentValue === d.val) return;
-		}
-		d.lastSentValue = d.val;
-
-		if (d.sendFormat != undefined && d.sendFormat.trim() != "")
-		{
-			var formatted = eval(d.sendFormat);
-			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
-		}
-		else if (d.sendSpace == true)
-			RED.BiDirDataWebSocketBridge.SendToWebSocket(d.name + " " + d.val); // n.name is the labelID
-		else
-			RED.BiDirDataWebSocketBridge.SendToWebSocket(d.name + d.val); // n.name is the labelID
-	}
+	
 	function setUiSliderValueFromMouse(d, mouseX, mouseY)
 	{
 		//console.error("setUiSliderValueFromMouse");
@@ -2265,12 +2248,12 @@ RED.view = (function() {
 
 		if (d.type == "UI_Button") {
 			setRectFill(rect);
-			if (d.pressAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.pressAction);
+			RED.ControlGUI.sendUiButton(true, d);
 		
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
 			if (d.sendMode == "m")
-				sendUiSliderValue(d);
+                RED.ControlGUI.sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
 			var newIndex = rect.attr("listItemIndex");
 			if (newIndex == undefined) {
@@ -2280,16 +2263,13 @@ RED.view = (function() {
 			d.selectedIndex = parseInt(newIndex);
 			d.dirty = true;
 			console.warn("ui_listBoxMouseDown " + d.sendCommand + " " + d.selectedIndex);
-			var formatted = eval(d.sendCommand);
-
+			RED.ControlGUI.sendUiListBox(d);
 			//setRectFill(rect);
 			if (d.parentGroup != undefined && d.parentGroup.individualListBoxMode == false)
 			{
-
 				UI_ListBoxDeselectOther(d);
 			}
 
-			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
 			//redraw(true);
 			redraw_update_UI_ListBox(rect, d);
 		} else if (d.type == "UI_Piano") {
@@ -2302,9 +2282,7 @@ RED.view = (function() {
 			d.keyDown = 0x90;
 			setRectFill(rect, "#ff7f0e");
 			setRectStroke(rect, "#ff7f0e");
-			var formatted = eval(d.sendCommand);
-			//console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);
-			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
+			RED.ControlGUI.sendUiPiano(true, d);
 		}
 		else if (d.type == "UI_ScriptButton") {
 			setRectFill(rect);
@@ -2332,10 +2310,10 @@ RED.view = (function() {
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
 			resetRectFill(rect)
-			if (d.releaseAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.releaseAction);
+			RED.ControlGUI.sendUiButton(false, d);
 		} else if (d.type == "UI_Slider") {
 			if (d.sendMode == "r")
-				sendUiSliderValue(d);
+                RED.ControlGUI.sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
 			//ui_listBoxMouseUp(d, rect);
 			//resetRectFill(rect);
@@ -2347,12 +2325,11 @@ RED.view = (function() {
 				return; // this happenns when click title bar
 			}
 			d.keyIndex = parseInt(newKeyIndex);
-			d.keyDown = 0x80;
+			
 			resetRectFill(rect);
 			resetRectStroke(rect);
-			var formatted = eval(d.sendCommand);
-			//console.warn("ui_PianoMouseUp " + formatted  + " "+ d.keyIndex);
-			RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
+            
+            RED.ControlGUI.sendUiPiano(false, d);
 		}
 		else if (d.type == "UI_ScriptButton") {
 			resetRectFill(rect);
@@ -2371,7 +2348,7 @@ RED.view = (function() {
 				d.val += 1;
 				if (d.val > d.maxVal) d.val = d.maxVal;
 				if (d.sendMode == "m")
-					sendUiSliderValue(d);
+                    RED.ControlGUI.sendUiSliderValue(d);
 				d.dirty = true;
 				redraw_nodes(true);
 			}
@@ -2381,7 +2358,7 @@ RED.view = (function() {
 				d.val -= 1;
 				if (d.val < d.minVal) d.val = d.minVal;
 				if (d.sendMode == "m")
-					sendUiSliderValue(d);
+                    RED.ControlGUI.sendUiSliderValue(d);
 				d.dirty = true;
 				redraw_nodes(true);
 			}
