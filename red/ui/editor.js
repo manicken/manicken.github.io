@@ -30,7 +30,7 @@ RED.editor = (function() {
 	var settingsCategory = { label:"Code Editor", expanded:false, bgColor:"#DDD"};
 
 	var settingsEditor = {
-		aceEditorTheme:         { label:"Ace Theme", type:"combobox", actionOnChange:true, valIsText:true, options:aceThemeList},
+		aceEditorTheme:         { label:"Ace Theme", type:"combobox", actionOnChange:true, valIsText:true, options:aceThemeList},// aceThemeList is from ace-theme-list.js
 	}
 
 	var editing_node = null;
@@ -239,7 +239,12 @@ RED.editor = (function() {
 		if (editing_node._def.useAceEditor != undefined)
 		{ 
 			var editor = ace.edit("aceEditor");
-			editing_node.comment = editor.getValue();
+            if (editing_node._def.useAceEditorCodeFieldName != undefined)
+                editing_node[editing_node._def.useAceEditorCodeFieldName] = editor.getValue();
+            else // default
+			    editing_node.comment = editor.getValue();
+
+                
 		}
 
 		editing_node.bgColor = $("#node-input-color").val();
@@ -286,6 +291,7 @@ RED.editor = (function() {
 				autoOpen: false,
 				closeOnEscape: false,
 				width: 500,
+                position: {at:"top"},
 				buttons: [
 					{
 						id: "btnEditorRunScript",
@@ -329,7 +335,15 @@ RED.editor = (function() {
                         if (aceEditorExist != null)
 						{
 							//console.log("editor window height:"+$(this).height());
-							$("#aceEditor").height($(this).height() - 120);
+                            /*if (editing_node._def.aceEditorOffsetHeight != undefined)
+                                $("#aceEditor").height($(this).height() - editing_node._def.aceEditorOffsetHeight);
+                            else
+							    $("#aceEditor").height($(this).height() - 120);*/
+
+                            if (editing_node._def.aceEditorOffsetHeight != undefined)
+                                aceEditor.css("height", $(this).height() - editing_node._def.aceEditorOffsetHeight);
+                            else
+							    aceEditor.css("height", $(this).height() - 100);
 							var aceEditor = ace.edit("aceEditor");
 							aceEditor.resize(true);
 							$(this).scrollTop(aceEditor.scrollHeight);
@@ -345,10 +359,14 @@ RED.editor = (function() {
 							$(this).dialog('option','width',size.width);
 							$(this).dialog('option','height',size.height);
 						}
+                        
 						var aceEditor = $("#aceEditor");
 						if (aceEditor != undefined)
 						{
-							aceEditor.css("height", $(this).height() - 100);
+                            if (editing_node._def.aceEditorOffsetHeight != undefined)
+                                aceEditor.css("height", $(this).height() - editing_node._def.aceEditorOffsetHeight);
+                            else
+							    aceEditor.css("height", $(this).height() - 100);
 							$(this).scrollTop(aceEditor.scrollHeight);
 							
 						}

@@ -87,7 +87,13 @@ RED.editor.ace = (function() {
 		}
 
 		if (node.comment == undefined) node.comment = new String("");
-		aceEditor.setValue(node.comment);
+
+        if (node._def.useAceEditorCodeFieldName != undefined)
+            aceEditor.setValue(node[node._def.useAceEditorCodeFieldName]);
+        else // default
+            aceEditor.setValue(node.comment);
+
+		
 		aceEditor.session.selection.clearSelection();
 	}
 

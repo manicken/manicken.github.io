@@ -579,7 +579,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/NodeDefGenerator.js"></script>
 <script src="red/NodeDefManager.js"></script>
 <script src="red/NodeHelpManager.js"></script>
-
+<script src="red/ControlGUI.js"></script>
 
 <!--
  TODO: generate some or all of this automatically from the C++ source
@@ -845,7 +845,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     "midiCh":{"value":"0"},"midiId":{"value":"0"},
                     "pressAction":{},"repeatPressAction":{"value":false},
                     "releaseAction":{},"repeatReleaseAction":{"value":false},
-                    "local":{"value":false}}
+                    "local":{"value":false}
+                    
+                }
             },
 
             "UI_Slider":{
@@ -859,6 +861,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     "sendSpace":{"value":true},"repeat":{"value":false},"repeatPeriod":{"value":0},"sendMode":{"value":"r"},"sendFormat":{},
                     "autoReturn":{"value":false},"returnValue":{"value":"mid"},
                     "barFGcolor":{"value":"#F6F8BC"}
+                    
                 }
             },
 
@@ -885,11 +888,12 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     "itemTextSize":{"value":14},
                     "items":{"value":"item1\nitem2\nitem3"},"sendCommand":{},"selectedIndex":{"value":0},"selectedIndexOffset":{"value":0},"headerHeight":{"value":30},
                     "itemBGcolor":{"value":"#F6F8BC"}
+                    
                 }
             },
 
             "UI_Piano":{
-                "shortName":"Piano","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
+                "shortName":"Piano","uiObject":true,"nonObject":true,"useAceEditor":"javascript","useAceEditorCodeFieldName":"sendCommand","aceEditorOffsetHeight":120,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
                 "defaults":{
                     "name":{},"id":{},"comment":{},
                     "w":{"value":210, "minval":"1", "type":"int"},
@@ -905,6 +909,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     "x":{"value":150, "minval":"0", "type":"int"},
                     "y":{"value":150, "minval":"0", "type":"int"},
                     "blackKeyLabelsVisible":{"value":true},"whiteKeyLabelsVisible":{"value":true}
+                    
                 }
             },
             "UI_ScriptButton":{
@@ -1127,6 +1132,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
         <input type="checkbox" id="node-input-repeatReleaseAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Release Action</span>
         </label>
     </div>
+    <div class="form-row-long">
+		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+		<select name="node-input-target" id="node-input-target">
+			<option value="0">Web Socket</option>
+			<option value="1">Web Serial API</option>
+            <option value="1">Web MIDI API</option>
+	    </select>
+	</div>
 </script>
 
 <script type="text/x-red" data-help-name="UI_Slider">
@@ -1252,6 +1265,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
 		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
 	</div>
+
+    <div class="form-row-long">
+		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+		<select name="node-input-target" id="node-input-target">
+			<option value="0">Web Socket</option>
+			<option value="1">Web Serial API</option>
+            <option value="1">Web MIDI API</option>
+	    </select>
+	</div>
 </script>
 
 <script type="text/x-red" data-help-name="UI_TextBox">
@@ -1360,7 +1382,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
 		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
 	</div>
-	<div class="form-row">
+    <div class="form-row-long">
+		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+		<select name="node-input-target" id="node-input-target">
+			<option value="0">Web Socket</option>
+			<option value="1">Web Serial API</option>
+            <option value="2">Web MIDI API</option>
+	    </select>
+	</div>
+	<div class="form-row" id="node-input-midiOptions">
 		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
 		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"/></a>
 		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
@@ -1373,10 +1403,23 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
 		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
 	</div>
+    
 	<div class="form-row-mid">
 		<label for="node-input-items"><i class="fa fa-tag"></i> Items</label>
 		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-items" rows="8"/></textarea>
 	</div>
+    <script>
+        function node_input_target_changed() {
+            if ($('#node-input-target').val() == 1)
+                $('#node-input-midiOptions').addClass("hidden");
+            else
+                $('#node-input-midiOptions').removeClass("hidden");
+        }
+        $('#node-input-target').change(function() { 
+            node_input_target_changed();
+        });
+        node_input_target_changed();
+    </script>
 	
 </script>
 <script type="text/x-red" data-help-name="UI_Piano">
@@ -1412,58 +1455,61 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<input id="node-input-blackKeysColor" data-jscolor="">
 	</div>
 	<div class="form-row">
-		<label for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
-		<input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off">
+		<label style="width:140px" for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
+		<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"></a>
+		<label style="width:170px" for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
+		<a class="node-input-number"><input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off"></a>
 	</div>
+
 	<div class="form-row">
-        <label style="width:150px" for="node-input-whiteKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>WhiteKeyLabels Visible</label>
-        <label for="node-input-whiteKeyLabelsVisible">
-        <input type="checkbox" id="node-input-whiteKeyLabelsVisible" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        </label>
+        <label style="width:180px" for="node-input-whiteKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>WhiteKeyLabels Visible</label>
+        <input type="checkbox" id="node-input-whiteKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+        <label style="width:180px" for="node-input-blackKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>BlackKeyLabels Visible</label>
+        <input type="checkbox" id="node-input-blackKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px;  vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
 	</div>
-	<div class="form-row">
-        <label style="width:150px" for="node-input-blackKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>BlackKeyLabels Visible</label>
-        <label for="node-input-blackKeyLabelsVisible">
-        <input type="checkbox" id="node-input-blackKeyLabelsVisible" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        </label>
-	</div>
-	<div class="form-row">
+	<!--<div class="form-row">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
 		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
-		<input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off">
-	</div>
-	<div class="form-row">
+	</div>-->
+	
+	<!--<div class="form-row">
 		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
 		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
 	</div>
 	<div class="form-row">
 		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
 		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-octave"><i class="fa fa-tag"></i> Octave</label>
-		<input type="text" id="node-input-octave" placeholder="octave" autocomplete="off">
-	</div>
+	</div>-->
+	
 	<div class="form-row">
 		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<input type="text" id="node-input-w" placeholder="w" autocomplete="off">
-	</div>
-	<div class="form-row">
+		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"/></a>
 		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<input type="text" id="node-input-h" placeholder="h" autocomplete="off">
+		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
 	</div>
-	<div class="form-row">
+    <div class="form-row">
 		<label for="node-input-x"><i class="fa fa-tag"></i> xPos</label>
-		<input type="text" id="node-input-x" placeholder="x" autocomplete="off">
-	</div>
-	<div class="form-row">
+		<a class="node-input-number"><input type="text" id="node-input-x" placeholder="x" autocomplete="off"/></a>
 		<label for="node-input-y"><i class="fa fa-tag"></i> yPos</label>
-		<input type="text" id="node-input-y" placeholder="y" autocomplete="off">
+		<a class="node-input-number"><input type="text" id="node-input-y" placeholder="y" autocomplete="off"/></a>
 	</div>
 	
+	<!--<div class="form-row-long">
+		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+		<select name="node-input-target" id="node-input-target">
+			<option value="0">Web Socket</option>
+			<option value="1">Web Serial API</option>
+            <option value="1">Web MIDI API</option>
+	    </select>
+	</div>-->
+    <div class="form-row">
+		<label for="node-input-octave"><i class="fa fa-tag"></i> Octave</label>
+		<a class="node-input-number"><input type="text" id="node-input-octave" placeholder="octave" autocomplete="off"></a>
+	</div>
+    <div class="form-row-long">
+		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
+		<pre id="aceEditor"></pre>
+	</div>
 
 </script>
 <script type="text/x-red" data-help-name="UI_ScriptButton">

@@ -83,7 +83,7 @@ RED.NodeDefManager = (function() {
 
     var settingsEditor = {
         DownloadCurrentNodeDefs:    { label:"Download Current NodeDefs", type:"button", action: DownloadCurrentNodeDefs},
-        aceEditorTheme:         { label:"Ace Theme (JSON editor)", type:"combobox", actionOnChange:true, valIsText:true, options:aceThemeList},
+        aceEditorTheme:         { label:"Ace Theme (JSON editor)", type:"combobox", actionOnChange:true, valIsText:true, options:aceThemeList}, // aceThemeList is from ace-theme-list.js
     };
     $('#btn-node-def-manager').click(function(){showForm();});
     
