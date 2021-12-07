@@ -79,6 +79,8 @@ RED.settings = (function() {
 
     function restoreSettings(RED_Class_settings, RED_Class_defSettings, ClassSetting, RED_Class_Name)
     {
+        if (RED_Class_settings == undefined) return; // skip whole removed Class
+
         RED.storage.dontSave = true; // prevent save while setting settings
         RED.view.preventRedraw = true;
         //console.log(typeof RED_Class);
@@ -90,8 +92,11 @@ RED.settings = (function() {
         {
             var valueName = settingValueNames[svi];
 
-            // console.warn(valueName);
-            if (RED_Class_settings[valueName] == undefined) {// this skip any removed settings
+             console.warn(valueName);
+            /*if (RED_Class_settings.hasOwnProperty(valueName) == false) {
+
+             }*/
+            if (RED_Class_settings.hasOwnProperty(valueName) && RED_Class_settings[valueName] == undefined) {// this skip any removed settings
                 console.error("setting removed typeof " + valueName + ":" + typeof ClassSetting[valueName] + ":" + typeof RED_Class_settings);
                 continue;
             }

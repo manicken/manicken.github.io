@@ -17,7 +17,7 @@
  **/
 
  RED.ControlGUI = (function() {
-    var sendTargetTexts = ["Web Socket", "Web Serial API", "Web MIDI API"];
+    /*var sendTargetTexts = ["Web Socket", "Web Serial API", "Web MIDI API"];
     var sendTargets = [0,1,2];
 
     var defSettings = {
@@ -34,7 +34,7 @@
 
     var settingsEditor = {
         defaultSendTarget:         { label:"Default Send Target", type:"combobox", actionOnChange:true, options:sendTargets, optionTexts:sendTargetTexts},
-    }
+    }*/
 
     function sendUiSliderValue(d)
 	{
@@ -82,19 +82,14 @@
         //RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
     }
 
-    function SendToWebSocket(message) //short for RED.BiDirDataWebSocketBridge.SendToWebSocket(message);
-    {
-        RED.BiDirDataWebSocketBridge.SendToWebSocket(message);
-    }
-
     return {
-        defSettings:defSettings,
+        /*defSettings:defSettings,
 		settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
 
         sendTargetTexts:sendTargetTexts,
-        sendTargets:sendTargets,
+        sendTargets:sendTargets,*/
         
         sendUiButton:sendUiButton,
 		sendUiSliderValue:sendUiSliderValue,
