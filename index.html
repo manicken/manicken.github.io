@@ -97,6 +97,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li><a id="btn-compile-upload" class="btn action-deploy" href="#"><i class="fa fa-send"></i> Upload</a></li>
 				</ul>
 			</div>
+            <div class="btn-group pull-left">
+				<a id="btn-connectSerial" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Connect to serial</a>
+                <a id="btn-disConnectSerial" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a>
+			</div>
 
 			<div class="btn-group pull-right">
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-align-justify"></i> <span class="caret"></span></a>
@@ -147,7 +151,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				</ul>
 			</div>
 			<div class="btn-group pull-right">
-				<a id="btn-save";" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Save</a>
+				<a id="btn-save" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Save</a>
 
 			</div>
 			<div class="btn-group hidden">
@@ -581,6 +585,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/NodeHelpManager.js"></script>
 <script src="red/ControlGUI.js"></script>
 <script src="NodeDefinitions.js"></script>
+<script src="osc-browser.js"></script>
+<script src="slip.js"></script>
+<script src="OSC.js"></script>
+
 
 <!--
  TODO: generate some or all of this automatically from the C++ source
@@ -695,7 +703,12 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <p>Without their work on the open source <a href=\"http://nodered.org/\" target=\"_blank\">Node-RED</a> project, this graphical design tool would not have been possible!</p>
 <p>Other Special thanks to:<br>
 	D3.js team (for the data driven layout)<br>
-	JQuery team (used to fetch from the DOM)
+	JQuery team (used to fetch from the DOM)<br>
+    <a href=\"https://github.com/ajaxorg/ace\" target=\"_blank\">ACE editor</a><br>
+    <a href=\"https://github.com/colinbdclark/osc.js\" target=\"_blank\">Open Sound Controller javascript lib</a><br>
+    <a href=\"https://github.com/colinbdclark/slip.js\" target=\"_blank\">SLIP endoder javascript lib (had to change it to work)</a><br>
+     <br>
+    
 </p>
 </script>
 

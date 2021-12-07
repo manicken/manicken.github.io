@@ -2310,7 +2310,7 @@ RED.view = (function() {
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
 			resetRectFill(rect)
-			RED.ControlGUI.sendUiButton(false, d);
+			//RED.ControlGUI.sendUiButton(false, d);
 		} else if (d.type == "UI_Slider") {
 			//if (d.sendMode == "r") // don' work at the moment
                 RED.ControlGUI.sendUiSliderValue(d);

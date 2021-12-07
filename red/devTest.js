@@ -18,6 +18,7 @@
  * limitations under the License.
  **/
 
+
 RED.devTest = (function() {
 
     var defSettings = {
@@ -336,6 +337,7 @@ RED.devTest = (function() {
             })
     
     }*/
+    
 
     return {
         defSettings:defSettings,

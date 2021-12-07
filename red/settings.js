@@ -63,6 +63,7 @@ RED.settings = (function() {
             var RED_Class_Name = Object.getOwnPropertyNames(ClassSettings)[0]; // there is only one item
             var RED_Class = RED[RED_Class_Name];
             var ClassSetting = ClassSettings[RED_Class_Name];
+            if (RED_Class == undefined) continue; // skip whole removed Class
             restoreSettings(RED_Class.settings, RED_Class.defSettings, ClassSetting, RED_Class_Name)
         }
     }
@@ -73,6 +74,8 @@ RED.settings = (function() {
             var RED_Class_Name = RED_Class_Names[i];
             var RED_Class = RED[RED_Class_Name];
             var ClassSetting = ClassSettings[RED_Class_Name];
+            if (RED_Class == undefined) continue; // skip whole removed Class
+
             restoreSettings(RED_Class.settings, RED_Class.defSettings, ClassSetting, RED_Class_Name)
         }
     }
@@ -92,7 +95,7 @@ RED.settings = (function() {
         {
             var valueName = settingValueNames[svi];
 
-             console.warn(valueName);
+            // console.warn(valueName);
             /*if (RED_Class_settings.hasOwnProperty(valueName) == false) {
 
              }*/
