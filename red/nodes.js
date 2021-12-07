@@ -114,10 +114,10 @@ RED.nodes = (function() {
         }
     }
     function Init_BuiltIn_NodeDefinitions() {
-        var str = $("script[data-container-name|='NodeDefinitions']").html();
-        var nodeDefinitions = $.parseJSON(str);
-        if (nodeDefinitions == undefined) return;
-        registerGroups(nodeDefinitions);
+        //var str = $("script[data-container-name|='NodeDefinitions']").html();
+        //var nodeDefinitions = $.parseJSON(str);
+        //if (nodeDefinitions == undefined) return;
+        registerGroups(NodeDefinitions);
     }
     function registerGroups(nodeDefinitionsGroups) {
         var nodeDefGroupNames = Object.getOwnPropertyNames(nodeDefinitionsGroups);

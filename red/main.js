@@ -542,14 +542,14 @@ RED.main = (function() {
 
         $(".palette-spinner").show();
 
-        var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
+       // var metaData = $.parseJSON($("script[data-container-name|='InputOutputCompatibilityMetadata']").html());
         // RED.main.requirements is needed because $(function() executes at global scope, 
         // if we just set requirements without RED.main. it's gonna be located in global scope
         // and in that case later we cannot use RED.main.requirements because that is unassigned.
-        RED.main.requirements = metaData["requirements"]; // RED.main. is used to clarify the location of requirements
+        RED.main.requirements = InputOutputCompatibilityMetadata["requirements"]; // RED.main. is used to clarify the location of requirements
 
-        var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
-        RED.palette.doInit(nodeCategories);//["categories"]);
+        //var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
+        RED.palette.doInit(NodeCategories);//["categories"]);
 
         // register built in node types
         RED.nodes.Init_BuiltIn_NodeDefinitions();

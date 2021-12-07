@@ -88,11 +88,18 @@ RED.editor.ace = (function() {
 
 		if (node.comment == undefined) node.comment = new String("");
 
-        if (node._def.useAceEditorCodeFieldName != undefined)
-            aceEditor.setValue(node[node._def.useAceEditorCodeFieldName]);
-        else // default
-            aceEditor.setValue(node.comment);
-
+        if (node._def.useAceEditorCodeFieldName != undefined) {
+            var value = node[node._def.useAceEditorCodeFieldName];
+            if (value == undefined) value = new String("");
+            aceEditor.setValue(value);
+        }
+           
+        else { // default
+            var value = node.comment;
+            if (value == undefined) value = new String("");
+            aceEditor.setValue(value);
+            //aceEditor.setValue(node.comment);
+        }
 		
 		aceEditor.session.selection.clearSelection();
 	}

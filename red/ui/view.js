@@ -2065,7 +2065,7 @@ RED.view = (function() {
 		d3.event.stopPropagation();
 	}
 	function nodeMouseUp(d,i) {
-		console.log("nodeMouseUp "+ d.name+" i:" + i);
+		//console.log("nodeMouseUp "+ d.name+" i:" + i);
 
 		
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
@@ -2099,7 +2099,7 @@ RED.view = (function() {
 			
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
-			if (d.sendMode == "m")
+			//if (d.sendMode == "m") // don' work at the moment
 				RED.ControlGUI.sendUiSliderValue(d);
 		}
 	}
@@ -2252,7 +2252,7 @@ RED.view = (function() {
 		
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
-			if (d.sendMode == "m")
+			//if (d.sendMode == "m") // don' work at the moment
                 RED.ControlGUI.sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
 			var newIndex = rect.attr("listItemIndex");
@@ -2312,7 +2312,7 @@ RED.view = (function() {
 			resetRectFill(rect)
 			RED.ControlGUI.sendUiButton(false, d);
 		} else if (d.type == "UI_Slider") {
-			if (d.sendMode == "r")
+			//if (d.sendMode == "r") // don' work at the moment
                 RED.ControlGUI.sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
 			//ui_listBoxMouseUp(d, rect);
@@ -2347,8 +2347,7 @@ RED.view = (function() {
 				//console.log("uiObjectMouseScroll up");
 				d.val += 1;
 				if (d.val > d.maxVal) d.val = d.maxVal;
-				if (d.sendMode == "m")
-                    RED.ControlGUI.sendUiSliderValue(d);
+                RED.ControlGUI.sendUiSliderValue(d);
 				d.dirty = true;
 				redraw_nodes(true);
 			}
@@ -2357,8 +2356,7 @@ RED.view = (function() {
 				//console.log("uiObjectMouseScroll down");
 				d.val -= 1;
 				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.sendMode == "m")
-                    RED.ControlGUI.sendUiSliderValue(d);
+                RED.ControlGUI.sendUiSliderValue(d);
 				d.dirty = true;
 				redraw_nodes(true);
 			}

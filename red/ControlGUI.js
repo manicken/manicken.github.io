@@ -44,6 +44,8 @@
 		}
 		d.lastSentValue = d.val;
 
+        eval(d.sendCommand);
+/*
 		if (d.sendFormat != undefined && d.sendFormat.trim() != "")
 		{
 			var formatted = eval(d.sendFormat);
@@ -53,16 +55,20 @@
 		//	RED.BiDirDataWebSocketBridge.SendToWebSocket(d.name + " " + d.val); // n.name is the labelID
 		else
 			RED.BiDirDataWebSocketBridge.SendToWebSocket(d.name + d.val); // n.name is the labelID
+            */
 	}
     function sendUiButton(pressed, d)
     {
-        if (pressed == true && d.pressAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.pressAction);
-        else if (d.releaseAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.releaseAction);
+        //if (pressed == true && d.pressAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.pressAction);
+        //else if (d.releaseAction != "") RED.BiDirDataWebSocketBridge.SendToWebSocket(d.releaseAction);
+        d.pressed = pressed;
+        eval(d.sendCommand);
     }
     function sendUiListBox(d)
     {
-        var formatted = eval(d.sendCommand);
-        RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
+        eval(d.sendCommand);
+        //var formatted = eval(d.sendCommand);
+        //RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
     }
 
     function sendUiPiano(pressed, d) 
