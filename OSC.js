@@ -76,15 +76,21 @@ OSC = (function() {
         // Allow the serial port to be closed later.
         writer.releaseLock();
     }
-    function GetSimpleOSCdata(address, valueType, value)  {
-        var data = osc.writePacket( {
+    function GetSimpleOSCdata(address, valueTypes, ...values)  {
+        var oscPacket =  {
             address:address,
-            args:[
-                {
-                    type:valueType,
-                    value:value
-                }
-            ]});
+            args:[]
+        };
+        for (var i = 0; i < values.length; i++) {
+            oscPacket.args.push({type:valueTypes[i], value:values[i]})
+        }
+        /*{
+            type:valueType,
+            value:value
+        }*/
+        console.warn(oscPacket);
+
+        var data = osc.writePacket(oscPacket);
         //console.log(data);
         return data;//SendRawToSerial(data);
     }
