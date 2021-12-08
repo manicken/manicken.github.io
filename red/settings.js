@@ -365,6 +365,7 @@ RED.settings = (function() {
         setFromJSONobj:setFromJSONobj,
         getChangedSettings:getChangedSettings,
         resetClassSettings:resetClassSettings,
+        resetCatSettings:resetCatSettings,
         restoreSettings:restoreSettings,
         resetAllSettings:resetAllSettings,
         UpdateSettingsEditorCat:UpdateSettingsEditorCat,

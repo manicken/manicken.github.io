@@ -59,7 +59,7 @@ RED.settings.editor = (function() {
         settingCatParams.valueId = catContainerId;
         
         if (isRoot != undefined && isRoot == true) {
-            $("#" + headerMenuBtnResetId).on('click', function(e) { resetCatSettings(e, RED_Class); });
+            $("#" + headerMenuBtnResetId).on('click', function(e) { RED.settings.resetCatSettings(e, RED_Class); });
 
             if (menuItems != undefined && Array.isArray(menuItems)) {
                 for (var mii = 0; mii < menuItems.length; mii++) {
