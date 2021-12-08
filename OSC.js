@@ -1,4 +1,88 @@
+RED.OSC = (function() {
+
+    var defSettings = {
+        WsAddedScript: 'RED.bottombar.info.addLine("added Workspace " + ws.label);',
+        WsRenamedScript: 'RED.bottombar.info.addLine("renamed Workspace from" + oldName + " to " + newName);',
+        WsRemovedScript: 'RED.bottombar.info.addLine("removed Workspace " + ws.label);',
+        NodeAddedScript: 'RED.bottombar.info.addLine("added node " + node.name);',
+        NodeChangedScript: 'RED.bottombar.info.addLine("renamed node from " + changes.name + " to " + node.name);',
+        NodeRemovedScript: 'RED.bottombar.info.addLine("removed node " + node.name);',
+        LinkAddedScript: 'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );',
+        LinkRemovedScript: 'RED.bottombar.info.addLine("removed link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")");'
+    }
+    var _settings = {
+        WsAddedScript: defSettings.WsAddedScript,
+        WsRenamedScript: defSettings.WsRenamedScript,
+        WsRemovedScript: defSettings.WsRemovedScript,
+        NodeAddedScript: defSettings.NodeAddedScript,
+        NodeChangedScript: defSettings.NodeChangedScript,
+        NodeRemovedScript: defSettings.NodeRemovedScript,
+        LinkAddedScript: defSettings.LinkAddedScript,
+        LinkRemovedScript: defSettings.LinkRemovedScript,
+    }
+    var settings = {
+        get WsAddedScript() { return _settings.WsAddedScript; },
+        set WsAddedScript(value) { _settings.WsAddedScript = value; RED.storage.update();},
+        get WsRenamedScript() { return _settings.WsRenamedScript; },
+        set WsRenamedScript(value) { _settings.WsRenamedScript = value; RED.storage.update();},
+        get WsRemovedScript() { return _settings.WsRemovedScript; },
+        set WsRemovedScript(value) { _settings.WsRemovedScript = value; RED.storage.update();},
+        get NodeAddedScript() { return _settings.NodeAddedScript; },
+        set NodeAddedScript(value) { _settings.NodeAddedScript = value; RED.storage.update();},
+        get NodeChangedScript() { return _settings.NodeChangedScript; },
+        set NodeChangedScript(value) { _settings.NodeChangedScript = value; RED.storage.update();},
+        get NodeRemovedScript() { return _settings.NodeRemovedScript; },
+        set NodeRemovedScript(value) { _settings.NodeRemovedScript = value; RED.storage.update();},
+        get LinkAddedScript() { return _settings.LinkAddedScript; },
+        set LinkAddedScript(value) { _settings.LinkAddedScript = value; RED.storage.update();},
+        get LinkRemovedScript() { return _settings.LinkRemovedScript; },
+        set LinkRemovedScript(value) { _settings.LinkRemovedScript = value; RED.storage.update();},
+    }
+    var settingsCategory = { label:"OSC", expanded:false, popupText: "Open Sound Control settings", bgColor:"#DDD" };
+
+    var settingsEditor = {
+        WsAddedScript:   { label:"Class Added Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Workspace/Flow/Class is added"},
+        WsRenamedScript:   { label:"Class Renamed Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Workspace/Flow/Class is renamed"},
+        WsRemovedScript:   { label:"Class Removed Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Workspace/Flow/Class is removed"},
+        NodeAddedScript:   { label:"Audio Object Added Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Node/'Audio Object' is added"},
+        NodeChangedScript:   { label:"Audio Object Changed Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Node/'Audio Object' is changed/renamed"},
+        NodeRemovedScript:   { label:"Audio Object Removed Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Node/'Audio Object' is removed"},
+        LinkAddedScript:   { label:"AudioConnection Added Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Link/AudioConnection/Patchcable is added"},
+        LinkRemovedScript:   { label:"AudioConnection Removed Event", type:"multiline", useAceEditor:true,aceEditorMode:"c_cpp", popupText: "the user script that is executed when a Link/AudioConnection/Patchcable is removed"},
+    }
+
+    function RegisterEvents() {
+        RED.events.on("nodes:add", NodeAdded);
+        RED.events.on("nodes:change", NodeChanged);
+        RED.events.on("nodes:remove", NodeRemoved);
+        RED.events.on("flows:add", WsAdded);
+        RED.events.on("flows:renamed", WsRenamed);//RED.bottombar.info.addContent("removed link");
+        RED.events.on("flows:remove", WsRemoved);
+        RED.events.on("links:add", LinkAdded);
+        RED.events.on("links:remove", LinkRemoved);
+    }
+
+    function WsAdded(ws) { eval(_settings.WsAddedScript); }
+    function WsRenamed(oldName,newName) { eval(_settings.WsRenamedScript); }
+    function WsRemoved(ws) { eval(_settings.WsRemovedScript); }
+    function NodeAdded(node) { eval(_settings.NodeAddedScript); }
+    function NodeChanged(node,changes) { eval(_settings.NodeChangedScript); }
+    function NodeRemoved(node) { eval(_settings.NodeRemovedScript); }
+    function LinkAdded(link) { eval(_settings.LinkAddedScript); }
+    function LinkRemoved(link) { eval(_settings.LinkRemovedScript); }
+
+    return {
+        defSettings:defSettings,
+		settings:settings,
+		settingsCategory:settingsCategory,
+        settingsEditor:settingsEditor,
+
+        RegisterEvents:RegisterEvents,
+	};
+})();
+
 OSC = (function() {
+    
 
     navigator.serial.addEventListener("connect", (event) => {
         RED.notify("Serial port connected", "warning", null, 3000);
@@ -94,6 +178,8 @@ OSC = (function() {
         //console.log(data);
         return data;//SendRawToSerial(data);
     }
+
+    
 
     return {
         SendRawToSerial:SendRawToSerial,

@@ -565,7 +565,7 @@ RED.main = (function() {
         RED.storage.dontSave = true;
         RED.settings.createTab();
         RED.storage.dontSave = false;
-
+        RED.OSC.RegisterEvents();
 
 
         // if the query string has ?info=className, populate info tab

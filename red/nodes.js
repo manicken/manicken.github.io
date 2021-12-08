@@ -338,6 +338,7 @@ RED.nodes = (function() {
 	}
 	function addLink(l) {
 		links.push(l);
+        RED.events.emit('links:add',l);
 	}
 
 	function checkForIO() {
@@ -379,7 +380,7 @@ RED.nodes = (function() {
 		var removedLinks = [];
 		
         var node = getNode(id);
-        RED.events.emit('nodes:remove',node);
+        
         if (!node) return removedLinks; // cannot continue if node don't exists
 
         if (node.type == "TabInput" || node.type == "TabOutput")
@@ -393,7 +394,11 @@ RED.nodes = (function() {
         nodes.splice(nodes.indexOf(node),1);
         removedLinks = links.filter(function(l) { return (l.source === node) || (l.target === node); });
         removedLinks.map(function(l) {links.splice(links.indexOf(l), 1); });
-			
+		for (var i = 0; i < removedLinks.length; i++) {
+            RED.events.emit('links:remove', removedLinks[i]);
+        }
+
+        RED.events.emit('nodes:remove',node); // so it's executed after links:remove
 			
 		return removedLinks;
 	}
@@ -403,6 +408,7 @@ RED.nodes = (function() {
 		if (index != -1) {
 			links.splice(index,1);
 		}
+        RED.events.emit('links:remove',l);
 	}
 
 	function refreshValidation() {

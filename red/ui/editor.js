@@ -229,7 +229,7 @@ RED.editor = (function() {
 		if (changed != undefined && changed == true) {
 			var wasChanged = editing_node.changed;
             editing_node.changed = true;
-            RED.events.emit("nodes:change",editing_node);
+            RED.events.emit("nodes:change",editing_node,changes);
 			RED.view.dirty(true);
 			RED.history.push({t:'edit',node:editing_node,changes:changes,links:removedLinks,dirty:wasDirty,changed:wasChanged});
 		}

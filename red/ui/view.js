@@ -1496,10 +1496,11 @@ RED.view = (function() {
 
 				if (node.parentGroup != undefined)
 					removeNodeFromGroup(node.parentGroup, node);
-
+                //OSC.NodeRemoved(node); // use RED.events instead 
 				var rmlinks = RED.nodes.remove(node.id);
 				for (var j=0; j < rmlinks.length; j++) {
 					var link = rmlinks[j];
+                    //OSC.LinkRemoved(link);// use RED.events instead 
 					//console.log("delete link: " + link.source.id + ":" + link.sourcePort
 					//	+ " -> " + link.target.id + ":" + link.targetPort);
 					if (link.source == node) {
@@ -1536,6 +1537,7 @@ RED.view = (function() {
 				//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
 			RED.nodes.removeLink(selected_link);
 			removedLinks.push(selected_link);
+            //OSC.LinkRemoved(selected_link);// use RED.events instead 
 			setDirty(true);
 		}
 		RED.history.push({t:'delete',nodes:removedNodes,links:removedLinks,dirty:startDirty});
@@ -4593,7 +4595,7 @@ RED.view = (function() {
 						var oldLabel = workspace.label;
 						workspace.label = label;
 						RED.nodes.workspaceNameChanged(oldLabel, label); // Jannik add
-
+                        RED.events.emit("flows:renamed", oldLabel, label);
 						
 
 						// update the tab text

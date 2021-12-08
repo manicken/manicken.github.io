@@ -181,9 +181,14 @@ RED.settings.editor = (function() {
         var textRows = options.rows;
         var popupText = options.popupText;
         var readOnly = options.readOnly;
+        var useAceEditor = options.useAceEditor;
+        var aceEditorMode = options.aceEditorMode;
         if (textInputWidth == undefined) textInputWidth = 40;
         if (textRows == undefined) textRows = 8;
         if (readOnly == undefined) readOnly = false;
+        if (useAceEditor == undefined) useAceEditor = false;
+        
+
         var html = "";
         html += '<div class="settings-item" id="divSetting-'+id+'">';
 
@@ -192,7 +197,12 @@ RED.settings.editor = (function() {
         html += '</div>';
 
         html += '<div class="center">';
-        html += '<textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="'+textRows+'" cols="50" style="width: '+textInputWidth+'px;"/>';
+        if (useAceEditor == true) {
+            html += '<pre id="aceEditor-'+id+'" style="height: 100px; width: 100%;"></pre>'
+        }
+        else {
+            html += '<textarea class="settings-item-multilinetextInput" type="text" id="'+id+'" name="'+id+'" rows="'+textRows+'" cols="50" style="width: '+textInputWidth+'px;"/>';
+        }
         html += '</div>';
 
         if (readOnly == false)
@@ -206,17 +216,49 @@ RED.settings.editor = (function() {
 
         //RED.console_ok("create complete TextInputWithApplyButton @ " + containerId + " = " + label + " : " + id);
         $("#" + containerId).append(html);
+
+        if (useAceEditor == true) {
+            var aceEditor = ace.edit("aceEditor-"+id);
+            var aceTheme = "ace/theme/" + RED.NodeDefManager.settings.aceEditorTheme
+            aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
+            
+            aceEditor.setOptions({
+                enableBasicAutocompletion: true,
+                enableSnippets: true,
+                tabSize: RED.arduino.settings.CodeIndentations,
+                enableLiveAutocompletion: true,
+            });
+            if (aceEditorMode != undefined) {
+                aceEditor.session.setMode("ace/mode/"+aceEditorMode, function() { console.log("ace mode changed to "+ aceEditorMode);});
+            }
+            
+        }
         if (readOnly == false)
         {
             if (typeof cb === "function")
             {
-                $('#btn-' + id).click(function() { cb($('#' + id).val());});
-                $('#' + id).val(param);
+                if (useAceEditor == true) {
+                    $('#btn-' + id).click(function() { cb(ace.edit("aceEditor-" +id).getValue()); });
+                    ace.edit("aceEditor-"+id).setValue(param);
+		            ace.edit("aceEditor-"+id).session.selection.clearSelection();
+                }
+                else {
+                    $('#btn-' + id).click(function() { cb($('#' + id).val());});
+                    $('#' + id).val(param);
+                }
             }
             else if(typeof cb == "object")
             {
-                $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
-                $('#' + id).val(cb[param]);
+                if (useAceEditor == true) {
+                    $('#btn-' + id).click(function() { cb[param] = ace.edit("aceEditor-" +id).getValue(); });
+
+                    ace.edit("aceEditor-"+id).setValue(cb[param]);
+		            ace.edit("aceEditor-"+id).session.selection.clearSelection();
+                }
+                else {
+                    $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
+                    $('#' + id).val(cb[param]);
+                }
             }
         }
         if (popupText != undefined)

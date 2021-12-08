@@ -43,14 +43,21 @@ RED.bottombar.info = (function() {
 	function setContent(txt) {
 	    mText = txt;
 	    refresh();
+        RED.bottombar.show('output');
 //	    $("#messages").html(txt);//'<div class="info-messages">' + txt + '</div>');
 	}
 
 	function addContent(txt) {
 	    mText += txt;
 	    refresh();
+        RED.bottombar.show('output');
 //        $("#messages").html($("#messages").html() + txt);//'<div class="info-messages">' + txt + '</div>');
 	}
+    function addLine(txt) {
+        addContent(txt + "<br>");
+    }
+
+    $('#btn-clear-output').click(function () { setContent("") });
 
 	function message_listener_error(jqXHR, textStatus, errorThrown)
     {
@@ -80,6 +87,7 @@ RED.bottombar.info = (function() {
 		},
 		setContent: setContent,
 		addContent: addContent,
+        addLine:addLine,
 		addMessageListener: addMessageListener,
 		removeMessageListener: removeMessageListener
     }
