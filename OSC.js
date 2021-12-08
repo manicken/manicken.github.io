@@ -1,9 +1,9 @@
 RED.OSC = (function() {
 
     var defSettings = {
-        
+
         WsAddedScript: 'RED.bottombar.info.addLine("added Workspace " + ws.label);',
-        WsRenamedScript: 'RED.bottombar.info.addLine("renamed Workspace from" + oldName + " to " + newName);',
+        WsRenamedScript: 'RED.bottombar.info.addLine("renamed Workspace from " + oldName + " to " + newName);',
         WsRemovedScript: 'RED.bottombar.info.addLine("removed Workspace " + ws.label);',
         NodeAddedScript: 'RED.bottombar.info.addLine("added node " + node.name);',
         NodeChangedScript: 'RED.bottombar.info.addLine("renamed node from " + changes.name + " to " + node.name);',
