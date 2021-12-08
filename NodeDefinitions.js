@@ -230,7 +230,8 @@ NodeDefinitions = {
             "AudioEffectWaveshaper":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"waveshape","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioEffectGranular":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"granular","inputs":1,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioEffectDigitalCombine":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"combine","inputs":2,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"},
-            
+            "AudioEffectWaveFolder":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"wavefolder","inputs":2,"outputs":1,"category":"effect","color":"#E6E0F8","icon":"arrow-in.png"},
+
             "AudioFilterBiquad":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"biquad","inputs":1,"outputs":1,"category":"filter","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioFilterFIR":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"fir","inputs":1,"outputs":1,"category":"filter","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioFilterStateVariable":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"filter","inputs":2,"outputs":3,"category":"filter","color":"#E6E0F8","icon":"arrow-in.png"},
