@@ -67,7 +67,7 @@ RED.OSC = (function() {
     function WsRenamed(oldName,newName) { eval(_settings.WsRenamedScript); }
     function WsRemoved(ws) { eval(_settings.WsRemovedScript); }
     function NodeAdded(node) { eval(_settings.NodeAddedScript); }
-    function NodeChanged(node,changes) { eval(_settings.NodeChangedScript); }
+    function NodeChanged(node,changes) { if (changes.name == undefined) return; eval(_settings.NodeChangedScript); }
     function NodeRemoved(node) { eval(_settings.NodeRemovedScript); }
     function LinkAdded(link) { eval(_settings.LinkAddedScript); }
     function LinkRemoved(link) { eval(_settings.LinkRemovedScript); }

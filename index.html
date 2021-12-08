@@ -2475,8 +2475,11 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 	<p>This object has no functions to call from the Arduino sketch.  It
 		simply streams data from the TDM hardware to its 16 output ports.</p>
 	<h3>Hardware</h3>
-	<p>TDM has been tested with this <a href="https://oshpark.com/shared_projects/2Yj6rFaW">
-		CS42448 Circuit Board</a>.  It may also work with
+	<p>TDM has been tested with this
+		<a href="https://oshpark.com/shared_projects/2Yj6rFaW">
+		CS42448 Board for Teensy 3.x</a> and this
+		<a href="https://oshpark.com/shared_projects/gVFy0fWQ">
+		CS42448 Board for Teensy 4.x</a>.  It may also work with
 		<a href="https://forum.pjrc.com/threads/42894">Invensense ICS-52000 microphones</a>.
 		</p>
 	<table class=doc align=center cellpadding=3>
@@ -2484,7 +2487,7 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		<tr class=odd><td align=center>9</td><td align=center>21</td><td>BCLK</td><td>Output, 11.3 MHz</td></tr>
 		<tr class=odd><td align=center>11</td><td align=center>23</td><td>MCLK</td><td>Output, 22.6 MHz</td></tr>
 		<tr class=odd><td align=center>13</td><td align=center>8</td><td>RX</td><td>Input, 11.3 Mbit/sec</td></tr>
-		<tr class=odd><td align=center>23</td><td align=center>21</td><td>FS</td><td>Output</td></tr>
+		<tr class=odd><td align=center>23</td><td align=center>20</td><td>FS</td><td>Output</td></tr>
 	</table>
 	<p>Audio from
 		master mode TDM may be used in the same project as ADC, DAC and
@@ -2612,8 +2615,8 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 	<li>Teensy 3.2
 	<li>Teensy 3.5
 	<li>Teensy 3.6
-	<!--<li>Teensy 4.0
-	<li>Teensy 4.1-->
+	<li>Teensy 4.0
+	<li>Teensy 4.1
 	</ul>
 	<h3>Audio Connections</h3>
 	<table class=doc align=center cellpadding=3>
@@ -2627,11 +2630,11 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 	<h3>Hardware</h3>
 	<p>PDM has been tested with this <a href="https://www.adafruit.com/product/3492">
 		Adafruit MP34DT01-M Microphone Board</a>.
-		</p>
+	</p>
 	<table class=doc align=center cellpadding=3>
-		<tr class=top><th>Pin</th><th>Signal</th><th>Direction</th></tr>
-		<tr class=odd><td align=center>9</td><td>CLK</td><td>Output, 2.8235 MHz</td></tr>
-		<tr class=odd><td align=center>13</td><td>DATA</td><td>Input, Data on rising edge</td></tr>
+		<tr class=top><th>T3.x Pin</th><th>T4.x Pin</th><th>Signal</th><th>Direction</th></tr>
+		<tr class=odd><td align=center>9</td><td align=center>21</td><td>CLK</td><td>Output, 2.8235 MHz</td></tr>
+		<tr class=odd><td align=center>13</td><td align=center>8</td><td>DATA</td><td>Input, Data on rising edge</td></tr>
 	</table>
 	<p>Data is input on the rising edge.  The SEL pin on MP34DT01-M should be
 		connected LOW for proper data capture.</p>
@@ -2652,6 +2655,59 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		</p>
 </script>
 <script type="text/x-red" data-template-name="_AudioInputPDM">
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="AudioInputPDM2">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>Receive (and filter) a Pulse Density Modulated bitstream from I2S2 unit.
+		</p>
+	<p align=center><img src="img/pdmmic.jpg"><br><small>PDM MEMS Mic, using I2S2</small></p>
+	</div>
+	<h3>Boards Supported</h3>
+	<ul>
+	<li>Teensy 4.0
+	<li>Teensy 4.1
+	</ul>
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>Out 0</td><td>Filtered Audio Output</td></tr>
+	</table>
+	<h3>Functions</h3>
+	<p>This object has no functions to call from the Arduino sketch.  It
+		simply streams data from the PDM data, filters out the high frequency
+		noise and gives you the audio signal.</p>
+	<h3>Hardware</h3>
+	<p>PDM2 has been tested with this <a href="https://www.adafruit.com/product/3492">
+		Adafruit MP34DT01-M Microphone Board</a>.
+	</p>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>T4.x Pin I2S2</th><th>Signal</th><th>Direction</th></tr>
+		<tr class=odd><td align=center>4</td><td>CLK</td><td>Output, 2.8235 MHz</td></tr>
+		<tr class=odd><td align=center>5</td><td>DATA</td><td>Input, Data on rising edge</td></tr>
+	</table>
+
+	<p>Data is input on the rising edge.  The SEL pin on MP34DT01-M should be
+		connected LOW for proper data capture.</p>
+	<!--<h3>Examples</h3>-->
+	<h3>Notes</h3>
+        <p>This uses the alternate I2S2 unit on the T4, employing the BCLK2 and IN2 pins, 
+	   allowing AudioInputI2S to be run alongside.</p>
+	<p>The filter used is a 512 tap FIR with approx &plusmn;1.1 dB gain
+		flatness to 10 kHz.  While far from audiophile grade, this should
+		perform far better than the rapid rolloff of Cascaded Integrator
+		Comb (CIC) or simple moving average filters commonly used on
+		other microcontrollers.  The filter also consumes 2104 bytes of
+		RAM for buffering and 32K of Flash for a lookup table to optimized
+		the filter computation.
+		</p>
+</script>
+<script type="text/x-red" data-template-name="_AudioInputPDM2">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
@@ -3554,7 +3610,11 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		simply streams data from its 16 input ports to the TDM hardware.</p>
 	<h3>Hardware</h3>
 	<p>TDM has been tested with this <a href="https://oshpark.com/shared_projects/2Yj6rFaW">
-		CS42448 Circuit Board</a>.
+		CS42448 Board for Teensy 3.x</a> and this
+		<a href="https://oshpark.com/shared_projects/gVFy0fWQ">
+		CS42448 Board for Teensy 4.x</a> and this
+		<a href="https://oshpark.com/shared_projects/O7iqdcLr">
+		ADAU1966A Board for Teensy 4.x</a>.
 		</p>
 	<table class=doc align=center cellpadding=3>
 		<tr class=top><th>T3.x<br>Pin</th><th>T4.x<br>Pin</th><th>Signal</th><th>Direction</th></tr>
@@ -3859,6 +3919,10 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
 	</div>
+    <div class="form-row">
+		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
+		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
+	</div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
 		<input id="node-input-color" data-jscolor="">
@@ -4130,23 +4194,33 @@ Returns the actual achieved attenuation of the anti-aliasing filter. If the inpu
 		<tr class=odd><td align=center>Out 0</td><td>Sound Output</td></tr>
 	</table>
 	<h3>Functions</h3>
+	<p class=func><span class=keyword>setMaxBuffers</span>(uint8);</p>
+	<p class=desc>Set the maximum buffer block count for the queue to limit its size - by default 32 blocks are used on Teensy3's
+	  and 80 on Teeny 4's - this allows the value to be reduced so that the queue cannot get too far ahead, nor use up lots of
+	  audio blocks you might want for other purposes.  The minimum number of buffer blocks is 2.
+	</p>
 	<p class=func><span class=keyword>play</span>(int16);</p>
-	<p class=desc>not yet implemented
+	<p class=desc>add a single sample to the queue - no need to use getBuffer() or playBuffer() as this
+	  method does the necessary handling.  Note this method may block waiting for a spare buffer if the queue is full
 	</p>
 	<p class=func><span class=keyword>play</span>(int16[], length);</p>
-	<p class=desc>not yet implemented
+	<p class=desc>add multiple samples to the queue - no need to use getBuffer() or playBuffer() as this
+	  method does the necessary handling.  Note this method may block waiting for a spare buffer if the queue is full.
+	  The length should be the number of samples in the array.
 	</p>
 	<p class=func><span class=keyword>getBuffer</span>();</p>
 	<p class=desc>Returns a pointer to an array of 128 int16.  This buffer
-		is within the audio library memory pool, providing the most efficient
-		way to input data to the audio system.  The buffer is likely to be
-		populated by previously used data, so the entire 128 words should be
-		written before calling playBuffer().  Only a single buffer should be
-		requested at a time.  This function may return NULL if no memory is
-		available.
+	  is within the audio library memory pool, providing the most efficient
+	  way to input data to the audio system.  The buffer is likely to be
+	  populated by previously used data, so the entire 128 words should be
+	  written before calling playBuffer().  Only a single buffer should be
+	  requested at a time.  This function may return NULL if no memory is
+	  available.	  
+	</p>
+	<p>You may find it easier to use the play() methods unless performance is crucial.
 	</p>
 	<p class=func><span class=keyword>playBuffer</span>();</p>
-	<p class=desc>Transmit the buffer previously obtained from getBuffer().
+	<p class=desc>Transmit the buffer previously obtained from getBuffer().  If you use the play() methods you should not use this.
 	</p>
 	<h3>Examples</h3>
 		<p><a href="http://community.arm.com/groups/embedded/blog/2014/05/23/led-video-panel-at-maker-faire-2014" target="_blank">4320 LED Video+Sound Project</a>
@@ -5995,12 +6069,26 @@ double s_freq = .0625;</p>
 		maximum resonance when the control signal is at its 1.0 maximum
 		amplitude, this setting must be at least 0.8.
 	</p>
+    <p class=func><span class=keyword>inputDrive</span>(level);</p>
+	<p class=desc>TODO: add info here...<br>
+		range is 0 to 4.0
+	</p>
+	<p class=func><span class=keyword>passbandGain</span>(gain);</p>
+	<p class=desc>TODO: add info here...<br>
+		range is 0 to 0.5
+	</p>
+	<p class=func><span class=keyword>interpolationMethod</span>(method);</p>
+	<p class=desc>TODO: add info here...<br>
+		<span class=literal>LADDER_FILTER_INTERPOLATION_FIR_POLY</span><br>
+		<span class=literal>LADDER_FILTER_INTERPOLATION_LINEAR</span><br>
+	</p>
 <h3>Examples</h3>
 	<p class=exam>File &gt; Examples &gt; Audio &gt; Synthesis &gt; LadderFilter
 	</p>
 	<h3>Notes</h3>
-	<p>
-		When controlled by a signal, the equation for the filter
+	<p>	Teensy 3.5 is the minimum hardware capable of running this filter.
+	</p>
+	<p>	When controlled by a signal, the equation for the filter
 		frequency is:
 	</p>
 	<p>
@@ -6967,7 +7055,9 @@ value  frequency
 	</p>
 	<h3>Hardware</h3>
 	<p>Tested with this <a href="https://oshpark.com/shared_projects/2Yj6rFaW">
-		CS42448 Circuit Board</a>.
+		CS42448 Board for Teensy 3.x</a> and this
+		<a href="https://oshpark.com/shared_projects/gVFy0fWQ">
+		CS42448 Board for Teensy 4.x</a>.
 	</p>
 	<p align=center><img src="img/tdm.jpg"></p>
 	</div>
