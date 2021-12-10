@@ -5,28 +5,28 @@ RED.OSC = (function() {
         WsAddedScript: 'RED.bottombar.info.addLine("added Workspace " + ws.label);',
         WsRenamedScript: 'RED.bottombar.info.addLine("renamed Workspace from " + oldName + " to " + newName);',
         WsRemovedScript: 'RED.bottombar.info.addLine("removed Workspace " + ws.label);',
-        NodeAddedScript: 'RED.bottombar.info.addLine("added node " + node.name);' + 
-                         'var addr = "/teensy1/dynamic/createObject*"' +
-                         'var data = OSC.GetSimpleOSCdata(addr,"ss", node.type, node.name);' + 
+        NodeAddedScript: 'RED.bottombar.info.addLine("added node " + node.name);\n' + 
+                         'var addr = "/teensy1/dynamic/createObject*"\n' +
+                         'var data = OSC.GetSimpleOSCdata(addr,"ss", node.type, node.name);\n' + 
                          'OSC.SendAsSlipToSerial(data);',
-        NodeChangedScript: 'RED.bottombar.info.addLine("renamed node from " + changes.name + " to " + node.name);'+
-                           'var addr = "/teensy1/dynamic/ren*"'+
-                           'var data = OSC.GetSimpleOSCdata(addr,"ss", changes.name, node.name);'+
+        NodeChangedScript: 'RED.bottombar.info.addLine("renamed node from " + changes.name + " to " + node.name);\n'+
+                           'var addr = "/teensy1/dynamic/ren*"\n'+
+                           'var data = OSC.GetSimpleOSCdata(addr,"ss", changes.name, node.name);\n'+
                            'OSC.SendAsSlipToSerial(data);,',
-        NodeRemovedScript: 'RED.bottombar.info.addLine("removed node " + node.name);'+
-                            'var addr = "/teensy1/dynamic/destroy*"'+
-                            'var data = OSC.GetSimpleOSCdata(addr,"s", node.name);'+
+        NodeRemovedScript: 'RED.bottombar.info.addLine("removed node " + node.name);\n'+
+                            'var addr = "/teensy1/dynamic/destroy*"\n'+
+                            'var data = OSC.GetSimpleOSCdata(addr,"s", node.name);\n'+
                             'OSC.SendAsSlipToSerial(data);',
-        LinkAddedScript: 'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );'+
-                            'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );'+
-                            'var data = osc.writeBundle({timeTag: osc.timeTag(0),packets: ['+
-                            '    {address: "/teensy1/dynamic/createConn*",args: [{type: "s", value: link.source.name+link.sourcePort+link.target.name+link.targetPort}]},'+
-                            '    {address: "/teensy1/audio/wafo2mixer1/connect*", args: [{type: "s", value: link.source.name}, {type: "i", value: link.sourcePort}, {type: "s", value: link.target.name}, {type: "i", value: link.targetPort}]}'+
-                            '	]});'+
+        LinkAddedScript: 'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );\n'+
+                            'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );\n'+
+                            'var data = osc.writeBundle({timeTag: osc.timeTag(0),packets: [\n'+
+                            '    {address: "/teensy1/dynamic/createConn*",args: [{type: "s", value: link.source.name+link.sourcePort+link.target.name+link.targetPort}]},\n'+
+                            '    {address: "/teensy1/audio/wafo2mixer1/connect*", args: [{type: "s", value: link.source.name}, {type: "i", value: link.sourcePort}, {type: "s", value: link.target.name}, {type: "i", value: link.targetPort}]}\n'+
+                            '	]});\n'+
                             'OSC.SendAsSlipToSerial(data);',
-        LinkRemovedScript: 'RED.bottombar.info.addLine("removed link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")");' + 
-                            'var addr = "/teensy1/dynamic/destroy*"'+
-                            'var data = OSC.GetSimpleOSCdata(addr,"s", link.source.name+link.sourcePort+link.target.name+link.targetPort);'+
+        LinkRemovedScript: 'RED.bottombar.info.addLine("removed link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")");\n' + 
+                            'var addr = "/teensy1/dynamic/destroy*"\n'+
+                            'var data = OSC.GetSimpleOSCdata(addr,"s", link.source.name+link.sourcePort+link.target.name+link.targetPort);\n'+
                             'OSC.SendAsSlipToSerial(data);'
     }
     var _settings = {
