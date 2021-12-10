@@ -192,7 +192,7 @@ OSC = (function() {
             type:valueType,
             value:value
         }*/
-        console.warn(oscPacket);
+        //console.warn(oscPacket);
 
         var data = osc.writePacket(oscPacket);
         //console.log(data);
