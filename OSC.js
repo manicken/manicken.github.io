@@ -19,9 +19,10 @@ RED.OSC = (function() {
                             'OSC.SendAsSlipToSerial(data);',
         LinkAddedScript: 'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );\n'+
                             'RED.bottombar.info.addLine("added link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")" );\n'+
+                            'var connName = link.source.name+link.sourcePort+link.target.name+link.targetPort;\n'+
                             'var data = osc.writeBundle({timeTag: osc.timeTag(0),packets: [\n'+
-                            '    {address: "/teensy1/dynamic/createConn*",args: [{type: "s", value: link.source.name+link.sourcePort+link.target.name+link.targetPort}]},\n'+
-                            '    {address: "/teensy1/audio/wafo2mixer1/connect*", args: [{type: "s", value: link.source.name}, {type: "i", value: link.sourcePort}, {type: "s", value: link.target.name}, {type: "i", value: link.targetPort}]}\n'+
+                            '    {address: "/teensy1/dynamic/createConn*",args: [{type: "s", value: connName}]},\n'+
+                            '    {address: "/teensy1/audio/" + connName + "/connect*", args: [{type: "s", value: link.source.name}, {type: "i", value: link.sourcePort}, {type: "s", value: link.target.name}, {type: "i", value: link.targetPort}]}\n'+
                             '	]});\n'+
                             'OSC.SendAsSlipToSerial(data);',
         LinkRemovedScript: 'RED.bottombar.info.addLine("removed link (" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")");\n' + 
