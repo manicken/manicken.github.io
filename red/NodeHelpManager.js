@@ -77,8 +77,8 @@ RED.NodeHelpManager = (function() {
         // returns HTMLScriptElement
         var first = $("script[data-help-name]")[0];
         //var name = first.substring(first.indexOf("data-help-name=\""));
-        console.warn(first.getAttribute("data-help-name"));
-        console.warn(first.innerText);
+        //console.warn(first.getAttribute("data-help-name"));
+        //console.warn(first.innerText);
     }
 
     function parseRawHtml(html) {

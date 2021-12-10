@@ -153,7 +153,9 @@ RED.settings = (function() {
         var settingNames = Object.getOwnPropertyNames(RED_Class.settings);
         for (var i = 0; i < settingNames.length; i++)
         {
-            
+            //if (RED_Class.settings[name] == undefined || RED_Class.defSettings[name] == undefined)
+            //    continue; // skip removed settings
+
             var name = settingNames[i];
             //console.warn("getChangedSettings: " + name + " " + typeof RED_Class.settings[name]);
             if (typeof RED_Class.settings[name] !== "object") {

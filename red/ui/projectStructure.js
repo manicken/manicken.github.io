@@ -236,7 +236,14 @@ RED.projectStructure = (function() {
             
             existingObject.element.find(".red-ui-info-outline-item-label").html("&nbsp;");
         }
-        var existingParent = existingObject.parent.id;
+        if (existingParent != undefined && existingParent.parent != undefined)
+            var existingParent = existingObject.parent.id;
+        else{
+            
+            console.error("TODO. fix existingParent == undefined and existingParent.parent == undefined");
+            return; // too many errors following this
+        }
+
         if (!existingParent) {
             existingParent = existingObject.parent.parent.flow
             console.error(existingParent);

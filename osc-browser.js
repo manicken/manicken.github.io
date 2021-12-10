@@ -1791,7 +1791,7 @@ var osc = osc || {};
         exports.EventEmitter = originalGlobalValue;
         return EventEmitter;
     };
-
+/*
     // Expose the class either via AMD, CommonJS or the global object
     if (typeof define === 'function' && define.amd) {
         define(function () {
@@ -1803,7 +1803,7 @@ var osc = osc || {};
     }
     else {
         exports.EventEmitter = EventEmitter;
-    }
+    }*/
 }(typeof window !== 'undefined' ? window : this || {}));
 ;
 /*
@@ -1817,9 +1817,9 @@ var osc = osc || {};
 
 /* global require, module */
 
-var osc = osc || require("./osc.js"),
-    slip = slip || require("slip"),
-    EventEmitter = EventEmitter || require("events").EventEmitter;
+var osc = osc || require("./osc.js");
+    //slip = slip || require("slip"),
+    //EventEmitter = EventEmitter || require("events").EventEmitter;
 
 (function () {
 
@@ -1855,7 +1855,7 @@ var osc = osc || require("./osc.js"),
         this.options = options || {};
         this.on("data", this.decodeOSC.bind(this));
     };
-
+/*
     var p = osc.Port.prototype = Object.create(EventEmitter.prototype);
     p.constructor = osc.Port;
 
@@ -1895,7 +1895,7 @@ var osc = osc || require("./osc.js"),
             this.emit("error", err);
         }
     };
-
+*/
 
     osc.SLIPPort = function (options) {
         var that = this;
@@ -1912,7 +1912,7 @@ var osc = osc || require("./osc.js"),
         var decodeHandler = o.useSLIP ? this.decodeSLIPData : this.decodeOSC;
         this.on("data", decodeHandler.bind(this));
     };
-
+/*
     p = osc.SLIPPort.prototype = Object.create(osc.Port.prototype);
     p.constructor = osc.SLIPPort;
 
@@ -1936,7 +1936,7 @@ var osc = osc || require("./osc.js"),
         // TODO: Get packetInfo through SLIP decoder.
         this.decoder.decode(data, packetInfo);
     };
-
+*/
 
     // Unsupported, non-API function.
     osc.relay = function (from, to, eventName, sendFnName, transformFn, sendArgs) {
@@ -1991,7 +1991,7 @@ var osc = osc || require("./osc.js"),
 
         this.listen();
     };
-
+/*
     p = osc.Relay.prototype = Object.create(EventEmitter.prototype);
     p.constructor = osc.Relay;
 
@@ -2022,7 +2022,7 @@ var osc = osc || require("./osc.js"),
         osc.stopRelaying(this.port2, this.port2Spec);
         this.emit("close", this.port1, this.port2);
     };
-
+*/
 
     // If we're in a require-compatible environment, export ourselves.
     if (typeof module !== "undefined" && module.exports) {

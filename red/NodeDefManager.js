@@ -79,7 +79,7 @@ RED.NodeDefManager = (function() {
         get aceEditorTheme() { return _settings.aceEditorTheme; },
 		set aceEditorTheme(value) { _settings.aceEditorTheme = value;  RED.storage.update();},
     };
-    var settingsCategory = { label:"Node Def Manager", expanded:true, bgColor:"#DDD" };
+    var settingsCategory = { label:"Node Def Manager", expanded:false, bgColor:"#DDD" };
 
     var settingsEditor = {
         DownloadCurrentNodeDefs:    { label:"Download Current NodeDefs", type:"button", action: DownloadCurrentNodeDefs},

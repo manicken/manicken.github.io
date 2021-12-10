@@ -226,6 +226,7 @@ RED.nodes = (function() {
 		for (i=0;i<nodes.length;i++) {
 			//console.log("checkID, nodes[i].id = " + nodes[i].id);
 			if (wsId && (wsId != nodes[i].z)) continue; // skip nodes that is not in current workspace
+            if (nodes[i]._def.nonObject != undefined) continue; // don't check against nonObjects
             if (nodes[i] == node) continue; // don't check against itself
             var splitStarting = nodes[i].name.split('['); // get array name without array def,
 
@@ -394,11 +395,12 @@ RED.nodes = (function() {
         nodes.splice(nodes.indexOf(node),1);
         removedLinks = links.filter(function(l) { return (l.source === node) || (l.target === node); });
         removedLinks.map(function(l) {links.splice(links.indexOf(l), 1); });
-		for (var i = 0; i < removedLinks.length; i++) {
-            RED.events.emit('links:remove', removedLinks[i]);
-        }
+		
+        // to use with OSC event
+        RED.events.emit('nodes:removed', node, removedLinks);
 
-        RED.events.emit('nodes:remove',node); // so it's executed after links:remove
+        // normal event
+        RED.events.emit('nodes:remove',node);
 			
 		return removedLinks;
 	}
