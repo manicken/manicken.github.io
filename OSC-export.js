@@ -6,7 +6,13 @@ OSC.export = (function () {
 
     $('#btn-deploy-osc').click(function () { export_simple(); });
     function export_simple() {
-        //const t0 = performance.now();
+        var clearAllAddr = "/dynamic/clearAl*";
+        var createObjectAddr = "/dynamic/cr*O*";
+        var createConnectionAddr = "/dynamic/cr*C*";
+        var connectAddr = function (linkName) {
+            return "/audio/" + linkName + "/c*";
+        }
+
         RED.storage.update();
 
         if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
@@ -14,20 +20,7 @@ OSC.export = (function () {
             return;
         }
         var nns = RED.nodes.createCompleteNodeSet(false);
-        // sort is made inside createCompleteNodeSet
-        var wsCppFiles = [];
-        //wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
-        //var jsonString = JSON.stringify(nns); // one liner JSON
 
-        //console.log(JSON.stringify(nns));
-        var includes = ""; // Include Def nodes
-        var globalVars = "";
-        var codeFiles = "";
-        var functions = "";
-        var cppAPN = "// Audio Processing Nodes\n";
-        var cppAC = "// Audio Connections (all connections (aka wires or links))\n";
-        var cppCN = "// Control Nodes (all control nodes (no inputs or outputs))\n";
-        var cordcount = 1;
         var activeWorkspace = RED.view.getWorkspace();
 
         console.log("save1(simple) workspace:" + activeWorkspace);
@@ -50,9 +43,9 @@ OSC.export = (function () {
             if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 
             var nodeType = getTypeName(nns, n);
-            var nodeName = RED.nodes.make_name(n);
+            var nodeName = n.name;//RED.nodes.make_name(n);
 
-            addr = RED.OSC.settings.RootAddress + "/dynamic/createObject*";
+            addr = RED.OSC.settings.RootAddress + createObjectAddr;
             apos.push(OSC.CreatePacket(addr,"ss", nodeType, nodeName));
 
             if (haveIO(node)) {
@@ -62,9 +55,9 @@ OSC.export = (function () {
                     var src_name = RED.nodes.make_name(src);
                     var dst_name = RED.nodes.make_name(dst);
                     var linkName = src_name+pi+dst_name+dstPortIndex;
-                    addr = RED.OSC.settings.RootAddress + "/dynamic/createObject*";
+                    addr = RED.OSC.settings.RootAddress + createConnectionAddr;
                     acs.push(OSC.CreatePacket(addr,"s", linkName));
-                    addr = RED.OSC.settings.RootAddress + "/audio/" + linkName + "/connect*";
+                    addr = RED.OSC.settings.RootAddress + connectAddr(linkName);
                     acs.push(OSC.CreatePacket(addr,"sisi", src_name, pi, dst_name, dstPortIndex));
                 });
             }
@@ -72,7 +65,7 @@ OSC.export = (function () {
         var exportDialogText = ""; // use this for debug output
 
         var bundle = OSC.CreateBundle(0);
-        addr = RED.OSC.settings.RootAddress + "/dynamic/clearAll*";
+        addr = RED.OSC.settings.RootAddress + clearAllAddr;
         var clearAllPacket = OSC.CreatePacket(addr, "");
         bundle.packets.push(clearAllPacket);
         exportDialogText += JSON.stringify(clearAllPacket) + "\n";
@@ -89,8 +82,8 @@ OSC.export = (function () {
         var bundleData = OSC.CreateBundleData(bundle);
 
         var dataAsText = new TextDecoder("utf-8").decode(bundleData);
-
-        showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText + "\nRAW data:\n" + dataAsText, " OSC messages: (" + bundleData.length + " bytes)", "send",
+        exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
+        showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent\nfirst in JSON format then in RAW format"},
         function () {OSC.SendData(bundleData)});
 
     }
@@ -101,8 +94,6 @@ OSC.export = (function () {
      * @param {Node} n node
      */
      function getTypeName(nns, n) {
-        var cpp = "";
-        var typeLength = n.type.length;
         if (n.type == "AudioMixer") {
             var tmplDef = "";
             if (n.inputs == 1) // special case 
@@ -120,25 +111,20 @@ OSC.export = (function () {
             }
             else
                 tmplDef = "<" + n.inputs + ">";
-
-            cpp += n.type + tmplDef + " ";
-            typeLength += tmplDef.length;
+            return n.type + tmplDef;
         }
-        else if (n.type == "AudioStreamObject") {
-            cpp += n.subType + " ";
-            typeLength = n.subType.length;
-        }
+        else if (n.type == "AudioStreamObject")
+            return n.subType;
         else
-            cpp += n.type + " ";
-
-        for (var j = typeLength; j < 32; j++) cpp += " ";
-        return cpp;
+            return n.type;
     }
     function haveIO(node) {
         return ((node.outputs > 0) || (node._def.inputs > 0));
     }
-    function showExportDialog(title, text, textareaLabel,okText,okPressedCb) {
-        if (okText == undefined) okText = "Ok";
+    function showExportDialog(title, text, textareaLabel,overrides,okPressedCb) {
+        if (overrides == undefined) var overrides = {};
+        if (overrides.okText == undefined) overrides.okText = "Ok";
+
         var box = document.querySelector('.ui-droppable'); // to get window size
         function float2int(value) {
             return value | 0;
@@ -148,11 +134,12 @@ OSC.export = (function () {
         RED.view.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
             if (textareaLabel != undefined)
                 $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
-
+                if (overrides.tips != undefined)
+                    $("#export-clipboard-dialog-tips").text(overrides.tips);
             $("#node-input-export").val(text).focus(function () {
                 var textarea = $(this);
 
-                textarea.select();
+                //textarea.select();
                 //console.error(textarea.height());
                 var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
                 textarea.height(textareaNewHeight);
@@ -173,7 +160,7 @@ OSC.export = (function () {
                 height: box.clientHeight,
                 buttons: [
                     {
-                        text: okText,
+                        text: overrides.okText,
                         click: function () {
                             RED.console_ok("Export dialog OK pressed!");
                             $(this).dialog("close");
