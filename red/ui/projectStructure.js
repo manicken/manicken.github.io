@@ -48,8 +48,9 @@ RED.projectStructure = (function() {
 
         treeList.appendTo(outlinerPanel);
 
+        console.error("TODO. need to fix project tree - it's broken somehow - and I don't know why")
+        /*
         RED.sidebar.addTab("project", content);
-
 
         RED.events.on("projects:load", onProjectLoad);
 
@@ -66,7 +67,7 @@ RED.projectStructure = (function() {
         RED.events.on("groups:remove",onObjectRemove);
         RED.events.on("groups:change",onNodeChange);
 
-        RED.events.on("workspace:clear", onWorkspaceClear)
+        RED.events.on("workspace:clear", onWorkspaceClear)*/
     }
 
     function getFlowData() {
@@ -221,7 +222,7 @@ RED.projectStructure = (function() {
 
         var existingObject = objects[n.id];
         var parent = n.parentGroup||n.z||"__global__";
-        console.warn("onNodeChange n.parentGroup: " , n.parentGroup , " " + n.name);
+        //console.warn("onNodeChange n.parentGroup: " , n.parentGroup , " " + n.name);
 
         var nodeLabelText = getNodeLabelText(n);
         if (nodeLabelText != undefined) {
@@ -236,20 +237,18 @@ RED.projectStructure = (function() {
             
             existingObject.element.find(".red-ui-info-outline-item-label").html("&nbsp;");
         }
-        if (existingParent != undefined && existingParent.parent != undefined)
-            var existingParent = existingObject.parent.id;
-        else{
-            
-            console.error("TODO. fix existingParent == undefined and existingParent.parent == undefined");
-            return; // too many errors following this
-        }
+        var existingParent;
+        if (existingObject.parent != undefined)
+            existingParent = existingObject.parent.id;
+        
 
         if (!existingParent) {
-            existingParent = existingObject.parent.parent.flow
-            console.error(existingParent);
+            //existingParent = existingObject.parent.parent.flow
+            existingParent = n.z;
+            //console.error(existingParent);
         }
-        console.error("parent",parent);
-        console.error("existingParent",existingParent);
+        //console.error("parent",parent);
+        //console.error("existingParent",existingParent);
         if (parent !== existingParent) {
             var parentItem = existingObject.parent;
             if (existingObject.treeList != undefined)
@@ -288,7 +287,7 @@ RED.projectStructure = (function() {
                     empties[parent].treeList.remove();
                     delete empties[parent];
                 }
-                console.warn("parent: ", parent)
+                //console.warn("parent: ", parent)
                 if (objects[parent] != undefined)
                 objects[parent].treeList.addChild(existingObject)
             }

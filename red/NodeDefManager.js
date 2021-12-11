@@ -70,7 +70,7 @@ RED.NodeDefManager = (function() {
     var treeList;
 
     var defSettings = {
-        aceEditorTheme: "theme-chrome",
+        aceEditorTheme: "chrome",
     };
     var _settings = {
         aceEditorTheme: defSettings.aceEditorTheme,

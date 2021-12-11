@@ -518,9 +518,9 @@ RED.editor = (function() {
             // first check if have own editor
             var ifHaveOwnEditor = $("script[data-template-name|='" + node.type + "']");
             if (ifHaveOwnEditor.length != 0) 
-            {	editorType = node.type; console.log("use type editor:" + editorType);}
+            {	editorType = node.type; /*console.log("use type editor:" + editorType);*/}
             else // use global editor
-            {	editorType = "NodesGlobalEdit"; console.log("use global editor");}
+            {	editorType = "NodesGlobalEdit"; /*console.log("use global editor");*/}
             
             RED.view.getForm("dialog-form", editorType, function (d, f) {
                 prepareEditDialog(node, "node-input");

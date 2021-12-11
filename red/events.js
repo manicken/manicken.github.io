@@ -18,7 +18,7 @@
      var handlers = {};
 
      function on(evt,func) {
-         console.warn("adding RED.event ", evt);
+         //console.warn("adding RED.event ", evt);
          handlers[evt] = handlers[evt]||[];
          handlers[evt].push(func);
      }

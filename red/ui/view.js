@@ -679,7 +679,7 @@ RED.view = (function() {
         // restore the settings for the tab
         if (RED.nodes.getWorkspace(tab.id).settings != undefined) { // failsafe check should never happen
             preventSaveActiveWorkspaceSettings = true;
-            console.warn("Restoring tab settings");
+            //console.warn("Restoring tab settings");
             RED.settings.resetClassSettings(RED.view); // this first resets all settings to default
             RED.settings.restoreSettings(RED.view.settings, RED.view.defSettings, tab.settings);  // this then apply what is changed
             RED.settings.UpdateSettingsEditorCat(RED.view, RED.view.settingsEditor); // finally update settings editor tab cat
@@ -722,7 +722,7 @@ RED.view = (function() {
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
 	$('#btn-paste').click(function() {importNodes(clipboard,null, true)});
-    console.warn("view loading...");
+    //console.warn("view loading...");
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
 		onchange: setSelectWorkspace,
@@ -4725,7 +4725,7 @@ RED.view = (function() {
 					break;
 				}
 			}
-			console.log("table contens: type("+ typeof data2 + "):\n"+ data2); // development debug
+			//console.log("table contens: type("+ typeof data2 + "):\n"+ data2); // development debug
 		}
 		//console.log(data2); // development debug
         

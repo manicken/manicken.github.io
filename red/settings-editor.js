@@ -220,7 +220,7 @@ RED.settings.editor = (function() {
         if (useAceEditor == true) {
             var aceEditor = ace.edit("aceEditor-"+id);
             var aceTheme = "ace/theme/" + RED.NodeDefManager.settings.aceEditorTheme
-            aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
+            aceEditor.setTheme(aceTheme, function() { /*console.log("ace theme changed");*/});
             
             aceEditor.setOptions({
                 enableBasicAutocompletion: true,
@@ -229,7 +229,7 @@ RED.settings.editor = (function() {
                 enableLiveAutocompletion: true,
             });
             if (aceEditorMode != undefined) {
-                aceEditor.session.setMode("ace/mode/"+aceEditorMode, function() { console.log("ace mode changed to "+ aceEditorMode);});
+                aceEditor.session.setMode("ace/mode/"+aceEditorMode, function() { /*console.log("ace mode changed to "+ aceEditorMode);*/});
             }
             
         }

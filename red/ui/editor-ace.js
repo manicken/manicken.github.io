@@ -61,8 +61,8 @@ RED.editor.ace = (function() {
 		//aceEditor.completers = [completer];
 
 		var aceTheme = "ace/theme/" + RED.editor.settings.aceEditorTheme
-		console.log("setting ace editor theme to:" + aceTheme)
-		aceEditor.setTheme(aceTheme, function() { console.log("ace theme changed");});
+		//console.log("setting ace editor theme to:" + aceTheme)
+		aceEditor.setTheme(aceTheme, function() { /*console.log("ace theme changed");*/});
 		//$(".ui-dialog").css('background-color', "#282a36"); 
 		//$(".ui-dialog").css('color', "#f8f8f2"); 
 		
@@ -76,14 +76,14 @@ RED.editor.ace = (function() {
 		
 		if (node._def.useAceEditor == "javascript")
 		{
-			aceEditor.session.setMode("ace/mode/javascript", function() { console.log("ace mode changed to javascript");});
-			console.warn("ace editor in javascript mode");
+			aceEditor.session.setMode("ace/mode/javascript", function() { /*console.log("ace mode changed to javascript");*/});
+			//console.warn("ace editor in javascript mode");
 		}
 		else if (node._def.useAceEditor == "c_cpp")
 		{
-			aceEditor.session.setMode("ace/mode/c_cpp", function() { console.log("ace mode changed to c_cpp");});
+			aceEditor.session.setMode("ace/mode/c_cpp", function() {/* console.log("ace mode changed to c_cpp");*/});
 			init_aceEditor_c_cpp_mode(aceEditor);
-			console.warn("ace editor in c_cpp mode");
+			//console.warn("ace editor in c_cpp mode");
 		}
 
 		if (node.comment == undefined) node.comment = new String("");
@@ -107,8 +107,8 @@ RED.editor.ace = (function() {
 	function init_aceEditor_c_cpp_mode(aceEditor)
 	{
 		defaultCompleters = aceEditor.completers;
-		console.warn("aceEditor.completers:");
-				console.warn(aceEditor.completers);
+		//console.warn("aceEditor.completers:");
+				//console.warn(aceEditor.completers);
 
 		aceEditor.commands.addCommand({
 			name: "dotCommand",
@@ -126,7 +126,7 @@ RED.editor.ace = (function() {
 				aceEditor.insert(".");            
 				lastToken = RED.nodes.getArrayDeclarationWithoutSizeSyntax(lastToken);
 				var split = lastToken.split(".");
-				console.error(split);
+				//console.error(split);
 				if (split.length > 1) lastToken = split[split.length-1];
 
 				// here it need also need to check the type
@@ -141,7 +141,7 @@ RED.editor.ace = (function() {
 					}
 					else
 					{
-						console.warn("kw.name:" + kw.name);
+						//console.warn("kw.name:" + kw.name);
 					}
 				}
 				if (tokenType == "")
@@ -155,11 +155,11 @@ RED.editor.ace = (function() {
 						}
 						else
 						{
-							console.warn("kw.name:" + kw.name);
+							//console.warn("kw.name:" + kw.name);
 						}
 					}
 				}
-				console.log("lastToken:" + lastToken + " @ " + tokenType);
+				//console.log("lastToken:" + lastToken + " @ " + tokenType);
 				defaultCompleters = aceEditor.completers; // save default
 				
 				var byToken = [];

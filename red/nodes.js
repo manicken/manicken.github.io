@@ -701,7 +701,7 @@ RED.nodes = (function() {
             if (nd.isAddon != undefined && nd.isAddon == true) {
                 naddons[ndn] = nd;
             }
-            else console.warn("skippin ", nd);
+            //else console.warn("skippin ", nd);
         }
         return naddons;
     }
@@ -783,7 +783,7 @@ RED.nodes = (function() {
     }
 
 	function importNodes(newNodesObj, createNewIds, clearCurrentFlow) {
-		console.trace("@ importNodes - createNewIds:" + createNewIds);
+		//console.trace("@ importNodes - createNewIds:" + createNewIds);
 		
 		var newNodes;
 		if (createNewIds == undefined)
@@ -1874,7 +1874,7 @@ RED.nodes = (function() {
 			if (ws != undefined)
 			{
 				currentWorkspace = ws;
-				console.warn("workspace selected: "+ ws.label + " " + ws.id);
+				//console.warn("workspace selected: "+ ws.label + " " + ws.id);
 			}
         },
         getCurrentWorkspace: function() { return currentWorkspace},

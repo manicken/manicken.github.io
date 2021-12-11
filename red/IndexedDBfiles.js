@@ -84,7 +84,7 @@ RED.IndexedDBfiles = (function() {
             console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
             return;
         }
-        console.log(window.indexedDB);
+        //console.log(window.indexedDB);
         // initial initiation
         var request = window.indexedDB.open("AudioSystemDesignTool", 4);
         request.onerror = function(event) {
@@ -151,7 +151,7 @@ RED.IndexedDBfiles = (function() {
     
         request.onsuccess = function(event) {
             db = event.target.result; 
-            console.warn("indexDB request onsuccess: ", db );
+            //console.warn("indexDB request onsuccess: ", db );
             db.onerror = function(event) {
                 // Generic error handler for all errors targeted at this database's
                 // requests!

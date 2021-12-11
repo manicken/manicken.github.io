@@ -23,7 +23,7 @@ RED.sidebar.info = (function() {
 	content.style.paddingRight = "4px";
 	RED.sidebar.addTab("info",content);
 
-	console.warn("tab-info loading.."); // to see loading order
+	//console.warn("tab-info loading.."); // to see loading order
 	
 	
 	

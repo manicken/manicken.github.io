@@ -182,7 +182,7 @@ RED.main = (function() {
         var menuName = "menu-demo-flows";
         var data = JSON.parse($("script[data-container-name|='ExamplesList']").html());
         var names = Object.getOwnPropertyNames(data);
-        console.log(names);
+        //console.log(names);
         $("#"+menuName).empty();
         for(var mi = 0; mi < names.length; mi++)
         {
@@ -486,7 +486,7 @@ RED.main = (function() {
 	//***********************************************/
 	$(function()  // jQuery short-hand for $(document).ready(function() { ... });
 	{	
-        console.warn("main $(function() {...}) exec"); // to see load order
+        //console.warn("main $(function() {...}) exec"); // to see load order
 		RED.NodeHelpManager.init(function() { // this makes sure that the addon help is loaded before anything else
             init();
         });

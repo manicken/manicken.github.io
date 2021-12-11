@@ -324,12 +324,12 @@ RED.settings = (function() {
                     }
                 }
                 else
-                    console.error("generateSettingsFromClasses, " + settingName + " have no action callback function");
+                    console.warn("generateSettingsFromClasses, " + settingName + " have no action callback function");
 
                 return;
             }
             else if (setting.action == undefined) {
-                console.error("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting and don't have action defined");
+                console.warn("generateSettingsFromClasses, skipping:" + settingName + " because it don't have a setting and don't have action defined");
                 return;
             }
         }

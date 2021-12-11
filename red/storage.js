@@ -24,7 +24,7 @@ RED.storage = (function() {
             var JSON_string = JSON.stringify(nns);
             localStorage.setItem("audio_library_guitool", JSON_string);
             RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON_string);
-            console.trace("localStorage write");
+            //console.trace("localStorage write");
             RED.notify("<strong>Saved..</strong>", "success", null, 2000, 30);
 		}
 	}
@@ -42,11 +42,11 @@ RED.storage = (function() {
 	}
 	function load() {
 
-		const t0 = performance.now();
+		//const t0 = performance.now();
 		if (localStorage) {
 			//console.warn(allStorage());
 			var json_string = localStorage.getItem("audio_library_guitool");
-			console.log("localStorage read: " );//+ json_string);
+			//console.log("localStorage read: " );//+ json_string);
 
 			if (json_string != undefined && (json_string.trim().length != 0))
 			{
@@ -57,8 +57,8 @@ RED.storage = (function() {
 				RED.nodes.createNewDefaultWorkspace();
 			}
 		}
-		const t1 = performance.now();
-		console.log('storage-load took: ' + (t1-t0) +' milliseconds.');
+		//const t1 = performance.now();
+		//console.log('storage-load took: ' + (t1-t0) +' milliseconds.');
 	}
     
 
