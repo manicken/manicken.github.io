@@ -59,62 +59,7 @@ RED.arduino.export = (function () {
             }]
         }).dialog("open");
     }
-    function showExportDialog(title, text, textareaLabel) {
-        var box = document.querySelector('.ui-droppable'); // to get window size
-        function float2int(value) {
-            return value | 0;
-        }
-        RED.view.state(RED.state.EXPORT);
-        var t2 = performance.now();
-        RED.view.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
-            if (textareaLabel != undefined)
-                $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
-
-            $("#node-input-export").val(text).focus(function () {
-                var textarea = $(this);
-
-                textarea.select();
-                //console.error(textarea.height());
-                var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
-                textarea.height(textareaNewHeight);
-
-                textarea.mouseup(function () {
-                    textarea.unbind("mouseup");
-                    return false;
-                });
-            }).focus();
-
-
-
-            //console.warn(".ui-droppable.box.clientHeight:"+ box.clientHeight);
-            //$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
-            $("#dialog").dialog({
-                title: title,
-                width: box.clientWidth * 0.60, // setting the size of dialog takes ~170mS
-                height: box.clientHeight,
-                buttons: [
-                    {
-                        text: "Ok",
-                        click: function () {
-                            RED.console_ok("Export dialog OK pressed!");
-                            $(this).dialog("close");
-                        }
-                    },
-                    {
-                        text: "Cancel",
-                        click: function () {
-                            RED.console_ok("Export dialog Cancel pressed!");
-                            $(this).dialog("close");
-                        }
-                    }
-                ],
-            }).dialog("open");
-
-        });
-        //RED.view.dirty(false);
-        const t3 = performance.now();
-        console.log('arduino-export-save-show-dialog took: ' + (t3 - t2) + ' milliseconds.');
-    }
+    
 
     /*function isSpecialNode(nt)
     {
@@ -130,45 +75,7 @@ RED.arduino.export = (function () {
       else if (nt == "PointerArray") return true;
       else return false;
     }*/
-    /**
-     * This is only for the moment to get special type AudioMixer<n> and AudioStreamObject
-     * @param {*} nns nodeArray
-     * @param {Node} n node
-     */
-    function getTypeName(nns, n) {
-        var cpp = "";
-        var typeLength = n.type.length;
-        if (n.type == "AudioMixer") {
-            var tmplDef = "";
-            if (n.inputs == 1) // special case 
-            {
-                // check if source is a array
-                var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
-                if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
-                {
-                    var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
-                    if (isArray) tmplDef = "<" + isArray.arrayLength + ">";
-                    console.log("special case AudioMixer connected from array " + src.node.name + ", new AudioMixer def:" + tmplDef);
-                }
-                else
-                    tmplDef = "<" + n.inputs + ">";
-            }
-            else
-                tmplDef = "<" + n.inputs + ">";
-
-            cpp += n.type + tmplDef + " ";
-            typeLength += tmplDef.length;
-        }
-        else if (n.type == "AudioStreamObject") {
-            cpp += n.subType + " ";
-            typeLength = n.subType.length;
-        }
-        else
-            cpp += n.type + " ";
-
-        for (var j = typeLength; j < 32; j++) cpp += " ";
-        return cpp;
-    }
+    
 
     function getCppHeader(jsonString, includes) {
         if (includes == undefined)
@@ -323,7 +230,7 @@ RED.arduino.export = (function () {
 
             if (haveIO(node)) {
                 // generate code for audio processing node instance
-                cppAPN += getTypeName(nns, n);
+                cppAPN += RED.export.getTypeName(nns, n);
                 var name = RED.nodes.make_name(n)
                 cppAPN += name + "; ";
                 for (var j = n.id.length; j < 14; j++) cppAPN += " ";
@@ -367,8 +274,8 @@ RED.arduino.export = (function () {
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive())
 
         if (useExportDialog)
-            showExportDialog("Simple Export to Arduino", cpp, " Source Code:");
-        //showExportDialog("Simple Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
+            RED.export.showExportDialog("Simple Export to Arduino", cpp, " Source Code:");
+        //RED.export.showExportDialog("Simple Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 
         const t2 = performance.now();
         console.log('arduino-export-save1 took generating: ' + (t1 - t0) + ' milliseconds.');
@@ -544,7 +451,7 @@ RED.arduino.export = (function () {
                         n.name = isArray.newName;
                     }
 
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getTypeName(nns, n);
+                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + RED.export.getTypeName(nns, n);
                     //console.log(">>>" + n.type +"<<<"); // debug test
                     var name = RED.nodes.make_name(n)
 
@@ -762,8 +669,8 @@ RED.arduino.export = (function () {
 
         // only show dialog when server is active and not generating zip
         if (useExportDialog)
-            showExportDialog("Class Export to Arduino", cpp, " Source Code:");
-        //showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
+            RED.export.showExportDialog("Class Export to Arduino", cpp, " Source Code:");
+        //RED.export.showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
         const t1 = performance.now();
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
@@ -846,7 +753,7 @@ RED.arduino.export = (function () {
     $('#btn-deploy2singleLineJson').click(function () { exportSingleLineJSON(); });
     function exportSingleLineJSON() {
         var json = localStorage.getItem("audio_library_guitool");
-        showExportDialog("Single line JSON", json, " JSON:");
+        RED.export.showExportDialog("Single line JSON", json, " JSON:");
     }
 
     /*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
@@ -861,7 +768,6 @@ RED.arduino.export = (function () {
 
     return {
         //isSpecialNode:isSpecialNode,
-        showExportDialog: showExportDialog,
         pushJSON: pushJSON,
         generate_OSC_function_decode:generate_OSC_function_decode,
     };

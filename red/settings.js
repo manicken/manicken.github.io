@@ -160,7 +160,9 @@ RED.settings = (function() {
             //console.warn("getChangedSettings: " + name + " " + typeof RED_Class.settings[name]);
             if (typeof RED_Class.settings[name] !== "object") {
                 var str1 = RED_Class.settings[name].toString();
-                var str2 = RED_Class.defSettings[name].toString();
+                
+                try{var str2 = RED_Class.defSettings[name].toString();}
+                catch(err) {console.error("need to fix this occurence of error " + name + " @ ", RED_Class);}
             } else {
                 var str1 = JSON.stringify(RED_Class.settings[name]);
                 var str2 = JSON.stringify(RED_Class.defSettings[name]);

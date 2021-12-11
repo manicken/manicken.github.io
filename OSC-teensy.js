@@ -276,8 +276,6 @@ OSC = (function() {
         RED.events.on("links:remove", LinkRemoved);
     }
 
-    
-
     function AddLineToLog(text, foreColor, bgColor) {
         var style = "";
         if (foreColor != undefined)
@@ -294,6 +292,7 @@ OSC = (function() {
         SendTextToSerial:SendTextToSerial,
         GetSimpleOSCdata:CreateMessageData, // keep this for backwards compability
         CreateMessageData:CreateMessageData, // newer name
+        GetLinkName:GetLinkName,
         CreatePacket:CreatePacket,
         CreateBundle:CreateBundle,
         CreateBundleData:CreateBundleData, // simplifies from osc.writeBundle(bundle)

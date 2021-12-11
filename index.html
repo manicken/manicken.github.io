@@ -90,6 +90,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     <li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
 				</ul>
 			</div>
+            <div class="btn-group pull-left">
+				<a id="menu-export" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a id="btn-deploy-osc" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple (classic)</a></li>
+                    
+				</ul>
+			</div>
 			<div class="btn-group pull-left">
 				<a id="menu-ide" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
 				<ul class="dropdown-menu">
@@ -546,6 +553,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/main.js"></script> <!-- main must be first because it defines Root var: RED -->
 <script src="red/settings.js"></script>
 <script src="red/settings-editor.js"></script>
+<scritp src="red/export.js"></scritp>
 <script src="red/arduino.js"></script>
 <script src="red/arduino-import.js"></script>
 <script src="red/arduino-export.js"></script>
@@ -590,6 +598,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="osc-browser.js"></script>
 <script src="slip.js"></script>
 <script src="OSC-teensy.js"></script>
+<script src="OSC-export.js"></script>
 
 
 <!--
