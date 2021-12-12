@@ -82,6 +82,10 @@ OSC.export = (function () {
         var bundleData = OSC.CreateBundleData(bundle);
 
         var dataAsText = new TextDecoder("utf-8").decode(bundleData);
+        
+        exportDialogText += "\nTotal AudioObjects:" + apos.length + "\n";
+        exportDialogText += "Total AudioConnections: " + (acs.length/2) + "\n";
+
         exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
         showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
         function () {OSC.SendData(bundleData)});

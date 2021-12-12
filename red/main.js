@@ -87,7 +87,7 @@ RED.main = (function() {
 		if (!file) {
 		  return;
         }
-        if (file.type == "application/json")
+        if (file.type == "application/json" || file.type == "text/plain")
             readJSONfile(file);
         else if (file.type == "application/x-zip-compressed")
             readZIPfile(file);
