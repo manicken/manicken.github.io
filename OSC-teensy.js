@@ -132,7 +132,7 @@ OSC = (function() {
     function SendData(data) {
         if (RED.OSC.settings.Encoding == 1) // SLIP
         {
-            AddLineToLog("using SLIP");
+            //AddLineToLog("using SLIP");
             data = Slip.encode(data);
         }
         if (RED.OSC.settings.TransportLayer == 0) // Web Serial API
@@ -227,16 +227,16 @@ OSC = (function() {
     }
 
     function LinkAdded(link) {
-        var connName = GetLinkName(link);
-        link.name = connName;
+        var linkName = GetLinkName(link);
+        link.name = linkName;
         var addLinkAddr = RED.OSC.settings.RootAddress + "/dynamic/createConn*";
-        var connectLinkAddr = RED.OSC.settings.RootAddress + "/audio/" + connName + "/connect*";
+        var connectLinkAddr = RED.OSC.settings.RootAddress + "/audio/" + linkName + "/connect*";
         var bundle = OSC.CreateBundle();
-        bundle.packets.push(CreatePacket(addLinkAddr, "s", connName));
+        bundle.packets.push(CreatePacket(addLinkAddr, "s", linkName));
         bundle.packets.push(CreatePacket(connectLinkAddr, "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort));
         SendData(CreateBundleData(bundle));
         if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("added link " + GetLinkDebugName(link));
+            AddLineToLog("added link [" + linkName  + "] " + GetLinkDebugName(link));
     }
 
     function GetLinkName(link) {
@@ -257,7 +257,7 @@ OSC = (function() {
         SendData(CreateMessageData(addr,"s", linkName));
 
         if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("removed link " + GetLinkDebugName(link));
+            AddLineToLog("removed link [" + linkName  + "] " + GetLinkDebugName(link));
     }
 
     // not yet implemented functionality
