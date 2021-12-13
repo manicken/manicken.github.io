@@ -542,14 +542,17 @@ RED.nodes = (function() {
         node.z = n.z;
         node.bgColor = n.bgColor;
         node.wires = [];
+        node.wireNames = [];
         for(var i=0;i<n.outputs;i++) {
             node.wires.push([]);
+            node.wireNames.push([]);
         }
         var wires = links.filter(function(d){return d.source === n;});
         for (var j=0;j<wires.length;j++) {
             var w = wires[j];
             try{
             node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
+            node.wireNames[w.sourcePort].push(OSC.GetLinkName(w));
             }
             catch (e)
             {
@@ -914,9 +917,9 @@ RED.nodes = (function() {
             var def = getType(n.type);
             if (def != undefined) {
                 if (def.uiObject == undefined)
-                    var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,changed:false};
+                    var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,wireNames:n.wireNames,changed:false};
                 else
-                    var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,changed:false};
+                    var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,wireNames:n.wireNames,changed:false};
 
                 if (n.parentGroup != undefined)
                 {
@@ -994,6 +997,7 @@ RED.nodes = (function() {
         for (i=0;i<new_nodes.length;i++)
         {
             n = new_nodes[i];
+            //console.error(n);
             for (var w1=0;w1<n.wires.length;w1++)
             {
                 var wires = (n.wires[w1] instanceof Array)?n.wires[w1]:[n.wires[w1]]; // if not array then convert to array
@@ -1004,7 +1008,27 @@ RED.nodes = (function() {
                         var parts = wires[w2].split(":");
                         if (parts.length == 2 && parts[0] in node_map) {
                             var dst = node_map[parts[0]];
+                            
+                            
                             var link = {source:n,sourcePort:w1,target:dst,targetPort:parts[1]};
+
+                            if (n.wireNames != undefined) {
+                                try {
+                                var linkName = n.wireNames[w1][w2];
+                                
+                                }
+                                catch (err) { console.warn(" could not get prev link names  @ " +n.name); var linkName = OSC.GetLinkName(link);/*console.warn( " generating new link name " + linkName); */}
+
+                                //console.warn(" got prev link name " + linkName);
+                            }
+                            else {
+                                var linkName = OSC.GetLinkName(link); 
+                                //console.warn( " generating new link name " + linkName);
+                                    
+                            }
+                                
+
+                            link.name = linkName;
                             addLink(link);
                             new_links.push(link);
                         }
@@ -1027,6 +1051,8 @@ RED.nodes = (function() {
             }
             
             delete n.wires;
+            
+            delete n.wireNames;
         }
         return [new_nodes,new_links];
     }
