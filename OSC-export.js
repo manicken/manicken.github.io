@@ -54,7 +54,10 @@ OSC.export = (function () {
                     var dst = RED.nodes.node(dstId);
                     var src_name = RED.nodes.make_name(src);
                     var dst_name = RED.nodes.make_name(dst);
-                    var linkName = src_name+pi+dst_name+dstPortIndex;
+                    if (RED.OSC.settings.UseDebugLinkName == false)
+                        var linkName = src_name + pi + dst_name + dstPortIndex;
+                    else
+                        var linkName = src_name + "_" + pi +"_"+ dst_name +"_"+ dstPortIndex;
                     addr = RED.OSC.settings.RootAddress + createConnectionAddr;
                     acs.push(OSC.CreatePacket(addr,"s", linkName));
                     addr = RED.OSC.settings.RootAddress + connectAddr(linkName);

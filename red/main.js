@@ -567,6 +567,7 @@ RED.main = (function() {
         RED.storage.dontSave = false;
         OSC.RegisterEvents();
 
+        RED.OCPview.init()
 
         // if the query string has ?info=className, populate info tab
         var info = getQueryVariable("info");

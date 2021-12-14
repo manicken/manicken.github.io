@@ -36,8 +36,9 @@ RED.sidebar = (function() {
 	var sidebar_tabs = RED.tabs.create({
 		id:"sidebar-tabs",
 		onchange:function(tab) { // happens when switching between tabs
-			//console.warn("sidebar-tabs@onchange");
+			console.warn("sidebar-tabs@onchange " + tab.id);
 			$("#sidebar-content").children().hide();
+
 			$("#"+tab.id).show();
 		},
 		onremove: function(tab) {

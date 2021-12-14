@@ -542,17 +542,17 @@ RED.nodes = (function() {
         node.z = n.z;
         node.bgColor = n.bgColor;
         node.wires = [];
-        node.wireNames = [];
+        //node.wireNames = [];
         for(var i=0;i<n.outputs;i++) {
             node.wires.push([]);
-            node.wireNames.push([]);
+            //node.wireNames.push([]);
         }
         var wires = links.filter(function(d){return d.source === n;});
         for (var j=0;j<wires.length;j++) {
             var w = wires[j];
             try{
             node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
-            node.wireNames[w.sourcePort].push(OSC.GetLinkName(w));
+            //node.wireNames[w.sourcePort].push(OSC.GetLinkName(w));
             }
             catch (e)
             {
@@ -917,9 +917,9 @@ RED.nodes = (function() {
             var def = getType(n.type);
             if (def != undefined) {
                 if (def.uiObject == undefined)
-                    var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires,wireNames:n.wireNames,changed:false};
+                    var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires/*,wireNames:n.wireNames*/,changed:false};
                 else
-                    var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires,wireNames:n.wireNames,changed:false};
+                    var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires/*,wireNames:n.wireNames*/,changed:false};
 
                 if (n.parentGroup != undefined)
                 {
@@ -1011,13 +1011,13 @@ RED.nodes = (function() {
                             
                             
                             var link = {source:n,sourcePort:w1,target:dst,targetPort:parts[1]};
-
+                            /*
                             if (n.wireNames != undefined) {
                                 try {
                                 var linkName = n.wireNames[w1][w2];
                                 
                                 }
-                                catch (err) { console.warn(" could not get prev link names  @ " +n.name); var linkName = OSC.GetLinkName(link);/*console.warn( " generating new link name " + linkName); */}
+                                catch (err) { console.warn(" could not get prev link names  @ " +n.name); var linkName = OSC.GetLinkName(link);}
 
                                 //console.warn(" got prev link name " + linkName);
                             }
@@ -1029,6 +1029,7 @@ RED.nodes = (function() {
                                 
 
                             link.name = linkName;
+                            */
                             addLink(link);
                             new_links.push(link);
                         }
@@ -1052,7 +1053,7 @@ RED.nodes = (function() {
             
             delete n.wires;
             
-            delete n.wireNames;
+            //delete n.wireNames;
         }
         return [new_nodes,new_links];
     }

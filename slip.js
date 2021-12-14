@@ -100,7 +100,7 @@ Slip = (function() {
      * @param {Array-like} data an incoming stream of bytes
      */
     p.decode = function (data) {
-        data = slip.byteArray(data);
+        data = byteArray(data);
 
         var msg;
         for (var i = 0; i < data.length; i++) {
@@ -148,7 +148,7 @@ Slip = (function() {
     // Unsupported, non-API method.
     p.addByte = function (val) {
         if (this.msgBufferIdx > this.msgBuffer.length - 1) {
-            this.msgBuffer = slip.expandByteArray(this.msgBuffer);
+            this.msgBuffer = expandByteArray(this.msgBuffer);
         }
 
         this.msgBuffer[this.msgBufferIdx++] = val;
@@ -163,7 +163,7 @@ Slip = (function() {
             return; // Toss opening END byte and carry on.
         }
 
-        var msg = slip.sliceByteArray(this.msgBuffer, 0, this.msgBufferIdx);
+        var msg = sliceByteArray(this.msgBuffer, 0, this.msgBufferIdx);
         if (this.onMessage) {
             this.onMessage(msg);
         }
@@ -175,6 +175,7 @@ Slip = (function() {
     };
 
     return {
-        encode:encode
+        encode:encode,
+        Decoder:Decoder
     };
 })();
