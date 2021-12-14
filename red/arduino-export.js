@@ -268,6 +268,7 @@ RED.arduino.export = (function () {
         wsCppFiles.push(getNewWsCppFile(RED.nodes.getWorkspace(activeWorkspace).label + ".h", cpp));
 
         var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
+
         RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
         const t1 = performance.now();
 
@@ -337,7 +338,7 @@ RED.arduino.export = (function () {
                 }
             }
         }
-
+        var keywords = [];
         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
         {
             var ws = RED.nodes.workspaces[wsi];
@@ -358,9 +359,10 @@ RED.arduino.export = (function () {
                 newWsCpp = getNewWsCppFile(ws.label, "");
                 newWsCpp.isMain = true;
             }
-            else
+            else {
                 newWsCpp = getNewWsCppFile(ws.label + ".h", "");
-
+                keywords.push({token:ws.label, type:"KEYWORD2"});
+            }
             // first go through special types
             var classComment = "";
             var classConstructorCode = "";
@@ -660,8 +662,10 @@ RED.arduino.export = (function () {
 
         //console.log(jsonString);
         var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
+        wsCppFilesJson.keywords = keywords;
         var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
         //if (RED.arduino.isConnected())
+
         if (generateZip == undefined)
             RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST but not when exporting to zip
         //console.warn(jsonPOSTstring);
@@ -748,6 +752,7 @@ RED.arduino.export = (function () {
         var wsCppFiles = [];
         wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", json)); // JSON beautifier
         var wsCppFilesJson = getPOST_JSON(wsCppFiles, false); // false == don't remove other files
+
         RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
     }
     $('#btn-deploy2singleLineJson').click(function () { exportSingleLineJSON(); });
