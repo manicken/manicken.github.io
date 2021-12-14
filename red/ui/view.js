@@ -4248,6 +4248,7 @@ RED.view = (function() {
 	RED.keyboard.add(/* - */ 189,{ctrl:true},function(){zoomOut();d3.event.preventDefault();});
 	RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
 	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard, null, true);d3.event.preventDefault();});
+    RED.keyboard.add(/* o */ 79,{ctrl:true},function(){showExportNodesDialog(); d3.event.preventDefault();});
 	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){/*showExportNodesDialog();*/settings.guiEditMode = !settings.guiEditMode; d3.event.preventDefault();});
 	RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog(true);d3.event.preventDefault();});
 	RED.keyboard.add(/* s */ 83,{ctrl:true},function(){RED.storage.update(); RED.main.updateProjectsMenu(); d3.event.preventDefault();});
