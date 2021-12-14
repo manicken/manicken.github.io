@@ -1277,31 +1277,31 @@ RED.OCPview = (function() {
 			$("#li-menu-export-library").removeClass("disabled");
 		}
 		if (moving_set.length === 0 && selected_link == null) {
-			RED.keyboard.remove(/* backspace */ 8);
-			RED.keyboard.remove(/* delete */ 46);
-			RED.keyboard.remove(/* c */ 67);
-			RED.keyboard.remove(/* x */ 88);
+			//RED.keyboard.remove(/* backspace */ 8);
+			//RED.keyboard.remove(/* delete */ 46);
+			//RED.keyboard.remove(/* c */ 67);
+			//RED.keyboard.remove(/* x */ 88);
 		} else {
 			//RED.keyboard.add(/* backspace */ 8,function(){deleteSelection();d3.event.preventDefault();}); // jannik thinks this is unlogical and unnecessary
-			RED.keyboard.add(/* delete */ 46,function(){deleteSelection();d3.event.preventDefault();});
-			RED.keyboard.add(/* c */ 67,{ctrl:true},function(){copySelection();d3.event.preventDefault();});
-			RED.keyboard.add(/* x */ 88,{ctrl:true},function(){copySelection();deleteSelection();d3.event.preventDefault();});
+			//RED.keyboard.add(/* delete */ 46,function(){deleteSelection();d3.event.preventDefault();});
+			//RED.keyboard.add(/* c */ 67,{ctrl:true},function(){copySelection();d3.event.preventDefault();});
+			//RED.keyboard.add(/* x */ 88,{ctrl:true},function(){copySelection();deleteSelection();d3.event.preventDefault();});
 		}
 		if (moving_set.length === 0) {
-			RED.keyboard.remove(/* up   */ 38);
-			RED.keyboard.remove(/* down */ 40);
-			RED.keyboard.remove(/* left */ 37);
-			RED.keyboard.remove(/* right*/ 39);
-			RED.keyboard.add(/* up   */ 38, function() { moveView(0,-1,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
-			RED.keyboard.add(/* down */ 40, function() { moveView(0,1,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
-			RED.keyboard.add(/* left */ 37, function() { moveView(-1,0,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
-			RED.keyboard.add(/* right*/ 39, function() { moveView(1,0,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			//RED.keyboard.remove(/* up   */ 38);
+			//RED.keyboard.remove(/* down */ 40);
+			//RED.keyboard.remove(/* left */ 37);
+			//RED.keyboard.remove(/* right*/ 39);
+			//RED.keyboard.add(/* up   */ 38, function() { moveView(0,-1,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			//RED.keyboard.add(/* down */ 40, function() { moveView(0,1,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			//RED.keyboard.add(/* left */ 37, function() { moveView(-1,0,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
+			//RED.keyboard.add(/* right*/ 39, function() { moveView(1,0,settings.keyboardScrollSpeed); d3.event.preventDefault(); });
 		} else {
 			
-			RED.keyboard.add(/* up   */ 38, function() { moveSelection_keyboard( 0,-1); d3.event.preventDefault(); }, endKeyboardMove);
-			RED.keyboard.add(/* down */ 40, function() { moveSelection_keyboard( 0, 1); d3.event.preventDefault(); }, endKeyboardMove);
-			RED.keyboard.add(/* left */ 37, function() { moveSelection_keyboard(-1, 0); d3.event.preventDefault(); }, endKeyboardMove);
-			RED.keyboard.add(/* right*/ 39, function() { moveSelection_keyboard( 1, 0); d3.event.preventDefault(); }, endKeyboardMove);
+			//RED.keyboard.add(/* up   */ 38, function() { moveSelection_keyboard( 0,-1); d3.event.preventDefault(); }, endKeyboardMove);
+			//RED.keyboard.add(/* down */ 40, function() { moveSelection_keyboard( 0, 1); d3.event.preventDefault(); }, endKeyboardMove);
+			//RED.keyboard.add(/* left */ 37, function() { moveSelection_keyboard(-1, 0); d3.event.preventDefault(); }, endKeyboardMove);
+			//RED.keyboard.add(/* right*/ 39, function() { moveSelection_keyboard( 1, 0); d3.event.preventDefault(); }, endKeyboardMove);
 		}
 		if (moving_set.length == 1 || (moving_set[0] != undefined && moving_set[0].n.type == "group")) {
 			RED.sidebar.info.refresh(moving_set[0].n);
@@ -1947,7 +1947,7 @@ RED.OCPview = (function() {
 		//var pos = [touch0.pageX,touch0.pageY];
 		//RED.touch.radialMenu.show(d3.select(this),pos);
 		if (mouse_mode == RED.state.IMPORT_DRAGGING) {
-			RED.keyboard.remove(/* ESCAPE */ 27);
+			//RED.keyboard.remove(/* ESCAPE */ 27);
 			updateSelection();
 			setDirty(true);
 			redraw(true);
@@ -4276,17 +4276,17 @@ RED.OCPview = (function() {
 		redraw_links();
 	}
 
-	RED.keyboard.add(/* z */ 90,{ctrl:true},function(){RED.history.pop();});
+	//RED.keyboard.add(/* z */ 90,{ctrl:true},function(){RED.history.pop();});
 	//RED.keyboard.add(/* o */ 79,{ctrl:true},function(){arrangeAll();d3.event.preventDefault();}); // have at other place, to close to print
-	RED.keyboard.add(/* a */ 65,{ctrl:true},function(){selectAll();d3.event.preventDefault();});
-	RED.keyboard.add(/* = */ 187,{ctrl:true},function(){zoomIn();d3.event.preventDefault();});
-	RED.keyboard.add(/* - */ 189,{ctrl:true},function(){zoomOut();d3.event.preventDefault();});
-	RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
-	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard, null, true);d3.event.preventDefault();});
-	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){/*showExportNodesDialog();*/settings.guiEditMode = !settings.guiEditMode; d3.event.preventDefault();});
-	RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog(true);d3.event.preventDefault();});
-	RED.keyboard.add(/* s */ 83,{ctrl:true},function(){RED.storage.update(); RED.main.updateProjectsMenu(); d3.event.preventDefault();});
-	RED.keyboard.add(/* p */ 80,{ctrl:true},function(){RED.main.print();d3.event.preventDefault();});
+	//RED.keyboard.add(/* a */ 65,{ctrl:true},function(){selectAll();d3.event.preventDefault();});
+	//RED.keyboard.add(/* = */ 187,{ctrl:true},function(){zoomIn();d3.event.preventDefault();});
+	//RED.keyboard.add(/* - */ 189,{ctrl:true},function(){zoomOut();d3.event.preventDefault();});
+	//RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
+	//RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard, null, true);d3.event.preventDefault();});
+	//RED.keyboard.add(/* e */ 69,{ctrl:true},function(){/*showExportNodesDialog();*/settings.guiEditMode = !settings.guiEditMode; d3.event.preventDefault();});
+	//RED.keyboard.add(/* i */ 73,{ctrl:true},function(){showImportNodesDialog(true);d3.event.preventDefault();});
+	//RED.keyboard.add(/* s */ 83,{ctrl:true},function(){RED.storage.update(); RED.main.updateProjectsMenu(); d3.event.preventDefault();});
+	//RED.keyboard.add(/* p */ 80,{ctrl:true},function(){RED.main.print();d3.event.preventDefault();});
 
 	// TODO: 'dirty' should be a property of RED.nodes - with an event callback for ui hooks
 	function setDirty(d) {
@@ -4378,12 +4378,12 @@ RED.OCPview = (function() {
 				mouse_mode = RED.state.IMPORT_DRAGGING;
 			}
 
-			RED.keyboard.add(/* ESCAPE */ 27,function(){
-					RED.keyboard.remove(/* ESCAPE */ 27);
-					clearSelection();
-					RED.history.pop();
-					mouse_mode = 0;
-			});
+			//RED.keyboard.add(/* ESCAPE */ 27,function(){
+			//		RED.keyboard.remove(/* ESCAPE */ 27);
+			//		clearSelection();
+			//		RED.history.pop();
+			//		mouse_mode = 0;
+			//});
 
 			RED.history.push({t:'add',nodes:new_node_ids,links:new_links,dirty:RED.view.dirty()});
 
@@ -4662,10 +4662,10 @@ RED.OCPview = (function() {
 			}
 		],
 		open: function(e) {
-			RED.keyboard.disable();
+			//RED.keyboard.disable();
 		},
 		close: function(e) {
-			RED.keyboard.enable();
+			//RED.keyboard.enable();
 		}
 	});
 	$( "#node-dialog-delete-workspace" ).dialog({
@@ -4696,10 +4696,10 @@ RED.OCPview = (function() {
 			}
 		],
 		open: function(e) {
-			RED.keyboard.disable();
+			//RED.keyboard.disable();
 		},
 		close: function(e) {
-			RED.keyboard.enable();
+			//RED.keyboard.enable();
 		}
 
 	});
