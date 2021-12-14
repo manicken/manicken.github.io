@@ -71,10 +71,10 @@
         //RED.BiDirDataWebSocketBridge.SendToWebSocket(formatted);
     }
 
-    function sendUiPiano(pressed, d) 
+    function sendUiPiano(d) 
     {
-        if (pressed == true) d.keyDown = 0x90;
-        else d.keyDown = 0x80;
+        //if (pressed == true) d.keyDown = 0x90;
+        //else d.keyDown = 0x80;
         eval(d.sendCommand);
         //var formatted = eval(d.sendCommand);
         //if (pressed == true) console.warn("ui_PianoMouseDown " + formatted  + " "+ d.keyIndex);

@@ -2281,10 +2281,10 @@ RED.view = (function() {
 				return; // this happenns when click title bar
 			}
 			d.keyIndex = parseInt(newKeyIndex);
-			d.keyDown = 0x90;
+			d.pressed = true;
 			setRectFill(rect, "#ff7f0e");
 			setRectStroke(rect, "#ff7f0e");
-			RED.ControlGUI.sendUiPiano(true, d);
+			RED.ControlGUI.sendUiPiano(d);
 		}
 		else if (d.type == "UI_ScriptButton") {
 			setRectFill(rect);
@@ -2327,11 +2327,12 @@ RED.view = (function() {
 				return; // this happenns when click title bar
 			}
 			d.keyIndex = parseInt(newKeyIndex);
+            d.pressed = false;
 			
 			resetRectFill(rect);
 			resetRectStroke(rect);
             
-            RED.ControlGUI.sendUiPiano(false, d);
+            RED.ControlGUI.sendUiPiano(d);
 		}
 		else if (d.type == "UI_ScriptButton") {
 			resetRectFill(rect);
