@@ -815,12 +815,12 @@ RED.nodes = (function() {
 
             if (isNewVersion(newNodes) == true) // this is for the future versions of structure, not yet implemented
             {
-                RED.notify("new json structure detected, ver: " + newNodes.version, "info", null, 2000);
+                //RED.notify("new json structure detected, ver: " + newNodes.version, "info", null, 2000);
                 if (newNodes.settings != undefined) {
                     RED.settings.setFromJSONobj(newNodes.settings);
                 }
-                else
-                    RED.notify("newNodes.settings is undefined, using defaults", "warning", null, 2000); //  this is for the future version of structure, not yet implemented
+                //else
+                //    RED.notify("newNodes.settings is undefined, using defaults", "warning", null, 2000); //  this is for the future version of structure, not yet implemented
                 
                 if (newNodes.nodeAddons != undefined) {
                     // here the new node addons loading should happen

@@ -501,14 +501,14 @@ RED.main = (function() {
         RED.arduino.startConnectedChecker();
         if (navigator.storage && navigator.storage.persist) {
             navigator.storage.persist().then(function(persistent) {
-                if (persistent)
+                /*if (persistent)
                     RED.notify("Storage will not be cleared except by explicit user action<br>or automatic/manually cache clear<br>on firefox this automatic clear<br>can be put into a exception list for permanent data storage.<br>note the data will still be removed by manually cache clear.", "info", null, 10000);
                 else
-                    RED.notify("Storage may be cleared by the UA under storage pressure.", "info", null, 4000);
+                    RED.notify("Storage may be cleared by the UA under storage pressure.", "info", null, 4000);*/
             });
         }
         else {
-            RED.notify("This browser don't support persistent storage!!!", "warning", null, 4000);
+            //RED.notify("This browser don't support persistent storage!!!", "warning", null, 4000);
         }
 
         addDemoFlowsToMenu();

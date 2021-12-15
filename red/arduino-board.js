@@ -83,8 +83,8 @@ RED.arduino.board = (function () {
         $("#"+ brdOptionsId).empty();
         
         var board = treeData[boardId];
-        if (board == undefined) {RED.notify("error could not select board " + boardId, "warning", null, 3000); return; }
-        if (board.menu == undefined) {RED.notify("board have no options " + boardId, "warning", null, 3000); return; }
+        if (board == undefined) {/*RED.notify("error could not select board " + boardId, "warning", null, 3000);*/ return; }
+        if (board.menu == undefined) {/*RED.notify("board have no options " + boardId, "warning", null, 3000);*/ return; }
         
         options = RED.arduino.settings.Board.Options;
 
