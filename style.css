@@ -477,6 +477,9 @@
   #btn-guiRunEditMode {
       margin-top: 0px;
   }
+  #btn-oscLiveUpdateMode {
+    margin-top: 0px;
+}
   .settings-category div .settings-menu {
       position: relative;
       padding-left: 3px;

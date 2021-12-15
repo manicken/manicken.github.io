@@ -9,7 +9,9 @@ RED.OSC = (function() {
     var EncodingOptions = [0,1];
 
     var defSettings = {
+        LiveUpdate: true,
         ShowOutputDebug: true,
+        ShowOutputOscTxRaw: true,
         ShowOutputOscRxRaw: true,
         ShowOutputOscRxDecoded: true,
         UseDebugLinkName: false,
@@ -18,7 +20,9 @@ RED.OSC = (function() {
         Encoding: 1 // SLIP
     }
     var _settings = {
+        LiveUpdate: defSettings.LiveUpdate,
         ShowOutputDebug: defSettings.ShowOutputDebug,
+        ShowOutputOscTxRaw: defSettings.ShowOutputOscTxRaw,
         ShowOutputOscRxRaw: defSettings.ShowOutputOscRxRaw,
         ShowOutputOscRxDecoded: defSettings.ShowOutputOscRxDecoded,
         UseDebugLinkName: defSettings.UseDebugLinkName,
@@ -28,8 +32,30 @@ RED.OSC = (function() {
     }
     var settings = {
 
+        get LiveUpdate() { return _settings.LiveUpdate; },
+        set LiveUpdate(state) { 
+            _settings.LiveUpdate = state; 
+            
+            $('#' + settingsEditor.LiveUpdate.valueId).prop('checked', state);
+            $('#btn-oscLiveUpdateMode').prop('checked', state);
+            RED.storage.update();
+			/*if (state == true)
+			{
+                RED.notify("Is OSC Live update mode", "warning", null, 500);
+                $('#btn-oscLiveUpdateMode').prop('checked', false);
+			}
+			else
+			{
+                RED.notify("Is not OSC Live update mode", "warning", null, 500);
+                $('#btn-oscLiveUpdateMode').prop('checked', true);
+            }*/
+        },
+
         get ShowOutputDebug() { return _settings.ShowOutputDebug; },
         set ShowOutputDebug(value) { _settings.ShowOutputDebug = value; RED.storage.update();},
+
+        get ShowOutputOscTxRaw() { return _settings.ShowOutputOscTxRaw; },
+        set ShowOutputOscTxRaw(value) { _settings.ShowOutputOscTxRaw = value; RED.storage.update();},
 
         get ShowOutputOscRxRaw() { return _settings.ShowOutputOscRxRaw; },
         set ShowOutputOscRxRaw(value) { _settings.ShowOutputOscRxRaw = value; RED.storage.update();},
@@ -51,10 +77,15 @@ RED.OSC = (function() {
     }
     var settingsCategory = { label:"OSC", expanded:false, popupText: "Open Sound Control settings", bgColor:"#DDD" };
 
+    var clearLogNote = "<br><br>the output can be cleared at 'top-right menu' -> 'clear output'";
+    var dataShownNote = "debug data should be shown in the bottom output log";
+
     var settingsEditor = {
-        ShowOutputDebug:        { label:"Show tx output debug", type:"boolean", popupText:"If transmit debug data should be shown in the bottom output log<br><br>the output can be cleared at 'top-right menu' -> 'clear output'"},
-        ShowOutputOscRxRaw:     { label:"Show rx raw output debug", type:"boolean", popupText:"If receive raw debug data should be shown in the bottom output log<br><br>the output can be cleared at 'top-right menu' -> 'clear output'"},
-        ShowOutputOscRxDecoded: { label:"Show rx decoded output debug", type:"boolean", popupText:"If receive decoded debug data should be shown in the bottom output log<br><br>the output can be cleared at 'top-right menu' -> 'clear output'"},
+        LiveUpdate:             { label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
+        ShowOutputDebug:        { label:"Show tx output debug", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
+        ShowOutputOscTxRaw:     { label:"Show tx raw output debug", type:"boolean", popupText:"If transmit raw " + dataShownNote + clearLogNote},
+        ShowOutputOscRxRaw:     { label:"Show rx raw output debug", type:"boolean", popupText:"If receive raw " + dataShownNote + clearLogNote},
+        ShowOutputOscRxDecoded: { label:"Show rx decoded output debug", type:"boolean", popupText:"If receive decoded " + dataShownNote + clearLogNote},
         UseDebugLinkName:       { label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
         RootAddress:            { label:"Root Address", type:"string", popupText: "this defines the root address"},
         Encoding:               { label:"Encoding", type:"combobox", optionTexts:EncodingOptionTexts, options:EncodingOptions, popupText: "The encoding of the data sent"},
@@ -136,7 +167,7 @@ OSC = (function() {
         var rxDecoded = "";
 
         if (RED.OSC.settings.ShowOutputOscRxRaw == true) {
-            rxDecoded += new TextDecoder("utf-8").decode(data).split('\n').join('<br>')
+            rxDecoded += new TextDecoder("utf-8").decode(data).split('\n').join('<br>').split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;');
         }
 
         if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
@@ -172,6 +203,9 @@ OSC = (function() {
         writer.releaseLock();
     }
     function SendData(data) {
+        if (RED.OSC.settings.ShowOutputOscTxRaw == true)
+            AddLineToLog("raw send:<br>" + new TextDecoder("utf-8").decode(data).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;'));
+
         if (RED.OSC.settings.Encoding == 1) // SLIP
         {
             //AddLineToLog("using SLIP");
@@ -230,6 +264,8 @@ OSC = (function() {
     }
 
     function NodeAdded(node) {
+        if (RED.OSC.settings.LiveUpdate == false) return;
+
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
         var addr = RED.OSC.settings.RootAddress + "/dynamic/createObject*";
@@ -240,6 +276,8 @@ OSC = (function() {
     }
 
     function NodeRenamed(node, oldName, newName) {
+        if (RED.OSC.settings.LiveUpdate == false) return;
+
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
         var addr = RED.OSC.settings.RootAddress + "/dynamic/ren*";
@@ -265,6 +303,8 @@ OSC = (function() {
     }
 
     function NodeRemoved(node, links) {
+        if (RED.OSC.settings.LiveUpdate == false) return;
+
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
         var addr = RED.OSC.settings.RootAddress + "/dynamic/destroy*";
@@ -284,6 +324,8 @@ OSC = (function() {
     }
 
     function LinkAdded(link) {
+        if (RED.OSC.settings.LiveUpdate == false) return;
+
         var linkName = GetLinkName(link);
         //link.name = linkName;
         var addLinkAddr = RED.OSC.settings.RootAddress + "/dynamic/createConn*";
@@ -311,6 +353,8 @@ OSC = (function() {
     }
 
     function LinkRemoved(link) {
+        if (RED.OSC.settings.LiveUpdate == false) return;
+        
         var addr = RED.OSC.settings.RootAddress + "/dynamic/destroy*";
         
         var linkName = GetLinkName(link);
