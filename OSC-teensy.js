@@ -12,6 +12,7 @@ RED.OSC = (function() {
         LiveUpdate: true,
         ShowOutputDebug: true,
         ShowOutputOscTxRaw: true,
+        ShowOutputOscTxDecoded: true,
         ShowOutputOscRxRaw: true,
         ShowOutputOscRxDecoded: true,
         UseDebugLinkName: false,
@@ -23,6 +24,7 @@ RED.OSC = (function() {
         LiveUpdate: defSettings.LiveUpdate,
         ShowOutputDebug: defSettings.ShowOutputDebug,
         ShowOutputOscTxRaw: defSettings.ShowOutputOscTxRaw,
+        ShowOutputOscTxDecoded: defSettings.ShowOutputOscTxDecoded,
         ShowOutputOscRxRaw: defSettings.ShowOutputOscRxRaw,
         ShowOutputOscRxDecoded: defSettings.ShowOutputOscRxDecoded,
         UseDebugLinkName: defSettings.UseDebugLinkName,
@@ -53,6 +55,9 @@ RED.OSC = (function() {
 
         get ShowOutputDebug() { return _settings.ShowOutputDebug; },
         set ShowOutputDebug(value) { _settings.ShowOutputDebug = value; RED.storage.update();},
+
+        get ShowOutputOscTxDecoded() { return _settings.ShowOutputOscTxDecoded; },
+        set ShowOutputOscTxDecoded(value) { _settings.ShowOutputOscTxDecoded = value; RED.storage.update();},
 
         get ShowOutputOscTxRaw() { return _settings.ShowOutputOscTxRaw; },
         set ShowOutputOscTxRaw(value) { _settings.ShowOutputOscTxRaw = value; RED.storage.update();},
@@ -85,13 +90,14 @@ RED.OSC = (function() {
         transmitDebug:  {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 ShowOutputDebug:        { label:"Show basic info", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
+                ShowOutputOscTxDecoded: { label:"Show JSON", type:"boolean", popupText:"If transmit JSON message " + dataShownNote + clearLogNote},
                 ShowOutputOscTxRaw:     { label:"Show raw data", type:"boolean", popupText:"If transmit raw " + dataShownNote + clearLogNote},
             }
         },
         receiveDebug:   {label:"Receive Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 
-                ShowOutputOscRxDecoded: { label:"Show decoded message", type:"boolean", popupText:"If receive decoded " + dataShownNote + clearLogNote},
+                ShowOutputOscRxDecoded: { label:"Show JSON", type:"boolean", popupText:"If receive JSON message " + dataShownNote + clearLogNote},
                 ShowOutputOscRxRaw:     { label:"Show raw data", type:"boolean", popupText:"If receive raw " + dataShownNote + clearLogNote},
             }
         },
@@ -226,6 +232,19 @@ OSC = (function() {
         else {
             AddLineToLog("(WARNING) Try to use Transport Layer NIY "+RED.OSC.LayerOptionTexts[RED.OSC.settings.TransportLayer] + "<brPlease select annother transport layer", "#FF0000", "#FFF0F0");
         }
+    }
+    function SendBundle(bundle) {
+        if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
+            AddLineToLog(JSON.stringify(bundle));
+        SendData(CreateBundleData(bundle));
+    }
+    function SendPacket(packet) {
+        if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
+            AddLineToLog(JSON.stringify(packet));
+        SendData(osc.writePacket(packet));
+    }
+    function SendMessage(address, valueTypes, ...values) {
+        SendPacket(CreatePacket(address, valueTypes, ...values));
     }
     function SendAsSlipToSerial(data) {
         SendRawToSerial(Slip.encode(data));
@@ -410,6 +429,9 @@ OSC = (function() {
         CreatePacket:CreatePacket,
         CreateBundle:CreateBundle,
         CreateBundleData:CreateBundleData, // simplifies from osc.writeBundle(bundle)
+        SendBundle:SendBundle,
+        SendMessage:SendMessage,
+        SendPacket:SendPacket,
         AddLineToLog:AddLineToLog, // simplifies usage of RED.bottombar.info.addLine(text);
         RegisterEvents:RegisterEvents
 	};
