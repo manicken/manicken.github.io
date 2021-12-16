@@ -994,7 +994,7 @@
       margin-left: -250px;
       left: 60%;
       position: absolute;
-      top: 1px;
+      top: 50px;
   }
   #notifications .alert {
       box-shadow: 0 0 1px 1px;

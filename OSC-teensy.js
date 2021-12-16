@@ -81,11 +81,20 @@ RED.OSC = (function() {
     var dataShownNote = "debug data should be shown in the bottom output log";
 
     var settingsEditor = {
-        LiveUpdate:             { label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
-        ShowOutputDebug:        { label:"Show tx output debug", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
-        ShowOutputOscTxRaw:     { label:"Show tx raw output debug", type:"boolean", popupText:"If transmit raw " + dataShownNote + clearLogNote},
-        ShowOutputOscRxRaw:     { label:"Show rx raw output debug", type:"boolean", popupText:"If receive raw " + dataShownNote + clearLogNote},
-        ShowOutputOscRxDecoded: { label:"Show rx decoded output debug", type:"boolean", popupText:"If receive decoded " + dataShownNote + clearLogNote},
+        LiveUpdate:     {label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
+        transmitDebug:  {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
+            items: {
+                ShowOutputDebug:        { label:"Show basic info", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
+                ShowOutputOscTxRaw:     { label:"Show raw data", type:"boolean", popupText:"If transmit raw " + dataShownNote + clearLogNote},
+            }
+        },
+        receiveDebug:   {label:"Receive Debug Output", expanded:false, bgColor:"#DDD",
+            items: {
+                
+                ShowOutputOscRxDecoded: { label:"Show decoded message", type:"boolean", popupText:"If receive decoded " + dataShownNote + clearLogNote},
+                ShowOutputOscRxRaw:     { label:"Show raw data", type:"boolean", popupText:"If receive raw " + dataShownNote + clearLogNote},
+            }
+        },
         UseDebugLinkName:       { label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
         RootAddress:            { label:"Root Address", type:"string", popupText: "this defines the root address"},
         Encoding:               { label:"Encoding", type:"combobox", optionTexts:EncodingOptionTexts, options:EncodingOptions, popupText: "The encoding of the data sent"},
@@ -103,8 +112,9 @@ RED.OSC = (function() {
 
 OSC = (function() {
 
-    navigator.serial.addEventListener("connect", (event) => {
-        RED.notify("Serial port connected", "warning", null, 3000);
+    navigator.serial.addEventListener("connect", async (event) => {
+        RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
+        
       });
       
       navigator.serial.addEventListener("disconnect", (event) => {
