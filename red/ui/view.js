@@ -2137,6 +2137,9 @@ RED.view = (function() {
 			d.dirty = true;
 			redraw_nodes(true);
 		}
+        if (d.divVal == undefined || d.divVal == "" || d.divVal == 0) d.divVal = 1;
+        d.divVal = parseInt(d.divVal);
+        d.fval = d.val/d.divVal;
 	}
 	function subtractColor(colorA, colorB)
 	{
@@ -2350,18 +2353,26 @@ RED.view = (function() {
 				//console.log("uiObjectMouseScroll up");
 				d.val += 1;
 				if (d.val > d.maxVal) d.val = d.maxVal;
+                if (d.divVal == undefined || d.divVal == "" || d.divVal == 0) d.divVal = 1;
+                d.divVal = parseInt(d.divVal);
+                d.fval = d.val/d.divVal;
                 RED.ControlGUI.sendUiSliderValue(d);
 				d.dirty = true;
 				redraw_nodes(true);
+                
 			}
 			else if (delta < 0)
 			{
 				//console.log("uiObjectMouseScroll down");
 				d.val -= 1;
 				if (d.val < d.minVal) d.val = d.minVal;
+                if (d.divVal == undefined || d.divVal == "" || d.divVal == 0) d.divVal = 1;
+                d.divVal = parseInt(d.divVal);
+                d.fval = d.val/d.divVal;
                 RED.ControlGUI.sendUiSliderValue(d);
 				d.dirty = true;
 				redraw_nodes(true);
+                
 			}
 		}
 	}
@@ -3736,6 +3747,7 @@ RED.view = (function() {
 			.attr("dy", "0.35em");
 	}
     function UI_slider_sanitate_values(d) {
+        
         d.maxVal = parseInt(d.maxVal);
         d.minVal = parseInt(d.minVal);
         d.val = parseInt(d.val);
