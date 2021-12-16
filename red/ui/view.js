@@ -3735,6 +3735,17 @@ RED.view = (function() {
 			.attr("text-anchor", "start")
 			.attr("dy", "0.35em");
 	}
+    function UI_slider_sanitate_values(d) {
+        d.maxVal = parseInt(d.maxVal);
+        d.minVal = parseInt(d.minVal);
+        d.val = parseInt(d.val);
+        
+        if (d.val < d.minVal) d.val = d.minVal;
+        if (d.val > d.maxVal) d.val = d.maxVal;
+    }
+    function UI_slider_calc_pos_multipler(d) {
+        return ((d.val - d.minVal) / (d.maxVal - d.minVal));
+    }
 	function redraw_update_UI_Slider(nodeRect, d)
 	{
 		//console.warn("UI_Slider was dirty")
@@ -3747,30 +3758,18 @@ RED.view = (function() {
 				else if (d.orientation == "h") return 0;
 			})
 			.attr("y", function(d) {
-				d.maxVal = parseInt(d.maxVal);
-				d.minVal = parseInt(d.minVal);
-				d.val = parseInt(d.val);
-				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.val > d.maxVal) d.val = d.maxVal;
-				if (d.orientation == "v") return d.h - ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h ;
+				UI_slider_sanitate_values(d);
+				if (d.orientation == "v") return d.h - UI_slider_calc_pos_multipler(d) * d.h ;
 				else if (d.orientation == "h") return 0;
 			})
 			.attr("width", function(d) {
-				d.maxVal = parseInt(d.maxVal);
-				d.minVal = parseInt(d.minVal);
-				d.val = parseInt(d.val);
-				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.val > d.maxVal) d.val = d.maxVal;
+				UI_slider_sanitate_values(d);
 				if (d.orientation == "v") return d.w;
-				else if (d.orientation == "h") return ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.w;
+				else if (d.orientation == "h") return UI_slider_calc_pos_multipler(d) * d.w;
 			})
 			.attr("height", function(d) {
-				d.maxVal = parseInt(d.maxVal);
-				d.minVal = parseInt(d.minVal);
-				d.val = parseInt(d.val);
-				if (d.val < d.minVal) d.val = d.minVal;
-				if (d.val > d.maxVal) d.val = d.maxVal;
-				if (d.orientation == "v") return  ((d.val - d.minVal) / (d.maxVal - d.minVal)) * d.h;
+				UI_slider_sanitate_values(d);
+				if (d.orientation == "v") return  UI_slider_calc_pos_multipler(d) * d.h;
 				else if (d.orientation == "h") return d.h;
 			});
 		nodeRect.selectAll('text.slider_value_label').each(function(d,i) {

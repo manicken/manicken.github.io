@@ -1,0 +1,9 @@
+// for future extract of dialog stuff
+
+RED.view.dialogs = (function() {
+
+return {
+
+
+};
+})();
