@@ -824,6 +824,7 @@ RED.OCPview = (function() {
 	//$('#btn-copy').click(function() {copySelection()});
 	//$('#btn-paste').click(function() {importNodes(clipboard,null, true)});
     //console.warn("view loading...");
+    /*
 	var workspace_tabs = RED.tabs.create({
 		id: "ocp-workspace-tabs",
 		onchange: setSelectWorkspace,
@@ -917,7 +918,7 @@ RED.OCPview = (function() {
 		$( "#node-dialog-delete-workspace" ).dialog('open');
 
 		
-	}
+	}*/
 
 	function canvasMouseDown() {
         if (allowUiItemTextInput == true) return;
@@ -4429,7 +4430,7 @@ RED.OCPview = (function() {
 
 		return form;
 	}
-
+/*
 	$('#btn-import-json').click(function() {showImportNodesDialog(false);});
 	$('#btn-import-arduino').click(function() {showImportNodesDialog(true);});
 	$('#btn-export-clipboard').click(function() {showExportNodesDialog();});
@@ -4483,7 +4484,7 @@ RED.OCPview = (function() {
 		else
 		{
 			title = "Import JSON";
-			$("#node-input-import").prop('placeholder', "Paste JSON string here.");
+			$("#node-input-import").prop('placeholder', "Pastaae JSON string here.");
 			$("#import-dialog-textarea-label").text(" JSON:");
 		}
 			
@@ -4534,7 +4535,7 @@ RED.OCPview = (function() {
             RED.main.SetPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
         }
 		$( "#node-dialog-rename-workspace" ).dialog("open");
-    }
+    }*/
     
     function chk_exportIsMain_OnClick() {
         // Get the checkbox
@@ -4988,7 +4989,7 @@ RED.OCPview = (function() {
 		},
 		getForm: getForm,
 		calculateTextSize: calculateTextSize,
-		showExportNodesDialog: showExportNodesDialog,
+		//showExportNodesDialog: showExportNodesDialog,
 		showPopOver:showPopOver,
 		node_def:node_def,
 		defaults: {
@@ -5029,7 +5030,7 @@ RED.OCPview = (function() {
             updateSelection();
             redraw(true);
         },
-        workspace_tabs:workspace_tabs,
+        //workspace_tabs:workspace_tabs,
         reveal: function(id,triggerHighlight) {
             if (RED.nodes.workspace(id) != undefined/* || RED.nodes.subflow(id)*/) {
                 workspace_tabs.activateTab(id);
