@@ -4449,8 +4449,8 @@ RED.view = (function() {
 		else
 		{
 			title = "Import JSON";
-			$("#node-input-import").prop('placeholder', "Paste JSON string here.");
-			$("#import-dialog-textarea-label").text(" JSON:");
+			$("#node-input-import").prop('placeholder', "Paste JSON string here.\nOr paste a http url to a JSON here.");
+			$("#import-dialog-textarea-label").text(" JSON/URL:");
 		}
 			
 		$( "#dialog" ).dialog("option","title",title).dialog( "open" );
