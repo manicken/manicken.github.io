@@ -95,5 +95,6 @@
 		sendUiSliderValue:sendUiSliderValue,
         sendUiListBox:sendUiListBox,
         sendUiPiano:sendUiPiano,
+
 	};
 })();

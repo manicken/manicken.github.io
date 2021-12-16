@@ -367,10 +367,11 @@ RED.nodes = (function() {
 		return null;
 	}
 
-	function getNodeByName(name) {
-		for (var n in nodes) {
-			if (nodes[n].name == name) {
-				return nodes[n];
+	function getNodeByName(name,nns) {
+        if (nns == undefined) nns = nodes;
+		for (var n in nns) {
+			if (nns[n].name == name) {
+				return nns[n];
 			}
 		}
 		return null;

@@ -53,7 +53,7 @@ NodeDefinitions = {
                 "shortName":"Button","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
                 "useAceEditor":"javascript","useAceEditorCodeFieldName":"sendCommand","aceEditorOffsetHeight":0,
                 "defaults":{
-                    "name":{},"id":{},"comment":{},"w":{"value":100},"h":{"value":30},"textSize":{"value":14},
+                    "name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":100},"h":{"value":30},"textSize":{"value":14},
                     "midiCh":{"value":"0"},"midiId":{"value":"0"},
                     "pressAction":{},"repeatPressAction":{"value":false},
                     "releaseAction":{},"repeatReleaseAction":{"value":false},
@@ -66,7 +66,7 @@ NodeDefinitions = {
                 "shortName":"Slider","uiObject":true,"nonObject":true,"category":"ui","color":"#808080","textColor":"#000000","icon":"",
                 "useAceEditor":"javascript","useAceEditorCodeFieldName":"sendCommand","aceEditorOffsetHeight":200,
                 "defaults":{
-                    "name":{},"id":{},"comment":{},"w":{"value":30},"h":{"value":300},"textSize":{"value":14},
+                    "name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":30},"h":{"value":300},"textSize":{"value":14},
                     "midiCh":{"value":"0"},"midiId":{"value":"0"},
                     "orientation":{"value":"v"},"label":{"value":"d.val"},
                     "minVal":{"value":0},"maxVal":{"value":100},"val":{"value":50},
@@ -81,24 +81,24 @@ NodeDefinitions = {
 
             "UI_TextBox":{
                 "shortName":"TextBox","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
-                "defaults":{"name":{},"id":{},"comment":{},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
+                "defaults":{"name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
             },
 
             "UI_Label":{
                 "shortName":"Label","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"", 
-                "defaults":{"name":{},"id":{},"comment":{},"w":{"value":100},"h":{"value":30},"textSize":{"value":14}}
+                "defaults":{"name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":100},"h":{"value":30},"textSize":{"value":14}}
             },
 
             "UI_Image":{
                 "shortName":"Image","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
-                "defaults":{"name":{},"id":{},"comment":{},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
+                "defaults":{"name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":150},"h":{"value":150},"textSize":{"value":14}}
             },
 
             "UI_ListBox":{
                 "shortName":"ListBox","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
                 "useAceEditor":"javascript","useAceEditorCodeFieldName":"sendCommand","aceEditorOffsetHeight":300,
                 "defaults":{
-                    "name":{},"id":{},"comment":{},"w":{"value":150},"h":{"value":150},"textSize":{"value":14},
+                    "name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":150},"h":{"value":150},"textSize":{"value":14},
                     "midiCh":{"value":"0"},"midiId":{"value":"0"},
                     "itemTextSize":{"value":14},
                     "items":{"value":"item1\nitem2\nitem3"},"selectedIndex":{"value":0},"selectedIndexOffset":{"value":0},"headerHeight":{"value":30},
@@ -112,7 +112,7 @@ NodeDefinitions = {
                 "shortName":"Piano","uiObject":true,"nonObject":true,"category":"ui","color":"#F6F8BC","textColor":"#000000","icon":"",
                 "useAceEditor":"javascript","useAceEditorCodeFieldName":"sendCommand","aceEditorOffsetHeight":120,
                 "defaults":{
-                    "name":{},"id":{},"comment":{},
+                    "name":{},"id":{},"tag":{"value":""},"comment":{},
                     "w":{"value":210, "minval":"1", "type":"int"},
                     "h":{"value":130, "minval":"1", "type":"int"},
                     "textSize":{"value":14, "minval":"1", "type":"int"},
@@ -132,14 +132,14 @@ NodeDefinitions = {
             "UI_ScriptButton":{
                 "shortName":"scriptBtn","uiObject":true,"nonObject":"","useAceEditor":"javascript","category":"ui","color":"#ddffbb","icon":"",
                 "defaults":{
-                    "name":{},"id":{},"comment":{},"w":{"value":100},"h":{"value":30},"textSize":{"value":14},
+                    "name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":100},"h":{"value":30},"textSize":{"value":14},
                     "nodes":{"value":[]}
                 }
             },
             "group":{
                 "shortName":"group","uiObject":true,"nonObject":"","category":"ui","color":"#ddffbb","icon":"",
                 "defaults":{
-                    "name":{},"id":{},"comment":{},"w":{"value":200},"h":{"value":200},"textSize":{"value":14},
+                    "name":{},"id":{},"tag":{"value":""},"comment":{},"w":{"value":200},"h":{"value":200},"textSize":{"value":14},
                     "nodes":{"value":[]},"border_color":{"value":"#999"},"individualListBoxMode":{"value":"false"},"exportAsClass":{"value":"false"}
                 }
             }

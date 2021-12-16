@@ -279,7 +279,22 @@ RED.editor = (function() {
 			}
 		} else if (RED.view.state() == RED.state.IMPORT) {
 			console.error("RED.view.state() == RED.state.IMPORT");
-			RED.view.importNodes($("#node-input-import").val());
+            var text = $("#node-input-import").val();
+            if (text.startsWith("http")) {
+                RED.notify("downloading JSON " + text, "info", null, 3000);
+                RED.main.httpDownloadAsync(text, 
+                    function(data) {
+                        RED.view.importNodes(data);
+                    }
+                    , 
+                    function(err) {
+                        RED.notify("could not download json" + err, "info", null, 3000);
+                    }
+                );
+            }
+                
+            else
+			    RED.view.importNodes(text);
 		}
 		else
 		{
