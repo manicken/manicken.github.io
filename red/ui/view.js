@@ -3747,6 +3747,9 @@ RED.view = (function() {
 			.attr("dy", "0.35em");
 	}
     function UI_slider_sanitate_values(d) {
+        if (d.divVal == undefined || d.divVal == "" || d.divVal == 0) d.divVal = 1;
+        d.divVal = parseInt(d.divVal);
+        d.fval = d.val/d.divVal;
         
         d.maxVal = parseInt(d.maxVal);
         d.minVal = parseInt(d.minVal);

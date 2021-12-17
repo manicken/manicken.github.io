@@ -358,9 +358,9 @@ RED.editor = (function() {
 							    $("#aceEditor").height($(this).height() - 120);*/
 
                             if (editing_node._def.aceEditorOffsetHeight != undefined)
-                                aceEditor.css("height", $(this).height() - editing_node._def.aceEditorOffsetHeight);
+                                $("#aceEditor").css("height", $(this).height() - editing_node._def.aceEditorOffsetHeight);
                             else
-							    aceEditor.css("height", $(this).height() - 100);
+                                $("#aceEditor").css("height", $(this).height() - 100);
 							var aceEditor = ace.edit("aceEditor");
 							aceEditor.resize(true);
 							$(this).scrollTop(aceEditor.scrollHeight);
