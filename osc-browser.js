@@ -402,9 +402,14 @@ var osc = osc || {};
      * @return {Uint8Array} the data that was read
      */
     osc.readBlob = function (dv, offsetState) {
-        var len = osc.readInt32(dv, offsetState),
-            paddedLen = (len + 3) & ~0x03,
-            blob = new Uint8Array(dv.buffer, offsetState.idx, len);
+
+        var len = osc.readInt32(dv, offsetState);
+        
+        console.error("osc readblob size:" + len + " offsetState.idx:"+offsetState.idx);
+        //console.warn(dv.buffer.);
+        
+        var paddedLen = (len + 3) & ~0x03;
+        var blob = new Uint8Array(dv.buffer, offsetState.idx, len);
 
         offsetState.idx += paddedLen;
 
@@ -954,6 +959,7 @@ var osc = osc || {};
      * @return {Object} a bundle or message object
      */
     osc.readPacket = function (data, options, offsetState, len) {
+        //console.warn("osc.readPacket" + data.byteLength);
         var dv = osc.dataView(data, data.byteOffset, data.byteLength);
 
         len = len === undefined ? dv.byteLength : len;

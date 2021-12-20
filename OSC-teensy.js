@@ -179,6 +179,42 @@ OSC = (function() {
     }
     //const closedPromise = readUntilClosed();
 
+    // ********************************************************************
+    // ********************** MIDI ****************************************
+    // ********************************************************************
+    var midi = null;  // global MIDIAccess object
+    function onMIDISuccess( midiAccess ) {
+    console.log( "MIDI ready!" );
+    midi = midiAccess;  // store in the global (in real usage, would probably keep in an object instance)
+    listInputsAndOutputs();
+    }
+
+    function onMIDIFailure(msg) {
+    console.log( "Failed to get MIDI access - " + msg );
+    }
+
+    
+    $('#btn-listMidi').click(function() { navigator.requestMIDIAccess().then( onMIDISuccess, onMIDIFailure ); });
+
+    function listInputsAndOutputs( ) {
+        midiAccess = midi;
+        for (var entry of midiAccess.inputs) {
+          var input = entry[1];
+          AddLineToLog( "Input port [type:'" + input.type + "'] id:'" + input.id +
+            "' manufacturer:'" + input.manufacturer + "' name:'" + input.name +
+            "' version:'" + input.version + "'" );
+        }
+      
+        for (var entry of midiAccess.outputs) {
+          var output = entry[1];
+          AddLineToLog( "Output port [type:'" + output.type + "'] id:'" + output.id +
+            "' manufacturer:'" + output.manufacturer + "' name:'" + output.name +
+            "' version:'" + output.version + "'" );
+        }
+      }
+    //***********************************************************************
+    //***********************************************************************
+
     function slipDecoded(data) {
         var rxDecoded = "";
 

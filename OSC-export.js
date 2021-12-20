@@ -7,6 +7,31 @@ OSC.export = (function () {
     $('#btn-deploy-osc').click(function () { export_simple(); });
     function export_simple() {
         var clearAllAddr = "/dynamic/clearAl*";
+        var result = getSimpleExport_bundle(false);
+        var bundle = result.bundle;
+        var bundleData = OSC.CreateBundleData(bundle);
+
+        // generate human readable export text
+        var exportDialogText = ""; // use this for debug output
+
+        for (var i = 0; i < bundle.packets.length; i++) {
+            exportDialogText += JSON.stringify(bundle.packets[i]) + "\n";
+        }
+        
+        var dataAsText = new TextDecoder("utf-8").decode(bundleData);
+        
+        exportDialogText += "\nTotal AudioObjects:" + result.apos.length + "\n";
+        exportDialogText += "Total AudioConnections: " + (result.acs.length/2) + "\n";
+
+        exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
+        showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
+        function () {OSC.SendData(bundleData)});
+
+    }
+
+    function getSimpleExport_bundle(getBundleOnly) {
+        if (getBundleOnly == undefined) getBundleOnly = false;
+        var clearAllAddr = "/dynamic/clearAl*";
         var createObjectAddr = "/dynamic/cr*O*";
         var createConnectionAddr = "/dynamic/cr*C*";
         var connectAddr = function (linkName) {
@@ -65,34 +90,24 @@ OSC.export = (function () {
                 });
             }
         }
-        var exportDialogText = ""; // use this for debug output
 
         var bundle = OSC.CreateBundle(0);
         addr = RED.OSC.settings.RootAddress + clearAllAddr;
         var clearAllPacket = OSC.CreatePacket(addr, "");
         bundle.packets.push(clearAllPacket);
-        exportDialogText += JSON.stringify(clearAllPacket) + "\n";
         // first add all Audio Processing Objects
         for (var i = 0; i < apos.length; i++) {
             bundle.packets.push(apos[i]);
-            exportDialogText += JSON.stringify(apos[i]) + "\n";
         }
         // second add all Audio Connections
         for (var i = 0; i < acs.length; i++) {
             bundle.packets.push(acs[i]);
-            exportDialogText += JSON.stringify(acs[i]) + "\n";
+
         }
-        var bundleData = OSC.CreateBundleData(bundle);
-
-        var dataAsText = new TextDecoder("utf-8").decode(bundleData);
-        
-        exportDialogText += "\nTotal AudioObjects:" + apos.length + "\n";
-        exportDialogText += "Total AudioConnections: " + (acs.length/2) + "\n";
-
-        exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
-        showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
-        function () {OSC.SendData(bundleData)});
-
+        if (getBundleOnly == true) 
+            return bundle;
+        else
+            return {bundle:bundle, apos:apos, acs:acs};
     }
 
     /** have to put this here as JAVASCRIPT is broken shit

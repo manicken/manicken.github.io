@@ -3053,7 +3053,7 @@ RED.view = (function() {
                 (destX-sc2*(scale)*node_width)+" "+(destY-scaleY*node_dest_height)+" "+
                 destX+" "+destY
         } else {
-			console.error("Test");
+			//console.error("Test");
             var midX = Math.floor(destX-dx/linksPosMode);
             var midY = Math.floor(destY-dy/linksPosMode);
             //
