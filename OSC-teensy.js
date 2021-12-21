@@ -10,6 +10,7 @@ RED.OSC = (function() {
 
     var defSettings = {
         LiveUpdate: true,
+        OnlyShowLastDebug: false,
         ShowOutputDebug: true,
         ShowOutputOscTxRaw: true,
         ShowOutputOscTxDecoded: true,
@@ -22,6 +23,7 @@ RED.OSC = (function() {
     }
     var _settings = {
         LiveUpdate: defSettings.LiveUpdate,
+        OnlyShowLastDebug: defSettings.OnlyShowLastDebug,
         ShowOutputDebug: defSettings.ShowOutputDebug,
         ShowOutputOscTxRaw: defSettings.ShowOutputOscTxRaw,
         ShowOutputOscTxDecoded: defSettings.ShowOutputOscTxDecoded,
@@ -53,6 +55,9 @@ RED.OSC = (function() {
             }*/
         },
 
+        get OnlyShowLastDebug() { return _settings.OnlyShowLastDebug; },
+        set OnlyShowLastDebug(value) { _settings.OnlyShowLastDebug = value; RED.storage.update();},
+
         get ShowOutputDebug() { return _settings.ShowOutputDebug; },
         set ShowOutputDebug(value) { _settings.ShowOutputDebug = value; RED.storage.update();},
 
@@ -82,11 +87,13 @@ RED.OSC = (function() {
     }
     var settingsCategory = { label:"OSC", expanded:false, popupText: "Open Sound Control settings", bgColor:"#DDD" };
 
-    var clearLogNote = "<br><br>the output can be cleared at 'top-right menu' -> 'clear output'";
+    var clearLogNote = "<br><br>the output can be cleared with 'clear output log' button";
     var dataShownNote = "debug data should be shown in the bottom output log";
 
     var settingsEditor = {
+        ClearOutputLog: { label:"Clear output log", type:"button", action: ClearOutputLog},
         LiveUpdate:     {label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
+        OnlyShowLastDebug:        { label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
         transmitDebug:  {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 ShowOutputDebug:        { label:"Show basic info", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
@@ -105,6 +112,9 @@ RED.OSC = (function() {
         RootAddress:            { label:"Root Address", type:"string", popupText: "this defines the root address"},
         Encoding:               { label:"Encoding", type:"combobox", optionTexts:EncodingOptionTexts, options:EncodingOptions, popupText: "The encoding of the data sent"},
         TransportLayer:         { label:"Transport Layer", type:"combobox", optionTexts:LayerOptionTexts, options:LayerOptions, popupText: "The Transport Layer to send OSC data over when<br> a Node/'Audio Object' is added/renamed/removed<br> or when<br> a Link/AudioConnection/Patchcable is added/removed"},
+    }
+    function ClearOutputLog() {
+        RED.bottombar.info.setContent("");
     }
 
     return {
@@ -221,9 +231,10 @@ OSC = (function() {
         if (RED.OSC.settings.ShowOutputOscRxRaw == true) {
             rxDecoded += new TextDecoder("utf-8").decode(data).split('\n').join('<br>').split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;');
         }
-
+        var oscRx = osc.readPacket(data, {metadata:true});
+        
         if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
-            var oscRx = osc.readPacket(data, {metadata:true});
+            
 
             rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
             rxDecoded += "packets: " + "<br>";
@@ -451,7 +462,19 @@ OSC = (function() {
             style = "color:" + foreColor + ";";
         if (bgColor != undefined)
             style += "background-color:" + bgColor + ";";
-        RED.bottombar.info.addLine("<span style=" + style + ">" + text + "</span>");
+        if (RED.OSC.settings.OnlyShowLastDebug == false)
+            RED.bottombar.info.addLine("<span style=" + style + ">" + text + "</span>");
+        else
+            RED.bottombar.info.setContent("<span style=" + style + ">" + text + "</span>");
+    }
+
+    function SetLog(text, foreColor, bgColor) {
+        var style = "";
+        if (foreColor != undefined)
+            style = "color:" + foreColor + ";";
+        if (bgColor != undefined)
+            style += "background-color:" + bgColor + ";";
+        RED.bottombar.info.setContent("<span style=" + style + ">" + text + "</span>");
     }
 
     return {
@@ -469,6 +492,7 @@ OSC = (function() {
         SendMessage:SendMessage,
         SendPacket:SendPacket,
         AddLineToLog:AddLineToLog, // simplifies usage of RED.bottombar.info.addLine(text);
+        SetLog:SetLog,
         RegisterEvents:RegisterEvents
 	};
 })();
