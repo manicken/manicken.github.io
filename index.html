@@ -113,7 +113,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			</div>
 
             <div class="btn-group pull-left">
-				<a id="btn-listMidi" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;List MIDI devices</a>
+				<a id="btn-testFileSelect" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Test File Select Dialog</a>
                 <!--<a id="btn-disConnectSerial" class="btn action-deploy" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a>-->
 			</div>
 
@@ -426,6 +426,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		</div>
 	</form>
 </div>
+<div id="file-select-dialog" class="hide">
+	<form id="file-select-dialog" class="form-horizontal">
+    </form>
+</div>
 <div id="node-definitions-manager-dialog" class="hide">
 	<form id="node-definitions-manager-dialog" class="form-horizontal">
     </form>
@@ -617,6 +621,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="slip.js"></script>
 <script src="OSC-teensy.js"></script>
 <script src="OSC-export.js"></script>
+<script src="red/ui/FileSelectDialog.js"></script>
 
 
 <!--

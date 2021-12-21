@@ -405,7 +405,7 @@ var osc = osc || {};
 
         var len = osc.readInt32(dv, offsetState);
         
-        console.error("osc readblob size:" + len + " offsetState.idx:"+offsetState.idx);
+        //console.error("osc readblob size:" + len + " offsetState.idx:"+offsetState.idx);
         //console.warn(dv.buffer.);
         
         var paddedLen = (len + 3) & ~0x03;

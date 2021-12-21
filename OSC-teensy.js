@@ -142,7 +142,7 @@ OSC = (function() {
     $('#btn-connectSerial').click(async function() { 
         port = await navigator.serial.requestPort();
         console.warn("connection"+Date.now());
-        await port.open({baudRate:115200});
+        await port.open({baudRate:115200, bufferSize:1024});
         console.warn("done"+Date.now());
 
         readUntilClosed();
@@ -159,7 +159,27 @@ OSC = (function() {
     });
     var keepReading = true;
     var reader;
-    var slipDecoder = new Slip.Decoder({onMessage: slipDecoded});
+    var slipDecoder = new Slip.Decoder({onMessage: slipDecoded, onError:slipError});
+
+    function slipError(err) {
+        console.error("slip error: " + err);
+    }
+    function getDataArrayAsAsciiAndHex(data) {
+        var result = "";
+        for (var i = 0; i < data.length; i++) {
+            if (data[i] < 0x20 || data[i] > 0x7E) {
+                if (data[i] >= 0x10)
+                    result += "[" + data[i].toString(16)+ "]";
+                //else if (data[i] == 0x00)
+                //    result += "&Oslash;";
+                else
+                    result += "[0" + data[i].toString(16)+ "]";
+            }
+            else
+                result += String.fromCharCode(data[i]);
+        }
+        return result;
+    }
 
     async function readUntilClosed() {
         while (port.readable && keepReading) {
@@ -171,10 +191,11 @@ OSC = (function() {
                     // reader.cancel() has been called.
                     break;
                     }
+                    //console.error("decoding:",getDataArrayAsAsciiAndHex(value));
                     slipDecoder.decode(value);
                     // value is a Uint8Array.
                     //
-                    
+                   // console.warn("done decoding");
                 }
             } catch (error) {
                 RED.notify("Serial port read error " + error, "warning", null, 5000);
@@ -204,7 +225,7 @@ OSC = (function() {
     }
 
     
-    $('#btn-listMidi').click(function() { navigator.requestMIDIAccess().then( onMIDISuccess, onMIDIFailure ); });
+    //$('#btn-listMidi').click(function() { navigator.requestMIDIAccess().then( onMIDISuccess, onMIDIFailure ); });
 
     function listInputsAndOutputs( ) {
         midiAccess = midi;
@@ -226,25 +247,30 @@ OSC = (function() {
     //***********************************************************************
 
     function slipDecoded(data) {
+        //console.log("slipDecoded:" + data.byteOffset + " " + data.byteLength + " " + data.length);
         var rxDecoded = "";
 
         if (RED.OSC.settings.ShowOutputOscRxRaw == true) {
-            rxDecoded += new TextDecoder("utf-8").decode(data).split('\n').join('<br>').split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;');
+            rxDecoded += getDataArrayAsAsciiAndHex(data).split('\n').join('<br>').split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;');
         }
-        var oscRx = osc.readPacket(data, {metadata:true});
-        
-        if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
-            
-
-            rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
-            rxDecoded += "packets: " + "<br>";
-            for (var i = 0; i < oscRx.packets.length; i++) {
-                rxDecoded += JSON.stringify(oscRx.packets[i]) + "<br>";
+        try {
+            var oscRx = osc.readPacket(data, {metadata:true});
+            if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
+                rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
+                rxDecoded += "packets: " + "<br>";
+                for (var i = 0; i < oscRx.packets.length; i++) {
+                    rxDecoded += JSON.stringify(oscRx.packets[i]) + "<br>";
+                }
             }
+            if ((RED.OSC.settings.ShowOutputOscRxRaw == true) || (RED.OSC.settings.ShowOutputOscRxDecoded == true))
+                AddLineToLog(rxDecoded);
+        }
+        catch (err) { // print what we have so far
+            AddLineToLog(rxDecoded+"<br>"+err);
         }
         
-        if ((RED.OSC.settings.ShowOutputOscRxRaw == true) || (RED.OSC.settings.ShowOutputOscRxDecoded == true))
-            AddLineToLog(rxDecoded);
+        
+        
                     
        // AddLineToLog();
     }
@@ -266,14 +292,15 @@ OSC = (function() {
         writer.releaseLock();
     }
     function SendData(data) {
-        if (RED.OSC.settings.ShowOutputOscTxRaw == true)
-            AddLineToLog("raw send:<br>" + new TextDecoder("utf-8").decode(data).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;'));
-
+        
         if (RED.OSC.settings.Encoding == 1) // SLIP
         {
             //AddLineToLog("using SLIP");
             data = Slip.encode(data);
         }
+        if (RED.OSC.settings.ShowOutputOscTxRaw == true)
+            AddLineToLog("raw send:<br>" + getDataArrayAsAsciiAndHex(data).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;'));
+
         if (RED.OSC.settings.TransportLayer == 0) // Web Serial API
             SendRawToSerial(data);
         else {
