@@ -2,9 +2,44 @@
 
 OSC.export = (function () {
 
-    
+    function InitButtonPopups() {
+        RED.main.SetPopOver("#btn-save-osc-sd", "Saves the current (only audio nodes+links) Design to the connected Teensy SD-Card as a file with the extension .osc<br>so that it can later be loaded using 'Load .osc from SD-card'");
+        RED.main.SetPopOver("#btn-load-osc-sd", "Loads a .osc file from the SD-card and applies the design");
+        RED.main.SetPopOver("#btn-save-json-sd", "Saves the current (whole) Design to a .json file on the connected teensy SD-card");
+        RED.main.SetPopOver("#btn-load-json-sd", "Load/Retreives a saved .json from the connected Teensy SD-Card<br>this is then loaded into this tool.");
+        RED.main.SetPopOver("#btn-deploy-osc", "Exports this design to a Teensy Running The Dynamic Audio Framework");
+    }
+    $('#btn-save-osc-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveOscToSDcard, "Save as .osc (.osc is added automatically)");});
+    function saveOscToSDcard(name) {
+        var addr = RED.OSC.settings.RootAddress + "/fs/save";
+        var bundle = OSC.export.getSimpleExport_bundle(true);
+        var data = OSC.CreateBundleData(bundle);
+        OSC.SendMessage(addr,'sb',name + ".osc", data);
+    }
 
-    $('#btn-deploy-osc').click(function () { export_simple(); });
+    $('#btn-load-osc-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, loadOscFromSDcard, "Load .osc (.osc is added automatically)");});
+    function loadOscFromSDcard(name) {
+        var addr = RED.OSC.settings.RootAddress + "/fs/load";
+        OSC.SendMessage(addr,'s',name + ".osc");
+    }
+
+    $('#btn-save-json-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveJSONToSDcard, "Save as .json (.json is added automatically)");});
+    function saveJSONToSDcard(name) {
+        var nns = RED.nodes.createCompleteNodeSet(false);
+        var jsonString = JSON.stringify(nns);
+        var data = new TextEncoder("utf-8").encode(jsonString);
+        var addr = RED.OSC.settings.RootAddress + "/fs/save";
+        OSC.SendMessage(addr,'sb',name + ".json", data);
+    }
+
+    $('#btn-load-json-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, loadJSONFromSDcard, "Load .json (.json is added automatically)");});
+    function loadJSONFromSDcard(name) {
+        var addr = RED.OSC.settings.RootAddress + "/fs/send";
+        OSC.SendMessage(addr,'s',name + ".json");
+        OSC.SetLog("not implemented yet")
+    }
+
+    $('#btn-deploy-osc').click(export_simple);
     function export_simple() {
         var clearAllAddr = "/dynamic/clearAl*";
         var result = getSimpleExport_bundle(false);
@@ -207,6 +242,7 @@ OSC.export = (function () {
     }
 
     return {
-        
+        getSimpleExport_bundle:getSimpleExport_bundle,
+        InitButtonPopups:InitButtonPopups
     };
 })();

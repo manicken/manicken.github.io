@@ -304,10 +304,11 @@ RED.main = (function() {
 
 		}
 	}
-	function showSelectNameDialog(defaultFileName, cbOnOk)
+	function showSelectNameDialog(defaultFileName, cbOnOk, title)
 	{
+        if (title == undefined) title = "Confirm deploy";
 		$( "#select-name-dialog" ).dialog({
-			title: "Confirm deploy",
+			title: title,
 			modal: true,
 			autoOpen: true,
 			width: 530,
@@ -536,6 +537,7 @@ RED.main = (function() {
         SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
 
         SetPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
+        OSC.export.InitButtonPopups();
 
         jscolor.presets.default = {
             closeButton:true
