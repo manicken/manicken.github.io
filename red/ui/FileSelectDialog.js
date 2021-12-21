@@ -29,19 +29,7 @@ OSC.fileSelector = (function () {
         leftPanel.html("");
         var rootDir = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
 
-        putFiles(rootDir, "/", demofileList);
-        
-        /*var defGroupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
-        for (var i = 0; i < defGroupNames.length; i++) {
-            var defGroupName = defGroupNames[i];
-            var nodeDefGroupItems = createNode(nodeDefGroupTree, {type:"dir", path:"/", name:defGroupName});
-            
-            var defCat = RED.nodes.node_defs[defGroupName];
-            var defNames = Object.getOwnPropertyNames(defCat.types);
-            for (var i2 = 0; i2 < defNames.length; i2++) {
-                createNode(nodeDefGroupItems, {type:"file", path:"/" + defGroupName, name:defNames[i2]});
-            }
-        }*/
+        putFiles(rootDir, "", demofileList);
     }
 
     function putFiles(itemsRoot, path, fileList) {
@@ -74,7 +62,10 @@ OSC.fileSelector = (function () {
         }
     }
     function openDir(options,itemsRoot) {
-        var newPath = options.path + "/" + options.name
+        if (options.path == "/") // root dir
+            var newPath = "/" + options.name;
+        else
+            var newPath = options.path + "/" + options.name
         OSC.AddLineToLog("dir open:" + newPath);
 
         // here we can add items to the folder
@@ -89,7 +80,7 @@ OSC.fileSelector = (function () {
         var name = item.text();
         var path = item.attr("path");
         
-        currentSelectedItem = {path:path, name:name};
+        currentSelectedItem = {path:path, name:name, fullPath: path+"/"+name};
         OSC.AddLineToLog("Folder selected: " + JSON.stringify(currentSelectedItem));
     }
 
@@ -102,7 +93,7 @@ OSC.fileSelector = (function () {
         var name = item.text();
         var path = item.attr("path");
        
-        currentSelectedItem = {path:path, name:name };
+        currentSelectedItem = {path:path, name:name, fullPath: path+"/"+name };
         OSC.AddLineToLog("File selected: " + JSON.stringify(currentSelectedItem));
     }
 
