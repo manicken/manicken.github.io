@@ -22,21 +22,32 @@ OSC.fileSelector = (function () {
 
         $( "#file-select-dialog" ).dialog("open");
     }
-
-    function BuildTree()
+    var demofileList = [{name:"file.json", type:"file"}, {name:"folder", type:"dir"},{name:"file.osc", type:"file"}]
+        
+    function BuildTree(path)
     {
         leftPanel.html("");
-        var nodeDefGroupTree = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
-        var defGroupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
+        var rootDir = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
+
+        putFiles(rootDir, "/", demofileList);
+        
+        /*var defGroupNames = Object.getOwnPropertyNames(RED.nodes.node_defs);
         for (var i = 0; i < defGroupNames.length; i++) {
             var defGroupName = defGroupNames[i];
-            var nodeDefGroupItems = createNode(nodeDefGroupTree, {type:"dir", path:"/", text:defGroupName});
+            var nodeDefGroupItems = createNode(nodeDefGroupTree, {type:"dir", path:"/", name:defGroupName});
             
             var defCat = RED.nodes.node_defs[defGroupName];
             var defNames = Object.getOwnPropertyNames(defCat.types);
             for (var i2 = 0; i2 < defNames.length; i2++) {
-                createNode(nodeDefGroupItems, {type:"file", path:"/" + defGroupName, text:defNames[i2]});
+                createNode(nodeDefGroupItems, {type:"file", path:"/" + defGroupName, name:defNames[i2]});
             }
+        }*/
+    }
+
+    function putFiles(itemsRoot, path, fileList) {
+        for (var i = 0; i < fileList.length; i++) {
+            fileList[i].path = path;
+            createNode(itemsRoot, fileList[i])
         }
     }
 
@@ -47,23 +58,28 @@ OSC.fileSelector = (function () {
             var caret = nodeDefGroup.append('span').attr('class', 'caret2');
 
             var item = nodeDefGroup.append('span')
-            item.attr('class', 'nodeDefItem').attr('path', options.path).text(options.text).on("click", Folder_MouseClick);
-            var nodeDefGroupItems = nodeDefGroup.append('ul').attr('class', 'nested2');
+            item.attr('class', 'nodeDefItem').attr('path', options.path).text(options.name).on("click", Folder_MouseClick);
+            var itemsRoot = nodeDefGroup.append('ul').attr('class', 'nested2');
             
             caret.on('click', function() {
                 this.parentElement.querySelector(".nested2").classList.toggle("active2");
                 this.classList.toggle("caret2-down");
-                openDir(options.path);
+                openDir(options,itemsRoot);
             });
-            return nodeDefGroupItems;
+            return itemsRoot;
         }
         else if (options.type == "file")
         {
-            parent.append('li').append('span').attr('class', 'nodeDefItem').attr('path', options.path).text(options.text).on("click", File_MouseClick);
+            parent.append('li').append('span').attr('class', 'nodeDefItem').attr('path', options.path).text(options.name).on("click", File_MouseClick);
         }
     }
-    function openDir(path) {
-        console.warn("dir open:", path);
+    function openDir(options,itemsRoot) {
+        var newPath = options.path + "/" + options.name
+        OSC.AddLineToLog("dir open:" + newPath);
+
+        // here we can add items to the folder
+        putFiles(itemsRoot, newPath, demofileList);
+        //createNode(itemsRoot, {type:"dir", path:newPath, name:"subdir"});
     }
 
     function Folder_MouseClick() {
@@ -74,7 +90,7 @@ OSC.fileSelector = (function () {
         var path = item.attr("path");
         
         currentSelectedItem = {path:path, name:name};
-        console.log("Folder selected: ", currentSelectedItem);
+        OSC.AddLineToLog("Folder selected: " + JSON.stringify(currentSelectedItem));
     }
 
     function File_MouseClick() {
@@ -87,7 +103,7 @@ OSC.fileSelector = (function () {
         var path = item.attr("path");
        
         currentSelectedItem = {path:path, name:name };
-        console.log("File selected: ", currentSelectedItem);
+        OSC.AddLineToLog("File selected: " + JSON.stringify(currentSelectedItem));
     }
 
     function DeselectOthers()
