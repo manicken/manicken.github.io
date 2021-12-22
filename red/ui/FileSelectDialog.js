@@ -18,10 +18,45 @@ OSC.fileSelector = (function () {
         initialized = true;
     }
 
-    $('#btn-testFileSelect').click(function() { showForm(); });
+    $('#btn-testFileSelect').click(function() { show(); });
 
-    function showForm()
+    var filter = "*";
+
+    function show(options)
     {
+        listFilesCmd = RED.OSC.settings.RootAddress + "/fs/list";
+
+        if (options == undefined) options = {};
+        if (options.rootDir == undefined) options.rootDir = "/";
+        if (options.title == undefined) options.title = "File Select Dialog";
+        if (options.filter == undefined) filter = "*";
+        else filter = options.filter.toLowerCase();
+
+        var buttons = [];
+
+        if (options.okCallback != undefined) {
+            if (options.okButtonText == undefined) options.okButtonText = "OK";
+            var okButton = {
+                text:options.okButtonText,
+                click: function() { $( this ).dialog( "close" ); okCallback(currentSelectedItem); }
+            };
+            buttons.push(okButton);
+        } 
+        buttons.push({
+            text: "Close",
+            click: function() {	$( this ).dialog( "close" ); }
+        });
+
+        $("#file-select-dialog form" ).submit(function(e) { e.preventDefault();});
+        $( "#file-select-dialog" ).dialog({
+            modal: true, autoOpen: false,
+            width: 800, height:600,
+            title: options.title,
+            buttons: buttons,
+            open: dialogOpened,
+            close: function(e) { RED.keyboard.enable();	isOpen = false; }
+        });
+
         if (initialized == false)
             init();
 
@@ -32,19 +67,24 @@ OSC.fileSelector = (function () {
         leftPanel = form.append('div').attr('id', "nodeDefMgr-LeftPanel");
         rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel');
 
-        listFilesRoot = BuildTree("/");
+        BuildTree(options.rootDir,false);
+        
 
         $( "#file-select-dialog" ).dialog("open");
     }
     
     var demofileList = [{name:"file.json", type:"file"}, {name:"folder", type:"dir"},{name:"file.osc", type:"file"}]
         
-    function BuildTree(rootDir)
+    function BuildTree(rootDir, rootOpen)
     {
         leftPanel.html("");
         var rootroot = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
         currentSelectedItem = {path:rootDir};
-        return createNode(rootroot, {type:"dir", name:rootDir})
+        var options = {type:"dir", path:"", name:rootDir, open:rootOpen};
+        listFilesRoot = createNode(rootroot, options);
+
+        if (rootOpen == true)
+            OSC.SendMessage(listFilesCmd,'s',rootDir);
         //putFiles(rootDir, "", demofileList);
     }
 
@@ -52,7 +92,7 @@ OSC.fileSelector = (function () {
     function dialogOpened(e) {
         RED.keyboard.disable();
         isOpen = true;
-        listFilesCmd = RED.OSC.settings.RootAddress + "/fs/list";
+        
         
         OSC.SendMessage(listFilesCmd,'s',currentSelectedItem.path);
     }
@@ -92,6 +132,8 @@ OSC.fileSelector = (function () {
                 i++; // get next which is the name
                 if (i >= (packetArgs.length - 1)) return; // corrupted arguments
                 item = packetArgs[i];
+                if (filter != "*" && item.value.toLowerCase().endsWith(filter) == false) continue; // skip item
+
                 entryList.push({name:item.value, type:"file", size:fileSize}); 
             }
         }
@@ -109,18 +151,27 @@ OSC.fileSelector = (function () {
     function createNode(parent, options) {
         if (options.type == "dir")
         {
+            if ( options.open == undefined) options.open = false;
+
             var nodeDefGroup = parent.append('li');
-            var caret = nodeDefGroup.append('span').attr('class', 'caret2');
+            if (options.open == true)
+                var caret = nodeDefGroup.append('span').attr('class', 'caret2 caret2-down');
+            else
+                var caret = nodeDefGroup.append('span').attr('class', 'caret2');
 
             var item = nodeDefGroup.append('span')
             item.attr('class', 'nodeDefItem').attr('path', options.path).text(options.name).on("click", Folder_MouseClick);
-            var itemsRoot = nodeDefGroup.append('ul').attr('class', 'nested2');
+            if (options.open == true)
+                var itemsRoot = nodeDefGroup.append('ul').attr('class', 'nested2 active');
+            else
+                var itemsRoot = nodeDefGroup.append('ul').attr('class', 'nested2');
             
             caret.on('click', function() {
                 this.parentElement.querySelector(".nested2").classList.toggle("active2");
                 this.classList.toggle("caret2-down");
                 openDir(options,itemsRoot);
             });
+
             return itemsRoot;
         }
         else if (options.type == "file")
@@ -153,7 +204,7 @@ OSC.fileSelector = (function () {
         var name = item.text();
         var path = item.attr("path");
         
-        currentSelectedItem = {path:path, name:name, fullPath: path+"/"+name};
+        currentSelectedItem = {path:path, name:name, fullPath: function() { return this.path+"/"+this.name;}};
         OSC.AddLineToLog("Folder selected: " + JSON.stringify(currentSelectedItem));
     }
 
@@ -166,7 +217,7 @@ OSC.fileSelector = (function () {
         var name = item.text();
         var path = item.attr("path");
        
-        currentSelectedItem = {path:path, name:name, fullPath: path+"/"+name };
+        currentSelectedItem = {path:path, name:name, fullPath: function() { return this.path+"/"+this.name;}};
         OSC.AddLineToLog("File selected: " + JSON.stringify(currentSelectedItem));
     }
 
@@ -175,23 +226,9 @@ OSC.fileSelector = (function () {
         form.selectAll('.nodeDefItem').classed('nodeDefItemSelected', false);
     }
 
-    $("#file-select-dialog form" ).submit(function(e) { e.preventDefault();});
-	$( "#file-select-dialog" ).dialog({
-		modal: true, autoOpen: false,
-		width: 800, height:600,
-		title: "File Select Dialog",
-		buttons: [
-			{
-				text: "Close",
-				click: function() {	$( this ).dialog( "close" ); }
-			}
-		],
-		open: dialogOpened,
-		close: function(e) { RED.keyboard.enable();	isOpen = false; }
-	});
+    
 
     return {
-        showForm:showForm,
-        BuildTree:BuildTree
+        show:show
     };
 })();

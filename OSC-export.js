@@ -17,10 +17,10 @@ OSC.export = (function () {
         OSC.SendMessage(addr,'sb',name + ".osc", data);
     }
 
-    $('#btn-load-osc-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, loadOscFromSDcard, "Load .osc (.osc is added automatically)");});
-    function loadOscFromSDcard(name) {
+    $('#btn-load-osc-sd').click(function () {OSC.fileSelector.show({title:"Load .osc",filter:".osc",okCallback:loadOscFromSDcard});});
+    function loadOscFromSDcard(selectedItem) {
         var addr = RED.OSC.settings.RootAddress + "/fs/load";
-        OSC.SendMessage(addr,'s',name + ".osc");
+        OSC.SendMessage(addr,'s',selectedItem.fullPath);
     }
 
     $('#btn-save-json-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveJSONToSDcard, "Save as .json (.json is added automatically)");});
@@ -32,11 +32,11 @@ OSC.export = (function () {
         OSC.SendMessage(addr,'sb',name + ".json", data);
     }
 
-    $('#btn-load-json-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, loadJSONFromSDcard, "Load .json (.json is added automatically)");});
-    function loadJSONFromSDcard(name) {
+    $('#btn-load-json-sd').click(function () {OSC.fileSelector.show({title:"Load .json",filter:".json",okCallback:loadJSONFromSDcard});});
+    function loadJSONFromSDcard(selectedItem) {
         var addr = RED.OSC.settings.RootAddress + "/fs/send";
-        OSC.SendMessage(addr,'s',name + ".json");
-        OSC.SetLog("not implemented yet")
+        OSC.SendMessage(addr,'s',selectedItem.fullPath);
+        //OSC.SetLog("not implemented yet")
     }
 
     $('#btn-deploy-osc').click(export_simple);
