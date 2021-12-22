@@ -32,17 +32,29 @@ OSC.fileSelector = (function () {
         leftPanel = form.append('div').attr('id', "nodeDefMgr-LeftPanel");
         rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel');
 
-        listFilesRoot = BuildTree();
+        listFilesRoot = BuildTree("/");
 
         $( "#file-select-dialog" ).dialog("open");
     }
+    
+    var demofileList = [{name:"file.json", type:"file"}, {name:"folder", type:"dir"},{name:"file.osc", type:"file"}]
+        
+    function BuildTree(rootDir)
+    {
+        leftPanel.html("");
+        var rootroot = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
+        currentSelectedItem = {path:rootDir};
+        return createNode(rootroot, {type:"dir", name:rootDir})
+        //putFiles(rootDir, "", demofileList);
+    }
+
 
     function dialogOpened(e) {
         RED.keyboard.disable();
         isOpen = true;
         listFilesCmd = RED.OSC.settings.RootAddress + "/fs/list";
-        currentSelectedItem = {path:"/"};
-        OSC.SendMessage(listFilesCmd,'s',"/");
+        
+        OSC.SendMessage(listFilesCmd,'s',currentSelectedItem.path);
     }
 
     function OSCBundle_Received(oscBundle) {
@@ -83,17 +95,8 @@ OSC.fileSelector = (function () {
                 entryList.push({name:item.value, type:"file", size:fileSize}); 
             }
         }
+        listFilesRoot.html("");
         putFiles(listFilesRoot, currentSelectedItem.path, entryList);
-    }
-
-    var demofileList = [{name:"file.json", type:"file"}, {name:"folder", type:"dir"},{name:"file.osc", type:"file"}]
-        
-    function BuildTree()
-    {
-        leftPanel.html("");
-        return leftPanel.append('ul').attr('class', "nodeDefGroupTree");
-
-        //putFiles(rootDir, "", demofileList);
     }
 
     function putFiles(itemsRoot, path, fileList) {
