@@ -255,6 +255,8 @@ OSC = (function() {
         }
         try {
             var oscRx = osc.readPacket(data, {metadata:true});
+            RED.events.emit("OSCBundle:Received", oscRx);
+            
             if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
                 rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
                 rxDecoded += "packets: " + "<br>";
@@ -268,11 +270,6 @@ OSC = (function() {
         catch (err) { // print what we have so far
             AddLineToLog(rxDecoded+"<br>"+err);
         }
-        
-        
-        
-                    
-       // AddLineToLog();
     }
     
 

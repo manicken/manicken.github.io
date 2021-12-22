@@ -6,11 +6,25 @@ OSC.fileSelector = (function () {
     var rightPanel;
     var currentSelectedItem;
 
+    var isOpen = false;
+
+    var initialized = false;
+
+    var listFilesCmd = "";
+    var listFilesRoot;
+
+    function init(){
+        RED.events.on("OSCBundle:Received", OSCBundle_Received);
+        initialized = true;
+    }
+
     $('#btn-testFileSelect').click(function() { showForm(); });
 
     function showForm()
     {
-        
+        if (initialized == false)
+            init();
+
         form = d3.select('#file-select-dialog');
 
         form.html(""); // TODO: make use of data driven update
@@ -18,18 +32,68 @@ OSC.fileSelector = (function () {
         leftPanel = form.append('div').attr('id', "nodeDefMgr-LeftPanel");
         rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel');
 
-        BuildTree();
+        listFilesRoot = BuildTree();
 
         $( "#file-select-dialog" ).dialog("open");
     }
+
+    function dialogOpened(e) {
+        RED.keyboard.disable();
+        isOpen = true;
+        listFilesCmd = RED.OSC.settings.RootAddress + "/fs/list";
+        currentSelectedItem = {path:"/"};
+        OSC.SendMessage(listFilesCmd,'s',"/");
+    }
+
+    function OSCBundle_Received(oscBundle) {
+        if(isOpen == false) return;
+        //there is only one package in a bundle when doing filelist
+        if (oscBundle.packets == undefined) return; // skip non bundles
+        if (oscBundle.packets[0].address != "/reply") return; // skip non replys
+        if (oscBundle.packets[0].args == undefined) return; // skip replys with no arguments
+        
+        if (oscBundle.packets[0].args[0].value == listFilesCmd) entryList_Received(oscBundle.packets[0].args);
+        else console.log("command not supported yet",oscBundle.packets[0].args[0].value);
+    }
+
+    function entryList_Received(packetArgs) {
+        var item = packetArgs[packetArgs.length -1];
+        if (item.type != "i" || item.value != 0) return; // error
+
+        var entryList = [];
+        //var newEntry = {};
+        // begin after dir arg
+        // and do all except the last
+        for (var i = 2; i < (packetArgs.length - 1); i++) {
+            item = packetArgs[i];
+            if (item.value == "dir") {
+                i++; // get next which is the name
+                if (i >= (packetArgs.length - 1)) return; // corrupted arguments
+                item = packetArgs[i];
+                entryList.push({name:item.value, type:"dir"});
+            }
+            else if (item.value == "file") {
+                i++; // get next which is the size
+                if (i >= (packetArgs.length - 1)) return; // corrupted arguments
+                item = packetArgs[i];
+                var fileSize = item.value;
+                i++; // get next which is the name
+                if (i >= (packetArgs.length - 1)) return; // corrupted arguments
+                item = packetArgs[i];
+                entryList.push({name:item.value, type:"file", size:fileSize}); 
+            }
+        }
+        putFiles(listFilesRoot, currentSelectedItem.path, entryList);
+    }
+
     var demofileList = [{name:"file.json", type:"file"}, {name:"folder", type:"dir"},{name:"file.osc", type:"file"}]
         
-    function BuildTree(path)
+    function BuildTree()
     {
         leftPanel.html("");
-        var rootDir = leftPanel.append('ul').attr('class', "nodeDefGroupTree");
+        return leftPanel.append('ul').attr('class', "nodeDefGroupTree");
 
-        putFiles(rootDir, "", demofileList);
+        //putFiles(rootDir, "", demofileList);
     }
 
     function putFiles(itemsRoot, path, fileList) {
@@ -67,9 +131,15 @@ OSC.fileSelector = (function () {
         else
             var newPath = options.path + "/" + options.name
         OSC.AddLineToLog("dir open:" + newPath);
-
+        
+        currentSelectedItem = {path:newPath, name: options.name};
+        //currentSelectedItem.path = newPath
+        
+        listFilesRoot = itemsRoot;
+        
+        OSC.SendMessage(listFilesCmd,'s',newPath);
         // here we can add items to the folder
-        putFiles(itemsRoot, newPath, demofileList);
+        //putFiles(itemsRoot, newPath, demofileList);
         //createNode(itemsRoot, {type:"dir", path:newPath, name:"subdir"});
     }
 
@@ -113,8 +183,8 @@ OSC.fileSelector = (function () {
 				click: function() {	$( this ).dialog( "close" ); }
 			}
 		],
-		open: function(e) { RED.keyboard.disable(); },
-		close: function(e) { RED.keyboard.enable();	}
+		open: dialogOpened,
+		close: function(e) { RED.keyboard.enable();	isOpen = false; }
 	});
 
     return {
