@@ -492,21 +492,21 @@ OSC = (function() {
     {
         if (oscBundle.packets == undefined) return; // skip non bundles
         if (oscBundle.packets[0].address != "/reply") {
-            RED.bottombar.info.addLine("WARNING receive don't contain a reply cmd");
+            RED.bottombar.info.addLine("WARNING: receive don't contain a reply cmd");
             return;
         }
         if (oscBundle.packets[0].args == undefined || oscBundle.packets[0].args.length == 0) {
-            RED.bottombar.info.addLine("ERROR reply don't contain any arguments");
+            RED.bottombar.info.addLine("ERROR: reply don't contain any arguments");
             return;
         }
         var args = oscBundle.packets[0].args; // simplify usage
         if (args[args.length-1].type != "i") {
-            RED.bottombar.info.addLine("ERROR reply last argument is not a fault code type");
+            RED.bottombar.info.addLine("ERROR: reply last argument is not a fault code type");
             return;
         }
         var faultCode = args[args.length-1].value;
         if (faultCode < 0) {
-            RED.bottombar.info.addLine("ERROR reply last argument fault code value cannot be less than zero");
+            RED.bottombar.info.addLine("ERROR: reply last argument fault code value cannot be less than zero");
             return;
         }
         else if (faultCode < OSC_REPLY_CODES.length) {
@@ -515,7 +515,7 @@ OSC = (function() {
         }
         else
         {
-            RED.bottombar.info.addLine("WARNING unknown fault code: " + faultCode);
+            RED.bottombar.info.addLine("WARNING: unknown fault code: " + faultCode);
             return;
         }
     }

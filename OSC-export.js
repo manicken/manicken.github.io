@@ -102,11 +102,14 @@ OSC.export = (function () {
             
             if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 
-            var nodeType = getTypeName(nns, n);
+            //var nodeType = getTypeName(nns, n);
             var nodeName = n.name;//RED.nodes.make_name(n);
 
             addr = RED.OSC.settings.RootAddress + createObjectAddr;
-            apos.push(OSC.CreatePacket(addr,"ss", nodeType, nodeName));
+            if (node.type != "AudioMixer")
+                apos.push(OSC.CreatePacket(addr,"ss", node.type, nodeName));
+            else
+                apos.push(OSC.CreatePacket(addr,"ssi", node.type, node.name, node.inputs));
 
             if (haveIO(node)) {
                 RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
