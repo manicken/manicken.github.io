@@ -38,7 +38,7 @@ OSC.fileSelector = (function () {
             if (options.okButtonText == undefined) options.okButtonText = "OK";
             var okButton = {
                 text:options.okButtonText,
-                click: function() { $( this ).dialog( "close" ); okCallback(currentSelectedItem); }
+                click: function() { $( this ).dialog( "close" ); options.okCallback(currentSelectedItem); }
             };
             buttons.push(okButton);
         } 
@@ -65,7 +65,7 @@ OSC.fileSelector = (function () {
         form.html(""); // TODO: make use of data driven update
 
         leftPanel = form.append('div').attr('id', "nodeDefMgr-LeftPanel");
-        rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel');
+        rightPanel = form.append('div').attr('id', 'nodeDefMgr-RightPanel'); 
 
         BuildTree(options.rootDir,false);
         

@@ -32,6 +32,7 @@ NodeDefinitions = {
             "TabInput":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"In","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
             "PointerArray":{"defaults":{"name":{},"id":{},"objectType":{},"arrayItems":{}},"shortName":"pArray","nonObject":"","dontShowInPalette":"","category":"special","color":"#aaffdd","icon":"range.png"},
             "AudioMixer":{"defaults":{"name":{"type":"c_cpp_name"},"id":{},"inputs":{"value":"1"},"comment":{}},"shortName":"mixer","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
+            
             "AudioCrossPointSwitch":{"defaults":{"name":{"type":"c_cpp_name"},"id":{},"inputs":{"value":"1"},"outputs":{"value":"1"},"comment":{}},"shortName":"crossSwitch","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
             "ClassComment":{"defaults":{"name":{},"id":{}},"shortName":"ClassComment","nonObject":"","category":"special","color":"#ccffcc","icon":"comment.png"},
             "Comment":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"Comment","nonObject":"","category":"special","color":"#ddffbb","icon":"comment.png"},

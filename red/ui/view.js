@@ -1126,9 +1126,11 @@ RED.view = (function() {
 				redraw(true);
 				//redraw_links_init();
 				//redraw_links();
-				if (nn._def.autoedit) {
-					RED.editor.edit(nn);
-				}
+                
+				if (nn._def.autoedit != undefined) {
+                    console.warn("autoedit");
+                    RED.editor.edit(nn);
+                }
 			}
 	});
 	function AddNewNode(xPos, yPos, typeName)
@@ -1177,7 +1179,7 @@ RED.view = (function() {
 		/*if (nn._def.onadd) {
 			nn._def.onadd.call(nn);
 		}*/
-
+        
 		//nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
 		RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
 		RED.nodes.add(nn);

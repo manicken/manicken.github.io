@@ -20,7 +20,7 @@ OSC.export = (function () {
     $('#btn-load-osc-sd').click(function () {OSC.fileSelector.show({title:"Load .osc",filter:".osc",okCallback:loadOscFromSDcard});});
     function loadOscFromSDcard(selectedItem) {
         var addr = RED.OSC.settings.RootAddress + "/fs/load";
-        OSC.SendMessage(addr,'s',selectedItem.fullPath);
+        OSC.SendMessage(addr,'s',selectedItem.fullPath());
     }
 
     $('#btn-save-json-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveJSONToSDcard, "Save as .json (.json is added automatically)");});
@@ -35,7 +35,7 @@ OSC.export = (function () {
     $('#btn-load-json-sd').click(function () {OSC.fileSelector.show({title:"Load .json",filter:".json",okCallback:loadJSONFromSDcard});});
     function loadJSONFromSDcard(selectedItem) {
         var addr = RED.OSC.settings.RootAddress + "/fs/send";
-        OSC.SendMessage(addr,'s',selectedItem.fullPath);
+        OSC.SendMessage(addr,'s',selectedItem.fullPath());
         //OSC.SetLog("not implemented yet")
     }
 

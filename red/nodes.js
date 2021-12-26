@@ -322,11 +322,11 @@ RED.nodes = (function() {
 	 * @param {Node} n 
 	 */
 	function addNode(n,index) {
-		if (n.type == "AudioMixerX")
+		/*if (n.type == "AudioMixerX")
 		{
 			if (!n.inputs)
 				n.inputs = n._def.inputs;
-		}
+		}*/
         		
         n.dirty = true;
         if (index == undefined)
@@ -876,8 +876,8 @@ RED.nodes = (function() {
         var unknownTypes = [];
         for (i=0;i<newNodes.length;i++) {
             n = newNodes[i];
-            if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
-            else if (n.type == "Array") n.type = "PointerArray"; // type conversion
+            //if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
+            if (n.type == "Array") n.type = "PointerArray"; // type conversion
             // TODO: remove workspace in next release+1(Node-Red team comment)
             if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
                 // TODO: get this UI thing out of here! (see below as well) (Node-Red team comment)
@@ -912,7 +912,7 @@ RED.nodes = (function() {
             if (n.type === "workspace" || n.type === "tab") continue;
             else if (n.type === "settings") continue
                 
-            if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
+            //if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
             //console.warn(n);
 
             var def = getType(n.type);

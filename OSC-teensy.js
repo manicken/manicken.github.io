@@ -255,17 +255,21 @@ OSC = (function() {
         }
         try {
             var oscRx = osc.readPacket(data, {metadata:true});
-            RED.events.emit("OSCBundle:Received", oscRx);
+            
             
             if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
                 rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
                 rxDecoded += "packets: " + "<br>";
                 for (var i = 0; i < oscRx.packets.length; i++) {
-                    rxDecoded += JSON.stringify(oscRx.packets[i]) + "<br>";
+                    rxDecoded += JSON.stringify(oscRx.packets[i]);
+                    if (i < oscRx.packets.length - 1)
+                        rxDecoded += "<br>";
                 }
             }
             if ((RED.OSC.settings.ShowOutputOscRxRaw == true) || (RED.OSC.settings.ShowOutputOscRxDecoded == true))
                 AddLineToLog(rxDecoded);
+
+            RED.events.emit("OSCBundle:Received", oscRx);
         }
         catch (err) { // print what we have so far
             AddLineToLog(rxDecoded+"<br>"+err);
@@ -369,8 +373,11 @@ OSC = (function() {
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
         var addr = RED.OSC.settings.RootAddress + "/dynamic/createObject*";
-        SendData(CreateMessageData(addr,"ss", node.type, node.name));
-        
+        if (node.type != "AudioMixer")
+            SendData(CreateMessageData(addr,"ss", node.type, node.name));
+        else
+            SendData(CreateMessageData(addr,"ssi", node.type, node.name,node.inputs));
+
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("added node (" + node.type + ") " + node.name);
     }
@@ -478,6 +485,39 @@ OSC = (function() {
         RED.events.on("flows:remove", WsRemoved);
         RED.events.on("links:add", LinkAdded);
         RED.events.on("links:remove", LinkRemoved);
+        RED.events.on("OSCBundle:Received", OSCBundleReceived);
+    }
+    var OSC_REPLY_CODES = ["OK","NOT_FOUND","BLANK_NAME","DUPLICATE_NAME","NO_DYNAMIC","NO_MEMORY","PARAM_ERROR","TYPE_ERROR"];
+    function OSCBundleReceived(oscBundle)
+    {
+        if (oscBundle.packets == undefined) return; // skip non bundles
+        if (oscBundle.packets[0].address != "/reply") {
+            RED.bottombar.info.addLine("receive don't contain a reply cmd");
+            return;
+        }
+        if (oscBundle.packets[0].args == undefined || oscBundle.packets[0].args.length == 0) {
+            RED.bottombar.info.addLine("reply don't contain any arguments");
+            return;
+        }
+        var args = oscBundle.packets[0].args; // simplify usage
+        if (args[args.length-1].type != "i") {
+            RED.bottombar.info.addLine("reply last argument is not a fault code type");
+            return;
+        }
+        var faultCode = args[args.length-1].value;
+        if (faultCode < 0) {
+            RED.bottombar.info.addLine("reply last argument fault code value cannot be less than zero");
+            return;
+        }
+        else if (faultCode < OSC_REPLY_CODES.length) {
+            RED.bottombar.info.addLine(OSC_REPLY_CODES[faultCode]);
+            return;
+        }
+        else
+        {
+            RED.bottombar.info.addLine("unknown fault code: " + faultCode);
+            return;
+        }
     }
 
     function AddLineToLog(text, foreColor, bgColor) {
