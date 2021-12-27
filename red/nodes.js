@@ -1809,7 +1809,10 @@ RED.nodes = (function() {
     }
     function NodeInputsChanged(node, oldCount, newCount) {
         // update the visuals
-        if (newCount >= oldCount) return;
+        if (newCount >= oldCount) {
+            RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount);
+            return;
+        }
 
         var linksToRemove = links.filter(function(l) { return (l.target === node) && (l.targetPort > (newCount-1)); });
         for (var i = 0; i < linksToRemove.length; i++)  {
@@ -1819,8 +1822,9 @@ RED.nodes = (function() {
                 links.splice(index,1);
             }
         }
+        console.error("links removed");
         RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount, linksToRemove);
-        
+
         RED.view.redraw();
     }
 

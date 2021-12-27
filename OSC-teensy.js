@@ -505,11 +505,11 @@ OSC = (function() {
 
     function NodeInputsUpdated(node, oldCount, newCount, removedLinks) {
         AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount);
-
+        console.warn("NodeInputsUpdated");
         var linksToUpdate = RED.nodes.links.filter(function(l) { return (l.source === node) || (l.target === node); });
 
         var bundle = CreateBundle();
-        AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links
+        if (removedLinks != undefined) AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links
         AddLinksRemovedToBundle(bundle, linksToUpdate); // destroy other links temporary
         bundle.add(GetDestroyObjectAddr(), "s", node.name); // destroy node temporary to change number of inputs
         bundle.add(GetCreateObjectAddr(),"ssi", node.type, node.name, newCount); // create new node with new number of inputs
