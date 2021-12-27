@@ -130,6 +130,7 @@ OSC = (function() {
 
     function GetClearAllAddr() { return RED.OSC.settings.RootAddress + "/dynamic/clearAl*"; }
     function GetCreateObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*O*"; }
+    function GetRenameObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/ren*"; }
     function GetDestroyObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/d*"; }
     function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*C*"; }
     function GetConnectAddr(connectionName) { return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/c*";}
@@ -142,7 +143,7 @@ OSC = (function() {
       navigator.serial.addEventListener("disconnect", (event) => {
         RED.notify("Serial port disconnected", "warning", null, 3000);
       });
-
+      $('#btn-osc-clearAll').click(function() { SendMessage(GetClearAllAddr()); });
     var port;
     //const serialLEDController = new SerialLEDController();
     $('#btn-connectSerial').click(async function() { 
@@ -328,21 +329,19 @@ OSC = (function() {
             AddLineToLog("(WARNING) Try to use Transport Layer NIY "+RED.OSC.LayerOptionTexts[RED.OSC.settings.TransportLayer] + "<brPlease select annother transport layer", "#FF0000", "#FFF0F0");
         }
     }
-    function SendBundle(bundle) {
+    function SendBundle(b) {
+        delete b.add;
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(JSON.stringify(bundle));
-        SendData(CreateBundleData(bundle));
+            AddLineToLog(JSON.stringify(b));
+        SendData(CreateBundleData(b));
     }
-    function SendPacket(packet) {
+    function SendPacket(p) {
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(JSON.stringify(packet));
-        SendData(osc.writePacket(packet));
+            AddLineToLog(JSON.stringify(p));
+        SendData(osc.writePacket(p));
     }
     function SendMessage(address, valueTypes, ...values) {
         SendPacket(CreatePacket(address, valueTypes, ...values));
-    }
-    function SendAsSlipToSerial(data) {
-        SendRawToSerial(Slip.encode(data));
     }
     async function SendTextToSerial(text) {
         if (port == undefined || port.writable == undefined) {
@@ -363,11 +362,15 @@ OSC = (function() {
         return osc.writePacket(CreatePacket(address, valueTypes, ...values));
     }
 
-    function CreateBundleData(bundle) {
-        return osc.writeBundle(bundle)
+    function CreateBundleData(b) {
+        delete b.add;
+        return osc.writeBundle(b)
     }
 
     function CreatePacket(address, valueTypes, ...values) {
+        var packet = {address:address, args: []};
+        if (valueTypes == undefined) return packet; // just return a "empty" packet
+
         var minLength = valueTypes.length;
         if (minLength > values.length) {
             minLength = values.length;
@@ -375,7 +378,7 @@ OSC = (function() {
         }
 
         //console.error(valueTypes,valueTypes.length);
-        var packet = {address:address, args: []};
+        
         for (var i = 0; i < minLength; i++) {
             packet.args.push({type:valueTypes[i], value:values[i]})
         }
@@ -384,7 +387,16 @@ OSC = (function() {
 
     function CreateBundle(timeDelaySeconds) {
         if (timeDelaySeconds == undefined) timeDelaySeconds = 0;
-        return {timeTag: osc.timeTag(timeDelaySeconds),packets:[]};
+        return {
+            timeTag: osc.timeTag(timeDelaySeconds),
+            packets:[],
+            add:function(firstArg, valueTypes, ...values) {
+                if (typeof firstArg == "object")
+                    this.packets.push(firstArg);
+                else
+                    this.packets.push(CreatePacket(firstArg, valueTypes, ...values)); // super shortcut so we can now do bundle.add("/addr", "s", "string")
+            }
+        }; 
     }
 
     function NodeAdded(node) {
@@ -392,11 +404,10 @@ OSC = (function() {
 
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
-        var addr = RED.OSC.settings.RootAddress + "/dynamic/createObject*";
         if (node._def.dynInputs == undefined)
-            SendData(CreateMessageData(addr,"ss", node.type, node.name));
+            SendMessage(GetCreateObjectAddr(),"ss", node.type, node.name);
         else
-            SendData(CreateMessageData(addr,"ssi", node.type, node.name,node.inputs));
+            SendMessage(GetCreateObjectAddr(),"ssi", node.type, node.name,node.inputs);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("added node (" + node.type + ") " + node.name);
@@ -407,7 +418,6 @@ OSC = (function() {
 
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
-        var addr = RED.OSC.settings.RootAddress + "/dynamic/ren*";
         var bundle = CreateBundle();
 
         var links = RED.nodes.links.filter(function(d) { return (d.source === node) || (d.target === node);});
@@ -416,14 +426,14 @@ OSC = (function() {
             
             var newLinkName = GetLinkName(link);
             var oldLinkName = newLinkName.split(newName).join(oldName);
-            bundle.packets.push(CreatePacket(addr, "ss", oldLinkName, newLinkName));
-            //console.warn();
+            bundle.add(GetRenameObjectAddr(), "ss", oldLinkName, newLinkName);
+            
             if (RED.OSC.settings.ShowOutputDebug == true)
                 AddLineToLog("renamed link: " + oldLinkName + " to " + newLinkName);
         }
-        bundle.packets.push(CreatePacket(addr, "ss", oldName, newName));
-        //console.warn("links:", links);
-        SendData(CreateBundleData(bundle));//(addr,"ss", oldName, newName));
+        bundle.add(GetRenameObjectAddr(), "ss", oldName, newName);
+        
+        SendBundle(bundle);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("renamed node from " + oldName + " to " + newName);
@@ -434,11 +444,10 @@ OSC = (function() {
 
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
-        var addr = RED.OSC.settings.RootAddress + "/dynamic/destroy*";
         var bundle = CreateBundle();
         AddLinksRemovedToBundle(bundle, links);
-        bundle.packets.push(CreatePacket(addr, "s", node.name));
-        SendData(CreateBundleData(bundle));
+        bundle.add(GetDestroyObjectAddr(), "s", node.name);
+        SendBundle(bundle);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("removed node " + node.name);
@@ -450,7 +459,7 @@ OSC = (function() {
             if (RED.OSC.settings.ShowOutputDebug == true)
                 AddLineToLog("removed link " + GetLinkDebugName(link));
             var linkName = GetLinkName(link);
-            bundle.packets.push(CreatePacket(GetDestroyObjectAddr(), "s", linkName));
+            bundle.add(GetDestroyObjectAddr(), "s", linkName);
         }
     }
 
@@ -458,9 +467,9 @@ OSC = (function() {
         if (RED.OSC.settings.LiveUpdate == false) return;
         var linkName = GetLinkName(link);
         var bundle = OSC.CreateBundle();
-        bundle.packets.push(CreatePacket(GetCreateConnectionAddr(), "s", linkName));
-        bundle.packets.push(CreatePacket(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort));
-        SendData(CreateBundleData(bundle));
+        bundle.add(GetCreateConnectionAddr(), "s", linkName);
+        bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
+        SendBundle(bundle);
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("added link [" + linkName  + "] " + GetLinkDebugName(link));
     }
@@ -482,7 +491,7 @@ OSC = (function() {
     function LinkRemoved(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
         var linkName = GetLinkName(link);
-        SendData(CreateMessageData(GetDestroyObjectAddr(),"s", linkName));
+        SendMessage(GetDestroyObjectAddr(),"s", linkName);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("removed link [" + linkName  + "] " + GetLinkDebugName(link));
@@ -496,8 +505,8 @@ OSC = (function() {
         var bundle = CreateBundle();
         AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links
         AddLinksRemovedToBundle(bundle, linksToUpdate); // destroy other links temporary
-        bundle.packets.push(CreatePacket(GetDestroyObjectAddr(), "s", node.name)); // destroy node temporary to change number of inputs
-        bundle.packets.push(CreatePacket(GetCreateObjectAddr(),"ssi", node.type, node.name, newCount)); // create new node with new number of inputs
+        bundle.add(GetDestroyObjectAddr(), "s", node.name); // destroy node temporary to change number of inputs
+        bundle.add(GetCreateObjectAddr(),"ssi", node.type, node.name, newCount); // create new node with new number of inputs
         AddLinksToCreateToBundle(bundle, linksToUpdate); // recreate other links again
         SendBundle(bundle);
     }
@@ -506,12 +515,10 @@ OSC = (function() {
         for (var i = 0; i < links.length; i++) {
             var l = links[i];
             var linkName = GetLinkName(l);
-            bundle.packets.push(CreatePacket(GetCreateConnectionAddr(), "s", linkName));
-            bundle.packets.push(CreatePacket(GetConnectAddr(linkName), "sisi", l.source.name, l.sourcePort, l.target.name, l.targetPort));
+            bundle.add(GetCreateConnectionAddr(), "s", linkName);
+            bundle.add(GetConnectAddr(linkName), "sisi", l.source.name, l.sourcePort, l.target.name, l.targetPort);
         }
     }
-
-    function AddLinksToCreate(addr, )
 
     // not yet implemented functionality
     function WsAdded(ws) { if (RED.OSC.settings.ShowOutputDebug == true) AddLineToLog("(not implemented yet) added Workspace " + ws.label);  }
@@ -587,13 +594,16 @@ OSC = (function() {
     return {
         GetClearAllAddr:GetClearAllAddr,
         GetCreateObjectAddr:GetCreateObjectAddr,
+        GetRenameObjectAddr:GetRenameObjectAddr,
         GetDestroyObjectAddr:GetDestroyObjectAddr,
         GetCreateConnectionAddr:GetCreateConnectionAddr,
         GetConnectAddr:GetConnectAddr,
 
         SendData:SendData, // uses the encoding and transport layer settings
         SendRawToSerial:SendRawToSerial,
-        SendAsSlipToSerial:SendAsSlipToSerial,
+
+        SendAsSlipToSerial:function (data) { SendRawToSerial(Slip.encode(data));}, // obsolete should be removed
+
         SendTextToSerial:SendTextToSerial,
         GetSimpleOSCdata:CreateMessageData, // keep this for backwards compability
         CreateMessageData:CreateMessageData, // newer name

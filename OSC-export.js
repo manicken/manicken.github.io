@@ -66,12 +66,6 @@ OSC.export = (function () {
 
     function getSimpleExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
-        var clearAllAddr = "/dynamic/clearAl*";
-        var createObjectAddr = "/dynamic/cr*O*";
-        var createConnectionAddr = "/dynamic/cr*C*";
-        var connectAddr = function (linkName) {
-            return "/audio/" + linkName + "/c*";
-        }
 
         RED.storage.update();
 
@@ -105,11 +99,10 @@ OSC.export = (function () {
             //var nodeType = getTypeName(nns, n);
             var nodeName = n.name;//RED.nodes.make_name(n);
 
-            addr = RED.OSC.settings.RootAddress + createObjectAddr;
             if (node.type != "AudioMixer")
-                apos.push(OSC.CreatePacket(addr,"ss", node.type, nodeName));
+                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ss", node.type, nodeName));
             else
-                apos.push(OSC.CreatePacket(addr,"ssi", node.type, node.name, node.inputs));
+                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs));
 
             if (haveIO(node)) {
                 RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
@@ -121,25 +114,21 @@ OSC.export = (function () {
                         var linkName = src_name + pi + dst_name + dstPortIndex;
                     else
                         var linkName = src_name + "_" + pi +"_"+ dst_name +"_"+ dstPortIndex;
-                    addr = RED.OSC.settings.RootAddress + createConnectionAddr;
-                    acs.push(OSC.CreatePacket(addr,"s", linkName));
-                    addr = RED.OSC.settings.RootAddress + connectAddr(linkName);
-                    acs.push(OSC.CreatePacket(addr,"sisi", src_name, pi, dst_name, dstPortIndex));
+                    acs.push(OSC.CreatePacket(OSC.GetCreateConnectionAddr(),"s", linkName));
+                    acs.push(OSC.CreatePacket(OSC.GetConnectAddr(linkName),"sisi", src_name, pi, dst_name, dstPortIndex));
                 });
             }
         }
 
         var bundle = OSC.CreateBundle(0);
-        addr = RED.OSC.settings.RootAddress + clearAllAddr;
-        var clearAllPacket = OSC.CreatePacket(addr, "");
-        bundle.packets.push(clearAllPacket);
+        bundle.add(OSC.GetClearAllAddr());
         // first add all Audio Processing Objects
         for (var i = 0; i < apos.length; i++) {
-            bundle.packets.push(apos[i]);
+            bundle.add(apos[i]);
         }
         // second add all Audio Connections
         for (var i = 0; i < acs.length; i++) {
-            bundle.packets.push(acs[i]);
+            bundle.add(acs[i]);
 
         }
         if (getBundleOnly == true) 
