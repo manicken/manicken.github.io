@@ -1813,8 +1813,14 @@ RED.nodes = (function() {
 
         var linksToRemove = links.filter(function(l) { return (l.target === node) && (l.targetPort > (newCount-1)); });
         for (var i = 0; i < linksToRemove.length; i++)  {
-            removeLink(linksToRemove[i]);
+            var link = linksToRemove[i];
+            var index = links.indexOf(link);
+            if (index != -1) {
+                links.splice(index,1);
+            }
         }
+        RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount, linksToRemove);
+        
         RED.view.redraw();
     }
 

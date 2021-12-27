@@ -128,6 +128,12 @@ RED.OSC = (function() {
 
 OSC = (function() {
 
+    function GetClearAllAddr() { return RED.OSC.settings.RootAddress + "/dynamic/clearAl*"; }
+    function GetCreateObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*O*"; }
+    function GetDestroyObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/d*"; }
+    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*C*"; }
+    function GetConnectAddr(connectionName) { return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/c*";}
+
     navigator.serial.addEventListener("connect", async (event) => {
         RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
         
@@ -387,7 +393,7 @@ OSC = (function() {
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
         var addr = RED.OSC.settings.RootAddress + "/dynamic/createObject*";
-        if (node.type != "AudioMixer")
+        if (node._def.dynInputs == undefined)
             SendData(CreateMessageData(addr,"ss", node.type, node.name));
         else
             SendData(CreateMessageData(addr,"ssi", node.type, node.name,node.inputs));
@@ -430,13 +436,7 @@ OSC = (function() {
 
         var addr = RED.OSC.settings.RootAddress + "/dynamic/destroy*";
         var bundle = CreateBundle();
-        for (var i = 0; i < links.length; i++) {
-            var link = links[i];
-            if (RED.OSC.settings.ShowOutputDebug == true)
-                AddLineToLog("removed link " + GetLinkDebugName(link));
-            var linkName = GetLinkName(link);
-            bundle.packets.push(CreatePacket(addr, "s", linkName));
-        }
+        AddLinksRemovedToBundle(bundle, links);
         bundle.packets.push(CreatePacket(addr, "s", node.name));
         SendData(CreateBundleData(bundle));
 
@@ -444,16 +444,22 @@ OSC = (function() {
             AddLineToLog("removed node " + node.name);
     }
 
+    function AddLinksRemovedToBundle(bundle, links) {
+        for (var i = 0; i < links.length; i++) {
+            var link = links[i];
+            if (RED.OSC.settings.ShowOutputDebug == true)
+                AddLineToLog("removed link " + GetLinkDebugName(link));
+            var linkName = GetLinkName(link);
+            bundle.packets.push(CreatePacket(GetDestroyObjectAddr(), "s", linkName));
+        }
+    }
+
     function LinkAdded(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
-
         var linkName = GetLinkName(link);
-        //link.name = linkName;
-        var addLinkAddr = RED.OSC.settings.RootAddress + "/dynamic/createConn*";
-        var connectLinkAddr = RED.OSC.settings.RootAddress + "/audio/" + linkName + "/connect*";
         var bundle = OSC.CreateBundle();
-        bundle.packets.push(CreatePacket(addLinkAddr, "s", linkName));
-        bundle.packets.push(CreatePacket(connectLinkAddr, "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort));
+        bundle.packets.push(CreatePacket(GetCreateConnectionAddr(), "s", linkName));
+        bundle.packets.push(CreatePacket(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort));
         SendData(CreateBundleData(bundle));
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("added link [" + linkName  + "] " + GetLinkDebugName(link));
@@ -475,24 +481,37 @@ OSC = (function() {
 
     function LinkRemoved(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
-        
-        var addr = RED.OSC.settings.RootAddress + "/dynamic/destroy*";
-        
         var linkName = GetLinkName(link);
-        SendData(CreateMessageData(addr,"s", linkName));
+        SendData(CreateMessageData(GetDestroyObjectAddr(),"s", linkName));
 
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("removed link [" + linkName  + "] " + GetLinkDebugName(link));
     }
 
-    function NodeInputsChanged(node, oldCount, newCount) {
+    function NodeInputsUpdated(node, oldCount, newCount, removedLinks) {
         AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount);
-        // TODO.
-        // 1. send delete all wires to/from the node
-        // 2. send delete node
-        // 3. send create new node with new amount of inputs
-        // 4. send create all prev wires
+
+        var linksToUpdate = RED.nodes.links.filter(function(l) { return (l.source === node) || (l.target === node); });
+
+        var bundle = CreateBundle();
+        AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links
+        AddLinksRemovedToBundle(bundle, linksToUpdate); // destroy other links temporary
+        bundle.packets.push(CreatePacket(GetDestroyObjectAddr(), "s", node.name)); // destroy node temporary to change number of inputs
+        bundle.packets.push(CreatePacket(GetCreateObjectAddr(),"ssi", node.type, node.name, newCount)); // create new node with new number of inputs
+        AddLinksToCreateToBundle(bundle, linksToUpdate); // recreate other links again
+        SendBundle(bundle);
     }
+
+    function AddLinksToCreateToBundle(bundle, links) {
+        for (var i = 0; i < links.length; i++) {
+            var l = links[i];
+            var linkName = GetLinkName(l);
+            bundle.packets.push(CreatePacket(GetCreateConnectionAddr(), "s", linkName));
+            bundle.packets.push(CreatePacket(GetConnectAddr(linkName), "sisi", l.source.name, l.sourcePort, l.target.name, l.targetPort));
+        }
+    }
+
+    function AddLinksToCreate(addr, )
 
     // not yet implemented functionality
     function WsAdded(ws) { if (RED.OSC.settings.ShowOutputDebug == true) AddLineToLog("(not implemented yet) added Workspace " + ws.label);  }
@@ -502,7 +521,7 @@ OSC = (function() {
     function RegisterEvents() {
         RED.events.on("nodes:add", NodeAdded);
         RED.events.on("nodes:renamed", NodeRenamed);
-        RED.events.on("nodes:inputs", NodeInputsChanged); // happens when the input count is changed
+        RED.events.on("nodes:inputsUpdated", NodeInputsUpdated); // happens when the input count is changed is usually fired from nodes.js (NodeInputsChanged)
         RED.events.on("nodes:removed", NodeRemoved); // note usage of nodes:removed instead of the normal nodes:remove
         RED.events.on("flows:add", WsAdded);
         RED.events.on("flows:renamed", WsRenamed);//RED.bottombar.info.addContent("removed link");
@@ -566,6 +585,12 @@ OSC = (function() {
     }
 
     return {
+        GetClearAllAddr:GetClearAllAddr,
+        GetCreateObjectAddr:GetCreateObjectAddr,
+        GetDestroyObjectAddr:GetDestroyObjectAddr,
+        GetCreateConnectionAddr:GetCreateConnectionAddr,
+        GetConnectAddr:GetConnectAddr,
+
         SendData:SendData, // uses the encoding and transport layer settings
         SendRawToSerial:SendRawToSerial,
         SendAsSlipToSerial:SendAsSlipToSerial,
