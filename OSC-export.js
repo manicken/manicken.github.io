@@ -46,6 +46,10 @@ OSC.export = (function () {
         var bundle = result.bundle;
         var bundleData = OSC.CreateBundleData(bundle);
 
+        if (RED.OSC.settings.DirectExport == true) {
+            OSC.SendData(bundleData);
+            return;
+        }
         // generate human readable export text
         var exportDialogText = ""; // use this for debug output
 
@@ -60,7 +64,7 @@ OSC.export = (function () {
 
         exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
         showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
-        function () {OSC.SendData(bundleData)});
+        function () {OSC.SendData(bundleData);});
 
     }
 
