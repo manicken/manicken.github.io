@@ -276,21 +276,35 @@ OSC = (function() {
         }
     }
     
+    var txFIFO = [];
+    var dataIndex = 0;
 
-    function SendRawToSerial(data) {
+    async function SendRawToSerial(data) {
         if (port == undefined || port.writable == undefined) {
             if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("[not connected]", "#FF0000", "#FFF0F0");
             return;
         }
 
-        //AddLineToLog(new TextDecoder("utf-8").decode(data));
-        //while (port.writable.locked == true) {console.log("waiting..."); }
+        if (port.writable.locked == true) {
+            console.error("enqueue data " + dataIndex);
+            txFIFO.push({data:data, index:dataIndex++});
+            return;
+        }
         const writer = port.writable.getWriter();
-        writer.write(data);
 
-        // Allow the serial port to be closed later.
-        writer.releaseLock();
+        await writer.write(data).then(
+            function (value) { writer.releaseLock(); SendNextInBuffer();},
+            function (error) { console.warn("serial write error "+ error); writer.releaseLock(); SendNextInBuffer();}
+        );
+    }
+
+    function SendNextInBuffer() {
+        if (txFIFO.length != 0) {
+            var item = txFIFO.shift();
+            console.error("dequeue data " + item.index);
+            SendRawToSerial(item.data);
+        }
     }
     function SendData(data) {
         
