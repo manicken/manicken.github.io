@@ -487,8 +487,11 @@ OSC = (function() {
 
     function NodeInputsChanged(node, oldCount, newCount) {
         AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount);
-
-
+        // TODO.
+        // 1. send delete all wires to/from the node
+        // 2. send delete node
+        // 3. send create new node with new amount of inputs
+        // 4. send create all prev wires
     }
 
     // not yet implemented functionality

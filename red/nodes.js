@@ -1803,7 +1803,23 @@ RED.nodes = (function() {
 		name = name.replace(" ", "_").replace("+", "_").replace("-", "_");
 		return name
 	}
+    function init() {
+        Init_BuiltIn_NodeDefinitions();
+        RED.events.on("nodes:inputs", NodeInputsChanged);
+    }
+    function NodeInputsChanged(node, oldCount, newCount) {
+        // update the visuals
+        if (newCount >= oldCount) return;
+
+        var linksToRemove = links.filter(function(l) { return (l.target === node) && (l.targetPort > (newCount-1)); });
+        for (var i = 0; i < linksToRemove.length; i++)  {
+            removeLink(linksToRemove[i]);
+        }
+        RED.view.redraw();
+    }
+
 	return {
+        init:init,
         moveWorkspace: function(start, end) {
             if (start > end)
             {

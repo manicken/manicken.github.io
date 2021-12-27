@@ -4901,6 +4901,8 @@ RED.view = (function() {
 		anyLinkEnter = true;
 		redraw_links();
 	}
+
+
 	return {
         defSettings:defSettings,
 		settings:settings,

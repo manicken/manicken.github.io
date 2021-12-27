@@ -557,7 +557,8 @@ RED.main = (function() {
         RED.palette.doInit(NodeCategories);//["categories"]);
 
         // register built in node types
-        RED.nodes.Init_BuiltIn_NodeDefinitions();
+        //RED.nodes.Init_BuiltIn_NodeDefinitions(); // replaced with following that internally calls Init_BuiltIn_NodeDefinitions
+        RED.nodes.init();
         
         RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
             showHelp();
