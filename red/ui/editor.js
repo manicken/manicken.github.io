@@ -76,26 +76,41 @@ RED.editor = (function() {
 	 * @param value - the property value being validated
 	 * @returns {boolean} whether the node proprty is valid
 	 */
-	function validateNodeProperty(node,definition,property,value) {
+	function validateNodeProperty(node,definition,property,value,field) {
 		var valid = true;
 		if ("required" in definition[property] && definition[property].required) {
 			valid = value !== "";
 		}
 
 		if (valid && definition[property].type) { // RED.nodes.getType(definition[property].type) && !("validate" in definition[property])) {
+
 			if (definition[property].type == "int") {
                 var val = parseInt(value);
-                if (isNaN(val)) valid = false;
-                else {
-                    if (definition[property].minval) {
-                        var minVal = parseInt(definition[property].minval);
-                        if (isNaN(minVal)) valid = false;
-                        if (value < minVal) valid = false;
+                if (isNaN(val)){
+                    if (field != undefined) {
+                        if (!isNaN(parseInt(definition[property].minval)))
+                            field.value = parseInt(definition[property].minval);
+                        else
+                            field.value = 1; // one is allway best for all situations
                     }
-                    if (definition[property].maxval) {
+                    else valid = false;
+                }
+                else {
+                    if (field != undefined) field.value = val;
+
+                    if (definition[property].minval && !isNaN(parseInt(definition[property].minval))) {
+                        var minVal = parseInt(definition[property].minval);
+                        if (value < minVal) {
+                            if (field != undefined) field.value = minVal;
+                            else valid = false;
+                        }
+                    }
+                    if (definition[property].maxval && !isNaN(parseInt(definition[property].maxval))) {
                         var maxVal = parseInt(definition[property].maxval);
-                        if (isNaN(maxVal)) valid = false;
-                        if (value > maxVal) valid = false;
+                        if (value > maxVal) {
+                            if (field != undefined) field.value = maxVal;
+                            else valid = false;
+                        }
                     }
                 }
             }
@@ -449,7 +464,7 @@ RED.editor = (function() {
 	 */
 	function attachPropertyChangeHandler(node,property,prefix) {
 		$("#"+prefix+"-"+property).change(function() {
-			if (!validateNodeProperty(node, node._def.defaults , property,this.value)) {
+			if (!validateNodeProperty(node, node._def.defaults , property,this.value, this)) {
 				$(this).addClass("input-error");
                 document.getElementById("btnEditorApply").disabled = true;
                 document.getElementById("btnEditorOk").disabled = true;
