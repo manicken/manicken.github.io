@@ -277,7 +277,7 @@ OSC = (function() {
     }
     
 
-    async function SendRawToSerial(data) {
+    function SendRawToSerial(data) {
         if (port == undefined || port.writable == undefined) {
             if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("[not connected]", "#FF0000", "#FFF0F0");
@@ -285,9 +285,9 @@ OSC = (function() {
         }
 
         //AddLineToLog(new TextDecoder("utf-8").decode(data));
-
+        //while (port.writable.locked == true) {console.log("waiting..."); }
         const writer = port.writable.getWriter();
-        await writer.write(data);
+        writer.write(data);
 
         // Allow the serial port to be closed later.
         writer.releaseLock();
@@ -471,6 +471,12 @@ OSC = (function() {
             AddLineToLog("removed link [" + linkName  + "] " + GetLinkDebugName(link));
     }
 
+    function NodeInputsChanged(node, oldCount, newCount) {
+        AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount);
+
+
+    }
+
     // not yet implemented functionality
     function WsAdded(ws) { if (RED.OSC.settings.ShowOutputDebug == true) AddLineToLog("(not implemented yet) added Workspace " + ws.label);  }
     function WsRenamed(oldName,newName) { if (RED.OSC.settings.ShowOutputDebug == true) AddLineToLog("(not implemented yet) renamed Workspace from " + oldName + " to " + newName);  }
@@ -479,6 +485,7 @@ OSC = (function() {
     function RegisterEvents() {
         RED.events.on("nodes:add", NodeAdded);
         RED.events.on("nodes:renamed", NodeRenamed);
+        RED.events.on("nodes:inputs", NodeInputsChanged); // happens when the input count is changed
         RED.events.on("nodes:removed", NodeRemoved); // note usage of nodes:removed instead of the normal nodes:remove
         RED.events.on("flows:add", WsAdded);
         RED.events.on("flows:renamed", WsRenamed);//RED.bottombar.info.addContent("removed link");

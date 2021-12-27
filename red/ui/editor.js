@@ -232,6 +232,8 @@ RED.editor = (function() {
             RED.events.emit("nodes:change",editing_node);
             if (changes.name != undefined)
                 RED.events.emit("nodes:renamed",editing_node,changes.name,editing_node.name);
+            if (changes.inputs != undefined)
+                RED.events.emit("nodes:inputs",editing_node,changes.inputs,editing_node.inputs)
 			RED.view.dirty(true);
 			RED.history.push({t:'edit',node:editing_node,changes:changes,links:removedLinks,dirty:wasDirty,changed:wasChanged});
 		}
