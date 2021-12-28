@@ -247,19 +247,37 @@ RED.nodes = (function() {
 		//console.log("getUniqueCppName, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
 		var basename = n.name; //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
 		if (!checkName(basename, wsId)) return basename; // no need to change
-		
-		//console.log("getUniqueCppName, using basename=" + basename);
 		var count = 1;
-		var sep = /[0-9]$/.test(basename) ? "_" : ""; // expression checks if basename ends with a number, sep = seperator
+        basename = getBaseName(basename);
+
+		//console.log("getUniqueCppName, using basename=" + basename);
+		
+		//var sep = /[0-9]$/.test(basename) ? "_" : ""; // expression checks if basename ends with a number, sep = seperator
+        //console.log("sep:" + sep);
 		var name;
 		while (1) {
-			name = basename + sep + count;
+			//name = basename + sep + count;
+            name = basename + count;
 			if (!checkName(name, wsId)) break;
 			count++;
 		}
 		//console.log("getUniqueCppName, unique name=" + name);
 		return name;
 	}
+    function getBaseName(name) {
+        var index = name.length - 1;
+        //var number = "";
+        while (index >= 0 && charIsNumber(name[index])) {
+            //number = name[index] + number;
+            index--;
+        }
+        var basename = name.substring(0, index+1);
+        //console.log(basename + " " + number);
+        return basename;
+    }
+    function charIsNumber(char) {
+        return (char >= '0') && (char <= '9');
+    }
 	
 	function createUniqueCppId(n, workspaceName) {
 		//console.log("getUniqueCppId, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
