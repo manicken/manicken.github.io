@@ -248,8 +248,12 @@ RED.nodes = (function() {
 		var basename = n.name; //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
 		if (!checkName(basename, wsId)) return basename; // no need to change
 		var count = 1;
-        if (nameShouldEndWithNumber == undefined)
-            basename = getBaseName(basename);
+        if (nameShouldEndWithNumber == undefined) {
+            console.log("generate name from: " + basename);
+            var ret = getBaseName(basename);
+            basename = ret.basename;
+            count = ret.count;
+        }
         else
         {
             var sep = /[0-9]$/.test(basename) ? "_" : ""; // expression checks if basename ends with a number, sep = seperator
@@ -271,14 +275,15 @@ RED.nodes = (function() {
 	}
     function getBaseName(name) {
         var index = name.length - 1;
-        //var number = "";
+        var number = "";
         while (index >= 0 && charIsNumber(name[index])) {
-            //number = name[index] + number;
+            number = name[index] + number;
             index--;
         }
         var basename = name.substring(0, index+1);
-        //console.log(basename + " " + number);
-        return basename;
+        console.log(basename + " " + number);
+        if (number == "") number = "1";
+        return {basename:basename, count:parseInt(number)};
     }
     function charIsNumber(char) {
         return (char >= '0') && (char <= '9');
