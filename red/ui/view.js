@@ -1116,7 +1116,7 @@ RED.view = (function() {
 				mousePos[1] /= settings.scaleFactor;
 				mousePos[0] /= settings.scaleFactor;
 
-				var nn = AddNewNode(mousePos[0],mousePos[1], ui.draggable[0].type);
+				var nn = AddNewNode(mousePos[0],mousePos[1], ui.draggable[0].type, true);
 				setDirty(true);
 				// auto select dropped node - so info shows (if visible)
 				clearSelection();
@@ -1133,7 +1133,7 @@ RED.view = (function() {
                 }
 			}
 	});
-	function AddNewNode(xPos, yPos, typeName)
+	function AddNewNode(xPos, yPos, typeName, nameShouldEndWithNumber)
 	{
 		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
 		
@@ -1144,7 +1144,7 @@ RED.view = (function() {
 		
 		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
 		nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
-		nn.name = RED.nodes.cppName(nn); // jannik add/change create unique name
+		nn.name = RED.nodes.cppName(nn, activeWorkspace, nameShouldEndWithNumber); // jannik add/change create unique name
 
 		nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
 		nn._def.defaults.name = { value: nn.id };

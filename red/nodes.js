@@ -243,16 +243,21 @@ RED.nodes = (function() {
 		return false;
 	}
 
-	function createUniqueCppName(n, wsId) {
+	function createUniqueCppName(n, wsId, nameShouldEndWithNumber) {
 		//console.log("getUniqueCppName, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
 		var basename = n.name; //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
 		if (!checkName(basename, wsId)) return basename; // no need to change
 		var count = 1;
-        basename = getBaseName(basename);
-
+        if (nameShouldEndWithNumber == undefined)
+            basename = getBaseName(basename);
+        else
+        {
+            var sep = /[0-9]$/.test(basename) ? "_" : ""; // expression checks if basename ends with a number, sep = seperator
+            basename = basename + sep;
+        }
 		//console.log("getUniqueCppName, using basename=" + basename);
 		
-		//var sep = /[0-9]$/.test(basename) ? "_" : ""; // expression checks if basename ends with a number, sep = seperator
+		//
         //console.log("sep:" + sep);
 		var name;
 		while (1) {
