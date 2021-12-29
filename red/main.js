@@ -537,7 +537,7 @@ RED.main = (function() {
         SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
 
         SetPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
-        OSC.export.InitButtonPopups();
+        
 
         jscolor.presets.default = {
             closeButton:true
@@ -559,6 +559,10 @@ RED.main = (function() {
         // register built in node types
         //RED.nodes.Init_BuiltIn_NodeDefinitions(); // replaced with following that internally calls Init_BuiltIn_NodeDefinitions
         RED.nodes.init();
+        if (OSC.Init())
+            OSC.export.InitButtonPopups();
+        else
+            OSC.export.InitButtonPopups(true);
         
         RED.keyboard.add(/* ? */ 191, {shift: true}, function () {
             showHelp();

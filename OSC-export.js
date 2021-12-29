@@ -2,12 +2,16 @@
 
 OSC.export = (function () {
 
-    function InitButtonPopups() {
-        RED.main.SetPopOver("#btn-save-osc-sd", "Saves the current (only audio nodes+links) Design to the connected Teensy SD-Card as a file with the extension .osc<br>so that it can later be loaded using 'Load .osc from SD-card'");
-        RED.main.SetPopOver("#btn-load-osc-sd", "Loads a .osc file from the SD-card and applies the design");
-        RED.main.SetPopOver("#btn-save-json-sd", "Saves the current (whole) Design to a .json file on the connected teensy SD-card");
-        RED.main.SetPopOver("#btn-load-json-sd", "Load/Retreives a saved .json from the connected Teensy SD-Card<br>this is then loaded into this tool.");
-        RED.main.SetPopOver("#btn-deploy-osc", "Exports this design to a Teensy Running The Dynamic Audio Framework");
+    function InitButtonPopups(notavailable) {
+        var a = "";
+        if (notavailable != undefined && notavailable == true)
+            a = "Currently not available at the current browser<br>as this functionality currently is implemented using the Web Serial API<br>in the future WebSockets will be supported that will then enable this functionality.<br><br>"
+        RED.main.SetPopOver("#btn-save-osc-sd", a+"Saves the current (only audio nodes+links) Design to the connected Teensy SD-Card as a file with the extension .osc<br>so that it can later be loaded using 'Load .osc from SD-card'");
+        RED.main.SetPopOver("#btn-load-osc-sd", a+"Loads a .osc file from the SD-card and applies the design");
+        RED.main.SetPopOver("#btn-save-json-sd", a+"Saves the current (whole) Design to a .json file on the connected teensy SD-card");
+        RED.main.SetPopOver("#btn-load-json-sd", a+"Load/Retreives a saved .json from the connected Teensy SD-Card<br>this is then loaded into this tool.");
+        RED.main.SetPopOver("#btn-deploy-osc", a+"Exports this design to a Teensy Running The Dynamic Audio Framework");
+        RED.main.SetPopOver("#btn-osc-clearAll", a+"Clears the current design in the teensy<br>this is good if something got messed up and you want a fresh start.");
     }
     $('#btn-save-osc-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveOscToSDcard, "Save as .osc (.osc is added automatically)");});
     function saveOscToSDcard(name) {

@@ -141,14 +141,41 @@ OSC = (function() {
     function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*C*"; }
     function GetConnectAddr(connectionName) { return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/c*";}
 
-    navigator.serial.addEventListener("connect", async (event) => {
-        RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
+    var available = navigator
+
+    function Init() {
+
+        if (navigator.serial == undefined) {
+            console.warn("Web Serial API not availabe on this browser!")
+            available = false;
+
+            var a = "Currently not available at the current browser<br>as this functionality currently is implemented using the Web Serial API<br>in the future WebSockets will be supported that will then enable this functionality.<br><br>"
         
-      });
-      
-      navigator.serial.addEventListener("disconnect", (event) => {
-        RED.notify("Serial port disconnected", "warning", null, 3000);
-      });
+            $("#btn-osc-clearAll").addClass("disabled");
+            $("#btn-connectSerial").addClass("disabled");
+            $("#btn-disConnectSerial").addClass("disabled");
+            $("#btn-deploy-osc").addClass("disabled");
+            $("#btn-save-osc-sd").addClass("disabled");
+            $("#btn-load-osc-sd").addClass("disabled");
+            $("#btn-save-json-sd").addClass("disabled");
+            $("#btn-load-json-sd").addClass("disabled");
+            $("#btn-osc-clearAll").addClass("disabled");
+            RED.main.SetPopOver("#btn-connectSerial", a);
+            RED.main.SetPopOver("#btn-disConnectSerial", a);
+
+            return false;
+        }
+        navigator.serial.addEventListener("connect", async (event) => {
+            RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
+        });
+          
+        navigator.serial.addEventListener("disconnect", (event) => {
+            RED.notify("Serial port disconnected", "warning", null, 3000);
+        });
+
+        return true;
+    }
+    
       $('#btn-osc-clearAll').click(function() { SendMessage(GetClearAllAddr()); });
     var port;
     //const serialLEDController = new SerialLEDController();
@@ -293,6 +320,11 @@ OSC = (function() {
     var dataIndex = 0;
 
     async function SendRawToSerial(data) {
+        if (available == false){ 
+            AddLineToLog("[Web Serial API not availabe]", "#FF0000", "#FFF0F0");
+            return;
+        }
+
         if (port == undefined || port.writable == undefined) {
             if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("[not connected]", "#FF0000", "#FFF0F0");
@@ -349,20 +381,8 @@ OSC = (function() {
     function SendMessage(address, valueTypes, ...values) {
         SendPacket(CreatePacket(address, valueTypes, ...values));
     }
-    async function SendTextToSerial(text) {
-        if (port == undefined || port.writable == undefined) {
-            if (RED.OSC.settings.ShowOutputDebug == true)
-                AddLineToLog("[not connected]", "#FF0000", "#FFF0F0");
-            return;
-        }
-        var data = new TextEncoder("utf-8").encode(text);
-
-        const writer = port.writable.getWriter();
-
-        await writer.write(data);
-
-        // Allow the serial port to be closed later.
-        writer.releaseLock();
+    function SendTextToSerial(text) {
+        SendRawToSerial(new TextEncoder("utf-8").encode(text));
     }
     function CreateMessageData(address, valueTypes, ...values)  {
         return osc.writePacket(CreatePacket(address, valueTypes, ...values));
@@ -624,6 +644,8 @@ OSC = (function() {
         SendPacket:SendPacket,
         AddLineToLog:AddLineToLog, // simplifies usage of RED.bottombar.info.addLine(text);
         SetLog:SetLog,
-        RegisterEvents:RegisterEvents
+        RegisterEvents:RegisterEvents,
+
+        Init:Init
 	};
 })();
