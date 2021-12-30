@@ -144,9 +144,14 @@ OSC = (function() {
     function GetCreateObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crOb"; }
     function GetRenameObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/ren*"; }
     function GetDestroyObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/d*"; }
-    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crCo"; }
+    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/createConnection"; }
     function GetCreateGroupAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crGrp"; }
-    function GetConnectAddr(connectionName) { return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/co";}
+    function GetConnectAddr(connectionName) {
+        if (connectionName.startsWith("/"))
+            return RED.OSC.settings.RootAddress + "/audio" + connectionName + "/co";
+        else
+            return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/co";
+    }
 
     var available = navigator
 
@@ -507,14 +512,25 @@ OSC = (function() {
             AddLineToLog("added link [" + linkName  + "] " + GetLinkDebugName(link));
     }
     var debugLinkName = true;
+    function GetNameWithoutArrayDef(name) {
+        var value = 0;
+		//console.warn("isNameDeclarationArray: " + name);
+		var startIndex = name.indexOf("[");
+		if (startIndex == -1) return name;
+        return name.substring(0, startIndex);
+    }
     function GetLinkName(link) {
         //if (link.name != undefined)
         //    return link.name;
         //else
+        var srcName = GetNameWithoutArrayDef(link.source.name);
+        var dstName = GetNameWithoutArrayDef(link.target.name);
+
+
         if (RED.OSC.settings.UseDebugLinkName == false)
-            return link.source.name + link.sourcePort + link.target.name + link.targetPort;
+            return srcName + link.sourcePort + dstName + link.targetPort;
         else
-            return link.source.name + "_" + link.sourcePort +"_"+ link.target.name +"_"+ link.targetPort;
+            return srcName + "_" + link.sourcePort +"_"+ dstName +"_"+ link.targetPort;
     }
 
     function GetLinkDebugName(link) {

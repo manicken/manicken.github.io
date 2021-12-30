@@ -177,29 +177,31 @@ OSC.export = (function () {
         for (var ni = 0; ni < ws.nodes.length; ni++) {
             var n = ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
+            if (node._def.nonObject != undefined) continue;
+
             var maybeClass = isClass(nns, n.type);
             if (maybeClass.is == true)
             {
                 var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
                 if (isArray) {
-                    n.name = isArray.name;
+                    var name = isArray.name;
                     var count = isArray.arrayLength
-                    bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    bundle.add(OSC.GetCreateGroupAddr(),"ss", name, path)
                     for (var ai = 0; ai < count; ai++)
                     {
-                        bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + n.name);
+                        bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + name);
                         if (wildcardArrayItems == false)
-                            getClassObjects(nns, maybeClass.ws, bundle, path + n.name + "/i" + i, wildcardArrayItems);
+                            getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i" + ai, wildcardArrayItems);
                     }
                     if (wildcardArrayItems == true)
-                        getClassObjects(nns, maybeClass.ws, bundle, path + n.name + "/i*", wildcardArrayItems);
+                        getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i*", wildcardArrayItems);
                 }
                 else {
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
                     getClassObjects(nns, maybeClass.ws, bundle, n.name);
                 }
             }
-            else if (node._def.nonObject == undefined)
+            else
             {
                 if (path == '/')
                     bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
@@ -208,6 +210,75 @@ OSC.export = (function () {
             }
         }
     }
+
+    function getClassConnections(nns, ws, bundle, path, wildcardArrayItems) {
+        for (var ni = 0; ni < ws.nodes.length; ni++) {
+            var n = ws.nodes[ni];
+            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
+            if (node._def.nonObject != undefined) continue;
+            var links = RED.nodes.links.filter(function(l) { return (l.source === node); });
+
+            var maybeClass = isClass(nns, n.type);
+            if (maybeClass.is == true)
+            {
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+                if (isArray) {
+                    var name = isArray.name;
+                    var count = isArray.arrayLength
+                    //bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    for (var ai = 0; ai < count; ai++)
+                    {
+                        //bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + n.name);
+                        console.error("this 1 @ " + path +" "+ name + "/i" + ai);
+                        addLinksToBundle(bundle, links, path + name + "/i" + ai, path + name + "/i" + ai,path + name + "/i" + ai);
+                        getClassConnections(nns, maybeClass.ws, bundle, path + name + "/i" + ai, wildcardArrayItems);
+                    }
+                }
+                else {
+                    console.error("this 2 @ " + path + " " + n.name);
+                    //bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    addLinksToBundle(bundle, links, path + n.name , path + n.name ,path + n.name);
+                    getClassConnections(nns, maybeClass.ws, bundle, n.name);
+                }
+            }
+            else 
+            {
+                console.error("this 3 @ " + path);
+                addLinksToBundle(bundle, links, path , path ,path);
+                /*if (path == '/')
+                    bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+                else
+                    bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);*/
+            }
+        }
+    }
+
+    function GetNameWithoutArrayDef(name) {
+        var value = 0;
+		//console.warn("isNameDeclarationArray: " + name);
+		var startIndex = name.indexOf("[");
+		if (startIndex == -1) return name;
+        return name.substring(0, startIndex);
+    }
+    function addLinksToBundle(bundle, links, path, srcPath, dstPath) {
+        for (var li = 0; li < links.length; li++) {
+            var link = links[li];
+            if ((link.target._def.nonObject != undefined) || (link.source._def.nonObject != undefined)) continue; // Input or Output objects
+
+            var linkName = OSC.GetLinkName(link);
+            var srcName = GetNameWithoutArrayDef(link.source.name);
+            var dstName = GetNameWithoutArrayDef(link.target.name);
+            if (path == "/") {
+                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
+                bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, link.sourcePort, dstName, link.targetPort);
+            }
+            else {
+                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, path);
+                bundle.add(OSC.GetConnectAddr(path +"/"+ linkName),"sisi", srcPath + "/" + srcName, link.sourcePort, dstPath + "/" + dstName, link.targetPort);
+            }
+        }
+    }
+    
 
     function getGroupExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
@@ -231,7 +302,8 @@ OSC.export = (function () {
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
         getClassObjects(nns, ws, bundle, '/', RED.OSC.settings.WildcardArrayObjects);
-        
+        getClassConnections(nns, ws, bundle, '/', RED.OSC.settings.WildcardArrayObjects);
+
         if (getBundleOnly == true) 
             return bundle;
         else
