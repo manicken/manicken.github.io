@@ -284,6 +284,9 @@ RED.arduino.export = (function () {
 
     }
 
+    //nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
+			
+
     $('#btn-deploy2').click(function () { export_classBased(); });
     $('#btn-deploy2zip').click(function () { export_classBased(true); });
     function export_classBased(generateZip) {

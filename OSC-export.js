@@ -43,10 +43,18 @@ OSC.export = (function () {
         //OSC.SetLog("not implemented yet")
     }
 
-    $('#btn-deploy-osc').click(export_simple);
-    function export_simple() {
+    $('#btn-deploy-osc').click(do_export);
+
+    $('#btn-deploy-osc-group').click(function () {do_export(true); });
+    function do_export(groupBased) {
+
         var clearAllAddr = "/dynamic/clearAl*";
-        var result = getSimpleExport_bundle(false);
+        if (groupBased == undefined)
+            var result = getSimpleExport_bundle(false);
+        else
+            var result = getGroupExport_bundle(false);
+        if (result == undefined) return; // only happens at getGroupExport_bundle
+
         var bundle = result.bundle;
         var bundleData = OSC.CreateBundleData(bundle);
 
@@ -145,7 +153,141 @@ OSC.export = (function () {
             return {bundle:bundle, apos:apos, acs:acs};
     }
 
-    /** have to put this here as JAVASCRIPT is broken shit
+    function findMainWs(nns) {
+        for (var wi=0; wi < nns.workspaces.length; wi++) {
+            if (nns.workspaces[wi].isMain == true) {
+                return wi;
+            }
+        }
+        return -1; // not found
+    }
+
+    function isClass(nns, type)
+	{
+		for (var wsi = 0; wsi < nns.workspaces.length; wsi++)
+		{
+			var ws = nns.workspaces[wsi];
+			if (type == ws.label) return {is:true, ws:ws};
+			//console.log(node.type  + "!="+ ws.label);
+		}
+		return {is:false};
+	}
+
+    function getClassObjects(nns, ws, bundle, path) {
+        for (var ni = 0; ni < ws.nodes.length; ni++) {
+            var n = ws.nodes[ni];
+            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
+            var maybeClass = isClass(nns, n.type);
+            if (maybeClass.is == true)
+            {
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+                if (isArray) {
+                    n.name = isArray.name;
+                    var count = isArray.arrayLength
+                    bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    for (var ai = 0; ai < count; ai++)
+                    {
+                        bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + n.name);
+                    }
+                    getClassObjects(nns, maybeClass.ws, bundle, path + n.name + "/i*");
+                }
+                else {
+                    bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    getClassObjects(nns, maybeClass.ws, bundle, n.name);
+                }
+            }
+            else if (node._def.nonObject == undefined)
+            {
+                if (path == '/')
+                    bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+                else
+                    bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
+            }
+        }
+    }
+
+    function getGroupExport_bundle(getBundleOnly) {
+        if (getBundleOnly == undefined) getBundleOnly = false;
+
+        RED.storage.update();
+
+        if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
+            showExportErrorDialog();
+            return;
+        }
+        var nns = RED.nodes.createCompleteNodeSet(true); // true mean we get the new structure
+
+        var mainWorkSpace = findMainWs(nns);
+        if (mainWorkSpace == -1) {
+            RED.main.verifyDialog("Main Tab not set", "Main Tab not set", "The main file is not set<br> please set the main entry file<br> double click the tab that you want as the main and check the 'Main File' checkbox,<br><br>ignore the 'exported Main File Name' as it's not used with OSC", function() {});
+            return;
+        }
+        var apos = []; // Audio Processing Objects
+        var acs = []; // Audio Connections 
+        var ws = nns.workspaces[mainWorkSpace];
+        var bundle = OSC.CreateBundle(0);
+        bundle.add(OSC.GetClearAllAddr());
+        getClassObjects(nns, ws, bundle, '/');
+        
+        if (getBundleOnly == true) 
+            return bundle;
+        else
+            return {bundle:bundle, apos:apos, acs:acs};
+
+        /*
+        
+
+        for (var i = 0; i < nns.length; i++) {
+            var n = nns[i];
+            if (n.type == "tab" || n.type == "settings") continue;
+            if (n.z != activeWorkspace) continue; // workspace filter
+
+            //if (isSpecialNode(n.type) || (n.type == "PointerArray")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
+            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
+
+            if (node == null) { console.warn("node == null:" + "type:" + n.type + ",id:" + n.id); continue; } // this should never happen (because now "tab" type checked at top)
+            
+            if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+
+            //var nodeType = getTypeName(nns, n);
+            var nodeName = n.name;//RED.nodes.make_name(n);
+
+            if (node.type != "AudioMixer")
+                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ss", node.type, nodeName));
+            else
+                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs));
+
+            if (haveIO(node)) {
+                RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
+                    var src = RED.nodes.node(n.id);
+                    var dst = RED.nodes.node(dstId);
+                    var src_name = RED.nodes.make_name(src);
+                    var dst_name = RED.nodes.make_name(dst);
+                    if (RED.OSC.settings.UseDebugLinkName == false)
+                        var linkName = src_name + pi + dst_name + dstPortIndex;
+                    else
+                        var linkName = src_name + "_" + pi +"_"+ dst_name +"_"+ dstPortIndex;
+                    acs.push(OSC.CreatePacket(OSC.GetCreateConnectionAddr(),"s", linkName));
+                    acs.push(OSC.CreatePacket(OSC.GetConnectAddr(linkName),"sisi", src_name, pi, dst_name, dstPortIndex));
+                });
+            }
+        }
+*/
+        /*var bundle = OSC.CreateBundle(0);
+        
+        // first add all Audio Processing Objects
+        for (var i = 0; i < apos.length; i++) {
+            bundle.add(apos[i]);
+        }
+        // second add all Audio Connections
+        for (var i = 0; i < acs.length; i++) {
+            bundle.add(acs[i]);
+
+        }*/
+        
+    }
+
+    /**
      * This is only for the moment to get special type AudioMixer<n> and AudioStreamObject
      * @param {*} nns nodeArray
      * @param {Node} n node

@@ -135,11 +135,12 @@ RED.OSC = (function() {
 OSC = (function() {
 
     function GetClearAllAddr() { return RED.OSC.settings.RootAddress + "/dynamic/clearAl*"; }
-    function GetCreateObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*O*"; }
+    function GetCreateObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crOb"; }
     function GetRenameObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/ren*"; }
     function GetDestroyObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/d*"; }
-    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/cr*C*"; }
-    function GetConnectAddr(connectionName) { return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/c*";}
+    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crCo"; }
+    function GetCreateGroupAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crGrp"; }
+    function GetConnectAddr(connectionName) { return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/co";}
 
     var available = navigator
 
@@ -619,6 +620,7 @@ OSC = (function() {
 
     return {
         GetClearAllAddr:GetClearAllAddr,
+        GetCreateGroupAddr:GetCreateGroupAddr,
         GetCreateObjectAddr:GetCreateObjectAddr,
         GetRenameObjectAddr:GetRenameObjectAddr,
         GetDestroyObjectAddr:GetDestroyObjectAddr,

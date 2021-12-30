@@ -1486,7 +1486,7 @@ RED.nodes = (function() {
 				name = name.replace(arrayDef, "[i]");
 		}
 		//console.log("NameDeclaration is Array:" + name);
-		return {newName:name, arrayLength:value};
+		return {newName:name, name:name.substring(0, startIndex), arrayLength:value};
 	}
 	function getArrayDeclarationWithoutSizeSyntax(name)
 	{
