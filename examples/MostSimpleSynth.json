@@ -1,0 +1,245 @@
+{
+    "version": 1,
+    "settings": {
+        "arduino": {
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "BiDirDataWebSocketBridge": {},
+        "workspaces": {},
+        "sidebar": {},
+        "palette": {},
+        "editor": {},
+        "devTest": {},
+        "IndexedDBfiles": {
+            "testFileNames": "testFile.txt"
+        },
+        "NodeDefGenerator": {},
+        "NodeDefManager": {},
+        "NodeHelpManager": {},
+        "OSC": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "Main",
+            "label": "Voice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "Voice_waveform2",
+                    "type": "AudioSynthWaveform",
+                    "name": "waveform1",
+                    "comment": "",
+                    "x": 160,
+                    "y": 150,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_mixer4_1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_waveform3",
+                    "type": "AudioSynthWaveform",
+                    "name": "waveform2",
+                    "comment": "",
+                    "x": 160,
+                    "y": 190,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_mixer4_1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_waveform1",
+                    "type": "AudioSynthWaveform",
+                    "name": "waveform3",
+                    "comment": "",
+                    "x": 160,
+                    "y": 230,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_mixer4_1:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_waveform4",
+                    "type": "AudioSynthWaveform",
+                    "name": "waveform4",
+                    "comment": "",
+                    "x": 160,
+                    "y": 275,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_mixer4_1:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_mixer4_1",
+                    "type": "AudioMixer4",
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": "4",
+                    "x": 370,
+                    "y": 205,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_Out1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_code1",
+                    "type": "Function",
+                    "name": "begin",
+                    "comment": "void begin()\n{\n    waveform1.begin(1.0, 110, WAVEFORM_SINE);\n    waveform2.begin(1.0, 110, WAVEFORM_SQUARE);\n    waveform3.begin(1.0, 110, WAVEFORM_SAWTOOTH);\n    waveform4.begin(1.0, 110, WAVEFORM_TRIANGLE);\n}\n",
+                    "x": 354,
+                    "y": 318,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_Out1",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "comment": "",
+                    "x": 540,
+                    "y": 205,
+                    "z": "Main",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "9992a3f3.e2a248",
+            "label": "Synth",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "Synth_constValue1",
+                    "type": "ConstValue",
+                    "name": "VOICECOUNT",
+                    "value": "8",
+                    "valueType": "int",
+                    "x": 146,
+                    "y": 52,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#EB9834",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_codeFile1",
+                    "type": "CodeFile",
+                    "name": "theMixer.h",
+                    "comment": "/* Audio Library for Teensy 3.X\n * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com\n *\n * Development of this audio library was funded by PJRC.COM, LLC by sales of\n * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop\n * open source software by purchasing Teensy or other PJRC products.\n *\n * Permission is hereby granted, free of charge, to any person obtaining a copy\n * of this software and associated documentation files (the \"Software\"), to deal\n * in the Software without restriction, including without limitation the rights\n * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n * copies of the Software, and to permit persons to whom the Software is\n * furnished to do so, subject to the following conditions:\n *\n * The above copyright notice, development funding notice, and this permission\n * notice shall be included in all copies or substantial portions of the Software.\n *\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n  * THE SOFTWARE.\n */\n\n#ifndef themixer_h_\n#define themixer_h_\n\n#include <Arduino.h>\n#include <AudioStream.h>\n\n//#define AudioMixer4 AudioMixer<4>\n\n#if defined(__ARM_ARCH_7EM__)\n\n#define MULTI_UNITYGAIN 65536\n#define MULTI_UNITYGAIN_F 65536.0f\n#define MAX_GAIN 32767.0f\n#define MIN_GAIN -32767.0f\n#define MULT_DATA_TYPE int32_t\n\n#elif defined(KINETISL)\n\n#define MULTI_UNITYGAIN 256\n#define MULTI_UNITYGAIN_F 256.0f\n#define MAX_GAIN 127.0f\n#define MIN_GAIN -127.0f\n#define MULT_DATA_TYPE int16_t\n\n#endif\n\ntemplate <int NN> class AudioMixer : public AudioStream\n{\npublic:\n  AudioMixer(void) : AudioStream(NN, inputQueueArray) {\n    for (int i=0; i<NN; i++) multiplier[i] = MULTI_UNITYGAIN;\n  } \n  virtual void update();\n  \n  /**\n   * this sets the individual gains\n   * @param channel\n   * @param gain\n   */\n  void gain(unsigned int channel, float gain);\n  /**\n   * set all channels to specified gain\n   * @param gain\n   */\n  void gain(float gain);\n\nprivate:\n  MULT_DATA_TYPE multiplier[NN];\n  audio_block_t *inputQueueArray[NN];\n};\n\n// the following Forward declarations \n// must be defined when we use template \n// the compiler throws some warnings that should be errors otherwise\n\nstatic int32_t signed_multiply_32x16b(int32_t a, uint32_t b); \nstatic int32_t signed_multiply_32x16t(int32_t a, uint32_t b);\nstatic int32_t signed_saturate_rshift(int32_t val, int bits, int rshift);\nstatic uint32_t pack_16b_16b(int32_t a, int32_t b);\nstatic uint32_t signed_add_16_and_16(uint32_t a, uint32_t b);\n\n// because of the template use applyGain and applyGainThenAdd functions\n// must be in this file and NOT in cpp file\n#if defined(__ARM_ARCH_7EM__)\n\n  static void applyGain(int16_t *data, int32_t mult)\n  {\n    uint32_t *p = (uint32_t *)data;\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\n\n    do {\n      uint32_t tmp32 = *p; // read 2 samples from *data\n      int32_t val1 = signed_multiply_32x16b(mult, tmp32);\n      int32_t val2 = signed_multiply_32x16t(mult, tmp32);\n      val1 = signed_saturate_rshift(val1, 16, 0);\n      val2 = signed_saturate_rshift(val2, 16, 0);\n      *p++ = pack_16b_16b(val2, val1);\n    } while (p < end);\n  }\n\n  static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)\n  {\n    uint32_t *dst = (uint32_t *)data;\n    const uint32_t *src = (uint32_t *)in;\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\n\n    if (mult == MULTI_UNITYGAIN) {\n      do {\n        uint32_t tmp32 = *dst;\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\n        tmp32 = *dst;\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\n      } while (dst < end);\n    } else {\n      do {\n        uint32_t tmp32 = *src++; // read 2 samples from *data\n        int32_t val1 =  signed_multiply_32x16b(mult, tmp32);\n        int32_t val2 =  signed_multiply_32x16t(mult, tmp32);\n        val1 =  signed_saturate_rshift(val1, 16, 0);\n        val2 =  signed_saturate_rshift(val2, 16, 0);\n        tmp32 =  pack_16b_16b(val2, val1);\n        uint32_t tmp32b = *dst;\n        *dst++ =  signed_add_16_and_16(tmp32, tmp32b);\n      } while (dst < end);\n    }\n  }\n\n#elif defined(KINETISL)\n\n  static void applyGain(int16_t *data, int32_t mult)\n  {\n    const int16_t *end = data + AUDIO_BLOCK_SAMPLES;\n\n    do {\n      int32_t val = *data * mult;\n      *data++ = signed_saturate_rshift(val, 16, 0);\n    } while (data < end);\n  }\n\n  static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)\n  {\n    const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;\n\n    if (mult == MULTI_UNITYGAIN) {\n      do {\n        int32_t val = *dst + *src++;\n        *dst++ = signed_saturate_rshift(val, 16, 0);\n      } while (dst < end);\n    } else {\n      do {\n        int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??\n        *dst++ = signed_saturate_rshift(val, 16, 0);\n      } while (dst < end);\n    }\n  }\n#endif\n\ntemplate <int NN> void AudioMixer<NN>::gain(unsigned int channel, float gain) {\n  if (channel >= NN) return;\n  if (gain > MAX_GAIN) gain = MAX_GAIN;\n  else if (gain < MIN_GAIN) gain = MIN_GAIN;\n  multiplier[channel] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\n}\n\ntemplate <int NN> void AudioMixer<NN>::gain(float gain) {\n  for (int i = 0; i < NN; i++) {\n    if (gain > MAX_GAIN) gain = MAX_GAIN;\n    else if (gain < MIN_GAIN) gain = MIN_GAIN;\n    multiplier[i] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\n  } \n}\n\ntemplate <int NN> void AudioMixer<NN>::update() {\n  audio_block_t *in, *out=NULL;\n  unsigned int channel;\n  for (channel=0; channel < NN; channel++) {\n    if (!out) {\n      out = receiveWritable(channel);\n      if (out) {\n        int32_t mult = multiplier[channel];\n        if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);\n      }\n    } else {\n      in = receiveReadOnly(channel);\n      if (in) {\n        applyGainThenAdd(out->data, in->data, multiplier[channel]);\n        release(in);\n      }\n    }\n  }\n  if (out) {\n    transmit(out);\n    release(out);\n  }\n}\n// this class and function forces include \n// of functions applyGainThenAdd and applyGain used by the template\nclass DummyClass\n{\n  public:\n    virtual void dummyFunction();\n};\nvoid DummyClass::dummyFunction() {\n  applyGainThenAdd(0, 0, 0);\n  applyGain(0,0);\n    \n}\n\n#endif",
+                    "x": 140,
+                    "y": 100,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_Voice1",
+                    "type": "Voice",
+                    "name": "voices[VOICECOUNT]",
+                    "x": 140,
+                    "y": 165,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Synth_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Synth_code1",
+                    "type": "Function",
+                    "name": "begin",
+                    "comment": "void begin()\n{\n    for (int i = 0; i < VOICECOUNT; i++)\n    {\n        voices[i].begin();\n    }\n}\n",
+                    "x": 130,
+                    "y": 240,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_mixer1",
+                    "type": "AudioMixer",
+                    "name": "mixer",
+                    "inputs": "1",
+                    "comment": "",
+                    "x": 325,
+                    "y": 169,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Synth_i2s1:0",
+                            "Synth_i2s1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Synth_i2s1",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s",
+                    "comment": "",
+                    "x": 460,
+                    "y": 175,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_sgtl5000_1",
+                    "type": "AudioControlSGTL5000",
+                    "name": "sgtl5000",
+                    "comment": "",
+                    "x": 460,
+                    "y": 225,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ]
+        }
+    ],
+    "nodeAddons": {}
+}
