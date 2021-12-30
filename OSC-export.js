@@ -230,7 +230,7 @@ OSC.export = (function () {
                             bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
                             for (var ai = 0; ai < count; ai++)
                             {
-                                bundle.add(OSC.GetCreateObjectAddr(),"sas",n.type, "i"+ai, path + "/" + name);
+                                bundle.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, path + "/" + name);
                             }
                         }
                         else
