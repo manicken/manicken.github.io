@@ -173,7 +173,7 @@ OSC.export = (function () {
 		return {is:false};
 	}
 
-    function getClassObjects(nns, ws, bundle, path) {
+    function getClassObjects(nns, ws, bundle, path, wildcardArrayItems) {
         for (var ni = 0; ni < ws.nodes.length; ni++) {
             var n = ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
@@ -188,8 +188,11 @@ OSC.export = (function () {
                     for (var ai = 0; ai < count; ai++)
                     {
                         bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + n.name);
+                        if (wildcardArrayItems == false)
+                            getClassObjects(nns, maybeClass.ws, bundle, path + n.name + "/i" + i, wildcardArrayItems);
                     }
-                    getClassObjects(nns, maybeClass.ws, bundle, path + n.name + "/i*");
+                    if (wildcardArrayItems == true)
+                        getClassObjects(nns, maybeClass.ws, bundle, path + n.name + "/i*", wildcardArrayItems);
                 }
                 else {
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
@@ -227,7 +230,7 @@ OSC.export = (function () {
         var ws = nns.workspaces[mainWorkSpace];
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
-        getClassObjects(nns, ws, bundle, '/');
+        getClassObjects(nns, ws, bundle, '/', RED.OSC.settings.WildcardArrayObjects);
         
         if (getBundleOnly == true) 
             return bundle;

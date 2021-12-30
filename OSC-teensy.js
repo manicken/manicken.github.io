@@ -11,6 +11,7 @@ RED.OSC = (function() {
     var defSettings = {
         LiveUpdate: true,
         DirectExport: false,
+        WildcardArrayObjects: true,
         OnlyShowLastDebug: false,
         ShowOutputDebug: true,
         ShowOutputOscTxRaw: true,
@@ -25,6 +26,7 @@ RED.OSC = (function() {
     var _settings = {
         LiveUpdate: defSettings.LiveUpdate,
         DirectExport: defSettings.DirectExport,
+        WildcardArrayObjects: defSettings.WildcardArrayObjects,
         OnlyShowLastDebug: defSettings.OnlyShowLastDebug,
         ShowOutputDebug: defSettings.ShowOutputDebug,
         ShowOutputOscTxRaw: defSettings.ShowOutputOscTxRaw,
@@ -59,6 +61,9 @@ RED.OSC = (function() {
 
         get DirectExport() { return _settings.DirectExport; },
         set DirectExport(value) { _settings.DirectExport = value; RED.storage.update();},
+
+        get WildcardArrayObjects() { return _settings.WildcardArrayObjects; },
+        set WildcardArrayObjects(value) { _settings.WildcardArrayObjects = value; RED.storage.update();},
 
         get OnlyShowLastDebug() { return _settings.OnlyShowLastDebug; },
         set OnlyShowLastDebug(value) { _settings.OnlyShowLastDebug = value; RED.storage.update();},
@@ -99,6 +104,7 @@ RED.OSC = (function() {
         ClearOutputLog: { label:"Clear output log", type:"button", action: ClearOutputLog},
         LiveUpdate:     {label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
         DirectExport:     {label:"Direct Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Simple), the export dialog will not show."},
+        WildcardArrayObjects:     {label:"Wildcard Array Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Group), the object creating inside arrays will use wildcard.<br>Not when this is enabled the generated message will be much shorter for big arrays.<br> Disabling wildcard can be used for debugging."},
         OnlyShowLastDebug:        { label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
         transmitDebug:  {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
             items: {
