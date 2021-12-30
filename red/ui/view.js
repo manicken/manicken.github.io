@@ -1116,6 +1116,11 @@ RED.view = (function() {
 				mousePos[1] /= settings.scaleFactor;
 				mousePos[0] /= settings.scaleFactor;
 
+                if (ui.draggable[0].type == RED.nodes.workspace(activeWorkspace).label)
+                {
+                    RED.notify("You cannot have a object inside itself!!!", "info", null, 3000);
+                    return;
+                }
 				var nn = AddNewNode(mousePos[0],mousePos[1], ui.draggable[0].type, true);
 				setDirty(true);
 				// auto select dropped node - so info shows (if visible)
@@ -1145,6 +1150,8 @@ RED.view = (function() {
 		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
 		nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
 		nn.name = RED.nodes.cppName(nn, activeWorkspace, nameShouldEndWithNumber); // jannik add/change create unique name
+        if (nn._def.category == "tabs")
+          nn.name = nn.name.toLowerCase();
 
 		nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
 		nn._def.defaults.name = { value: nn.id };
