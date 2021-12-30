@@ -185,7 +185,7 @@ OSC.export = (function () {
                 var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
                 if (isArray) {
                     var name = isArray.name;
-                    var count = isArray.arrayLength
+                    var count = isArray.arrayLength;
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", name, path)
                     for (var ai = 0; ai < count; ai++)
                     {
@@ -203,10 +203,42 @@ OSC.export = (function () {
             }
             else
             {
-                if (path == '/')
-                    bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
-                else
-                    bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+
+                if (path == '/') {
+                    if (node.type != "AudioMixer") {
+                        if (isArray) {
+                            var name = isArray.name;
+                            var count = isArray.arrayLength;
+                            bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
+                            for (var ai = 0; ai < count; ai++)
+                            {
+                                bundle.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, name);
+                            }
+                        }
+                        else
+                            bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+                    }
+                    else
+                        bundle.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, node.inputs);
+                }
+                else {
+                    if (node.type != "AudioMixer") {
+                        if (isArray) {
+                            var name = isArray.name;
+                            var count = isArray.arrayLength;
+                            bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
+                            for (var ai = 0; ai < count; ai++)
+                            {
+                                bundle.add(OSC.GetCreateObjectAddr(),"sas",n.type, "i"+ai, path + "/" + name);
+                            }
+                        }
+                        else
+                            bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
+                    }
+                    else
+                        bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, node.inputs);
+                }
             }
         }
     }
@@ -225,30 +257,34 @@ OSC.export = (function () {
                 if (isArray) {
                     var name = isArray.name;
                     var count = isArray.arrayLength
-                    //bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
                     for (var ai = 0; ai < count; ai++)
                     {
-                        //bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + n.name);
                         console.error("this 1 @ " + path +" "+ name + "/i" + ai);
-                        addLinksToBundle(bundle, links, path + name + "/i" + ai, path + name + "/i" + ai,path + name + "/i" + ai);
+                        addLinksToBundle(bundle, links, path, path + name + "/i" + ai,path + name + "/i" + ai);
                         getClassConnections(nns, maybeClass.ws, bundle, path + name + "/i" + ai, wildcardArrayItems);
                     }
                 }
                 else {
                     console.error("this 2 @ " + path + " " + n.name);
-                    //bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
-                    addLinksToBundle(bundle, links, path + n.name , path + n.name ,path + n.name);
+                    addLinksToBundle(bundle, links, path , path +"/"+ n.name ,path +"/"+ n.name);
                     getClassConnections(nns, maybeClass.ws, bundle, n.name);
                 }
             }
             else 
             {
                 console.error("this 3 @ " + path);
-                addLinksToBundle(bundle, links, path , path ,path);
-                /*if (path == '/')
-                    bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+                if (isArray) {
+                    var name = isArray.name;
+                    var count = isArray.arrayLength
+                    for (var ai = 0; ai < count; ai++)
+                    {
+                        addLinksToBundle(bundle, links, path , path ,path, ai);
+                    }
+                }
                 else
-                    bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);*/
+                    addLinksToBundle(bundle, links, path , path ,path);
             }
         }
     }
@@ -260,21 +296,27 @@ OSC.export = (function () {
 		if (startIndex == -1) return name;
         return name.substring(0, startIndex);
     }
-    function addLinksToBundle(bundle, links, path, srcPath, dstPath) {
+    function addLinksToBundle(bundle, links, path, srcPath, dstPath, overrideTargetPort) {
         for (var li = 0; li < links.length; li++) {
             var link = links[li];
             if ((link.target._def.nonObject != undefined) || (link.source._def.nonObject != undefined)) continue; // Input or Output objects
 
-            var linkName = OSC.GetLinkName(link);
+            
             var srcName = GetNameWithoutArrayDef(link.source.name);
             var dstName = GetNameWithoutArrayDef(link.target.name);
+            var srcPort = link.sourcePort;
+            var dstPort = link.targetPort;
+            var linkName = OSC.GetLinkName(link,overrideTargetPort);
+            if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
             if (path == "/") {
+                console.warn("path / " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
-                bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, link.sourcePort, dstName, link.targetPort);
+                bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, srcPort, dstName, dstPort);
             }
             else {
+                console.warn("path " + path + " " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, path);
-                bundle.add(OSC.GetConnectAddr(path +"/"+ linkName),"sisi", srcPath + "/" + srcName, link.sourcePort, dstPath + "/" + dstName, link.targetPort);
+                bundle.add(OSC.GetConnectAddr(path +"/"+ linkName),"sisi", srcPath + "/" + srcName, srcPort, dstPath + "/" + dstName, dstPort);
             }
         }
     }

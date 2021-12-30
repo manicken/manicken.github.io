@@ -519,18 +519,20 @@ OSC = (function() {
 		if (startIndex == -1) return name;
         return name.substring(0, startIndex);
     }
-    function GetLinkName(link) {
+    function GetLinkName(link,overrideTargetPort) {
         //if (link.name != undefined)
         //    return link.name;
         //else
         var srcName = GetNameWithoutArrayDef(link.source.name);
         var dstName = GetNameWithoutArrayDef(link.target.name);
-
+        var srcPort = link.sourcePort;
+        var dstPort = link.targetPort;
+        if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
 
         if (RED.OSC.settings.UseDebugLinkName == false)
-            return srcName + link.sourcePort + dstName + link.targetPort;
+            return srcName + srcPort + dstName + dstPort;
         else
-            return srcName + "_" + link.sourcePort +"_"+ dstName +"_"+ link.targetPort;
+            return srcName + "_" + srcPort +"_"+ dstName +"_"+ dstPort;
     }
 
     function GetLinkDebugName(link) {
