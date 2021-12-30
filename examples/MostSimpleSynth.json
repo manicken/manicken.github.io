@@ -125,14 +125,58 @@
                     "wires": []
                 },
                 {
+                    "id": "Voice_Comment1",
+                    "type": "Comment",
+                    "name": "begin contains the begin function to simplify initialization from the \"parent\" class",
+                    "comment": "",
+                    "x": 405,
+                    "y": 410,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
                     "id": "Voice_Out1",
                     "type": "TabOutput",
-                    "name": "Out",
+                    "name": "OutC",
                     "comment": "",
                     "x": 540,
                     "y": 205,
                     "z": "Main",
-                    "bgColor": "#cce6ff",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_Out2",
+                    "type": "TabOutput",
+                    "name": "OutB",
+                    "comment": "",
+                    "x": 540,
+                    "y": 265,
+                    "z": "Main",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_Out3",
+                    "type": "TabOutput",
+                    "name": "OutA",
+                    "comment": "",
+                    "x": 540,
+                    "y": 325,
+                    "z": "Main",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_Comment2",
+                    "type": "Comment",
+                    "name": "the order (top to bottom) of theese outputs represents the order outside",
+                    "comment": "",
+                    "x": 865,
+                    "y": 245,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
                     "wires": []
                 }
             ]
@@ -185,7 +229,9 @@
                     "wires": [
                         [
                             "Synth_mixer1:0"
-                        ]
+                        ],
+                        [],
+                        []
                     ]
                 },
                 {
@@ -217,6 +263,17 @@
                     ]
                 },
                 {
+                    "id": "Synth_Comment3",
+                    "type": "Comment",
+                    "name": "begin contains the begin function to simplify initialization from the \"parent\" class",
+                    "comment": "",
+                    "x": 315,
+                    "y": 290,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
                     "id": "Synth_i2s1",
                     "type": "AudioOutputI2S",
                     "name": "i2s",
@@ -236,6 +293,28 @@
                     "y": 225,
                     "z": "9992a3f3.e2a248",
                     "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_Comment2",
+                    "type": "Comment",
+                    "name": "theMixer.h contains all code needed to be able to use the c++ template mixer n",
+                    "comment": "",
+                    "x": 525,
+                    "y": 95,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_Comment1",
+                    "type": "Comment",
+                    "name": "VOICECOUNT is just a constant and is just a easy way to define the amount and can then be used in the begin loop for a global way of manipulating the amount of voices",
+                    "comment": "",
+                    "x": 820,
+                    "y": 45,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
                     "wires": []
                 }
             ]
