@@ -198,7 +198,7 @@ OSC.export = (function () {
                 }
                 else {
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
-                    getClassObjects(nns, maybeClass.ws, bundle, n.name);
+                    getClassObjects(nns, maybeClass.ws, bundle, path + "/" + n.name);
                 }
             }
             else
