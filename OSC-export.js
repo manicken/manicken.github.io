@@ -68,6 +68,11 @@ OSC.export = (function () {
         for (var i = 0; i < bundle.packets.length; i++) {
             exportDialogText += JSON.stringify(bundle.packets[i]) + "\n";
         }
+
+        exportDialogText += "\nPackets raw data:\n";
+        for (var i = 0; i < bundle.packets.length; i++) {
+            exportDialogText += new TextDecoder("utf-8").decode(osc.writePacket(bundle.packets[i])) + "\n";
+        }
         
         var dataAsText = new TextDecoder("utf-8").decode(bundleData);
         
@@ -230,13 +235,13 @@ OSC.export = (function () {
                             bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
                             for (var ai = 0; ai < count; ai++)
                             {
-                                bundle.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, path + "/" + name);
+                                bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, path + "/" + name);
                             }
                         }
                         else
                             bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
                     }
-                    else
+                    else // array of AudioMixer is not possible
                         bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, node.inputs);
                 }
             }
@@ -260,7 +265,7 @@ OSC.export = (function () {
                     for (var ai = 0; ai < count; ai++)
                     {
                         console.error("this 1 @ " + path +" "+ name + "/i" + ai);
-                        addLinksToBundle(bundle, links, path, path + name + "/i" + ai,path + name + "/i" + ai);
+                        addLinksToBundle(bundle, links, path, path + name + "/i" + ai,path + name + "/i" + ai, ai);
                         getClassConnections(nns, maybeClass.ws, bundle, path + name + "/i" + ai, wildcardArrayItems);
                     }
                 }
