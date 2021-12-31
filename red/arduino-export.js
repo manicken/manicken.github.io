@@ -323,7 +323,7 @@ RED.arduino.export = (function () {
         // first scan for code files to include them first
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
-            if (n.type == "CodeFile") // very special case
+            if (n.type == "CodeFile" || n.type == "theMixer.h") // very special case
             {
                 if (n.comment.length != 0) {
                     var wsFile = getNewWsCppFile(n.name, n.comment);
