@@ -321,9 +321,12 @@ RED.arduino.export = (function () {
         wsCppFiles.push(getNewWsCppFile("preferences.txt", RED.arduino.board.export_arduinoIDE()));
         wsCppFiles.push(getNewWsCppFile("platformio.ini", RED.arduino.board.export_platformIO()));
         // first scan for code files to include them first
+        if (RED.arduino.settings.UseAudioMixerTemplate != true)
+            var mixervariants = [];
+
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
-            if (n.type == "CodeFile" || n.type == "theMixer.h") // very special case
+            if (n.type == "CodeFile") // very special case
             {
                 if (n.comment.length != 0) {
                     var wsFile = getNewWsCppFile(n.name, n.comment);
@@ -340,6 +343,22 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
+            else if (n.type == "AudioMixer" && mixervariants != undefined) {
+                var inputCount = getSizeForAudioMixer(nns, n);
+
+                if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
+            }
+        }
+        if (mixervariants != undefined && mixervariants.length > 0) {
+            var mfiles = Mixers.GetCode(mixervariants);
+            var file = getNewWsCppFile("mixers.h", mfiles.h);
+            file.header = "\n// ****** Start Of Included File: mixers.h ****** \n";
+            file.footer = "\n// ****** End Of Included file: mixers.h ******\n";
+            wsCppFiles.push(file);
+            file = getNewWsCppFile("mixers.cpp", mfiles.cpp);
+            file.header = "\n// ****** Start Of Included File: mixers.cpp ****** \n";
+            file.footer = "\n// ****** End Of Included file: mixers.cpp ******\n";
+            wsCppFiles.push(file);
         }
         var keywords = [];
         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
@@ -821,7 +840,19 @@ RED.arduino.export = (function () {
         console.log('arduino-export-save-show-dialog took: ' + (t3 - t2) + ' milliseconds.');
     }
 
-    
+    function getSizeForAudioMixer(nns, n) {
+        // check if source is a array
+        var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
+        if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
+        {
+            var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
+            if (isArray) {
+                console.log("special case AudioMixer connected from array " + src.node.name + ", new AudioMixer def:" + tmplDef);
+                return isArray.arrayLength;
+            }
+        }
+        return n.inputs;
+    }
 
     /**
      * This is only for the moment to get special type AudioMixer<n> and AudioStreamObject
@@ -832,23 +863,13 @@ RED.arduino.export = (function () {
         var cpp = "";
         var typeLength = n.type.length;
         if (n.type == "AudioMixer") {
-            var tmplDef = "";
-            if (n.inputs == 1) // special case 
-            {
-                // check if source is a array
-                var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
-                if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
-                {
-                    var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
-                    if (isArray) tmplDef = "<" + isArray.arrayLength + ">";
-                    console.log("special case AudioMixer connected from array " + src.node.name + ", new AudioMixer def:" + tmplDef);
-                }
-                else
-                    tmplDef = "<" + n.inputs + ">";
-            }
-            else
-                tmplDef = "<" + n.inputs + ">";
 
+            var tmplDef = getSizeForAudioMixer(nns, n);
+
+            if (RED.arduino.settings.UseAudioMixerTemplate == true)
+                tmplDef = '<' + tmplDef + '>'; // include the template def.
+
+            
             cpp += n.type + tmplDef + " ";
             typeLength += tmplDef.length;
         }

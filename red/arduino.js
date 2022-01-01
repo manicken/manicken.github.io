@@ -19,6 +19,7 @@ RED.arduino = (function() {
 	var serverIsActive = false;
 	
     var defSettings = {
+        UseAudioMixerTemplate: false,
         useExportDialog: false,
 		IOcheckAtExport: true,
 		WriteJSONtoExportedFile: true,
@@ -38,6 +39,7 @@ RED.arduino = (function() {
     }
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
+        UseAudioMixerTemplate: defSettings.UseAudioMixerTemplate,
 		useExportDialog: defSettings.useExportDialog,
 		IOcheckAtExport: defSettings.IOcheckAtExport,
 		WriteJSONtoExportedFile: defSettings.WriteJSONtoExportedFile,
@@ -75,6 +77,9 @@ RED.arduino = (function() {
         */
     }
 	var settings = {
+        get UseAudioMixerTemplate() { return _settings.UseAudioMixerTemplate; },
+		set UseAudioMixerTemplate(state) { _settings.UseAudioMixerTemplate = state; RED.storage.update();},
+
 		get useExportDialog() { return _settings.useExportDialog; },
 		set useExportDialog(state) { _settings.useExportDialog = state; RED.storage.update();},
 
@@ -142,6 +147,7 @@ RED.arduino = (function() {
                 },
                 otherSettings: {label:"Other settings", expanded:false, bgColor:"#006468", 
                     items: {
+                        UseAudioMixerTemplate:   { label:"Use C++ Template Mixer (obsolete)", type:"boolean", popupText: "This functionality is now obsolete<br>as the Tool now generates the needed code for the different mixer variants.<br>The template based mixer had some issues and sometimes did not work."},
                         useExportDialog:         { label:"Force Show export dialog", type:"boolean"},
                         IOcheckAtExport:         { label:"IO check At Export", type:"boolean"},
                         WriteJSONtoExportedFile: { label:"Write JSON at exported file", type:"boolean"},

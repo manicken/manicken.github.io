@@ -624,6 +624,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="OSC-teensy.js"></script>
 <script src="OSC-export.js"></script>
 <script src="red/ui/FileSelectDialog.js"></script>
+<script src="mixersCode.js"></script>
 
 
 <!--
@@ -675,10 +676,6 @@ span.mainfunction {color: #993300; font-weight: bolder}
             "description":"this is the original design that Demo Flow A & B is based on<br>made by kd5rxt-mark @ pjrc forum"
         }
     }
-</script>
-
-<script type="text/x-red" data-container-name="theMixer.h">
-    [{"id":"Main_codeFile1","type":"CodeFile","name":"theMixer.h","comment":"/* Audio Library for Teensy 3.X\r\n * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com\r\n *\r\n * Development of this audio library was funded by PJRC.COM, LLC by sales of\r\n * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop\r\n * open source software by purchasing Teensy or other PJRC products.\r\n *\r\n * Permission is hereby granted, free of charge, to any person obtaining a copy\r\n * of this software and associated documentation files (the \"Software\"), to deal\r\n * in the Software without restriction, including without limitation the rights\r\n * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\r\n * copies of the Software, and to permit persons to whom the Software is\r\n * furnished to do so, subject to the following conditions:\r\n *\r\n * The above copyright notice, development funding notice, and this permission\r\n * notice shall be included in all copies or substantial portions of the Software.\r\n *\r\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\n * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\n * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\n * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\n * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\n * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\r\n  * THE SOFTWARE.\r\n */\r\n\r\n#ifndef themixer_h_\r\n#define themixer_h_\r\n\r\n#include <Arduino.h>\r\n#include <AudioStream.h>\r\n\r\n//#define AudioMixer4 AudioMixer<4>\r\n\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n#define MULTI_UNITYGAIN 65536\r\n#define MULTI_UNITYGAIN_F 65536.0f\r\n#define MAX_GAIN 32767.0f\r\n#define MIN_GAIN -32767.0f\r\n#define MULT_DATA_TYPE int32_t\r\n\r\n#elif defined(KINETISL)\r\n\r\n#define MULTI_UNITYGAIN 256\r\n#define MULTI_UNITYGAIN_F 256.0f\r\n#define MAX_GAIN 127.0f\r\n#define MIN_GAIN -127.0f\r\n#define MULT_DATA_TYPE int16_t\r\n\r\n#endif\r\n\r\ntemplate <int NN> class AudioMixer : public AudioStream\r\n{\r\npublic:\r\n  AudioMixer(void) : AudioStream(NN, inputQueueArray) {\r\n    for (int i=0; i<NN; i++) multiplier[i] = MULTI_UNITYGAIN;\r\n  } \r\n  virtual void update();\r\n  \r\n  /**\r\n   * this sets the individual gains\r\n   * @param channel\r\n   * @param gain\r\n   */\r\n  void gain(unsigned int channel, float gain);\r\n  /**\r\n   * set all channels to specified gain\r\n   * @param gain\r\n   */\r\n  void gain(float gain);\r\n\r\nprivate:\r\n  MULT_DATA_TYPE multiplier[NN];\r\n  audio_block_t *inputQueueArray[NN];\r\n};\r\n\r\n// the following Forward declarations \r\n// must be defined when we use template \r\n// the compiler throws some warnings that should be errors otherwise\r\n\r\nstatic int32_t signed_multiply_32x16b(int32_t a, uint32_t b); \r\nstatic int32_t signed_multiply_32x16t(int32_t a, uint32_t b);\r\nstatic int32_t signed_saturate_rshift(int32_t val, int bits, int rshift);\r\nstatic uint32_t pack_16b_16b(int32_t a, int32_t b);\r\nstatic uint32_t signed_add_16_and_16(uint32_t a, uint32_t b);\r\n\r\n// because of the template use applyGain and applyGainThenAdd functions\r\n// must be in this file and NOT in cpp file\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    uint32_t *p = (uint32_t *)data;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    do {\r\n      uint32_t tmp32 = *p; // read 2 samples from *data\r\n      int32_t val1 = signed_multiply_32x16b(mult, tmp32);\r\n      int32_t val2 = signed_multiply_32x16t(mult, tmp32);\r\n      val1 = signed_saturate_rshift(val1, 16, 0);\r\n      val2 = signed_saturate_rshift(val2, 16, 0);\r\n      *p++ = pack_16b_16b(val2, val1);\r\n    } while (p < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)\r\n  {\r\n    uint32_t *dst = (uint32_t *)data;\r\n    const uint32_t *src = (uint32_t *)in;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        uint32_t tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n        tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        uint32_t tmp32 = *src++; // read 2 samples from *data\r\n        int32_t val1 =  signed_multiply_32x16b(mult, tmp32);\r\n        int32_t val2 =  signed_multiply_32x16t(mult, tmp32);\r\n        val1 =  signed_saturate_rshift(val1, 16, 0);\r\n        val2 =  signed_saturate_rshift(val2, 16, 0);\r\n        tmp32 =  pack_16b_16b(val2, val1);\r\n        uint32_t tmp32b = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, tmp32b);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n\r\n#elif defined(KINETISL)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    const int16_t *end = data + AUDIO_BLOCK_SAMPLES;\r\n\r\n    do {\r\n      int32_t val = *data * mult;\r\n      *data++ = signed_saturate_rshift(val, 16, 0);\r\n    } while (data < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)\r\n  {\r\n    const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        int32_t val = *dst + *src++;\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n#endif\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(unsigned int channel, float gain) {\r\n  if (channel >= NN) return;\r\n  if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n  else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n  multiplier[channel] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(float gain) {\r\n  for (int i = 0; i < NN; i++) {\r\n    if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n    else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n    multiplier[i] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n  } \r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::update() {\r\n  audio_block_t *in, *out=NULL;\r\n  unsigned int channel;\r\n  for (channel=0; channel < NN; channel++) {\r\n    if (!out) {\r\n      out = receiveWritable(channel);\r\n      if (out) {\r\n        int32_t mult = multiplier[channel];\r\n        if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);\r\n      }\r\n    } else {\r\n      in = receiveReadOnly(channel);\r\n      if (in) {\r\n        applyGainThenAdd(out->data, in->data, multiplier[channel]);\r\n        release(in);\r\n      }\r\n    }\r\n  }\r\n  if (out) {\r\n    transmit(out);\r\n    release(out);\r\n  }\r\n}\r\n// this class and function forces include \r\n// of functions applyGainThenAdd and applyGain used by the template\r\nclass DummyClass\r\n{\r\n  public:\r\n    virtual void dummyFunction();\r\n};\r\nvoid DummyClass::dummyFunction() {\r\n  applyGainThenAdd(0, 0, 0);\r\n  applyGain(0,0);\r\n    \r\n}\r\n\r\n#endif","x":330,"y":260,"z":"Main","bgColor":"#DDFFBB","wires":[]}]
 </script>
 
 <script  type="text/x-red" data-container-name="ManickenPolySynth">
@@ -1673,9 +1670,26 @@ span.mainfunction {color: #993300; font-weight: bolder}
 -->
 </script>
 
+<script type="text/x-red" data-help-name="theMixer.h">
+    <h3>Summary</h3>
+	<div class=tooltipinfo>
+    <p>(obsolete) in favor of the new autogenerated mixer code</p>
+    <p>insert this anywhere in your design to include the code required to use the</p>
+    </div>
+</script>
+
 <script type="text/x-red" data-help-name="AudioMixer">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
+    <p>The ultimate mixer.</p>
+    <p>To use this, normally you don't have to do anything<br>
+        as the Tool Autogenerates code for all mixer variants you use.<br>
+        But if you prefer and still use the C++ template mixer<br>
+        you can use the C++ template mixer code provided by the theMixer.h object in the mixer category<br>
+        to use the template mixer structure you also have to enable a setting<br>
+        @ settings-Arduino-"other settings"-"Use C++ Template Mixer (obsolete)"
+    </p>
+        
 	<p>Combine up to n audio signals together, each with adjustable gain.<br>
 		All channels support signal attenuation or amplification.</p>
 	<p>	When used together with<br> a <b>array type</b> source,<br>
@@ -1752,7 +1766,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/x-red" data-help-name="AudioCrossPointSwitch">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
-	<p></p>
+	<p>this is a extrernal Type and are not supported by the official library.</p>
 	</div>
 	<h3>Audio Connections</h3>
 	<table id='table-AudioMixer' class=doc align=center cellpadding=3>
