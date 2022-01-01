@@ -1012,11 +1012,17 @@ RED.nodes = (function() {
                 if (n.bgColor == undefined)	node.bgColor = node._def.color; 
                 else node.bgColor = n.bgColor;
 
-                console.warn(n.name + " " + n.outputs + " " + node._def.outputs);
-                node.outputs = n.outputs||node._def.outputs;
+                //console.warn(n.name + " " + n.outputs + " " + node._def.outputs);
+                node.outputs = n.outputs?n.outputs:node._def.outputs?node._def.outputs:0;
+                //console.warn("rövknullad " +node.outputs);
 
-                console.warn(node.outputs);
+                /*node.outputs_ = 0;
+                Object.defineProperty(node, 'outputs', {
+                    set: function(value) { console.trace(node.name); this.outputs_ = value;  },
+                    get: function() { console.trace(node.name); return this.outputs_; }
+                });*/
                 
+
                 addNode(node);
                 //if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
                 RED.editor.validateNode(node);

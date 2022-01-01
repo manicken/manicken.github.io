@@ -345,7 +345,8 @@ RED.arduino.export = (function () {
             }
             else if (n.type == "AudioMixer" && mixervariants != undefined) {
                 var inputCount = getSizeForAudioMixer(nns, n);
-
+                if (inputCount == 4) continue; //this is allready in the audio lib
+                
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
         }
@@ -847,7 +848,7 @@ RED.arduino.export = (function () {
         {
             var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
             if (isArray) {
-                console.log("special case AudioMixer connected from array " + src.node.name + ", new AudioMixer def:" + tmplDef);
+                console.log("special case AudioMixer connected from array " + src.node.name);
                 return isArray.arrayLength;
             }
         }

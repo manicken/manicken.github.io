@@ -1145,6 +1145,7 @@ RED.view = (function() {
 
 		nn.type = typeName;
 		nn._def = RED.nodes.getType(nn.type);
+        //console.warn(nn._def);
 		nn.bgColor = nn._def.color;
 		
 		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
@@ -1156,7 +1157,8 @@ RED.view = (function() {
 		nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
 		nn._def.defaults.name = { value: nn.id };
 
-		nn.outputs = nn._def.outputs;
+		nn.outputs = nn._def.outputs?nn._def.outputs:0;
+
 		nn.changed = true;
 
 		
@@ -4593,6 +4595,11 @@ RED.view = (function() {
 						if (RED.nodes.workspaceNameCheck(label)) // Jannik add
 						{
 							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
+							return; // abort name change if name allready exist
+                        }
+                        if (RED.nodes.getType(label) != undefined) // Jannik add
+						{
+                            RED.notify("<strong>Warning</strong>: Name:"+label + " Is the name of a Existing object type, choose annother name.","warning");
 							return; // abort name change if name allready exist
                         }
                         if (label.endsWith(".")) // Jannik add

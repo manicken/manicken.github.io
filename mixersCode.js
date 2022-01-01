@@ -8,6 +8,8 @@ Mixers = (function () {
     function GetCode(variants) {
         var mixersCpp = "";
         var mixersH = "";
+
+        console.warn("mixer variants",variants);
         
         for (var vi = 0; vi < variants.length; vi++)
         {
