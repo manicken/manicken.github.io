@@ -202,6 +202,9 @@ RED.arduino.export = (function () {
 
         console.log("save1(simple) workspace:" + activeWorkspace);
 
+        if (RED.arduino.settings.UseAudioMixerTemplate != true)
+            var mixervariants = [];
+
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
             if (n.type == "tab" || n.type == "settings") continue;
@@ -224,6 +227,12 @@ RED.arduino.export = (function () {
                     wsFile.overwrite_file = false;
                     wsCppFiles.push(wsFile);
                 }
+            }
+            else if (node.type == "AudioMixer" && mixervariants != undefined) {
+                var inputCount = getSizeForAudioMixer(nns, node);
+                if (inputCount == 4) continue; // this variant is allready in the audio lib
+
+                if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
 
             if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
@@ -261,6 +270,11 @@ RED.arduino.export = (function () {
         }
 
         var cpp = getCppHeader(jsonString, includes);
+        if (mixervariants != undefined && mixervariants.length > 0) {
+            var mfiles = Mixers.GetCode(mixervariants);
+            cpp += "\n" + mfiles.copyrightNote + "\n" + mfiles.h + "\n";
+            cpp += "\n" + mfiles.cpp + "\n";
+        }
         cpp += "\n" + codeFiles + "\n" + cppAPN + "\n" + cppAC + "\n" + cppCN + "\n" + globalVars + "\n" + functions + "\n";
         cpp += getCppFooter();
         //console.log(cpp);
