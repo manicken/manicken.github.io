@@ -345,20 +345,18 @@ RED.arduino.export = (function () {
             }
             else if (n.type == "AudioMixer" && mixervariants != undefined) {
                 var inputCount = getSizeForAudioMixer(nns, n);
-                if (inputCount == 4) continue; //this is allready in the audio lib
-                
+                if (inputCount == 4) continue; // this variant is allready in the audio lib
+
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
         }
         if (mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants);
             var file = getNewWsCppFile("mixers.h", mfiles.h);
-            file.header = "\n// ****** Start Of Included File: mixers.h ****** \n";
-            file.footer = "\n// ****** End Of Included file: mixers.h ******\n";
+            file.header = mfiles.copyrightNote;
             wsCppFiles.push(file);
             file = getNewWsCppFile("mixers.cpp", mfiles.cpp);
-            file.header = "\n// ****** Start Of Included File: mixers.cpp ****** \n";
-            file.footer = "\n// ****** End Of Included file: mixers.cpp ******\n";
+            file.header = mfiles.copyrightNote;
             wsCppFiles.push(file);
         }
         var keywords = [];
@@ -673,8 +671,14 @@ RED.arduino.export = (function () {
         for (var i = 0; i < wsCppFiles.length; i++) {
             // don't include beautified json string here
             // and only append to cpp when useExportDialog
-            if (isCodeFile(wsCppFiles[i].name) && showExportDialog)
-                cpp += wsCppFiles[i].contents;
+            if (isCodeFile(wsCppFiles[i].name) && showExportDialog) {
+                if (wsCppFiles[i].name == "mixers.cpp") // special case
+                    cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', ''); // don't use that here as it generates compiler error
+                else if (wsCppFiles[i].name == "mixers.h") // special case
+                    cpp += wsCppFiles[i].header + wsCppFiles[i].contents; // to include the copyright note
+                else
+                    cpp += wsCppFiles[i].contents;
+            }
 
             wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
             delete wsCppFiles[i].header;
