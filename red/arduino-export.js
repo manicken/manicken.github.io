@@ -376,8 +376,8 @@ RED.arduino.export = (function () {
         var cpp = getCppHeader(jsonString, includes);
         if (mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants); // variants 0 and 4 are taken care of in Mixers.GetCode
-            cpp += "\n" + mfiles.copyrightNote + "\n" + mfiles.h + "\n";
-            cpp += "\n" + mfiles.cpp + "\n";
+            cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
+            cpp += mfiles.cpp.replace('#include "mixers.h"', '') + "\n";
         }
         //console.warn("cpparray:\n"+cppArray)
         cpp += "\n" + codeFiles + "\n" + defines + "\n" + cppAPN + "\n" + cppAC + "\n" + cppCN + "\n" + globalVars + "\n" + functions + "\n";
@@ -559,6 +559,10 @@ RED.arduino.export = (function () {
                 }
                 else if (n.type == "EndOfFileCode") {
                     class_eofCode += n.comment + "\n";
+                }
+                else if (n.type == "AudioMixer") {
+                    var includeName = '#include "mixers.h"';
+                    if (!classIncludes.includes(includeName)) classIncludes.push(includeName);
                 }
             }
             if (classComment.length > 0) {
@@ -791,10 +795,11 @@ RED.arduino.export = (function () {
             // don't include beautified json string here
             // and only append to cpp when useExportDialog
             if (isCodeFile(wsCppFiles[i].name) && showExportDialog) {
-                if (wsCppFiles[i].name == "mixers.cpp") // special case
-                    cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', ''); // don't use that here as it generates compiler error
+                if (wsCppFiles[i].name == "mixers.cpp") { // special case
+                    cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
+                }
                 else if (wsCppFiles[i].name == "mixers.h") // special case
-                    cpp += wsCppFiles[i].header + wsCppFiles[i].contents; // to include the copyright note
+                    cpp += wsCppFiles[i].header + "\n" + wsCppFiles[i].contents + "\n"; // to include the copyright note
                 else
                     cpp += wsCppFiles[i].contents;
             }
@@ -966,6 +971,8 @@ RED.arduino.export = (function () {
 
     function getSizeForAudioMixer(nns, n, replaceConstWithValue) { // rename to getDynamicInputCount?
         // check if source is a array
+        if (n.inputs != 1) return n.inputs;
+
         var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
         if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
         {
@@ -981,7 +988,7 @@ RED.arduino.export = (function () {
     }
 
     /**
-     * This is only for the moment to get special type AudioMixer<n> and AudioStreamObject
+     * This is only for the moment to get special type AudioMixer<n>, AudioMixerNNN or AudioStreamObject
      * @param {*} nns nodeArray
      * @param {Node} n node
      */
@@ -990,7 +997,7 @@ RED.arduino.export = (function () {
         var typeLength = n.type.length;
         if (n.type == "AudioMixer") {
 
-            var tmplDef = getSizeForAudioMixer(nns, n);
+            var tmplDef = getSizeForAudioMixer(nns, n).toString();
 
             if (RED.arduino.settings.UseAudioMixerTemplate == true)
                 tmplDef = '<' + tmplDef + '>'; // include the template def.
@@ -1001,7 +1008,7 @@ RED.arduino.export = (function () {
         }
         else if (n.type == "AudioStreamObject") {
             cpp += n.subType + " ";
-            typeLength = n.subType.length;
+            typeLength = n.subType.toString().length;
         }
         else
             cpp += n.type + " ";
