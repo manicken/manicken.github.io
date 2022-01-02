@@ -108,7 +108,7 @@ RED.arduino.export = (function () {
             staticType:staticType,
             workspaceId: workspaceId,
             base: function() {
-                if (staticType==true) return "AudioConnection        patchCord"+this.count + "(";
+                if (this.staticType==true) return "AudioConnection        patchCord"+this.count + "(";
                 else {
                     if (this.dstRootIsArray || this.srcRootIsArray)
                         return getNrOfSpaces(majorIncrement+minorIncrement) + "patchCord[pci++] = new AudioConnection(";
@@ -133,14 +133,14 @@ RED.arduino.export = (function () {
                 //if ((this.srcPort == 0) && (this.dstPort == 0))
                 //	this.cppCode	+= "\n" + this.base + this.count + "(" + this.srcName + ", " + this.dstName + ");"; // this could be used but it's generating code that looks more blurry
 
-                if (this.dstRootIsArray && this.srcRootIsArray && staticType == true) {
+                if (this.dstRootIsArray && this.srcRootIsArray && this.staticType == true) {
                     for (var i = 0; i < this.arrayLength; i++) {
                         this.cppCode += this.base() + this.srcName.replace('[i]', '[' + i + ']') + ", " + this.srcPort + ", " + this.dstName.replace('[i]', '[' + i + ']') + ", " + this.dstPort + ");\n";
                         this.count++;
                     }
                 }
                 else if (this.dstRootIsArray) {
-                    if (staticType==false) {
+                    if (this.staticType==false) {
                         this.cppCode += this.base() + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");\n";
                     }
                     else {
@@ -153,7 +153,7 @@ RED.arduino.export = (function () {
                     this.totalCount += this.arrayLength;
                 }
                 else if (this.srcRootIsArray) {
-                    if (staticType==false) {
+                    if (this.staticType==false) {
                         this.cppCode += this.base() + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", i);\n";
                     }
                     else {
@@ -632,7 +632,7 @@ RED.arduino.export = (function () {
             if (newWsCpp.isMain == false) // don't generate either audio connections or constructor in main file
             {
                 // generate code for all connections (aka wires or links)
-                var ac = getNewAudioConnectionType(ws.id, minorIncrement, majorIncrement);
+                var ac = getNewAudioConnectionType(ws.id, minorIncrement, majorIncrement, false);
                 ac.count = 1;
                 var cppPcs = "";
                 var cppArray = "";
