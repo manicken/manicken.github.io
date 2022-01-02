@@ -13,6 +13,10 @@ Mixers = (function () {
         
         for (var vi = 0; vi < variants.length; vi++)
         {
+            if (variants[vi] <= 0) continue; // cannot have a mixer with zero or less inputs
+            if (variants[vi] == 4) continue; // mixer with 4 inputs allready exists in the lib
+            if (variants[vi] > 255) variants[vi] = 255; // a AudioObject cannot have more than 255 inputs
+
             mixersCpp += mixers_cpp_template.split('NNN').join(variants[vi].toString()) + "\n";
             mixersH += mixers_h_template.split('NNN').join(variants[vi].toString()) + "\n";
         }

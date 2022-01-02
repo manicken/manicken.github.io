@@ -1424,7 +1424,8 @@ RED.nodes = (function() {
 
 		// if the portNode is found, next we get what is connected to that port inside the class
 		var newSrc = getWireInputSourceNode(nns, getWorkspaceIdFromClassName(classNode.type), outputNode.id); // this return type {node:n, srcPortIndex: srcPortIndex};
-
+        if (newSrc == undefined) return false;
+        
 		ac.srcName += "." + make_name(newSrc.node);
 		ac.srcPort = newSrc.srcPortIndex;
 
