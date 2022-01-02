@@ -1693,17 +1693,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class=tooltipinfo>
     <p>The ultimate mixer.</p>
     <p>To use this, normally you don't have to do anything<br>
-        as the Tool Autogenerates code for all mixer variants you use.<br>
-        But if you prefer and still use the C++ template mixer<br>
-        you can use the C++ template mixer code provided by the theMixer.h object in the mixer category<br>
-        to use the template mixer structure you also have to enable a setting<br>
-        @ settings-Arduino-"other settings"-"Use C++ Template Mixer (obsolete)"
+        as the Tool Autogenerates code for all mixer size-variants you use.<br>
     </p>
         
 	<p>Combine up to n audio signals together, each with adjustable gain.<br>
 		All channels support signal attenuation or amplification.</p>
-	<p>	When used together with<br> a <b>array type</b> source,<br>
-	    only one input is needed, the code generator will make a mixer matching the array-size.</p>
+    <p>note. the maximum amount of inputs a AudioStream object can have is 255, this then the case for this mixer as well.</p>
+	<p>	When used together with<br> a <b>array type</b> source,<br>(a object with the array declaration ['arraysize'] after the name)<br>
+	    then it should be set to only one input,<br>the code generator will make a mixer matching the arraysize.<br><br>
+    </p>
 	</div>
 	<h3>Audio Connections</h3>
 	<table id='table-AudioMixer' class=doc align=center cellpadding=3>
@@ -1729,6 +1727,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		1.0 amplifies it.  Negative numbers may also be used, to invert the
 		signal. 
 	</p>
+    <p> If you prefer and still use the C++ template mixer<br>
+        you can use the C++ template mixer code provided by the theMixer.h object in the mixer category<br>
+        to use the template mixer structure you also have to enable a setting<br>
+        @ settings-Arduino-"other settings"-"Use C++ Template Mixer (obsolete)"</p>
 	<h3>Examples</h3>
 	<p class=exam>File &gt; Examples &gt; Audio &gt; SamplePlayer
 	</p>
