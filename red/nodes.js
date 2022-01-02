@@ -1551,6 +1551,10 @@ RED.nodes = (function() {
 			{
 				getFunctions(n, items);
 			}
+            else if (n.type == "Variables")
+            {
+                getVaribles(n, items);
+            }
 			if (n._def.nonObject != undefined) continue;
 			var data = RED.NodeHelpManager.getHelp(n.type); //  $("script[data-help-name|='" + n.type + "']").html();
 			//var firstP = $("<div/>").append(data).children("div").first().html();
@@ -1620,9 +1624,28 @@ RED.nodes = (function() {
 			var name = functions[fi][3].trim();
 			var param = functions[fi][4].trim();
 			//console.error(functions[fi]);
-			completeItems.push({ name:(name+param), value:(name+param), type:returnType, html: "@ " + functionNode.name + "<br> returns" + returnType, meta: returnType, score:(1000)  });
+			completeItems.push({ name:(name+param), value:(name+param), type:returnType, html: "@ " + functionNode.name + "<br> returns " + returnType, meta: returnType, score:(1000)  });
 		}
 	}
+    function getVaribles(varNode, completeItems)
+    {
+        //var vars = [...varNode.comment.matchAll(/(?:\w+\s+)([a-zA-Z_][a-zA-Z0-9_]*)\s*[\[;,=]/g)];
+        //var vars = [...varNode.comment.matchAll(/\b(?:(?:auto\s*|const\s*|unsigned\s*|signed\s*|register\s*|volatile\s*|static\s*|void\s*|short\s*|uint8_t\s*|uint16_t\s*|uint32_t\s*|uint64_t\s*|int8_t\s*|int16_t\s*|int32_t\s*|int64_t\s*|long\s*|char\s*|int\s*|float\s*|double\s*|bool\s*|complex\s*)+)(?:\s+\*?\*?\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*[\[;,=)]/gm)];
+        var vars = [...varNode.comment.matchAll(/^[ \t]*(?!return|typedef)((\w+[ \t,]*\*?[ \t,]+)+)*(\w+)(\[\w*\])?([ \t,]*=\s*(\w)|;)/gm)];
+        for (var fi = 0; fi < vars.length; fi++)
+		{		
+            //console.error(vars[fi]);
+            			
+			//if (vars[fi] == undefined) continue;
+			if (vars[fi][1] == undefined) vars[fi][1] = "";
+			var returnType = vars[fi][1].trim();
+			var name = vars[fi][3].trim();
+			var param = vars[fi][6].trim();
+			//console.error(functions[fi]);
+			completeItems.push({ name:(name), value:(name), type:returnType, html: "@ <b>" + varNode.name + "</b><br> " + vars[fi][0], meta: returnType, score:(1000)  });
+		    
+        }
+    }
 	/**
 	 * function used by addClassTabsToPalette()
 	 */
