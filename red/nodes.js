@@ -1640,7 +1640,7 @@ RED.nodes = (function() {
 			if (vars[fi][1] == undefined) vars[fi][1] = "";
 			var returnType = vars[fi][1].trim();
 			var name = vars[fi][3].trim();
-			var param = vars[fi][6].trim();
+			//var param = vars[fi][6].trim();
 			//console.error(functions[fi]);
 			completeItems.push({ name:(name), value:(name), type:returnType, html: "@ <b>" + varNode.name + "</b><br> " + vars[fi][0], meta: returnType, score:(1000)  });
 		    
