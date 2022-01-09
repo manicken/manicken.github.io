@@ -536,7 +536,8 @@ RED.editor = (function() {
                 if (!node._def.defaults.hasOwnProperty(d)) continue;
 
                 var propEditor = node._def.defaults[d].editor;
-                if (propEditor == undefined) continue; // edit disabled
+                
+                if (node._def.defaults[d].noEdit != undefined) { console.warn("edit disabled for " + node.type + " " + d); continue; }// edit disabled
                 data += GetEditorLine_Input(propEditor, d);
             }
             var form = $("#dialog-form");
@@ -552,7 +553,7 @@ RED.editor = (function() {
             if (ifHaveOwnEditor.length != 0) 
             {	editorType = node.type; /*console.log("use type editor:" + editorType);*/}
             else // use global editor
-            {	editorType = "NodesGlobalEdit"; /*console.log("use global editor");*/}
+            {	editorType = "NodesGlobalEdit"; console.log("use global editor");}
             
             RED.view.getForm("dialog-form", editorType, function (d, f) {
                 prepareEditDialog(node, "node-input");
@@ -565,6 +566,7 @@ RED.editor = (function() {
       }
 
     function GetEditorLine_Input(editor, propName) {
+        if (editor == undefined) editor = {}; // default everything
         var type=(editor.type!=undefined)?editor.type:"text";
         var rowClass=(editor.rowClass!=undefined)?editor.rowClass:"form-row";
         var label=(editor.label!=undefined)?editor.label:capitalizeFirstLetter(propName);

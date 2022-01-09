@@ -1864,11 +1864,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This is just a placeholder that defines the input(s) to the class.</p>
+    <br>
+    <p><b>FUTURE IMPLEMENTATIONS</b></p>
+    * signal bus output<br>
+    * bus output can be used with stereo mixer<br>
 	</div>
 	<h3>Audio Connections</h3>
 	<table class=doc align=center cellpadding=3>
 		<tr class=top><th>Port</th><th>Purpose</th></tr>
-		<tr class=odd><td align=center>Out 0</td><td>"Virtual Input" signal</td></tr>
+		<tr class=odd><td align=center>Out n</td><td>"Virtual Input" signal</td></tr>
 	</table>
 	<h3>Notes</h3>
 	<p></p>
@@ -1879,11 +1883,50 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This is just a placeholder that defines the output(s) from the class.</p>
+    <br>
+    <p><b>FUTURE IMPLEMENTATIONS</b></p>
+    * signal bus output<br>
+    * bus output can be used with stereo mixer<br>
 	</div>
 	<h3>Audio Connections</h3>
 	<table class=doc align=center cellpadding=3>
 		<tr class=top><th>Port</th><th>Purpose</th></tr>
-		<tr class=odd><td align=center>In 0</td><td>"Virtual Output" signal</td></tr>
+		<tr class=odd><td align=center>In n</td><td>"Virtual Output" signal</td></tr>
+	</table>
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+
+<script type="text/x-red" data-help-name="BusJoin">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+    <p><b>NOT IMPLEMENTED YET</b></p>
+	<p>This is just a visual/virtual object, that is just used in the tool to make drawing complex designs easier</p>
+    <p>Can be used together with Class 'bus' inputs.</p>
+	</div>
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>In n</td><td>"signals to be joined" signal</td></tr>
+        <tr class=odd><td align=center>Bus Out</td><td>"The joined Bus Output" signal</td></tr>
+	</table>
+	<h3>Notes</h3>
+	<p></p>
+	<p></p>
+</script>
+<script type="text/x-red" data-help-name="BusSplit">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+    <p><b>NOT IMPLEMENTED YET</b></p>
+	<p>This is just a visual/virtual object, that is just used in the tool to make drawing complex designs easier</p>
+    <p>Can be used together with Class 'bus' outputs.</p>
+	</div>
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>Bus In</td><td>"Bus to be splitted" signal</td></tr>
+        <tr class=odd><td align=center>Out n</td><td>"The splitted signals" signal</td></tr>
 	</table>
 	<h3>Notes</h3>
 	<p></p>

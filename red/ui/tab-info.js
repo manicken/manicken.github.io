@@ -148,11 +148,12 @@ RED.sidebar.info = (function() {
 			}
 		}
 		table += "</tbody></table><br/>";
-        if (node._def.help != undefined && node._def.help.trim().length != 0) this.setHelpContent(table, node._def.help);
-        else this.setHelpContent(table, node.type);
+        this.setHelpContent(table, node.type, node._def.help);
 	}
 
-	function setHelpContent(prefix, key) {
+	function setHelpContent(prefix, key, defaultText) {
+        if (defaultText == undefined || defaultText.trim().length == 0) defaultText = "no help available";
+        
 		if (RED.sidebar.settings.autoSwitchTabToInfoTab)
 			RED.sidebar.show("info");
 		// server test switched off - test purposes only
@@ -170,7 +171,7 @@ RED.sidebar.info = (function() {
 				if (RED.nodes.isClass(key))
 					finalHtml = '<div class="node-help">' + getClassHelpContent(key) + '</div>';
 				else
-					finalHtml = '<div class="node-help">no help available</div>';
+					finalHtml = '<div class="node-help">'+defaultText+'</div>';
 			}
 		} else {
 			$.get( "resources/help/" + key + ".html", function( data ) {

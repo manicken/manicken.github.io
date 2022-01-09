@@ -413,10 +413,10 @@ RED.nodes = (function() {
         
         if (!node) return removedLinks; // cannot continue if node don't exists
 
-        if (node.type == "TabInput" || node.type == "TabOutput")
+        if (node._def.classIn != undefined || node._def.classOut != undefined)
         {
-            //TODO: do the removal of external connected wires
-            console.warn("TODO: do the removal of external connected wires");
+            //TODO: do the removal of external connected wires // now fixed
+            //console.warn("TODO: do the removal of external connected wires"); // now fixed
             var wsLabel = getWorkspaceLabel(RED.view.getWorkspace());
             RED.console_ok("workspace label:" + wsLabel);
             refreshClassNodes();
@@ -1232,8 +1232,8 @@ RED.nodes = (function() {
 			var node = nns[i];
 			if (wsId && (node.z != wsId)) continue;
 
-			if (node.type == "TabInput") inNodes.push(convertNode(node, true));
-			else if (node.type == "TabOutput") outNodes.push(convertNode(node, true));
+			if (node._def.classIn != undefined) inNodes.push(convertNode(node, true));
+			else if (node._def.classOut != undefined) outNodes.push(convertNode(node, true));
 		}
 		inNodes.sort(function(a,b){ return (a.y - b.y); });
 		outNodes.sort(function(a,b){ return (a.y - b.y); });
@@ -1256,8 +1256,8 @@ RED.nodes = (function() {
 			var node = nns[i];
 			if (wsId && (node.z != wsId)) continue;
 
-			if (node.type == "TabInput") inNodesCount++;
-			else if (node.type == "TabOutput") outNodesCount++;
+			if (node._def.classIn != undefined) inNodesCount++;
+			else if (node._def.classOut != undefined) outNodesCount++;
 		}
 		return {outCount:outNodesCount, inCount:inNodesCount};
 	}
@@ -1276,10 +1276,13 @@ RED.nodes = (function() {
 		{
 			var node = nodes[i];
 			if (node.z != wsId) continue;
-			if (node.type == type) retNodes.push(node);
+			if (node._def["class"+type] != undefined) retNodes.push(node);
 		}
 		retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
-		return retNodes[index].name;
+        //console.warn(type + retNodes[index].inputs);
+        if (type == "In" && retNodes[index].outputs > 1) return retNodes[index].name + "["+retNodes[index].outputs+"]";
+        else if (type == "Out" && retNodes[index].inputs > 1) return retNodes[index].name + "["+retNodes[index].inputs+"]";
+		else return retNodes[index].name;
 	}
 	function getClassComments(wsId)
 	{
@@ -1657,7 +1660,7 @@ RED.nodes = (function() {
 			var n = nns[i];
 			if (n.z == classUid)
 			{
-				if (n.type == "TabInput")
+				if (n._def.classIn != undefined)
 				{
 					count++;
 					//console.log("TabInput:" + n.name);
@@ -1677,7 +1680,7 @@ RED.nodes = (function() {
 			var n = nns[i];
 			if (n.z == classUid)
 			{
-				if (n.type == "TabOutput")
+				if (n._def.classOut != undefined)
 				{
 					count++;
 					//console.log("TabOutput:" + n.name);

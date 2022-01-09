@@ -322,15 +322,15 @@ RED.palette = (function() {
 			//$("#palette-"+defCategory).append(d);
 			d.onmousedown = function(e) { e.preventDefault(); };
 
-            if (def.help != undefined && def.help.trim().length != 0) setTooltipContent('', def.help, d, " @ " + nodeDefGroupName);
-            else setTooltipContent('', nt, d, " @ " + nodeDefGroupName);
+            if (def.help != undefined && def.help.trim().length != 0) setTooltipContent(nt, d, " @ " + nodeDefGroupName, def.help);
+            else setTooltipContent(nt, d, " @ " + nodeDefGroupName);
 			
 		    $(d).click(function() {
 			  	console.warn("palette node click:" + d.type);
 				RED.nodes.selectNode(d.type);
 			  	//RED.sidebar.info.setHelpContent('', d.type);
 
-                if (def.help != undefined && def.help.trim().length != 0) RED.sidebar.info.setHelpContent("<h3>" + d.type + "</h3>", def.help);
+                if (def.help != undefined && def.help.trim().length != 0) RED.sidebar.info.setHelpContent("<h3>" + d.type + "</h3>",d.type, def.help);
                 else RED.sidebar.info.setHelpContent('', d.type);
 		    });
 		    $(d).draggable({
@@ -348,10 +348,12 @@ RED.palette = (function() {
 		
 	}
 	
-	function setTooltipContent(prefix, key, elem, preInfo, postInfo) {
+	function setTooltipContent(key, elem, preInfo, defaultText) {
 		// server test switched off - test purposes only
 		var patt = new RegExp(/^[http|https]/);
 		var server = false && patt.test(location.protocol);
+
+        if (defaultText == undefined) defaultText = "no help available";
 
 		var options = {
 			title: elem.type,
@@ -370,8 +372,8 @@ RED.palette = (function() {
             var content = '<b>'+key+'</b>';
             if (preInfo != undefined) content += preInfo;
             if (firstP != undefined) content += '<br><br>' + firstP;
-            else content += '<br><br>no help availabe'
-            if (postInfo != undefined) content += '<br>' + postInfo;
+            else content += '<br><br>' + defaultText;
+            //if (postInfo != undefined) content += '<br>' + postInfo;
 
 			options.content = content;
 			$(elem).popover(options);

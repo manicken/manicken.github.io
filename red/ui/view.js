@@ -1145,7 +1145,8 @@ RED.view = (function() {
 
 		nn.type = typeName;
 		nn._def = RED.nodes.getType(nn.type);
-        //console.warn(nn._def);
+        console.warn(nn._def);
+        
 		nn.bgColor = nn._def.color;
 		
 		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
@@ -1155,7 +1156,7 @@ RED.view = (function() {
           nn.name = nn.name.toLowerCase();
 
 		nn._def.defaults = nn._def.defaults ? nn._def.defaults  : {};
-		nn._def.defaults.name = { value: nn.id };
+		nn._def.defaults.name.value = nn.id;
 
 		nn.outputs = nn._def.outputs?nn._def.outputs:0;
 
@@ -4049,7 +4050,7 @@ RED.view = (function() {
 		nodeExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
 		{
 			//console.error("redraw nodeExit:" + d.type);
-			if (d.type == "TabInput" || d.type == "TabOutput")
+			if (d._def.classIn != undefined || d._def.classOut != undefined)
 			{
 				if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
 			}
@@ -4064,7 +4065,7 @@ RED.view = (function() {
 			d.oldHeight = undefined;
 
 			//console.error("redraw nodeEnter:" + d.type);
-			if (d.type == "TabInput" || d.type == "TabOutput")
+			if (d._def.classIn != undefined || d._def.classOut != undefined)
 			{
 				if (!updatedClassTypes) { updatedClassTypes = true; RED.nodes.updateClassTypes(); }
 			}
@@ -4723,13 +4724,13 @@ RED.view = (function() {
 		
 		var portName = portDir + " " + index;
 
-		if (!data2 || (data2 == null)) // shows workspace user custom class io
+		if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
 			if (RED.nodes.isClass(nodeType))
 			{
 				var wsId = RED.nodes.getWorkspaceIdFromClassName(nodeType);
-				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, "Tab"+portDir+ "put", index);
+				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, portDir, index);
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}

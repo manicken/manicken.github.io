@@ -442,7 +442,7 @@ OSC = (function() {
 
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
-        if (node._def.dynInputs == undefined)
+        if (node._def.defaults.inputs == undefined) // if inputs is defined in defaults that mean it's user editable
             SendMessage(GetCreateObjectAddr(),"ss", node.type, node.name);
         else
             SendMessage(GetCreateObjectAddr(),"ssi", node.type, node.name,node.inputs);

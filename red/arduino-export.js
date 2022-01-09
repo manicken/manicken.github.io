@@ -304,7 +304,7 @@ RED.arduino.export = (function () {
                     var src = RED.nodes.node(n.id);
                         var dst = RED.nodes.node(dstId);
 
-                        if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
+                        if (src._def.classIn != undefined || dst._def.classOut != undefined) return; // now with JSON string at top, place-holders not needed anymore
 
                         if (dst.type.startsWith("Junction"))// && )
                         {
@@ -647,7 +647,7 @@ RED.arduino.export = (function () {
                         var src = RED.nodes.node(n.id);
                         var dst = RED.nodes.node(dstId);
 
-                        if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
+                        if (src._def.classIn != undefined || dst._def.classOut != undefined) return; // now with JSON string at top, place-holders not needed anymore
 
                         if (dst.type.startsWith("Junction"))// && )
                         {
