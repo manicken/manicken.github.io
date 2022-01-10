@@ -1266,7 +1266,10 @@ RED.nodes = (function() {
 		{
 			var node = nns[i];
 			if (wsId && (node.z != wsId)) continue;
-
+            if (node._def == undefined) {
+                console.error(node);
+                continue;
+            }
 			if (node._def.classIn != undefined) inNodesCount++;
 			else if (node._def.classOut != undefined) outNodesCount++;
 		}
