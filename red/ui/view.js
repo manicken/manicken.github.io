@@ -36,7 +36,7 @@ RED.view = (function() {
     
 
     var defSettings = {
-		
+		LinkDropOnNodeAppend:true,
 		showNodeToolTip:true,
 		guiEditMode: true,
 		lockWindowMouseScrollInRunMode: true,
@@ -71,7 +71,7 @@ RED.view = (function() {
 	};
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
-
+        LinkDropOnNodeAppend: defSettings.LinkDropOnNodeAppend,
 		showNodeToolTip: defSettings.showNodeToolTip,
 		guiEditMode: defSettings.guiEditMode,
 		lockWindowMouseScrollInRunMode: defSettings.lockWindowMouseScrollInRunMode,
@@ -105,6 +105,9 @@ RED.view = (function() {
         
 	};	
 	var settings = {
+
+        get LinkDropOnNodeAppend() { return _settings.LinkDropOnNodeAppend; },
+		set LinkDropOnNodeAppend(state) { _settings.LinkDropOnNodeAppend = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 		
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
 		set showNodeToolTip(state) { _settings.showNodeToolTip = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
@@ -313,6 +316,7 @@ RED.view = (function() {
 		},
 		nodeSubCat: {label:"Nodes", expanded:false, bgColor:"#FFFFFF",
 			items: {
+                LinkDropOnNodeAppend:  {label:"Auto append dropped links", type:"boolean", popupText: "Auto append dropped links to any free input-slot<br>This makes it possible to just drop new 'input'-links to anywhere on a node to make them automatically add to any free input."},
 				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
 				nodeDefaultTextSize: {label:"Text Size", type:"number", popupText: "AudioStream-type Node label text size (not used for UI-category nodes as they have their own invidual settings)"},
 				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>Center based locations:<br><img src=\"helpImgs/CenterBasedLocations_sm.png\"><br><br>Top Left based locations:<br><img src=\"helpImgs/TopLeftBasedLocations_sm.png\"><br><br>When this is unchecked everything is drawn from that previous center point<br>and it's using the top-left corner as the object position reference (and vice versa),<br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
@@ -2107,6 +2111,8 @@ RED.view = (function() {
             console.warn(d.type + " " + d.name + " have no IO");
             return;
         }
+
+        if (settings.LinkDropOnNodeAppend == false) return;
         let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
         console.warn("next free index "+ nextFreeInputIndex);
         if (nextFreeInputIndex == -1) return;
