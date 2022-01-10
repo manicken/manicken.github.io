@@ -382,6 +382,17 @@ RED.nodes = (function() {
 		return hasIO;
 	}
 
+    function checkForAudio() {
+		var hasAudio = false;
+		RED.nodes.eachNode(function (node) {
+
+			if (node.type.includes("Audio")) {
+				hasAudio = true;
+			}
+		});
+		return hasAudio;
+	}
+
 	function getNode(id) {
 		if (id in configNodes) {
 			return configNodes[id];
@@ -1966,6 +1977,7 @@ RED.nodes = (function() {
 		cppName: createUniqueCppName,
 		cppId: createUniqueCppId,
 		hasIO: checkForIO,
+        hasAudio:checkForAudio,
 		generateArrayNode:generateArrayNode,
 		isClass:isClass,
 		getClassComments:getClassComments,

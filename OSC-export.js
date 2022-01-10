@@ -43,9 +43,13 @@ OSC.export = (function () {
         //OSC.SetLog("not implemented yet")
     }
 
-    $('#btn-deploy-osc').click(do_export);
+    $('#btn-deploy-osc').click(function() {
+        RED.arduino.export.showIOcheckWarning(do_export);
+    });
 
-    $('#btn-deploy-osc-group').click(function () {do_export(true); });
+    $('#btn-deploy-osc-group').click(function () {
+        RED.arduino.export.showIOcheckWarning(function() {do_export(true);});
+    });
     function do_export(groupBased) {
 
         var clearAllAddr = "/dynamic/clearAl*";
@@ -90,10 +94,6 @@ OSC.export = (function () {
 
         RED.storage.update();
 
-        if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            showExportErrorDialog();
-            return;
-        }
         var nns = RED.nodes.createCompleteNodeSet(false);
 
         var activeWorkspace = RED.view.getWorkspace();
@@ -332,10 +332,6 @@ OSC.export = (function () {
 
         RED.storage.update();
 
-        if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            RED.arduino.export.showExportErrorDialog();  // to be removed and replaced by warning instead
-            return;
-        }
         var nns = RED.nodes.createCompleteNodeSet(true); // true mean we get the new structure
 
         var mainWorkSpace = findMainWs(nns);

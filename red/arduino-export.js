@@ -44,39 +44,6 @@ RED.arduino.export = (function () {
         return str;
     }
 
-    function showExportErrorDialog() { // to be removed and replaced by warning instead
-        $("#node-dialog-error-deploy").dialog({
-            title: "Error exporting data to Arduino IDE",
-            modal: true,
-            autoOpen: false,
-            width: 410,
-            height: 245,
-            buttons: [{
-                text: "Ok",
-                click: function () {
-                    $(this).dialog("close");
-                }
-            }]
-        }).dialog("open");
-    }
-    
-
-    /*function isSpecialNode(nt)
-    {
-      if (nt == "ClassComment") return true;
-      else if (nt == "Comment") return true;
-      else if (nt == "TabInput") return true;
-      else if (nt == "TabOutput") return true;
-      else if (nt == "Function") return true;
-      else if (nt == "Variables") return true;
-      else if (nt == "CodeFile") return true;
-      else if (nt == "ConstValue") return true;
-      else if (nt == "tab") return true;
-      else if (nt == "PointerArray") return true;
-      else return false;
-    }*/
-    
-
     function getCppHeader(jsonString, includes) {
         if (includes == undefined)
             includes = "";
@@ -205,7 +172,30 @@ RED.arduino.export = (function () {
         return ((node.outputs > 0) || (node._def.inputs > 0));
     }
 
-    $('#btn-deploy').click(function () { export_simple(); });
+    let exportWarningText = "Your design contains Audio Object(s)<br>"+
+                            "<p>But the workspace(s) contains no input/output nodes!</p>"+
+                            "<p>Without such a input/output function the exported code will not generate any sound!</p>" +
+                            "<p>Do you still want to export?</p>"
+			
+			
+    function showIOcheckWarning(okCB) {
+        if (RED.nodes.hasAudio() && !RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
+            console.log("showing stuff");
+            RED.main.verifyDialog("Export warning", "!!warning!!",  exportWarningText, function(okPressed) { 
+                if (okPressed)
+                {
+                    okCB();
+                }
+                
+            }, "Yes", "No");
+        }
+        else
+            okCB();
+    }
+
+    $('#btn-deploy').click(function () {
+        showIOcheckWarning(export_simple);
+    });
     function export_simple() {
 
         var minorIncrement = RED.arduino.settings.CodeIndentations;
@@ -215,10 +205,6 @@ RED.arduino.export = (function () {
         const t0 = performance.now();
         RED.storage.update();
 
-        if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            showExportErrorDialog(); // to be removed and replaced by warning instead
-            return;
-        }
         var nns = RED.nodes.createCompleteNodeSet(false);
         // sort is made inside createCompleteNodeSet
         var wsCppFiles = [];
@@ -406,18 +392,19 @@ RED.arduino.export = (function () {
     //nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
 			
 
-    $('#btn-deploy2').click(function () { export_classBased(); });
-    $('#btn-deploy2zip').click(function () { export_classBased(true); });
+    $('#btn-deploy2').click(function () {
+        showIOcheckWarning(export_classBased);
+    });
+    $('#btn-deploy2zip').click(function () {
+        showIOcheckWarning(function() {export_classBased(true);});
+    });
     function export_classBased(generateZip) {
         var minorIncrement = RED.arduino.settings.CodeIndentations;
         var majorIncrement = minorIncrement * 2;
         const t0 = performance.now();
         RED.storage.update();
 
-        if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            showExportErrorDialog(); // to be removed and replaced by warning instead
-            return;
-        }
+        
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 
         var nns = RED.nodes.createCompleteNodeSet(false);
@@ -1031,6 +1018,6 @@ RED.arduino.export = (function () {
         //isSpecialNode:isSpecialNode,
         pushJSON: pushJSON,
         generate_OSC_function_decode:generate_OSC_function_decode,
-        showExportErrorDialog:showExportErrorDialog // to be removed and replaced by warning instead
+        showIOcheckWarning:showIOcheckWarning // to be removed and replaced by warning instead
     };
 })();
