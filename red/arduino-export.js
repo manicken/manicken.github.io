@@ -44,7 +44,7 @@ RED.arduino.export = (function () {
         return str;
     }
 
-    function showExportErrorDialog() {
+    function showExportErrorDialog() { // to be removed and replaced by warning instead
         $("#node-dialog-error-deploy").dialog({
             title: "Error exporting data to Arduino IDE",
             modal: true,
@@ -216,7 +216,7 @@ RED.arduino.export = (function () {
         RED.storage.update();
 
         if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            showExportErrorDialog();
+            showExportErrorDialog(); // to be removed and replaced by warning instead
             return;
         }
         var nns = RED.nodes.createCompleteNodeSet(false);
@@ -415,7 +415,7 @@ RED.arduino.export = (function () {
         RED.storage.update();
 
         if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            showExportErrorDialog();
+            showExportErrorDialog(); // to be removed and replaced by warning instead
             return;
         }
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
@@ -1031,5 +1031,6 @@ RED.arduino.export = (function () {
         //isSpecialNode:isSpecialNode,
         pushJSON: pushJSON,
         generate_OSC_function_decode:generate_OSC_function_decode,
+        showExportErrorDialog:showExportErrorDialog // to be removed and replaced by warning instead
     };
 })();

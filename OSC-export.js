@@ -333,7 +333,7 @@ OSC.export = (function () {
         RED.storage.update();
 
         if (!RED.nodes.hasIO() && RED.arduino.settings.IOcheckAtExport) {
-            showExportErrorDialog();
+            RED.arduino.export.showExportErrorDialog();  // to be removed and replaced by warning instead
             return;
         }
         var nns = RED.nodes.createCompleteNodeSet(true); // true mean we get the new structure
