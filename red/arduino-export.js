@@ -418,6 +418,7 @@ RED.arduino.export = (function () {
         // wsCpp and newWsCpp is used
         var wsCppFiles = [];
         var newWsCpp;
+        var mainFileName = "";
         var codeFileIncludes = [];
         var classAdditional = [];
         // first create the json strings, 
@@ -481,6 +482,7 @@ RED.arduino.export = (function () {
                     fileName = ws.label;
                 newWsCpp = getNewWsCppFile(fileName + ws.mainNameExt, "");
                 newWsCpp.isMain = true;
+                mainFileName = fileName;
             }
             else if (ws.label == "main.cpp") {
                 newWsCpp = getNewWsCppFile(ws.label, "");
@@ -818,13 +820,16 @@ RED.arduino.export = (function () {
 
         if (generateZip != undefined && (generateZip == true)) {
             var zip = new JSZip();
-
+            let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
+            let subFolder = mainFileName != "" ? mainFileName : RED.arduino.settings.ProjectName;
             for (var i = 0; i < wsCppFiles.length; i++) {
                 var wsCppfile = wsCppFiles[i];
 
                 if (wsCppfile.overwrite_file == false) continue; // don't include in zip as it's only a placeholder for existing files
-
-                zip.file(wsCppfile.name, wsCppfile.contents);
+                if (useSubfolder == false)
+                    zip.file(wsCppfile.name, wsCppfile.contents);
+                else
+                    zip.file(subFolder + "\\" + wsCppfile.name, wsCppfile.contents);
             }
             zip.generateAsync({ type: "blob", compression: "DEFLATE" }).then(function (blob) {
                 //console.log("typeof:" + typeof content);

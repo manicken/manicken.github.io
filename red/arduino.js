@@ -19,6 +19,7 @@ RED.arduino = (function() {
 	var serverIsActive = false;
 	
     var defSettings = {
+        ZipExportUseSubFolder: false,
         UseAudioMixerTemplate: false,
         useExportDialog: false,
 		IOcheckAtExport: true,
@@ -39,6 +40,7 @@ RED.arduino = (function() {
     }
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
+        ZipExportUseSubFolder:defSettings.ZipExportUseSubFolder,
         UseAudioMixerTemplate: defSettings.UseAudioMixerTemplate,
 		useExportDialog: defSettings.useExportDialog,
 		IOcheckAtExport: defSettings.IOcheckAtExport,
@@ -80,6 +82,9 @@ RED.arduino = (function() {
         get UseAudioMixerTemplate() { return _settings.UseAudioMixerTemplate; },
 		set UseAudioMixerTemplate(state) { _settings.UseAudioMixerTemplate = state; RED.storage.update();},
 
+        get ZipExportUseSubFolder() { return _settings.ZipExportUseSubFolder; },
+		set ZipExportUseSubFolder(state) { _settings.ZipExportUseSubFolder = state; RED.storage.update();},
+
 		get useExportDialog() { return _settings.useExportDialog; },
 		set useExportDialog(state) { _settings.useExportDialog = state; RED.storage.update();},
 
@@ -117,7 +122,8 @@ RED.arduino = (function() {
                 ProjectName:             { label:"Project Name", type:"string", popupText: "Project Name is used as the default file names for zip-file export and JSON-save to file.<br>"+
 																						"It's also used at the default savename for the autosave function,<br>when replacing the whole design with a template design.<br>"+
 																						"<br>When naming a tab with  [ProjectName].ino (not including the []),<br>that defines it's the main ino-file when it's exported to Arduino IDE."},
-				
+                ZipExportUseSubFolder:         { label:"Zip file subfolder", type:"boolean", popupText:"When exporting as zip,<br> if this is checked then the files in the zip will be put into a sub folder,<br> this is intended for complete Arduino Sketch exports."},
+                        
                 
                 board: {label:"Board settings", expanded:true, bgColor:"#006468", 
                     items: {
