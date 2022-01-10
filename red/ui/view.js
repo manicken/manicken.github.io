@@ -2103,12 +2103,16 @@ RED.view = (function() {
 			d3.event.stopPropagation();
 			return;
 		}
-        // this makes it possible to add multiple links to the first input and to objects that don't have any outputs
-        // this could however come handy if proper checks are done then it wont allow objects that don't have any outputs
-        // and if checks against allready connected wires then that can be used to allow drop wires direct on the node and
-        // they get automatically added to free ports
-		//if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
-		//else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
+        if ((d._def.inputs == undefined && d._def.outputs == undefined) || (d._def.inputs != undefined && d._def.inputs == 0) && (d._def.outputs != undefined && d._def.outputs == 0)) {
+            console.warn(d.type + " " + d.name + " have no IO");
+            return;
+        }
+        let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
+        console.warn("next free index "+ nextFreeInputIndex);
+        if (nextFreeInputIndex == -1) return;
+        
+		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, nextFreeInputIndex); // Jannik add so that input count can be changed on the fly
+		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, nextFreeInputIndex);
 	}
 	function uiObjectMouseMove (d, mouseX, mouseY)
 	{

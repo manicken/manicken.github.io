@@ -1905,6 +1905,24 @@ RED.nodes = (function() {
 
         RED.view.redraw();
     }
+    function FindNextFreeInputPort(node) {
+        var _links = links.filter(function(l) { return (l.target === node); });
+        if (_links.length == 0) return 0; // first index
+        let index = 0;
+        let inputs = node.inputs ? node.inputs: node._def.inputs ? node._def.inputs : 0;
+        if (inputs == 0) return -1; 
+        //console.error(_links);
+        _links.sort(function(a,b){ return (a.targetPort - b.targetPort); });
+        for (let i = 0; i < _links.length ; i++,index++) {
+            if (_links[i].targetPort == index) continue;
+            
+            return index;
+        }
+        if (_links.length == inputs)
+            return -1;
+        else
+            return index;
+    }
 
 	return {
         init:init,
@@ -1926,6 +1944,7 @@ RED.nodes = (function() {
             //workspaces[index+1] = workspaces[index];
 		    //workspaces[index] = wsTemp;
         },
+        FindNextFreeInputPort:FindNextFreeInputPort,
 		moveNodeToEnd:moveNodeToEnd,
 		createWorkspaceObject:createWorkspaceObject,
 		createNewDefaultWorkspace: createNewDefaultWorkspace,
