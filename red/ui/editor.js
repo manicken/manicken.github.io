@@ -34,6 +34,7 @@ RED.editor = (function() {
 	}
 
 	var editing_node = null;
+    var editing_link = null;
 
 	/**
 	 * Validate a node 
@@ -282,7 +283,9 @@ RED.editor = (function() {
 	{
 		if (editing_node) {
 			editNode_dialog_OK_pressed(); // found above
-		} else if (RED.view.state() == RED.state.EXPORT) {
+		} else if (editing_link) {
+
+        } else if (RED.view.state() == RED.state.EXPORT) {
 			console.error("RED.view.state() == RED.state.EXPORT");
 			if (/library/.test($( "#dialog" ).dialog("option","title"))) {
 				//TODO: move this to RED.library
@@ -383,6 +386,9 @@ RED.editor = (function() {
 							$(this).scrollTop(aceEditor.scrollHeight);
 						}
 					}
+                    else if (editing_link != undefined) {
+                        //$(this).dialog('option',"sizeCache-"+editing_node.type,ui.size);
+                    }
 				},
 				open: function(e) {
 					RED.keyboard.disable();
@@ -414,7 +420,9 @@ RED.editor = (function() {
 						}
 						jscolor.install();
 					}
-
+                    else if (editing_link != undefined) {
+                        $("#node-input-color").val(editing_link.color);
+                    }
 				},
 				close: function(e) {
 					RED.keyboard.enable();
@@ -429,8 +437,14 @@ RED.editor = (function() {
 						RED.view.resetMouseVars();
 						console.log("edit node done!");
 					}
+                    else if (editing_link) {
+
+                        RED.view.resetMouseVars();
+                        console.log("edit link done!");
+                    }
 					//RED.sidebar.config.refresh();
 					editing_node = null;
+                    editing_link = null;
 				}
 		});
 	}

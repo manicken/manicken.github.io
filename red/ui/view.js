@@ -403,6 +403,7 @@ RED.view = (function() {
 		lasso = null,
 		showStatus = false,
 		lastClickNode = null,
+        lastClickLink = null,
 		dblClickPrimed = null,
 		clickTime = 0,
 		clickElapsed = 0;
@@ -1632,6 +1633,7 @@ RED.view = (function() {
 	}
 
 	function portMouseUp(d,portType,portIndex) {
+        console.warn("portMouseUp",portType,portIndex);
 		document.body.style.cursor = "";
 		if (mouse_mode == RED.state.JOINING && mousedown_node) {
 			if (typeof TouchEvent != "undefined" && d3.event instanceof TouchEvent) {
@@ -1935,6 +1937,7 @@ RED.view = (function() {
 			return;
 		}
 		mousedown_node = d;
+        console.warn(d);
 		
 		var now = Date.now();
 		clickElapsed = now-clickTime;
@@ -2100,8 +2103,12 @@ RED.view = (function() {
 			d3.event.stopPropagation();
 			return;
 		}
-		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
-		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
+        // this makes it possible to add multiple links to the first input and to objects that don't have any outputs
+        // this could however come handy if proper checks are done then it wont allow objects that don't have any outputs
+        // and if checks against allready connected wires then that can be used to allow drop wires direct on the node and
+        // they get automatically added to free ports
+		//if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, 0); // Jannik add so that input count can be changed on the fly
+		//else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, 0);
 	}
 	function uiObjectMouseMove (d, mouseX, mouseY)
 	{
@@ -2855,11 +2862,20 @@ RED.view = (function() {
 			
 			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
-            console.warn(d);
+            //console.warn(d);
 			l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
 					mousedown_link = d;
-					if (!d3.event.ctrlKey)
+
+                    // double click functionality start
+					var now = Date.now();
+                    clickElapsed = now-clickTime;
+                    clickTime = now;
+                    dblClickPrimed = (lastClickLink == mousedown_link);
+                    lastClickLink = mousedown_link;
+                    // double click end
+
+                    if (!d3.event.ctrlKey)
 						clearSelection();
 					selected_link = mousedown_link;
 					d.selected = true;
@@ -2869,6 +2885,17 @@ RED.view = (function() {
 					redraw_links();
 					d3.event.stopPropagation();
 				})
+                .on("mouseup",function(d) {
+                    if (dblClickPrimed && mousedown_link == d && clickElapsed > 0 && clickElapsed < 750) {
+                        d.outline = this.nextSibling;
+                        d.line = d.outline.nextSibling;
+                        //$(d.line).css("stroke", "#F00");
+                        console.warn("link double clicked ", d);
+                        clickElapsed = 0;
+                        d3.event.stopPropagation();
+                        return;
+                    }
+                })
 				.on("touchstart",function(d) {
 					mousedown_link = d;
 					clearSelection();
