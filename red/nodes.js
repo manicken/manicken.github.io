@@ -1268,7 +1268,7 @@ RED.nodes = (function() {
 	 * @param {String} type "TabInput" or "TabOutput"
 	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
 	 */
-	function getClassIOportName(wsId, type, index) // this 
+	function getClassIOport(wsId, type, index) // this 
 	{
 		var retNodes = [];
 		if (!wsId) return
@@ -1280,9 +1280,9 @@ RED.nodes = (function() {
 		}
 		retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
         //console.warn(type + retNodes[index].inputs);
-        if (type == "In" && retNodes[index].outputs > 1) return retNodes[index].name + "["+retNodes[index].outputs+"]";
-        else if (type == "Out" && retNodes[index].inputs > 1) return retNodes[index].name + "["+retNodes[index].inputs+"]";
-		else return retNodes[index].name;
+        if (type == "In" && retNodes[index].outputs > 1) return {name:retNodes[index].name + "["+retNodes[index].outputs+"]", node:retNodes[index], isBus:true};
+        else if (type == "Out" && retNodes[index].inputs > 1) return {name:retNodes[index].name + "["+retNodes[index].inputs+"]", node:retNodes[index], isBus:true};
+		else return {name:retNodes[index].name, node:retNodes[index],isBus:false};
 	}
 	function getClassComments(wsId)
 	{
@@ -1974,7 +1974,7 @@ RED.nodes = (function() {
 		getClassPortNode:getClassPortNode,
 		getWireInputSourceNode:getWireInputSourceNode,
 		getClassIOportsSorted:getClassIOportsSorted,
-		getClassIOportName:getClassIOportName, // used by node port tooltip popup
+		getClassIOport:getClassIOport, // used by node port tooltip popup
 		classOutputPortToCpp:classOutputPortToCpp,
 		classInputPortToCpp:classInputPortToCpp,
 		isNameDeclarationArray:isNameDeclarationArray,

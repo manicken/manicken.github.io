@@ -943,10 +943,26 @@
     fill: none;
     pointer-events: none;
   }
-  
+
   .link_outline {
     stroke: #fff;
     stroke-width: 6;
+    cursor: crosshair;
+    fill: none;
+    pointer-events: none;
+  }
+
+  .link_line_bus {
+    stroke: #7f7f7f;
+    stroke-width: 6;
+    fill: none;
+    pointer-events: none;
+    stroke-dasharray: 10, 5;
+  }
+
+  .link_outline_bus {
+    stroke:#aef2ff;
+    stroke-width: 8;
     cursor: crosshair;
     fill: none;
     pointer-events: none;
@@ -958,8 +974,13 @@
     cursor: crosshair;
     fill: none;
   }
+
   
-  g.link_selected path.link_line {
+  
+  g.link_selected path.link_line{
+    stroke: #ff7f0e;
+  }
+  g.link_selected path.link_line_bus{
     stroke: #ff7f0e;
   }
   g.link_unknown path.link_line {

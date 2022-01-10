@@ -2842,9 +2842,11 @@ RED.view = (function() {
 					(d.target.z == activeWorkspace);
 
 		});
+        //console.log(wsLinks);
 		//const t1 = performance.now();
 		var visLinksAll = visLinks.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
 		//const t2 = performance.now();
+        //console.warn(visLinksAll);
 
 		var linkEnter = visLinksAll.enter().insert("g",".node").attr("class","link");
 		anyLinkEnter = false;
@@ -2853,6 +2855,7 @@ RED.view = (function() {
 			
 			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
+            console.warn(d);
 			l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
 					mousedown_link = d;
@@ -2876,8 +2879,17 @@ RED.view = (function() {
 					redraw_links();
 					d3.event.stopPropagation();
 				});
-			l.append("svg:path").attr("class","link_outline link_path");
-			l.append("svg:path").attr("class","link_line link_path");
+
+            if (RED.nodes.isClass(d.source.type) && RED.nodes.getClassIOport(RED.nodes.getWorkspaceIdFromClassName(d.source.type), "Out", d.sourcePort).isBus ||
+                RED.nodes.isClass(d.target.type) && RED.nodes.getClassIOport(RED.nodes.getWorkspaceIdFromClassName(d.target.type), "In", d.targetPort).isBus ||
+                d.source.type == "BusJoin" || d.target.type == "BusSplit") {
+                l.append("svg:path").attr("class","link_outline_bus link_path");
+                l.append("svg:path").attr("class","link_line_bus link_path");
+            }
+            else {
+                l.append("svg:path").attr("class","link_outline link_path");
+                l.append("svg:path").attr("class","link_line link_path");
+            }
 		});
 
 		visLinksAll.exit().remove();
@@ -4730,7 +4742,7 @@ RED.view = (function() {
 			if (RED.nodes.isClass(nodeType))
 			{
 				var wsId = RED.nodes.getWorkspaceIdFromClassName(nodeType);
-				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, portDir, index);
+				portName = portName + ": " + RED.nodes.getClassIOport(wsId, portDir, index).name;
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}
