@@ -10,7 +10,8 @@ OSC.export = (function () {
         RED.main.SetPopOver("#btn-load-osc-sd", a+"Loads a .osc file from the SD-card and applies the design");
         RED.main.SetPopOver("#btn-save-json-sd", a+"Saves the current (whole) Design to a .json file on the connected teensy SD-card");
         RED.main.SetPopOver("#btn-load-json-sd", a+"Load/Retreives a saved .json from the connected Teensy SD-Card<br>this is then loaded into this tool.");
-        RED.main.SetPopOver("#btn-deploy-osc", a+"Exports this design to a Teensy Running The Dynamic Audio Framework");
+        RED.main.SetPopOver("#btn-deploy-osc", a+"Exports this flat (no arrays/no classes) design to a Teensy Running The Dynamic Audio Framework");
+        RED.main.SetPopOver("#btn-deploy-osc-group", a+"Exports this grouped (full support) design to a Teensy Running The Dynamic Audio Framework<br><br><b>note. This is under development, and may not yet work as intended.</b>");
         RED.main.SetPopOver("#btn-osc-clearAll", a+"Clears the current design in the teensy<br>this is good if something got messed up and you want a fresh start.");
     }
     $('#btn-save-osc-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveOscToSDcard, "Save as .osc (.osc is added automatically)");});
@@ -60,30 +61,35 @@ OSC.export = (function () {
         if (result == undefined) return; // only happens at getGroupExport_bundle
 
         var bundle = result.bundle;
-        var bundleData = OSC.CreateBundleData(bundle);
-
-        if (RED.OSC.settings.DirectExport == true) {
-            OSC.SendData(bundleData);
-            return;
+        try {
+            var bundleData = OSC.CreateBundleData(bundle);
+            if (RED.OSC.settings.DirectExport == true) {
+                OSC.SendData(bundleData);
+                return;
+            }
         }
+        catch (err) {
+            OSC.AddLineToLog(err);
+        }
+        
         // generate human readable export text
         var exportDialogText = ""; // use this for debug output
 
         for (var i = 0; i < bundle.packets.length; i++) {
-            exportDialogText += JSON.stringify(bundle.packets[i]) + "\n";
+            exportDialogText += OSC.GetPacketCompactForm(bundle.packets[i]) + "\n";
         }
 
-        exportDialogText += "\nPackets raw data:\n";
+        /*exportDialogText += "\nPackets raw data:\n";
         for (var i = 0; i < bundle.packets.length; i++) {
             exportDialogText += new TextDecoder("utf-8").decode(osc.writePacket(bundle.packets[i])) + "\n";
-        }
+        }*/
         
         var dataAsText = new TextDecoder("utf-8").decode(bundleData);
         
         exportDialogText += "\nTotal AudioObjects:" + result.apos.length + "\n";
         exportDialogText += "Total AudioConnections: " + (result.acs.length/2) + "\n";
-
-        exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
+        if (bundleData != undefined) // only happen when bundle contain errors
+            exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
         showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
         function () {OSC.SendData(bundleData);});
 
@@ -211,38 +217,57 @@ OSC.export = (function () {
                 var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
 
                 if (path == '/') {
-                    if (node.type != "AudioMixer") {
-                        if (isArray) {
-                            var name = isArray.name;
-                            var count = isArray.arrayLength;
-                            bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
-                            for (var ai = 0; ai < count; ai++)
-                            {
+                    if (isArray) {
+                        var name = isArray.name;
+                        var count = isArray.arrayLength;
+                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
+                        for (var ai = 0; ai < count; ai++)
+                        {
+                            if (node._def.defaults.inputs == undefined) {
                                 bundle.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, name);
                             }
-                        }
-                        else
-                            bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
-                    }
-                    else
-                        bundle.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, node.inputs);
-                }
-                else {
-                    if (node.type != "AudioMixer") {
-                        if (isArray) {
-                            var name = isArray.name;
-                            var count = isArray.arrayLength;
-                            bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
-                            for (var ai = 0; ai < count; ai++)
-                            {
-                                bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, path + "/" + name);
+                            else {
+                                // AudioMixer or any object supporting dynamic count of inputs
+                                bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, name, RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
-                        else
-                            bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
                     }
-                    else // array of AudioMixer is not possible
-                        bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, node.inputs);
+                    else {
+                        if (node._def.defaults.inputs == undefined) {
+                            bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+                        }
+                        else {
+                            // AudioMixer or any object supporting dynamic count of inputs
+                            bundle.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.arduino.export.getDynamicInputCount(node, true));
+                        }
+                    }
+                }
+                else {
+                    if (isArray) {
+                        var name = isArray.name;
+                        var count = isArray.arrayLength;
+                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
+                        for (var ai = 0; ai < count; ai++)
+                        {
+                            if (node._def.defaults.inputs == undefined) {
+                                bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, path + "/" + name);
+                            }
+                            else {
+                                // AudioMixer or any object supporting dynamic count of inputs
+                                bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, path + "/" + name, RED.arduino.export.getDynamicInputCount(node, true));
+                            }
+                        }
+                    }
+                    else {
+                        if (node._def.defaults.inputs == undefined) {
+                            bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
+                        }
+                        else {
+                            // AudioMixer or any object supporting dynamic count of inputs
+                            bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, RED.arduino.export.getDynamicInputCount(node, true));
+                        }
+                    }
+
                 }
             }
         }
@@ -416,7 +441,7 @@ OSC.export = (function () {
             if (n.inputs == 1) // special case 
             {
                 // check if source is a array
-                var src = RED.nodes.getWireInputSourceNode(nns, n.z, n.id);
+                var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
                 if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
                 {
                     var isArray = RED.nodes.isNameDeclarationArray(src.node.name);

@@ -217,7 +217,7 @@ NodeDefinitions = {
             "AudioOutputUSB":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"usb","inputs":2,"outputs":0,"category":"output-other","color":"#E6E0F8","icon":"arrow-in.png"},
 
             "AudioAmplifier":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"amp","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
-            "AudioMixer4":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{},"inputs":{"value":"4"}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
+            "AudioMixer4":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"mixer4","inputs":4,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioPlayMemory":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"playMem","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioPlaySdWav":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"playSdWav","inputs":0,"outputs":2,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"},
             "AudioPlaySdRaw":{"defaults":{"name":{"type":"c_cpp_name"},"comment":{}},"shortName":"playSdRaw","inputs":0,"outputs":1,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"},

@@ -1346,15 +1346,16 @@ RED.nodes = (function() {
 	
 	/**
 	 * This is used to find what is connected to a input-pin
+     * Only used to get whats connected to DynInput objects such as AudioMixer and AudioMixerStereo
 	 * @param {Array} nns array of all nodes
 	 * @param {String} wsId workspace id
 	 * @param {String} nId node id
 	 * @returns {*} as {node:n, srcPortIndex: srcPortIndex}
 	 */
-	function getWireInputSourceNode(nns, wsId, nId)
+	function getWireInputSourceNode(node, port)
 	{
 		//console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
-		for (var ni = 0; ni < nns.length; ni++)
+		/*for (var ni = 0; ni < nns.length; ni++)
 		{
 			var n = nns[ni];
 			if (n.z != wsId) continue; // workspace check
@@ -1369,7 +1370,13 @@ RED.nodes = (function() {
 				}
 			});
 			if (retVal) return retVal;
-		}
+		}*/
+        if (port == undefined) port = 0; // default
+        var _links = links.filter(function(l) { return ((l.target === node) && (l.targetPort == port)); });
+        console.log("_links:" + node.name ,_links);
+        if (_links.length == 0) return undefined;
+        // there is only be one link found
+        return {node:_links[0].source, srcPortIndex:_links[0].sourcePort};
 	}
 	/**
 	 * This is used to count the amount of inputs that a unknown type has
@@ -1440,7 +1447,8 @@ RED.nodes = (function() {
 		} // abort
 
 		// if the portNode is found, next we get what is connected to that port inside the class
-		var newSrc = getWireInputSourceNode(nns, getWorkspaceIdFromClassName(classNode.type), outputNode.id); // this return type {node:n, srcPortIndex: srcPortIndex};
+		var newSrc = getWireInputSourceNode(getNode(outputNode.id), 0); // this return type {node:n, srcPortIndex: srcPortIndex};
+        console.error(newSrc);
         if (newSrc == undefined) return false;
         
 		ac.srcName += "." + make_name(newSrc.node);

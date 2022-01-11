@@ -944,33 +944,32 @@ RED.view = (function() {
 				}
 			}
 			
+            if (posMode == 2) {
+                var mouse_down_w = mousedown_node.w/2;
+            }
+            else {
+                if (mousedown_port_type == 1) {
+                    if (mousedown_node.type == "JunctionRL")
+                        var mouse_down_w = mousedown_node.w;
+                    else
+                        var mouse_down_w = 1;
+                }
+                else {
+                    if (mousedown_node.type == "JunctionRL")
+                        var mouse_down_w = 0;
+                    else
+                        var mouse_down_w = mousedown_node.w;
+                }
+            }
+            
 
-			//drag_line.attr("d", redraw_link);
-			if (posMode === 2)
-			{
-				drag_line.attr("d",
-					"M "+(mousedown_node.x+sc*mousedown_node.w/2)+" "+(mousedown_node.y+portY)+
-					" C "+(mousedown_node.x+sc*(mousedown_node.w/2+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
-					(mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
-					mousePos[0]+" "+mousePos[1]
-					);
-			}
-			else
-			{
-				/*drag_line.attr("d",
-					"M "+(mousedown_node.x+sc*1)+" "+(mousedown_node.y+portY)+
-					" C "+(mousedown_node.x+sc*(1+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
-					(mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
-					mousePos[0]+" "+mousePos[1]
-					);*/
-
-					drag_line.attr("d",
-					"M "+(mousedown_node.x+sc*1)+" "+(mousedown_node.y+portY)+
-					" L "+mousePos[0]+" "+mousePos[1]
-					);
-			}
-				
-
+            drag_line.attr("d",
+                "M "+(mousedown_node.x+sc*mouse_down_w)+" "+(mousedown_node.y+portY)+
+                " C "+(mousedown_node.x+sc*(mouse_down_w+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
+                (mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
+                mousePos[0]+" "+mousePos[1]
+                );
+			
 			d3.event.preventDefault();
 		} else if (mouse_mode == RED.state.MOVING) {
 			
