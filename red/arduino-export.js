@@ -990,7 +990,7 @@ RED.arduino.export = (function () {
         {
             var isArray = RED.nodes.isNameDeclarationArray(src.node.name,src.node.z,replaceConstWithValue);
             if (isArray) {
-                console.trace("special case "+n.type+" connected from array " + src.node.name + " " + isArray.arrayLength);
+                console.log("special case "+n.type+" connected from array " + src.node.name + " " + isArray.arrayLength);
                 if (isArray.arrayLength <= 0) return 1;
                 if (isArray.arrayLength > 255) return 255;
                 return isArray.arrayLength;

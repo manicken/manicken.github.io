@@ -184,7 +184,9 @@ OSC.export = (function () {
 		return {is:false};
 	}
 
-    function getClassObjects(nns, ws, bundle, path, wildcardArrayItems) {
+    function getClassObjects(nns, ws, bundle, path) {
+        var wildcardArrayItems = RED.OSC.settings.WildcardArrayObjects;
+
         for (var ni = 0; ni < ws.nodes.length; ni++) {
             var n = ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
@@ -202,14 +204,16 @@ OSC.export = (function () {
                     {
                         bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + name);
                         if (wildcardArrayItems == false)
-                            getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i" + ai, wildcardArrayItems);
+                            getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i" + ai);
                     }
                     if (wildcardArrayItems == true)
-                        getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i*", wildcardArrayItems);
+                        getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i*");
                 }
                 else {
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
-                    getClassObjects(nns, maybeClass.ws, bundle, path + "/" + n.name);
+                    if (path != "/") path += "/";
+                    getClassObjects(nns, maybeClass.ws, bundle, path + n.name);
+                    
                 }
             }
             else
@@ -220,7 +224,7 @@ OSC.export = (function () {
                     if (isArray) {
                         var name = isArray.name;
                         var count = isArray.arrayLength;
-                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
+                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
                         for (var ai = 0; ai < count; ai++)
                         {
                             if (node._def.defaults.inputs == undefined) {
@@ -242,11 +246,13 @@ OSC.export = (function () {
                         }
                     }
                 }
-                else {
+                else { // inside of class
+                    
                     if (isArray) {
                         var name = isArray.name;
                         var count = isArray.arrayLength;
-                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name);
+                        //console.warn("this happen isArray: " + name);
+                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name, path);
                         for (var ai = 0; ai < count; ai++)
                         {
                             if (node._def.defaults.inputs == undefined) {
@@ -259,6 +265,7 @@ OSC.export = (function () {
                         }
                     }
                     else {
+                        //console.warn("this happen: " + n.name);
                         if (node._def.defaults.inputs == undefined) {
                             bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
                         }
@@ -273,7 +280,7 @@ OSC.export = (function () {
         }
     }
 
-    function getClassConnections(nns, ws, bundle, path, wildcardArrayItems) {
+    function getClassConnections(nns, ws, bundle, path) {
         for (var ni = 0; ni < ws.nodes.length; ni++) {
             var n = ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
@@ -291,7 +298,7 @@ OSC.export = (function () {
                     {
                         console.error("this 1 @ " + path +" "+ name + "/i" + ai);
                         addLinksToBundle(bundle, links, path, path + name + "/i" + ai,path + name + "/i" + ai, ai);
-                        getClassConnections(nns, maybeClass.ws, bundle, path + name + "/i" + ai, wildcardArrayItems);
+                        getClassConnections(nns, maybeClass.ws, bundle, path + name + "/i" + ai);
                     }
                 }
                 else {
@@ -369,8 +376,8 @@ OSC.export = (function () {
         var ws = nns.workspaces[mainWorkSpace];
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
-        getClassObjects(nns, ws, bundle, '/', RED.OSC.settings.WildcardArrayObjects);
-        getClassConnections(nns, ws, bundle, '/', RED.OSC.settings.WildcardArrayObjects);
+        getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get
+        getClassConnections(nns, ws, bundle, '/');
 
         if (getBundleOnly == true) 
             return bundle;
