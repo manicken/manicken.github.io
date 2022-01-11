@@ -4558,6 +4558,7 @@ RED.view = (function() {
         RED.main.SetPopOver("#node-input-export-isMain-settings", "This defines which file-name to use when exporting as main.", "left");
         RED.main.SetPopOver("#node-input-generateCppDestructor-workspace", "This autogenerates the C++ destructor function that will disconnect and destroy all AudioConnections", "left");
         $( "#node-input-export-isMain" ).prop('checked',  ws.isMain);
+        $( "#node-input-export-isOSCmain" ).prop('checked',  ws.isOSCmain);
         chk_exportIsMain_OnClick();
 
         var otherMain = getOtherMain(ws)
@@ -4626,6 +4627,7 @@ RED.view = (function() {
                     workspace.generateCppDestructor = $("#node-input-generateCppDestructor-workspace").prop('checked');
                     workspace.extraClassDeclarations = $("#node-input-workspace-extraClassDeclarations").val();
                     workspace.isMain = $( "#node-input-export-isMain" ).prop('checked');
+                    workspace.isOSCmain = $( "#node-input-export-isOSCmain" ).prop('checked');
                     workspace.mainNameType = $( "#node-input-export-mainNameType" ).val();
                     workspace.mainNameExt = $( "#node-input-export-mainNameExt" ).val();
 					if (workspace.export != exportNew)

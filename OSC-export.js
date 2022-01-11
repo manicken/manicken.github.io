@@ -166,7 +166,7 @@ OSC.export = (function () {
 
     function findMainWs(nns) {
         for (var wi=0; wi < nns.workspaces.length; wi++) {
-            if (nns.workspaces[wi].isMain == true) {
+            if (nns.workspaces[wi].isOSCmain == true) {
                 return wi;
             }
         }
@@ -376,7 +376,7 @@ OSC.export = (function () {
         var ws = nns.workspaces[mainWorkSpace];
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
-        getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get
+        getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get getClassConnections working
         getClassConnections(nns, ws, bundle, '/');
 
         if (getBundleOnly == true) 
