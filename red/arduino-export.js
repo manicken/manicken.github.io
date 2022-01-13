@@ -219,7 +219,7 @@ RED.arduino.export = (function () {
         const t0 = performance.now();
         RED.storage.update();
 
-        var nns = RED.nodes.createCompleteNodeSet(false);
+        var nns = RED.nodes.createCompleteNodeSet({newVer:false});
         // sort is made inside createCompleteNodeSet
         var wsCppFiles = [];
         wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
@@ -296,7 +296,7 @@ RED.arduino.export = (function () {
                     var src = RED.nodes.node(n.id);
                         var dst = RED.nodes.node(dstId);
 
-                        if (src._def.classIn != undefined || dst._def.classOut != undefined) return; // now with JSON string at top, place-holders not needed anymore
+                        if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
 
                         if (dst.type.startsWith("Junction"))// && )
                         {
@@ -424,7 +424,7 @@ RED.arduino.export = (function () {
         
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 
-        var nns = RED.nodes.createCompleteNodeSet(false);
+        var nns = RED.nodes.createCompleteNodeSet({newVer:false});
         // sort is made inside createCompleteNodeSet
 
         var tabNodes = RED.nodes.getClassIOportsSorted();
@@ -653,7 +653,7 @@ RED.arduino.export = (function () {
                         var src = RED.nodes.node(n.id);
                         var dst = RED.nodes.node(dstId);
 
-                        if (src._def.classIn != undefined || dst._def.classOut != undefined) return; // now with JSON string at top, place-holders not needed anymore
+                        if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
 
                         if (dst.type.startsWith("Junction"))// && )
                         {

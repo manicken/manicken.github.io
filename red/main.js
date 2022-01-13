@@ -233,7 +233,8 @@ RED.main = (function() {
                         }
                         console.error("load " + label);
                         //console.log("newFlowData:" + contents);
-                        var nns = RED.nodes.createCompleteNodeSet(true);
+                        RED.nodes.sortNodes();
+                        var nns = RED.nodes.createCompleteNodeSet({newVer:true});
                         RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json",JSON.stringify(nns), function(dirName,fileName) {
                             saveToFile(RED.arduino.settings.ProjectName + ".json");
                             RED.storage.loadContents(contents);
@@ -296,7 +297,7 @@ RED.main = (function() {
 	{
 		try
 		{
-            var nns = RED.nodes.createCompleteNodeSet(true);
+            var nns = RED.nodes.createCompleteNodeSet({newVer:true});
             var jsonString  = JSON.stringify(nns, null, 4);
 			download(name, jsonString);
 		}catch (err)

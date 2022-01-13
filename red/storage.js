@@ -20,7 +20,8 @@ RED.storage = (function() {
 		
 		if (localStorage)
 		{
-			var nns = RED.nodes.createCompleteNodeSet(true);
+            //RED.nodes.sortNodes();
+			var nns = RED.nodes.createCompleteNodeSet({newVer:true});
             var JSON_string = JSON.stringify(nns);
             localStorage.setItem("audio_library_guitool", JSON_string);
             RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON_string);

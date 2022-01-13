@@ -28,10 +28,8 @@ NodeDefinitions = {
         "homepage":"https://github.com/manicken",
         "url":"",
         "types":{
-            //"TabOutput":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"Out","classOut":"","nonObject":"","inputs":1,"outputs":0,"category":"special","color":"#cce6ff","icon":"arrow-in.png"},
-            //"TabInput":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"In","classIn":"","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
-            "TabOutput":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"inputs":{"value":1,"maxval":255,"minval":1,"type":"int"}},"editor":"autogen","shortName":"Out","classOut":"","nonObject":"","inputs":1,"outputs":0,"category":"special","color":"#cce6ff","icon":"arrow-in.png"},
-            "TabInput":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"outputs":{"value":1,"maxval":255,"minval":1,"type":"int"}},"editor":"autogen","shortName":"In","classIn":"","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
+            "TabOutput":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"inputs":{"value":1,"maxval":255,"minval":1,"type":"int"}},"editor":"autogen","shortName":"Out","nonObject":"","inputs":1,"outputs":0,"category":"special","color":"#cce6ff","icon":"arrow-in.png"},
+            "TabInput":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"outputs":{"value":1,"maxval":255,"minval":1,"type":"int"}},"editor":"autogen","shortName":"In","nonObject":"","inputs":0,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
             
             "BusJoin":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"inputs":{"value":1,"maxval":255,"minval":2,"type":"int"}},"editor":"autogen","shortName":"BusJoin","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "help":"not implemented yet"},
             "BusSplit":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"outputs":{"value":1,"maxval":255,"minval":2,"type":"int"}},"editor":"autogen","shortName":"BusSplit","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},

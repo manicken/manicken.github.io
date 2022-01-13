@@ -30,7 +30,8 @@ OSC.export = (function () {
 
     $('#btn-save-json-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveJSONToSDcard, "Save as .json (.json is added automatically)");});
     function saveJSONToSDcard(name) {
-        var nns = RED.nodes.createCompleteNodeSet(false);
+        RED.storage.update();
+        var nns = RED.nodes.createCompleteNodeSet({newVer:true});
         var jsonString = JSON.stringify(nns);
         var data = new TextEncoder("utf-8").encode(jsonString);
         var addr = RED.OSC.settings.RootAddress + "/fs/save";
@@ -100,7 +101,7 @@ OSC.export = (function () {
 
         RED.storage.update();
 
-        var nns = RED.nodes.createCompleteNodeSet(false);
+        var nns = RED.nodes.createCompleteNodeSet({newVer:false});
 
         var activeWorkspace = RED.view.getWorkspace();
 
@@ -343,7 +344,12 @@ OSC.export = (function () {
             var dstName = GetNameWithoutArrayDef(link.target.name);
             var srcPort = link.sourcePort;
             var dstPort = link.targetPort;
+            
+            // need to replace this with a function that returns multiple
+            // audioconnections/linknames, i.e. when many wires connect from
+            // a TabInput inside a class
             var linkName = OSC.GetLinkName(link,overrideTargetPort);
+            
             if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
             if (path == "/") {
                 console.warn("path / " + linkName);
@@ -364,7 +370,7 @@ OSC.export = (function () {
 
         RED.storage.update();
 
-        var nns = RED.nodes.createCompleteNodeSet(true); // true mean we get the new structure
+        var nns = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
 
         var mainWorkSpace = findMainWs(nns);
         if (mainWorkSpace == -1) {
@@ -376,7 +382,7 @@ OSC.export = (function () {
         var ws = nns.workspaces[mainWorkSpace];
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
-        getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get getClassConnections working
+        //getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get getClassConnections working
         getClassConnections(nns, ws, bundle, '/');
 
         if (getBundleOnly == true) 

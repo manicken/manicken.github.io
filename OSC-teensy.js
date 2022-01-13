@@ -516,15 +516,35 @@ OSC = (function() {
         var value = 0;
 		//console.warn("isNameDeclarationArray: " + name);
 		var startIndex = name.indexOf("[");
+        //var endIndex = name.indexOf("]");
 		if (startIndex == -1) return name;
+        //if (endIndex == -1) return name;
         return name.substring(0, startIndex);
     }
     function GetLinkName(link,overrideTargetPort) {
-        //if (link.name != undefined)
-        //    return link.name;
-        //else
         var srcName = GetNameWithoutArrayDef(link.source.name);
         var dstName = GetNameWithoutArrayDef(link.target.name);
+        
+        var wsId = RED.nodes.isClass(link.source.type)
+        if (wsId != undefined) {
+            console.warn("isclass " + link.source.type);
+            var port = RED.nodes.getClassIOport(wsId, "Out", link.sourcePort);
+            var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0);
+
+            srcName+=newSrc.node.name + "_" + newSrc.srcPortIndex;
+        }
+
+        var wsId = RED.nodes.isClass(link.target.type)
+        if (wsId != undefined) {
+            console.warn("isclass " + link.target.type);
+            var port = RED.nodes.getClassIOport(wsId, "In", link.targetPort);
+            // this port can connect to many inputs therefore it need special treatment
+            
+            //var newDst = RED.nodes.getWireOutputSourceNode(port.node, 0);
+
+            //dstName+=newDst.node.name + "_" + newDst.srcPortIndex;
+        }
+
         var srcPort = link.sourcePort;
         var dstPort = link.targetPort;
         if (overrideTargetPort != undefined) dstPort = overrideTargetPort;

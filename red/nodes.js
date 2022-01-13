@@ -425,7 +425,7 @@ RED.nodes = (function() {
         
         if (!node) return removedLinks; // cannot continue if node don't exists
 
-        if (node._def.classIn != undefined || node._def.classOut != undefined)
+        if (node.type == "TabInput" || node.type == "TabOutput")
         {
             //TODO: do the removal of external connected wires // now fixed
             //console.warn("TODO: do the removal of external connected wires"); // now fixed
@@ -636,10 +636,96 @@ RED.nodes = (function() {
 		}
 		return nns;
 	}
+
+    Array.prototype.pushArray = function (other_array) {
+        /* You should include a test to check whether other_array really is an array */
+        //console.warn(typeof other_array);
+        other_array.forEach(function(v) {this.push(v)}, this);
+    }
+
+    function sortNodes() {
+        //console.error("nodecount before sort: "+nodes.length);
+        var sortedNodes = [];
+        for (wsi=0;wsi<workspaces.length;wsi++)
+		{
+			ws = workspaces[wsi];
+
+            var absoluteXposMax = 0;
+            var absoluteYposMax = 0;
+            var workspaceColSize = RED.view.defSettings.gridVmajorSize;
+            
+            // if the ws.settings.gridVmajorSize is defined then use that instead
+            if (ws.settings.gridVmajorSize != undefined) workspaceColSize = ws.settings.gridVmajorSize;
+            // calculate absolute node max and min positions
+            for (var ni = 0; ni < nodes.length; ni++)
+            {
+                var node = nodes[ni];
+                if (node.z != ws.id) continue; // workspace filter
+                if (node.x > absoluteXposMax) absoluteXposMax = node.x;
+                if (node.y > absoluteYposMax) absoluteYposMax = node.y;
+            }
+            // ensure that every node is included 
+            absoluteXposMax += workspaceColSize*4; 
+            absoluteYposMax += RED.view.node_def.height*4;
+            var otherNodes = [];
+			// sort audio nodes by columns (xpos)
+			for (var xPosMin = 0; xPosMin < absoluteXposMax; xPosMin+=workspaceColSize)
+			{
+				var nnsCol = []; // current column
+				var xPosMax = xPosMin+workspaceColSize;
+
+				for (ni=0;ni<nodes.length;ni++)
+				{
+					var node = nodes[ni];
+					if (node.z != ws.id) continue; // workspace filter
+
+					if (node._def.uiObject != undefined) continue; // skip 'ui nodes' they are added down (and should never be sorted because then it will mess up ui layout)
+                    if (node.type == "TabInput" || node.type == "TabOutput") continue; // skip TabInputs TabOutputs they are added down
+
+					if ((node.x >= xPosMin) && (node.x < xPosMax))
+						nnsCol.push(node);
+				}
+				// sort "new" nodes by ypos
+				nnsCol.sort(function(a,b){return(a.y-b.y);});
+                otherNodes.pushArray(nnsCol);
+            }
+            var classIOnodes = [];
+            var uiNodes = [];
+            // add ui nodes last and as they are in draw order
+			for (var ni=0;ni<nodes.length;ni++)
+			{
+				var node = nodes[ni];
+				if (node.z != ws.id) continue; // workspace filter
+                if (node.type == "TabInput" || node.type == "TabOutput") { // handle TabInputs TabOutputs separately as they should be sorted top to bottom regardless of x pos
+                    classIOnodes.push(node);
+                    continue;
+                }
+				if (node._def.uiObject == undefined) continue; // skip other non ui nodes
+                // just add ui nodes as is to preserve draw order
+                uiNodes.push(node);
+			}
+            classIOnodes.sort(function(a,b){return(a.y-b.y);});
+            sortedNodes.pushArray(uiNodes);
+            sortedNodes.pushArray(classIOnodes);
+            sortedNodes.pushArray(otherNodes);
+		}
+        nodes.length = 0;
+        nodes.pushArray(sortedNodes);
+        //console.error("nodecount after sort: "+nodes.length);
+    }
 	
-	function createCompleteNodeSet(newVersion) {
-        if (newVersion == undefined) newVersion = false;
-       
+	function createCompleteNodeSet(args) {
+        var newVersion;
+        var sort;
+        if (args == undefined) args = {};
+        if (args.newVer == undefined) newVersion = false;
+        else newVersion = args.newVer;
+        if (args.sort == undefined) sort = true; // defaults to allways sort
+        else sort = args.sort;
+
+        if (sort == true) sortNodes();
+
+   
 		if(newVersion == true) var project = {version:1};
         else var nns = [];
 
@@ -655,18 +741,28 @@ RED.nodes = (function() {
 		//								  "\n  workspaceColSize:" + workspaceColSize);
         // first add all workspaces/tabs to the nns
         if (newVersion == false) {
-            for (wsi=0;wsi<workspaces.length;wsi++) {
+            for (let wsi=0;wsi<workspaces.length;wsi++) {
                 nns.push(workspaces[wsi]);
             }
         }
 		var ws = {};
 		// sort nodes by workspace
-		for (wsi=0;wsi<workspaces.length;wsi++)
+		for (var wsi=0;wsi<workspaces.length;wsi++)
 		{
 			ws = workspaces[wsi];
             if (newVersion == true)
                 ws.nodes = []; // clear this
 
+            for (var ni = 0; ni < nodes.length; ni++) {
+                var node = nodes[ni];
+                if (node.z != ws.id) continue; // workspace filter
+
+                if (newVersion == true)
+                    ws.nodes.push(convertNode(node));
+                else
+				    nns.push(convertNode(node)); 
+            }
+/*
             var absoluteXposMax = 0;
             var absoluteYposMax = 0;
             var workspaceColSize = RED.view.defSettings.gridVmajorSize;
@@ -683,8 +779,8 @@ RED.nodes = (function() {
                 if (node.y > absoluteYposMax) absoluteYposMax = node.y;
             }
             // ensure that every node is included 
-            absoluteXposMax += workspaceColSize*2; 
-            absoluteYposMax += RED.view.node_def.height*2;
+            absoluteXposMax += workspaceColSize*4; 
+            absoluteYposMax += RED.view.node_def.height*4;
 
             
 			// sort nodes by columns (xpos)
@@ -725,7 +821,7 @@ RED.nodes = (function() {
                     ws.nodes.push(convertNode(node, true));
                 else
 				    nns.push(convertNode(node, true)); 
-			}
+			}*/
 		}
         if (newVersion == true) {
             project.workspaces = workspaces;
@@ -1244,8 +1340,8 @@ RED.nodes = (function() {
 			var node = nns[i];
 			if (wsId && (node.z != wsId)) continue;
 
-			if (node._def.classIn != undefined) inNodes.push(convertNode(node, true));
-			else if (node._def.classOut != undefined) outNodes.push(convertNode(node, true));
+			if (node.type == "TabInput") inNodes.push(convertNode(node, true));
+			else if (node.type == "TabOutput") outNodes.push(convertNode(node, true));
 		}
 		inNodes.sort(function(a,b){ return (a.y - b.y); });
 		outNodes.sort(function(a,b){ return (a.y - b.y); });
@@ -1271,8 +1367,8 @@ RED.nodes = (function() {
                 console.error(node);
                 continue;
             }
-			if (node._def.classIn != undefined) inNodesCount++;
-			else if (node._def.classOut != undefined) outNodesCount++;
+			if (node.type == "TabInput") inNodesCount++;
+			else if (node.type == "TabOutput") outNodesCount++;
 		}
 		return {outCount:outNodesCount, inCount:inNodesCount};
 	}
@@ -1287,13 +1383,14 @@ RED.nodes = (function() {
 	{
 		var retNodes = [];
 		if (!wsId) return
+        var nodeType = "Tab"+type+"put";
 		for (var i = 0; i < nodes.length; i++)
 		{
 			var node = nodes[i];
 			if (node.z != wsId) continue;
-			if (node._def["class"+type] != undefined) retNodes.push(node);
+			if (node.type == nodeType) retNodes.push(node);
 		}
-		retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
+		//retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
         //console.warn(type + retNodes[index].inputs);
         if (type == "In" && retNodes[index].outputs > 1) return {name:retNodes[index].name + "["+retNodes[index].outputs+"]", node:retNodes[index], isBus:true};
         else if (type == "Out" && retNodes[index].inputs > 1) return {name:retNodes[index].name + "["+retNodes[index].inputs+"]", node:retNodes[index], isBus:true};
@@ -1683,7 +1780,7 @@ RED.nodes = (function() {
 			var n = nns[i];
 			if (n.z == classUid)
 			{
-				if (n._def.classIn != undefined)
+				if (n.type == "TabInput")
 				{
 					count++;
 					//console.log("TabInput:" + n.name);
@@ -1703,7 +1800,7 @@ RED.nodes = (function() {
 			var n = nns[i];
 			if (n.z == classUid)
 			{
-				if (n._def.classOut != undefined)
+				if (n.type == "TabOutput")
 				{
 					count++;
 					//console.log("TabOutput:" + n.name);
@@ -1935,6 +2032,7 @@ RED.nodes = (function() {
 
 	return {
         init:init,
+        sortNodes:sortNodes,
         moveWorkspace: function(start, end) {
             if (start > end)
             {
@@ -2039,6 +2137,7 @@ RED.nodes = (function() {
 			}
         },
         getCurrentWorkspace: function() { return currentWorkspace},
+        setNodes:function(_nodes) { nodes = _nodes;},
 		nodes: nodes, // TODO: exposed for d3 vis
 		workspaces:workspaces,
 		links: links,  // TODO: exposed for d3 vis
