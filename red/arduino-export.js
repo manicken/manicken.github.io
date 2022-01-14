@@ -926,9 +926,9 @@ RED.arduino.export = (function () {
         function float2int(value) {
             return value | 0;
         }
-        RED.view.state(RED.state.EXPORT);
+        RED.view.state = RED.state.EXPORT;
         var t2 = performance.now();
-        RED.view.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
+        RED.view.dialogs.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
             if (textareaLabel != undefined)
                 $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
 

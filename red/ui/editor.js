@@ -285,8 +285,8 @@ RED.editor = (function() {
 			editNode_dialog_OK_pressed(); // found above
 		} else if (editing_link) {
 
-        } else if (RED.view.state() == RED.state.EXPORT) {
-			console.error("RED.view.state() == RED.state.EXPORT");
+        } else if (RED.view.state == RED.state.EXPORT) {
+			console.error("RED.view.state == RED.state.EXPORT");
 			if (/library/.test($( "#dialog" ).dialog("option","title"))) {
 				//TODO: move this to RED.library
 				var flowName = $("#node-input-filename").val();
@@ -297,8 +297,8 @@ RED.editor = (function() {
 					});
 				}
 			}
-		} else if (RED.view.state() == RED.state.IMPORT) {
-			console.error("RED.view.state() == RED.state.IMPORT");
+		} else if (RED.view.state == RED.state.IMPORT) {
+			console.error("RED.view.state == RED.state.IMPORT");
             var text = $("#node-input-import").val();
             if (text.startsWith("http")) {
                 RED.notify("downloading JSON " + text, "info", null, 3000);
@@ -427,8 +427,8 @@ RED.editor = (function() {
 				close: function(e) {
 					RED.keyboard.enable();
 
-					if (RED.view.state() != RED.state.IMPORT_DRAGGING) {
-						RED.view.state(RED.state.DEFAULT);
+					if (RED.view.state != RED.state.IMPORT_DRAGGING) {
+						RED.view.state = RED.state.DEFAULT;
 					}
 					$( this ).dialog('option','height','auto');
 					$( this ).dialog('option','width','500');
@@ -536,7 +536,7 @@ RED.editor = (function() {
 				format:'hex', closeButton:true, shadow:true
 			};
 		}
-		RED.view.state(RED.state.EDITING);
+		RED.view.state = RED.state.EDITING;
 
 		editing_node = node;
 		
@@ -569,7 +569,7 @@ RED.editor = (function() {
             else // use global editor
             {	editorType = "NodesGlobalEdit"; console.log("use global editor");}
             
-            RED.view.getForm("dialog-form", editorType, function (d, f) {
+            RED.view.dialogs.getForm("dialog-form", editorType, function (d, f) {
                 prepareEditDialog(node, "node-input");
                 $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
             });

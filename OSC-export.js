@@ -167,7 +167,7 @@ OSC.export = (function () {
 
     function findMainWs(nns) {
         for (var wi=0; wi < nns.workspaces.length; wi++) {
-            if (nns.workspaces[wi].isOSCmain == true) {
+            if (nns.workspaces[wi].isAudioMain == true) {
                 return wi;
             }
         }
@@ -334,7 +334,8 @@ OSC.export = (function () {
 		if (startIndex == -1) return name;
         return name.substring(0, startIndex);
     }
-    function addLinksToBundle(bundle, links, path, srcPath, dstPath, overrideTargetPort) {
+
+    function addLinksToBundle(bundle, links, connectionPath, srcPath, dstPath, overrideTargetPort) {
         for (var li = 0; li < links.length; li++) {
             var link = links[li];
             if ((link.target._def.nonObject != undefined) || (link.source._def.nonObject != undefined)) continue; // Input or Output objects
@@ -351,15 +352,15 @@ OSC.export = (function () {
             var linkName = OSC.GetLinkName(link,overrideTargetPort);
             
             if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
-            if (path == "/") {
+            if (connectionPath == "/") {
                 console.warn("path / " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
                 bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, srcPort, dstName, dstPort);
             }
             else {
-                console.warn("path " + path + " " + linkName);
-                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, path);
-                bundle.add(OSC.GetConnectAddr(path +"/"+ linkName),"sisi", srcPath + "/" + srcName, srcPort, dstPath + "/" + dstName, dstPort);
+                console.warn("path " + connectionPath + " " + linkName);
+                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, connectionPath);
+                bundle.add(OSC.GetConnectAddr(connectionPath +"/"+ linkName),"sisi", srcPath + "/" + srcName, srcPort, dstPath + "/" + dstName, dstPort);
             }
         }
     }
@@ -374,7 +375,7 @@ OSC.export = (function () {
 
         var mainWorkSpace = findMainWs(nns);
         if (mainWorkSpace == -1) {
-            RED.main.verifyDialog("Main Tab not set", "Main Tab not set", "The main file is not set<br> please set the main entry file<br> double click the tab that you want as the main and check the 'Main File' checkbox,<br><br>ignore the 'exported Main File Name' as it's not used with OSC", function() {});
+            RED.main.verifyDialog("Warning", "Audio Main Entry Tab not set", "Please set the Audio Main Entry tab<br> double click the tab that you want as the main and check the 'Audio Main File' checkbox.<br><br>note. if you select many tabs as audio main only the first is used.", function() {});
             return;
         }
         var apos = []; // Audio Processing Objects
@@ -486,9 +487,9 @@ OSC.export = (function () {
         function float2int(value) {
             return value | 0;
         }
-        RED.view.state(RED.state.EXPORT);
+        RED.view.state = RED.state.EXPORT;
         var t2 = performance.now();
-        RED.view.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
+        RED.view.dialogs.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
             if (textareaLabel != undefined)
                 $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
                 if (overrides.tips != undefined)

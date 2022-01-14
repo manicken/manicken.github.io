@@ -23,13 +23,8 @@ RED.view = (function() {
 
 	var posMode = 2; // position mode (1 = topLeft, 2 = center)
 
-	var activeGroups = [];
-	var currentHoveredGroup = undefined; // used to select the current hovered group
-	var lastHoveredGroup = undefined; // this contains the last hovered group so that a node can be moved outside a group
-
 	var anyLinkEnter = false;
     var anyNodeEnter = false;
-    
     
 
     
@@ -726,7 +721,7 @@ RED.view = (function() {
 		id: "workspace-tabs",
 		onchange: setSelectWorkspace,
 		ondblclick: function(tab) {
-			showRenameWorkspaceDialog(tab.id);
+			RED.view.dialogs.showRenameWorkspaceDialog(tab.id,workspace_tabs.count());
 		},
 		onadd: function(tab) { // this is a callback called from tabs.js
 			var menuli = $("<li/>");
@@ -790,15 +785,12 @@ RED.view = (function() {
 		workspace_tabs.activateTab(tabId);
 		RED.history.push({t:'add',workspaces:[ws],dirty:dirty});
         RED.view.dirty(true);
-
-        
 		//RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
-		
 	}
 	//$('#btn-workspace-add-tab').on("click",addWorkspace);
 	$('#btn-workspace-add').on("click",addWorkspace);
 	$('#btn-workspace-edit').on("click",function() {
-		showRenameWorkspaceDialog(activeWorkspace);
+		RED.view.dialogs.showRenameWorkspaceDialog(activeWorkspace);
 	});
 	$('#btn-workspace-delete').on("click",function() {
 		deleteWorkspace(activeWorkspace);
@@ -813,8 +805,6 @@ RED.view = (function() {
 		$( ".node-dialog-delete-workspace-name" ).text(ws.label);
 		//$( "#node-dialog-delete-workspace-name2" ).text(ws.label);
 		$( "#node-dialog-delete-workspace" ).dialog('open');
-
-		
 	}
 
 	function canvasMouseDown() {
@@ -976,7 +966,7 @@ RED.view = (function() {
 		} else if (mouse_mode == RED.state.MOVING_ACTIVE || mouse_mode == RED.state.IMPORT_DRAGGING) {
 			showHideGrid(true);
 			moveSelection_mouse();
-			moveToFromGroup_update();
+			RED.view.groupbox.moveToFromGroup_update();
 			
 		} 
 		// ui object resize mouse move
@@ -990,7 +980,6 @@ RED.view = (function() {
 		//console.log("redraw from canvas mouse move");
 	}
 	
-
 	function canvasMouseUp() {
         if (RED.view.ui.allowUiItemTextInput == true) return;
 
@@ -1094,7 +1083,6 @@ RED.view = (function() {
                 }
             }
         }
-
         
 		if ( evt.altKey ) {
 			evt.preventDefault();
@@ -1140,7 +1128,6 @@ RED.view = (function() {
 	{
 		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
 		
-
 		nn.type = typeName;
 		nn._def = RED.nodes.getType(nn.type);
         //console.warn(nn._def);
@@ -1197,18 +1184,21 @@ RED.view = (function() {
 		//console.log("drop happend:" + typeName);
 		return nn;
 	}
+
 	function zoomIn() {
 		if (settings.scaleFactor < 0.3)
 			settings.scaleFactor += 0.05;
 		else if (settings.scaleFactor < maxZoomFactor)
 			settings.scaleFactor += 0.1;
 	}
+
 	function zoomOut() {
 		if (settings.scaleFactor > 0.3)
 			settings.scaleFactor -= 0.1;
 		else if (settings.scaleFactor > 0.1)
 			settings.scaleFactor -= 0.05;
 	}
+
 	function zoomZero() {
 		settings.scaleFactor = 1;
 	}
@@ -1307,6 +1297,7 @@ RED.view = (function() {
 		if (dy > 0) chart.scrollTop(chart.scrollTop() + scrollSpeed/settings.scaleFactor);
 		else if (dy < 0) chart.scrollTop(chart.scrollTop() - scrollSpeed/settings.scaleFactor);
 	}
+
 	function endKeyboardMove() {
 		var ns = [];
 		for (var i=0;i<moving_set.length;i++) {
@@ -1316,10 +1307,12 @@ RED.view = (function() {
 		}
 		RED.history.push({t:'move',nodes:ns,dirty:dirty});// TODO: is this nessesary
 	}
+
 	function XOR(bool1, bool2)
 	{
 		return (bool1 && !bool2) || (!bool1 && bool2);
 	}
+
 	function moveSelection_keyboard(dx,dy) { // used when moving by keyboard keys
 		var snapToGrid = XOR(d3.event.shiftKey, settings.snapToGrid);
 		if(snapToGrid)
@@ -1396,6 +1389,7 @@ RED.view = (function() {
 		//redraw_links_init();
 		redraw_links();
 	}
+
 	function moveSelection_mouse()
 	{
 		mousePos = mouse_position;
@@ -1936,7 +1930,7 @@ RED.view = (function() {
 
 				if (mousedown_node.nodes != undefined && mousedown_node.nodes.length != 0)
 				{
-					SelectAllInGroup(mousedown_node);
+					RED.view.groupbox.SelectAllInGroup(mousedown_node);
 				}
 			}
 			if (!d3.event.ctrlKey)
@@ -1986,6 +1980,7 @@ RED.view = (function() {
 		redraw_links();
 		d3.event.stopPropagation();
 	}
+
 	function nodeMouseUp(d,i) {
 		//console.log("nodeMouseUp "+ d.name+" i:" + i);
 
@@ -2000,7 +1995,7 @@ RED.view = (function() {
 			return;
 		}
 		showHideGrid(false);
-		moveSelectionToFromGroupMouseUp();
+		RED.view.groupbox.moveSelectionToFromGroupMouseUp();
 		
 		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
 			RED.editor.edit(d);
@@ -2058,7 +2053,6 @@ RED.view = (function() {
 		RED.touch.radialMenu.show(obj,pos,options);
 		resetMouseVars();
 	}
-
 	
 	function checkRequirements(d) {
 		//Add requirements
@@ -2110,8 +2104,8 @@ RED.view = (function() {
 		if (d.unknownType != undefined) l = d.type;
 		if (d.type == "JunctionLR" || d.type == "JunctionRL")
 		{
-			d.w = node_def.height;
-			d.h = node_def.height;
+			d.w = 25;//node_def.height;
+			d.h = 25;//node_def.height;
 			return;
 		}
 		if (d.type == "ConstValue")
@@ -2163,14 +2157,23 @@ RED.view = (function() {
 			.attr("class","node_icon_group")
 			.attr("x",0).attr("y",0);
 
-		var icon_shade = icon_group.append("rect")
-			.attr("x",0).attr("y",0)
-			.attr("class","node_icon_shade")
-			.attr("width","30")
-			.attr("stroke","none")
-			.attr("fill","#000")
-			.attr("fill-opacity","0.05")
-			.attr("height",function(d){return d.h; Math.min(50,d.h-4);});
+        if (d.type != "JunctionLR" && d.type != "JunctionRL") {
+            var icon_shade = icon_group.append("rect")
+                .attr("x",0).attr("y",0)
+                .attr("class","node_icon_shade")
+                .attr("width","30")
+                .attr("stroke","none")
+                .attr("fill","#000")
+                .attr("fill-opacity","0.05")
+                .attr("height",function(d){return d.h; Math.min(50,d.h-4);});
+
+            var icon_shade_border = icon_group.append("path")
+                .attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
+                .attr("class","node_icon_shade_border")
+                .attr("stroke-opacity","0.1")
+                .attr("stroke","#000")
+                .attr("stroke-width","2");
+        }
 
 		var icon = icon_group.append("image")
 			.attr("xlink:href","icons/"+d._def.icon)
@@ -2188,12 +2191,7 @@ RED.view = (function() {
             .attr("fill","#fff");
             */
 
-		var icon_shade_border = icon_group.append("path")
-			.attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
-			.attr("class","node_icon_shade_border")
-			.attr("stroke-opacity","0.1")
-			.attr("stroke","#000")
-			.attr("stroke-width","2");
+		
 
 		if ("right" == d._def.align) {
 			icon_group.attr('class','node_icon_group node_icon_group_'+d._def.align);
@@ -2204,9 +2202,17 @@ RED.view = (function() {
 		var img = new Image();
 		img.src = "icons/"+d._def.icon;
 		img.onload = function() {
-			icon.attr("width",Math.min(img.width,30));
-			icon.attr("height",Math.min(img.height,30));
-			icon.attr("x",15-Math.min(img.width,30)/2);
+            if (d.type == "JunctionLR" || d.type == "JunctionRL") {
+                icon.attr("width",Math.min(img.width,15));
+			    icon.attr("height",Math.min(img.height,25));
+                icon.attr("x",15-Math.min(img.width,30)/2);
+            }
+            else {
+			    icon.attr("width",Math.min(img.width,30));
+			    icon.attr("height",Math.min(img.height,30));
+                icon.attr("x",15-Math.min(img.width,30)/2);
+            }
+			
             icon.attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
 		};
 
@@ -2298,7 +2304,7 @@ RED.view = (function() {
 			{
 				//console.log("text width:" + calculateTextSize(d.name).w);
 				//console.log("node width:" + d.w);
-                console.warn(this);
+                //console.warn(this);
 				return (d.w-(d.textDimensions.w))/2; // allways divide by 2
 			});
         }
@@ -2843,438 +2849,7 @@ RED.view = (function() {
 
 	//#region Group redraw init/update
 
-	$('#btn-debugShowGroupElements').click(function() { moveGroupToFront(null); });
-	function moveGroupToFront(group)
-	{
-		let wrapper=document.querySelector(".workspace-chart-groups");
-		let children=wrapper.children;
-
-		for ( var i = 0; i < children.length; i++)
-		{
-			if (children[i].id == group.id)
-			{
-				if (i == children.length - 1) return; // allready at the end
-
-				// first move the child to the second last position
-				wrapper.insertBefore(children[i], children[children.length-1]);
-				// swap the last items (now the selected child is at the end)
-				wrapper.insertBefore(children[children.length-1], children[children.length-2]);
-				RED.nodes.moveNodeToEnd(group);
-				return;
-			}
-		}
-	}
-
-
-	function getSelectionExtents()
-	{
-		var xmin=settings.space_width,xmax=0,ymin=settings.space_height,ymax=0;
-
-		for (var i = 0; i < moving_set.length; i++)
-		{
-			var n = moving_set[i].n;
-			var nxmin = (n.x - n.w/posMode);
-			var nxmax = (n.x + n.w/posMode);
-			var nymin = (n.y - n.h/posMode);
-			var nymax = (n.y + n.h/posMode);
-
-			if (nxmin < xmin) xmin = nxmin;
-			if (nxmax > xmax) xmax = nxmax;
-			if (nymin < ymin) ymin = nymin;
-			if (nymax > ymax) ymax = nymax;
-		}
-		return {xmin:xmin,xmax:xmax,ymin:ymin,ymax:ymax};
-	}
-
-	var allreadyVisited = [];
-	/**
-	 * This includes all items in subgroups as well (by recursive calls)
-	 * @param {*} group 
-	 */
-	function SelectAllInGroup(group)
-	{
-		//if (allreadyVisited.includes(group)) return;
-		//allreadyVisited.push(group); // failsafe until the group loop is fixed
-		
-		//console.error("select all in:" + group.name);
-		for (var ni = 0;ni < group.nodes.length; ni++)
-		{
-			group.nodes[ni].selected = true;
-			group.nodes[ni].dirty = true;
-			moving_set.push({n:group.nodes[ni]});
-
-			if (group.nodes[ni].nodes != undefined && group.nodes[ni].nodes.length != 0)
-				SelectAllInGroup(group.nodes[ni]);
-		}
-	}
-	function getGroupAt(x,y) {
-		var candidates = [];
-		for (var gi = 0; gi < activeGroups.length; gi++)
-		{
-			var g = activeGroups[gi];
-			// because the nodes are middle point based
-			if (posMode === 2)
-			{
-				var gxmi = g.x - g.w/posMode; 
-				var gymi = g.y - g.h/posMode;
-				var gxma = g.x + g.w/posMode;
-				var gyma = g.y + g.h/posMode;
-			}
-			else
-			{
-				var gxmi = g.x; 
-				var gymi = g.y;
-				var gxma = g.x + g.w;
-				var gyma = g.y + g.h;
-			}
-            if ((x >= gxmi) && (x <= gxma) && (y >= gymi) && (y <= gyma)) {
-				if (g !== mousedown_node)
-                	candidates.push(g);
-            }
-		}
-		if (candidates.length != 0)
-			return candidates[candidates.length-1]; // return last item
-		return undefined;
-	}
-
 	
-	function removeNodeFromGroup(group, node)
-	{
-		console.warn(" try remove " + node.name + " from the group " + group.name)
-		for (var i = 0; i < group.nodes.length; i++)
-		{
-            if (group.nodes[i] == node)
-			{
-                
-                node.parentGroup = undefined;
-                //RED.events.emit("nodes:remove",node);
-                group.nodes.splice(i,1);
-                //RED.events.emit("nodes:add",node);
-
-				console.warn(node.name + " was removed from the group " + group.name)
-                RED.notify(node.name + " was removed from the group " + group.name,false,false, 2000);
-
-                
-			}
-        }
-        //RED.events.emit("groups:change",group);
-        RED.events.emit("nodes:change",node);
-	}
-	function moveSelectionToFromGroupMouseUp()
-	{
-		var currentHoveredGroupDef = (currentHoveredGroup != undefined);
-		var lastHoveredGroupDef = (lastHoveredGroup != undefined);
-		//console.error(currentHoveredGroupDef + ":" + lastHoveredGroupDef);
-
-		if (lastHoveredGroupDef == true)
-		{
-			//console.log("lastHoveredGroupDef == true");
-			for (var i = 0; i < moving_set.length; i++)
-			{
-				let node = moving_set[i].n;
-				if (lastHoveredGroup == node) continue;
-
-				removeNodeFromGroup(lastHoveredGroup, node);
-			}
-			lastHoveredGroup.hovered = false;
-			lastHoveredGroup = undefined;
-		}
-		if (currentHoveredGroupDef == true)
-		{
-			//console.log("currentHoveredGroupDef == true");
-			for (var i = 0; i < moving_set.length; i++)
-			{
-				//moveToFromGroupMouseUp(moving_set[i].n);
-				let node = moving_set[i].n;
-				if (currentHoveredGroup == node) continue;
-				if (currentHoveredGroup.nodes.includes(node)) continue;
-				if (node.parentGroup != undefined) continue;
-				
-				// here a parent "recursive prevention" root check needs to be done
-				// if any parent of currentHoveredGroup is equal to d
-				// then that parent should never be added
-				if (ifAnyRootParent(currentHoveredGroup, node)){ console.log("(recursive prevention) cannot add " + node.name + " into " + currentHoveredGroup.name); continue; }
-
-                //RED.events.emit("nodes:remove", node);
-                currentHoveredGroup.nodes.push(node);
-                //RED.events.emit("groups:change", currentHoveredGroup);
-                node.parentGroup = currentHoveredGroup;
-                //RED.events.emit("nodes:add", node);
-
-				console.warn(node.name + " was added to the group " + currentHoveredGroup.name);
-                RED.notify(node.name + " was added to the group " + currentHoveredGroup.name,false,false, 2000);
-
-                
-                RED.events.emit("nodes:change",node);
-                
-            }
-            //RED.events.emit("groups:change",currentHoveredGroup);
-
-            currentHoveredGroup.hovered = false;
-			currentHoveredGroup = undefined;
-		}
-		 
-	}
-	function ifAnyRootParent(childGroup,parentGroup)
-	{
-		//var check = false;
-		if ((childGroup.parentGroup != undefined) && (childGroup.parentGroup != parentGroup))
-		{	
-			console.warn(childGroup.parentGroup.name + "!=" + parentGroup.name);
-			return ifAnyRootParent(childGroup.parentGroup, parentGroup);
-		}
-		if (childGroup.parentGroup == undefined)
-		{
-			console.warn(childGroup.name +".parentGroup == undefinded");
-			return false;
-		}
-		if (childGroup.parentGroup == parentGroup)
-		{
-			console.warn(childGroup.name +".parentGroup ==" + parentGroup.name);
-			return true;
-		}
-	}
-	function setUInode_Xmin(node, val) // used by group
-	{
-		if (posMode === 2)
-		{
-			var dx = (node.x - node.w/posMode) - val;
-			node.w = node.w + dx;
-			node.x = node.x - dx/posMode;
-		}
-		else
-		{
-			var dx = node.x - val;
-			node.w = node.w + dx;
-			node.x = node.x - dx;
-		}
-	}
-	function setUInode_Xmax(node, val) // used by group
-	{
-		if (posMode === 2)
-		{
-			var dx = (node.x + node.w/posMode) - val;
-			node.w = node.w - dx;
-			node.x = node.x - dx/posMode;
-		}
-		else
-		{
-			var dx = (node.x + node.w) - val;
-			node.w = node.w - dx;
-			//node.x = node.x - dx;
-		}
-	}
-	function setUInode_Ymin(node, val) // used by group
-	{
-		if (posMode === 2)
-		{
-			var dy = (node.y - node.h/posMode) - val;
-			node.h = node.h + dy;
-			node.y = node.y - dy/posMode;
-		}
-		else
-		{
-			var dy = node.y - val;
-			node.h = node.h + dy;
-			node.y = node.y - dy;
-		}
-	}
-	function setUInode_Ymax(node, val) // used by group
-	{
-		if (posMode === 2)
-		{
-			var dy = (node.y + node.h/posMode) - val;
-			node.h = node.h - dy;
-			node.y = node.y - dy/posMode;
-		}
-		else
-		{
-			var dy = (node.y + node.h) - val;
-			node.h = node.h - dy;
-			//node.y = node.y - dy;
-		}
-	}
-	function saveOldSizeAndPos(node) // used by group
-	{
-		node.xo = node.x;
-		node.yo = node.y;
-		node.wo = node.w;
-		node.ho = node.h;
-	}
-	function restoreOldSizeAndPos(node) // used by group
-	{
-		if (node.xo != undefined) node.x = node.xo;
-		if (node.yo != undefined) node.y = node.yo;
-		if (node.wo != undefined) node.w = node.wo;
-		if (node.ho != undefined) node.h = node.ho;
-	}
-	function getNodeExtents(node) // used by group
-	{
-		if (posMode === 2)
-		{
-			return {xmin: node.x - node.w/posMode,
-					xmax: node.x + node.w/posMode,
-					ymin: node.y - node.h/posMode,
-					ymax: node.y + node.h/posMode}
-		}
-		else
-		{
-			return {xmin: node.x,
-					xmax: node.x + node.w,
-					ymin: node.y,
-					ymax: node.y + node.h}
-		}
-	}
-	function moveToFromGroup_update()
-	{
-		var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
-		if (groupAt != undefined)
-		{
-			if (currentHoveredGroup != undefined) // used when hovering from child-to-parent or parent-to-child
-			{
-				if (groupAt == currentHoveredGroup) return;
-                currentHoveredGroup.hovered = false;
-                if (RED.workspaces.settings.addToGroupAutosize == true)
-				    restoreOldSizeAndPos(currentHoveredGroup);
-				lastHoveredGroup = currentHoveredGroup;
-				console.warn("group leave2:" + currentHoveredGroup.name);
-			}
-			currentHoveredGroup = groupAt;
-			currentHoveredGroup.hovered = true;
-			console.trace("group enter:" + currentHoveredGroup.name);
-
-			if (mousedown_node.type == "group")
-			{
-				// prevents parent group to be before child
-				if (currentHoveredGroup.parentGroup !== mousedown_node)
-					moveGroupToFront(mousedown_node);
-			}
-			// prevents child group to be resized outside parent
-			if (currentHoveredGroup.parentGroup !== mousedown_node && RED.workspaces.settings.addToGroupAutosize == true)
-			{
-				var selExtents = getSelectionExtents();
-				var chgExtents = getNodeExtents(currentHoveredGroup);
-				saveOldSizeAndPos(currentHoveredGroup);
-				if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
-				if (selExtents.xmax > chgExtents.xmax){setUInode_Xmax(currentHoveredGroup, selExtents.xmax + 30); }
-				if (selExtents.ymin < chgExtents.ymin){setUInode_Ymin(currentHoveredGroup, selExtents.ymin - 30); }
-				if (selExtents.ymax > chgExtents.ymax){setUInode_Ymax(currentHoveredGroup, selExtents.ymax + 30); }
-
-				console.log(selExtents);
-			}
-			redraw_groups(true);
-		}
-		else if (currentHoveredGroup != undefined)
-		{
-			lastHoveredGroup = currentHoveredGroup;
-			console.warn("group leave1:" + currentHoveredGroup.name);
-			currentHoveredGroup.hovered = false;
-            if (RED.workspaces.settings.addToGroupAutosize == true)
-                restoreOldSizeAndPos(currentHoveredGroup);
-			currentHoveredGroup = undefined;
-			redraw_groups(true);
-		}
-	}
-	function redraw_groups_init()
-	{
-		activeGroups = RED.nodes.nodes.filter(function(d)
-		{
-			return (d.z == activeWorkspace && d.type == "group");
-		});
-		//console.error(activeGroups);
-		// just use .nodegroup for now
-		// it should maybe have seperate class later
-		var visGroupAll = visGroups.selectAll(".nodegroup").data(activeGroups, function(d){return d.id;});
-		var groupExit = visGroupAll.exit().remove();
-		groupExit.each(function(d,i) // this happens only when a node exits(is removed) from the current workspace.
-		{
-			// here it could remove the nodes that is inside a group
-			// or it could also just remove the group leaving the nodes "behind"
-			// it should be done with a selector
-		});
-
-		var groupEnter = visGroupAll.enter().insert("svg:g").attr("class", "node nodegroup");
-		anyGroupEnter = false;
-		groupEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
-		{
-			anyGroupEnter = true; // could probally just check if (groupEnter.length > 0)
-
-			var groupRect = d3.select(this);
-			groupRect.attr("id",d.id);
-
-			d.oldNodeText = undefined;
-			d.oldWidth = undefined;
-			d.oldHeight = undefined;
-
-			var selRectBG = groupRect.append("rect").attr("class", "nodeGroupSelOutlineBG");
-			var selRect = groupRect.append("rect").attr("class", "nodeGroupSelOutline");
-			//groupRect.classed("nodeGroupSelOutline-hovered", function(d) { return d.hovered; })
-
-			//redraw_nodeMainRect_init(groupRect, d);
-			var mainRect = groupRect.append("rect")
-									.attr("class", "node")
-									.attr("fill",function(d) { return d._def.color;})
-									.attr("rx", 6)
-									.attr("ry", 6)
-									.on("mouseup",nodeMouseUp)
-									.on("mousedown",nodeMouseDown)
-									.on("mousemove", nodeMouseMove)
-									.on("mouseover", nodeMouseOver)
-									.on("mouseout", nodeMouseOut)
-									.on("touchstart",nodeTouchStart)
-									.on("touchend", nodeTouchEnd);
-
-			var text = groupRect.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '0.35em').attr('text-anchor','start');
-
-			if (d._def.align) { // replace with custom thingy
-				text.attr('class','node_label node_label_'+d._def.align);
-				text.attr('text-anchor','end');
-			}
-
-		});
-		return visGroupAll;
-	}
-	function redraw_groups(fullUpdate)
-	{
-		var visGroupAll = redraw_groups_init();
-
-		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace
-			var groupRect = d3.select(this);
-
-			if (posMode === 2)
-				groupRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
-			else
-				groupRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
-				
-			groupRect.selectAll(".node")
-				.attr("width",function(d){return d.w})
-				.attr("height",function(d){return d.h})
-				.attr("fill", d.bgColor)
-				.attr("style", "stroke:" + d.border_color + ";");
-				//.attr("stroke", d.border_color);
-
-			var groupLabel = groupRect.selectAll('text.node_label').text(d.name);
-
-			redraw_update_label(groupRect, d);
-			
-			groupRect.selectAll(".nodeGroupSelOutlineBG")
-				.attr("x", -6).attr("y", -6)
-				.attr("rx", 4).attr("ry", 4)
-				.attr("width", d.w + 12)
-				.attr("height", d.h + 12)
-				.attr("class", function(d) { if (d.selected) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-selected";
-											 else if (d.hovered) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-hovered"; 
-											else return "nodeGroupSelOutlineBG"});
-			groupRect.selectAll(".nodeGroupSelOutline")
-				.attr("x", -6).attr("y", -6)
-				.attr("rx", 4).attr("ry", 4)
-				.attr("width", d.w + 12)
-				.attr("height", d.h + 12)
-				.attr("class", function(d) { if (d.selected) return "nodeGroupSelOutline nodeGroupSelOutline-selected";
-											 else if (d.hovered) return "nodeGroupSelOutline nodeGroupSelOutline-hovered"; 
-											else return "nodeGroupSelOutline"});
-		});
-	}
 	//#endregion Group redraw init/update
 
 	//#region UI items redraw init/update
@@ -3415,7 +2990,7 @@ RED.view = (function() {
 		if (mouse_mode != RED.state.JOINING)
 		{
 			redraw_nodes(fullUpdate);
-			redraw_groups(fullUpdate);
+			RED.view.groupbox.redraw_groups(fullUpdate);
 		}
 		//const t1 = performance.now();
 		//redraw_links(); // this now only redraws links that was added and links that are selected (i.e. they are selected when a node is selected)
@@ -3629,317 +3204,6 @@ RED.view = (function() {
 		}
 	}
 
-	function getForm(formId, key, callback) {
-		// server test switched off - test purposes only
-		var patt = new RegExp(/^[http|https]/);
-		var server = false && patt.test(location.protocol);
-		var form = $("<h2>No form found.</h2>");
-
-		if (!server) {
-			data = $("script[data-template-name|='" + key + "']").html();
-			//console.log('%c' + typeof data + "%c"+ data, 'background: #bada55; color: #555 ', 'background: #555; color: #bada55 ');
-			form = $("#" + formId);
-			$(form).empty();
-			$(form).append(data);
-			if(typeof callback == 'function') {
-				callback.call(this, form);
-			}
-		} else {
-			var frmPlugin = "resources/form/" + key + ".html";
-			$.get(frmPlugin, function(data) {
-				form = $("#" + formId);
-				$(form).empty();
-				$(form).append(data);
-				if(typeof callback == 'function') {
-					callback.call(this, form);
-				}
-			});
-		}
-
-		return form;
-	}
-
-	$('#btn-import-json').click(function() {showImportNodesDialog(false);});
-	$('#btn-import-arduino').click(function() {showImportNodesDialog(true);});
-	$('#btn-export-clipboard').click(function() {showExportNodesDialog();});
-	$('#btn-export-library').click(function() {showExportNodesLibraryDialog();});
-
-	function showExportNodesDialog() {
-		RED.editor.init_edit_dialog();
-		mouse_mode = RED.state.EXPORT;
-		var nns = RED.nodes.createExportableNodeSet(moving_set);
-		//$("#dialog-form").html(getForm("dialog-form", "export-clipboard-dialog"));
-		var frm = getForm("dialog-form", "export-clipboard-dialog", function (d, f) {
-			$("#node-input-export").val(JSON.stringify(nns)).focus(function() {
-				var textarea = $(this);
-				textarea.select();
-				textarea.mouseup(function() {
-						textarea.unbind("mouseup");
-						return false;
-				});
-			}).focus();
-		$( "#dialog" ).dialog("option","title","Export nodes to clipboard").dialog( "open" );
-		});
-	}
-
-	function showExportNodesLibraryDialog() {
-		RED.editor.init_edit_dialog();
-		mouse_mode = RED.state.EXPORT;
-		var nns = RED.nodes.createExportableNodeSet(moving_set);
-		//$("#dialog-form").html(this.getForm('export-library-dialog'));
-		getForm("dialog-form", "export-library-dialog", function(d, f) {
-		$("#node-input-filename").attr('nodes',JSON.stringify(nns));
-		$( "#dialog" ).dialog("option","title","Export nodes to library").dialog( "open" );
-		});
-	}
-
-	function showImportNodesDialog(is_arduino_code) {
-		RED.editor.init_edit_dialog();
-		$("#btnEditorRunScript").hide();
-		$("#btnEditorApply").hide();
-		mouse_mode = RED.state.IMPORT;
-		//$("#dialog-form").html(this.getForm('import-dialog'));
-		getForm("dialog-form", "import-dialog", function(d, f) {
-		$("#node-input-import").val("");
-		$( "#node-input-arduino" ).prop('checked', is_arduino_code);
-		var title = "";
-		if (is_arduino_code)
-		{
-			title = "Import Arduino Code";
-			$("#node-input-import").prop('placeholder', "Paste Arduino Code here.");
-			$("#import-dialog-textarea-label").text(" Code:");
-		}			
-		else
-		{
-			title = "Import JSON";
-			$("#node-input-import").prop('placeholder', "Paste JSON string here.\nOr paste a http url to a JSON here.");
-			$("#import-dialog-textarea-label").text(" JSON/URL:");
-		}
-			
-		$( "#dialog" ).dialog("option","title",title).dialog( "open" );
-		});
-	}
-
-	function showRenameWorkspaceDialog(id) {
-		var ws = RED.nodes.workspace(id);
-		$( "#node-dialog-rename-workspace" ).dialog("option","workspace",ws);
-
-		if (workspace_tabs.count() == 1) {
-			$( "#node-dialog-rename-workspace").next().find(".leftButton")
-				.prop('disabled',true)
-				.addClass("ui-state-disabled");
-		} else {
-			$( "#node-dialog-rename-workspace").next().find(".leftButton")
-				.prop('disabled',false)
-				.removeClass("ui-state-disabled");
-        }
-        $( "#node-input-workspace-name" ).val(ws.label);
-        $( "#node-input-workspace-id" ).val(ws.id);
-
-        $( "#node-input-export-workspace" ).prop('checked',  ws.export);
-        $("#node-input-generateCppDestructor-workspace").prop('checked', ws.generateCppDestructor);
-        $("#node-input-workspace-extraClassDeclarations").val(ws.extraClassDeclarations);
-
-        RED.main.SetPopOver("#node-input-workspace-extraClassDeclarations", "sets the extra class declarations <br> example (everything after the class name):<br>class ClassName final : Inheritance")
-
-        RED.main.SetPopOver("#node-input-export-workspace-checkbox", "uncheck this if you don't want to export this workspace tab", "left");
-
-        RED.main.SetPopOver("#node-input-export-isMain-settings", "This defines which file-name to use when exporting as main.", "left");
-        RED.main.SetPopOver("#node-input-generateCppDestructor-workspace", "This autogenerates the C++ destructor function that will disconnect and destroy all AudioConnections", "left");
-        $( "#node-input-export-isMain" ).prop('checked',  ws.isMain);
-        $( "#node-input-export-isOSCmain" ).prop('checked',  ws.isOSCmain);
-        chk_exportIsMain_OnClick();
-
-        var otherMain = getOtherMain(ws)
-        if (otherMain == undefined){
-            $( "#node-input-export-isMain" ).prop('disabled' , false);
-            RED.main.SetPopOver("#node-input-export-isMain-checkbox", "when checked this defines the main file.<br><br>note. there can only be one main in the project", "left");
-            $( "#node-input-export-isMain" ).click(chk_exportIsMain_OnClick);
-            $( "#node-input-export-mainNameType" ).val(ws.mainNameType);
-            $( "#node-input-export-mainNameExt" ).val(ws.mainNameExt);
-            
-        }
-        else {
-            $( "#node-input-export-isMain" ).prop('disabled' , true);
-            RED.main.SetPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
-        }
-		$( "#node-dialog-rename-workspace" ).dialog("open");
-    }
-    
-    function chk_exportIsMain_OnClick() {
-        // Get the checkbox
-        var isMainChk = document.getElementById("node-input-export-isMain");
-        var isMainSettings = document.getElementById("node-input-export-isMain-settings");
-        if (isMainChk.checked == true)
-            isMainSettings.style.display = "table-row";
-        else
-            isMainSettings.style.display = "none";
-    }
-    function getOtherMain(ws)
-    {
-        for (var i = 0; i < RED.nodes.workspaces.length; i++)
-        {
-            if (RED.nodes.workspaces[i] == ws) continue;
-
-            if (RED.nodes.workspaces[i].isMain == true)
-            {
-                //RED.notify("<strong>Warning</strong> "+RED.nodes.workspaces[i].label  + " is allready defined as the main file.<br> there can only be one main file,<br>If you want this to be the new main first you have to uncheck the 'Main File' of " + RED.nodes.workspaces[i].label,"warning");
-                return RED.nodes.workspaces[i].label;
-            }
-        }
-        return undefined;
-    }
-
-	$("#node-dialog-rename-workspace form" ).submit(function(e) { e.preventDefault();});
-	$( "#node-dialog-rename-workspace" ).dialog({
-		modal: true,
-		autoOpen: false,
-		width: 500,
-		title: "Rename sheet",
-		buttons: [
-			{
-				class: 'leftButton',
-				text: "Delete",
-				click: function() {
-					var workspace = $(this).dialog('option','workspace');
-					$( this ).dialog( "close" );
-					deleteWorkspace(workspace.id);
-				}
-			},
-			{
-				text: "Ok",
-				click: function() {
-					var workspace = $(this).dialog('option','workspace');
-					
-                    var exportNew = $( "#node-input-export-workspace" ).prop('checked')
-                    // TODO proper changed check
-                    workspace.generateCppDestructor = $("#node-input-generateCppDestructor-workspace").prop('checked');
-                    workspace.extraClassDeclarations = $("#node-input-workspace-extraClassDeclarations").val();
-                    workspace.isMain = $( "#node-input-export-isMain" ).prop('checked');
-                    workspace.isOSCmain = $( "#node-input-export-isOSCmain" ).prop('checked');
-                    workspace.mainNameType = $( "#node-input-export-mainNameType" ).val();
-                    workspace.mainNameExt = $( "#node-input-export-mainNameExt" ).val();
-					if (workspace.export != exportNew)
-					{
-						workspace.export = exportNew;
-                        if (exportNew == true)
-                            RED.workspaces.enable(workspace.id);
-                        else
-                            RED.workspaces.disable(workspace.id);
-					}
-                    //console.warn("exportWorkspace:"+workspace.export);
-
-                    var label = $( "#node-input-workspace-name" ).val();
-                    if (workspace.label != label) {
-
-						if (RED.nodes.workspaceNameCheck(label)) // Jannik add
-						{
-							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
-							return; // abort name change if name allready exist
-                        }
-                        if (RED.nodes.getType(label) != undefined) // Jannik add
-						{
-                            RED.notify("<strong>Warning</strong>: Name:"+label + " Is the name of a Existing object type, choose annother name.","warning");
-							return; // abort name change if name allready exist
-                        }
-                        if (label.endsWith(".")) // Jannik add
-						{
-							RED.notify("<strong>Warning</strong>: Cannot use dots in the end of the name, choose annother name.","warning");
-							return; // abort name change 
-                        }
-                        function isValid(input) {
-                            var result = false;
-                            try {
-                                result = document.createElement(input).toString() != "[object HTMLUnknownElement]";
-                            }
-                            catch { return false;}
-                            return result;
-                        }
-  
-                        /*if (isValid(label) == false && workspace.isMain == false)
-                        {
-                            RED.notify("<strong>Warning</strong>: Cannot use this name because it contains html specific tags, choose annother name. <br> note. if 'Main File' is checked any name can be choosed as long as it is a valid filename.","warning");
-							return; // abort name change 
-                        }*/
-                        
-						
-						RED.view.dirty(true);
-						var oldLabel = workspace.label;
-						workspace.label = label;
-						RED.nodes.workspaceNameChanged(oldLabel, label); // Jannik add
-                        RED.events.emit("flows:renamed", oldLabel, label);
-						
-
-						// update the tab text
-						var link = $("#workspace-tabs a[href='#"+workspace.id+"']");
-						link.attr("title",label);
-						link.text(label);
-						// update the menu item text
-						var menuItem = $("#workspace-menu-list a[href='#"+workspace.id+"']");
-						menuItem.attr("title",label);
-						menuItem.text(label);
-
-                        workspace_tabs.resize(); // internally it's updateTabWidths
-                        
-                        
-					}
-                    RED.events.emit("flows:change",workspace);
-
-                    RED.storage.update();
-
-					$( this ).dialog( "close" );
-				}
-			},
-			{
-				text: "Cancel",
-				click: function() {
-					$( this ).dialog( "close" );
-				}
-			}
-		],
-		open: function(e) {
-			RED.keyboard.disable();
-		},
-		close: function(e) {
-			RED.keyboard.enable();
-		}
-	});
-	$( "#node-dialog-delete-workspace" ).dialog({
-		modal: true,
-		autoOpen: false,
-		width: 500,
-		title: "Confirm delete",
-		buttons: [
-			{
-				text: "Ok",
-				click: function() {
-					var workspace = $(this).dialog('option','workspace');
-					RED.view.removeWorkspace(workspace);
-					var historyEvent = RED.nodes.removeWorkspace(workspace.id);
-					historyEvent.t = 'delete';
-					historyEvent.dirty = dirty;
-					historyEvent.workspaces = [workspace];
-					RED.history.push(historyEvent);
-					RED.view.dirty(true);
-					$( this ).dialog( "close" );
-				}
-			},
-			{
-				text: "Cancel",
-				click: function() {
-					$( this ).dialog( "close" );
-				}
-			}
-		],
-		open: function(e) {
-			RED.keyboard.disable();
-		},
-		close: function(e) {
-			RED.keyboard.enable();
-		}
-
-	});
-	
 	function getIOpinInfo(pinRect, node, index)
 	{
 		var classAttr = pinRect.getAttribute("class");
@@ -4148,11 +3412,98 @@ RED.view = (function() {
 		vis.attr("transform","scale("+settings.scaleFactor+")");
 		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
 		redraw_nodes(true,true);
-		redraw_groups(true);
+		RED.view.groupbox.redraw_groups(true);
 		redraw_links_init();
 		anyLinkEnter = true;
 		redraw_links();
 	}
+    function selectnode(selection) {
+        if (typeof selection !== "undefined") {
+            clearSelection();
+            if (typeof selection == "string") {
+                var selectedNode = RED.nodes.node(selection);
+                if (selectedNode) {
+                    selectedNode.selected = true;
+                    selectedNode.dirty = true;
+                    moving_set = [];
+                    moving_set.push(selectedNode);
+                }
+            } else if (selection != undefined) {
+                if (selection.nodes != undefined) {
+                    //updateActiveNodes();
+                    moving_set = [];
+                    // TODO: this selection group span groups
+                    //  - if all in one group -> activate the group
+                    //  - if in multiple groups (or group/no-group)
+                    //      -> select the first 'set' of things in the same group/no-group
+                    selection.nodes.forEach(function(n) {
+                        // if (n.type !== "group") {
+                            n.selected = true;
+                            n.dirty = true;
+                            moving_set.push(n);
+                        // } else {
+                        //     selectGroup(n,true);
+                        // }
+                    })
+                }
+            }
+        }
+        updateSelection();
+        redraw(true);
+    }
+
+    function reveal(id,triggerHighlight) {
+        if (RED.nodes.workspace(id) != undefined/* || RED.nodes.subflow(id)*/) {
+            workspace_tabs.activateTab(id);
+        } else {
+            var node = RED.nodes.node(id) /*|| RED.nodes.group(id)*/;
+            if (node) {
+                if (node.z && (node.type === "group")) {
+                    //if (activeWorkspace)
+                    workspace_tabs.activateTab(node.z);
+                    node.dirty = true;
+                    //RED.workspaces.show(node.z);
+                    var chart = $("#chart");
+                    var screenSize = [chart.width()/settings.scaleFactor,chart.height()/settings.scaleFactor];
+                    var scrollPos = [chart.scrollLeft()/settings.scaleFactor,chart.scrollTop()/settings.scaleFactor];
+                    var cx = node.x;
+                    var cy = node.y;
+                    if (node.type === "group") {
+                        cx += node.w/2;
+                        cy += node.h/2;
+                    }
+                    if (cx < scrollPos[0] || cy < scrollPos[1] || cx > screenSize[0]+scrollPos[0] || cy > screenSize[1]+scrollPos[1]) {
+                        var deltaX = '-='+(((scrollPos[0] - cx) + screenSize[0]/2)*settings.scaleFactor);
+                        var deltaY = '-='+(((scrollPos[1] - cy) + screenSize[1]/2)*settings.scaleFactor);
+                        chart.animate({
+                            scrollLeft: deltaX,
+                            scrollTop: deltaY
+                        },200);
+                    }
+                    if (triggerHighlight !== false) {
+                        node.highlighted = true;
+                        if (!node._flashing) {
+                            node._flashing = true;
+                            var flash = 22;
+                            var flashFunc = function() {
+                                flash--;
+                                node.dirty = true;
+                                if (flash >= 0) {
+                                    node.highlighted = !node.highlighted;
+                                    setTimeout(flashFunc,100);
+                                } else {
+                                    node.highlighted = false;
+                                    delete node._flashing;
+                                }
+                                RED.view.redraw();
+                            }
+                            flashFunc();
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 	return {
         defSettings,
@@ -4161,15 +3512,23 @@ RED.view = (function() {
         settingsEditor,
         get mouse_position() {return mouse_position;},
         get node_def() {return node_def;},
-        get mouse_mode() {return mouse_mode;},
-        set mouse_mode(mode) {mouse_mode = mode;},
+        get state() {return mouse_mode;}, 
+        set state(state) {mouse_mode = state;},
         get mousedown_node() {return mousedown_node;},
         get posMode() {return posMode;},
-        get nodeMouseUp() {return nodeMouseUp;},
-        get nodeMouseDown() {return nodeMouseDown;},
-        get nodeMouseOver() {return nodeMouseOver;},
-        get nodeMouseOut() {return nodeMouseOut;},
-        get nodeMouseMove() {return nodeMouseMove;},
+        redraw_update_label,
+        nodeMouseUp,
+        nodeMouseDown,
+        nodeMouseOver,
+        nodeMouseOut,
+        nodeMouseMove,
+        nodeTouchStart,
+        nodeTouchEnd,
+        get visGroups() { return visGroups;},
+        get activeWorkspace() { return activeWorkspace;},
+
+        get workspace_tabs() {return workspace_tabs;},
+        get moving_set() {return moving_set;},
         calculateTextSize,
         redraw_nodes,
 
@@ -4180,145 +3539,28 @@ RED.view = (function() {
 		init:initView,
 		AddNewNode,
 		resetMouseVars, // exposed for editor
-		state:function(state) {
-			if (state == null) {
-				return mouse_mode
-			} else {
-				mouse_mode = state;
-			}
-		},
-		addWorkspace: function(ws) {
-			workspace_tabs.addTab(ws); // see tabs.js
-			//workspace_tabs.resize(); // see tabs.js // this is not needed because workspace_tabs.addTab() does it internally
-		},
-		removeWorkspace: function(ws) {
-			workspace_tabs.removeTab(ws.id); // see tabs.js
-			//RED.arduino.httpGetAsync("removeFile:" + ws.label + ".h");
-		},
-		getWorkspace: function() {
-			return activeWorkspace;
-		},
-		showWorkspace: function(id) {
-			workspace_tabs.activateTab(id); // see tabs.js
-		},
-		redraw: function() {
-			completeRedraw();
-			/*redraw(true);
-			redraw_links_init();
-			anyLinkEnter = true;
-			redraw_links();*/
-		},
-		dirty: function(d) {
-			if (d == null) {
-				return dirty;
-			} else {
-				setDirty(d);
-			}
-		},
+		
+		addWorkspace: function(ws) { workspace_tabs.addTab(ws); },
+		removeWorkspace: function(ws) { workspace_tabs.removeTab(ws.id); /*RED.arduino.httpGetAsync("removeFile:" + ws.label + ".h")*/ },
+		getWorkspace: function() { return activeWorkspace; },
+		showWorkspace: function(id) { workspace_tabs.activateTab(id); },
+		redraw: function() { completeRedraw(); },
+		dirty: function(d) { if (d == null) { return dirty; } else { setDirty(d); } },
 		importNodes: importNodes,
-		resize: function() {
-			workspace_tabs.resize();
-		},
+		resize: function() { workspace_tabs.resize(); },
 		status: function(s) {
 			showStatus = s;
 			RED.nodes.eachNode(function(n) { n.dirty = true;});
 			//TODO: subscribe/unsubscribe here
 			redraw(false);
 		},
-		getForm: getForm,
 		calculateTextSize: calculateTextSize,
-		showExportNodesDialog: showExportNodesDialog,
 		showPopOver:showPopOver,
 		defaults: {
 			width: node_def.width,
 			height: node_def.height
         },
-        select: function(selection) {
-            if (typeof selection !== "undefined") {
-                clearSelection();
-                if (typeof selection == "string") {
-                    var selectedNode = RED.nodes.node(selection);
-                    if (selectedNode) {
-                        selectedNode.selected = true;
-                        selectedNode.dirty = true;
-                        moving_set = [];
-                        moving_set.push(selectedNode);
-                    }
-                } else if (selection != undefined) {
-                    if (selection.nodes != undefined) {
-                        //updateActiveNodes();
-                        moving_set = [];
-                        // TODO: this selection group span groups
-                        //  - if all in one group -> activate the group
-                        //  - if in multiple groups (or group/no-group)
-                        //      -> select the first 'set' of things in the same group/no-group
-                        selection.nodes.forEach(function(n) {
-                           // if (n.type !== "group") {
-                                n.selected = true;
-                                n.dirty = true;
-                                moving_set.push(n);
-                           // } else {
-                           //     selectGroup(n,true);
-                           // }
-                        })
-                    }
-                }
-            }
-            updateSelection();
-            redraw(true);
-        },
-        workspace_tabs:workspace_tabs,
-        reveal: function(id,triggerHighlight) {
-            if (RED.nodes.workspace(id) != undefined/* || RED.nodes.subflow(id)*/) {
-                workspace_tabs.activateTab(id);
-            } else {
-                var node = RED.nodes.node(id) /*|| RED.nodes.group(id)*/;
-                if (node) {
-                    if (node.z && (node.type === "group")) {
-                        //if (activeWorkspace)
-                        workspace_tabs.activateTab(node.z);
-                        node.dirty = true;
-                        //RED.workspaces.show(node.z);
-                        var chart = $("#chart");
-                        var screenSize = [chart.width()/settings.scaleFactor,chart.height()/settings.scaleFactor];
-                        var scrollPos = [chart.scrollLeft()/settings.scaleFactor,chart.scrollTop()/settings.scaleFactor];
-                        var cx = node.x;
-                        var cy = node.y;
-                        if (node.type === "group") {
-                            cx += node.w/2;
-                            cy += node.h/2;
-                        }
-                        if (cx < scrollPos[0] || cy < scrollPos[1] || cx > screenSize[0]+scrollPos[0] || cy > screenSize[1]+scrollPos[1]) {
-                            var deltaX = '-='+(((scrollPos[0] - cx) + screenSize[0]/2)*settings.scaleFactor);
-                            var deltaY = '-='+(((scrollPos[1] - cy) + screenSize[1]/2)*settings.scaleFactor);
-                            chart.animate({
-                                scrollLeft: deltaX,
-                                scrollTop: deltaY
-                            },200);
-                        }
-                        if (triggerHighlight !== false) {
-                            node.highlighted = true;
-                            if (!node._flashing) {
-                                node._flashing = true;
-                                var flash = 22;
-                                var flashFunc = function() {
-                                    flash--;
-                                    node.dirty = true;
-                                    if (flash >= 0) {
-                                        node.highlighted = !node.highlighted;
-                                        setTimeout(flashFunc,100);
-                                    } else {
-                                        node.highlighted = false;
-                                        delete node._flashing;
-                                    }
-                                    RED.view.redraw();
-                                }
-                                flashFunc();
-                            }
-                        }
-                    }
-                }
-            }
-        },
+        select: selectnode,
+        reveal,
 	};
 })();

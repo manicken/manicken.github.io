@@ -15,7 +15,7 @@ RED.view.ui = (function() {
 
 		if (RED.view.settings.guiEditMode == false) {
 			_this.style.cursor = "default";
-            if (RED.view.mouse_mode != RED.state.UI_OBJECT_MOUSE_DOWN) return;
+            if (RED.view.state != RED.state.UI_OBJECT_MOUSE_DOWN) return;
 			uiObjectMouseMove(d, x, y);
             
 			return;
@@ -23,7 +23,7 @@ RED.view.ui = (function() {
 
         // following is for resize
 
-		if (RED.view.mouse_mode !== RED.state.DEFAULT) return;
+		if (RED.view.state !== RED.state.DEFAULT) return;
         //var uiItemResizeBorderSize = RED.view.ui.get_uiItemResizeBorderSize();
 		//var nodeRect = d3.select(this);
 		
@@ -115,20 +115,20 @@ RED.view.ui = (function() {
 	
 	function uiObjectMouseOver (d, mouseX, mouseY, rect)
 	{
-		if (RED.view.mouse_mode == RED.state.UI_OBJECT_MOUSE_DOWN)
+		if (RED.view.state == RED.state.UI_OBJECT_MOUSE_DOWN)
 			uiObjectMouseDown(d, mouseX, mouseY, rect);
 		currentUiObject = d; // used by scroll event
 	}
 
 	function uiObjectMouseOut (d, mouseX, mouseY, rect)
 	{
-		if (RED.view.mouse_mode == RED.state.UI_OBJECT_MOUSE_DOWN)
+		if (RED.view.state == RED.state.UI_OBJECT_MOUSE_DOWN)
 			uiObjectMouseUp(d, mouseX, mouseY, rect, true);
 		currentUiObject = null; // used by scroll event
 	}
 	function uiObjectMouseDown(d, mouseX, mouseY, rect)
 	{
-		RED.view.mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
+		RED.view.state = RED.state.UI_OBJECT_MOUSE_DOWN;
 		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
 
 		if (d.type == "UI_Button") {
@@ -189,7 +189,7 @@ RED.view.ui = (function() {
 	function uiObjectMouseUp(d, mouseX, mouseY, rect, mouse_still_down)
 	{
 		if (mouse_still_down == undefined)
-		    RED.view.mouse_mode = RED.state.UI_OBJECT_MOUSE_UP;
+		    RED.view.state = RED.state.UI_OBJECT_MOUSE_UP;
 		
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
@@ -297,7 +297,7 @@ RED.view.ui = (function() {
         //console.warn("whatthefucjiswrongwithjavascript:",RED.view.node_def);
 
         var mousedown_node = RED.view.mousedown_node;
-        var mouse_mode = RED.view.mouse_mode;
+        var mouse_mode = RED.view.state;
         var posMode = RED.view.posMode;
 
 
@@ -749,7 +749,7 @@ RED.view.ui = (function() {
         }
         //else // default above is moving
         //    RED.view.set_mouse_mode(RED.state.MOVING);
-        RED.view.mouse_mode = mouse_mode;
+        RED.view.state = mouse_mode;
         //console.log("resize mouse_mode:" + mouse_mode);
     }
 
