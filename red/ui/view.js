@@ -2225,7 +2225,8 @@ RED.view = (function() {
 		
 		if (d._def.align) {
 			text.attr('class','node_label node_label_'+d._def.align);
-			text.attr('text-anchor','end');
+            //if (d._def.align == "right")
+			//    text.attr('text-anchor','start');
 		}
 	}
 	
@@ -2292,13 +2293,25 @@ RED.view = (function() {
 			else return (d.h/2)-1; // allways divide by 2
 		});
 
-		if (d._def.uiObject != undefined)
+		if (d._def.uiObject != undefined) {
 			nodeRects.attr('x', function(d)
 			{
 				//console.log("text width:" + calculateTextSize(d.name).w);
 				//console.log("node width:" + d.w);
+                console.warn(this);
 				return (d.w-(d.textDimensions.w))/2; // allways divide by 2
 			});
+        }
+        else if (d._def.align == "right") {
+
+            nodeRects.attr('x', function(d)
+			{
+				//console.log("text width:" + calculateTextSize(d.name).w);
+				//console.log("node width:" + d.w);
+                console.warn(this);
+				return 10; // allways divide by 2
+			});
+        }
 	}
 
 	function redraw_nodeInputs(nodeRect, d)
