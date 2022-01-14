@@ -818,7 +818,7 @@ RED.view = (function() {
 	}
 
 	function canvasMouseDown() {
-        if (RED.view.ui.allowUiItemTextInput() == true) return;
+        if (RED.view.ui.allowUiItemTextInput == true) return;
         
 		if (!mousedown_node && !mousedown_link) {
 			clearLinkSelection();
@@ -992,7 +992,7 @@ RED.view = (function() {
 	
 
 	function canvasMouseUp() {
-        if (RED.view.ui.allowUiItemTextInput() == true) return;
+        if (RED.view.ui.allowUiItemTextInput == true) return;
 
 		if (mousedown_node && mouse_mode == RED.state.JOINING) {
 			drag_line.attr("class", "drag_line_hidden");
@@ -1573,8 +1573,17 @@ RED.view = (function() {
 		}
 	}
 	var calculateTextSizeElement = undefined;
+    var calculateTextSizeCache = {};
 	function calculateTextSize(str,textSize) {
-		
+        //const t0 = performance.now();
+		var name = str + "_" + textSize;
+
+        if (calculateTextSizeCache[name] != undefined) {
+            //const t1 = performance.now();
+		    //console.error("@calculateTextSize time @ " + name + " : " + (t1-t0));
+            return calculateTextSizeCache[name];
+        }
+
 		//if (str == undefined)
 		//	return {w:0, h:0};
 		//console.error("@calculateTextSize str type:" + typeof str);
@@ -1600,13 +1609,19 @@ RED.view = (function() {
 		sp.style.position = "absolute";
 		sp.style.top = "-1000px";*/
 		sp.innerHTML = (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-		const t0 = performance.now();
+		
 		var w = sp.offsetWidth;
 		var h = sp.offsetHeight;
 		//document.body.removeChild(sp);
-		const t1 = performance.now();
-		//console.error("@calculateTextSize time:" + (t1-t0));
-		return {w:parseFloat(w), h:parseFloat(h)};
+		
+
+        var sizes = {w:parseFloat(w), h:parseFloat(h)};
+        calculateTextSizeCache[name] = sizes; // cache it for performance boost
+
+        //const t1 = performance.now();
+		//console.error("@calculateTextSize time @ " + name + " : " + (t1-t0));
+
+		return sizes;
 	}
 
 	function resetMouseVars() {
@@ -2140,7 +2155,7 @@ RED.view = (function() {
 			mainRect.attr("fill",function(d) { return d._def.color;});
 	}	
 	
-	function redraw_nodeIcon(nodeRect, d)
+	function redraw_nodeIcon_init(nodeRect, d)
 	{
 		nodeRect.selectAll(".node_icon_group").remove();
 		
@@ -2155,7 +2170,7 @@ RED.view = (function() {
 			.attr("stroke","none")
 			.attr("fill","#000")
 			.attr("fill-opacity","0.05")
-			.attr("height",function(d){return Math.min(50,d.h-4);});
+			.attr("height",function(d){return d.h; Math.min(50,d.h-4);});
 
 		var icon = icon_group.append("image")
 			.attr("xlink:href","icons/"+d._def.icon)
@@ -2163,6 +2178,15 @@ RED.view = (function() {
 			.attr("x",0)
 			.attr("width","30")
 			.attr("height","30");
+
+        /*var icon = icon_group.append("text")
+            .attr("x",10).attr("y",d.h/2 + 5)
+            .text("\uf061")
+            .style("font-family", "FontAwesome")
+            .style("font-size", "20")
+            .style("stroke", "none")
+            .attr("fill","#fff");
+            */
 
 		var icon_shade_border = icon_group.append("path")
 			.attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
@@ -2183,9 +2207,10 @@ RED.view = (function() {
 			icon.attr("width",Math.min(img.width,30));
 			icon.attr("height",Math.min(img.height,30));
 			icon.attr("x",15-Math.min(img.width,30)/2);
+            icon.attr("y",function(d){return (d.h-d3.select(this).attr("height"))/posMode;});
 		};
 
-		//icon.style("pointer-events","none");
+		icon.style("pointer-events","none");
 		icon_group.style("pointer-events","none");			
 	}
 	function redraw_init_nodeLabel(nodeRect, d)
@@ -2767,9 +2792,12 @@ RED.view = (function() {
 		}
 		nodeRect.selectAll(".node-gradient-top").attr("width",function(d){return d.w});
 		nodeRect.selectAll(".node_icon_group_right").attr('transform', function(d){return "translate("+(d.w-30)+",0)"});
-		nodeRect.selectAll(".node_label_right").attr('x', function(d){return d.w-38});
+        nodeRect.selectAll(".node_label_right").attr('x', function(d){return d.w-38});
 		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/posMode;});
+        //console.warn(d.name + " " + d.h);
 		nodeRect.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
+        nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
+        
 	}
 	function nodeOutput_mouseover(pi) // here d is the portindex
 	{
@@ -3292,7 +3320,7 @@ RED.view = (function() {
 			}
 
 			redraw_nodeMainRect_init(nodeRect, d);
-			if (d._def.icon) redraw_nodeIcon(nodeRect, d);
+			if (d._def.icon) redraw_nodeIcon_init(nodeRect, d);
 			redraw_nodeInputs(nodeRect, d);
 			redraw_nodeOutputs(nodeRect, d);
 			if (d.type != "JunctionLR" && d.type != "JunctionRL")
@@ -4118,17 +4146,17 @@ RED.view = (function() {
 		settings,
 		settingsCategory,
         settingsEditor,
-        mouse_position:function () {return mouse_position;},
-        node_def,
-        get_mouse_mode:function() {return mouse_mode;},
-        set_mouse_mode:function(mode) {mouse_mode = mode;},
-        get_mousedown_node:function() {return mousedown_node;},
-        get_posMode:function() {return posMode;},
-        nodeMouseUp:function() {return nodeMouseUp;},
-        nodeMouseDown:function() {return nodeMouseDown;},
-        nodeMouseOver:function() {return nodeMouseOver;},
-        nodeMouseOut:function() {return nodeMouseOut;},
-        nodeMouseMove:function() {return nodeMouseMove;},
+        get mouse_position() {return mouse_position;},
+        get node_def() {return node_def;},
+        get mouse_mode() {return mouse_mode;},
+        set mouse_mode(mode) {mouse_mode = mode;},
+        get mousedown_node() {return mousedown_node;},
+        get posMode() {return posMode;},
+        get nodeMouseUp() {return nodeMouseUp;},
+        get nodeMouseDown() {return nodeMouseDown;},
+        get nodeMouseOver() {return nodeMouseOver;},
+        get nodeMouseOut() {return nodeMouseOut;},
+        get nodeMouseMove() {return nodeMouseMove;},
         calculateTextSize,
         redraw_nodes,
 

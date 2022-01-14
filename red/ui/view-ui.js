@@ -5,14 +5,7 @@ RED.view.ui = (function() {
     var allowUiItemTextInput = false;
     var uiItemResizeBorderSize= 6;
     var currentUiObject = null;
-    var mousedown_node_w = 0,
-        mousedown_node_h = 0,
-        mousedown_node_x = 0,
-        mousedown_node_y = 0;
-    var mouse_offset_resize_x = 0,
-		mouse_offset_resize_y = 0;
-    //var currentUiObjectMouseX = 0;
-	//var currentUiObjectMouseY = 0;
+    var mousedown_node_resize = {x:0, y:0, w:0, h:0, ox:0, oy:0}
 
     function nodeMouseMove(d,_this) {
         //console.warn("nodeMouseMove");
@@ -22,15 +15,15 @@ RED.view.ui = (function() {
 
 		if (RED.view.settings.guiEditMode == false) {
 			_this.style.cursor = "default";
-			//currentUiObjectMouseX = x;
-			//currentUiObjectMouseY = y;
-            if (RED.view.get_mouse_mode() != RED.state.UI_OBJECT_MOUSE_DOWN) return;
+            if (RED.view.mouse_mode != RED.state.UI_OBJECT_MOUSE_DOWN) return;
 			uiObjectMouseMove(d, x, y);
             
 			return;
 		}
 
-		if (RED.view.get_mouse_mode() !== RED.state.DEFAULT) return;
+        // following is for resize
+
+		if (RED.view.mouse_mode !== RED.state.DEFAULT) return;
         //var uiItemResizeBorderSize = RED.view.ui.get_uiItemResizeBorderSize();
 		//var nodeRect = d3.select(this);
 		
@@ -119,114 +112,23 @@ RED.view.ui = (function() {
         d.divVal = parseInt(d.divVal);
         d.fval = d.val/d.divVal;
 	}
-	function subtractColor(colorA, colorB)
-	{
-		var color_R = parseInt(colorA.substring(1,3), 16) - parseInt(colorB.substring(1,3), 16);
-		var color_G = parseInt(colorA.substring(3,5), 16) - parseInt(colorB.substring(3,5), 16);
-		var color_B = parseInt(colorA.substring(5), 16) - parseInt(colorB.substring(5), 16);
-		if (color_R < 0) color_R = 0;
-		if (color_G < 0) color_G = 0;
-		if (color_B < 0) color_B = 0;
-		return "#" + getTwoHex(color_R) + getTwoHex(color_G) + getTwoHex(color_B);
-    }
-    function addColors(colorA, colorB, adjLuminance)
-	{
-        var color_R_A = parseInt(colorA.substring(1,3), 16);
-        var color_G_A = parseInt(colorA.substring(3,5), 16);
-        var color_B_A = parseInt(colorA.substring(5), 16);
-        
-        if (adjLuminance != undefined && color_R_A < parseInt(adjLuminance))
-            var color_R = color_R_A + parseInt(colorB.substring(1,3), 16);
-        else
-            var color_R = color_R_A;
-        
-        if (adjLuminance != undefined && color_G_A < parseInt(adjLuminance))
-            var color_G = color_G_A + parseInt(colorB.substring(3,5), 16);
-        else
-            var color_G = color_G_A;
-
-        if (adjLuminance != undefined && color_B_A < parseInt(adjLuminance))
-            var color_B = color_B_A + parseInt(colorB.substring(5), 16);
-        else
-            var color_B = color_B_A;
-		if (color_R > 255) color_R = 255;
-		if (color_G > 255) color_G = 255;
-		if (color_B > 255) color_B = 255;
-		return "#" + getTwoHex(color_R) + getTwoHex(color_G) + getTwoHex(color_B);
-    }
-    function setMinColor(colorA, colorB, adjLuminance)
-	{
-        var color_R_A = parseInt(colorA.substring(1,3), 16);
-        var color_G_A = parseInt(colorA.substring(3,5), 16);
-        var color_B_A = parseInt(colorA.substring(5), 16);
-        var color_R_B = parseInt(colorB.substring(1,3), 16);
-        var color_G_B = parseInt(colorB.substring(3,5), 16);
-        var color_B_B = parseInt(colorB.substring(5), 16);
-        
-        if (color_R_A < color_R_B) color_R_A = color_R_B;
-        if (color_G_A < color_G_B) color_G_A = color_G_B;
-        if (color_B_A < color_B_B) color_B_A = color_B_B;
-
-        if (color_R_A > adjLuminance) color_R_A = adjLuminance;
-        if (color_G_A > adjLuminance) color_G_A = adjLuminance;
-        if (color_B_A > adjLuminance) color_B_A = adjLuminance;
-
-        
-		return "#" + getTwoHex(color_R_A) + getTwoHex(color_G_A) + getTwoHex(color_B_A);
-    }
-    var colorMap = undefined
-	function generateColorMap()
-	{
-        if (colorMap != undefined) return colorMap; // use prev. generated colormap
-		// FF0000 -> FFFF00 upcount   G
-		// FEFF00 -> 00FF00 downcount R
-		// 00FF01 -> 00FFFF upcount   B
-		// 00FEFF -> 0000FF downcount G
-		// 0000FF -> FF00FF upcount   R
-		// FF00FF -> FF0000 downcount B
-        
-		colorMap = [];
-		var cR = 255;
-		var cG = 0;
-		var cB = 0;
-
-		// upcount   G
-		while(cG != 255) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cG++; }
-		// downcount R
-		while(cR != 0) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cR--; }
-		// upcount   B
-		while(cB != 255) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cB++; }
-		// downcount G
-		while(cG != 0) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cG--; }
-		// upcount   R
-		while(cR != 255) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cR++; }
-		// downcount B
-		while(cB != 0) { colorMap.push("#" + getTwoHex(cR) + getTwoHex(cG) + getTwoHex(cB)); cB--; }
-		return colorMap;
-	}
-	function getTwoHex(value)
-	{
-		if (value < 0x10)
-			return "0" + value.toString(16);
-		else
-			return value.toString(16);
-	}
+	
 	function uiObjectMouseOver (d, mouseX, mouseY, rect)
 	{
-		if (RED.view.get_mouse_mode() == RED.state.UI_OBJECT_MOUSE_DOWN)
+		if (RED.view.mouse_mode == RED.state.UI_OBJECT_MOUSE_DOWN)
 			uiObjectMouseDown(d, mouseX, mouseY, rect);
 		currentUiObject = d; // used by scroll event
 	}
 
 	function uiObjectMouseOut (d, mouseX, mouseY, rect)
 	{
-		if (RED.view.get_mouse_mode() == RED.state.UI_OBJECT_MOUSE_DOWN)
+		if (RED.view.mouse_mode == RED.state.UI_OBJECT_MOUSE_DOWN)
 			uiObjectMouseUp(d, mouseX, mouseY, rect, true);
 		currentUiObject = null; // used by scroll event
 	}
 	function uiObjectMouseDown(d, mouseX, mouseY, rect)
 	{
-		RED.view.set_mouse_mode(RED.state.UI_OBJECT_MOUSE_DOWN);
+		RED.view.mouse_mode = RED.state.UI_OBJECT_MOUSE_DOWN;
 		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
 
 		if (d.type == "UI_Button") {
@@ -247,13 +149,12 @@ RED.view.ui = (function() {
 			d.dirty = true;
 			console.warn("ui_listBoxMouseDown " + d.sendCommand + " " + d.selectedIndex);
 			RED.ControlGUI.sendUiListBox(d);
-			//setRectFill(rect);
+	
 			if (d.parentGroup != undefined && d.parentGroup.individualListBoxMode == false)
 			{
 				UI_ListBoxDeselectOther(d);
 			}
 
-			//redraw(true);
 			redraw_update_UI_ListBox(rect, d);
 		} else if (d.type == "UI_Piano") {
 			var newKeyIndex = rect.attr("keyIndex");
@@ -288,7 +189,7 @@ RED.view.ui = (function() {
 	function uiObjectMouseUp(d, mouseX, mouseY, rect, mouse_still_down)
 	{
 		if (mouse_still_down == undefined)
-		RED.view.set_mouse_mode(RED.state.UI_OBJECT_MOUSE_UP);
+		    RED.view.mouse_mode = RED.state.UI_OBJECT_MOUSE_UP;
 		
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
@@ -363,7 +264,7 @@ RED.view.ui = (function() {
 			rect.attr("fill", rect.attr("fillOld")); // failsafe
 		rect.attr("fillOld", rect.attr("fill"));
 		if (setColor == undefined)
-			rect.attr("fill", subtractColor(rect.attr("fill"), "#202020"));
+			rect.attr("fill", RED.color.subtractColor(rect.attr("fill"), "#202020"));
 		else
 			rect.attr("fill", setColor);
 	}
@@ -381,7 +282,7 @@ RED.view.ui = (function() {
 			rect.attr("stroke", rect.attr("strokeOld")); // failsafe
 		rect.attr("strokeOld", rect.attr("stroke"));
 		if (setColor == undefined)
-			rect.attr("stroke", subtractColor(rect.attr("stroke"), "#202020"));
+			rect.attr("stroke", RED.color.subtractColor(rect.attr("stroke"), "#202020"));
 		else
 			rect.attr("stroke", setColor);
 	}
@@ -391,47 +292,45 @@ RED.view.ui = (function() {
 			rect.attr("stroke", rect.attr("strokeOld"));
 	}
 
-    
-
     function uiNodeResize()
 	{
         //console.warn("whatthefucjiswrongwithjavascript:",RED.view.node_def);
 
-        var mousedown_node = RED.view.get_mousedown_node();
-        var mouse_mode = RED.view.get_mouse_mode();
-        var posMode = RED.view.get_posMode();
+        var mousedown_node = RED.view.mousedown_node;
+        var mouse_mode = RED.view.mouse_mode;
+        var posMode = RED.view.posMode;
 
 
 		if (mouse_mode == RED.state.RESIZE_LEFT || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT) {
-			var dx = mouse_offset_resize_x - RED.view.mouse_position()[0];
-			mousedown_node.w = parseInt(mousedown_node_w + dx);
+			var dx = mousedown_node_resize.ox - RED.view.mouse_position[0];
+			mousedown_node.w = parseInt(mousedown_node_resize.w + dx);
 			
 			if (mousedown_node.w <= RED.view.node_def.width) mousedown_node.w = RED.view.node_def.width;
-			else mousedown_node.x = mousedown_node_x - dx/posMode;
+			else mousedown_node.x = mousedown_node_resize.x - dx/posMode;
 			mousedown_node.dirty = true;
 		} 
 		if (mouse_mode == RED.state.RESIZE_RIGHT || mouse_mode == RED.state.RESIZE_TOP_RIGHT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
-			var dx = mouse_offset_resize_x - RED.view.mouse_position()[0];
-			mousedown_node.w = parseInt(mousedown_node_w - dx);
+			var dx = mousedown_node_resize.ox - RED.view.mouse_position[0];
+			mousedown_node.w = parseInt(mousedown_node_resize.w - dx);
 			
 			if (mousedown_node.w <= RED.view.node_def.width) mousedown_node.w = RED.view.node_def.width;
-			else if (posMode === 2) mousedown_node.x = mousedown_node_x - dx/2;
+			else if (posMode === 2) mousedown_node.x = mousedown_node_resize.x - dx/2;
 			mousedown_node.dirty = true;
 		} 
 		if (mouse_mode == RED.state.RESIZE_TOP || mouse_mode == RED.state.RESIZE_TOP_LEFT || mouse_mode == RED.state.RESIZE_TOP_RIGHT) {
-			var dy = mouse_offset_resize_y - RED.view.mouse_position()[1];
-			mousedown_node.h = parseInt(mousedown_node_h + dy);
+			var dy = mousedown_node_resize.oy - RED.view.mouse_position[1];
+			mousedown_node.h = parseInt(mousedown_node_resize.h + dy);
 			
 			if (mousedown_node.h <= RED.view.node_def.height) mousedown_node.h = RED.view.node_def.height;
-			else mousedown_node.y = mousedown_node_y - dy/posMode;
+			else mousedown_node.y = mousedown_node_resize.y - dy/posMode;
 			mousedown_node.dirty = true;
 		}
 		if (mouse_mode == RED.state.RESIZE_BOTTOM || mouse_mode == RED.state.RESIZE_BOTTOM_LEFT || mouse_mode == RED.state.RESIZE_BOTTOM_RIGHT) {
-			var dy = mouse_offset_resize_y - RED.view.mouse_position()[1];
-			mousedown_node.h = parseInt(mousedown_node_h - dy);
+			var dy = mousedown_node_resize.oy - RED.view.mouse_position[1];
+			mousedown_node.h = parseInt(mousedown_node_resize.h - dy);
 			
 			if (mousedown_node.h <= RED.view.node_def.height) mousedown_node.h = RED.view.node_def.height;
-			else if (posMode === 2) mousedown_node.y = parseInt(mousedown_node_y - dy/2);
+			else if (posMode === 2) mousedown_node.y = parseInt(mousedown_node_resize.y - dy/2);
 			mousedown_node.dirty = true;
 		}
     }
@@ -475,11 +374,11 @@ RED.view.ui = (function() {
             .attr("x", 0).attr("y", 0)
             .attr("rx", 6).attr("ry", 6)
             .attr("fill", "rgba(255,255,255,0)")
-			.on("mouseup", RED.view.nodeMouseUp())
-			.on("mousedown",RED.view.nodeMouseDown())
-			.on("mousemove", RED.view.nodeMouseMove())
-			.on("mouseover", RED.view.nodeMouseOver())
-            .on("mouseout", RED.view.nodeMouseOut())
+			.on("mouseup", RED.view.nodeMouseUp)
+			.on("mousedown",RED.view.nodeMouseDown)
+			.on("mousemove", RED.view.nodeMouseMove)
+			.on("mouseover", RED.view.nodeMouseOver)
+            .on("mouseout", RED.view.nodeMouseOut)
 
         if (RED.view.settings.guiEditMode == true)
             $('.ui_textbox_textarea').css("pointer-events", "all");
@@ -506,11 +405,11 @@ RED.view.ui = (function() {
 			.attr("class", "slidernode")
 			.attr("rx", 4)
 			.attr("ry", 4)
-			.on("mouseup",RED.view.nodeMouseUp())
-			.on("mousedown",RED.view.nodeMouseDown())
-			.on("mousemove", RED.view.nodeMouseMove())
-			.on("mouseover", RED.view.nodeMouseOver())
-			.on("mouseout", RED.view.nodeMouseOut())
+			.on("mouseup",RED.view.nodeMouseUp)
+			.on("mousedown",RED.view.nodeMouseDown)
+			.on("mousemove", RED.view.nodeMouseMove)
+			.on("mouseover", RED.view.nodeMouseOver)
+			.on("mouseout", RED.view.nodeMouseOut)
 			.attr("fill",function(d) { return d._def.color;})
 
 		var sliderValueLabel = nodeRect.append("text")
@@ -597,11 +496,11 @@ RED.view.ui = (function() {
 				.attr("ry", 6)
 				.attr("listItemIndex", i)
 				.attr("selected", false)
-				.on("mouseup",  RED.view.nodeMouseUp()) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
-				.on("mousedown", RED.view.nodeMouseDown()) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
-				.on("mousemove", RED.view.nodeMouseMove())
-				.on("mouseover", RED.view.nodeMouseOver())
-				.on("mouseout", RED.view.nodeMouseOut())
+				.on("mouseup",  RED.view.nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", RED.view.nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", RED.view.nodeMouseMove)
+				.on("mouseover", RED.view.nodeMouseOver)
+				.on("mouseout", RED.view.nodeMouseOut)
 				.attr("fill",function(d) { return d.bgColor;});
 
 			var itemText = nodeRect.append("text")
@@ -641,7 +540,7 @@ RED.view.ui = (function() {
 			li.attr("x", 4);
 			li.attr("height", itemHeight);
 			if (d.selectedIndex == i)
-				li.attr("fill", subtractColor(d.itemBGcolor, "#303030"));
+				li.attr("fill", RED.color.subtractColor(d.itemBGcolor, "#303030"));
 			else
 				li.attr("fill", d.itemBGcolor);
 		});
@@ -675,11 +574,11 @@ RED.view.ui = (function() {
 				.attr("class", "ui_piano_item")
 				.attr("keyIndex", keyIndex[i])
 				.attr("selected", false)
-				.on("mouseup",  RED.view.nodeMouseUp()) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
-				.on("mousedown", RED.view.nodeMouseDown()) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
-				.on("mousemove", RED.view.nodeMouseMove())
-				.on("mouseover", RED.view.nodeMouseOver())
-				.on("mouseout", RED.view.nodeMouseOut())
+				.on("mouseup",  RED.view.nodeMouseUp) //function (d) { nodeMouseUp(d); d.selectedIndex = i; })
+				.on("mousedown", RED.view.nodeMouseDown) // function (d) { nodeMouseDown(d); d.selectedIndex = i; })
+				.on("mousemove", RED.view.nodeMouseMove)
+				.on("mouseover", RED.view.nodeMouseOver)
+				.on("mouseout", RED.view.nodeMouseOut)
 				.attr("fill",function(d) { return d.bgColor;});
 
 			if (i < 7)
@@ -724,7 +623,7 @@ RED.view.ui = (function() {
 				li.attr("x", i*keyWidth + i + 0.5);
 				li.attr("height", whiteKeyHeight);
 				li.attr("fill", d.whiteKeysColor);
-				li.attr("stroke", subtractColor(d.whiteKeysColor, "#303030"));
+				li.attr("stroke", RED.color.subtractColor(d.whiteKeysColor, "#303030"));
 				li.attr("width", keyWidth);
 			}
 			else if (i >= 7 && i <= 8)
@@ -796,58 +695,61 @@ RED.view.ui = (function() {
 	}
 
     function uiNodeResizeMouseDown(d,_this) {
-        mousedown_node_w = d.w;
-        mousedown_node_h = d.h;
-        mousedown_node_x = d.x;
-        mousedown_node_y = d.y;
-        mouse_offset_resize_x = RED.view.mouse_position()[0];
-        mouse_offset_resize_y = RED.view.mouse_position()[1];
-        //console.log("mousedown_node_w:" + mousedown_node_w +
-        //", mousedown_node_h:" + mousedown_node_h +
-        //", mouse_offset_resize_x:" + mouse_offset_resize_x +
-        //", mouse_offset_resize_y:" + mouse_offset_resize_y);
+        mousedown_node_resize.w = d.w;
+        mousedown_node_resize.h = d.h;
+        mousedown_node_resize.x = d.x;
+        mousedown_node_resize.y = d.y;
+        var mouse_position = RED.view.mouse_position;
+        mousedown_node_resize.ox = mouse_position[0];
+        mousedown_node_resize.oy = mouse_position[1];
+        //console.log("mousedown_node_old.w:" + mousedown_node_old.w +
+        //", mousedown_node_old.h:" + mousedown_node_old.h +
+        //", mousedown_node_resize.ox:" + mousedown_node_resize.ox +
+        //", mousedown_node_resize.oy:" + mousedown_node_resize.oy);
 
         //var nodeRect = d3.select(this);
         var mousePos = d3.mouse(_this)
         var x = mousePos[0];
         var y = mousePos[1];
+        var mouse_mode = RED.state.MOVING;
 
         if ((y > uiItemResizeBorderSize) && (y < (d.h-uiItemResizeBorderSize))) // width resize
         {
             if (x < uiItemResizeBorderSize)
-                RED.view.set_mouse_mode(RED.state.RESIZE_LEFT);
+                mouse_mode = RED.state.RESIZE_LEFT;
             else if (x > (d.w-uiItemResizeBorderSize))
-                RED.view.set_mouse_mode(RED.state.RESIZE_RIGHT);
+                mouse_mode = RED.state.RESIZE_RIGHT;
             else
-                RED.view.set_mouse_mode(RED.state.MOVING);
+                mouse_mode = RED.state.MOVING; 
         }
         else if ((x > uiItemResizeBorderSize) && (x < (d.w-uiItemResizeBorderSize)))
         {
             if (y < uiItemResizeBorderSize)
-                RED.view.set_mouse_mode(RED.state.RESIZE_TOP);
+                mouse_mode = RED.state.RESIZE_TOP;
             else if (y > (d.h-uiItemResizeBorderSize))
-                RED.view.set_mouse_mode(RED.state.RESIZE_BOTTOM);
+                mouse_mode = RED.state.RESIZE_BOTTOM;
             else
-                RED.view.set_mouse_mode(RED.state.MOVING);
+                mouse_mode = RED.state.MOVING;
         }
         else if ((x < uiItemResizeBorderSize) && (y < uiItemResizeBorderSize)) // top left resize
         {
-            RED.view.set_mouse_mode(RED.state.RESIZE_TOP_LEFT);
+            mouse_mode = RED.state.RESIZE_TOP_LEFT;
         }
         else if ((x < uiItemResizeBorderSize) && (y>(d.h-uiItemResizeBorderSize))) // bottom left resize
         {
-            RED.view.set_mouse_mode(RED.state.RESIZE_BOTTOM_LEFT);
+            mouse_mode = RED.state.RESIZE_BOTTOM_LEFT;
         }
         else if ((y < uiItemResizeBorderSize) && (x>(d.w-uiItemResizeBorderSize))) // top right resize
         {
-            RED.view.set_mouse_mode(RED.state.RESIZE_TOP_RIGHT);
+            mouse_mode = RED.state.RESIZE_TOP_RIGHT;
         }
         else if ((y > (d.h-uiItemResizeBorderSize)) && (x > (d.w-uiItemResizeBorderSize))) // bottom right resize
         {
-            RED.view.set_mouse_mode(RED.state.RESIZE_BOTTOM_RIGHT);
+            mouse_mode = RED.state.RESIZE_BOTTOM_RIGHT;
         }
-        else
-            RED.view.set_mouse_mode(RED.state.MOVING);
+        //else // default above is moving
+        //    RED.view.set_mouse_mode(RED.state.MOVING);
+        RED.view.mouse_mode = mouse_mode;
         //console.log("resize mouse_mode:" + mouse_mode);
     }
 
@@ -870,13 +772,7 @@ RED.view.ui = (function() {
     }
 
     return {
-        allowUiItemTextInput:function() {return allowUiItemTextInput;},
-        // the following four functions should be moved to a global RED.ui.helpers namespace
-        generateColorMap,
-        addColors:addColors,
-        subtractColor:subtractColor,
-        setMinColor:setMinColor,
-
+        get allowUiItemTextInput() {return allowUiItemTextInput;},
         uiNodeResizeMouseDown,
         uiNodeResize,
 

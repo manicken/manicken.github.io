@@ -201,7 +201,7 @@ RED.arduino.import = (function() {
 			$.each(RED.nodes.node_defs, function (defGroupName, obj) {
 				$.each(RED.nodes.node_defs[defGroupName].types, function (key, obj) {
                     words.push(key);
-                    console.log(key);
+                    //console.log(key);
                 });
 			});
 			traverseLines(newNodesStr);

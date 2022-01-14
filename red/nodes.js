@@ -250,7 +250,7 @@ RED.nodes = (function() {
 		if (!checkName(basename, wsId)) return basename; // no need to change
 		var count = 1;
         if (nameShouldEndWithNumber == undefined) {
-            console.log("generate name from: " + basename);
+            //console.log("generate name from: " + basename);
             var ret = getBaseName(basename);
             basename = ret.basename;
             count = ret.count;
@@ -282,7 +282,7 @@ RED.nodes = (function() {
             index--;
         }
         var basename = name.substring(0, index+1);
-        console.log(basename + " " + number);
+        //console.log(basename + " " + number);
         if (number == "") number = "1";
         return {basename:basename, count:parseInt(number)};
     }
