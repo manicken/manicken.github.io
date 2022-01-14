@@ -2207,7 +2207,7 @@ RED.view = (function() {
 			icon.attr("width",Math.min(img.width,30));
 			icon.attr("height",Math.min(img.height,30));
 			icon.attr("x",15-Math.min(img.width,30)/2);
-            icon.attr("y",function(d){return (d.h-d3.select(this).attr("height"))/posMode;});
+            icon.attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
 		};
 
 		icon.style("pointer-events","none");
@@ -2793,7 +2793,7 @@ RED.view = (function() {
 		nodeRect.selectAll(".node-gradient-top").attr("width",function(d){return d.w});
 		nodeRect.selectAll(".node_icon_group_right").attr('transform', function(d){return "translate("+(d.w-30)+",0)"});
         nodeRect.selectAll(".node_label_right").attr('x', function(d){return d.w-38});
-		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/posMode;});
+		nodeRect.selectAll(".node_icon").attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});
         //console.warn(d.name + " " + d.h);
 		nodeRect.selectAll(".node_icon_shade").attr("height",function(d){return d.h;});
         nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
