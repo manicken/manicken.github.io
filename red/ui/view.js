@@ -2993,7 +2993,7 @@ RED.view = (function() {
 			return true;
 		}
 	}
-	function setUInode_Xmin(node, val)
+	function setUInode_Xmin(node, val) // used by group
 	{
 		if (posMode === 2)
 		{
@@ -3008,7 +3008,7 @@ RED.view = (function() {
 			node.x = node.x - dx;
 		}
 	}
-	function setUInode_Xmax(node, val)
+	function setUInode_Xmax(node, val) // used by group
 	{
 		if (posMode === 2)
 		{
@@ -3023,7 +3023,7 @@ RED.view = (function() {
 			//node.x = node.x - dx;
 		}
 	}
-	function setUInode_Ymin(node, val)
+	function setUInode_Ymin(node, val) // used by group
 	{
 		if (posMode === 2)
 		{
@@ -3038,7 +3038,7 @@ RED.view = (function() {
 			node.y = node.y - dy;
 		}
 	}
-	function setUInode_Ymax(node, val)
+	function setUInode_Ymax(node, val) // used by group
 	{
 		if (posMode === 2)
 		{
@@ -3053,21 +3053,21 @@ RED.view = (function() {
 			//node.y = node.y - dy;
 		}
 	}
-	function saveOldSizeAndPos(node)
+	function saveOldSizeAndPos(node) // used by group
 	{
 		node.xo = node.x;
 		node.yo = node.y;
 		node.wo = node.w;
 		node.ho = node.h;
 	}
-	function restoreOldSizeAndPos(node)
+	function restoreOldSizeAndPos(node) // used by group
 	{
 		if (node.xo != undefined) node.x = node.xo;
 		if (node.yo != undefined) node.y = node.yo;
 		if (node.wo != undefined) node.w = node.wo;
 		if (node.ho != undefined) node.h = node.ho;
 	}
-	function getNodeExtents(node)
+	function getNodeExtents(node) // used by group
 	{
 		if (posMode === 2)
 		{
@@ -4112,7 +4112,6 @@ RED.view = (function() {
 		anyLinkEnter = true;
 		redraw_links();
 	}
-
 
 	return {
         defSettings,

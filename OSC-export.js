@@ -382,7 +382,9 @@ OSC.export = (function () {
         var ws = nns.workspaces[mainWorkSpace];
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
-        //getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get getClassConnections working
+        bundle.add("/comment", "s", "*** create all objects ***");
+        getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get getClassConnections working
+        bundle.add("/comment", "s", "*** create all audio connections ***");
         getClassConnections(nns, ws, bundle, '/');
 
         if (getBundleOnly == true) 
