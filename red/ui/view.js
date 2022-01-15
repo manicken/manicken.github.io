@@ -2314,7 +2314,7 @@ RED.view = (function() {
 			{
 				//console.log("text width:" + calculateTextSize(d.name).w);
 				//console.log("node width:" + d.w);
-                console.warn(this);
+                //console.warn(this);
 				return 10; // allways divide by 2
 			});
         }

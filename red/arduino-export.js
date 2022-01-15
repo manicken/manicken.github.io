@@ -145,7 +145,7 @@ RED.arduino.export = (function () {
                 }
                 else {
                     this.cppCode += this.base() + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");";
-                    if (this.staticType == true && (this.srcIsClass || this.dstIsClass)) this.cppCode += this.warningClassUse;
+                    if (this.staticType == true && (this.srcIsClass || this.dstIsClass)) this.cppCode += warningClassUse;
                     this.cppCode += "\n";
                     this.count++;
                     this.totalCount++;

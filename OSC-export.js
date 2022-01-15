@@ -335,7 +335,16 @@ OSC.export = (function () {
         return name.substring(0, startIndex);
     }
 
-    function addLinksToBundle(bundle, links, connectionPath, srcPath, dstPath, overrideTargetPort) {
+    /**
+     * 
+     * @param {*} bundle 
+     * @param {*} links 
+     * @param {*} connectionLocationPath where the connection is created
+     * @param {*} srcPath 
+     * @param {*} dstPath 
+     * @param {*} overrideTargetPort 
+     */
+    function addLinksToBundle(bundle, links, connectionLocationPath, srcPath, dstPath, overrideTargetPort) {
         for (var li = 0; li < links.length; li++) {
             var link = links[li];
             if ((link.target._def.nonObject != undefined) || (link.source._def.nonObject != undefined)) continue; // Input or Output objects
@@ -349,18 +358,23 @@ OSC.export = (function () {
             // need to replace this with a function that returns multiple
             // audioconnections/linknames, i.e. when many wires connect from
             // a TabInput inside a class
+            // then the following cases
+            // if source is class and dest. is normal
+            // if source is normal and dest. is class
+            // if source is class and dest. is class
+
             var linkName = OSC.GetLinkName(link,overrideTargetPort);
             
             if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
-            if (connectionPath == "/") {
+            if (connectionLocationPath == "/") {
                 console.warn("path / " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
                 bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, srcPort, dstName, dstPort);
             }
             else {
-                console.warn("path " + connectionPath + " " + linkName);
-                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, connectionPath);
-                bundle.add(OSC.GetConnectAddr(connectionPath +"/"+ linkName),"sisi", srcPath + "/" + srcName, srcPort, dstPath + "/" + dstName, dstPort);
+                console.warn("path " + connectionLocationPath + " " + linkName);
+                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, connectionLocationPath);
+                bundle.add(OSC.GetConnectAddr(connectionLocationPath +"/"+ linkName),"sisi", srcPath + "/" + srcName, srcPort, dstPath + "/" + dstName, dstPort);
             }
         }
     }
