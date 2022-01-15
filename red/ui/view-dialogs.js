@@ -120,7 +120,6 @@ RED.view.dialogs = (function() {
         RED.main.SetPopOver("#node-input-generateCppDestructor-workspace", "This autogenerates the C++ destructor function that will disconnect and destroy all AudioConnections", "left");
         $( "#node-input-export-isMain" ).prop('checked',  ws.isMain);
         $( "#node-input-export-isAudioMain" ).prop('checked',  ws.isAudioMain);
-        RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", "when checked this defines the <b>Audio Main Entry</b>.<br>(currently only used by <b>OSC group export</b>)<br><br>note. if multiple audio main:s are set only the first one are used", "left");
         chk_exportIsMain_OnClick();
 
         var otherMain = getOtherMain(ws)
@@ -136,6 +135,20 @@ RED.view.dialogs = (function() {
             $( "#node-input-export-isMain" ).prop('disabled' , true);
             RED.main.SetPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
         }
+
+        var otherAudioMain = getOtherAudioMain(ws);
+        if (otherAudioMain == undefined){
+            $( "#node-input-export-isAudioMain" ).prop('disabled' , false);
+            RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", "when checked this defines the <b>Audio Main Entry</b>.<br>(currently only used by <b>OSC group export</b>)<br><br>note. if multiple audio main:s are set only the first one are used", "left");
+            $( "#node-input-export-isAudioMain" ).click(chk_exportIsMain_OnClick);
+            
+        }
+        else {
+            console.error("this happen");
+            $( "#node-input-export-isAudioMain" ).prop('disabled' , true);
+            RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", otherAudioMain + "<br>is allready defined as the 'Audio Main File'", "left");
+        }
+
 		$( "#node-dialog-rename-workspace" ).dialog("open");
     }
     
@@ -155,6 +168,20 @@ RED.view.dialogs = (function() {
             if (RED.nodes.workspaces[i] == ws) continue;
 
             if (RED.nodes.workspaces[i].isMain == true)
+            {
+                //RED.notify("<strong>Warning</strong> "+RED.nodes.workspaces[i].label  + " is allready defined as the main file.<br> there can only be one main file,<br>If you want this to be the new main first you have to uncheck the 'Main File' of " + RED.nodes.workspaces[i].label,"warning");
+                return RED.nodes.workspaces[i].label;
+            }
+        }
+        return undefined;
+    }
+    function getOtherAudioMain(ws)
+    {
+        for (var i = 0; i < RED.nodes.workspaces.length; i++)
+        {
+            if (RED.nodes.workspaces[i] == ws) continue;
+
+            if (RED.nodes.workspaces[i].isAudioMain == true)
             {
                 //RED.notify("<strong>Warning</strong> "+RED.nodes.workspaces[i].label  + " is allready defined as the main file.<br> there can only be one main file,<br>If you want this to be the new main first you have to uncheck the 'Main File' of " + RED.nodes.workspaces[i].label,"warning");
                 return RED.nodes.workspaces[i].label;
@@ -313,9 +340,73 @@ RED.view.dialogs = (function() {
 
 	});
 
+    function showExportDialog(title, text, textareaLabel,overrides,okPressedCb) {
+        if (overrides == undefined) var overrides = {};
+        if (overrides.okText == undefined) overrides.okText = "Ok";
+
+        var box = document.querySelector('.ui-droppable'); // to get window size
+        function float2int(value) {
+            return value | 0;
+        }
+        RED.view.state = RED.state.EXPORT;
+        var t2 = performance.now();
+        RED.view.dialogs.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
+            if (textareaLabel != undefined)
+                $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
+                if (overrides.tips != undefined)
+                    $("#export-clipboard-dialog-tips").text(overrides.tips);
+            $("#node-input-export").val(text).focus(function () {
+                var textarea = $(this);
+
+                //textarea.select();
+                //console.error(textarea.height());
+                var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
+                textarea.height(textareaNewHeight);
+
+                textarea.mouseup(function () {
+                    textarea.unbind("mouseup");
+                    return false;
+                });
+            }).focus();
+
+
+
+            //console.warn(".ui-droppable.box.clientHeight:"+ box.clientHeight);
+            //$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
+            $("#dialog").dialog({
+                title: title,
+                width: box.clientWidth * 0.60, // setting the size of dialog takes ~170mS
+                height: box.clientHeight,
+                buttons: [
+                    {
+                        text: overrides.okText,
+                        click: function () {
+                            RED.console_ok("Export dialog OK pressed!");
+                            $(this).dialog("close");
+                            if (okPressedCb != undefined)
+                                okPressedCb();
+                        }
+                    },
+                    {
+                        text: "Cancel",
+                        click: function () {
+                            RED.console_ok("Export dialog Cancel pressed!");
+                            $(this).dialog("close");
+                        }
+                    }
+                ],
+            }).dialog("open");
+
+        });
+        //RED.view.dirty(false);
+        const t3 = performance.now();
+        console.log('arduino-export-save-show-dialog took: ' + (t3 - t2) + ' milliseconds.');
+    }
+
     return {
         getOtherMain,
         getForm,
+        showExportDialog,
         showExportNodesDialog,
         showExportNodesLibraryDialog,
         showImportNodesDialog,

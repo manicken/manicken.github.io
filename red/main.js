@@ -464,11 +464,13 @@ RED.main = (function() {
 	{
 		//console.error("setting popover for:" + buttonId + "  " + htmlText);
 		if (location == undefined) location = "bottom";
-		$(buttonId).mouseover(function() {
+        $(buttonId).unbind("mouseover mouseout");
+
+        $(buttonId).on("mouseover",function() {
 			RED.view.showPopOver(buttonId, true, htmlText, location); // true means html mode
 		});
-		$(buttonId).mouseout(function() {
-			$(this).popover("destroy");
+		$(buttonId).on("mouseout", function() {
+			$(buttonId).popover("destroy");
 		});
     }
     $('#btn-reloadWindow').click(function() { window.location.reload(); });

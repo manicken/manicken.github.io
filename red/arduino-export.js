@@ -397,8 +397,8 @@ RED.arduino.export = (function () {
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive())
 
         if (useExportDialog)
-            showExportDialog("Simple Export to Arduino", cpp, " Source Code:");
-        //showExportDialog("Simple Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
+            RED.view.dialogs.showExportDialog("Simple Export to Arduino", cpp, " Source Code:");
+        //RED.view.dialogs.showExportDialog("Simple Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
 
         const t2 = performance.now();
         console.log('arduino-export-save1 took generating: ' + (t1 - t0) + ' milliseconds.');
@@ -800,7 +800,7 @@ RED.arduino.export = (function () {
         for (var i = 0; i < wsCppFiles.length; i++) {
             // don't include beautified json string here
             // and only append to cpp when useExportDialog
-            if (isCodeFile(wsCppFiles[i].name) && showExportDialog) {
+            if (isCodeFile(wsCppFiles[i].name) && useExportDialog) {
                 if (wsCppFiles[i].name == "mixers.cpp") { // special case
                     cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
                 }
@@ -830,8 +830,8 @@ RED.arduino.export = (function () {
 
         // only show dialog when server is active and not generating zip
         if (useExportDialog)
-            showExportDialog("Class Export to Arduino", cpp, " Source Code:");
-        //showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
+            RED.view.dialogs.showExportDialog("Class Export to Arduino", cpp, " Source Code:");
+        //RED.view.dialogs.showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
         const t1 = performance.now();
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
@@ -918,64 +918,7 @@ RED.arduino.export = (function () {
     $('#btn-deploy2singleLineJson').click(function () { exportSingleLineJSON(); });
     function exportSingleLineJSON() {
         var json = localStorage.getItem("audio_library_guitool");
-        showExportDialog("Single line JSON", json, " JSON:");
-    }
-
-    function showExportDialog(title, text, textareaLabel) {
-        var box = document.querySelector('.ui-droppable'); // to get window size
-        function float2int(value) {
-            return value | 0;
-        }
-        RED.view.state = RED.state.EXPORT;
-        var t2 = performance.now();
-        RED.view.dialogs.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
-            if (textareaLabel != undefined)
-                $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
-
-            $("#node-input-export").val(text).focus(function () {
-                var textarea = $(this);
-
-                textarea.select();
-                //console.error(textarea.height());
-                var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
-                textarea.height(textareaNewHeight);
-
-                textarea.mouseup(function () {
-                    textarea.unbind("mouseup");
-                    return false;
-                });
-            }).focus();
-
-
-
-            //console.warn(".ui-droppable.box.clientHeight:"+ box.clientHeight);
-            //$( "#dialog" ).dialog("option","title","Export to Arduino").dialog( "open" );
-            $("#dialog").dialog({
-                title: title,
-                width: box.clientWidth * 0.60, // setting the size of dialog takes ~170mS
-                height: box.clientHeight,
-                buttons: [
-                    {
-                        text: "Ok",
-                        click: function () {
-                            RED.console_ok("Export dialog OK pressed!");
-                            $(this).dialog("close");
-                        }
-                    },
-                    {
-                        text: "Cancel",
-                        click: function () {
-                            RED.console_ok("Export dialog Cancel pressed!");
-                            $(this).dialog("close");
-                        }
-                    }
-                ],
-            }).dialog("open");
-
-        });
-        //RED.view.dirty(false);
-        const t3 = performance.now();
-        console.log('arduino-export-save-show-dialog took: ' + (t3 - t2) + ' milliseconds.');
+        RED.view.dialogs.showExportDialog("Single line JSON", json, " JSON:");
     }
 
     // TODO: allow multiple array source signals to be connected to the mixer

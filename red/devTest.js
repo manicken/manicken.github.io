@@ -214,7 +214,7 @@ RED.devTest = (function() {
             functions += RED.arduino.export.generate_OSC_function_decode(node_def_names[i]);
             
         }
-        RED.export.showExportDialog("All official functions", defines + "\n" + functions, "list");
+        RED.view.dialogs.showExportDialog("All official functions", defines + "\n" + functions, "list");
     }
 
     
@@ -300,7 +300,7 @@ RED.devTest = (function() {
 		project1.workspaces = RED.nodes.workspaces;
         // SAVE test
 		var project_jsonString = JSON.stringify(project1, null, 4);
-		RED.export.showExportDialog("New Project JSON Test", project_jsonString);
+		RED.view.dialogs.showExportDialog("New Project JSON Test", project_jsonString);
 
         // LOAD test
         var projectLoadTest = JSON.parse(project_jsonString);
