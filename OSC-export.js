@@ -282,11 +282,13 @@ OSC.export = (function () {
     }
 
     function getClassConnections(nns, ws, bundle, path) {
+        
         for (var ni = 0; ni < ws.nodes.length; ni++) {
             var n = ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
             if (node._def.nonObject != undefined) continue;
-            var links = RED.nodes.links.filter(function(l) { return (l.source === node); });
+            var links = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.source.type != "TabInput") && (l.target.type != "TabOutput"); });
+            links.sort(function (a,b) {return a.target.y < b.target.y;})
 
             var maybeClass = isClass(nns, n.type);
             if (maybeClass.is == true)
@@ -297,20 +299,30 @@ OSC.export = (function () {
                     var count = isArray.arrayLength
                     for (var ai = 0; ai < count; ai++)
                     {
-                        console.error("this 1 @ " + path +" "+ name + "/i" + ai);
-                        addLinksToBundle(bundle, links, path, path + name + "/i" + ai,path + name + "/i" + ai, ai);
-                        getClassConnections(nns, maybeClass.ws, bundle, path + name + "/i" + ai);
+                        //console.error("this 1 @ " + path +" "+ name + "/i" + ai);
+                        var srcPath = path + name + "/i" + ai;
+                        var dstPath = path + name + "/i" + ai;
+                        addLinksToBundle(bundle, expandLinks(links,srcPath,dstPath), path, ai);
+                        bundle.add("/comment", "s" , "*************************************************************************");
+                        bundle.add("/comment", "s" , "*** adding connections inside "+ maybeClass.ws.label + " ****************************");
+                        bundle.add("/comment", "s" , "*************************************************************************");
+                        getClassConnections(nns, maybeClass.ws, bundle, srcPath);
                     }
                 }
                 else {
-                    console.error("this 2 @ " + path + " " + n.name);
-                    addLinksToBundle(bundle, links, path , path +"/"+ n.name ,path +"/"+ n.name);
+                    //console.error("this 2 @ " + path + " " + n.name);
+                    var srcPath = path +"/"+ n.name;
+                    var dstPath = path +"/"+ n.name;
+                    addLinksToBundle(bundle, expandLinks(links,srcPath,dstPath), path);
+                    bundle.add("/comment", "s" , "*************************************************************************");
+                    bundle.add("/comment", "s" , "*** adding connections inside "+ maybeClass.ws.label + " ****************************");
+                    bundle.add("/comment", "s" , "*************************************************************************");
                     getClassConnections(nns, maybeClass.ws, bundle, n.name);
                 }
             }
             else 
             {
-                console.error("this 3 @ " + path);
+                //console.error("this 3 @ " + path);
 
                 var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
                 if (isArray) {
@@ -318,11 +330,11 @@ OSC.export = (function () {
                     var count = isArray.arrayLength
                     for (var ai = 0; ai < count; ai++)
                     {
-                        addLinksToBundle(bundle, links, path , path ,path, ai);
+                        addLinksToBundle(bundle, expandLinks(links,path,path), path, ai);
                     }
                 }
                 else
-                    addLinksToBundle(bundle, links, path , path ,path);
+                    addLinksToBundle(bundle, expandLinks(links,path,path), path);
             }
         }
     }
@@ -336,6 +348,67 @@ OSC.export = (function () {
     }
 
     /**
+     * returns multiple
+     * audioconnections/linknames, i.e. when many wires connect from
+     * a TabInput inside a class
+     * then the following cases
+     * if source is class and dest. is normal
+     * if source is normal and dest. is class
+     * if source is class and dest. is class
+     * @param {*} links 
+     */
+    function expandLinks(links,srcPath,dstPath) {
+        //console.trace();
+        var newLinks = [];
+        for (var li = 0; li < links.length; li++)
+        {
+            var l = links[li];
+            var newLink = {source:l.source, sourcePort:l.sourcePort, sourcePath:srcPath,
+                           target:l.target, targetPort:l.targetPort, targetPath:dstPath};
+
+            if (RED.nodes.isClass(l.source.type))
+            {
+                console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
+                var port = RED.nodes.getClassIOport(l.source.type, "Out", l.sourcePort);
+                var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
+                newLink.sourcePath = srcPath + "/" + l.source.name;
+                newLink.source = newSrc.node;
+                newLink.sourcePort = newSrc.srcPortIndex;
+            }
+
+            if (RED.nodes.isClass(l.target.type))
+            {
+                var newDstPath = dstPath + "/" + l.target.name;
+                console.warn("l.target isclass " + l.target.name + " from " + l.source.name);
+                var port = RED.nodes.getClassIOport(l.target.type, "In", l.targetPort);
+                //console.warn("port:",port);
+                // port can have multiple connections out from it
+                var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
+                //portLinks.sort(function (a,b) {return a.target.y < b.target.y;})
+                //console.warn("portLinks:",portLinks);
+                var newPortLinks = [];
+                for (var pli = 0; pli < portLinks.length; pli++)
+                {
+                    var pl = portLinks[pli];
+                    var newPortLink = {source:l.source, sourcePort:l.sourcePort, sourcePath:srcPath,
+                                   target:pl.target, targetPort:pl.targetPort, targetPath:newDstPath};
+                    newPortLinks.push(newPortLink);
+                }
+                console.warn("newPortLinks:",newPortLinks);
+                newLinks.pushArray(expandLinks(newPortLinks,srcPath,newDstPath));
+
+            }
+            else
+            {
+                console.error("push link:",newLink);
+                
+                newLinks.push(newLink);
+            }
+        }
+        return newLinks;
+    }
+
+    /**
      * 
      * @param {*} bundle 
      * @param {*} links 
@@ -344,29 +417,20 @@ OSC.export = (function () {
      * @param {*} dstPath 
      * @param {*} overrideTargetPort 
      */
-    function addLinksToBundle(bundle, links, connectionLocationPath, srcPath, dstPath, overrideTargetPort) {
+    function addLinksToBundle(bundle, links, connectionLocationPath, overrideTargetPort) {
         for (var li = 0; li < links.length; li++) {
             var link = links[li];
-            if ((link.target._def.nonObject != undefined) || (link.source._def.nonObject != undefined)) continue; // Input or Output objects
+            if ((link.target.type == "TabOutput") || (link.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
 
-            
             var srcName = GetNameWithoutArrayDef(link.source.name);
             var dstName = GetNameWithoutArrayDef(link.target.name);
             var srcPort = link.sourcePort;
             var dstPort = link.targetPort;
-            
-            // need to replace this with a function that returns multiple
-            // audioconnections/linknames, i.e. when many wires connect from
-            // a TabInput inside a class
-            // then the following cases
-            // if source is class and dest. is normal
-            // if source is normal and dest. is class
-            // if source is class and dest. is class
 
             var linkName = OSC.GetLinkName(link,overrideTargetPort);
             
             if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
-            if (connectionLocationPath == "/") {
+            if (connectionLocationPath != link.sourcePath && connectionLocationPath != link.targetPath) {
                 console.warn("path / " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
                 bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, srcPort, dstName, dstPort);
@@ -374,7 +438,7 @@ OSC.export = (function () {
             else {
                 console.warn("path " + connectionLocationPath + " " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, connectionLocationPath);
-                bundle.add(OSC.GetConnectAddr(connectionLocationPath +"/"+ linkName),"sisi", srcPath + "/" + srcName, srcPort, dstPath + "/" + dstName, dstPort);
+                bundle.add(OSC.GetConnectAddr(connectionLocationPath +"/"+ linkName),"sisi", link.sourcePath + "/" + srcName, srcPort, link.targetPath + "/" + dstName, dstPort);
             }
         }
     }

@@ -1108,6 +1108,13 @@ RED.view = (function() {
                     return;
                 }
 				var nn = AddNewNode(mousePos[0],mousePos[1], ui.draggable[0].type, true);
+                
+                if (posMode == 1) { // only need to do this for top left pos mode
+                    redraw_calcNewNodeSize(nn);
+                    nn.x -= nn.w/2;
+                    nn.y -= nn.h/2;
+                }
+
 				setDirty(true);
 				// auto select dropped node - so info shows (if visible)
 				clearSelection();
@@ -1128,6 +1135,7 @@ RED.view = (function() {
 	{
 		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
 		
+
 		nn.type = typeName;
 		nn._def = RED.nodes.getType(nn.type);
         //console.warn(nn._def);
@@ -1147,6 +1155,7 @@ RED.view = (function() {
 
 		nn.changed = true;
 
+        
 		
 		for (var d in nn._def.defaults) {
 			if (nn._def.defaults.hasOwnProperty(d)) {

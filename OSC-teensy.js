@@ -524,7 +524,15 @@ var OSC = (function() {
     function GetLinkName(link,overrideTargetPort) {
         var srcName = GetNameWithoutArrayDef(link.source.name);
         var dstName = GetNameWithoutArrayDef(link.target.name);
+
+        if (link.sourcePath != undefined && typeof link.sourcePath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
+             srcName = (link.sourcePath.replaceAllVal("/", "_") + "_" + srcName).replaceAllVal("__", "_");
+        }
+        if (link.targetPath != undefined && typeof link.targetPath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
+            dstName = (link.targetPath.replaceAllVal("/", "_") + "_" + dstName).replaceAllVal("__", "_");
+        }
         
+        /* disable this for now
         var wsId = RED.nodes.isClass(link.source.type)
         if (wsId != undefined) {
             console.warn("isclass " + link.source.type);
@@ -543,7 +551,7 @@ var OSC = (function() {
             //var newDst = RED.nodes.getWireOutputSourceNode(port.node, 0);
 
             //dstName+=newDst.node.name + "_" + newDst.srcPortIndex;
-        }
+        }*/
 
         var srcPort = link.sourcePort;
         var dstPort = link.targetPort;

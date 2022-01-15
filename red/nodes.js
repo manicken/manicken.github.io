@@ -637,12 +637,6 @@ RED.nodes = (function() {
 		return nns;
 	}
 
-    Array.prototype.pushArray = function (other_array) {
-        /* You should include a test to check whether other_array really is an array */
-        //console.warn(typeof other_array);
-        other_array.forEach(function(v) {this.push(v)}, this);
-    }
-
     function sortNodes() {
         //console.error("nodecount before sort: "+nodes.length);
         var sortedNodes = [];
@@ -1375,13 +1369,16 @@ RED.nodes = (function() {
 	/**
 	 * Gets all TabInput or TabOutput belonging to a class, and then sorting them vertically top->bottom (normal view)
 	 * then the correct port-node based by index is returned
-	 * @param {String} wsId workspace id
+	 * @param {String} wsId workspace id or workspace Label (class type)
 	 * @param {String} type "TabInput" or "TabOutput"
 	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
 	 */
 	function getClassIOport(wsId, type, index) // this 
 	{
 		var retNodes = [];
+        var id = RED.nodes.isClass(wsId); // this makes the above take ClassType as input as well
+        if (id) wsId = id;
+
 		if (!wsId) return
         var nodeType = "Tab"+type+"put";
 		for (var i = 0; i < nodes.length; i++)
