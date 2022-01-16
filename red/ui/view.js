@@ -3522,7 +3522,7 @@ RED.view = (function() {
         get mouse_position() {return mouse_position;},
         get node_def() {return node_def;},
         get state() {return mouse_mode;}, 
-        set state(state) {mouse_mode = state;},
+        set state(_state) {mouse_mode = _state;},
         get mousedown_node() {return mousedown_node;},
         get posMode() {return posMode;},
         redraw_update_label,

@@ -318,7 +318,7 @@ RED.editor = (function() {
 		}
 		else
 		{
-			console.error("editor no mode");
+			console.error("editor no mode " + RED.view.state);
 		}
 	}
 	function init_edit_dialog()
