@@ -163,11 +163,11 @@ RED.editor.ace = (function() {
 				defaultCompleters = aceEditor.completers; // save default
 				
 				var byToken = [];
-				var wsId = RED.nodes.isClass(tokenType);
-				if (wsId)
+				var ws = RED.nodes.isClass(tokenType);
+				if (ws)
 				{
 					//byToken = RED.nodes.getAllFunctionNodeFunctions(wsId);
-					byToken = RED.nodes.getWorkspaceNodesAsCompletions(wsId);
+					byToken = RED.nodes.getWorkspaceNodesAsCompletions(ws.id);
 					// TODO: also make it fetch AudioObjects
 				}
 				else

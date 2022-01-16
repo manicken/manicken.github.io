@@ -4370,10 +4370,10 @@ RED.OCPview = (function() {
 		if (!data2 || (data2 == null)) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
-			if (RED.nodes.isClass(nodeType))
+            var ws = RED.nodes.isClass(nodeType);
+			if (ws)
 			{
-				var wsId = RED.nodes.getWorkspaceIdFromClassName(nodeType);
-				portName = portName + ": " + RED.nodes.getClassIOportName(wsId, "Tab"+portDir+ "put", index);
+				portName = portName + ": " + RED.nodes.getClassIOportName(ws.id, "Tab"+portDir+ "put", index);
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}

@@ -3,10 +3,185 @@
 
 RED.export = (function () {
 
-    
-    
+    function getClassConnections(class_ws, links, currPath) {
+        console.log("*******************************************");
+        console.error("getClassConnections  path: \"" + currPath + "\"");
+        for (var ni = 0; ni < class_ws.nodes.length; ni++) {
+            var n = class_ws.nodes[ni];
+            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
+            if (node._def.nonObject != undefined) continue;
+            var clinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.source.type != "TabInput") && (l.target.type != "TabOutput"); });
+            clinks.sort(function (a,b) {return a.target.y < b.target.y;})
+
+            var _ws = RED.nodes.isClass(n.type);
+            if (_ws)
+            {
+                console.warn("is class:" + n.name);
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, _ws.id, true);
+                if (isArray) {
+                    console.warn("  is array");
+                    var name = isArray.name;
+                    var count = isArray.arrayLength
+                    for (var ai = 0; ai < count; ai++)
+                    {
+                        //console.error("this 1 @ " + path +" "+ name + "/i" + ai);
+                        var newPath = currPath + name + "/i" + ai;
+                        links.pushArray(expandLinks(clinks, newPath));
+                        console.log("*************************************************************************");
+                        console.log("*** adding connections inside "+ _ws.label + " ****************************");
+                        console.log("*************************************************************************");
+                        getClassConnections(_ws, links, newPath);
+                    }
+                }
+                else {
+                    console.warn("  is NOT array");
+                    //console.error("this 2 @ " + path + " " + n.name);
+                    //var newPath = currPath +"/"+ n.name;
+                    links.pushArray(expandLinks(clinks, currPath));
+                    console.log("*************************************************************************");
+                    console.log("*** adding connections inside "+ _ws.label + " ****************************");
+                    console.log("*************************************************************************");
+                    getClassConnections(_ws, links, n.name);
+                }
+            }
+            else 
+            {
+                console.warn("is NOT class:" + n.name);
+
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, class_ws.id, true);
+                if (isArray) {
+                    console.warn("  is array");
+                    var name = isArray.name;
+                    var count = isArray.arrayLength
+                    
+                    for (var ai = 0; ai < count; ai++)
+                    {
+                        links.pushArray(expandLinks(clinks, currPath));
+                    }
+                }
+                else {
+                    console.warn("  is NOT array");
+                    links.pushArray(expandLinks(clinks, currPath));
+                }
+            }
+        }
+    }
+
+    function copyLink(l, defaultPath) {
+        return { linkPath:l.linkPath?l.linkPath:defaultPath,
+                 source:l.source, sourcePort:parseInt(l.sourcePort), sourcePath:l.sourcePath?l.sourcePath:defaultPath,
+                 target:l.target, targetPort:parseInt(l.targetPort), targetPath:l.targetPath?l.targetPath:defaultPath,
+                 origin:l.origin?l.origin:l};
+    }
+    function getFinalSource(l,ws) {
+        console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
+
+        var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
+        var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
+        l.sourcePath = l.sourcePath + "/" + l.source.name;
+        l.source = newSrc.node;
+        l.sourcePort = newSrc.srcPortIndex;
+        var _ws = RED.nodes.isClass(l.source.type);
+        if (_ws)
+        {
+            getFinalSource(l,_ws);
+        }
+    }
+
+    /**
+     * returns multiple
+     * audioconnections/linknames, i.e. when many wires connect from
+     * a TabInput inside a class
+     * then the following cases
+     * if source is class and dest. is normal
+     * if source is normal and dest. is class
+     * if source is class and dest. is class
+     * @param {*} links 
+     */
+     function expandLinks(links,classPath) {
+        console.log("*******************************************");
+        console.error("expandLinks classPath:\"" + classPath);
+        var newLinks = [];
+        var ws;
+        for (var li = 0; li < links.length; li++)
+        {
+            var l = links[li];
+            var newLink = copyLink(l, classPath);
+            
+            console.warn("newLink: "+printLinkDebug(newLink));
+
+            ws = RED.nodes.isClass(l.source.type)
+            if (ws)
+            {
+                getFinalSource(newLink,ws);
+                /* keep the following until we are 100% sure that getFinalSource works as intended
+                console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
+                
+                var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
+                var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
+                newLink.sourcePath = classPath + "/" + l.source.name;
+                newLink.source = newSrc.node;
+                newLink.sourcePort = newSrc.srcPortIndex;
+                // TODO. check if new src is class
+                // the following don't work
+                // we actually need annother function called getFinalSource
+                // and then call that recursive in itself until non class is found 
+                ws = RED.nodes.isClass(newSrc.node.type);
+                if (ws)
+                    getFinalSource(newLink,ws);
+
+                */
+            }
+
+            ws = RED.nodes.isClass(l.target.type);
+            if (ws)
+            {
+                console.warn("l.target isclass " + l.target.name + " from " + l.source.name);
+
+                var port = RED.nodes.getClassIOport(ws.id, "In", l.targetPort);
+                //console.warn("port:",port);
+                // port can have multiple connections out from it
+                var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
+
+                var newPortLinks = [];
+                var newTargetPath = classPath + "/" + l.target.name;
+                for (var pli = 0; pli < portLinks.length; pli++)
+                {
+                    var pl = portLinks[pli];
+                    var newPortLink = copyLink(l, classPath);
+                    newPortLink.targetPath = newTargetPath;
+                    newPortLink.target = pl.target;
+                    newPortLink.targetPort = pl.targetPort;
+                    newPortLinks.push(newPortLink);
+                }
+                console.warn("newPortLinks:\n" + printLinksDebug(newPortLinks));
+                newLinks.pushArray(expandLinks(newPortLinks,classPath));
+
+            }
+            else
+            {
+                console.error("push link: " + printLinkDebug(newLink));
+                
+                newLinks.push(newLink);
+            }
+        }
+        return newLinks;
+    }
+
+    function printLinkDebug(l) {
+        return '"' + l.linkPath + '", ("' + l.sourcePath + '",' + l.source.name + "," + l.sourcePort + ') -> ("' + l.targetPath + '",'+ l.target.name + "," + l.targetPort + ")\n";
+    }
+    function printLinksDebug(links) {
+        var txt = "";
+        for (var i = 0; i < links.length; i++) {
+            txt += printLinkDebug(links[i]);
+        }
+        return txt;
+    }
 
     return {
-        
+        getClassConnections,
+        printLinkDebug,
+        printLinksDebug
     };
 })();

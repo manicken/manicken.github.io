@@ -455,6 +455,7 @@ RED.view.groupbox = (function() {
         redraw_groups_init,
         moveToFromGroup_update,
         moveSelectionToFromGroupMouseUp,
+        removeNodeFromGroup,
         SelectAllInGroup
     };
 })();

@@ -185,19 +185,25 @@ OSC.export = (function () {
 		return {is:false};
 	}
 
-    function getClassObjects(nns, ws, bundle, path) {
+    function getClassObjects(class_ws, bundle, path) {
+        console.error("getClassObjects: " + class_ws.label + " \"" + path + "\"");
         var wildcardArrayItems = RED.OSC.settings.WildcardArrayObjects;
 
-        for (var ni = 0; ni < ws.nodes.length; ni++) {
-            var n = ws.nodes[ni];
+        for (var ni = 0; ni < class_ws.nodes.length; ni++) {
+            var n = class_ws.nodes[ni];
+            
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
             if (node._def.nonObject != undefined) continue;
 
-            var maybeClass = isClass(nns, n.type);
-            if (maybeClass.is == true)
+            console.warn("node:" + n.name);
+
+            var _ws = RED.nodes.isClass(n.type);
+            if (_ws)
             {
-                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+                console.warn("is class");
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, class_ws.id, true);
                 if (isArray) {
+                    console.warn("is array");
                     var name = isArray.name;
                     var count = isArray.arrayLength;
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", name, path)
@@ -205,24 +211,27 @@ OSC.export = (function () {
                     {
                         bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + name);
                         if (wildcardArrayItems == false)
-                            getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i" + ai);
+                            getClassObjects(_ws, bundle, path + name + "/i" + ai);
                     }
                     if (wildcardArrayItems == true)
-                        getClassObjects(nns, maybeClass.ws, bundle, path + name + "/i*");
+                        getClassObjects(_ws, bundle, path + name + "/i*");
                 }
                 else {
+                    console.warn("is NOT array");
                     bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
-                    if (path != "/") path += "/";
-                    getClassObjects(nns, maybeClass.ws, bundle, path + n.name);
+                   
+                    getClassObjects(_ws, bundle, path + "/" + n.name);
                     
                 }
             }
             else
             {
-                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+                console.warn("is NOT class");
+                var isArray = RED.nodes.isNameDeclarationArray(n.name, class_ws.id, true);
 
-                if (path == '/') {
+                if (path == '') {
                     if (isArray) {
+                        console.warn("is array");
                         var name = isArray.name;
                         var count = isArray.arrayLength;
                         bundle.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
@@ -238,6 +247,7 @@ OSC.export = (function () {
                         }
                     }
                     else {
+                        console.warn("is NOT array");
                         if (node._def.defaults.inputs == undefined) {
                             bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
                         }
@@ -281,131 +291,12 @@ OSC.export = (function () {
         }
     }
 
-    function getClassConnections(nns, ws, bundle, path) {
-        
-        for (var ni = 0; ni < ws.nodes.length; ni++) {
-            var n = ws.nodes[ni];
-            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
-            if (node._def.nonObject != undefined) continue;
-            var links = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.source.type != "TabInput") && (l.target.type != "TabOutput"); });
-            links.sort(function (a,b) {return a.target.y < b.target.y;})
-
-            var maybeClass = isClass(nns, n.type);
-            if (maybeClass.is == true)
-            {
-                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
-                if (isArray) {
-                    var name = isArray.name;
-                    var count = isArray.arrayLength
-                    for (var ai = 0; ai < count; ai++)
-                    {
-                        //console.error("this 1 @ " + path +" "+ name + "/i" + ai);
-                        var srcPath = path + name + "/i" + ai;
-                        var dstPath = path + name + "/i" + ai;
-                        addLinksToBundle(bundle, expandLinks(links,srcPath,dstPath), path, ai);
-                        bundle.add("/comment", "s" , "*************************************************************************");
-                        bundle.add("/comment", "s" , "*** adding connections inside "+ maybeClass.ws.label + " ****************************");
-                        bundle.add("/comment", "s" , "*************************************************************************");
-                        getClassConnections(nns, maybeClass.ws, bundle, srcPath);
-                    }
-                }
-                else {
-                    //console.error("this 2 @ " + path + " " + n.name);
-                    var srcPath = path +"/"+ n.name;
-                    var dstPath = path +"/"+ n.name;
-                    addLinksToBundle(bundle, expandLinks(links,srcPath,dstPath), path);
-                    bundle.add("/comment", "s" , "*************************************************************************");
-                    bundle.add("/comment", "s" , "*** adding connections inside "+ maybeClass.ws.label + " ****************************");
-                    bundle.add("/comment", "s" , "*************************************************************************");
-                    getClassConnections(nns, maybeClass.ws, bundle, n.name);
-                }
-            }
-            else 
-            {
-                //console.error("this 3 @ " + path);
-
-                var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
-                if (isArray) {
-                    var name = isArray.name;
-                    var count = isArray.arrayLength
-                    for (var ai = 0; ai < count; ai++)
-                    {
-                        addLinksToBundle(bundle, expandLinks(links,path,path), path, ai);
-                    }
-                }
-                else
-                    addLinksToBundle(bundle, expandLinks(links,path,path), path);
-            }
-        }
-    }
-
     function GetNameWithoutArrayDef(name) {
         var value = 0;
 		//console.warn("isNameDeclarationArray: " + name);
 		var startIndex = name.indexOf("[");
 		if (startIndex == -1) return name;
         return name.substring(0, startIndex);
-    }
-
-    /**
-     * returns multiple
-     * audioconnections/linknames, i.e. when many wires connect from
-     * a TabInput inside a class
-     * then the following cases
-     * if source is class and dest. is normal
-     * if source is normal and dest. is class
-     * if source is class and dest. is class
-     * @param {*} links 
-     */
-    function expandLinks(links,srcPath,dstPath) {
-        //console.trace();
-        var newLinks = [];
-        for (var li = 0; li < links.length; li++)
-        {
-            var l = links[li];
-            var newLink = {source:l.source, sourcePort:l.sourcePort, sourcePath:srcPath,
-                           target:l.target, targetPort:l.targetPort, targetPath:dstPath};
-
-            if (RED.nodes.isClass(l.source.type))
-            {
-                console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
-                var port = RED.nodes.getClassIOport(l.source.type, "Out", l.sourcePort);
-                var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
-                newLink.sourcePath = srcPath + "/" + l.source.name;
-                newLink.source = newSrc.node;
-                newLink.sourcePort = newSrc.srcPortIndex;
-            }
-
-            if (RED.nodes.isClass(l.target.type))
-            {
-                var newDstPath = dstPath + "/" + l.target.name;
-                console.warn("l.target isclass " + l.target.name + " from " + l.source.name);
-                var port = RED.nodes.getClassIOport(l.target.type, "In", l.targetPort);
-                //console.warn("port:",port);
-                // port can have multiple connections out from it
-                var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
-                //portLinks.sort(function (a,b) {return a.target.y < b.target.y;})
-                //console.warn("portLinks:",portLinks);
-                var newPortLinks = [];
-                for (var pli = 0; pli < portLinks.length; pli++)
-                {
-                    var pl = portLinks[pli];
-                    var newPortLink = {source:l.source, sourcePort:l.sourcePort, sourcePath:srcPath,
-                                   target:pl.target, targetPort:pl.targetPort, targetPath:newDstPath};
-                    newPortLinks.push(newPortLink);
-                }
-                console.warn("newPortLinks:",newPortLinks);
-                newLinks.pushArray(expandLinks(newPortLinks,srcPath,newDstPath));
-
-            }
-            else
-            {
-                console.error("push link:",newLink);
-                
-                newLinks.push(newLink);
-            }
-        }
-        return newLinks;
     }
 
     /**
@@ -417,7 +308,7 @@ OSC.export = (function () {
      * @param {*} dstPath 
      * @param {*} overrideTargetPort 
      */
-    function addLinksToBundle(bundle, links, connectionLocationPath, overrideTargetPort) {
+    function addLinksToBundle(bundle, links) {
         for (var li = 0; li < links.length; li++) {
             var link = links[li];
             if ((link.target.type == "TabOutput") || (link.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
@@ -427,23 +318,30 @@ OSC.export = (function () {
             var srcPort = link.sourcePort;
             var dstPort = link.targetPort;
 
-            var linkName = OSC.GetLinkName(link,overrideTargetPort);
+            var linkName = OSC.GetLinkName(link);
+
             
-            if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
-            if (connectionLocationPath != link.sourcePath && connectionLocationPath != link.targetPath) {
+            
+            //if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
+            if (link.linkPath == "") {
                 console.warn("path / " + linkName);
                 bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
-                bundle.add(OSC.GetConnectAddr(linkName),"sisi", srcName, srcPort, dstName, dstPort);
+                bundle.add(OSC.GetConnectAddr(linkName),"sisi", "/" + srcName, srcPort, "/" + dstName, dstPort);
             }
             else {
-                console.warn("path " + connectionLocationPath + " " + linkName);
-                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, connectionLocationPath);
-                bundle.add(OSC.GetConnectAddr(connectionLocationPath +"/"+ linkName),"sisi", link.sourcePath + "/" + srcName, srcPort, link.targetPath + "/" + dstName, dstPort);
+                // first fix missing / but only if the strings are not empty
+                // otherwise there will be duplicate // at the beginnings
+                if (link.linkPath.startsWith("/") == false && link.linkPath != "") link.linkPath = "/"+link.linkPath;
+                if (link.sourcePath.startsWith("/") == false && link.sourcePath != "") link.sourcePath = "/"+link.sourcePath;
+                if (link.targetPath.startsWith("/") == false && link.targetPath != "") link.targetPath = "/"+link.targetPath;
+
+                console.warn("path " + link.linkPath + " " + linkName);
+                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, link.linkPath);
+                bundle.add(OSC.GetConnectAddr(link.linkPath +"/"+ linkName),"sisi", link.sourcePath + "/" + srcName, srcPort, link.targetPath + "/" + dstName, dstPort);
             }
         }
     }
     
-
     function getGroupExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
 
@@ -461,10 +359,17 @@ OSC.export = (function () {
         var ws = nns.workspaces[mainWorkSpace];
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
+        bundle.add("/comment", "s", "**************************");
         bundle.add("/comment", "s", "*** create all objects ***");
-        getClassObjects(nns, ws, bundle, '/'); // now this is working so uncomment it until we get getClassConnections working
+        bundle.add("/comment", "s", "**************************");
+        getClassObjects(ws, bundle, ''); // now this is working so uncomment it until we get getClassConnections working
+        bundle.add("/comment", "s", "************************************");
         bundle.add("/comment", "s", "*** create all audio connections ***");
-        getClassConnections(nns, ws, bundle, '/');
+        bundle.add("/comment", "s", "************************************");
+        var links = [];
+        RED.export.getClassConnections(ws, links, '');
+        console.log(RED.export.printLinksDebug(links));
+        addLinksToBundle(bundle, links);
 
         if (getBundleOnly == true) 
             return bundle;

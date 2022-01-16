@@ -1369,17 +1369,16 @@ RED.nodes = (function() {
 	/**
 	 * Gets all TabInput or TabOutput belonging to a class, and then sorting them vertically top->bottom (normal view)
 	 * then the correct port-node based by index is returned
-	 * @param {String} wsId workspace id or workspace Label (class type)
+	 * @param {String} wsId workspace id
 	 * @param {String} type "TabInput" or "TabOutput"
 	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
 	 */
 	function getClassIOport(wsId, type, index) // this 
 	{
-		var retNodes = [];
-        var id = RED.nodes.isClass(wsId); // this makes the above take ClassType as input as well
-        if (id) wsId = id;
+        if (!wsId) return;
 
-		if (!wsId) return
+		var retNodes = [];
+		
         var nodeType = "Tab"+type+"put";
 		for (var i = 0; i < nodes.length; i++)
 		{
@@ -1389,9 +1388,15 @@ RED.nodes = (function() {
 		}
 		//retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
         //console.warn(type + retNodes[index].inputs);
-        if (type == "In" && retNodes[index].outputs > 1) return {name:retNodes[index].name + "["+retNodes[index].outputs+"]", node:retNodes[index], isBus:true};
-        else if (type == "Out" && retNodes[index].inputs > 1) return {name:retNodes[index].name + "["+retNodes[index].inputs+"]", node:retNodes[index], isBus:true};
-		else return {name:retNodes[index].name, node:retNodes[index],isBus:false};
+        if (type == "In" && retNodes[index].outputs > 1) {
+            return {name:retNodes[index].name + "["+retNodes[index].outputs+"]", node:retNodes[index], isBus:true};
+        }
+        else if (type == "Out" && retNodes[index].inputs > 1) {
+            return {name:retNodes[index].name + "["+retNodes[index].inputs+"]", node:retNodes[index], isBus:true};
+        }
+		else {
+            return {name:retNodes[index].name, node:retNodes[index],isBus:false};
+        }
 	}
 	function getClassComments(wsId)
 	{
@@ -1423,7 +1428,7 @@ RED.nodes = (function() {
 		for (var wsi = 0; wsi < workspaces.length; wsi++)
 		{
 			var ws = workspaces[wsi];
-			if (type == ws.label) return ws.id;
+			if (type == ws.label) return ws;
 			//console.log(node.type  + "!="+ ws.label);
 		}
 		return undefined;

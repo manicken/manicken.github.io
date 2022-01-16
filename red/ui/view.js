@@ -1508,7 +1508,7 @@ RED.view = (function() {
 				}
 
 				if (node.parentGroup != undefined)
-					removeNodeFromGroup(node.parentGroup, node);
+					RED.view.groupbox.removeNodeFromGroup(node.parentGroup, node);
                 //OSC.NodeRemoved(node); // use RED.events instead 
 				var rmlinks = RED.nodes.remove(node.id);
 				for (var j=0; j < rmlinks.length; j++) {
@@ -2516,9 +2516,10 @@ RED.view = (function() {
 					redraw_links();
 					d3.event.stopPropagation();
 				});
-
-            if (RED.nodes.isClass(d.source.type) && RED.nodes.getClassIOport(RED.nodes.getWorkspaceIdFromClassName(d.source.type), "Out", d.sourcePort).isBus ||
-                RED.nodes.isClass(d.target.type) && RED.nodes.getClassIOport(RED.nodes.getWorkspaceIdFromClassName(d.target.type), "In", d.targetPort).isBus ||
+            var wsSrc = RED.nodes.isClass(d.source.type);
+            var wsDst = RED.nodes.isClass(d.target.type);
+            if (wsSrc && RED.nodes.getClassIOport(wsSrc.id, "Out", d.sourcePort).isBus ||
+                wsDst && RED.nodes.getClassIOport(wsDst.id, "In", d.targetPort).isBus ||
                 d.source.type == "BusJoin" || d.target.type == "BusSplit") {
                 l.append("svg:path").attr("class","link_outline_bus link_path");
                 l.append("svg:path").attr("class","link_line_bus link_path");
@@ -3239,10 +3240,10 @@ RED.view = (function() {
 		if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
-			if (RED.nodes.isClass(nodeType))
+            var ws = RED.nodes.isClass(nodeType)
+			if (ws)
 			{
-				var wsId = RED.nodes.getWorkspaceIdFromClassName(nodeType);
-				portName = portName + ": " + RED.nodes.getClassIOport(wsId, portDir, index).name;
+				portName = portName + ": " + RED.nodes.getClassIOport(ws.id, portDir, index).name;
 			}
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}

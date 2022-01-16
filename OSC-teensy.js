@@ -521,41 +521,20 @@ var OSC = (function() {
         //if (endIndex == -1) return name;
         return name.substring(0, startIndex);
     }
-    function GetLinkName(link,overrideTargetPort) {
-        var srcName = GetNameWithoutArrayDef(link.source.name);
-        var dstName = GetNameWithoutArrayDef(link.target.name);
+    function GetLinkName(l,overrideTargetPort) {
+        var srcName = GetNameWithoutArrayDef(l.origin?l.origin.source.name:l.source.name);
+        var dstName = GetNameWithoutArrayDef(l.origin?l.origin.target.name:l.target.name);
 
-        if (link.sourcePath != undefined && typeof link.sourcePath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
+        /*if (link.sourcePath != undefined && typeof link.sourcePath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
              srcName = (link.sourcePath.replaceAllVal("/", "_") + "_" + srcName).replaceAllVal("__", "_");
         }
         if (link.targetPath != undefined && typeof link.targetPath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
             dstName = (link.targetPath.replaceAllVal("/", "_") + "_" + dstName).replaceAllVal("__", "_");
-        }
-        
-        /* disable this for now
-        var wsId = RED.nodes.isClass(link.source.type)
-        if (wsId != undefined) {
-            console.warn("isclass " + link.source.type);
-            var port = RED.nodes.getClassIOport(wsId, "Out", link.sourcePort);
-            var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0);
-
-            srcName+=newSrc.node.name + "_" + newSrc.srcPortIndex;
-        }
-
-        var wsId = RED.nodes.isClass(link.target.type)
-        if (wsId != undefined) {
-            console.warn("isclass " + link.target.type);
-            var port = RED.nodes.getClassIOport(wsId, "In", link.targetPort);
-            // this port can connect to many inputs therefore it need special treatment
-            
-            //var newDst = RED.nodes.getWireOutputSourceNode(port.node, 0);
-
-            //dstName+=newDst.node.name + "_" + newDst.srcPortIndex;
         }*/
-
-        var srcPort = link.sourcePort;
-        var dstPort = link.targetPort;
-        if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
+        
+        var srcPort = l.origin?l.origin.sourcePort:l.sourcePort;
+        var dstPort = l.origin?l.origin.targetPort:l.targetPort;
+        //if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
 
         if (RED.OSC.settings.UseDebugLinkName == false)
             return srcName + srcPort + dstName + dstPort;
