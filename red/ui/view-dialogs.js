@@ -136,18 +136,18 @@ RED.view.dialogs = (function() {
             RED.main.SetPopOver("#node-input-export-isMain-checkbox", otherMain + "<br>is allready defined as the 'Main File'", "left");
         }
 
-        var otherAudioMain = getOtherAudioMain(ws);
-        if (otherAudioMain == undefined){
+        //var otherAudioMain = getOtherAudioMain(ws);
+        //if (otherAudioMain == undefined){
             $( "#node-input-export-isAudioMain" ).prop('disabled' , false);
             RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", "when checked this defines the <b>Audio Main Entry</b>.<br>(currently only used by <b>OSC group export</b>)<br><br>note. if multiple audio main:s are set only the first one are used", "left");
-            $( "#node-input-export-isAudioMain" ).click(chk_exportIsMain_OnClick);
+        //    $( "#node-input-export-isAudioMain" ).click(chk_exportIsMain_OnClick);
             
-        }
+        /*}
         else {
             console.error("this happen");
             $( "#node-input-export-isAudioMain" ).prop('disabled' , true);
             RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", otherAudioMain + "<br>is allready defined as the 'Audio Main File'", "left");
-        }
+        }*/
 
 		$( "#node-dialog-rename-workspace" ).dialog("open");
     }

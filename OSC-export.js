@@ -1,4 +1,11 @@
-
+class PacketArray extends Array {
+    add(firstArg, valueTypes, ...values) {
+        if (typeof firstArg == "object")
+            this.push(firstArg);
+        else
+            this.push(OSC.CreatePacket(firstArg, valueTypes, ...values)); // super shortcut so we can now do bundle.add("/addr", "s", "string")){
+    }
+}
 
 OSC.export = (function () {
 
@@ -56,7 +63,8 @@ OSC.export = (function () {
 
         var clearAllAddr = "/dynamic/clearAl*";
         if (groupBased == undefined)
-            var result = getSimpleExport_bundle(false);
+            //var result = getSimpleExport_bundle(false);
+            var result = getSuperSimpleExport_bundle(false);
         else
             var result = getGroupExport_bundle(false);
         if (result == undefined) return; // only happens at getGroupExport_bundle
@@ -70,7 +78,8 @@ OSC.export = (function () {
             }
         }
         catch (err) {
-            OSC.AddLineToLog(err);
+            OSC.AddLineToLog("OSC.CreateBundleData err",err);
+            console.log(bundle);
         }
         
         // generate human readable export text
@@ -79,90 +88,16 @@ OSC.export = (function () {
         for (var i = 0; i < bundle.packets.length; i++) {
             exportDialogText += OSC.GetPacketCompactForm(bundle.packets[i]) + "\n";
         }
-
-        /*exportDialogText += "\nPackets raw data:\n";
-        for (var i = 0; i < bundle.packets.length; i++) {
-            exportDialogText += new TextDecoder("utf-8").decode(osc.writePacket(bundle.packets[i])) + "\n";
-        }*/
         
-        var dataAsText = new TextDecoder("utf-8").decode(bundleData);
+        var dataAsText = OSC.getDataArrayAsAsciiAndHex(bundleData).split('\n').join('<br>').split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;');
         
-        exportDialogText += "\nTotal AudioObjects:" + result.apos.length + "\n";
-        exportDialogText += "Total AudioConnections: " + (result.acs.length/2) + "\n";
+        exportDialogText += "\nTotal AudioObjects:" + result.aposCount + "\n";
+        exportDialogText += "Total AudioConnections: " + (result.acsCount/2) + "\n";
         if (bundleData != undefined) // only happen when bundle contain errors
             exportDialogText += "\nRAW data (size "+bundleData.length+" bytes):\n" + dataAsText + "\n";
         RED.view.dialogs.showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
         function () {OSC.SendData(bundleData);});
 
-    }
-
-    function getSimpleExport_bundle(getBundleOnly) {
-        if (getBundleOnly == undefined) getBundleOnly = false;
-
-        RED.storage.update();
-
-        var nns = RED.nodes.createCompleteNodeSet({newVer:false});
-
-        var activeWorkspace = RED.view.getWorkspace();
-
-        console.log("save1(simple) workspace:" + activeWorkspace);
-
-        
-        var addr = "";
-        var apos = []; // Audio Processing Objects
-        var acs = []; // Audio Connections 
-
-        for (var i = 0; i < nns.length; i++) {
-            var n = nns[i];
-            if (n.type == "tab" || n.type == "settings") continue;
-            if (n.z != activeWorkspace) continue; // workspace filter
-
-            //if (isSpecialNode(n.type) || (n.type == "PointerArray")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
-            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
-
-            if (node == null) { console.warn("node == null:" + "type:" + n.type + ",id:" + n.id); continue; } // this should never happen (because now "tab" type checked at top)
-            
-            if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
-
-            //var nodeType = getTypeName(nns, n);
-            var nodeName = n.name;//RED.nodes.make_name(n);
-
-            if (node.type != "AudioMixer")
-                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ss", node.type, nodeName));
-            else
-                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs));
-
-            if (haveIO(node)) {
-                RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
-                    var src = RED.nodes.node(n.id);
-                    var dst = RED.nodes.node(dstId);
-                    var src_name = RED.nodes.make_name(src);
-                    var dst_name = RED.nodes.make_name(dst);
-                    if (RED.OSC.settings.UseDebugLinkName == false)
-                        var linkName = src_name + pi + dst_name + dstPortIndex;
-                    else
-                        var linkName = src_name + "_" + pi +"_"+ dst_name +"_"+ dstPortIndex;
-                    acs.push(OSC.CreatePacket(OSC.GetCreateConnectionAddr(),"s", linkName));
-                    acs.push(OSC.CreatePacket(OSC.GetConnectAddr(linkName),"sisi", src_name, pi, dst_name, dstPortIndex));
-                });
-            }
-        }
-
-        var bundle = OSC.CreateBundle(0);
-        bundle.add(OSC.GetClearAllAddr());
-        // first add all Audio Processing Objects
-        for (var i = 0; i < apos.length; i++) {
-            bundle.add(apos[i]);
-        }
-        // second add all Audio Connections
-        for (var i = 0; i < acs.length; i++) {
-            bundle.add(acs[i]);
-
-        }
-        if (getBundleOnly == true) 
-            return bundle;
-        else
-            return {bundle:bundle, apos:apos, acs:acs};
     }
 
     function findMainWs(nns) {
@@ -174,18 +109,7 @@ OSC.export = (function () {
         return -1; // not found
     }
 
-    function isClass(nns, type)
-	{
-		for (var wsi = 0; wsi < nns.workspaces.length; wsi++)
-		{
-			var ws = nns.workspaces[wsi];
-			if (type == ws.label) return {is:true, ws:ws};
-			//console.log(node.type  + "!="+ ws.label);
-		}
-		return {is:false};
-	}
-
-    function getClassObjects(class_ws, bundle, path) {
+    function addObjectsToPacketArray(class_ws, packets, path) {
         console.error("getClassObjects: " + class_ws.label + " \"" + path + "\"");
         var wildcardArrayItems = RED.OSC.settings.WildcardArrayObjects;
 
@@ -206,21 +130,21 @@ OSC.export = (function () {
                     console.warn("is array");
                     var name = isArray.name;
                     var count = isArray.arrayLength;
-                    bundle.add(OSC.GetCreateGroupAddr(),"ss", name, path)
+                    packets.add(OSC.GetCreateGroupAddr(),"ss", name, path)
                     for (var ai = 0; ai < count; ai++)
                     {
-                        bundle.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + name);
+                        packets.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + name);
                         if (wildcardArrayItems == false)
-                            getClassObjects(_ws, bundle, path + name + "/i" + ai);
+                            addObjectsToPacketArray(_ws, packets, path + name + "/i" + ai);
                     }
                     if (wildcardArrayItems == true)
-                        getClassObjects(_ws, bundle, path + name + "/i*");
+                        addObjectsToPacketArray(_ws, packets, path + name + "/i*");
                 }
                 else {
                     console.warn("is NOT array");
-                    bundle.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    packets.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
                    
-                    getClassObjects(_ws, bundle, path + "/" + n.name);
+                    addObjectsToPacketArray(_ws, packets, path + "/" + n.name);
                     
                 }
             }
@@ -234,26 +158,26 @@ OSC.export = (function () {
                         console.warn("is array");
                         var name = isArray.name;
                         var count = isArray.arrayLength;
-                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
+                        packets.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
                         for (var ai = 0; ai < count; ai++)
                         {
                             if (node._def.defaults.inputs == undefined) {
-                                bundle.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, name);
+                                packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, name);
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, name, RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, name, RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
                     else {
                         console.warn("is NOT array");
                         if (node._def.defaults.inputs == undefined) {
-                            bundle.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+                            packets.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            bundle.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
@@ -263,29 +187,28 @@ OSC.export = (function () {
                         var name = isArray.name;
                         var count = isArray.arrayLength;
                         //console.warn("this happen isArray: " + name);
-                        bundle.add(OSC.GetCreateGroupAddr(),"ss", name, path);
+                        packets.add(OSC.GetCreateGroupAddr(),"ss", name, path);
                         for (var ai = 0; ai < count; ai++)
                         {
                             if (node._def.defaults.inputs == undefined) {
-                                bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, path + "/" + name);
+                                packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, path + "/" + name);
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, path + "/" + name, RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, path + "/" + name, RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
                     else {
                         //console.warn("this happen: " + n.name);
                         if (node._def.defaults.inputs == undefined) {
-                            bundle.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
+                            packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            bundle.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
-
                 }
             }
         }
@@ -301,14 +224,14 @@ OSC.export = (function () {
 
     /**
      * 
-     * @param {*} bundle 
+     * @param {*} packets 
      * @param {*} links 
      * @param {*} connectionLocationPath where the connection is created
      * @param {*} srcPath 
      * @param {*} dstPath 
      * @param {*} overrideTargetPort 
      */
-    function addLinksToBundle(bundle, links) {
+    function addLinksToPacketArray(packets, links) {
         for (var li = 0; li < links.length; li++) {
             var link = links[li];
             if ((link.target.type == "TabOutput") || (link.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
@@ -319,14 +242,13 @@ OSC.export = (function () {
             var dstPort = link.targetPort;
 
             var linkName = OSC.GetLinkName(link);
+            if (link.linkPath == undefined) link.linkPath = ""; // make this work for standard links
 
-            
-            
             //if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
             if (link.linkPath == "") {
                 console.warn("path / " + linkName);
-                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName);
-                bundle.add(OSC.GetConnectAddr(linkName),"sisi", "/" + srcName, srcPort, "/" + dstName, dstPort);
+                packets.add(OSC.GetCreateConnectionAddr(),"s", linkName);
+                packets.add(OSC.GetConnectAddr(linkName),"sisi", "/" + srcName, srcPort, "/" + dstName, dstPort);
             }
             else {
                 // first fix missing / but only if the strings are not empty
@@ -336,8 +258,8 @@ OSC.export = (function () {
                 if (link.targetPath.startsWith("/") == false && link.targetPath != "") link.targetPath = "/"+link.targetPath;
 
                 console.warn("path " + link.linkPath + " " + linkName);
-                bundle.add(OSC.GetCreateConnectionAddr(),"ss", linkName, link.linkPath);
-                bundle.add(OSC.GetConnectAddr(link.linkPath +"/"+ linkName),"sisi", link.sourcePath + "/" + srcName, srcPort, link.targetPath + "/" + dstName, dstPort);
+                packets.add(OSC.GetCreateConnectionAddr(),"ss", linkName, link.linkPath);
+                packets.add(OSC.GetConnectAddr(link.linkPath +"/"+ linkName),"sisi", link.sourcePath + "/" + srcName, srcPort, link.targetPath + "/" + dstName, dstPort);
             }
         }
     }
@@ -354,50 +276,55 @@ OSC.export = (function () {
             RED.main.verifyDialog("Warning", "Audio Main Entry Tab not set", "Please set the Audio Main Entry tab<br> double click the tab that you want as the main and check the 'Audio Main File' checkbox.<br><br>note. if you select many tabs as audio main only the first is used.", function() {});
             return;
         }
-        var apos = []; // Audio Processing Objects
-        var acs = []; // Audio Connections 
+
+        // usage of PacketArray so that we can add OSC packets easly to it
+        var apos = new PacketArray(); // Audio Processing Objects
+        var acs = new PacketArray(); // Audio Connections 
+
         var ws = nns.workspaces[mainWorkSpace];
+        addObjectsToPacketArray(ws, apos, '');
+        var links = [];
+        RED.export.getClassConnections(ws, links, '');
+        addLinksToPacketArray(acs, links);
+
+        console.log(RED.export.printLinksDebug(links));
+
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
         bundle.add("/comment", "s", "**************************");
         bundle.add("/comment", "s", "*** create all objects ***");
         bundle.add("/comment", "s", "**************************");
-        getClassObjects(ws, bundle, ''); // now this is working so uncomment it until we get getClassConnections working
+        bundle.addPackets(apos); // first add all Audio Processing Objects
         bundle.add("/comment", "s", "************************************");
         bundle.add("/comment", "s", "*** create all audio connections ***");
         bundle.add("/comment", "s", "************************************");
-        var links = [];
-        RED.export.getClassConnections(ws, links, '');
-        console.log(RED.export.printLinksDebug(links));
-        addLinksToBundle(bundle, links);
+        bundle.addPackets(acs); // second add all Audio Connections
 
-        if (getBundleOnly == true) 
-            return bundle;
-        else
-            return {bundle:bundle, apos:apos, acs:acs};
+        if (getBundleOnly == true) return bundle;
+        else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
+    }
 
-        /*
-        
+    function getSimpleExport_bundle(getBundleOnly) {
+        if (getBundleOnly == undefined) getBundleOnly = false;
+        RED.storage.update(); // this will also sort the nodes
+        var nns = RED.nodes.createCompleteNodeSet({newVer:false}); // don't think this is needed anymore
+        var activeWorkspace = RED.view.activeWorkspace;
+        var apos = new PacketArray(); // Audio Processing Objects
+        var acs = new PacketArray(); // Audio Connections 
 
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
             if (n.type == "tab" || n.type == "settings") continue;
             if (n.z != activeWorkspace) continue; // workspace filter
-
-            //if (isSpecialNode(n.type) || (n.type == "PointerArray")) continue; // simple export don't support Array-node, it's replaced by "real" node-array, TODO: remove Array-type
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
-
             if (node == null) { console.warn("node == null:" + "type:" + n.type + ",id:" + n.id); continue; } // this should never happen (because now "tab" type checked at top)
             
             if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
 
-            //var nodeType = getTypeName(nns, n);
-            var nodeName = n.name;//RED.nodes.make_name(n);
-
             if (node.type != "AudioMixer")
-                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ss", node.type, nodeName));
+                apos.add(OSC.GetCreateObjectAddr(),"ss", node.type, node.name);
             else
-                apos.push(OSC.CreatePacket(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs));
+                apos.add(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs);
 
             if (haveIO(node)) {
                 RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
@@ -409,62 +336,55 @@ OSC.export = (function () {
                         var linkName = src_name + pi + dst_name + dstPortIndex;
                     else
                         var linkName = src_name + "_" + pi +"_"+ dst_name +"_"+ dstPortIndex;
-                    acs.push(OSC.CreatePacket(OSC.GetCreateConnectionAddr(),"s", linkName));
-                    acs.push(OSC.CreatePacket(OSC.GetConnectAddr(linkName),"sisi", src_name, pi, dst_name, dstPortIndex));
+                    acs.add(OSC.GetCreateConnectionAddr(),"s", linkName);
+                    acs.add(OSC.GetConnectAddr(linkName),"sisi", src_name, pi, dst_name, dstPortIndex);
                 });
             }
         }
-*/
-        /*var bundle = OSC.CreateBundle(0);
-        
-        // first add all Audio Processing Objects
-        for (var i = 0; i < apos.length; i++) {
-            bundle.add(apos[i]);
-        }
-        // second add all Audio Connections
-        for (var i = 0; i < acs.length; i++) {
-            bundle.add(acs[i]);
-
-        }*/
-        
+        var bundle = OSC.CreateBundle(0);
+        bundle.add(OSC.GetClearAllAddr());
+        bundle.addPackets(apos); // first add all Audio Processing Objects
+        bundle.addPackets(acs); // second add all Audio Connections
+        if (getBundleOnly == true) return bundle;
+        else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
     }
 
-    /**
-     * This is only for the moment to get special type AudioMixer<n> and AudioStreamObject
-     * @param {*} nns nodeArray
-     * @param {Node} n node
-     */
-     function getTypeName(nns, n) {
-        if (n.type == "AudioMixer") {
-            var tmplDef = "";
-            if (n.inputs == 1) // special case 
-            {
-                // check if source is a array
-                var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
-                if (src && (src.node.name)) // if not src.node.name is defined then it is not an array, because the id never defines a array
-                {
-                    var isArray = RED.nodes.isNameDeclarationArray(src.node.name);
-                    if (isArray) tmplDef = "<" + isArray.arrayLength + ">";
-                    console.log("special case AudioMixer connected from array " + src.node.name + ", new AudioMixer def:" + tmplDef);
-                }
-                else
-                    tmplDef = "<" + n.inputs + ">";
-            }
-            else
-                tmplDef = "<" + n.inputs + ">";
-            return n.type + tmplDef;
+    function getSuperSimpleExport_bundle(getBundleOnly) {
+        if (getBundleOnly == undefined) getBundleOnly = false;
+        RED.storage.update(); // this will also sort the nodes
+        var activeWorkspace = RED.view.activeWorkspace;
+        var apos = new PacketArray(); // Audio Processing Objects
+        var acs = new PacketArray(); // Audio Connections 
+        var nodes = RED.nodes.nodes;
+        for (var i = 0; i < nodes.length; i++) {
+            var node = nodes[i];
+            if (node.z != activeWorkspace) continue; // workspace filter
+            if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
+            
+            if (node._def.defaults.inputs == undefined) 
+                apos.add(OSC.GetCreateObjectAddr(),"ss", node.type, node.name);
+            else // only happens for dynamic input objects
+                apos.add(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs);
+
+            var links = RED.nodes.links.filter(function (l) {return l.source === node});
+            addLinksToPacketArray(acs, links);
         }
-        else if (n.type == "AudioStreamObject")
-            return n.subType;
-        else
-            return n.type;
+        var bundle = OSC.CreateBundle(0);
+        bundle.add(OSC.GetClearAllAddr());
+        bundle.addPackets(apos); // first add all Audio Processing Objects
+        bundle.addPackets(acs); // second add all Audio Connections
+        if (getBundleOnly == true)  return bundle;
+        else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
     }
+
     function haveIO(node) {
         return ((node.outputs > 0) || (node._def.inputs > 0));
     }
 
     return {
-        getSimpleExport_bundle:getSimpleExport_bundle,
-        InitButtonPopups:InitButtonPopups
+        getSimpleExport_bundle,
+        getSuperSimpleExport_bundle,
+        getGroupExport_bundle,
+        InitButtonPopups
     };
 })();

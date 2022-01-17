@@ -1,5 +1,3 @@
-var ObjectExtensions = (function() {
-
     Array.prototype.pushArray = function (other_array) {
         /* You should include a test to check whether other_array really is an array */
         //console.warn(typeof other_array);
@@ -16,6 +14,4 @@ var ObjectExtensions = (function() {
         return false;
     }
 
-return {};
-
-})();
+    

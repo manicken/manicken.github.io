@@ -1018,10 +1018,10 @@
   #notifications {
       z-index: 10000;
       width: 500px;
-      margin-left: -250px;
-      left: 250px;
+      /*margin-left: -250px;*/
+      left: 50%;
       position: absolute;
-      top: 50px;
+      top: 120px;
   }
   #notifications .alert {
       box-shadow: 0 0 1px 1px;
