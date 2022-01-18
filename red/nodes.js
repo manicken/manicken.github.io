@@ -593,7 +593,7 @@ RED.nodes = (function() {
             var w = wires[j];
             try{
             node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
-            //node.wireNames[w.sourcePort].push(OSC.GetLinkName(w));
+            //node.wireNames[w.sourcePort].push(RED.export.GetLinkName(w));
             }
             catch (e)
             {
@@ -1157,12 +1157,12 @@ RED.nodes = (function() {
                                 var linkName = n.wireNames[w1][w2];
                                 
                                 }
-                                catch (err) { console.warn(" could not get prev link names  @ " +n.name); var linkName = OSC.GetLinkName(link);}
+                                catch (err) { console.warn(" could not get prev link names  @ " +n.name); var linkName = RED.export.GetLinkName(link);}
 
                                 //console.warn(" got prev link name " + linkName);
                             }
                             else {
-                                var linkName = OSC.GetLinkName(link); 
+                                var linkName = RED.export.GetLinkName(link); 
                                 //console.warn( " generating new link name " + linkName);
                                     
                             }

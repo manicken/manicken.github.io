@@ -144,7 +144,7 @@ var OSC = (function() {
     function GetCreateObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crOb"; }
     function GetRenameObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/ren*"; }
     function GetDestroyObjectAddr() { return RED.OSC.settings.RootAddress + "/dynamic/d*"; }
-    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/createConnection"; }
+    function GetCreateConnectionAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crCo"; }
     function GetCreateGroupAddr() { return RED.OSC.settings.RootAddress + "/dynamic/crGrp"; }
     function GetConnectAddr(connectionName) {
         if (connectionName.startsWith("/"))
@@ -469,7 +469,7 @@ var OSC = (function() {
 		for (var i=0;i<links.length;i++) {
             var link = links[i];
             
-            var newLinkName = GetLinkName(link);
+            var newLinkName = RED.export.GetLinkName(link);
             var oldLinkName = newLinkName.split(newName).join(oldName);
             bundle.add(GetRenameObjectAddr(), "ss", oldLinkName, newLinkName);
             
@@ -502,64 +502,30 @@ var OSC = (function() {
         for (var i = 0; i < links.length; i++) {
             var link = links[i];
             if (RED.OSC.settings.ShowOutputDebug == true)
-                AddLineToLog("removed link " + GetLinkDebugName(link));
-            var linkName = GetLinkName(link);
+                AddLineToLog("removed link " + RED.export.GetLinkDebugName(link));
+            var linkName = RED.export.GetLinkName(link);
             bundle.add(GetDestroyObjectAddr(), "s", linkName);
         }
     }
 
     function LinkAdded(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
-        var linkName = GetLinkName(link);
+        var linkName = RED.export.GetLinkName(link);
         var bundle = OSC.CreateBundle();
         bundle.add(GetCreateConnectionAddr(), "s", linkName);
         bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
         SendBundle(bundle);
         if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("added link [" + linkName  + "] " + GetLinkDebugName(link));
+            AddLineToLog("added link [" + linkName  + "] " + RED.export.GetLinkDebugName(link));
     }
-    var debugLinkName = true;
-    function GetNameWithoutArrayDef(name) {
-        var value = 0;
-		//console.warn("isNameDeclarationArray: " + name);
-		var startIndex = name.indexOf("[");
-        //var endIndex = name.indexOf("]");
-		if (startIndex == -1) return name;
-        //if (endIndex == -1) return name;
-        return name.substring(0, startIndex);
-    }
-    function GetLinkName(l,overrideTargetPort) {
-        var srcName = GetNameWithoutArrayDef(l.origin?l.origin.source.name:l.source.name);
-        var dstName = GetNameWithoutArrayDef(l.origin?l.origin.target.name:l.target.name);
-
-        /*if (link.sourcePath != undefined && typeof link.sourcePath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
-             srcName = (link.sourcePath.replaceAllVal("/", "_") + "_" + srcName).replaceAllVal("__", "_");
-        }
-        if (link.targetPath != undefined && typeof link.targetPath == "string" && link.sourcePath.EqualToAny("", "/") == false) {
-            dstName = (link.targetPath.replaceAllVal("/", "_") + "_" + dstName).replaceAllVal("__", "_");
-        }*/
-        
-        var srcPort = l.origin?l.origin.sourcePort:l.sourcePort;
-        var dstPort = l.origin?l.origin.targetPort:l.targetPort;
-        //if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
-
-        if (RED.OSC.settings.UseDebugLinkName == false)
-            return srcName + srcPort + dstName + dstPort;
-        else
-            return srcName + "_" + srcPort +"_"+ dstName +"_"+ dstPort;
-    }
-
-    function GetLinkDebugName(link) {
-        return "(" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")";
-    }
-
+    
     function LinkRemoved(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
-        var linkName = GetLinkName(link);
+        var linkName = RED.export.GetLinkName(link);
         SendMessage(GetDestroyObjectAddr(),"s", linkName);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("removed link [" + linkName  + "] " + GetLinkDebugName(link));
+            AddLineToLog("removed link [" + linkName  + "] " + RED.export.GetLinkDebugName(link));
     }
 
     function NodeInputsUpdated(node, oldCount, newCount, removedLinks) {
@@ -579,7 +545,7 @@ var OSC = (function() {
     function AddLinksToCreateToBundle(bundle, links) {
         for (var i = 0; i < links.length; i++) {
             var l = links[i];
-            var linkName = GetLinkName(l);
+            var linkName = RED.export.GetLinkName(l);
             bundle.add(GetCreateConnectionAddr(), "s", linkName);
             bundle.add(GetConnectAddr(linkName), "sisi", l.source.name, l.sourcePort, l.target.name, l.targetPort);
         }
@@ -702,7 +668,6 @@ var OSC = (function() {
         SendTextToSerial,
         GetSimpleOSCdata:CreateMessageData, // keep this for backwards compability
         CreateMessageData, // newer name
-        GetLinkName,
         CreatePacket,
         CreateBundle,
         CreateBundleData, // simplifies from osc.writeBundle(bundle)

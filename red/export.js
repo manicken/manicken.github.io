@@ -16,8 +16,12 @@ RED.export = (function () {
             var _ws = RED.nodes.isClass(n.type);
             if (_ws)
             {
-                console.warn("is class:" + n.name);
-                var isArray = RED.nodes.isNameDeclarationArray(n.name, _ws.id, true);
+                console.warn("is class: " + n.name);
+                // just disable all array detection for now
+                // should have that in a seperate function
+                // called expandArrays(links)
+
+                /*var isArray = RED.nodes.isNameDeclarationArray(n.name, _ws.id, true);
                 if (isArray) {
                     console.warn("  is array");
                     var name = isArray.name;
@@ -25,8 +29,9 @@ RED.export = (function () {
                     for (var ai = 0; ai < count; ai++)
                     {
                         //console.error("this 1 @ " + path +" "+ name + "/i" + ai);
+                        // TODO. fix this
                         var newPath = currPath + name + "/i" + ai;
-                        links.pushArray(expandLinks(clinks, newPath));
+                        links.pushArray(expandLinks(clinks, currPath, "i"+ai));
                         console.log("*************************************************************************");
                         console.log("*** adding connections inside "+ _ws.label + " ****************************");
                         console.log("*************************************************************************");
@@ -36,19 +41,19 @@ RED.export = (function () {
                 else {
                     console.warn("  is NOT array");
                     //console.error("this 2 @ " + path + " " + n.name);
-                    //var newPath = currPath +"/"+ n.name;
+                    //var newPath = currPath +"/"+ n.name;*/
                     links.pushArray(expandLinks(clinks, currPath));
                     console.log("*************************************************************************");
                     console.log("*** adding connections inside "+ _ws.label + " ****************************");
                     console.log("*************************************************************************");
                     getClassConnections(_ws, links, n.name);
-                }
+                //}
             }
             else 
             {
-                console.warn("is NOT class:" + n.name);
+                console.warn("is NOT class: " + n.name);
 
-                var isArray = RED.nodes.isNameDeclarationArray(n.name, class_ws.id, true);
+                /*var isArray = RED.nodes.isNameDeclarationArray(n.name, class_ws.id, true);
                 if (isArray) {
                     console.warn("  is array");
                     var name = isArray.name;
@@ -56,23 +61,26 @@ RED.export = (function () {
                     
                     for (var ai = 0; ai < count; ai++)
                     {
-                        links.pushArray(expandLinks(clinks, currPath));
+                        // TODO. fix this
+                        //var newPath = currPath + name + "/i" + ai;
+                        links.pushArray(expandLinks(clinks, currPath, "i"+ai));
                     }
                 }
                 else {
-                    console.warn("  is NOT array");
+                    console.warn("  is NOT array");*/
                     links.pushArray(expandLinks(clinks, currPath));
-                }
+                //}
             }
         }
     }
 
-    function copyLink(l, defaultPath) {
-        return { linkPath:l.linkPath?l.linkPath:defaultPath,
+    function copyLink(l, defaultPath, arrayIndex) {
+        return { linkPath:l.linkPath?l.linkPath:defaultPath, arrayIndex:l.arrayIndex?l.arrayIndex:arrayIndex,
                  source:l.source, sourcePort:parseInt(l.sourcePort), sourcePath:l.sourcePath?l.sourcePath:defaultPath,
                  target:l.target, targetPort:parseInt(l.targetPort), targetPath:l.targetPath?l.targetPath:defaultPath,
                  origin:l.origin?l.origin:l};
     }
+
     function getFinalSource(l,ws) {
         console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
 
@@ -98,7 +106,7 @@ RED.export = (function () {
      * if source is class and dest. is class
      * @param {*} links 
      */
-     function expandLinks(links,classPath) {
+     function expandLinks(links,classPath,arrayIndex) {
         console.log("*******************************************");
         console.error("expandLinks classPath:\"" + classPath);
         var newLinks = [];
@@ -106,7 +114,22 @@ RED.export = (function () {
         for (var li = 0; li < links.length; li++)
         {
             var l = links[li];
-            var newLink = copyLink(l, classPath);
+            var newLink = copyLink(l, classPath, arrayIndex);
+            //if (arrayIndex != undefined)
+            //    newLink.arrayIndex = arrayIndex;
+
+            // TODO: to early to check this?
+            /*if (newLink.arrayIndex != undefined) {
+                console.log("expandLinks: is array " + newLink.arrayIndex+ " (" + newLink.sourcePath + ") (" + newLink.targetPath + ")");
+                var source = l.origin?l.origin.source:l.source;
+                var target = l.origin?l.origin.target:l.target;
+                var isArray = RED.nodes.isNameDeclarationArray(source.name, source.z, true);
+                if (isArray) newLink.sourcePath = GetNameWithoutArrayDef(newLink.sourcePath) + "/" + l.arrayIndex;
+                if (isArray) console.warn("source isArray: " + source.name);
+                isArray = RED.nodes.isNameDeclarationArray(target.name, target.z, true);
+                if (isArray) newLink.targetPath = GetNameWithoutArrayDef(newLink.targetPath) + "/" + l.arrayIndex;
+                if (isArray) console.warn("target isArray: " + target.name);
+            }*/
             
             console.warn("newLink: "+printLinkDebug(newLink));
 
@@ -148,7 +171,7 @@ RED.export = (function () {
                 for (var pli = 0; pli < portLinks.length; pli++)
                 {
                     var pl = portLinks[pli];
-                    var newPortLink = copyLink(l, classPath);
+                    var newPortLink = copyLink(newLink, classPath, arrayIndex);
                     newPortLink.targetPath = newTargetPath;
                     newPortLink.target = pl.target;
                     newPortLink.targetPort = pl.targetPort;
@@ -169,7 +192,7 @@ RED.export = (function () {
     }
 
     function printLinkDebug(l) {
-        return '"' + l.linkPath + '", ("' + l.sourcePath + '",' + l.source.name + "," + l.sourcePort + ') -> ("' + l.targetPath + '",'+ l.target.name + "," + l.targetPort + ")\n";
+        return '"' + l.linkPath + '", "'+ (l.arrayIndex||"") +'", ("' + l.sourcePath + '",' + l.source.name + "," + l.sourcePort + ') -> ("' + l.targetPath + '",'+ l.target.name + "," + l.targetPort + ")\n";
     }
     function printLinksDebug(links) {
         var txt = "";
@@ -179,7 +202,67 @@ RED.export = (function () {
         return txt;
     }
 
+    function haveIO(node) {
+        return ((node.outputs > 0) || (node._def.inputs > 0));
+    }
+
+    function GetNameWithoutArrayDef(name) {
+        var value = 0;
+		//console.warn("isNameDeclarationArray: " + name);
+		var startIndex = name.indexOf("[");
+        //var endIndex = name.indexOf("]");
+		if (startIndex == -1) return name;
+        //if (endIndex == -1) return name;
+        return name.substring(0, startIndex);
+    }
+    function GetLinkName(l) {
+        var srcName = l.origin?l.origin.source.name:l.source.name;
+        var dstName = l.origin?l.origin.target.name:l.target.name;
+        //srcName = GetNameWithoutArrayDef(srcName);
+        //dstName = GetNameWithoutArrayDef(dstName);
+
+        var srcPort = parseInt(l.origin?l.origin.sourcePort:l.sourcePort);
+        var dstPort = parseInt(l.origin?l.origin.targetPort:l.targetPort);
+
+        if (l.arrayIndex != undefined) {
+            var source = l.origin?l.origin.source:l.source;
+            var target = l.origin?l.origin.target:l.target;
+            var isArray = RED.nodes.isNameDeclarationArray(source.name, source.z, true);
+            if (isArray) srcName += "_" + l.arrayIndex;
+            isArray = RED.nodes.isNameDeclarationArray(target.name, target.z, true);
+            if (isArray) dstName += "_" + l.arrayIndex;
+
+            var target = l.target;//l.origin?l.origin.target:l.target;
+            var arrayIndex = parseInt(l.arrayIndex.substring(1));
+            if (target._def.defaults.inputs != undefined)
+                dstPort = arrayIndex+dstPort;
+        
+        }
+
+        if (RED.OSC.settings.UseDebugLinkName == false)
+            return srcName + srcPort + dstName + dstPort;
+        else
+            return srcName + "_" + srcPort +"_"+ dstName +"_"+ dstPort;
+    }
+
+    function GetLinkDebugName(link) {
+        return "(" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")";
+    }
+
+    function GetNameWithoutArrayDef(name) {
+        var value = 0;
+		//console.warn("isNameDeclarationArray: " + name);
+		var startIndex = name.indexOf("[");
+		if (startIndex == -1) return name;
+        return name.substring(0, startIndex);
+    }
+
     return {
+        GetNameWithoutArrayDef,
+        GetLinkDebugName,
+        GetLinkName,
+        haveIO,
+
         getClassConnections,
         printLinkDebug,
         printLinksDebug
