@@ -203,7 +203,7 @@ RED.view.dialogs = (function() {
 				click: function() {
 					var workspace = $(this).dialog('option','workspace');
 					$( this ).dialog( "close" );
-					deleteWorkspace(workspace.id);
+					RED.view.deleteWorkspace(workspace.id);
 				}
 			},
 			{
@@ -317,7 +317,7 @@ RED.view.dialogs = (function() {
 					RED.view.removeWorkspace(workspace);
 					var historyEvent = RED.nodes.removeWorkspace(workspace.id);
 					historyEvent.t = 'delete';
-					historyEvent.dirty = dirty;
+					historyEvent.dirty = RED.view.dirty();
 					historyEvent.workspaces = [workspace];
 					RED.history.push(historyEvent);
 					RED.view.dirty(true);

@@ -153,7 +153,7 @@ RED.arduino.export = (function () {
 
             },
             checkIfDstIsArray: function () {
-                var isArray = RED.nodes.isNameDeclarationArray(this.dstName, this.workspaceId);
+                var isArray = RED.export.isNameDeclarationArray(this.dstName, this.workspaceId);
                 if (!isArray) {
                     this.dstRootIsArray = false;
                     return false;
@@ -165,7 +165,7 @@ RED.arduino.export = (function () {
             },
             checkIfSrcIsArray: function () {
 
-                var isArray = RED.nodes.isNameDeclarationArray(this.srcName, this.workspaceId);
+                var isArray = RED.export.isNameDeclarationArray(this.srcName, this.workspaceId);
                 if (!isArray) {
                     this.srcRootIsArray = false;
                     return false;
@@ -598,7 +598,7 @@ RED.arduino.export = (function () {
                     //if(isSpecialNode(n.type)) continue;
                     if ((node.outputs <= 0) && (node._def.inputs <= 0)) continue;
 
-                    var isArray = RED.nodes.isNameDeclarationArray(n.name, ws.id, true);
+                    var isArray = RED.export.isNameDeclarationArray(n.name, ws.id, true);
                     if (isArray) {
                         n.name = isArray.newName;
                     }
@@ -931,7 +931,7 @@ RED.arduino.export = (function () {
         var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
         if (src && (src.node.name)) // if not src.node.name is defined then it is not an array
         {
-            var isArray = RED.nodes.isNameDeclarationArray(src.node.name,src.node.z,replaceConstWithValue);
+            var isArray = RED.export.isNameDeclarationArray(src.node.name,src.node.z,replaceConstWithValue);
             if (isArray) {
                 console.log("special case "+n.type+" connected from array " + src.node.name + " " + isArray.arrayLength);
                 if (isArray.arrayLength <= 0) return 1;

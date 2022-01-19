@@ -1590,39 +1590,7 @@ RED.nodes = (function() {
 		});
 		return true;
 	}
-	function isNameDeclarationArray(name,wsId,replaceConstWithValue)
-	{
-		var value = 0;
-		//console.warn("isNameDeclarationArray: " + name);
-		var startIndex = name.indexOf("[");
-		if (startIndex == -1) return undefined;
-		var endIndex = name.indexOf("]");
-		if (endIndex == -1){ console.log("isNameDeclarationArray: missing end ] in " + name); return undefined;}
-		var arrayDef = name.substring(startIndex,endIndex+1); // this includes the []
-		var valueDef = name.substring(startIndex+1,endIndex)
-		if (isNaN(valueDef))
-		{
-			value = Number(getConstantNodeValue(valueDef, wsId));
-			if (replaceConstWithValue)
-			{
-				name = name.replace(arrayDef, "[" + Number(value) + "]");
-			}
-			else
-				name = name.replace(arrayDef, "[i]");
-		} 
-		else
-		{
-			value = Number(valueDef);
-			if (replaceConstWithValue)
-			{
-				name = name.replace(arrayDef, "["+value+"]");
-			}
-			else
-				name = name.replace(arrayDef, "[i]");
-		}
-		//console.log("NameDeclaration is Array:" + name);
-		return {newName:name, name:name.substring(0, startIndex), arrayLength:value};
-	}
+
 	function getArrayDeclarationWithoutSizeSyntax(name)
 	{
 		var value = 0;
@@ -1636,21 +1604,7 @@ RED.nodes = (function() {
 		return name.replace(arrayDef, "[]");
 	}
 	
-	function getConstantNodeValue(name, wsId)
-	{
-		for (var i = 0; i < nodes.length; i++)
-		{
-			var n = nodes[i];
-			if (n.z != wsId) continue; // workspace filter
-			if (n.type != "ConstValue") continue; // type filter
-			if (n.name === name)
-			{
-				return Number(n.value);
-			}
-		}
-		console.error("did not found ConstantNodeValue:" + name + " @ wsId:" + wsId);
-		return 0;
-	}
+	
 	//var AceAutoCompleteKeywords = null;
 	/**
 	 * this takes both the current workspace node-names and also the external AceAutoCompleteKeywords
@@ -2120,7 +2074,6 @@ RED.nodes = (function() {
 		getClassIOport:getClassIOport, // used by node port tooltip popup
 		classOutputPortToCpp:classOutputPortToCpp,
 		classInputPortToCpp:classInputPortToCpp,
-		isNameDeclarationArray:isNameDeclarationArray,
 		getWorkspaceNodesAsCompletions:getWorkspaceNodesAsCompletions,
 		getAllFunctionNodeFunctions:getAllFunctionNodeFunctions,
 		getArrayDeclarationWithoutSizeSyntax:getArrayDeclarationWithoutSizeSyntax,

@@ -3534,6 +3534,7 @@ RED.view = (function() {
         nodeMouseMove,
         nodeTouchStart,
         nodeTouchEnd,
+        deleteWorkspace,
         get visGroups() { return visGroups;},
         get activeWorkspace() { return activeWorkspace;},
 
