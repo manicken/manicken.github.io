@@ -257,15 +257,15 @@ OSC.export = (function () {
             var linkName = RED.export.GetLinkName(l);
             // this should maybe be take care of in RED.export.expandArrays
             if (l.arrayIndex != undefined) {
-                var target = l.target;//l.origin?l.origin.target:l.target;
+                //var target = l.target;//l.origin?l.origin.target:l.target;
                 var arrayIndex = parseInt(l.arrayIndex.substring(1));
-                if (target._def.defaults.inputs != undefined){ // dynamic input audio object
+                if (l.target._def.defaults.inputs != undefined){ // dynamic input audio object
                     dstPort = RED.export.getDynInputDynSizePortIndex(l.target, l.origin.source) + arrayIndex;//+dstPort;
                 }
             }
             else {
-                if (target._def.defaults.inputs != undefined){ // dynamic input audio object
-                    dstPort = RED.export.getDynInputDynSizePortIndex(l.target, l.origin.source);//+dstPort;
+                if (l.target._def.defaults.inputs != undefined){ // dynamic input audio object
+                    dstPort = RED.export.getDynInputDynSizePortIndex(l.target, l.origin?l.origin.source:l.source);//+dstPort;
                 }
             }
             var sourcePath = l.sourcePath||"";
