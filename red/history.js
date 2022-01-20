@@ -33,22 +33,23 @@ RED.history = (function() {
 		},
 		pop: function() {
 			var ev = undo_history.pop();
+            console.warn(ev);
 			var i;
 			if (ev) {
 				if (ev.t == 'add') {
-					if (ev.nodes)
+					if (ev.nodes != undefined)
 					{
 						for (i=0;i<ev.nodes.length;i++) {
 							RED.nodes.remove(ev.nodes[i]);
 						}
 					}
-					if (ev.links)
+					if (ev.links != undefined)
 					{
 						for (i=0;i<ev.links.length;i++) {
 							RED.nodes.removeLink(ev.links[i]);
 						}
 					}
-					if (ev.workspaces)
+					if (ev.workspaces != undefined)
 					{
 						for (i=0;i<ev.workspaces.length;i++) {
 							RED.nodes.removeWorkspace(ev.workspaces[i].id);
@@ -56,16 +57,25 @@ RED.history = (function() {
 						}
 					}
 				} else if (ev.t == "delete") {
-					for (i=0;i<ev.workspaces.length;i++) {
-						RED.nodes.addWorkspace(ev.workspaces[i]);
-						RED.view.addWorkspace(ev.workspaces[i]);
-					}
-					for (i=0;i<ev.nodes.length;i++) {
-						RED.nodes.add(ev.nodes[i]);
-					}
-					for (i=0;i<ev.links.length;i++) {
-						RED.nodes.addLink(ev.links[i]);
-					}
+                    if (ev.workspaces != undefined)
+					{
+                        for (i=0;i<ev.workspaces.length;i++) {
+                            RED.nodes.addWorkspace(ev.workspaces[i]);
+                            RED.view.addWorkspace(ev.workspaces[i]);
+                        }
+                    }
+                    if (ev.nodes != undefined)
+					{
+                        for (i=0;i<ev.nodes.length;i++) {
+                            RED.nodes.add(ev.nodes[i]);
+                        }
+                    }
+                    if (ev.links != undefined)
+					{
+                        for (i=0;i<ev.links.length;i++) {
+                            RED.nodes.addLink(ev.links[i]);
+                        }
+                    }
 				} else if (ev.t == "move") {
 					for (i=0;i<ev.nodes.length;i++) {
 						var n = ev.nodes[i];
