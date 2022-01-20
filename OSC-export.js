@@ -110,12 +110,16 @@ OSC.export = (function () {
     }
 
     function findMainWs(nns) {
+        var foundMains = [];
         for (var wi=0; wi < nns.workspaces.length; wi++) {
             if (nns.workspaces[wi].isAudioMain == true) {
-                return wi;
+                foundMains.push(wi);
             }
         }
-        return -1; // not found
+        if (foundMains.length == 0)
+            return undefined; // not found
+        
+        return foundMains; // let the caller decide what to do
     }
 
     /**
@@ -304,21 +308,36 @@ OSC.export = (function () {
 
         var nns = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
 
-        var mainWorkSpace = findMainWs(nns);
-        if (mainWorkSpace == -1) {
+        var foundMains = findMainWs(nns);
+        var mainWorkSpace;
+
+        if (foundMains == undefined) {
             RED.main.verifyDialog("Warning", "Audio Main Entry Tab not set", "Please set the Audio Main Entry tab<br> double click the tab that you want as the main and check the 'Audio Main File' checkbox.<br><br>note. if you select many tabs as audio main only the first is used.", function() {});
             return;
         }
+
+        if (foundMains.length > 1) { // multiple AudioMain found
+            if (RED.nodes.currentWorkspace.isAudioMain) // if current selected is AudioMain use that
+                mainWorkSpace = RED.nodes.currentWorkspace;
+            else
+                mainWorkSpace = foundMains[0]; // get the first one
+        }
+        else
+            mainWorkSpace = foundMains[0]; // get the only one
+
+        console.warn("AudioMain ", mainWorkSpace);
 
         // usage of PacketArray so that we can add OSC packets easly to it
         var apos = new PacketArray(); // Audio Processing Objects
         var acs = new PacketArray(); // Audio Connections 
 
-        var ws = nns.workspaces[mainWorkSpace];
-        addObjectsToPacketArray(ws, apos, '');
+        //var ws = nns.workspaces[mainWorkSpace];
+        addObjectsToPacketArray(mainWorkSpace, apos, '');
         var links = [];
-        RED.export.getClassConnections(ws, links, ''); // this is a recursive function
+        RED.export.getClassConnections(mainWorkSpace, links, ''); // this is a recursive function
         RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
+        // sort links
+        //links.sort(function (a,b) { return (b.targetPath + "/" + b.targetName).localeCompare(a.targetPath + "/" + a.targetName) || (a.targetPort - b.targetPort); });
         console.log(RED.export.printLinksDebug(links));
         links = RED.export.expandArrays(links);
         console.log(RED.export.printLinksDebug(links));

@@ -2091,6 +2091,7 @@ RED.nodes = (function() {
 				//console.warn("workspace selected: "+ ws.label + " " + ws.id);
 			}
         },
+        get currentWorkspace() {return currentWorkspace;},
         getCurrentWorkspace: function() { return currentWorkspace},
         setNodes:function(_nodes) { nodes = _nodes;},
 		nodes: nodes, // TODO: exposed for d3 vis

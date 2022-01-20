@@ -1433,3 +1433,21 @@ input[type=checkbox]
   transform: scale(1);
   padding-right: 20px;
 }
+
+#red-ui-navigator-canvas {
+    position: absolute;
+    bottom: 0;
+    right:0;
+    z-index: 101;
+    border-left: 1px solid #bbbbbb;
+    border-top: 1px solid #bbbbbb;
+    background: rgba(245,245,245,0.9);
+    box-shadow: -1px 0 3px rgba(0, 0, 0, 0.2);
+}
+.red-ui-navigator-border {
+    stroke-dasharray: 5,5;
+    pointer-events: none;
+    stroke: #dddddd;
+    stroke-width: 1;
+    fill: #fff;
+}

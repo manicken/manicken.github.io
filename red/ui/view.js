@@ -483,6 +483,7 @@ RED.view = (function() {
 
 		initWorkspace();
 		initGrid();
+        RED.view.navigator.init();
 		//document.getElementById("chart").addEventListener("scroll", chartScrolled); // used by partial render, now obsolete, maybe it can be used for something else later
 	}
 	/*function chartScrolled()// used by partial render, now obsolete, maybe it can be used for something else later
@@ -667,6 +668,7 @@ RED.view = (function() {
                 left:chart.scrollLeft(),
                 top:chart.scrollTop()
             };
+            
         }
         activeWorkspace = tab.id;
 
@@ -711,6 +713,9 @@ RED.view = (function() {
         redraw_links_init();
         redraw_links();
         //RED.storage.update();
+
+        RED.view.navigator.refresh();
+            RED.view.navigator.resize();
     }
 
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
@@ -2932,6 +2937,8 @@ RED.view = (function() {
 	}
 	function redraw_nodes(fullUpdate,superUpdate) // fullUpdate means that it checks for removed/added nodes as well
 	{
+        
+
 		if (fullUpdate != undefined && fullUpdate == true) {
 			var visNodesAll = redraw_nodes_init();
 		} else {
@@ -2991,6 +2998,9 @@ RED.view = (function() {
 	function redraw(fullUpdate) {
         if (preventRedraw == true) return;
 		const t0 = performance.now();
+
+        RED.view.navigator.refresh();
+        RED.view.navigator.resize();
 		
 		
 		vis.attr("transform","scale("+settings.scaleFactor+")");
@@ -3573,5 +3583,15 @@ RED.view = (function() {
         },
         select: selectnode,
         reveal,
+        getActiveNodes: function() {
+            var nodesFilter = RED.nodes.nodes.filter(function(d)
+            { 
+                return (d.z == activeWorkspace /*&& d.type != "group"*/);
+            });
+            return nodesFilter;
+        },
+        scale: function() {
+            return settings.scaleFactor;
+        },
 	};
 })();

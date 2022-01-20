@@ -22,7 +22,7 @@ RED.export = (function () {
                 console.log("*************************************************************************");
                 console.log("*** adding connections inside "+ _ws.label + " ****************************");
                 console.log("*************************************************************************");
-                getClassConnections(_ws, links, n.name);
+                getClassConnections(_ws, links, currPath + "/" + n.name);
             }
             else 
             {
@@ -140,10 +140,7 @@ RED.export = (function () {
             var l = links[li];
             l.sourceName = l.source.name;
             l.targetName = l.target.name;
-            if (l.target._def.defaults.inputs != undefined)
-            {
-                l.target.portIndex = 0;
-            }
+            
         }
     }
 
@@ -174,9 +171,42 @@ RED.export = (function () {
 
                 continue;
             }
+            var sourceFullPath = (l.sourcePath + "/" + l.sourceName).split('/'); 
+            var targetFullPath = (l.targetPath + "/" + l.targetName).split('/'); 
+            console.error(sourceFullPath,targetFullPath);
 
             var sourcePathIsArray = isNameDeclarationArray(l.sourcePath, wsId, true);
             var sourceNameIsArray = isNameDeclarationArray(l.sourceName?l.sourceName:l.source.name, wsId, true);
+            var targetPathIsArray = isNameDeclarationArray(l.targetPath, wsId, true);
+            var targetNameIsArray = isNameDeclarationArray(l.targetName?l.targetName:l.target.name, wsId, true);
+
+            // here are 9 combinations just for array source and array destinations
+            if (!sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 0101
+
+            } else if (!sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 0110
+            
+            }
+            else if (!sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 0111
+            
+            }
+            else if (sourcePathIsArray && !sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 1001
+            
+            }
+            else if (sourcePathIsArray && !sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 1010
+            
+            }
+            else if (sourcePathIsArray && !sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 1011
+            
+            }
+            else if (sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 1101
+            
+            }
+            else if (sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 1110
+            
+            }
+            else if (sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 1111
+            
+            }
             // take care of every combination actually there are 16 of them
             // or 9 if we need to support putting arrays after one and annother
             // but is reduced to 6 as every one of them would be very much for the moment
@@ -195,8 +225,6 @@ RED.export = (function () {
                 continue;
             }
             
-            var targetPathIsArray = isNameDeclarationArray(l.targetPath, wsId, true);
-            var targetNameIsArray = isNameDeclarationArray(l.targetName?l.targetName:l.target.name, wsId, true);
             if (targetPathIsArray && !targetNameIsArray) {
                 expandedLinks.pushArray(expandArray(l, targetPathIsArray, "targetPath"));
                 continue;
@@ -245,7 +273,9 @@ RED.export = (function () {
 
     function printLinkDebug(l) {
         var txt  = "";
-        txt += '("' + (l.sourcePath||"")+ '",' + (l.sourceName||l.source.name) + "," + l.sourcePort + ') -> ("' + (l.targetPath||"") + '",'+ (l.targetName||l.target.name) + "," + l.targetPort + ')  @ "' + (l.linkPath||"") + '"';
+        //txt += '("' + (l.sourcePath||"")+ '",' + (l.sourceName||l.source.name) + "," + l.sourcePort + ') -> ("' + (l.targetPath||"") + '",'+ (l.targetName||l.target.name) + "," + l.targetPort + ')  @ "' + (l.linkPath||"") + '"';
+        txt += '("' + (l.sourcePath||"") +"/"+ (l.sourceName||l.source.name) + '",' + l.sourcePort + ') -> ("' + (l.targetPath||"") + '/'+ (l.targetName||l.target.name) + '",' + l.targetPort + ')  @ "' + (l.linkPath||"") + '"';
+        
         /*if (l.origin) {
             //for (var i = 0; i < (l.linkPath.length + 3); i++) txt += " ";
 

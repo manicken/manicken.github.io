@@ -248,6 +248,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div id="chart-zoom-controls">
 		<div class="btn-group">
 			<!--<a class="btn btn-mini" id="lbl-zoom-level">1.0</a>-->
+            <a class="btn btn-mini" id="btn-toggle-navigator" href="#"><i class="fa fa-map-o"></i></a>
 			<a class="btn btn-mini" id="btn-zoom-out" href="#"><i class="icon-zoom-out"></i></a>
 			<a class="btn btn-mini" id="btn-zoom-zero" >1.0</a>
 			<a class="btn btn-mini" id="btn-zoom-in" href="#"><i class="icon-zoom-in"></i></a>
@@ -589,6 +590,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/tabs.js"></script>
 <script src="red/ui/color.js"></script>
 <script src="red/ui/view.js"></script>
+<script src="red/ui/actionList.js"></script>
+<script src="red/ui/actions.js"></script>
+<script src="red/ui/view-navigator.js"></script>
 <script src="red/ui/view-ui.js"></script>
 <script src="red/ui/view-dialogs.js"></script>
 <script src="red/ui/view-groupbox.js"></script>
@@ -729,20 +733,20 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <h3>Offline Use</h3>
 <p>This tool does not use a server.  A stand-alone copy is provided with the Teensy Audio Library, in the gui folder.</p>
 <p>But to make it much easier there is either<br>
-    <a href=\"https://github.com/manicken/arduinoAPIwebserver\" target=\"_blank\">Arduino IDE - API webserver</a> or <br>
-    <a href=\"https://github.com/manicken/vscode_api_webserver\" target=\"_blank\">VSCODE - API webserver</a> <br>
+    <a href="https://github.com/manicken/arduinoAPIwebserver" target=\"_blank\">Arduino IDE - API webserver</a> or <br>
+    <a href="https://github.com/manicken/vscode_api_webserver" target=\"_blank\">VSCODE - API webserver</a> <br>
     that can be used together with the tool.<br>
     Those webservers make it possible to push the export direct to either IDE,<br>and thus either copy/paste or export to zip is required.
 </p>
 <h3>Credits</h3>
 <p>Special thanks to Nicholas O'Leary, Dave Conway-Jones and IBM.</p>
-<p>Without their work on the open source <a href=\"http://nodered.org/\" target=\"_blank\">Node-RED</a> project, this graphical design tool would not have been possible!</p>
+<p>Without their work on the open source <a href="http://nodered.org/" target=\"_blank\">Node-RED</a> project, this graphical design tool would not have been possible!</p>
 <p>Other Special thanks to:<br>
 	D3.js team (for the data driven layout)<br>
 	JQuery team (used to fetch from the DOM)<br>
-    <a href=\"https://github.com/ajaxorg/ace\" target=\"_blank\">ACE editor</a><br>
-    <a href=\"https://github.com/colinbdclark/osc.js\" target=\"_blank\">Open Sound Controller javascript lib</a><br>
-    <a href=\"https://github.com/colinbdclark/slip.js\" target=\"_blank\">SLIP endoder javascript lib (had to change it to work)</a><br>
+    <a href="https://github.com/ajaxorg/ace" target=\"_blank\">ACE editor</a><br>
+    <a href="https://github.com/colinbdclark/osc.js" target=\"_blank\">Open Sound Controller javascript lib</a><br>
+    <a href="https://github.com/colinbdclark/slip.js" target=\"_blank\">SLIP endoder javascript lib (had to change it to work)</a><br>
      <br>
     
 </p>
