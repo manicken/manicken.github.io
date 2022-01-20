@@ -4,8 +4,8 @@
 RED.export = (function () {
 
     function getClassConnections(class_ws, links, currPath) {
-        console.log("*******************************************");
-        console.error("getClassConnections  path: \"" + currPath + "\"");
+        //console.log("*******************************************");
+        //console.error("getClassConnections  path: \"" + currPath + "\"");
         for (var ni = 0; ni < class_ws.nodes.length; ni++) {
             var n = class_ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
@@ -15,25 +15,25 @@ RED.export = (function () {
 
             links.pushArray(getFinalIO(clinks, currPath));
 
-            var _ws = RED.nodes.isClass(n.type);
+            var _ws = isClass(n.type);
             if (_ws)
             {
-                console.warn("is class: " + n.name);
-                console.log("*************************************************************************");
-                console.log("*** adding connections inside "+ _ws.label + " ****************************");
-                console.log("*************************************************************************");
+                //console.warn("is class: " + n.name);
+                //console.log("*************************************************************************");
+                //console.log("*** adding connections inside "+ _ws.label + " ****************************");
+                //console.log("*************************************************************************");
                 getClassConnections(_ws, links, currPath + "/" + n.name);
             }
             else 
             {
-                console.warn("is NOT class: " + n.name);
+                //console.warn("is NOT class: " + n.name);
             }
         }
     }
 
-    function copyLink(l, defaultPath, arrayIndex) {
+    function copyLink(l, defaultPath) {
         if (updateNames == undefined) updateNames = false;
-        return { linkPath:l.linkPath?l.linkPath:defaultPath, /*arrayIndex:l.arrayIndex?l.arrayIndex:arrayIndex,*/
+        return { linkPath:l.linkPath?l.linkPath:defaultPath,
                  source:l.source, sourcePort:parseInt(l.sourcePort), sourcePath:l.sourcePath?l.sourcePath:defaultPath,
                  target:l.target, targetPort:parseInt(l.targetPort), targetPath:l.targetPath?l.targetPath:defaultPath,
                  origin:l.origin?l.origin:l,
@@ -42,7 +42,7 @@ RED.export = (function () {
     }
 
     function getFinalSource(l,ws) {
-        console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
+        //console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
 
         var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
         if (port.inputs > 1) {
@@ -53,7 +53,7 @@ RED.export = (function () {
         l.sourcePath = l.sourcePath + "/" + l.source.name;
         l.source = newSrc.node;
         l.sourcePort = newSrc.srcPortIndex;
-        var _ws = RED.nodes.isClass(l.source.type);
+        var _ws = isClass(l.source.type);
         if (_ws)
         {
             getFinalSource(l,_ws);
@@ -70,28 +70,28 @@ RED.export = (function () {
      * if source is class and dest. is class
      * @param {*} links 
      */
-     function getFinalIO(links,classPath/*,arrayIndex*/) {
-        console.log("*******************************************");
-        console.error("expandLinks classPath:\"" + classPath);
+     function getFinalIO(links,classPath) {
+        //console.log("*******************************************");
+        //console.error("expandLinks classPath:\"" + classPath);
         var newLinks = [];
         var ws;
         for (var li = 0; li < links.length; li++)
         {
             var l = links[li];
-            var newLink = copyLink(l, classPath/*, arrayIndex*/);
+            var newLink = copyLink(l, classPath);
             
-            console.warn("newLink: "+printLinkDebug(newLink));
+            //console.warn("newLink: "+printLinkDebug(newLink));
 
-            ws = RED.nodes.isClass(l.source.type)
+            ws = isClass(l.source.type)
             if (ws)
             {
                 getFinalSource(newLink,ws);
             }
 
-            ws = RED.nodes.isClass(l.target.type);
+            ws = isClass(l.target.type);
             if (ws)
             {
-                console.warn("l.target isclass " + l.target.name + " from " + l.source.name);
+                //console.warn("l.target isclass " + l.target.name + " from " + l.source.name);
 
                 var port = RED.nodes.getClassIOport(ws.id, "In", l.targetPort);
                 //console.warn("port:",port);
@@ -103,18 +103,18 @@ RED.export = (function () {
                 for (var pli = 0; pli < portLinks.length; pli++)
                 {
                     var pl = portLinks[pli];
-                    var newPortLink = copyLink(newLink, classPath/*, arrayIndex*/);
+                    var newPortLink = copyLink(newLink, classPath);
                     newPortLink.targetPath = newTargetPath;
                     newPortLink.target = pl.target;
                     newPortLink.targetPort = pl.targetPort;
                     newPortLinks.push(newPortLink);
                 }
-                console.warn("newPortLinks:\n" + printLinksDebug(newPortLinks));
+                //console.warn("newPortLinks:\n" + printLinksDebug(newPortLinks));
                 newLinks.pushArray(getFinalIO(newPortLinks,classPath));
             }
             else
             {
-                console.error("push link: " + printLinkDebug(newLink));
+                //console.error("push link: " + printLinkDebug(newLink));
                 
                 newLinks.push(newLink);
             }
@@ -127,11 +127,10 @@ RED.export = (function () {
         for (var i = 0; i < isArrayObject.arrayLength; i++) {
             var newLink = copyLink(link, "", "");
             var newName = isArrayObject.name + "/i" + i;
-            newLink.arrayIndex = "i" + i;
             newLink[propertyName] = newLink[propertyName].replace(newLink[propertyName], newName);
             newLinks.push(newLink);
         }
-        console.warn(printLinksDebug(newLinks));
+        //console.warn(printLinksDebug(newLinks));
         return newLinks;
     }
     function updateNames(links) {
@@ -159,21 +158,20 @@ RED.export = (function () {
                 for (var i = 0; i < linkPathIsArray.arrayLength; i++) {
                     var newLink = copyLink(l, "", "");
                     var newPathName = linkPathIsArray.name + "/i" + i;
-                    newLink.arrayIndex = "i" + i;
                     newLink.sourcePath = newLink.sourcePath.replace(newLink.linkPath, newPathName);
                     newLink.targetPath = newLink.targetPath.replace(newLink.linkPath, newPathName);
                     newLink.linkPath = newPathName;
                     linksToCheck.push(newLink);
                 }
                 linksToCheck = expandArrays(linksToCheck);
-                console.error(printLinksDebug(linksToCheck));
+                //console.error(printLinksDebug(linksToCheck));
                 expandedLinks.pushArray(linksToCheck);
 
                 continue;
             }
-            var sourceFullPath = (l.sourcePath + "/" + l.sourceName).split('/'); 
-            var targetFullPath = (l.targetPath + "/" + l.targetName).split('/'); 
-            console.error(sourceFullPath,targetFullPath);
+            //var sourceFullPath = (l.sourcePath + "/" + l.sourceName).split('/'); 
+            //var targetFullPath = (l.targetPath + "/" + l.targetName).split('/'); 
+            //console.error(sourceFullPath,targetFullPath);
 
             var sourcePathIsArray = isNameDeclarationArray(l.sourcePath, wsId, true);
             var sourceNameIsArray = isNameDeclarationArray(l.sourceName?l.sourceName:l.source.name, wsId, true);
@@ -182,62 +180,87 @@ RED.export = (function () {
 
             // here are 9 combinations just for array source and array destinations
             if (!sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 0101
-
+                console.log("0101 !sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             } else if (!sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 0110
-            
+                console.log("0110 !sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
             else if (!sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 0111
-            
+                console.log("0111 !sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
             else if (sourcePathIsArray && !sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 1001
-            
+                console.log("1001 sourcePathIsArray && !sourceNameIsArray && !targetPathIsArray && targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
             else if (sourcePathIsArray && !sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 1010
-            
+                console.log("1010 sourcePathIsArray && !sourceNameIsArray && targetPathIsArray && !targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
             else if (sourcePathIsArray && !sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 1011
-            
+                console.log("1011 sourcePathIsArray && !sourceNameIsArray && targetPathIsArray && targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
-            else if (sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 1101
-            
+            else if (sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray) { // 1101 not valid very hard to implement
+                console.log("1101 sourcePathIsArray && sourceNameIsArray && !targetPathIsArray && targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
-            else if (sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 1110
-            
+            else if (sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray) { // 1110 not valid very hard to implement
+                console.log("1110 sourcePathIsArray && sourceNameIsArray && targetPathIsArray && !targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
-            else if (sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 1111
-            
+            else if (sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray) { // 1111 not valid hard to implement
+                console.log("1111 sourcePathIsArray && sourceNameIsArray && targetPathIsArray && targetNameIsArray " + l.sourcePath + "/" + l.sourceName + "->" + l.targetPath+"/"+l.targetName);
+                expandedLinks.push({invalid:'"'+l.sourcePath + "/" + l.sourceName + '" -> "' + l.targetPath+"/"+l.targetName + '" is not supported '});
+                continue; // skip this
             }
             // take care of every combination actually there are 16 of them
             // or 9 if we need to support putting arrays after one and annother
             // but is reduced to 6 as every one of them would be very much for the moment
             // this following 6 are certain useful anyway
             if (sourcePathIsArray && !sourceNameIsArray) {
+                console.log("sourcePathIsArray && !sourceNameIsArray");
                 expandedLinks.pushArray(expandArray(l, sourcePathIsArray, "sourcePath"));
                 continue;
             }
             else if (!sourcePathIsArray && sourceNameIsArray) {
+                console.log("!sourcePathIsArray && sourceNameIsArray");
                 expandedLinks.pushArray(expandArray(l, sourceNameIsArray, "sourceName"));
                 continue;
             }
             else if (sourcePathIsArray && sourceNameIsArray) {
-                // this is a multi step thingy
+                console.log("sourcePathIsArray && sourceNameIsArray");
+                // not supported
                 expandedLinks.pushArray(expandArrays(expandArray(l, sourcePathIsArray, "sourcePath")));
                 continue;
             }
             
             if (targetPathIsArray && !targetNameIsArray) {
+                console.log("targetPathIsArray && !targetNameIsArray");
                 expandedLinks.pushArray(expandArray(l, targetPathIsArray, "targetPath"));
                 continue;
             }
             else if (!targetPathIsArray && targetNameIsArray) {
+                console.log("!targetPathIsArray && targetNameIsArray");
                 expandedLinks.pushArray(expandArray(l, targetNameIsArray, "targetName"));
                 continue;
             }
             else if (targetPathIsArray && targetNameIsArray) {
+                console.log("targetPathIsArray && targetNameIsArray");
                 // this is a multi step thingy
                 expandedLinks.pushArray(expandArrays(expandArray(l, targetPathIsArray, "targetPath")));
                 continue;
             }
+            console.log("non array stuff");
             // non array stuff
             expandedLinks.push(l);
 
@@ -245,10 +268,16 @@ RED.export = (function () {
         return expandedLinks;
     }
 
-    function getDynInputDynSizePortIndex(dynInputObj, source) {
+    /**
+     * 
+     * @param {*} dynInputObj 
+     * @param {*} source if this is null then the total amount of inputs needed is returned
+     * @returns 
+     */
+    function getDynInputDynSizePortStartIndex(dynInputObj, source) {
         var links = RED.nodes.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
-        console.log(printLinksDebug(links));
+        //console.log(printLinksDebug(links));
         var offset = 0;
         for (var li = 0; li < links.length; li++) {
             var l = links[li];
@@ -257,14 +286,28 @@ RED.export = (function () {
                 return offset;
             }
             else {
+                var toAdd = 0;
                 var isArray = isNameDeclarationArray(l.source.name, l.source.z, true);
                 if (isArray) {
                     //console.error("is array " + l.source.name + " " + isArray.arrayLength)
-                    offset += isArray.arrayLength;
+                    toAdd = isArray.arrayLength;
+                    
                 }
                 else {
-                    offset++; // non array sources still have one output
+                    toAdd = 1; // non array sources still have one output
                 }
+                var ws = isClass(l.source.type)
+                if (ws){
+                    var lc = copyLink(l, "", "");
+                    getFinalSource(lc, ws);
+                    var isArray = isNameDeclarationArray(lc.source.name, lc.source.z, true);
+                    if (isArray) {
+                        //console.error("is array " + l.source.name + " " + isArray.arrayLength)
+                        toAdd *= isArray.arrayLength;
+                        
+                    }
+                }
+                offset += toAdd;
             }
         }
         //console.error("did not found source " + source.name + " @" + offset )
@@ -273,6 +316,7 @@ RED.export = (function () {
 
     function printLinkDebug(l) {
         var txt  = "";
+        if (l.invalid != undefined) return l.invalid;
         //txt += '("' + (l.sourcePath||"")+ '",' + (l.sourceName||l.source.name) + "," + l.sourcePort + ') -> ("' + (l.targetPath||"") + '",'+ (l.targetName||l.target.name) + "," + l.targetPort + ')  @ "' + (l.linkPath||"") + '"';
         txt += '("' + (l.sourcePath||"") +"/"+ (l.sourceName||l.source.name) + '",' + l.sourcePort + ') -> ("' + (l.targetPath||"") + '/'+ (l.targetName||l.target.name) + '",' + l.targetPort + ')  @ "' + (l.linkPath||"") + '"';
         
@@ -305,6 +349,7 @@ RED.export = (function () {
         //if (endIndex == -1) return name;
         return name.substring(0, startIndex);
     }
+
     function GetLinkName(l) {
         // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
         var srcName = l.origin?l.origin.source.name:l.source.name;
@@ -319,19 +364,22 @@ RED.export = (function () {
         var src = src = srcName + (dbg?"_":"") + srcPort;
         var dst = "";
         
-        // this should maybe be take care of in expandArrays
-        if (l.arrayIndex != undefined) {
+        var srcIsArray = l.sourcePath?getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName):"";
+        var dstIsArray = l.targetPath?getArrayIndexersFromPath(l.targetPath+"/"+l.targetName):"";
+        
+        if (srcIsArray.length != 0 || dstIsArray.length != 0) {
 
-            var arrayIndex = parseInt(l.arrayIndex.substring(1));
-            if (l.target._def.defaults.inputs != undefined)
-                dstPort = arrayIndex+dstPort;
+            srcPort = parseInt(l.sourcePort);
+            src = src = srcName + (dbg?"_":"") + srcPort;
+            dstPort = parseInt(l.targetPort);
 
-            var source = l.origin?l.origin.source:l.source;
-            var target = l.origin?l.origin.target:l.target;
-            var isArray = isNameDeclarationArray(source.name, source.z, true);
-            if (isArray) src += (dbg?"_":"") + getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName);//l.arrayIndex;
-            isArray = isNameDeclarationArray(target.name, target.z, true);
-            if (isArray) dst = dstName + (dbg?"_":"") + dstPort + (dbg?"_":"") + getArrayIndexersFromPath(l.targetPath+"/"+l.targetName);// l.arrayIndex;
+            var srcIsArray = getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName);
+            //console.error("-------------------------- " +l.sourcePath+"/"+l.sourceName+ " "+srcIsArray);
+            if (srcIsArray.length != 0) src += (dbg?"_":"") + srcIsArray;
+
+            var dstIsArray = getArrayIndexersFromPath(l.targetPath+"/"+l.targetName);
+            //console.error("-------------------------- " + l.targetPath+"/"+l.targetName + " " + dstIsArray);
+            if (dstIsArray.length != 0) dst = dstName + (dbg?"_":"") + dstPort + (dbg?"_":"") + dstIsArray;
             else dst = dstName + (dbg?"_":"") + dstPort;
         }
         else
@@ -415,12 +463,28 @@ RED.export = (function () {
 		return 0;
 	}
 
+    var project = {};
+
+    function isClass(type)
+	{
+		for (var wsi = 0; wsi < project.workspaces.length; wsi++)
+		{
+			var ws = project.workspaces[wsi];
+			if (type == ws.label) return ws;
+			//console.log(node.type  + "!="+ ws.label);
+		}
+		return undefined;
+	}
+
     return {
+        set project(_nns) {project = _nns; },
+        get project() { return project;},
+        isClass,
         GetNameWithoutArrayDef,
         GetLinkDebugName,
         GetLinkName,
         haveIO,
-        getDynInputDynSizePortIndex,
+        getDynInputDynSizePortStartIndex,
         updateNames,
         isNameDeclarationArray,
         getClassConnections,

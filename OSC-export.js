@@ -111,15 +111,27 @@ OSC.export = (function () {
 
     function findMainWs(nns) {
         var foundMains = [];
+        var mainSelected = -1;
         for (var wi=0; wi < nns.workspaces.length; wi++) {
             if (nns.workspaces[wi].isAudioMain == true) {
                 foundMains.push(wi);
+                if (nns.workspaces[wi].id == RED.view.activeWorkspace) {
+                    mainSelected = wi;
+                }
             }
+            
         }
         if (foundMains.length == 0)
             return undefined; // not found
         
-        return foundMains; // let the caller decide what to do
+        return {items:foundMains, mainSelected}; // let the caller decide what to do
+    }
+
+    function fixLeadingSlash(text) {
+        if (text.startsWith("/"))
+            return text;
+        else
+            return "/" + text
     }
 
     /**
@@ -129,7 +141,7 @@ OSC.export = (function () {
      * @param {String} path 
      */
     function addObjectsToPacketArray(class_ws, packets, path) {
-        console.error("getClassObjects: " + class_ws.label + " \"" + path + "\"");
+        //console.error("getClassObjects: " + class_ws.label + " \"" + path + "\"");
         var wildcardArrayItems = RED.OSC.settings.WildcardArrayObjects;
 
         for (var ni = 0; ni < class_ws.nodes.length; ni++) {
@@ -138,21 +150,21 @@ OSC.export = (function () {
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
             if (node._def.nonObject != undefined) continue;
 
-            console.warn("node:" + n.name);
+            //console.warn("node:" + n.name);
 
-            var _ws = RED.nodes.isClass(n.type);
+            var _ws = RED.export.isClass(n.type);
             if (_ws)
             {
-                console.warn("is class");
+                //console.warn("is class");
                 var isArray = RED.export.isNameDeclarationArray(n.name, class_ws.id, true);
                 if (isArray) {
-                    console.warn("is array");
+                    //console.warn("is array");
                     var name = isArray.name;
                     var count = isArray.arrayLength;
-                    packets.add(OSC.GetCreateGroupAddr(),"ss", name, path)
+                    packets.add(OSC.GetCreateGroupAddr(),"ss", name, fixLeadingSlash(path))
                     for (var ai = 0; ai < count; ai++)
                     {
-                        packets.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, path + name);
+                        packets.add(OSC.GetCreateGroupAddr(),"ss", "i"+ai, fixLeadingSlash(path + name));
                         if (wildcardArrayItems == false)
                             addObjectsToPacketArray(_ws, packets, path + name + "/i" + ai);
                     }
@@ -160,8 +172,8 @@ OSC.export = (function () {
                         addObjectsToPacketArray(_ws, packets, path + name + "/i*");
                 }
                 else {
-                    console.warn("is NOT array");
-                    packets.add(OSC.GetCreateGroupAddr(),"ss", n.name, path)
+                    //console.warn("is NOT array");
+                    packets.add(OSC.GetCreateGroupAddr(),"ss", n.name, fixLeadingSlash(path))
                    
                     addObjectsToPacketArray(_ws, packets, path + "/" + n.name);
                     
@@ -169,34 +181,34 @@ OSC.export = (function () {
             }
             else
             {
-                console.warn("is NOT class");
+                //console.warn("is NOT class");
                 var isArray = RED.export.isNameDeclarationArray(n.name, class_ws.id, true);
 
                 if (path == '') {
                     if (isArray) {
-                        console.warn("is array");
+                        //console.warn("is array");
                         var name = isArray.name;
                         var count = isArray.arrayLength;
                         packets.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
                         for (var ai = 0; ai < count; ai++)
                         {
                             if (node._def.defaults.inputs == undefined) {
-                                packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, name);
+                                packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, fixLeadingSlash(name));
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, name, RED.export.getDynInputDynSizePortIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(name), RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
                     else {
-                        console.warn("is NOT array");
+                        //console.warn("is NOT array");
                         if (node._def.defaults.inputs == undefined) {
                             packets.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.export.getDynInputDynSizePortIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
@@ -210,22 +222,22 @@ OSC.export = (function () {
                         for (var ai = 0; ai < count; ai++)
                         {
                             if (node._def.defaults.inputs == undefined) {
-                                packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, path + "/" + name);
+                                packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, fixLeadingSlash(path + "/" + name));
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, path + "/" + name, RED.export.getDynInputDynSizePortIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(path + "/" + name), RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
                     else {
                         //console.warn("this happen: " + n.name);
                         if (node._def.defaults.inputs == undefined) {
-                            packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, path);
+                            packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, fixLeadingSlash(path));
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, path, RED.export.getDynInputDynSizePortIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, fixLeadingSlash(path), RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
@@ -233,6 +245,17 @@ OSC.export = (function () {
         }
     }
 
+    function getOSCIndices(path) {
+        var indices = [];
+        var split = path.split("/");
+        split.forEach( function(str){
+            //if (str.length < 2) continue;
+            //console.log(str);
+            if ((str.length > 1) && (str[0] == 'i') && ((str[1]>='0')&&(str[1]<='9')))
+                indices.push(parseInt(str.substring(1)));
+        });
+        return indices;
+    }
     /**
      * 
      * @param {*} packets 
@@ -246,7 +269,14 @@ OSC.export = (function () {
         for (var li = 0; li < links.length; li++) {
             
             var l = links[li];
-            packets.add("//*************" + (l.arrayIndex?(" " + l.arrayIndex):""));
+
+            if (l.invalid != undefined) {
+                packets.add("//********************************************");
+                packets.add("//  " + l.invalid);
+                packets.add("//********************************************");
+                continue;
+            }
+            
             if ((l.target.type == "TabOutput") || (l.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
 
             // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
@@ -257,28 +287,32 @@ OSC.export = (function () {
             var srcPort = parseInt(l.sourcePort); // failsafe
             var dstPort = parseInt(l.targetPort); // failsafe
 
-            
+            var indices = getOSCIndices(l.sourcePath + "/" + l.sourceName);
+            packets.add("//*************" + ((indices.length!=0)?(" i" + indices.join(" i")):""));
+            if (indices.length != 0 && l.target._def.defaults.inputs != undefined) {// array source and dynamic input audio object
+                dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin.source);
+
+                if (indices.length == 1) {
+                    dstPort = dstPort + indices[0];
+                }
+                else {
+                    var isArraySn = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
+                    dstPort = dstPort + isArraySn.arrayLength*indices[0] + indices[1];
+                }
+                l.targetPort = dstPort; // update this so it can be used by GetLinkName
+            }
+            else if (l.target._def.defaults.inputs != undefined) { // dynamic input audio object
+                dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source);//+dstPort;
+                l.targetPort = dstPort; // update this so it can be used by GetLinkName
+            }
             var linkName = RED.export.GetLinkName(l);
-            // this should maybe be take care of in RED.export.expandArrays
-            if (l.arrayIndex != undefined) {
-                //var target = l.target;//l.origin?l.origin.target:l.target;
-                var arrayIndex = parseInt(l.arrayIndex.substring(1));
-                if (l.target._def.defaults.inputs != undefined){ // dynamic input audio object
-                    dstPort = RED.export.getDynInputDynSizePortIndex(l.target, l.origin.source) + arrayIndex;//+dstPort;
-                }
-            }
-            else {
-                if (l.target._def.defaults.inputs != undefined){ // dynamic input audio object
-                    dstPort = RED.export.getDynInputDynSizePortIndex(l.target, l.origin?l.origin.source:l.source);//+dstPort;
-                }
-            }
             var sourcePath = l.sourcePath||"";
             var targetPath = l.targetPath||"";
             var linkPath = l.linkPath||""; // make this work for standard links
             
             //if (overrideTargetPort != undefined) dstPort = overrideTargetPort;
             if (linkPath == "") {
-                console.warn("root path / " + linkName);
+                //console.warn("root path / " + linkName);
                 if (sourcePath.startsWith("/") == false && sourcePath != "") sourcePath = "/"+sourcePath;
                 if (targetPath.startsWith("/") == false && targetPath != "") targetPath = "/"+targetPath;
 
@@ -293,7 +327,7 @@ OSC.export = (function () {
                 if (sourcePath.startsWith("/") == false && sourcePath != "") sourcePath = "/"+sourcePath;
                 if (targetPath.startsWith("/") == false && targetPath != "") targetPath = "/"+targetPath;
 
-                console.warn("path " + linkPath + " " + linkName);
+                //console.warn("path " + linkPath + " " + linkName);
                 packets.add(OSC.GetCreateConnectionAddr(),"ss", linkName, linkPath);
                 packets.add(OSC.GetConnectAddr(linkPath +"/"+ linkName),"sisi", sourcePath + "/" + srcName, srcPort, targetPath + "/" + dstName, dstPort);
             }
@@ -306,35 +340,36 @@ OSC.export = (function () {
 
         RED.storage.update();
 
-        var nns = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
+        RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
 
-        var foundMains = findMainWs(nns);
-        var mainWorkSpace;
+        var foundMains = findMainWs(RED.export.project);
+        var mainWorkSpaceIndex;
 
         if (foundMains == undefined) {
             RED.main.verifyDialog("Warning", "Audio Main Entry Tab not set", "Please set the Audio Main Entry tab<br> double click the tab that you want as the main and check the 'Audio Main File' checkbox.<br><br>note. if you select many tabs as audio main only the first is used.", function() {});
             return;
         }
 
-        if (foundMains.length > 1) { // multiple AudioMain found
-            if (RED.nodes.currentWorkspace.isAudioMain) // if current selected is AudioMain use that
-                mainWorkSpace = RED.nodes.currentWorkspace;
+        if (foundMains.items.length > 1) { // multiple AudioMain found
+            if (foundMains.mainSelected != -1)
+                mainWorkSpaceIndex = foundMains.mainSelected;
             else
-                mainWorkSpace = foundMains[0]; // get the first one
+                mainWorkSpaceIndex = foundMains.items[0]; // get the first one
         }
         else
-            mainWorkSpace = foundMains[0]; // get the only one
+            mainWorkSpaceIndex = foundMains.items[0]; // get the only one
 
-        console.warn("AudioMain ", mainWorkSpace);
+        console.warn("AudioMain ", mainWorkSpaceIndex);
 
         // usage of PacketArray so that we can add OSC packets easly to it
         var apos = new PacketArray(); // Audio Processing Objects
         var acs = new PacketArray(); // Audio Connections 
 
-        //var ws = nns.workspaces[mainWorkSpace];
-        addObjectsToPacketArray(mainWorkSpace, apos, '');
+        var ws = RED.export.project.workspaces[mainWorkSpaceIndex];
+        console.warn("AudioMain ", mainWorkSpaceIndex, ws);
+        addObjectsToPacketArray(ws, apos, '');
         var links = [];
-        RED.export.getClassConnections(mainWorkSpace, links, ''); // this is a recursive function
+        RED.export.getClassConnections(ws, links, ''); // this is a recursive function
         RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
         // sort links
         //links.sort(function (a,b) { return (b.targetPath + "/" + b.targetName).localeCompare(a.targetPath + "/" + a.targetName) || (a.targetPort - b.targetPort); });
@@ -408,6 +443,7 @@ OSC.export = (function () {
     function getSuperSimpleExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
         RED.storage.update(); // this will also sort the nodes
+        RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // used by isClass and getDynInputDynSizePortStartIndex
         var activeWorkspace = RED.view.activeWorkspace;
         var apos = new PacketArray(); // Audio Processing Objects
         var acs = new PacketArray(); // Audio Connections 

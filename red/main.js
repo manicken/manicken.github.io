@@ -29,8 +29,21 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
  * node RED main - here the main entry function exist
  */
 RED.main = (function() {
-	
+	var defSettings = {
+        AutoDownloadJSON: false,
+    };
+    var _settings = {
+        AutoDownloadJSON:defSettings.AutoDownloadJSON,
+    };
+    var settings = {
+        get AutoDownloadJSON() { return _settings.AutoDownloadJSON; },
+        set AutoDownloadJSON(value) { _settings.AutoDownloadJSON = value; RED.storage.update();},
+    };
+    var settingsCategory = { label:"Global", expanded:false, popupText: "Global main setttings that don't belong to a specific category", bgColor:"#DDD" };
 
+    var settingsEditor = {
+        AutoDownloadJSON:     {label:"Auto Download JSON", type:"boolean", popupText:"When enabled this automatically downloads the current design as JSON after the page has loaded,<br>this can be used as a failsafe for important projects.<br><br>future improvement/additional functionality could involve a autosave based on a interval as well."},
+    };
 	//NOTE: code generation save function have moved to arduino-export.js
 	
 	//var classColor = "#E6E0F8"; // standard
@@ -386,18 +399,19 @@ RED.main = (function() {
 			$("#menu-export").removeClass("disabled").addClass("btn-danger");
 			$("#menu-ide").removeClass("disabled").addClass("btn-warning");
 		}, 1000);
-			$(".palette-scroll").show();
-			$("#palette-search").show();
-			
-			RED.storage.load();
-			RED.nodes.addClassTabsToPalette();
-			RED.nodes.refreshClassNodes();
-			RED.nodes.addUsedNodeTypesToPalette();
-			RED.view.redraw();
-			
-			
-			
-			
+
+        $(".palette-scroll").show();
+        $("#palette-search").show();
+        
+        RED.storage.load();
+        if (settings.AutoDownloadJSON == true) {
+            saveToFile(RED.arduino.settings.ProjectName + ".json");
+        }
+
+        RED.nodes.addClassTabsToPalette();
+        RED.nodes.refreshClassNodes();
+        RED.nodes.addUsedNodeTypesToPalette();
+        RED.view.redraw();
 	}
 
 /*	$('#btn-node-status').click(function() {toggleStatus();});
@@ -714,6 +728,10 @@ RED.main = (function() {
         }  
     }  
 	return {
+        defSettings:defSettings,
+		settings:settings,
+		settingsCategory:settingsCategory,
+        settingsEditor:settingsEditor,
 		
 		classColor:classColor,
 		requirements:requirements,

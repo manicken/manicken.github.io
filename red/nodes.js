@@ -23,6 +23,8 @@ RED.nodes = (function() {
 	var workspaces = [];
 	var currentWorkspace = {};
     var iconSets = {};
+
+    var exportedSet = {};
     
 	function getNode()
 	{
@@ -707,45 +709,43 @@ RED.nodes = (function() {
         nodes.pushArray(sortedNodes);
         //console.error("nodecount after sort: "+nodes.length);
     }
-	
+	function copyWorkspace(ws) {
+        return JSON.parse(JSON.stringify(ws));
+    }
+
 	function createCompleteNodeSet(args) {
         var newVersion;
         var sort;
         if (args == undefined) args = {};
         if (args.newVer == undefined) newVersion = false;
         else newVersion = args.newVer;
-        if (args.sort == undefined) sort = true; // defaults to allways sort
+        if (args.sort == undefined) sort = true; // default is allways sort
         else sort = args.sort;
 
         if (sort == true) sortNodes();
 
-   
 		if(newVersion == true) var project = {version:1};
         else var nns = [];
-
         
         if (newVersion == true)
             project.settings = RED.settings.getAsJSONobj();
         else
             nns.push({"type":"settings", "data":RED.settings.getAsJSONobj()});
         
-		// development debug
-		//console.warn("@createCompleteNodeSet\n  absoluteXposMax:" + absoluteXposMax +
-		//								  "\n  absoluteYposMax:" + absoluteYposMax +
-		//								  "\n  workspaceColSize:" + workspaceColSize);
-        // first add all workspaces/tabs to the nns
         if (newVersion == false) {
+            // first add all workspaces/tabs to the nns
             for (let wsi=0;wsi<workspaces.length;wsi++) {
                 nns.push(workspaces[wsi]);
             }
         }
-		var ws = {};
+		var _workspaces = [];
 		// sort nodes by workspace
 		for (var wsi=0;wsi<workspaces.length;wsi++)
 		{
-			ws = workspaces[wsi];
+ 			var ws = copyWorkspace(workspaces[wsi]); // so that we don't work with the active set, that resulted in a nasty suprice once
+            //console.log(ws);
             if (newVersion == true)
-                ws.nodes = []; // clear this
+                ws.nodes = [];
 
             for (var ni = 0; ni < nodes.length; ni++) {
                 var node = nodes[ni];
@@ -756,74 +756,18 @@ RED.nodes = (function() {
                 else
 				    nns.push(convertNode(node)); 
             }
-/*
-            var absoluteXposMax = 0;
-            var absoluteYposMax = 0;
-            var workspaceColSize = RED.view.defSettings.gridVmajorSize;
-            
-            // if the ws.settings.gridVmajorSize is defined then use that instead
-            if (ws.settings.gridVmajorSize != undefined) workspaceColSize = ws.settings.gridVmajorSize;
-            var ni;
-            // calculate absolute node max and min positions
-            for (ni = 0; ni < nodes.length; ni++)
-            {
-                var node = nodes[ni];
-                if (node.z != ws.id) continue; // workspace filter
-                if (node.x > absoluteXposMax) absoluteXposMax = node.x;
-                if (node.y > absoluteYposMax) absoluteYposMax = node.y;
-            }
-            // ensure that every node is included 
-            absoluteXposMax += workspaceColSize*4; 
-            absoluteYposMax += RED.view.node_def.height*4;
-
-            
-			// sort nodes by columns (xpos)
-			for (var xPosMin = 0; xPosMin < absoluteXposMax; xPosMin+=workspaceColSize)
-			{
-				var nnsCol = []; // current column
-				var xPosMax = xPosMin+workspaceColSize;
-
-				for (ni=0;ni<nodes.length;ni++)
-				{
-					var node = nodes[ni];
-					if (node.z != ws.id) continue; // workspace filter
-
-					if (node._def.uiObject != undefined) continue; // skip ui nodes they are added above (and should never be sorted because then it will mess up ui)
-
-					if ((node.x >= xPosMin) && (node.x < xPosMax))
-						nnsCol.push(convertNode(node, true));
-				}
-				// sort "new" nodes by ypos
-				nnsCol.sort(function(a,b){return(a.y-b.y);});
-				// push the "new" nodes to final array
-				for (var nni = 0; nni < nnsCol.length; nni++)
-				{
-                    if (newVersion == true)
-                        ws.nodes.push(nnsCol[nni]);
-                    else
-					    nns.push(nnsCol[nni]);
-				}
-            }
-            // add ui nodes last and as they are in draw order
-			for (ni=0;ni<nodes.length;ni++)
-			{
-				var node = nodes[ni];
-				if (node.z != ws.id) continue; // workspace filter
-				if (node._def.uiObject == undefined) continue; // skip non ui nodes
-                // just add ui nodes as is to preserve draw order
-                if (newVersion == true)
-                    ws.nodes.push(convertNode(node, true));
-                else
-				    nns.push(convertNode(node, true)); 
-			}*/
+            _workspaces.push(ws);
 		}
         if (newVersion == true) {
-            project.workspaces = workspaces;
+            project.workspaces = _workspaces;
             project.nodeAddons = getNodeAddons();
+            exportedSet = workspaces;
             return project;
         }
-        else
+        else {
+            exportedSet = nns;
 		    return nns;
+        }
 	}
 
     function getNodeAddons() {
@@ -1473,7 +1417,7 @@ RED.nodes = (function() {
 		}*/
         if (port == undefined) port = 0; // default
         var _links = links.filter(function(l) { return ((l.target === node) && (l.targetPort == port)); });
-        console.log("_links:" + node.name ,_links);
+        //console.log("_links:" + node.name ,_links);
         if (_links.length == 0) return undefined;
         // there is only be one link found
         return {node:_links[0].source, srcPortIndex:_links[0].sourcePort};
