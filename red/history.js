@@ -33,7 +33,7 @@ RED.history = (function() {
 		},
 		pop: function() {
 			var ev = undo_history.pop();
-            console.warn(ev);
+            //console.warn(ev);
 			var i;
 			if (ev) {
 				if (ev.t == 'add') {
