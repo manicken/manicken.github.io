@@ -1,0 +1,1849 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {
+            "AutoDownloadJSON": true
+        },
+        "arduino": {
+            "ProjectName": "GroupExampleStereo2",
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "BiDirDataWebSocketBridge": {},
+        "workspaces": {},
+        "sidebar": {
+            "autoSwitchTabToInfoTab": false
+        },
+        "palette": {
+            "onlyShowOne": false
+        },
+        "editor": {},
+        "devTest": {},
+        "IndexedDBfiles": {
+            "testFileNames": "testFile.txt"
+        },
+        "NodeDefGenerator": {},
+        "NodeDefManager": {},
+        "NodeHelpManager": {},
+        "OSC": {
+            "LiveUpdate": false,
+            "UseDebugLinkName": true
+        }
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "f0b642b9.1152",
+            "label": "Main1",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "showNodeToolTip": false,
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.8,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "Main1_waveform1",
+                    "type": "AudioSynthWaveform",
+                    "isClass": false,
+                    "name": "LFO",
+                    "comment": "",
+                    "x": 80,
+                    "y": 295,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main1_CascadedMonoVoice1:0",
+                            "Main1_SimpleVoice1:0",
+                            "Main1_waveformMod1:0",
+                            "Main1_ArrayOut1:0",
+                            "Main1_waveformMod3:0",
+                            "Main1_ArrayOut2:0",
+                            "Main1_ArrayOut3:0",
+                            "Main1_ArrayIn2:0",
+                            "Main1_MonoVoice1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_CascadedMonoVoice1",
+                    "type": "CascadedMonoVoice",
+                    "isClass": true,
+                    "name": "cascadedmonovoice",
+                    "x": 215,
+                    "y": 120,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [
+                            "Main1_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_MonoVoice1",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "monovoice[2]",
+                    "x": 215,
+                    "y": 160,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main1_mixer1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_SimpleVoice1",
+                    "type": "SimpleVoice",
+                    "isClass": true,
+                    "name": "simplevoice",
+                    "x": 215,
+                    "y": 200,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [
+                            "Main1_mixer1:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_ArrayOut3",
+                    "type": "ArrayOut",
+                    "isClass": true,
+                    "name": "arrayout1",
+                    "x": 215,
+                    "y": 240,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [
+                            "Main1_mixer1:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_ArrayIn2",
+                    "type": "ArrayIn",
+                    "isClass": true,
+                    "name": "arrayinB[2]",
+                    "x": 215,
+                    "y": 280,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main1_mixer1:4"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_ArrayOut1",
+                    "type": "ArrayOut",
+                    "isClass": true,
+                    "name": "arrayOutA[2]",
+                    "x": 215,
+                    "y": 320,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main1_mixer1:5"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmA[2]",
+                    "comment": "",
+                    "x": 215,
+                    "y": 360,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main1_waveformMod2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_waveformMod3",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmC[2]",
+                    "comment": "",
+                    "x": 215,
+                    "y": 400,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main1_ArrayIn1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_ArrayOut2",
+                    "type": "ArrayOut",
+                    "isClass": true,
+                    "name": "arrayout[2]",
+                    "x": 215,
+                    "y": 440,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main1_waveformMod4:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_waveformMod2",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmB[2]",
+                    "comment": "",
+                    "x": 335,
+                    "y": 360,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main1_mixer1:6"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_ArrayIn1",
+                    "type": "ArrayIn",
+                    "isClass": true,
+                    "name": "arrayinA[2]",
+                    "x": 330,
+                    "y": 400,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main1_mixer1:7"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_waveformMod4",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmD[2]",
+                    "comment": "",
+                    "x": 350,
+                    "y": 440,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main1_mixer1:8"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": 9,
+                    "x": 510,
+                    "y": 225,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main1_i2s2_1:0",
+                            "Main1_i2s2_1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main1_i2s2_1",
+                    "type": "AudioOutputI2S2",
+                    "isClass": false,
+                    "name": "i2s2",
+                    "comment": "",
+                    "x": 615,
+                    "y": 275,
+                    "z": "f0b642b9.1152",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "c456681f.542258",
+            "label": "Main2",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "SynthMain2_waveform1",
+                    "type": "AudioSynthWaveform",
+                    "isClass": false,
+                    "name": "LFO",
+                    "comment": "",
+                    "x": 55,
+                    "y": 60,
+                    "z": "c456681f.542258",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "SynthMain2_SimpleVoice1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SynthMain2_SimpleVoice1",
+                    "type": "SimpleVoice",
+                    "isClass": true,
+                    "name": "voice",
+                    "x": 175,
+                    "y": 60,
+                    "z": "c456681f.542258",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "SynthMain2_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SynthMain2_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 310,
+                    "y": 60,
+                    "z": "c456681f.542258",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "SynthMain2_i2s1:0",
+                            "SynthMain2_i2s1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SynthMain2_i2s1",
+                    "type": "AudioOutputI2S",
+                    "isClass": false,
+                    "name": "i2s",
+                    "comment": "",
+                    "x": 440,
+                    "y": 60,
+                    "z": "c456681f.542258",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "6c89dcd6.9f4444",
+            "label": "SimpleVoice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "SimpleVoice_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out1",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 730,
+                    "y": 205,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "SimpleVoice_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 20,
+                    "y": 210,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "SimpleVoice_SimpleSub1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleVoice_SimpleSub1",
+                    "type": "SimpleSub",
+                    "isClass": true,
+                    "name": "sub1",
+                    "x": 130,
+                    "y": 200,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "SimpleVoice_waveformMod1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleVoice_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wav",
+                    "comment": "",
+                    "x": 255,
+                    "y": 205,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "SimpleVoice_SimpleSub2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleVoice_SimpleSub2",
+                    "type": "SimpleSub",
+                    "isClass": true,
+                    "name": "sub2",
+                    "x": 375,
+                    "y": 195,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "SimpleVoice_envelope1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleVoice_envelope1",
+                    "type": "AudioEffectEnvelope",
+                    "isClass": false,
+                    "name": "env",
+                    "comment": "",
+                    "x": 495,
+                    "y": 205,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "SimpleVoice_SimpleSub3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleVoice_SimpleSub3",
+                    "type": "SimpleSub",
+                    "isClass": true,
+                    "name": "sub3",
+                    "x": 610,
+                    "y": 200,
+                    "z": "6c89dcd6.9f4444",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "SimpleVoice_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "c92907cc.aa65d8",
+            "label": "SimpleSub",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "SimpleSub_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 135,
+                    "y": 85,
+                    "z": "c92907cc.aa65d8",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "SimpleSub_SimpleSubSub1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleSub_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 415,
+                    "y": 85,
+                    "z": "c92907cc.aa65d8",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "SimpleSub_SimpleSubSub1",
+                    "type": "SimpleSubSub",
+                    "isClass": true,
+                    "name": "simplesubsub",
+                    "x": 235.33333333333331,
+                    "y": 84.11111111111111,
+                    "z": "c92907cc.aa65d8",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [
+                            "SimpleSub_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "de8d0e25.32ebb",
+            "label": "MonoVoice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "MonoSynth_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 105,
+                    "y": 80,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "MonoVoice_amp1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "MonoSynth_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out1",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 665,
+                    "y": 85,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "MonoVoice_amp1",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "amp",
+                    "comment": "",
+                    "x": 195,
+                    "y": 85,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "MonoSynth_waveformMod1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "MonoVoice_Comment1",
+                    "type": "Comment",
+                    "isClass": false,
+                    "name": "the amp above fixes support when a array of objects is on class input ",
+                    "comment": "",
+                    "x": 140,
+                    "y": 265,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "MonoSynth_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wav[2]",
+                    "comment": "",
+                    "x": 300,
+                    "y": 85,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "MonoSynth_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "MonoSynth_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 440,
+                    "y": 85,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "MonoSynth_envelope1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "MonoSynth_envelope1",
+                    "type": "AudioEffectEnvelope",
+                    "isClass": false,
+                    "name": "env",
+                    "comment": "",
+                    "x": 565,
+                    "y": 85,
+                    "z": "de8d0e25.32ebb",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "MonoSynth_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "a1963bfd.01bee8",
+            "label": "StereoVoice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "StereoSynth_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 415,
+                    "y": 155,
+                    "z": "a1963bfd.01bee8",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "StereoVoice_MonoVoice1:0",
+                            "StereoVoice_MonoVoice2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "StereoSynth_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out1",
+                    "comment": "",
+                    "inputs": 2,
+                    "x": 630,
+                    "y": 160,
+                    "z": "a1963bfd.01bee8",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "StereoVoice_MonoVoice1",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "mvL",
+                    "x": 515,
+                    "y": 135,
+                    "z": "a1963bfd.01bee8",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "StereoSynth_Out1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "StereoVoice_MonoVoice2",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "mvR",
+                    "x": 520,
+                    "y": 175,
+                    "z": "a1963bfd.01bee8",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "StereoSynth_Out1:1"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "28069ded.090eb2",
+            "label": "SimpleSubSub",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "SimpleSubSub_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 365,
+                    "y": 130,
+                    "z": "28069ded.090eb2",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "SimpleSubSub_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 155.3888888888889,
+                    "y": 130.33333333333334,
+                    "z": "28069ded.090eb2",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "SimpleSubSub_amp1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SimpleSubSub_amp1",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "amp",
+                    "comment": "",
+                    "x": 255,
+                    "y": 130,
+                    "z": "28069ded.090eb2",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "SimpleSubSub_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "9eb9cc46.e85fc",
+            "label": "ArrayOut",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "ArrayOut_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 165,
+                    "y": 235,
+                    "z": "9eb9cc46.e85fc",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "ArrayOut_amp1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "ArrayOut_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 519.0555555555555,
+                    "y": 235.22222222222223,
+                    "z": "9eb9cc46.e85fc",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "ArrayOut_amp1",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "amp",
+                    "comment": "",
+                    "x": 265,
+                    "y": 235,
+                    "z": "9eb9cc46.e85fc",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "ArrayOut_waveformMod1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "ArrayOut_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfm[2]",
+                    "comment": "",
+                    "x": 384.8333333333333,
+                    "y": 237.44444444444443,
+                    "z": "9eb9cc46.e85fc",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "ArrayOut_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "16f3897f.39c657",
+            "label": "ArrayIn",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "ArrayIn_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 615,
+                    "y": 105,
+                    "z": "16f3897f.39c657",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "ArrayIn_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 180,
+                    "y": 110,
+                    "z": "16f3897f.39c657",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "ArrayIn_waveformMod1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "ArrayIn_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfm[2]",
+                    "comment": "",
+                    "x": 335,
+                    "y": 120,
+                    "z": "16f3897f.39c657",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "ArrayIn_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "ArrayIn_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 475,
+                    "y": 120,
+                    "z": "16f3897f.39c657",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "ArrayIn_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "b2faae4f.f40918",
+            "label": "CascadedMonoVoice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "CascadedMonoVoice_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 520,
+                    "y": 120,
+                    "z": "b2faae4f.f40918",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "CascadedMonoVoice_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 210,
+                    "y": 120,
+                    "z": "b2faae4f.f40918",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "CascadedMonoVoice_MonoVoice1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "CascadedMonoVoice_MonoVoice1",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "mvA",
+                    "x": 315,
+                    "y": 120,
+                    "z": "b2faae4f.f40918",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "CascadedMonoVoice_MonoVoice2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "CascadedMonoVoice_MonoVoice2",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "mvB",
+                    "x": 415,
+                    "y": 120,
+                    "z": "b2faae4f.f40918",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "CascadedMonoVoice_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "3629fcd9.ccc604",
+            "label": "Main_Extreme",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "Main_waveform1",
+                    "type": "AudioSynthWaveform",
+                    "isClass": false,
+                    "name": "LFO",
+                    "comment": "",
+                    "x": 5,
+                    "y": 155,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_MonoSynth3:0",
+                            "Main_MonoSynth1:0",
+                            "Main_waveformMod3:0",
+                            "Main_waveformMod1:0",
+                            "Main_waveformMod2:0",
+                            "Main_StereoSynth1:0",
+                            "SynthMain_StereoVoice1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_MonoSynth3",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "monoVoiceC",
+                    "x": 145,
+                    "y": 25,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main_mixer3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_MonoSynth1",
+                    "type": "MonoVoice",
+                    "isClass": true,
+                    "name": "monoVoices[2]",
+                    "x": 155,
+                    "y": 80,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_waveformMod3",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "waveformMod",
+                    "comment": "",
+                    "x": 155,
+                    "y": 140,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixer3:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmA[2]",
+                    "comment": "",
+                    "x": 155,
+                    "y": 225,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixer4:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_waveformMod2",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmB[2]",
+                    "comment": "",
+                    "x": 155,
+                    "y": 265,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixer4:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_StereoSynth1",
+                    "type": "StereoVoice",
+                    "isClass": true,
+                    "name": "stereosynth",
+                    "x": 160,
+                    "y": 360,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [
+                            "Main_mixerStereo1:1",
+                            "Main_mixer5:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SynthMain_StereoVoice1",
+                    "type": "StereoVoice",
+                    "isClass": true,
+                    "name": "stereoVoices[2]",
+                    "x": 160,
+                    "y": 435,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Main_mixerStereo1:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_mixer4",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer[2]",
+                    "comment": "",
+                    "inputs": 2,
+                    "x": 280,
+                    "y": 245,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixer2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixerA",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 350,
+                    "y": 80,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixer3:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_mixer2",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixerB",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 445,
+                    "y": 255,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixer3:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_mixer3",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixerC",
+                    "comment": "",
+                    "inputs": 4,
+                    "x": 585,
+                    "y": 75,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Main_mixerStereo1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Main_mixer5",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixerR1",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 785,
+                    "y": 395,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        []
+                    ]
+                },
+                {
+                    "id": "Main_mixerStereo1",
+                    "type": "AudioMixerStereo",
+                    "isClass": false,
+                    "name": "mixerStereo",
+                    "comment": "",
+                    "inputs": 3,
+                    "x": 800,
+                    "y": 165,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "SynthMain_i2s1:0"
+                        ],
+                        [
+                            "SynthMain_i2s1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "SynthMain_sgtl5000_1",
+                    "type": "AudioControlSGTL5000",
+                    "isClass": false,
+                    "name": "sgtl5000",
+                    "comment": "",
+                    "x": 1090,
+                    "y": 200,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "SynthMain_i2s1",
+                    "type": "AudioOutputI2S",
+                    "isClass": false,
+                    "name": "i2s",
+                    "comment": "",
+                    "x": 1115,
+                    "y": 135,
+                    "z": "3629fcd9.ccc604",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "c41369b4.3652a",
+            "label": "FlatMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "workspaceBgColor": "#EDFFDF",
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "FlatMain_waveform1",
+                    "type": "AudioSynthWaveform",
+                    "isClass": false,
+                    "name": "LFO",
+                    "comment": "",
+                    "x": 35,
+                    "y": 155,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "FlatMain_waveformMod1:0",
+                            "FlatMain_waveformMod2:0",
+                            "FlatMain_waveformMod3:0",
+                            "FlatMain_waveformMod4:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "FlatMain_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmA",
+                    "comment": "",
+                    "x": 205,
+                    "y": 95,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "FlatMain_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "FlatMain_waveformMod2",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmB",
+                    "comment": "",
+                    "x": 205,
+                    "y": 135,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "FlatMain_mixer1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "FlatMain_waveformMod3",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmC",
+                    "comment": "",
+                    "x": 205,
+                    "y": 175,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "FlatMain_mixer1:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "FlatMain_waveformMod4",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "wfmD",
+                    "comment": "",
+                    "x": 205,
+                    "y": 215,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "FlatMain_mixer1:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "FlatMain_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": 5,
+                    "x": 400,
+                    "y": 140,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "FlatMain_i2s2_1:0",
+                            "FlatMain_i2s2_1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "FlatMain_i2s2_1",
+                    "type": "AudioOutputI2S2",
+                    "isClass": false,
+                    "name": "i2s2",
+                    "comment": "",
+                    "x": 535,
+                    "y": 160,
+                    "z": "c41369b4.3652a",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "d41350be.86af1",
+            "label": "Inputs",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "showNodeToolTip": false,
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "Inputs_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 250,
+                    "y": 125,
+                    "z": "d41350be.86af1",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "Inputs_Out2",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "Out",
+                    "comment": "",
+                    "inputs": 1,
+                    "x": 250,
+                    "y": 165,
+                    "z": "d41350be.86af1",
+                    "bgColor": "#cce6ff",
+                    "wires": []
+                },
+                {
+                    "id": "Inputs_i2s1",
+                    "type": "AudioInputI2S",
+                    "isClass": false,
+                    "name": "i2s",
+                    "comment": "",
+                    "x": 151.55555555555554,
+                    "y": 146.33333333333334,
+                    "z": "d41350be.86af1",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Inputs_Out1:0"
+                        ],
+                        [
+                            "Inputs_Out2:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "1ba0c212.27d05e",
+            "label": "Items",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "showNodeToolTip": false,
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "Items_Inputs1",
+                    "type": "Inputs",
+                    "isClass": true,
+                    "name": "inputs",
+                    "x": 95,
+                    "y": 150,
+                    "z": "1ba0c212.27d05e",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [
+                            "Items_amp1:0"
+                        ],
+                        [
+                            "Items_amp2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Items_amp1",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "amp0",
+                    "comment": "",
+                    "x": 225,
+                    "y": 125,
+                    "z": "1ba0c212.27d05e",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Items_Outputs1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Items_amp2",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "amp1",
+                    "comment": "",
+                    "x": 225,
+                    "y": 165,
+                    "z": "1ba0c212.27d05e",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Items_Outputs1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Items_Outputs1",
+                    "type": "Outputs",
+                    "isClass": true,
+                    "name": "outputs",
+                    "x": 350,
+                    "y": 140,
+                    "z": "1ba0c212.27d05e",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "24ec8f2b.b8188",
+            "label": "Outputs",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "showNodeToolTip": false,
+                "workspaceBgColor": "#EDFFDF",
+                "scaleFactor": 0.9,
+                "showGridHminor": false,
+                "showGridHmajor": false,
+                "showGridVminor": false,
+                "showGridVmajor": false,
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "id": "Outputs_In1",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 235,
+                    "y": 120,
+                    "z": "24ec8f2b.b8188",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "Outputs_i2s1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Outputs_In2",
+                    "type": "TabInput",
+                    "isClass": false,
+                    "name": "In",
+                    "comment": "",
+                    "outputs": 1,
+                    "x": 235,
+                    "y": 160,
+                    "z": "24ec8f2b.b8188",
+                    "bgColor": "#cce6ff",
+                    "wires": [
+                        [
+                            "Outputs_i2s1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Outputs_i2s1",
+                    "type": "AudioOutputI2S",
+                    "isClass": false,
+                    "name": "i2s",
+                    "comment": "",
+                    "x": 330,
+                    "y": 140,
+                    "z": "24ec8f2b.b8188",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ]
+        }
+    ],
+    "nodeAddons": {
+        "h4yn0nnyNodes": {
+            "isAddon": true,
+            "label": "h4yn0nnyNodes",
+            "description": "",
+            "credits": "h4yn0nnym0u5e",
+            "homepage": "",
+            "url": "https://api.github.com/repos/h4yn0nnym0u5e",
+            "types": {
+                "AudioEffectExpEnvelope": {
+                    "defaults": {
+                        "name": {
+                            "type": "c_cpp_name"
+                        },
+                        "comment": {},
+                        "color": {
+                            "value": "#c6c0d8"
+                        }
+                    },
+                    "shortName": "expEnv",
+                    "inputs": 1,
+                    "outputs": 1,
+                    "inputTypes": {
+                        "0": "i16"
+                    },
+                    "outputTypes": {
+                        "0": "i16"
+                    },
+                    "category": "effect",
+                    "help": "",
+                    "color": "#c6c0d8",
+                    "icon": "arrow-in.png"
+                },
+                "AudioMixerStereo": {
+                    "defaults": {
+                        "name": {
+                            "type": "c_cpp_name"
+                        },
+                        "id": {},
+                        "inputs": {
+                            "value": 1,
+                            "maxval": 255,
+                            "minval": 1,
+                            "type": "int"
+                        },
+                        "comment": {},
+                        "color": {
+                            "value": "#E6E0F8"
+                        }
+                    },
+                    "dynInputs": "",
+                    "shortName": "mixerS",
+                    "inputs": 1,
+                    "outputs": 2,
+                    "category": "mixer",
+                    "color": "#E6E0F8",
+                    "icon": "arrow-in.png"
+                }
+            }
+        }
+    }
+}
