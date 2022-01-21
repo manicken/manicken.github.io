@@ -1957,7 +1957,29 @@ RED.nodes = (function() {
         return false;
     }
 
+    /**
+     * this function gets the linktype
+     * and TODO is to check for validity
+     * @param {*} l 
+     * @returns 
+     */
+    function getLinkType(l) {
+        var wsSource = RED.nodes.isClass(l.source.type);
+        var wsTarget = RED.nodes.isClass(l.target.type);
+        var outPort = wsSource?RED.nodes.getClassIOport(wsSource.id, "Out", l.sourcePort):undefined;
+        var inPort = wsTarget?RED.nodes.getClassIOport(wsTarget.id, "In", l.targetPort):undefined;
+        
+        var type = {
+                    isBus:(outPort != undefined && outPort.isBus) ||
+                          (inPort != undefined && inPort.isBus) ||
+                          (l.source.type == "BusJoin" || l.target.type == "BusSplit"),
+                    valid:true
+                   }
+        return type;
+    }
+
 	return {
+        getLinkType,
         subflowContains,
         init:init,
         sortNodes:sortNodes,

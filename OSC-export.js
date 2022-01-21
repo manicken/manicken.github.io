@@ -290,19 +290,29 @@ OSC.export = (function () {
             var indices = getOSCIndices(l.sourcePath + "/" + l.sourceName);
             packets.add("//*************" + ((indices.length!=0)?(" i" + indices.join(" i")):""));
             if (indices.length != 0 && l.target._def.defaults.inputs != undefined) {// array source and dynamic input audio object
+                packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
                 dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin.source);
 
                 if (indices.length == 1) {
-                    dstPort = dstPort + indices[0];
+                    packets.add("//************* indices.length == 1");
+                    if (l.sourcePath != l.targetPath)
+                        dstPort = dstPort + indices[0];
+                    //else no change
                 }
                 else {
+                    packets.add("//************* indices.length > 1");
                     var isArraySn = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
-                    dstPort = dstPort + isArraySn.arrayLength*indices[0] + indices[1];
+                    if (l.sourcePath != l.targetPath)
+                        dstPort = dstPort + isArraySn.arrayLength*indices[0] + indices[1];
+                    else
+                        dstPort = indices[1];
                 }
                 l.targetPort = dstPort; // update this so it can be used by GetLinkName
             }
             else if (l.target._def.defaults.inputs != undefined) { // dynamic input audio object
+                packets.add("//************* dynamic input audio object  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
                 dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source);//+dstPort;
+                
                 l.targetPort = dstPort; // update this so it can be used by GetLinkName
             }
             var linkName = RED.export.GetLinkName(l);

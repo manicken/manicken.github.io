@@ -479,6 +479,7 @@ RED.export = (function () {
     return {
         set project(_nns) {project = _nns; },
         get project() { return project;},
+        getFinalIO,
         isClass,
         GetNameWithoutArrayDef,
         GetLinkDebugName,

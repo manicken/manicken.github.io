@@ -2529,11 +2529,8 @@ RED.view = (function() {
 					redraw_links();
 					d3.event.stopPropagation();
 				});
-            var wsSrc = RED.nodes.isClass(d.source.type);
-            var wsDst = RED.nodes.isClass(d.target.type);
-            if (wsSrc && RED.nodes.getClassIOport(wsSrc.id, "Out", d.sourcePort).isBus ||
-                wsDst && RED.nodes.getClassIOport(wsDst.id, "In", d.targetPort).isBus ||
-                d.source.type == "BusJoin" || d.target.type == "BusSplit") {
+            var linkType = RED.nodes.getLinkType(d);
+            if (linkType.isBus == true) {
                 l.append("svg:path").attr("class","link_outline_bus link_path");
                 l.append("svg:path").attr("class","link_line_bus link_path");
             }
