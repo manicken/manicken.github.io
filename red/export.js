@@ -465,7 +465,7 @@ RED.export = (function () {
 
     var project = {};
 
-    function isClass(type)
+    function isClass(type) // TODO rename to getClass
 	{
 		for (var wsi = 0; wsi < project.workspaces.length; wsi++)
 		{

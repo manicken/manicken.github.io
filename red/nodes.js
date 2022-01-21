@@ -566,6 +566,10 @@ RED.nodes = (function() {
 		var node = {};
 		node.id = n.id;
 		node.type = n.type;
+        if (n._def.isClass != undefined)
+            node.isClass = true; // just for the export to quick check if class
+        else
+            node.isClass = false;
 
 		for (var d in n._def.defaults) {
 			if (n._def.defaults.hasOwnProperty(d)) {
@@ -1930,7 +1934,31 @@ RED.nodes = (function() {
             return index;
     }
 
+    function subflowContains(sfid,nodeid) {
+        for (var i = 0; i < nodes.length; i++)
+        {
+            var node = nodes[i];
+            if (node.z === sfid)
+            {
+                var ws = isClass(node.type);
+                if (ws) {
+                    if (ws.id === nodeid) {
+                        return true;
+                    } else {
+                        var result = subflowContains(ws.id,nodeid);
+                        if (result) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+        }
+        return false;
+    }
+
 	return {
+        subflowContains,
         init:init,
         sortNodes:sortNodes,
         moveWorkspace: function(start, end) {

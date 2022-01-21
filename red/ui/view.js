@@ -1106,13 +1106,21 @@ RED.view = (function() {
 				mousePos[0] += this.scrollLeft;
 				mousePos[1] /= settings.scaleFactor;
 				mousePos[0] /= settings.scaleFactor;
+                var ws = RED.nodes.workspace(activeWorkspace);
+                var newNode = ui.draggable[0];
 
-                if (ui.draggable[0].type == RED.nodes.workspace(activeWorkspace).label)
+                if (newNode.type == ws.label)
                 {
                     RED.notify("You cannot have a object inside itself!!!", "info", null, 3000);
                     return;
                 }
-				var nn = AddNewNode(mousePos[0],mousePos[1], ui.draggable[0].type, true);
+                var typeWs = RED.nodes.isClass(newNode.type)
+                console.error(typeWs);
+                if (typeWs != undefined && RED.nodes.subflowContains(typeWs.id, ws.id) == true) {
+                    RED.notify("Circular reference detected<br>You cannot have a object indirect inside itself!!!", "info", null, 3000);
+                    return;
+                }
+				var nn = AddNewNode(mousePos[0],mousePos[1], newNode.type, true);
                 
                 if (posMode == 1) { // only need to do this for top left pos mode
                     redraw_calcNewNodeSize(nn);
