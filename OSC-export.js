@@ -385,9 +385,6 @@ OSC.export = (function () {
         var links = [];
         RED.export.getClassConnections(ws, links, ''); // this is a recursive function
         RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
-        // sort links
-        //links.sort(function (a,b) { return (b.targetPath + "/" + b.targetName).localeCompare(a.targetPath + "/" + a.targetName) || (a.targetPort - b.targetPort); });
-        links.sort(function (a,b) { return (a.sourcePath + "/" + a.sourceName).localeCompare(b.sourcePath + "/" + b.sourceName) || (a.targetPort - b.targetPort); });
         console.log(RED.export.printLinksDebug(links));
         links = RED.export.expandArrays(links);
         console.log(RED.export.printLinksDebug(links));
