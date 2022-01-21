@@ -288,28 +288,31 @@ OSC.export = (function () {
             var dstPort = parseInt(l.targetPort); // failsafe
 
             var indices = getOSCIndices(l.sourcePath + "/" + l.sourceName);
-            packets.add("//*************" + ((indices.length!=0)?(" i" + indices.join(" i")):""));
+            //packets.add("//*************" + ((indices.length!=0)?(" i" + indices.join(" i")):""));
+            packets.add("//");
             if (indices.length != 0 && l.target._def.defaults.inputs != undefined) {// array source and dynamic input audio object
-                packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
-                dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin.source);
 
+                //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
+                dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin.source);
+                packets.add("// dstPort: " + dstPort + " ");
                 if (indices.length == 1) {
                     packets.add("//************* indices.length == 1");
-                    if (l.sourcePath != l.targetPath)
+                    //if (l.sourcePath != l.targetPath)
                         dstPort = dstPort + indices[0];
                     //else no change
                 }
                 else {
                     packets.add("//************* indices.length > 1");
                     var isArraySn = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
-                    if (l.sourcePath != l.targetPath)
+                    //if (l.sourcePath != l.targetPath)
                         dstPort = dstPort + isArraySn.arrayLength*indices[0] + indices[1];
-                    else
-                        dstPort = indices[1];
+                    //else
+                    //    dstPort = indices[1];
                 }
                 l.targetPort = dstPort; // update this so it can be used by GetLinkName
             }
             else if (l.target._def.defaults.inputs != undefined) { // dynamic input audio object
+
                 packets.add("//************* dynamic input audio object  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
                 dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source);//+dstPort;
                 
@@ -383,6 +386,7 @@ OSC.export = (function () {
         RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
         // sort links
         //links.sort(function (a,b) { return (b.targetPath + "/" + b.targetName).localeCompare(a.targetPath + "/" + a.targetName) || (a.targetPort - b.targetPort); });
+        links.sort(function (a,b) { return (a.sourcePath + "/" + a.sourceName).localeCompare(b.sourcePath + "/" + b.sourceName) || (a.targetPort - b.targetPort); });
         console.log(RED.export.printLinksDebug(links));
         links = RED.export.expandArrays(links);
         console.log(RED.export.printLinksDebug(links));
