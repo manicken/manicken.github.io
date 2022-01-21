@@ -5,15 +5,18 @@ RED.export = (function () {
 
     function getClassConnections(class_ws, links, currPath) {
         //console.log("*******************************************");
-        //console.error("getClassConnections  path: \"" + currPath + "\"");
+        console.error("getClassConnections  path: \"" + currPath + "\"");
         for (var ni = 0; ni < class_ws.nodes.length; ni++) {
             var n = class_ws.nodes[ni];
             var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
             if (node._def.nonObject != undefined) continue;
             var clinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.source.type != "TabInput") && (l.target.type != "TabOutput"); });
             clinks.sort(function (a,b) {return a.target.y < b.target.y;})
-
+            console.error("clinks: " + printLinksDebug(clinks));
+            // cannot do it like this, thats why the paths gets messed up
             links.pushArray(getFinalIO(clinks, currPath));
+
+
 
             var _ws = isClass(n.type);
             if (_ws)
@@ -72,9 +75,13 @@ RED.export = (function () {
      */
      function getFinalIO(links,classPath) {
         //console.log("*******************************************");
-        //console.error("expandLinks classPath:\"" + classPath);
+        console.error("expandLinks classPath:\"" + classPath);
         var newLinks = [];
         var ws;
+
+        // fix this cannot do like this
+        // do like in arduino cpp export code
+
         for (var li = 0; li < links.length; li++)
         {
             var l = links[li];
@@ -99,18 +106,20 @@ RED.export = (function () {
                 var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
 
                 var newPortLinks = [];
-                var newTargetPath = classPath + "/" + l.target.name;
+                var newTargetPath = newLink.targetPath + "/" + l.target.name;
                 for (var pli = 0; pli < portLinks.length; pli++)
                 {
                     var pl = portLinks[pli];
+                    console.error("copy link: " + printLinkDebug(newLink));
                     var newPortLink = copyLink(newLink, classPath);
+                    console.error("copy link after: " + printLinkDebug(newPortLink));
                     newPortLink.targetPath = newTargetPath;
                     newPortLink.target = pl.target;
                     newPortLink.targetPort = pl.targetPort;
                     newPortLinks.push(newPortLink);
                 }
                 //console.warn("newPortLinks:\n" + printLinksDebug(newPortLinks));
-                newLinks.pushArray(getFinalIO(newPortLinks,classPath));
+                newLinks.pushArray(getFinalIO(newPortLinks,currPath));
             }
             else
             {
