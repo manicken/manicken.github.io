@@ -12,6 +12,7 @@ RED.export = (function () {
             if (node._def.nonObject != undefined) continue;
             var clinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.source.type != "TabInput") && (l.target.type != "TabOutput"); });
             clinks.sort(function (a,b) {return a.target.y < b.target.y;})
+            
             console.error("clinks: " + printLinksDebug(clinks));
             // cannot do it like this, thats why the paths gets messed up
             links.pushArray(getFinalIO(clinks, currPath));
@@ -75,7 +76,7 @@ RED.export = (function () {
      */
      function getFinalIO(links,classPath) {
         //console.log("*******************************************");
-        console.error("expandLinks classPath:\"" + classPath);
+        //console.error("expandLinks classPath:\"" + classPath);
         var newLinks = [];
         var ws;
 
@@ -110,16 +111,16 @@ RED.export = (function () {
                 for (var pli = 0; pli < portLinks.length; pli++)
                 {
                     var pl = portLinks[pli];
-                    console.error("copy link: " + printLinkDebug(newLink));
+                    //console.error("copy link: " + printLinkDebug(newLink));
                     var newPortLink = copyLink(newLink, classPath);
-                    console.error("copy link after: " + printLinkDebug(newPortLink));
+                    //console.error("copy link after: " + printLinkDebug(newPortLink));
                     newPortLink.targetPath = newTargetPath;
                     newPortLink.target = pl.target;
                     newPortLink.targetPort = pl.targetPort;
                     newPortLinks.push(newPortLink);
                 }
                 //console.warn("newPortLinks:\n" + printLinksDebug(newPortLinks));
-                newLinks.pushArray(getFinalIO(newPortLinks,currPath));
+                newLinks.pushArray(getFinalIO(newPortLinks,classPath));
             }
             else
             {
