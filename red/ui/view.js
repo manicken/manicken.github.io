@@ -1118,7 +1118,7 @@ RED.view = (function() {
                 console.error(typeWs);
                 if (typeWs != undefined && RED.nodes.subflowContains(typeWs.id, ws.id) == true) {
                     RED.notify("Circular reference detected<br>You cannot have a object indirect inside itself!!!", "info", null, 3000);
-                    return;
+                     return;
                 }
 				var nn = AddNewNode(mousePos[0],mousePos[1], newNode.type, true);
                 
