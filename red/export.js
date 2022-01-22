@@ -3,6 +3,8 @@
 
 RED.export = (function () {
 
+    var project = {};
+
     function getClassConnections(class_ws, links, currPath) {
         //console.log("*******************************************");
         console.error("getClassConnections  path: \"" + currPath + "\"");
@@ -44,6 +46,72 @@ RED.export = (function () {
         }
     }
 
+    function fixTargetPortsForDynInputObjects(links) {
+        for (var li = 0; li < links.length; li++) {
+            var l = links[li];
+            if (l.invalid != undefined) continue;
+            if ((l.target.type == "TabOutput") || (l.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
+
+            //var indices = getOSCIndices(l.sourcePath + "/" + l.sourceName);
+            var pathIndices = getOSCIndices(l.sourcePath);
+            var nameIndices = getOSCIndices(l.sourceName);
+            // TODO use pathIndices and nameIndices
+            // should solve the problems with the dstPort problems 
+
+            //console.warn(l.sourcePath, pathIndices,l.sourceName, nameIndices);
+            //packets.add("//*************" + ((indices.length!=0)?(" i" + indices.join(" i")):""));
+            
+            //packets.add("// original sourcePort: " + srcPort + " targetPort: " + dstPort + " ");
+            if ((pathIndices.length != 0 || nameIndices.length != 0) && l.target._def.defaults.inputs != undefined && l.target._def.nonObject == undefined) {// array source and dynamic input audio object
+
+                //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
+                var dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin.source);
+                
+                //packets.add("// dstPort: " + dstPort + " ");
+                if (pathIndices.length == 0 && nameIndices.length == 1) {
+                    
+                    //packets.add("//************* indices.length == 1");
+                    //if (l.source.z != l.target.z)
+                        dstPort = dstPort + nameIndices[0];
+                    //else
+                     //   console.warn("l.source.z == l.target.z " + printLinkDebug(l));
+                     console.warn(">>" +dstPort + "<< pathIndices.length == 0 && nameIndices.length == 1 " + printLinkDebug(l));
+                }
+                else if (pathIndices.length == 1 && nameIndices.length == 0) {
+                    
+                    var isArraySn = RED.export.isNameDeclarationArray(l.origin.source.name, l.source.z, true);
+                    if (l.source.z != l.target.z)
+                        dstPort = dstPort + pathIndices[0];
+                    /*else {
+                        dstPort = dstPort + nameIndices[0];
+                        console.warn("l.source.z == l.target.z " + printLinkDebug(l));
+                    }*/
+                    console.warn(">>" +dstPort + "<< pathIndices.length == 1 && nameIndices.length == 0 " + printLinkDebug(l));
+                }
+                else if (pathIndices.length == 1 && nameIndices.length == 1)  {
+                    
+                    //packets.add("//************* indices.length > 1");
+                    var isArraySn = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
+                    if (l.source.z != l.target.z)
+                        dstPort = dstPort + isArraySn.arrayLength*pathIndices[0] + nameIndices[0];
+                    else {
+                        dstPort = dstPort + nameIndices[0];
+                        console.warn("l.source.z == l.target.z ");
+                    }
+                    console.warn(">>" + dstPort + "<< pathIndices.length == 1 && nameIndices.length == 1 " + printLinkDebug(l));
+                }
+                l.targetPort = dstPort;
+            }
+            else if (l.target._def.defaults.inputs != undefined && l.target._def.nonObject == undefined) { // dynamic input audio object
+
+                //packets.add("//************* dynamic input audio object  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
+                dstPort = RED.export.getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source);//+dstPort;
+                
+                l.targetPort = dstPort;
+            }
+        }
+    }
+
     function copyLink(l, defaultPath) {
         //console.warn("copyLink from: " + printLinkDebug(l));
         var newL = { 
@@ -59,6 +127,7 @@ RED.export = (function () {
             targetPort:parseInt(l.targetPort),
             targetName:(l.targetName!=undefined)?l.targetName:l.target.name,
             
+            tabOut:l.tabOut, tabIn:l.tabIn,
             origin:(l.origin!=undefined)?l.origin:l
         };
         //console.warn("copyLink to: " + printLinkDebug(newL));
@@ -69,8 +138,11 @@ RED.export = (function () {
         //console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
 
         var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
-        if (port.inputs > 1) {
-            // do someting special here
+        //console.error(port);
+        if (port.isBus == true) {
+            // store it for later use
+            //console.error("**** port.inputs > 1 " + port.node.inputs);
+            l.tabOut = port.node;
         }
             
         var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
@@ -100,6 +172,10 @@ RED.export = (function () {
         var newLink = copyLink(link, classPath);
         
         var port = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
+        if (port.isBus == true) {
+            // store it for later use
+            l.tabIn = port.node;
+        }
         // port can have multiple connections out from it
         var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
 
@@ -332,14 +408,20 @@ RED.export = (function () {
         var txt  = "";
         if (l.invalid != undefined) return l.invalid;
         if( options == undefined) options = {asFullPath:false};
-        if (options.asFullPath != undefined && options.asFullPath == true)
-            txt += '("' + l.sourcePath +"/"+ (l.sourceName||l.source.name) + '",' + l.sourcePort + ') -> ("' + l.targetPath + '/'+ (l.targetName||l.target.name) + '",' + l.targetPort + ')  @ "' + l.linkPath + '"';
-        else
-            txt += '("' + l.sourcePath + '",' + (l.sourceName||l.source.name) + "," + l.sourcePort + ') -> ("' + l.targetPath + '",'+ (l.targetName||l.target.name) + "," + l.targetPort + ')  @ "' + l.linkPath + '"';
-        /*if (l.origin) {
-            //for (var i = 0; i < (l.linkPath.length + 3); i++) txt += " ";
+        if (options.asFullPath != undefined && options.asFullPath == true) {
+            var sourcePathAndName = l.sourcePath +"/"+ (l.sourceName||l.source.name);
+            var targetPathAndName = l.targetPath +"/"+ (l.targetName||l.target.name);
+        } else {
+            var sourcePathAndName = l.sourcePath +'","'+ (l.sourceName||l.source.name);
+            var targetPathAndName = l.targetPath +'","'+ (l.targetName||l.target.name);
+        }
 
-            txt += '  origin (' + l.origin.source.name + "," + l.origin.sourcePort + ') -> ('+ l.origin.target.name + "," + l.origin.targetPort + ")";
+        txt += '("' + sourcePathAndName + '",' + l.sourcePort + ') -> ("' + targetPathAndName + '",' + l.targetPort + ')  @ "' + l.linkPath + '" [' + (l.tabIn?l.tabIn.outputs:"") + "] [" + (l.tabOut?l.tabOut.inputs:"") + "]";
+       
+        /*if (l.origin) {
+        //for (var i = 0; i < (l.linkPath.length + 3); i++) txt += " ";
+
+        txt += '  origin (' + l.origin.source.name + "," + l.origin.sourcePort + ') -> ('+ l.origin.target.name + "," + l.origin.targetPort + ")";
             
         }*/
         return txt + "\n";
@@ -481,8 +563,6 @@ RED.export = (function () {
 		return 0;
 	}
 
-    var project = {};
-
     function isClass(type) // TODO rename to getClass
 	{
 		for (var wsi = 0; wsi < project.workspaces.length; wsi++)
@@ -493,6 +573,18 @@ RED.export = (function () {
 		}
 		return undefined;
 	}
+
+    function getOSCIndices(path) {
+        var indices = [];
+        var split = path.split("/");
+        split.forEach( function(str){
+            //if (str.length < 2) continue;
+            //console.log(str);
+            if ((str.length > 1) && (str[0] == 'i') && ((str[1]>='0')&&(str[1]<='9')))
+                indices.push(parseInt(str.substring(1)));
+        });
+        return indices;
+    }
 
     return {
         set project(_nns) {project = _nns; },
@@ -507,6 +599,7 @@ RED.export = (function () {
         updateNames,
         isNameDeclarationArray,
         getClassConnections,
+        fixTargetPortsForDynInputObjects,
         expandArrays,
         printLinkDebug,
         printLinksDebug
