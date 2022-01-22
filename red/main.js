@@ -31,18 +31,24 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
 RED.main = (function() {
 	var defSettings = {
         AutoDownloadJSON: false,
+        //AllowLowerCaseWorkspaceName: false,
     };
     var _settings = {
         AutoDownloadJSON:defSettings.AutoDownloadJSON,
+        //AllowLowerCaseWorkspaceName:defSettings.AllowLowerCaseWorkspaceName,
     };
     var settings = {
         get AutoDownloadJSON() { return _settings.AutoDownloadJSON; },
         set AutoDownloadJSON(value) { _settings.AutoDownloadJSON = value; RED.storage.update();},
+
+        //get AllowLowerCaseWorkspaceName() { return _settings.AllowLowerCaseWorkspaceName; },
+        //set AllowLowerCaseWorkspaceName(value) { _settings.AllowLowerCaseWorkspaceName = value; RED.storage.update();},
     };
     var settingsCategory = { label:"Global", expanded:false, popupText: "Global main setttings that don't belong to a specific category", bgColor:"#DDD" };
 
     var settingsEditor = {
         AutoDownloadJSON:     {label:"Auto Download JSON", type:"boolean", popupText:"When enabled this automatically downloads the current design as JSON after the page has loaded,<br>this can be used as a failsafe for important projects.<br><br>future improvement/additional functionality could involve a autosave based on a interval as well."},
+        //AllowLowerCaseWorkspaceName:     {label:"Allow LowerCase WorkspaceName", type:"boolean", popupText:"When enabled this allows the workspace name to begin with lowercase letters.<br>This should be avoided in C++ exports as class names should allways begin with a uppercase to distinct them from the instance name."},
     };
 	//NOTE: code generation save function have moved to arduino-export.js
 	

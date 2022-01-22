@@ -13,5 +13,28 @@
             if (this == strings[i]) return true;
         return false;
     }
+    String.prototype.setCharAt = function(index, chr) {
+        return this.substring(0, index) + chr + this.substring(index + chr.length);
+    }
 
+    function isValidIdentifierName(str)
+    {
+        // If first character is invalid
+        if (!((str[0] >= 'a' && str[0] <= 'z')
+            || (str[0]>= 'A' && str[0] <= 'Z')
+            || str[0] == '_'))
+            return false;
     
+        // Traverse the string for the rest of the characters
+        for (let i = 1; i < str.length; i++)
+        {
+            if (!((str[i] >= 'a' && str[i] <= 'z')
+                || (str[i] >= 'A' && str[i] <= 'Z')
+                || (str[i] >= '0' && str[i] <= '9')
+                || str[i] == '_'))
+                return false;
+        }
+    
+        // String is a valid identifier
+        return true;
+    }

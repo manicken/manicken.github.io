@@ -312,6 +312,8 @@ RED.nodes = (function() {
 		return name;
 	}
 
+    
+
 	function getUniqueName(n) {
 		var newName = n.name;
 		if (typeof newName === "string") {

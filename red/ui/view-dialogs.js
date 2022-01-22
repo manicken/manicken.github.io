@@ -195,7 +195,7 @@ RED.view.dialogs = (function() {
 		modal: true,
 		autoOpen: false,
 		width: 500,
-		title: "Rename sheet",
+		title: "Workspace/Tab properties",
 		buttons: [
 			{
 				class: 'leftButton',
@@ -232,19 +232,36 @@ RED.view.dialogs = (function() {
                     var label = $( "#node-input-workspace-name" ).val();
                     if (workspace.label != label) {
 
+                        if (label.trim().length == 0) // Jannik add
+						{
+							RED.notify("<strong>Warning</strong>:<br>Name cannot be empty,<br>please enter a name.","warning");
+							return; // abort name change 
+                        }
 						if (RED.nodes.workspaceNameCheck(label)) // Jannik add
 						{
-							RED.notify("<strong>Warning</strong>: Name:"+label + " allready exist, choose annother name.","warning");
+							RED.notify("<strong>Warning</strong>:<br>Name:"+label + " allready exist,<br>choose annother name.","warning");
 							return; // abort name change if name allready exist
                         }
                         if (RED.nodes.getType(label) != undefined) // Jannik add
 						{
-                            RED.notify("<strong>Warning</strong>: Name:"+label + " Is the name of a Existing object type, choose annother name.","warning");
+                            RED.notify("<strong>Warning</strong>:<br>Name:"+label + " Is the name of a Existing object type,<br>choose annother name.","warning");
 							return; // abort name change if name allready exist
                         }
                         if (label.endsWith(".")) // Jannik add
 						{
-							RED.notify("<strong>Warning</strong>: Cannot use dots in the end of the name, choose annother name.","warning");
+							RED.notify("<strong>Warning</strong>:<br>Cannot use dots in the end of the name,<br>choose annother name.","warning");
+							return; // abort name change 
+                        }
+                        var isUpperCase = (label[0] >= 'A' && label[0] <= 'Z');
+                        //var isLowerCase = (label[0] >= 'a' && label[0] <= 'z') && (RED.main.settings.AllowLowerCaseWorkspaceName == false);
+                        //var isLetter = (isUpperCase == true) && (isLowerCase == true);
+                        if (isUpperCase == false) // Jannik add
+						{
+							RED.notify("<strong>Warning</strong>:<br>Name should begin with a Uppercase letter A-Z,<br>choose annother name.","warning");
+                            if ((label[0] >= 'a' && label[0] <= 'z')) {// only change if first is a letter 
+                                label = label[0].toUpperCase() + label.substring(1);
+                                $( "#node-input-workspace-name" ).val(label);
+                            }
 							return; // abort name change 
                         }
                         function isValid(input) {
@@ -256,11 +273,11 @@ RED.view.dialogs = (function() {
                             return result;
                         }
   
-                        /*if (isValid(label) == false && workspace.isMain == false)
+                        if (isValidIdentifierName(label) == false)
                         {
-                            RED.notify("<strong>Warning</strong>: Cannot use this name because it contains html specific tags, choose annother name. <br> note. if 'Main File' is checked any name can be choosed as long as it is a valid filename.","warning");
+                            RED.notify("<strong>Warning</strong>:<br>Cannot use this name because it contains invalid characters,<br>choose annother name.","warning");
 							return; // abort name change 
-                        }*/
+                        }
                         
 						
 						RED.view.dirty(true);
