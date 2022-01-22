@@ -47,19 +47,27 @@ RED.notify = (function() {
 		n.innerHTML = msg;
 		$("#notifications").append(n);
 		//$("#notifications").css("left", "50%");
-		$(n).slideDown(300);
+		$(n).slideDown(100);
 		n.close = (function() {
 			var nn = n;
 			return function() {
 				currentNotifications.splice(currentNotifications.indexOf(nn),1);
-				$(nn).slideUp(300, function() {
+				$(nn).slideUp(100, function() {
 						nn.parentNode.removeChild(nn);
 				});
 			};
 		})();
 		if (!fixed) {
+            
 			n.timeoutid = window.setTimeout(n.close,timeout||3000);
 		}
+        $(n).on("click", (function() {
+            var nn = n;
+            return function() {
+                nn.close();
+                window.clearTimeout(nn.timeoutid);
+            };
+        })());
 		currentNotifications.push(n);
 		c+=1;
 		return n;

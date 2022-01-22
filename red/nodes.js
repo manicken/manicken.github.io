@@ -1934,7 +1934,8 @@ RED.nodes = (function() {
             return index;
     }
 
-    function subflowContains(sfid,nodeid) {
+    function subflowContains(sfid,nodeid,path) {
+        
         for (var i = 0; i < nodes.length; i++)
         {
             var node = nodes[i];
@@ -1943,16 +1944,18 @@ RED.nodes = (function() {
                 var ws = isClass(node.type);
                 if (ws) {
                     if (ws.id === nodeid) {
+                        path.path.push(node.name+" (" +node.type + ")");
                         return true;
                     } else {
-                        var result = subflowContains(ws.id,nodeid);
+                        
+                        var result = subflowContains(ws.id,nodeid,path);
                         if (result) {
+                            path.path.push(node.name+" (" +node.type + ")");
                             return true;
                         }
                     }
                 }
             }
-            
         }
         return false;
     }

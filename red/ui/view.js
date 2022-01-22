@@ -1116,8 +1116,12 @@ RED.view = (function() {
                 }
                 var typeWs = RED.nodes.isClass(newNode.type)
                 console.error(typeWs);
-                if (typeWs != undefined && RED.nodes.subflowContains(typeWs.id, ws.id) == true) {
-                    RED.notify("Circular reference detected<br>You cannot have a object indirect inside itself!!!", "info", null, 3000);
+                var path = {path:[]};
+                if (typeWs != undefined && RED.nodes.subflowContains(typeWs.id, ws.id, path) == true) {
+                    path.path.push(typeWs.label);
+                    path.path.reverse();
+
+                    RED.notify("<b>Circular reference detected</b><br><br>You cannot have a object indirect inside itself!!!<br><br>" + path.path.join(" -&gt; <br>"), "info", null, 5000);
                      return;
                 }
 				var nn = AddNewNode(mousePos[0],mousePos[1], newNode.type, true);
