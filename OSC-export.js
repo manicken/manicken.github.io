@@ -274,8 +274,8 @@ OSC.export = (function () {
             var dstName = l.targetName||l.target.name;//RED.export.GetNameWithoutArrayDef(l.target.name);
             //var srcName = link.source.name;
             //var dstName = link.target.name;
-            var srcPort = parseInt(l.sourcePort); // failsafe
-            var dstPort = parseInt(l.targetPort); // failsafe
+            var sourcePort = parseInt(l.sourcePort); // failsafe
+            var targetPort = parseInt(l.targetPort); // failsafe
             
             packets.add("//");
 
@@ -292,7 +292,7 @@ OSC.export = (function () {
 
                 packets.add(OSC.GetCreateConnectionAddr(),"s", linkName);
                 //packets.add(OSC.GetConnectAddr(linkName),"sisi", "/" + srcName, srcPort, "/" + dstName, dstPort);
-                packets.add(OSC.GetConnectAddr(linkName),"sisi", sourcePath + "/" + srcName, srcPort, targetPath + "/" + dstName, dstPort);
+                packets.add(OSC.GetConnectAddr(linkName),"sisi", sourcePath + "/" + srcName, sourcePort, targetPath + "/" + dstName, targetPort);
             }
             else {
                 // first fix missing / but only if the strings are not empty
@@ -303,7 +303,7 @@ OSC.export = (function () {
 
                 //console.warn("path " + linkPath + " " + linkName);
                 packets.add(OSC.GetCreateConnectionAddr(),"ss", linkName, linkPath);
-                packets.add(OSC.GetConnectAddr(linkPath +"/"+ linkName),"sisi", sourcePath + "/" + srcName, srcPort, targetPath + "/" + dstName, dstPort);
+                packets.add(OSC.GetConnectAddr(linkPath +"/"+ linkName),"sisi", sourcePath + "/" + srcName, sourcePort, targetPath + "/" + dstName, targetPort);
             }
             
         }
