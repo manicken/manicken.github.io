@@ -1896,6 +1896,7 @@ RED.nodes = (function() {
     function init() {
         Init_BuiltIn_NodeDefinitions();
         RED.events.on("nodes:inputs", NodeInputsChanged);
+        RED.events.on("flows:renamed", workspaceNameChanged);
     }
     function NodeInputsChanged(node, oldCount, newCount) {
         // update the visuals

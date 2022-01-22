@@ -264,14 +264,6 @@ RED.view.dialogs = (function() {
                             }
 							return; // abort name change 
                         }
-                        function isValid(input) {
-                            var result = false;
-                            try {
-                                result = document.createElement(input).toString() != "[object HTMLUnknownElement]";
-                            }
-                            catch { return false;}
-                            return result;
-                        }
   
                         if (isValidIdentifierName(label) == false)
                         {
@@ -283,7 +275,7 @@ RED.view.dialogs = (function() {
 						RED.view.dirty(true);
 						var oldLabel = workspace.label;
 						workspace.label = label;
-						RED.nodes.workspaceNameChanged(oldLabel, label); // Jannik add
+						//RED.nodes.workspaceNameChanged(oldLabel, label); // no need anymore RED.events take care of it now
                         RED.events.emit("flows:renamed", oldLabel, label);
 						
 

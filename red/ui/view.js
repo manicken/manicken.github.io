@@ -950,15 +950,30 @@ RED.view = (function() {
                         var mouse_down_w = mousedown_node.w;
                 }
             }
-            
-
+            /*
             drag_line.attr("d",
                 "M "+(mousedown_node.x+sc*mouse_down_w)+" "+(mousedown_node.y+portY)+
                 " C "+(mousedown_node.x+sc*(mouse_down_w+node_def.width*scale))+" "+(mousedown_node.y+portY+scaleY*node_def.height)+" "+
                 (mousePos[0]-sc*(scale)*node_def.width)+" "+(mousePos[1]-scaleY*node_def.height)+" "+
                 mousePos[0]+" "+mousePos[1]
                 );
-			
+			*/
+            //drag_line.attr("d", generateLinkPath(mousedown_node, null, mousedown_node.x+sc*mousedown_node.w/(posMode), mousedown_node.y+portY, mousePos[0]/*-sc*node_def.width/(posMode)*/, mousePos[1], sc));
+            drag_line.attr("d", generateLinkPath(mousedown_node, null, mouse_down_pos[0], mouse_down_pos[1], mousePos[0], mousePos[1], sc));
+            /*if (mousedown_port_type == 1) {
+                drag_line.attr("d", redraw_link({
+                        source:{type:mousedown_node.type,x:mousePos[0],y:mousePos[1],w:0,h:0},sourcePort:0,
+                        target:(port_mouse_move_node || mousedown_node), targetPort:sourcePort}));
+                
+
+            }
+            else {
+                drag_line.attr("d", redraw_link({
+                    source:mousedown_node,sourcePort:sourcePort,
+                    target:{type:(port_mouse_move_node?port_mouse_move_node.type:"JunctionLR"),x:mousePos[0],y:mousePos[1],w:0,h:0,_def:{}},targetPort:0}));
+            }*/
+            
+
 			d3.event.preventDefault();
 		} else if (mouse_mode == RED.state.MOVING) {
 			
@@ -984,6 +999,81 @@ RED.view = (function() {
 		redraw_links();
 		//console.log("redraw from canvas mouse move");
 	}
+    function generateDragLinkPath(origX,origY, destX, destY, sc) {
+        var dy = destY-origY;
+        var dx = destX-origX;
+        var delta = Math.sqrt(dy*dy+dx*dx);
+        var scale = settings.lineCurveScale;
+        var scaleY = 0;
+        if (dx*sc > 0) {
+            if (delta < node_def.width) {
+                scale = 0.75-0.75*((node_def.width-delta)/node_def.width);
+                // scale += 2*(Math.min(5*node_width,Math.abs(dx))/(5*node_width));
+                // if (Math.abs(dy) < 3*node_height) {
+                //     scaleY = ((dy>0)?0.5:-0.5)*(((3*node_height)-Math.abs(dy))/(3*node_height))*(Math.min(node_width,Math.abs(dx))/(node_width)) ;
+                // }
+            }
+        } else {
+            scale = 0.4-0.2*(Math.max(0,(node_def.width-Math.min(Math.abs(dx),Math.abs(dy)))/node_def.width));
+        }
+        if (dx*sc > 0) {
+            return "M "+origX+" "+origY+
+                " C "+(origX+sc*(node_def.width*scale))+" "+(origY+scaleY*node_def.height)+" "+
+                (destX-sc*(scale)*node_def.width)+" "+(destY-scaleY*node_def.height)+" "+
+                destX+" "+destY
+        } else {
+
+            var midX = Math.floor(destX-dx/2);
+            var midY = Math.floor(destY-dy/2);
+            //
+            if (dy === 0) {
+                midY = destY + node_def.height;
+            }
+            var cp_height = node_def.height/2;
+            var y1 = (destY + midY)/2
+            var topX =origX + sc*node_def.width*scale;
+            var topY = dy>0?Math.min(y1 - dy/2 , origY+cp_height):Math.max(y1 - dy/2 , origY-cp_height);
+            var bottomX = destX - sc*node_def.width*scale;
+            var bottomY = dy>0?Math.max(y1, destY-cp_height):Math.min(y1, destY+cp_height);
+            var x1 = (origX+topX)/2;
+            var scy = dy>0?1:-1;
+            var cp = [
+                // Orig -> Top
+                [x1,origY],
+                [topX,dy>0?Math.max(origY, topY-cp_height):Math.min(origY, topY+cp_height)],
+                // Top -> Mid
+                // [Mirror previous cp]
+                [x1,dy>0?Math.min(midY, topY+cp_height):Math.max(midY, topY-cp_height)],
+                // Mid -> Bottom
+                // [Mirror previous cp]
+                [bottomX,dy>0?Math.max(midY, bottomY-cp_height):Math.min(midY, bottomY+cp_height)],
+                // Bottom -> Dest
+                // [Mirror previous cp]
+                [(destX+bottomX)/2,destY]
+            ];
+            if (cp[2][1] === topY+scy*cp_height) {
+                if (Math.abs(dy) < cp_height*10) {
+                    cp[1][1] = topY-scy*cp_height/2;
+                    cp[3][1] = bottomY-scy*cp_height/2;
+                }
+                cp[2][0] = topX;
+            }
+            return "M "+origX+" "+origY+
+                " C "+
+                   cp[0][0]+" "+cp[0][1]+" "+
+                   cp[1][0]+" "+cp[1][1]+" "+
+                   topX+" "+topY+
+                " S "+
+                   cp[2][0]+" "+cp[2][1]+" "+
+                   midX+" "+midY+
+               " S "+
+                  cp[3][0]+" "+cp[3][1]+" "+
+                  bottomX+" "+bottomY+
+                " S "+
+                    cp[4][0]+" "+cp[4][1]+" "+
+                    destX+" "+destY
+        }
+    }
 	
 	function canvasMouseUp() {
         if (RED.view.ui.allowUiItemTextInput == true) return;
@@ -1652,10 +1742,13 @@ RED.view = (function() {
 		mousedown_port_type = 0;
 	}
 
+    var mouse_down_pos = [];
+
 	function portMouseDown(d,portType,portIndex) {
 		// disable zoom
 		//vis.call(d3.behavior.zoom().on("zoom"), null);
 		mousedown_node = d;
+        mouse_down_pos = mouse_position;
 		clearLinkSelection();
 		mouse_mode = RED.state.JOINING;
 		mousedown_port_type = portType;
@@ -2576,6 +2669,7 @@ RED.view = (function() {
 		if (d.target.inputs) numInputs = d.target.inputs || 1; //Jannik
 		else numInputs = d.target._def.inputs || 1;
 		
+        //console.warn("numinputs"+numInputs + " " + d.source.name)
 		var targetPort = d.targetPort || 0;
 		
 		if (posMode === 2)
@@ -2842,10 +2936,12 @@ RED.view = (function() {
         nodeRect.selectAll(".node_icon_shade_border").attr("d",function(d) { return "M 30 1 l 0 "+(d.h-2)})
         
 	}
+    var port_mouse_move_node = undefined;
 	function nodeOutput_mouseover(pi) // here d is the portindex
 	{
 		var port = d3.select(this); 
-		
+		port_mouse_move_node = RED.nodes.node(this.getAttribute("nodeId"));
+
 		$(this).popover("destroy"); // destroy prev
 		var data = getIOpinInfo(this, undefined, pi);
 		showPopOver(this, true, data, "left");
@@ -2856,7 +2952,7 @@ RED.view = (function() {
 	function nodeInput_mouseover(d) // here d is the node
 	{
 		var port = d3.select(this); 
-		
+		port_mouse_move_node = d;
 		$(this).popover("destroy"); // destroy prev
 		var data = getIOpinInfo(this, d, this.getAttribute("index")); // d is the node
 		showPopOver(this, true, data, "right");
@@ -2866,6 +2962,7 @@ RED.view = (function() {
 	}
 	function nodePort_mouseout(d)
 	{
+        port_mouse_move_node = undefined;
 		var port = d3.select(this); 
 		port.classed("port_hovered",false);
 		$(this).popover("destroy"); // destroy prev
