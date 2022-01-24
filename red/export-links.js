@@ -33,7 +33,7 @@ RED.export.links = (function () {
         var exportDialogText = RED.export.printLinksDebug(links);
 
         RED.view.dialogs.showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
-        function () {OSC.SendData(bundleData);});
+        function () {RED.notify("<strong>Nothing sent (development test only)</strong>", "success", null, 2000);});
     }
 
     function getClassConnections(class_ws, links, currPath) {
