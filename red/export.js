@@ -60,64 +60,52 @@ RED.export = (function () {
             var l = links[li];
             if (l.invalid != undefined) continue;
             if ((l.target.type == "TabOutput") || (l.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
+            
+            if (l.target._def.defaults.inputs == undefined) continue; // skip non dyn input object
+            if (l.target._def.nonObject != undefined) continue; // skip virtual objects (such as busJoiner) that have selectable input counts
+            
+            //dynamic input audio object
 
-            //var indices = getOSCIndices(l.sourcePath + "/" + l.sourceName);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
-            // TODO use pathIndices and nameIndices
-            // should solve the problems with the dstPort problems 
-
-            //console.warn(l.sourcePath, pathIndices,l.sourceName, nameIndices);
-            //packets.add("//*************" + ((indices.length!=0)?(" i" + indices.join(" i")):""));
-            
-            //packets.add("// original sourcePort: " + srcPort + " targetPort: " + dstPort + " ");
-            if ((pathIndices.length != 0 || nameIndices.length != 0) && l.target._def.defaults.inputs != undefined && l.target._def.nonObject == undefined) {// array source and dynamic input audio object
-
-                //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
-                var dstPort = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
+            //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
+            var dstPort = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
+            console.error("getDynInputDynSizePortStartIndex=>" + dstPort);
+            //packets.add("// dstPort: " + dstPort + " ");
+            if (pathIndices.length == 0 && nameIndices.length == 1) {
                 
-                //packets.add("// dstPort: " + dstPort + " ");
-                if (pathIndices.length == 0 && nameIndices.length == 1) {
-                    
-                    //packets.add("//************* indices.length == 1");
-                    //if (l.source.z != l.target.z)
-                        dstPort = dstPort + nameIndices[0];
-                    //else
-                     //   console.warn("l.source.z == l.target.z " + printLinkDebug(l));
-                     console.warn(">>" +dstPort + "<< pathIndices.length == 0 && nameIndices.length == 1 " + printLinkDebug(l));
-                }
-                else if (pathIndices.length == 1 && nameIndices.length == 0) {
-                    
-                    var isArraySn = isNameDeclarationArray(l.origin.source.name, l.source.z, true);
-                    if (l.source.z != l.target.z)
-                        dstPort = dstPort + pathIndices[0];
-                    /*else {
-                        dstPort = dstPort + nameIndices[0];
-                        console.warn("l.source.z == l.target.z " + printLinkDebug(l));
-                    }*/
-                    console.warn(">>" +dstPort + "<< pathIndices.length == 1 && nameIndices.length == 0 " + printLinkDebug(l));
-                }
-                else if (pathIndices.length == 1 && nameIndices.length == 1)  {
-                    
-                    //packets.add("//************* indices.length > 1");
-                    var isArraySn = isNameDeclarationArray(l.source.name, l.source.z, true);
-                    if (l.source.z != l.target.z)
-                        dstPort = dstPort + isArraySn.arrayLength*pathIndices[0] + nameIndices[0];
-                    else {
-                        dstPort = dstPort + nameIndices[0];
-                        console.warn("l.source.z == l.target.z ");
-                    }
-                    console.warn(">>" + dstPort + "<< pathIndices.length == 1 && nameIndices.length == 1 " + printLinkDebug(l));
-                }
-                l.targetPort = dstPort;
+                dstPort = dstPort + nameIndices[0];
+                console.warn(">>" +dstPort + "<< pathIndices.length == 0 && nameIndices.length == 1 " + printLinkDebug(l));
             }
-            else if (l.target._def.defaults.inputs != undefined && l.target._def.nonObject == undefined) { // dynamic input audio object
-
-                //packets.add("//************* dynamic input audio object  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
-                dstPort = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);//+dstPort;
+            else if (pathIndices.length == 1 && nameIndices.length == 0) {
                 
-                l.targetPort = dstPort;
+                if (l.source.z != l.target.z){
+                    dstPort = dstPort + pathIndices[0];
+                    console.warn("l.source.z != l.target.z ");
+                }
+                else {
+                    //dstPort = dstPort + pathIndices[0];
+                    console.warn("l.source.z == l.target.z ");
+                }
+                console.warn(">>" +dstPort + "<< ["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 " + printLinkDebug(l));
             }
+            else if (pathIndices.length == 1 && nameIndices.length == 1)  {
+                
+                var isArraySn = isNameDeclarationArray(l.source.name, l.source.z, true);
+                if (l.source.z != l.target.z) {
+                    dstPort = dstPort + isArraySn.arrayLength*pathIndices[0] + nameIndices[0];
+                    console.warn("l.source.z != l.target.z ");
+                }
+                else {
+                    dstPort = dstPort + nameIndices[0];
+                    console.warn("l.source.z == l.target.z ");
+                }
+                console.warn(">>" + dstPort + "<< pathIndices.length == 1 && nameIndices.length == 1 " + printLinkDebug(l));
+            }
+            else {
+                console.warn(">>" + dstPort + "<< pathIndices.length == 0 && nameIndices.length == 0 " + printLinkDebug(l));
+            }
+            l.targetPort = dstPort;
         }
     }
 
@@ -222,6 +210,7 @@ RED.export = (function () {
     function expandArray(link,isArrayObject,propertyName) {
         var newLinks = [];
         for (var i = 0; i < isArrayObject.arrayLength; i++) {
+            
             var newLink = copyLink(link, "", "");
             //var newName = isArrayObject.name + "/i" + i;
 
@@ -235,6 +224,7 @@ RED.export = (function () {
         for (var li = 0; li < links.length; li++)
         {
             var l = links[li];
+            if (l.invalid != undefined) continue;
             l.sourceName = l.source.name;
             l.targetName = l.target.name;
             
@@ -248,6 +238,7 @@ RED.export = (function () {
         for (var li = 0; li < links.length; li++)
         {
             var l = links[li];
+            if (l.invalid != undefined) { expandedLinks.push(l); continue; }
 
             var wsId = l.origin.source.z;
             var linkPathIsArray = isNameDeclarationArray(l.linkPath, wsId, true);
@@ -419,7 +410,7 @@ RED.export = (function () {
         var txt  = "";
         if (initialSpaces == undefined) initialSpaces = 0;
         for (var i = 0; i < initialSpaces; i++) txt += " ";
-        if (l.invalid != undefined) return l.invalid;
+        if (l.invalid != undefined) return l.invalid + "\n";
         if( options == undefined) options = {asFullPath:false};
         if (options.asFullPath != undefined && options.asFullPath == true) {
             var sourcePathAndName = l.sourcePath +"/"+ (l.sourceName||l.source.name);
@@ -604,9 +595,30 @@ RED.export = (function () {
         return indices;
     }
 
+    function findMainWs() {
+        var foundMains = [];
+        var mainSelected = -1;
+        for (var wi=0; wi < project.workspaces.length; wi++) {
+            if (project.workspaces[wi].isAudioMain == true) {
+                foundMains.push(wi);
+                if (project.workspaces[wi].id == RED.view.activeWorkspace) {
+                    mainSelected = wi;
+                }
+            }
+            
+        }
+        if (foundMains.length == 0)
+            return undefined; // not found
+        
+        return {items:foundMains, mainSelected}; // let the caller decide what to do
+    }
+
     return {
         set project(_nns) {project = _nns; },
         get project() { return project;},
+        findMainWs,
+        copyLink,
+        getFinalSource,
         getFinalTarget_s,
         isClass,
         GetNameWithoutArrayDef,

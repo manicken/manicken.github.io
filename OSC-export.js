@@ -109,23 +109,7 @@ OSC.export = (function () {
 
     }
 
-    function findMainWs(nns) {
-        var foundMains = [];
-        var mainSelected = -1;
-        for (var wi=0; wi < nns.workspaces.length; wi++) {
-            if (nns.workspaces[wi].isAudioMain == true) {
-                foundMains.push(wi);
-                if (nns.workspaces[wi].id == RED.view.activeWorkspace) {
-                    mainSelected = wi;
-                }
-            }
-            
-        }
-        if (foundMains.length == 0)
-            return undefined; // not found
-        
-        return {items:foundMains, mainSelected}; // let the caller decide what to do
-    }
+    
 
     function fixLeadingSlash(text) {
         if (text.startsWith("/"))
@@ -277,7 +261,7 @@ OSC.export = (function () {
             var sourcePort = parseInt(l.sourcePort); // failsafe
             var targetPort = parseInt(l.targetPort); // failsafe
             
-            packets.add("//");
+            //packets.add("//");
 
             var linkName = RED.export.GetLinkName(l);
             var sourcePath = l.sourcePath||"";
@@ -316,7 +300,7 @@ OSC.export = (function () {
 
         RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
 
-        var foundMains = findMainWs(RED.export.project);
+        var foundMains = RED.export.findMainWs();
         var mainWorkSpaceIndex;
 
         if (foundMains == undefined) {
@@ -343,7 +327,7 @@ OSC.export = (function () {
         console.warn("AudioMain ", mainWorkSpaceIndex, ws);
         addObjectsToPacketArray(ws, apos, '');
         var links = [];
-        RED.export.getClassConnections(ws, links, ''); // this is a recursive function
+        RED.export.links.getClassConnections(ws, links, ''); // this is a recursive function
         RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
         console.log(RED.export.printLinksDebug(links));
         links = RED.export.expandArrays(links);
@@ -447,7 +431,6 @@ OSC.export = (function () {
 
 
     return {
-        
         getSimpleExport_bundle,
         getSuperSimpleExport_bundle,
         getGroupExport_bundle,

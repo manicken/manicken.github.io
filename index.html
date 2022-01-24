@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="sass/tab-info.css">
 <link rel="stylesheet" href="sass/palette.css">
 <link rel="stylesheet" href="sass/search.css">
+<link rel="stylesheet" href="sass/ui/common/searchBox.css">
 
 <link rel="stylesheet" href="style_tabs.css">
 
@@ -93,6 +94,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             <div class="btn-group pull-left">
 				<a id="menu-export" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
 				<ul class="dropdown-menu">
+                    <li><a id="btn-deploy-osc-group-links" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export Links (development test)</a></li>
 					<li><a id="btn-deploy-osc" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export Simple (classic)</a></li>
                     <li><a id="btn-deploy-osc-group" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export Complete (Grouped design)</a></li>
                     <li><a id="btn-save-osc-sd" class="btn action-deploy" href="#"><i class="fa fa-download"></i> Save As .osc to SD-card</a></li>
@@ -568,6 +570,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/settings.js"></script>
 <script src="red/settings-editor.js"></script>
 <script src="red/export.js"></script>
+<script src="red/export-links.js"></script>
 <script src="red/arduino.js"></script>
 <script src="red/arduino-import.js"></script>
 <script src="red/arduino-export.js"></script>
@@ -598,6 +601,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/view-groupbox.js"></script>
 <script src="red/ui/OCPview.js"></script>
 <script src="red/ui/workspaces.js"></script>
+<script src="red/ui/searchBox.js"></script>
+<!--<script src="red/ui/typeSearch.js"></script>-->
+<script src="red/ui/search.js"></script>
 <script src="red/ui/sidebar.js"></script>
 <script src="red/ui/sidebar-palette.js"></script>
 <script src="red/ui/bottombar.js"></script>

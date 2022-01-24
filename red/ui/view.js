@@ -484,6 +484,11 @@ RED.view = (function() {
 		initWorkspace();
 		initGrid();
         RED.view.navigator.init();
+
+        RED.actions.add("core:list-flows",function() {
+            RED.actions.invoke("core:search","type:tab ");
+        });
+        RED.search.init();
 		//document.getElementById("chart").addEventListener("scroll", chartScrolled); // used by partial render, now obsolete, maybe it can be used for something else later
 	}
 	/*function chartScrolled()// used by partial render, now obsolete, maybe it can be used for something else later
@@ -769,12 +774,15 @@ RED.view = (function() {
         },
         //minimumTabWidth: 100,
         scrollable: true,
+        //vertical:true,
         //collapsible:true,
+       
         addButton: addWorkspace,
-            //addButtonCaption: "workspace.addFlow",
-            //searchButton: "core:list-flows",
-            //searchButtonCaption: "workspace.listFlows"
+        addButtonCaption: "workspace.addFlow",
+            searchButton: "core:list-flows",
+            searchButtonCaption: "workspace.listFlows"
     });
+   
 
 	var workspaceIndex = 0;
 
@@ -3583,49 +3591,48 @@ RED.view = (function() {
             workspace_tabs.activateTab(id);
         } else {
             var node = RED.nodes.node(id) /*|| RED.nodes.group(id)*/;
-            if (node) {
-                if (node.z && (node.type === "group")) {
-                    //if (activeWorkspace)
-                    workspace_tabs.activateTab(node.z);
-                    node.dirty = true;
-                    //RED.workspaces.show(node.z);
-                    var chart = $("#chart");
-                    var screenSize = [chart.width()/settings.scaleFactor,chart.height()/settings.scaleFactor];
-                    var scrollPos = [chart.scrollLeft()/settings.scaleFactor,chart.scrollTop()/settings.scaleFactor];
-                    var cx = node.x;
-                    var cy = node.y;
-                    if (node.type === "group") {
-                        cx += node.w/2;
-                        cy += node.h/2;
-                    }
-                    if (cx < scrollPos[0] || cy < scrollPos[1] || cx > screenSize[0]+scrollPos[0] || cy > screenSize[1]+scrollPos[1]) {
-                        var deltaX = '-='+(((scrollPos[0] - cx) + screenSize[0]/2)*settings.scaleFactor);
-                        var deltaY = '-='+(((scrollPos[1] - cy) + screenSize[1]/2)*settings.scaleFactor);
-                        chart.animate({
-                            scrollLeft: deltaX,
-                            scrollTop: deltaY
-                        },200);
-                    }
-                    if (triggerHighlight !== false) {
-                        node.highlighted = true;
-                        if (!node._flashing) {
-                            node._flashing = true;
-                            var flash = 22;
-                            var flashFunc = function() {
-                                flash--;
-                                node.dirty = true;
-                                if (flash >= 0) {
-                                    node.highlighted = !node.highlighted;
-                                    setTimeout(flashFunc,100);
-                                } else {
-                                    node.highlighted = false;
-                                    delete node._flashing;
-                                }
-                                RED.view.redraw();
-                            }
-                            flashFunc();
+            if (node == undefined) return;
+            if (node.z == undefined) return;
+
+            //if (activeWorkspace)
+            workspace_tabs.activateTab(node.z);
+            node.dirty = true;
+            //RED.workspaces.show(node.z);
+            var chart = $("#chart");
+            var screenSize = [chart.width()/settings.scaleFactor,chart.height()/settings.scaleFactor];
+            var scrollPos = [chart.scrollLeft()/settings.scaleFactor,chart.scrollTop()/settings.scaleFactor];
+            var cx = node.x;
+            var cy = node.y;
+            if (node.type === "group") {
+                cx += node.w/2;
+                cy += node.h/2;
+            }
+            if (cx < scrollPos[0] || cy < scrollPos[1] || cx > screenSize[0]+scrollPos[0] || cy > screenSize[1]+scrollPos[1]) {
+                var deltaX = '-='+(((scrollPos[0] - cx) + screenSize[0]/2)*settings.scaleFactor);
+                var deltaY = '-='+(((scrollPos[1] - cy) + screenSize[1]/2)*settings.scaleFactor);
+                chart.animate({
+                    scrollLeft: deltaX,
+                    scrollTop: deltaY
+                },200);
+            }
+            if (triggerHighlight !== false) {
+                node.highlighted = true;
+                if (!node._flashing) {
+                    node._flashing = true;
+                    var flash = 22;
+                    var flashFunc = function() {
+                        flash--;
+                        node.dirty = true;
+                        if (flash >= 0) {
+                            node.highlighted = !node.highlighted;
+                            setTimeout(flashFunc,100);
+                        } else {
+                            node.highlighted = false;
+                            delete node._flashing;
                         }
+                        RED.view.redraw();
                     }
+                    flashFunc();
                 }
             }
         }
