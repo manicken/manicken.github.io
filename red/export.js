@@ -55,6 +55,19 @@ RED.export = (function () {
         }
     }
 
+    function tagSameSourceLinksThatConnectsTo(_links,source,target) {
+        var links = _links.filter(function(l) { return (l.invalid == undefined) && (l.origin.source === source) && (l.target === target); });
+        links.sort(function(a,b) { return a.sourcePort-b.sourcePort;});
+        // need to tag together as group
+        for (var i = 1; i < links.length; i++) {
+            if (links[i].groupFirstLink == undefined)
+                links[i].groupFirstLink = links[0];
+        }
+        if (links.length > 1)
+            console.error("group",printLinksDebug(links));
+        return links.length;
+    }
+
     function fixTargetPortsForDynInputObjects(links) {
         for (var li = 0; li < links.length; li++) {
             var l = links[li];
@@ -65,47 +78,63 @@ RED.export = (function () {
             if (l.target._def.nonObject != undefined) continue; // skip virtual objects (such as busJoiner) that have selectable input counts
             
             //dynamic input audio object
-
+            
+            //console.error("common Links: " + commonLinkCount);
+            //if (l.groupFirstLink == undefined)
+                var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l.origin.source, l.target);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
             //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
-            var dstPort = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
-            console.error("getDynInputDynSizePortStartIndex=>" + dstPort);
+            if (l.groupFirstLink == undefined) {
+                var startIndex = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
+            }
+            else {
+                
+                var startIndex = getDynInputDynSizePortStartIndex(l.groupFirstLink.target, l.groupFirstLink.origin?l.groupFirstLink.origin.source:l.groupFirstLink.source, l.groupFirstLink.origin?l.groupFirstLink.origin.sourcePort:l.groupFirstLink.sourcePort);
+            }
+            
             //packets.add("// dstPort: " + dstPort + " ");
             if (pathIndices.length == 0 && nameIndices.length == 1) {
-                
-                dstPort = dstPort + nameIndices[0];
-                console.warn(">>" +dstPort + "<< pathIndices.length == 0 && nameIndices.length == 1 " + printLinkDebug(l));
+                var isArraySn = isNameDeclarationArray(l.source.name, l.source.z, true);
+                if (l.groupFirstLink == undefined)
+                    l.targetPort = startIndex + nameIndices[0];
+                else
+                    l.targetPort = startIndex + nameIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.origin?l.origin.sourcePort:l.sourcePort);
+                console.warn("pathIndices.length == 0 && ["+nameIndices.join(",")+"].length == 1 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 0) {
-                
+                var isArraySn = isNameDeclarationArray(l.origin.source.name, l.source.z, true);
                 if (l.source.z != l.target.z){
-                    dstPort = dstPort + pathIndices[0];
+                    if (l.groupFirstLink == undefined)
+                        l.targetPort = startIndex + pathIndices[0];
+                    else
+                        l.targetPort = startIndex + pathIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.origin?l.origin.sourcePort:l.sourcePort);
                     console.warn("l.source.z != l.target.z ");
                 }
                 else {
-                    //dstPort = dstPort + pathIndices[0];
+                    //l.targetPort = dstPort + pathIndices[0];
                     console.warn("l.source.z == l.target.z ");
                 }
-                console.warn(">>" +dstPort + "<< ["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 " + printLinkDebug(l));
+                console.warn("["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 1)  {
                 
                 var isArraySn = isNameDeclarationArray(l.source.name, l.source.z, true);
                 if (l.source.z != l.target.z) {
-                    dstPort = dstPort + isArraySn.arrayLength*pathIndices[0] + nameIndices[0];
+                    l.targetPort = startIndex + isArraySn.arrayLength*pathIndices[0] + nameIndices[0];
                     console.warn("l.source.z != l.target.z ");
                 }
                 else {
-                    dstPort = dstPort + nameIndices[0];
+                    l.targetPort = startIndex + nameIndices[0];
                     console.warn("l.source.z == l.target.z ");
                 }
-                console.warn(">>" + dstPort + "<< pathIndices.length == 1 && nameIndices.length == 1 " + printLinkDebug(l));
+                console.warn("["+pathIndices.join(",") + "].length == 1 && [" + nameIndices.join(",")+"].length == 1 ");
             }
             else {
-                console.warn(">>" + dstPort + "<< pathIndices.length == 0 && nameIndices.length == 0 " + printLinkDebug(l));
+                l.targetPort = startIndex;
+                console.warn("pathIndices.length == 0 && nameIndices.length == 0 ");
             }
-            l.targetPort = dstPort;
+            console.warn("final >>" + printLinkDebug(l) + "<<");
         }
     }
 
@@ -115,7 +144,7 @@ RED.export = (function () {
             //nextLink:l.nextLink,
 
             linkPath:(l.linkPath!=undefined)?l.linkPath:defaultPath,
-
+            sourceIsArray:l.sourceIsArray,
             sourcePath:(l.sourcePath!=undefined)?l.sourcePath:defaultPath,
             source:l.source,
             sourcePort:parseInt(l.sourcePort),
@@ -221,6 +250,7 @@ RED.export = (function () {
         //console.warn(printLinksDebug(newLinks));
         return newLinks;
     }
+    /* not needed anymore and should never be used either
     function updateNames(links) {
         for (var li = 0; li < links.length; li++)
         {
@@ -231,7 +261,7 @@ RED.export = (function () {
             
         }
     }
-
+*/
     function expandArrays(links) {
         // this should take care of array sources/targets
         var expandedLinks = [];
@@ -389,6 +419,7 @@ RED.export = (function () {
                 else {
                     toAdd = 1; // non array sources still have one output
                 }
+                // the following adds support for object array output from class/tab
                 var ws = isClass(l.source.type)
                 if (ws){
                     var lc = copyLink(l, ""); // so that it don't mess up the original links
@@ -400,6 +431,7 @@ RED.export = (function () {
                         
                     }
                 }
+
                 offset += toAdd;
             }
         }
@@ -483,7 +515,7 @@ RED.export = (function () {
         
         var sourceIsArray = (l.sourcePath != undefined)?getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName):"";
         var targetIsArray = (l.targetPath != undefined)?getArrayIndexersFromPath(l.targetPath+"/"+l.targetName):"";
-        console.error(sourceName,sourceIsArray,targetName, targetIsArray);
+        //console.error(sourceName,sourceIsArray,targetName, targetIsArray);
         
         if (sourceIsArray.length != 0 || targetIsArray.length != 0) {
 
@@ -635,7 +667,7 @@ RED.export = (function () {
         GetLinkName,
         haveIO,
         getDynInputDynSizePortStartIndex,
-        updateNames,
+        //updateNames,  // not needed anymore and should never be used either
         isNameDeclarationArray,
         getClassConnections,
         fixTargetPortsForDynInputObjects,

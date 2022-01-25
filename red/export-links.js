@@ -27,14 +27,16 @@ RED.export.links = (function () {
         var ws = RED.export.project.workspaces[mainWorkSpaceIndex];
         var links = [];
         getClassConnections(ws, links, "");
-        //RED.export.updateNames(links);
-        links = RED.export.expandArrays(links);
+        //RED.export.updateNames(links); // not needed anymore and should never be used either
+        links = RED.export.expandArrays(links); // for the moment this fixes array defs that the getClassConnections don't currently solve
         RED.export.fixTargetPortsForDynInputObjects(links);
         var exportDialogText = RED.export.printLinksDebug(links);
 
         RED.view.dialogs.showExportDialog("OSC Export to Dynamic Audio Lib", exportDialogText, " OSC messages: ", {okText:"send", tips:"this just shows the messages to be sent, first in JSON format then in RAW format"},
         function () {RED.notify("<strong>Nothing sent (development test only)</strong>", "success", null, 2000);});
     }
+
+    
 
     function getClassConnections(class_ws, links, currPath) {
         //console.log("*******************************************");
@@ -106,6 +108,7 @@ RED.export.links = (function () {
                 
             }
             if (isArray != undefined) {
+                l.sourceIsArray = isArray;
                 //if (node.name == "delay[2]") console.error(">>>>>>>>>>>>>>>>>>>>>>>>>>" + l.sourcePath);
                 l.sourcePath = l.sourcePath.replace(isArray.newName, isArray.name + "/i" + isArray.i);
                 l.sourceName = l.source.name.replace(isArray.newName, isArray.name + "/i" + isArray.i);
