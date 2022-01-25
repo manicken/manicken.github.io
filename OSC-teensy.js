@@ -232,7 +232,17 @@ var OSC = (function() {
         }
         return result;
     }
-
+    var startTime = undefined;
+    var endTime = undefined;
+    var allBytes = [];
+    function checkForLineEnd(values) {
+        for (var i=0;i<values.length;i++) {
+            if (values[i] == 0x0A) return true;
+            else
+                allBytes.push(values[i]);
+        }
+        return false;
+    }
     async function readUntilClosed() {
         while (port.readable && keepReading) {
             reader = port.readable.getReader();
@@ -243,6 +253,20 @@ var OSC = (function() {
                     // reader.cancel() has been called.
                     break;
                     }
+                    // just for performance testing
+                    /*if (checkForLineEnd(value) == true) {
+                        if (startTime == undefined) startTime = performance.now();
+                        else {
+                            endTime = performance.now();
+                            var elapsedTime = endTime - startTime;
+                            //console.log(getDataArrayAsAsciiAndHex(allBytes));
+                            console.log("rx time " + elapsedTime + " @ " + ((1000/elapsedTime)*(allBytes.length)) + " bytes/s" );
+                            allBytes.length = 0;
+                            startTime = performance.now();
+                        }
+
+                    }*/
+
                     //console.error("decoding:",getDataArrayAsAsciiAndHex(value));
                     slipDecoder.decode(value);
                     // value is a Uint8Array.

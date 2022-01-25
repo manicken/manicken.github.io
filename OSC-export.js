@@ -328,7 +328,7 @@ OSC.export = (function () {
         addObjectsToPacketArray(ws, apos, '');
         var links = [];
         RED.export.links.getClassConnections(ws, links, ''); // this is a recursive function
-        RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
+        //RED.export.updateNames(links); // sets each link sourceName and targetName after source.name and target.name respective
         console.log(RED.export.printLinksDebug(links));
         links = RED.export.expandArrays(links);
         console.log(RED.export.printLinksDebug(links));

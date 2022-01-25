@@ -119,12 +119,12 @@ RED.export = (function () {
             sourcePath:(l.sourcePath!=undefined)?l.sourcePath:defaultPath,
             source:l.source,
             sourcePort:parseInt(l.sourcePort),
-            sourceName:(l.sourceName!=undefined)?l.sourceName:l.source.name,
+            sourceName:l.sourceName,//!=undefined)?l.sourceName:l.source.name,
             
             targetPath:(l.targetPath!=undefined)?l.targetPath:defaultPath,
             target:l.target,
             targetPort:parseInt(l.targetPort),
-            targetName:(l.targetName!=undefined)?l.targetName:l.target.name,
+            targetName:l.targetName,//!=undefined)?l.targetName:l.target.name,
             
             tabOut:l.tabOut, tabIn:l.tabIn,
             origin:(l.origin!=undefined)?l.origin:l
@@ -147,6 +147,7 @@ RED.export = (function () {
         var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
         l.sourcePath = l.sourcePath + "/" + l.source.name;
         l.source = newSrc.node;
+        l.sourceName = l.source.name;
         l.sourcePort = newSrc.srcPortIndex;
         var _ws = isClass(l.source.type);
         if (_ws)
@@ -369,7 +370,7 @@ RED.export = (function () {
     function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) {
         var links = RED.nodes.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
-        console.log("getDynInputDynSizePortStartIndex \n" + printLinksDebug(links));
+        //console.log("getDynInputDynSizePortStartIndex \n" + printLinksDebug(links));
         var offset = 0;
         for (var li = 0; li < links.length; li++) {
             var l = links[li];
@@ -460,43 +461,51 @@ RED.export = (function () {
     }
 
     function GetLinkName(l) {
-        // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
-        var srcName = l.origin?l.origin.source.name:l.source.name;
-        var dstName = l.origin?l.origin.target.name:l.target.name;
-        srcName = GetNameWithoutArrayDef(srcName);
-        dstName = GetNameWithoutArrayDef(dstName);
-
-        var srcPort = parseInt(l.origin?l.origin.sourcePort:l.sourcePort);
-        var dstPort = parseInt(l.origin?l.origin.targetPort:l.targetPort);
-
         var dbg = RED.OSC.settings.UseDebugLinkName;
-        var src = src = srcName + (dbg?"_":"") + srcPort;
-        var dst = "";
-        
-        var srcIsArray = l.sourcePath?getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName):"";
-        var dstIsArray = l.targetPath?getArrayIndexersFromPath(l.targetPath+"/"+l.targetName):"";
-        
-        if (srcIsArray.length != 0 || dstIsArray.length != 0) {
+        // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
+        var sourceName = (l.origin?l.origin.source.name:l.source.name);
+        var targetName = (l.origin?l.origin.target.name:l.target.name);
+        sourceName = GetNameWithoutArrayDef(sourceName);
+        targetName = GetNameWithoutArrayDef(targetName);
+        if (l.origin) {
+            if (l.origin.source !== l.source)
+                sourceName += (dbg?"_":"") + GetNameWithoutArrayDef(l.source.name);
+            if (l.origin.target !== l.target)
+                targetName += (dbg?"_":"") + GetNameWithoutArrayDef(l.target.name);
+        }
 
-            srcPort = parseInt(l.sourcePort);
-            src = src = srcName + (dbg?"_":"") + srcPort;
-            dstPort = parseInt(l.targetPort);
+        var sourcePort = parseInt(l.origin?l.origin.sourcePort:l.sourcePort);
+        var targetPort = parseInt(l.origin?l.origin.targetPort:l.targetPort);
 
-            var srcIsArray = getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName);
+        
+        var sourceId = sourceName + (dbg?"_":"") + sourcePort;
+        var targetId = "";
+        
+        var sourceIsArray = (l.sourcePath != undefined)?getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName):"";
+        var targetIsArray = (l.targetPath != undefined)?getArrayIndexersFromPath(l.targetPath+"/"+l.targetName):"";
+        console.error(sourceName,sourceIsArray,targetName, targetIsArray);
+        
+        if (sourceIsArray.length != 0 || targetIsArray.length != 0) {
+
+            sourcePort = parseInt(l.sourcePort);
+            sourceId = sourceName + (dbg?"_":"") + sourcePort;
+            targetPort = parseInt(l.targetPort);
+
+            var sourceIsArray = getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName);
             //console.error("-------------------------- " +l.sourcePath+"/"+l.sourceName+ " "+srcIsArray);
-            if (srcIsArray.length != 0) src += (dbg?"_":"") + srcIsArray;
+            if (sourceIsArray.length != 0) sourceId += (dbg?"_":"") + sourceIsArray;
 
-            var dstIsArray = getArrayIndexersFromPath(l.targetPath+"/"+l.targetName);
+            var targetIsArray = getArrayIndexersFromPath(l.targetPath+"/"+l.targetName);
             //console.error("-------------------------- " + l.targetPath+"/"+l.targetName + " " + dstIsArray);
-            if (dstIsArray.length != 0) dst = dstName + (dbg?"_":"") + dstPort + (dbg?"_":"") + dstIsArray;
-            else dst = dstName + (dbg?"_":"") + dstPort;
+            if (targetIsArray.length != 0) targetId = targetName + (dbg?"_":"") + targetPort + (dbg?"_":"") + targetIsArray;
+            else targetId = targetName + (dbg?"_":"") + targetPort;
         }
         else
         {
-            dst = dstName + (dbg?"_":"") + dstPort;
+            targetId = targetName + (dbg?"_":"") + targetPort;
         }
 
-        return src + (dbg?"_":"") + dst;
+        return (sourceId + (dbg?"_":"") + targetId);
     }
 
     function getArrayIndexersFromPath(path) {
