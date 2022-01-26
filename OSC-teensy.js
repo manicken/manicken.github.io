@@ -10,6 +10,7 @@ RED.OSC = (function() {
 
     var defSettings = {
         HashLinkNames: false,
+        HashLinkNamesHeader: "CON",
         LiveUpdate: true,
         DirectExport: false,
         WildcardArrayObjects: true,
@@ -26,6 +27,7 @@ RED.OSC = (function() {
     }
     var _settings = {
         HashLinkNames: defSettings.HashLinkNames,
+        HashLinkNamesHeader:defSettings.HashLinkNamesHeader,
         LiveUpdate: defSettings.LiveUpdate,
         DirectExport: defSettings.DirectExport,
         WildcardArrayObjects: defSettings.WildcardArrayObjects,
@@ -63,6 +65,9 @@ RED.OSC = (function() {
 
         get HashLinkNames() { return _settings.HashLinkNames; },
         set HashLinkNames(value) { _settings.HashLinkNames = value; RED.storage.update();},
+
+        get HashLinkNamesHeader() { return _settings.HashLinkNamesHeader; },
+        set HashLinkNamesHeader(value) { _settings.HashLinkNamesHeader = value; RED.storage.update();},
 
         get DirectExport() { return _settings.DirectExport; },
         set DirectExport(value) { _settings.DirectExport = value; RED.storage.update();},
@@ -113,6 +118,7 @@ RED.OSC = (function() {
         OnlyShowLastDebug:    {label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
         UseDebugLinkName:     {label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
         HashLinkNames:        {label:"Hash link names", type:"boolean", popupText:"Enable experimental hashed short link names"},
+        HashLinkNamesHeader:  {label:"Hash link names header", type:"string", popupText:"Hashed short link names - 'header' i.e. what the connection names should begin with"},
         transmitDebug:        {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 ShowOutputDebug:        { label:"Show basic info", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
