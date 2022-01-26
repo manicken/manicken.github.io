@@ -372,8 +372,11 @@ RED.nodes = (function() {
 	}
 	function addLink(l) {
 		links.push(l);
+        if (loadingWorkspaces == false)
+            setLinkInfo(l);
         RED.events.emit('links:add',l);
 	}
+    
 
 	function checkForIO() {
 		var hasIO = false;
@@ -865,10 +868,10 @@ RED.nodes = (function() {
             return true;
         return false;
     }
-
+    var loadingWorkspaces = false;
 	function importNodes(newNodesObj, createNewIds, clearCurrentFlow) {
 		//console.trace("@ importNodes - createNewIds:" + createNewIds);
-		
+		loadingWorkspaces = true;
 		var newNodes;
 		if (createNewIds == undefined)
 			createNewIds = false; // not really necessary?
@@ -887,6 +890,8 @@ RED.nodes = (function() {
 				if (newNodesObj === "") {
 					//console.trace("newNodexObj == null create");
 					createNewDefaultWorkspace();
+                    loadingWorkspaces = false;
+                    refreshLinksInfo();
 					return;
 				}
 				newNodes = JSON.parse(newNodesObj);
@@ -923,6 +928,8 @@ RED.nodes = (function() {
                 }
                 else {
                     RED.notify("newNodes.workspaces is undefined, cannot import workspaces", "warning", null, 2000);
+                    loadingWorkspaces = false;
+                    refreshLinksInfo();
                     return;
                 }
             }
@@ -937,6 +944,8 @@ RED.nodes = (function() {
                 if (workspaces.length == 0) {
                     createNewDefaultWorkspace(); // jannik changed to function
                 }
+                loadingWorkspaces = false;
+                refreshLinksInfo();
                 return importNewNodes(newNodes, createNewIds);
             }
 		}
@@ -944,9 +953,12 @@ RED.nodes = (function() {
 			createNewDefaultWorkspace();
 			var newException = error.message + " " +  error.stack;
 			RED.notify("<strong>import nodes Error</strong>: " + newException, "error",null,false,20000); // better timeout
+            loadingWorkspaces = false;
+            refreshLinksInfo();
 			throw newException; // throw exception so it can be shown in webbrowser console
 		}
-
+        loadingWorkspaces = false;
+        refreshLinksInfo();
 	}
 
     function importNewNodes(newNodes, createNewIds) {
@@ -1160,7 +1172,7 @@ RED.nodes = (function() {
 		 * @param {*} srcNode 
 		 * @param {*} cb is function pointer with following format cb(srcPortIndex,dstId,dstPortIndex);
 		 */
-	function eachwire(srcNode, cb) {
+	function eachWire(srcNode, cb) {
 		if (!srcNode.wires){ console.log("!node.wires: " + srcNode.type + ":" + srcNode.name); return;}
 
 		//if (srcNode.wires.length == 0) console.log("port.length == 0:" + srcNode.type + ":" + srcNode.name)
@@ -1963,32 +1975,39 @@ RED.nodes = (function() {
         return false;
     }
 
+    function refreshLinksInfo(_links) { // _links allow just a set of links to be updated
+        if (_links == undefined) _links = links;
+        for (var li = 0; li < _links.length; li++)
+            setLinkInfo(_links[li]);
+    }
     /**
      * this function gets the linktype
      * and TODO is to check for validity
      * @param {*} l 
      * @returns 
      */
-    function getLinkType(l) {
-        var wsSource = RED.nodes.isClass(l.source.type);
-        var wsTarget = RED.nodes.isClass(l.target.type);
-        var outPort = wsSource?RED.nodes.getClassIOport(wsSource.id, "Out", l.sourcePort):undefined;
-        var inPort = wsTarget?RED.nodes.getClassIOport(wsTarget.id, "In", l.targetPort):undefined;
+    function setLinkInfo(l) {
+        var wsSource = isClass(l.source.type);
+        var wsTarget = isClass(l.target.type);
+        var tabOut = wsSource?getClassIOport(wsSource.id, "Out", l.sourcePort):undefined;
+        var tabIn = wsTarget?getClassIOport(wsTarget.id, "In", l.targetPort):undefined;
         
-        var type = {
-                    isBus:(outPort != undefined && outPort.isBus) ||
-                          (inPort != undefined && inPort.isBus) ||
-                          (l.source.type == "BusJoin" || l.target.type == "BusSplit"),
-                    valid:true
-                   }
-        return type;
+        l.info = {
+            isBus:(tabOut != undefined && tabOut.isBus) ||
+                    (tabIn != undefined && tabIn.isBus) ||
+                    (l.source.type == "BusJoin" || l.target.type == "BusSplit"),
+            valid:true,
+            tabOut,
+            tabIn
+        };
+        
     }
 
 	return {
-        getLinkType,
+        //getLinkInfo: setLinkInfo,
         subflowContains,
-        init:init,
-        sortNodes:sortNodes,
+        init,
+        sortNodes,
         moveWorkspace: function(start, end) {
             if (start > end)
             {
@@ -2007,26 +2026,26 @@ RED.nodes = (function() {
             //workspaces[index+1] = workspaces[index];
 		    //workspaces[index] = wsTemp;
         },
-        FindNextFreeInputPort:FindNextFreeInputPort,
-		moveNodeToEnd:moveNodeToEnd,
-		createWorkspaceObject:createWorkspaceObject,
-		createNewDefaultWorkspace: createNewDefaultWorkspace,
-        Init_BuiltIn_NodeDefinitions:Init_BuiltIn_NodeDefinitions,
-        registerGroups:registerGroups,
-        registerTypes:registerTypes,
-		registerType: registerType,
-        initNodeDefinitions:initNodeDefinitions,
-		getType: getType,
-		convertNode: convertNode,
-		selectNode: selectNode,
-		getJunctionSrcNode:getJunctionSrcNode,
-		getJunctionDstNodeEquals:getJunctionDstNodeEquals,
+        FindNextFreeInputPort,
+		moveNodeToEnd,
+		createWorkspaceObject,
+		createNewDefaultWorkspace,
+        Init_BuiltIn_NodeDefinitions,
+        registerGroups,
+        registerTypes,
+		registerType,
+        initNodeDefinitions,
+		getType,
+		convertNode,
+		selectNode,
+		getJunctionSrcNode,
+		getJunctionDstNodeEquals,
 		add: addNode,
 		addLink: addLink,
 		remove: removeNode,
-		removeLink: removeLink,
-		addWorkspace: addWorkspace,
-		removeWorkspace: removeWorkspace,
+		removeLink,
+		addWorkspace,
+		removeWorkspace,
 		workspace: getWorkspace,
 		eachNode: function(cb) {
 			for (var n=0;n<nodes.length;n++) {
@@ -2038,7 +2057,7 @@ RED.nodes = (function() {
 				cb(links[l]);
 			}
 		},
-		getEachLink:getEachLink,
+		getEachLink,
 		eachConfig: function(cb) {
 			for (var id in configNodes) {
 				if (configNodes.hasOwnProperty(id)) {
@@ -2046,17 +2065,17 @@ RED.nodes = (function() {
 				}
 			}
 		},
-		eachWire: eachwire,
-		workspaceNameChanged:workspaceNameChanged,
-		workspaceNameCheck:workspaceNameCheck,
+		eachWire,
+		workspaceNameChanged,
+		workspaceNameCheck,
 		node: getNode,
 		namedNode: getNodeByName,
-		importWorkspaces:importWorkspaces, // new structure
+		importWorkspaces, // new structure
 		import: importNodes,
-		refreshValidation: refreshValidation,
-		getAllFlowNodes: getAllFlowNodes,
-		createExportableNodeSet: createExportableNodeSet,
-		createCompleteNodeSet: createCompleteNodeSet,
+		refreshValidation,
+		getAllFlowNodes,
+		createExportableNodeSet,
+		createCompleteNodeSet,
 		id: getID,
 		getUniqueName:getUniqueName,
 		cppName: createUniqueCppName,
@@ -2064,23 +2083,23 @@ RED.nodes = (function() {
 		hasIO: checkForIO,
         hasAudio:checkForAudio,
 		generateArrayNode:generateArrayNode,
-		isClass:isClass,
-		getClassComments:getClassComments,
-		getWorkspaceIdFromClassName:getWorkspaceIdFromClassName,
-		getWorkspace:getWorkspace,
-		getClassPortNode:getClassPortNode,
-		getWireInputSourceNode:getWireInputSourceNode,
-		getClassIOportsSorted:getClassIOportsSorted,
-		getClassIOport:getClassIOport, // used by node port tooltip popup
-		classOutputPortToCpp:classOutputPortToCpp,
-		classInputPortToCpp:classInputPortToCpp,
-		getWorkspaceNodesAsCompletions:getWorkspaceNodesAsCompletions,
-		getAllFunctionNodeFunctions:getAllFunctionNodeFunctions,
-		getArrayDeclarationWithoutSizeSyntax:getArrayDeclarationWithoutSizeSyntax,
+		isClass,
+		getClassComments,
+		getWorkspaceIdFromClassName,
+		getWorkspace,
+		getClassPortNode,
+		getWireInputSourceNode,
+		getClassIOportsSorted,
+		getClassIOport, // used by node port tooltip popup
+		classOutputPortToCpp,
+		classInputPortToCpp,
+		getWorkspaceNodesAsCompletions,
+		getAllFunctionNodeFunctions,
+		getArrayDeclarationWithoutSizeSyntax,
 		updateClassTypes: function () {addClassTabsToPalette(); refreshClassNodes(); console.warn("@updateClassTypes");},
-		addUsedNodeTypesToPalette: addUsedNodeTypesToPalette,
-		addClassTabsToPalette:addClassTabsToPalette,
-		refreshClassNodes:refreshClassNodes,
+		addUsedNodeTypesToPalette,
+		addClassTabsToPalette,
+		refreshClassNodes,
 		make_name:make_name,
 		selectWorkspace: function (id)
 		{
@@ -2094,10 +2113,17 @@ RED.nodes = (function() {
         get currentWorkspace() {return currentWorkspace;},
         getCurrentWorkspace: function() { return currentWorkspace},
         setNodes:function(_nodes) { nodes = _nodes;},
-		nodes: nodes, // TODO: exposed for d3 vis
-		workspaces:workspaces,
-		links: links,  // TODO: exposed for d3 vis
-        node_defs: node_defs,
+		//nodes: nodes, // TODO: exposed for d3 vis
+        get nodes() {return nodes;},
+        set nodes(ns) {nodes = ns;},
+        get workspaces() {return workspaces;},
+        set workspaces(wss) {workspaces = wss;},
+        get links() {return links;},
+        set links(ls) {links = ls;},
+        get node_defs() {return node_defs;},
+        set node_defs(nds) {node_defs = nds;},
+		//links: links,  // TODO: exposed for d3 vis
+        //node_defs: node_defs,
         setIconSets: function(sets) {
             iconSets = sets;
             iconSets["font-awesome"] = RED.nodes.fontAwesome.getIconList();

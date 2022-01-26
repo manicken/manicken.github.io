@@ -99,7 +99,7 @@ RED.export = (function () {
                 if (l.groupFirstLink == undefined)
                     l.targetPort = startIndex + nameIndices[0];
                 else
-                    l.targetPort = startIndex + nameIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.origin?l.origin.sourcePort:l.sourcePort);
+                    l.targetPort = startIndex + nameIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.tabOutPortIndex?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
                 console.warn("pathIndices.length == 0 && ["+nameIndices.join(",")+"].length == 1 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 0) {
@@ -108,7 +108,7 @@ RED.export = (function () {
                     if (l.groupFirstLink == undefined)
                         l.targetPort = startIndex + pathIndices[0];
                     else
-                        l.targetPort = startIndex + pathIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.origin?l.origin.sourcePort:l.sourcePort);
+                        l.targetPort = startIndex + pathIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.tabOutPortIndex?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
                     console.warn("l.source.z != l.target.z ");
                 }
                 else {
@@ -139,15 +139,19 @@ RED.export = (function () {
     }
 
     function copyLink(l, defaultPath) {
-        //console.warn("copyLink from: " + printLinkDebug(l));
+        console.warn("copyLink from: " + printLinkDebug(l));
         var newL = {
             //nextLink:l.nextLink,
+            info:l.info,
+            tabOutPortIndex:((l.tabOutPortIndex!=undefined)?parseInt(l.tabOutPortIndex):undefined),
+            tabOut:l.tabOut, tabIn:l.tabIn,
 
             linkPath:(l.linkPath!=undefined)?l.linkPath:defaultPath,
             sourceIsArray:l.sourceIsArray,
             sourcePath:(l.sourcePath!=undefined)?l.sourcePath:defaultPath,
             source:l.source,
             sourcePort:parseInt(l.sourcePort),
+            
             sourceName:l.sourceName,//!=undefined)?l.sourceName:l.source.name,
             
             targetPath:(l.targetPath!=undefined)?l.targetPath:defaultPath,
@@ -155,15 +159,15 @@ RED.export = (function () {
             targetPort:parseInt(l.targetPort),
             targetName:l.targetName,//!=undefined)?l.targetName:l.target.name,
             
-            tabOut:l.tabOut, tabIn:l.tabIn,
+            
             origin:(l.origin!=undefined)?l.origin:l
         };
-        //console.warn("copyLink to: " + printLinkDebug(newL));
+        console.warn("copyLink to: " + printLinkDebug(newL));
         return newL;
     }
 
     function getFinalSource(l,ws,tabOutPortIndex) {
-        if (tabOutPortIndex == undefined) tabOutPortIndex = 0;
+        
          //console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
 
         var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
@@ -172,8 +176,10 @@ RED.export = (function () {
             // store it for later use
             //console.error("**** port.inputs > 1 " + port.node.inputs);
             l.tabOut = port.node;
+            //l.sourcePort = tabOutPortIndex;
         }
-            
+        if (tabOutPortIndex == undefined) tabOutPortIndex = 0;
+        
         var newSrc = RED.nodes.getWireInputSourceNode(port.node, tabOutPortIndex); // TODO. take care of bus output TabOutputs
         l.sourcePath = l.sourcePath + "/" + l.source.name;
         l.source = newSrc.node;
@@ -446,16 +452,23 @@ RED.export = (function () {
         for (var i = 0; i < initialSpaces; i++) txt += " ";
         if (l.invalid != undefined) return l.invalid + "\n";
         if( options == undefined) options = {asFullPath:false};
-        if (options.asFullPath != undefined && options.asFullPath == true) {
-            var sourcePathAndName = l.sourcePath +"/"+ (l.sourceName||l.source.name);
-            var targetPathAndName = l.targetPath +"/"+ (l.targetName||l.target.name);
-        } else {
-            var sourcePathAndName = l.sourcePath +'","'+ (l.sourceName||l.source.name);
-            var targetPathAndName = l.targetPath +'","'+ (l.targetName||l.target.name);
+        var afp = (options.asFullPath != undefined && options.asFullPath == true);
+
+        var sourceInfo = '("' + l.sourcePath + (afp==true?"/":'","') + (l.sourceName||l.source.name) + '",' + l.sourcePort + ')';
+        var targetInfo = '("' + l.targetPath + (afp==true?"/":'","') + (l.targetName||l.target.name) + '",' + l.targetPort + ')';
+
+        if (l.info != undefined) {
+            if (l.info.tabIn != undefined) {
+                var tabInInfo = ", tabIn:(" + l.info.tabIn.node.name + " [" + l.info.tabIn.node.outputs + "])";
+            }
+            if (l.info.tabOut != undefined) {
+                var tabOutInfo = ", tabOut:(" + l.info.tabOut.node.name + " [" + l.info.tabOut.node.inputs + "])"
+            }
+            var linkInfo = "isBus:" + l.info.isBus + ", valid:" + l.info.valid + (tabInInfo?tabInInfo:"") + (tabOutInfo?tabOutInfo:"");
         }
         
 
-        txt += '("' + sourcePathAndName + '",' + l.sourcePort + ') -> ("' + targetPathAndName + '",' + l.targetPort + ')  @ "' + l.linkPath + '" [' + (l.tabIn?l.tabIn.outputs:"") + "] [" + (l.tabOut?l.tabOut.inputs:"") + "]";
+        txt += sourceInfo + ' -> ' + targetInfo + ' @ "' + l.linkPath + '"  tabOutPortIndex:"' + l.tabOutPortIndex + (linkInfo?" "+linkInfo:"");
         
         /*if (l.nextLink != undefined) {
             initialSpaces += 2;

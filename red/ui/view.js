@@ -2634,8 +2634,9 @@ RED.view = (function() {
 					redraw_links();
 					d3.event.stopPropagation();
 				});
-            var linkType = RED.nodes.getLinkType(d);
-            if (linkType.isBus == true) {
+            //var linkInfo = RED.nodes.getLinkInfo(d);
+            //d.info = linkInfo;
+            if (d.info.isBus == true) {
                 l.append("svg:path").attr("class","link_outline_bus link_path");
                 l.append("svg:path").attr("class","link_line_bus link_path");
             }

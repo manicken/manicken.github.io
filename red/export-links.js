@@ -84,13 +84,45 @@ RED.export.links = (function () {
         }
     }
 
+    function expandBusWires(links) {
+        var newLinks = [];
+        // precheck for bus lines
+        // and expand/clone them
+        for (var li = 0; li < links.length; li++) {
+            var l = links[li];
+            if (l.info.isBus == true) {
+                console.error("*************is bus: " + RED.export.printLinkDebug(l));
+                // need to expand bus links
+                if ((l.info.tabOut != undefined) && (l.info.tabIn == undefined)) { // only support this combination for now
+                    //console.error("***************cloning: " + RED.export.printLinkDebug(l));
+                    for (var topi = 0; topi < l.info.tabOut.node.inputs; topi++) {
+                        //console.error("***********Making copy of: " + RED.export.printLinkDebug(l));
+                        l = RED.export.copyLink(l);
+                        //var newSrc = RED.nodes.getWireInputSourceNode(l.info.tabOut.node, topi);
+                        l.tabOutPortIndex = topi;
+                        console.error("########################## setting tabOutPortIndex to " + l.tabOutPortIndex + " @ " + RED.export.printLinkDebug(l));
+                        newLinks.push(l);
+                    }
+                }
+                else // only have this here for debugging proposes, should be replaced with a invalid link containing just info to show in the export
+                    newLinks.push(l);
+            }
+            else
+                newLinks.push(l);
+        }
+        return newLinks;
+    }
+
     function getNodeLinks(node, currPath, isArray) {
         var nodeLinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
         nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
+        console.error(node.name + "\nlinks:\n" + RED.export.printLinksDebug(nodeLinks));
+        console.warn(isArray);
 
-        //console.error(isArray, node.name + "\nlinks:\n" + RED.export.printLinksDebug(nodeLinks));
-        
+        nodeLinks = expandBusWires(nodeLinks);
+        console.error(node.name + "\nlinks after:\n" + RED.export.printLinksDebug(nodeLinks));
         var newLinks = [];
+        
         if (nodeLinks.length != 0)
             newLinks.push({invalid:currPath + "/" + (isArray?(isArray.name+"/i"+isArray.i):node.name)});
         //else
@@ -103,9 +135,9 @@ RED.export.links = (function () {
             ws = RED.export.isClass(l.source.type)
             if (ws)
             {
-                RED.export.getFinalSource(l,ws);
-
-                
+                var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
+                //console.error("############################################## " + l.tabOutPortIndex + " # " + tabOutPortIndex + " #" + port.node.name);
+                RED.export.getFinalSource(l,ws,tabOutPortIndex);
             }
             if (isArray != undefined) {
                 l.sourceIsArray = isArray;
@@ -125,25 +157,9 @@ RED.export.links = (function () {
                 l.targetName = l.target.name;
                 newLinks.push(l);
             }
-            if (l.tabOut != undefined) {
-                // TODO take care of bus output
-                var busLinks = RED.nodes.links.filter(function(l) { return (l.target === l.tabOut); });
-                busLinks.sort(function (a,b) {return a.targetPort-b.targetPort;});
-                console.error("l.tabOut ",l.tabOut, RED.export.printLinksDebug(busLinks));
-                for (var bli=1; bli < busLinks.length; bli++) {
-                    var nl = RED.export.copyLink(l, currPath);
-                    nl.source = busLinks[bli].source;
-                    nl.sourcePort = busLinks[bli].sourcePort;
-                    ws = RED.export.isClass(nl.source.type)
-                    if (ws)
-                    {
-                        RED.export.getFinalSource(nl,ws);
-                    }
-                    else
-                        nl.sourceName = nl.source.name;
-                    newLinks.push(nl);
-                }
-            }
+            // this needs to be taken care of before 'for (var li = 0; li < nodeLinks.length; li++)'
+            // in some kind of prescan
+            
         }
         
         return newLinks;

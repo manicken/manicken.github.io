@@ -333,7 +333,7 @@ OSC.export = (function () {
         links = RED.export.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
         //console.log(RED.export.printLinksDebug(links));
         RED.export.fixTargetPortsForDynInputObjects(links);
-        //console.log(RED.export.printLinksDebug(links));
+        console.log(RED.export.printLinksDebug(links));
         addLinksToPacketArray(acs, links);
         
         
