@@ -581,9 +581,12 @@ RED.export = (function () {
         var targetId = targetPath + (dbg?"_":"") + targetName + (dbg?"_":"") + l.targetPort;
 
         if (RED.OSC.settings.HashLinkNames == true)
-            return RED.OSC.settings.HashLinkNamesHeader||"L" + (cyrb53(sourceId + (dbg?"_":"") + targetId)).toString(16);
+            var name = RED.OSC.settings.HashLinkNamesHeader||"L" + (cyrb53(sourceId + (dbg?"_":"") + targetId)).toString(16);
         else
-            return (sourceId + (dbg?"_":"") + targetId);
+            var name = (sourceId + (dbg?"_":"") + targetId);
+
+        
+        return name;
     }
 
     function decimalToHex(d, padding) {
