@@ -87,12 +87,14 @@ RED.export = (function () {
             var nameIndices = getOSCIndices(l.sourceName);
             //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
             if (l.groupFirstLink == undefined) {
+                console.error("######################## l.groupFirstLink == undefined " + printLinkDebug(l));
                 var startIndex = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
             }
             else {
+                console.error("######################## l.groupFirstLink != undefined " + printLinkDebug(l));
                 var startIndex = getDynInputDynSizePortStartIndex(l.groupFirstLink.target, l.groupFirstLink.origin?l.groupFirstLink.origin.source:l.groupFirstLink.source, l.groupFirstLink.origin?l.groupFirstLink.origin.sourcePort:l.groupFirstLink.sourcePort);
             }
-            
+            console.error("############## startindex #######" + startIndex);
             //packets.add("// dstPort: " + dstPort + " ");
             if (pathIndices.length == 0 && nameIndices.length == 1) {
                 var isArraySn = isNameDeclarationArray(l.source.name, l.source.z, true);
@@ -131,7 +133,12 @@ RED.export = (function () {
                 console.warn("["+pathIndices.join(",") + "].length == 1 && [" + nameIndices.join(",")+"].length == 1 ");
             }
             else {
-                l.targetPort = startIndex;
+                if (l.groupFirstLink == undefined) {
+                    l.targetPort = startIndex;
+                }
+                else {
+                    l.targetPort = startIndex + (l.tabOutPortIndex?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
+                }
                 console.warn("pathIndices.length == 0 && nameIndices.length == 0 ");
             }
             console.warn("final >>" + printLinkDebug(l) + "<<");
@@ -139,7 +146,7 @@ RED.export = (function () {
     }
 
     function copyLink(l, defaultPath) {
-        console.warn("copyLink from: " + printLinkDebug(l));
+        //console.warn("copyLink from: " + printLinkDebug(l));
         var newL = {
             //nextLink:l.nextLink,
             info:l.info,
@@ -162,7 +169,7 @@ RED.export = (function () {
             
             origin:(l.origin!=undefined)?l.origin:l
         };
-        console.warn("copyLink to: " + printLinkDebug(newL));
+        //console.warn("copyLink to: " + printLinkDebug(newL));
         return newL;
     }
 
@@ -404,7 +411,7 @@ RED.export = (function () {
      * @param {*} source if this is null then the total amount of inputs needed is returned
      * @returns 
      */
-    function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) {
+    function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) { // TODO fix support for bus links
         var links = RED.nodes.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
         //console.log("getDynInputDynSizePortStartIndex \n" + printLinksDebug(links));
@@ -468,8 +475,9 @@ RED.export = (function () {
         }
         
 
-        txt += sourceInfo + ' -> ' + targetInfo + ' @ "' + l.linkPath + '"  tabOutPortIndex:"' + l.tabOutPortIndex + (linkInfo?" "+linkInfo:"");
-        
+        txt += sourceInfo + ' -> ' + targetInfo + ' @ "' + l.linkPath + '"  tabOutPortIndex:' + l.tabOutPortIndex + (linkInfo?" "+linkInfo:"");
+        if (l.groupFirstLink)
+            txt += "\n############ groupFirstLink: " + printLinkDebug(l.groupFirstLink);
         /*if (l.nextLink != undefined) {
             initialSpaces += 2;
             txt += "\n" + printLinkDebug(l.nextLink, undefined, initialSpaces);

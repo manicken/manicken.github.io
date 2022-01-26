@@ -2125,7 +2125,12 @@ RED.view = (function() {
 		RED.view.groupbox.moveSelectionToFromGroupMouseUp();
 		
 		if (dblClickPrimed && mousedown_node == d && clickElapsed > 0 && clickElapsed < 750) {
-			RED.editor.edit(d);
+			if (!d3.event.ctrlKey)
+                RED.editor.edit(d);
+            else {
+                var isClass = RED.nodes.isClass(d.type);
+                if (isClass) { reveal(isClass.id)}
+            }
 			clickElapsed = 0;
 			d3.event.stopPropagation();
 			return;
