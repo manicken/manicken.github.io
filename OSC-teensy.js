@@ -118,7 +118,7 @@ RED.OSC = (function() {
         OnlyShowLastDebug:    {label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
         UseDebugLinkName:     {label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
         HashLinkNames:        {label:"Hash link names", type:"boolean", popupText:"Enable experimental hashed short link names"},
-        HashLinkNamesHeader:  {label:"Hash link names header", type:"string", popupText:"Hashed short link names - 'header' i.e. what the connection names should begin with"},
+        HashLinkNamesHeader:  {label:"Hash link names header", type:"string", popupText:"Hashed short link names - 'header' i.e. what the connection names should begin with<br>note. if set to a empty string the default 'L' will be used as the header, as a OSC address cannot begin with a number?"},
         transmitDebug:        {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 ShowOutputDebug:        { label:"Show basic info", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
