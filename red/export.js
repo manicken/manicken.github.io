@@ -523,7 +523,7 @@ RED.export = (function () {
     function GetLinkName(l) {
         var dbg = RED.OSC.settings.UseDebugLinkName;
         // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
-        var sourceName = (l.origin?l.origin.source.name:l.source.name);
+        /*var sourceName = (l.origin?l.origin.source.name:l.source.name);
         var targetName = (l.origin?l.origin.target.name:l.target.name);
         sourceName = GetNameWithoutArrayDef(sourceName);
         targetName = GetNameWithoutArrayDef(targetName);
@@ -563,10 +563,51 @@ RED.export = (function () {
         else
         {
             targetId = targetName + (dbg?"_":"") + targetPort;
+        }*/
+        if (l.origin == undefined) {
+            var sourceName = l.source.name;
+            var targetName = l.target.name;
+            sourceName = GetNameWithoutArrayDef(sourceName);
+            targetName = GetNameWithoutArrayDef(targetName);
         }
+        else {
+            var sourcePath = l.sourcePath!=undefined?(l.sourcePath.replaceAllVal("/", (dbg?"_":""))):"";
+            var targetPath = l.targetPath!=undefined?(l.targetPath.replaceAllVal("/", (dbg?"_":""))):"";
+            var sourceName = l.sourceName.replaceAllVal("/", (dbg?"_":""));
+            var targetName = l.targetName.replaceAllVal("/", (dbg?"_":""));;
+        }
+        
+        var sourceId = sourcePath + (dbg?"_":"") + sourceName + (dbg?"_":"") + l.sourcePort;
+        var targetId = targetPath + (dbg?"_":"") + targetName + (dbg?"_":"") + l.targetPort;
 
-        return (sourceId + (dbg?"_":"") + targetId);
+        if (RED.OSC.settings.HashLinkNames == true)
+            return "CON" + (cyrb53(sourceId + (dbg?"_":"") + targetId)).toString(16);
+        else
+            return (sourceId + (dbg?"_":"") + targetId);
     }
+
+    function decimalToHex(d, padding) {
+        var hex = Number(d).toString(16);
+        padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
+    
+        while (hex.length < padding) {
+            hex = "0" + hex;
+        }
+    
+        return hex;
+    }
+
+    function cyrb53(str, seed = 0) {
+        let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+        for (let i = 0, ch; i < str.length; i++) {
+            ch = str.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761);
+            h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+        return 4294967296 * (2097151 & h2) + (h1>>>0);
+    };
 
     function getArrayIndexersFromPath(path) {
         var dbg = RED.OSC.settings.UseDebugLinkName;

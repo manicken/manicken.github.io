@@ -9,6 +9,7 @@ RED.OSC = (function() {
     var EncodingOptions = [0,1];
 
     var defSettings = {
+        HashLinkNames: false,
         LiveUpdate: true,
         DirectExport: false,
         WildcardArrayObjects: true,
@@ -24,6 +25,7 @@ RED.OSC = (function() {
         Encoding: 1 // SLIP
     }
     var _settings = {
+        HashLinkNames: defSettings.HashLinkNames,
         LiveUpdate: defSettings.LiveUpdate,
         DirectExport: defSettings.DirectExport,
         WildcardArrayObjects: defSettings.WildcardArrayObjects,
@@ -58,6 +60,9 @@ RED.OSC = (function() {
                 $('#btn-oscLiveUpdateMode').prop('checked', true);
             }*/
         },
+
+        get HashLinkNames() { return _settings.HashLinkNames; },
+        set HashLinkNames(value) { _settings.HashLinkNames = value; RED.storage.update();},
 
         get DirectExport() { return _settings.DirectExport; },
         set DirectExport(value) { _settings.DirectExport = value; RED.storage.update();},
@@ -101,12 +106,14 @@ RED.OSC = (function() {
     var dataShownNote = "debug data should be shown in the bottom output log";
 
     var settingsEditor = {
-        ClearOutputLog: { label:"Clear output log", type:"button", action: ClearOutputLog},
-        LiveUpdate:     {label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
-        DirectExport:     {label:"Direct Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Simple), the export dialog will not show."},
-        WildcardArrayObjects:     {label:"Wildcard Array Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Group), the object creating inside arrays will use wildcard.<br>Not when this is enabled the generated message will be much shorter for big arrays.<br> Disabling wildcard can be used for debugging."},
-        OnlyShowLastDebug:        { label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
-        transmitDebug:  {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
+        ClearOutputLog:       {label:"Clear output log", type:"button", action: ClearOutputLog},
+        LiveUpdate:           {label:"Live Update", type:"boolean", popupText:"Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed"},
+        DirectExport:         {label:"Direct Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Simple), the export dialog will not show."},
+        WildcardArrayObjects: {label:"Wildcard Array Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Group), the object creating inside arrays will use wildcard.<br>Not when this is enabled the generated message will be much shorter for big arrays.<br> Disabling wildcard can be used for debugging."},
+        OnlyShowLastDebug:    {label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
+        UseDebugLinkName:     {label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
+        HashLinkNames:        {label:"Hash link names", type:"boolean", popupText:"Enable experimental hashed short link names"},
+        transmitDebug:        {label:"Transmit Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 ShowOutputDebug:        { label:"Show basic info", type:"boolean", popupText:"If transmit " + dataShownNote + clearLogNote},
                 ShowOutputOscTxDecoded: { label:"Show JSON", type:"boolean", popupText:"If transmit JSON message " + dataShownNote + clearLogNote},
@@ -120,7 +127,7 @@ RED.OSC = (function() {
                 ShowOutputOscRxRaw:     { label:"Show raw data", type:"boolean", popupText:"If receive raw " + dataShownNote + clearLogNote},
             }
         },
-        UseDebugLinkName:       { label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
+        
         RootAddress:            { label:"Root Address", type:"string", popupText: "this defines the root address"},
         Encoding:               { label:"Encoding", type:"combobox", optionTexts:EncodingOptionTexts, options:EncodingOptions, popupText: "The encoding of the data sent"},
         TransportLayer:         { label:"Transport Layer", type:"combobox", optionTexts:LayerOptionTexts, options:LayerOptions, popupText: "The Transport Layer to send OSC data over when<br> a Node/'Audio Object' is added/renamed/removed<br> or when<br> a Link/AudioConnection/Patchcable is added/removed"},
