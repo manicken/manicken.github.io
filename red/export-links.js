@@ -125,7 +125,25 @@ RED.export.links = (function () {
                 l.targetName = l.target.name;
                 newLinks.push(l);
             }
-
+            if (l.tabOut != undefined) {
+                // TODO take care of bus output
+                var busLinks = RED.nodes.links.filter(function(l) { return (l.target === l.tabOut); });
+                busLinks.sort(function (a,b) {return a.targetPort-b.targetPort;});
+                console.error("l.tabOut ",l.tabOut, RED.export.printLinksDebug(busLinks));
+                for (var bli=1; bli < busLinks.length; bli++) {
+                    var nl = RED.export.copyLink(l, currPath);
+                    nl.source = busLinks[bli].source;
+                    nl.sourcePort = busLinks[bli].sourcePort;
+                    ws = RED.export.isClass(nl.source.type)
+                    if (ws)
+                    {
+                        RED.export.getFinalSource(nl,ws);
+                    }
+                    else
+                        nl.sourceName = nl.source.name;
+                    newLinks.push(nl);
+                }
+            }
         }
         
         return newLinks;

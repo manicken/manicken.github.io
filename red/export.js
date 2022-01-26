@@ -58,13 +58,14 @@ RED.export = (function () {
     function tagSameSourceLinksThatConnectsTo(_links,source,target) {
         var links = _links.filter(function(l) { return (l.invalid == undefined) && (l.origin.source === source) && (l.target === target); });
         links.sort(function(a,b) { return a.sourcePort-b.sourcePort;});
-        // need to tag together as group
+
         for (var i = 1; i < links.length; i++) {
-            if (links[i].groupFirstLink == undefined)
+            if (links[i].groupFirstLink == undefined) {
                 links[i].groupFirstLink = links[0];
+            }
         }
-        if (links.length > 1)
-            console.error("group",printLinksDebug(links));
+        //if (links.length > 1)
+        //    console.error("group",printLinksDebug(links));
         return links.length;
     }
 
@@ -81,7 +82,7 @@ RED.export = (function () {
             
             //console.error("common Links: " + commonLinkCount);
             //if (l.groupFirstLink == undefined)
-                var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l.origin.source, l.target);
+            var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l.origin.source, l.target);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
             //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
@@ -89,7 +90,6 @@ RED.export = (function () {
                 var startIndex = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
             }
             else {
-                
                 var startIndex = getDynInputDynSizePortStartIndex(l.groupFirstLink.target, l.groupFirstLink.origin?l.groupFirstLink.origin.source:l.groupFirstLink.source, l.groupFirstLink.origin?l.groupFirstLink.origin.sourcePort:l.groupFirstLink.sourcePort);
             }
             
@@ -162,8 +162,9 @@ RED.export = (function () {
         return newL;
     }
 
-    function getFinalSource(l,ws) {
-        //console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
+    function getFinalSource(l,ws,tabOutPortIndex) {
+        if (tabOutPortIndex == undefined) tabOutPortIndex = 0;
+         //console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
 
         var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
         //console.error(port);
@@ -173,7 +174,7 @@ RED.export = (function () {
             l.tabOut = port.node;
         }
             
-        var newSrc = RED.nodes.getWireInputSourceNode(port.node, 0); // TODO. take care of bus output TabOutputs
+        var newSrc = RED.nodes.getWireInputSourceNode(port.node, tabOutPortIndex); // TODO. take care of bus output TabOutputs
         l.sourcePath = l.sourcePath + "/" + l.source.name;
         l.source = newSrc.node;
         l.sourceName = l.source.name;
