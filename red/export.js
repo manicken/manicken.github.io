@@ -83,6 +83,7 @@ RED.export = (function () {
             //console.error("common Links: " + commonLinkCount);
             //if (l.groupFirstLink == undefined)
             var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l.origin.source, l.target);
+            console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ groupItemCount:" + groupItemCount);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
             //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
@@ -101,23 +102,25 @@ RED.export = (function () {
                 if (l.groupFirstLink == undefined)
                     l.targetPort = startIndex + nameIndices[0];
                 else
-                    l.targetPort = startIndex + nameIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.tabOutPortIndex?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
-                console.warn("pathIndices.length == 0 && ["+nameIndices.join(",")+"].length == 1 ");
+                    l.targetPort = startIndex + nameIndices[0]*(groupItemCount/isArraySn.arrayLength) + ((l.tabOutPortIndex!=undefined)?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
+                console.warn("01 pathIndices.length == 0 && ["+nameIndices.join(",")+"].length == 1 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 0) {
                 var isArraySn = isNameDeclarationArray(l.origin.source.name, l.source.z, true);
                 if (l.source.z != l.target.z){
                     if (l.groupFirstLink == undefined)
                         l.targetPort = startIndex + pathIndices[0];
-                    else
-                        l.targetPort = startIndex + pathIndices[0]*(groupItemCount/isArraySn.arrayLength) + (l.tabOutPortIndex?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
+                    else {
+                        //console.error("############" + startIndex  + " + " + pathIndices[0] +" * (" + groupItemCount+"/"+isArraySn.arrayLength + ") +" + "("+l.tabOutPortIndex+"?"+l.tabOutPortIndex+":("+l.origin+"?"+l.origin.sourcePort+":"+l.sourcePort+"))");
+                        l.targetPort = startIndex + pathIndices[0]*(groupItemCount/isArraySn.arrayLength) + ((l.tabOutPortIndex!=undefined)?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
+                    }
                     console.warn("l.source.z != l.target.z ");
                 }
                 else {
                     //l.targetPort = dstPort + pathIndices[0];
                     console.warn("l.source.z == l.target.z ");
                 }
-                console.warn("["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 ");
+                console.warn("10 ["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 1)  {
                 
@@ -130,7 +133,7 @@ RED.export = (function () {
                     l.targetPort = startIndex + nameIndices[0];
                     console.warn("l.source.z == l.target.z ");
                 }
-                console.warn("["+pathIndices.join(",") + "].length == 1 && [" + nameIndices.join(",")+"].length == 1 ");
+                console.warn("11 ["+pathIndices.join(",") + "].length == 1 && [" + nameIndices.join(",")+"].length == 1 ");
             }
             else {
                 if (l.groupFirstLink == undefined) {

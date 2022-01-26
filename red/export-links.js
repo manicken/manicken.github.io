@@ -116,11 +116,11 @@ RED.export.links = (function () {
     function getNodeLinks(node, currPath, isArray) {
         var nodeLinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
         nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
-        console.error(node.name + "\nlinks:\n" + RED.export.printLinksDebug(nodeLinks));
+        //console.error(node.name + "\nlinks:\n" + RED.export.printLinksDebug(nodeLinks));
         console.warn(isArray);
 
         nodeLinks = expandBusWires(nodeLinks);
-        console.error(node.name + "\nlinks after:\n" + RED.export.printLinksDebug(nodeLinks));
+        //console.error(node.name + "\nlinks after:\n" + RED.export.printLinksDebug(nodeLinks));
         var newLinks = [];
         
         if (nodeLinks.length != 0)
@@ -131,7 +131,7 @@ RED.export.links = (function () {
         for (var li = 0; li < nodeLinks.length; li++) {
             var l = RED.export.copyLink(nodeLinks[li], currPath);
 
-            console.warn(RED.export.printLinkDebug(l));
+            //console.warn(RED.export.printLinkDebug(l));
             ws = RED.export.isClass(l.source.type)
             if (ws)
             {
