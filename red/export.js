@@ -436,6 +436,9 @@ RED.export = (function () {
                 else {
                     toAdd = 1; // non array sources still have one output
                 }
+                if (l.info.isBus == true) {
+                    toAdd *= l.info.tabOut.node.inputs;
+                }
                 // the following adds support for object array output from class/tab
                 var ws = isClass(l.source.type)
                 if (ws){
