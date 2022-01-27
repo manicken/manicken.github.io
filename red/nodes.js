@@ -1997,9 +1997,10 @@ RED.nodes = (function() {
                     (tabIn != undefined && tabIn.isBus) ||
                     (l.source.type == "BusJoin" || l.target.type == "BusSplit");
 
-        if (sourceIsArray!=undefined && targetIsArray!=undefined) {// array to array not currently supported
+        if ((sourceIsArray!=undefined) && (targetIsArray!=undefined) && (l.target._def.defaults.inputs!=undefined)) {// array to array of dynmixers not currently supported
+            
             var valid = false;
-            var inValidText = "array to array not yet supported in OSC export";
+            var inValidText = "array to 'array of dynmixers' not yet supported in OSC export<br> non priority to implement";
         }
         else if (isBus && (l.source.type == "TabInput" || l.target.type == "TabOutput")) {
             var valid = false;
