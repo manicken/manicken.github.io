@@ -480,7 +480,14 @@
   }
   #btn-oscLiveUpdateMode {
     margin-top: 0px;
-}
+  }
+  #option-export-mode {
+    margin: 0px;
+    width: auto;
+  }
+  #lbl-export-mode {
+    margin: 0px;
+  }
   .settings-category div .settings-menu {
       position: relative;
       padding-left: 3px;
@@ -974,6 +981,10 @@
     stroke-width: 20;
     cursor: crosshair;
     fill: none;
+  }
+  .link_invalid {
+    stroke: #f00;
+    stroke-dasharray: 10, 5;
   }
 
   

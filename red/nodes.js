@@ -1991,12 +1991,30 @@ RED.nodes = (function() {
         var wsTarget = isClass(l.target.type);
         var tabOut = wsSource?getClassIOport(wsSource.id, "Out", l.sourcePort):undefined;
         var tabIn = wsTarget?getClassIOport(wsTarget.id, "In", l.targetPort):undefined;
-        
-        l.info = {
-            isBus:(tabOut != undefined && tabOut.isBus) ||
+        var sourceIsArray = RED.export.isNameDeclarationArray(l.source.name);
+        var targetIsArray = RED.export.isNameDeclarationArray(l.target.name);
+        var isBus = (tabOut != undefined && tabOut.isBus) ||
                     (tabIn != undefined && tabIn.isBus) ||
-                    (l.source.type == "BusJoin" || l.target.type == "BusSplit"),
-            valid:true,
+                    (l.source.type == "BusJoin" || l.target.type == "BusSplit");
+
+        if (sourceIsArray!=undefined && targetIsArray!=undefined) {// array to array not currently supported
+            var valid = false;
+            var inValidText = "array to array not yet supported in OSC export";
+        }
+        else if (isBus && (l.source.type == "TabInput" || l.target.type == "TabOutput")) {
+            var valid = false;
+            var inValidText = "connecting bus wires to either TabInput or TabOutput not yet supported";
+        }
+        else
+            var valid = true;
+        l.info = {
+            wsSource,
+            wsTarget,
+            sourceIsArray,
+            targetIsArray,
+            isBus,
+            valid,
+            inValidText,
             tabOut,
             tabIn
         };

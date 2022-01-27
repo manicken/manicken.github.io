@@ -114,7 +114,7 @@ RED.arduino = (function() {
 
 	};
 
-	var settingsCategory = { label:"Arduino", expanded:false, popupText: "Currently only Arduino Export Settings", bgColor:"#006468", headerBgColor:"#17A1A5", headerTextColor:"#FFFFFF", menuItems:[{label:"saveSettingsEditorAsJson",iconClass:"fa fa-copy", action:saveSettingsEditorAsJson}] };
+	var settingsCategory = { label:"Teensy/C++", expanded:false, popupText: "Currently only Teensy/C++ Export Settings", bgColor:"#006468", headerBgColor:"#17A1A5", headerTextColor:"#FFFFFF", menuItems:[{label:"saveSettingsEditorAsJson",iconClass:"fa fa-copy", action:saveSettingsEditorAsJson}] };
 
 	var settingsEditor = {
 		export: {label:"Export", expanded:true, bgColor:"#17A1A5",

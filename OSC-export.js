@@ -330,7 +330,7 @@ OSC.export = (function () {
         RED.export.links.getClassConnections(ws, links, ''); // this is a recursive function
         //RED.export.updateNames(links);  // not needed anymore and should never be used either
         //console.log(RED.export.printLinksDebug(links));
-        links = RED.export.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
+        //links = RED.export.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
         //console.log(RED.export.printLinksDebug(links));
         RED.export.fixTargetPortsForDynInputObjects(links);
         console.log(RED.export.printLinksDebug(links));

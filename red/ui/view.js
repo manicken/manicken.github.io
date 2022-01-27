@@ -2629,6 +2629,10 @@ RED.view = (function() {
                         return;
                     }
                 })
+                .on("mouseover",function(d) {
+                    if (d.info.valid == false)
+                        RED.notify(d.info.inValidText, "warning", null, 3000);
+                })
 				.on("touchstart",function(d) {
 					mousedown_link = d;
 					clearSelection();
@@ -2642,12 +2646,12 @@ RED.view = (function() {
             //var linkInfo = RED.nodes.getLinkInfo(d);
             //d.info = linkInfo;
             if (d.info.isBus == true) {
-                l.append("svg:path").attr("class","link_outline_bus link_path");
-                l.append("svg:path").attr("class","link_line_bus link_path");
+                l.append("svg:path").attr("class","link_path link_outline_bus"/* + ((d.info.valid==false)?" link_invalid":"")*/);
+                l.append("svg:path").attr("class","link_path link_line_bus" + ((d.info.valid==false)?" link_invalid":""));
             }
             else {
-                l.append("svg:path").attr("class","link_outline link_path");
-                l.append("svg:path").attr("class","link_line link_path");
+                l.append("svg:path").attr("class","link_path link_outline"/* + ((d.info.valid==false)?" link_invalid":"")*/);
+                l.append("svg:path").attr("class","link_path link_line" + ((d.info.valid==false)?" link_invalid":""));
             }
 		});
 

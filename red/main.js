@@ -560,7 +560,7 @@ RED.main = (function() {
         SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
 
         SetPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
-        
+        SetPopOver("#lbl-export-mode","This is just a 'maybe' future option,<br>think it could be used to check the design<br> and show errors if for example <br>a design can not be exported for the current mode<br>it can both highlight links and nodes that are not supported for the selected mode.<br><br>Can also be used together with one button to 'rule them all', <br>i.e. you select the mode and there is only one export button.");
 
         jscolor.presets.default = {
             closeButton:true

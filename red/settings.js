@@ -99,7 +99,7 @@ RED.settings = (function() {
             /*if (RED_Class_settings.hasOwnProperty(valueName) == false) {
 
              }*/
-            if (RED_Class_settings.hasOwnProperty(valueName) && RED_Class_settings[valueName] == undefined) {// this skip any removed settings
+            if (/*RED_Class_settings.hasOwnProperty(valueName) && */RED_Class_settings[valueName] == undefined) {// this skip any removed settings
                 console.error("setting removed typeof " + valueName + ":" + typeof ClassSetting[valueName] + ":" + typeof RED_Class_settings);
                 continue;
             }
@@ -158,12 +158,10 @@ RED.settings = (function() {
 
             var name = settingNames[i];
             //console.warn("getChangedSettings: " + name + " " + typeof RED_Class.settings[name]);
-            if (typeof RED_Class.settings[name] !== "object") {
+            if (typeof RED_Class.settings[name] !== "object") { 
                 var str1 = RED_Class.settings[name].toString();
-                
-                try{var str2 = RED_Class.defSettings[name].toString();}
-                catch(err) {console.error("need to fix this occurence of error " + name + " @ ", RED_Class);}
-            } else {
+                var str2 = RED_Class.defSettings[name].toString();
+            } else { // this is used when a setting have subsettings
                 var str1 = JSON.stringify(RED_Class.settings[name]);
                 var str2 = JSON.stringify(RED_Class.defSettings[name]);
             }

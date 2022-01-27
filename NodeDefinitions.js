@@ -169,6 +169,17 @@ NodeDefinitions = {
             }
         }
     },
+    "FrankBoesing": {
+        "label":"Frank Boesing",
+        "description":"Frank Boesing waw player/recorder",
+        "credits":"Frank Boesing",
+        "homepage":"https://github.com/FrankBoesing",
+        "url":"https://github.com/FrankBoesing/Teensy-WavePlayer",
+        "types":{
+            "AudioPlayWav":{"defaults":{"name":{"value":"new"}},"shortName":"playWav","inputs":0,"outputs":8,"category":"play","color":"#E6E0F8","icon":"arrow-in.png"},		
+            "AudioRecordWav":{"defaults":{"name":{"value":"new"}},"shortName":"RecordWav","inputs":4,"outputs":0,"category":"record","color":"#E6E0F8","icon":"arrow-in.png"},
+        }
+    },
 	"officialNodes": {
         "label":"Official Nodes",
         "description":"The official Audio node types embedded into this tool, that is used by the official Audio Library ",

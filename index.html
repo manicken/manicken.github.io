@@ -236,7 +236,18 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<input type="checkbox" name="options" id="btn-oscLiveUpdateMode" autocomplete="off" checked> <i class="fa fa-play fa-lg"></i> OSC live update
 				</label>
 			</div>
-			
+
+            <div class="btn-group">
+                <label id="lbl-export-mode">Export Mode:
+                <select name="option-export-mode" id="option-export-mode">
+                    <option value="0">Simple Flat C++</option>
+                    <option value="1">Class based C++</option>
+                    <option value="2">Class based zip</option>
+                    <option value="3">Open Sound Control</option>
+                </select>
+            </label>
+            </div>
+
 			<div class="btn-group hidden">
 				<a class="btn btn-small" id="btn-debugShowSelection" href="#"><i class="fa fa-cogs fa-lg"></i> debug show moving set</a>
 				<a class="btn btn-small" id="btn-debugShowGroupElements" href="#"><i class="fa fa-cogs fa-lg"></i> debug ShowGroupElements</a>
@@ -7229,6 +7240,121 @@ value  frequency
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name">
 	</div>
+</script>
+
+<script type="text/x-red" data-help-name="AudioRecordWav">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>Record a WAV file, stored on a SD card.</p>
+	</div>
+    <h3>Usage</h3>
+    need to install files from <a href="https://github.com/FrankBoesing/Teensy-WavePlayer" target="_blank">Frank Boesing</a>
+    to use this
+</script>
+
+<script type="text/x-red" data-help-name="AudioPlayWav">
+	<h3>Summary</h3>
+	<div class=tooltipinfo>
+	<p>Play a WAV file, stored on a SD card, using interleaved reads.</p>
+	</div>
+    <h3>Usage</h3>
+    need to install files from <a href="https://github.com/FrankBoesing/Teensy-WavePlayer" target="_blank">Frank Boesing</a>
+    to use this
+	<h3>Audio Connections</h3>
+	<table class=doc align=center cellpadding=3>
+		<tr class=top><th>Port</th><th>Purpose</th></tr>
+		<tr class=odd><td align=center>Out 0..7</td><td>Channel 0..7 Output</td></tr>
+	</table>
+	<h3>Functions</h3>
+	<p class=func><span class=keyword>play</span>(filename | File);</p>
+	<p class=desc>Begin playing a WAV file.  If a file is already playing,
+		it is stopped and this file starts playing from the beginning. The file to
+		play may be given by either a character string or an open File object.
+	</p>
+	<p class=func><span class=keyword>play</span>(filename | File,paused);</p>
+	<p class=desc>Begin playing a WAV file.  If a file is already playing,
+		it is stopped and this file starts playing from the beginning. If
+		paused is true then the playing does not start immediately, but
+		can be started and stopped with the pause function.
+	</p>
+	<p class=func><span class=keyword>pause</span>(bool);</p>
+	<p class=desc>Pause or resume playing.  If not playing, this function has no effect. Resumes
+	if bool is false, pauses if bool is true.
+	</p>
+	<p class=func><span class=keyword>stop</span>();</p>
+	<p class=desc>Stop playing.  If not playing or paused, this function has no effect.
+	</p>
+	<p class=func><span class=keyword>isPlaying</span>();</p>
+	<p class=desc>Return true (non-zero) if playing, or false (zero)
+		when stopped or paused.  
+	</p>
+	<p class=func><span class=keyword>isStopped</span>();</p>
+	<p class=desc>Return true (non-zero) if stopped, or false (zero)
+		when playing or paused.  
+	</p>
+	<p class=func><span class=keyword>isPaused</span>();</p>
+	<p class=desc>Return true (non-zero) if paused, or false (zero)
+		when playing or stopped.  
+	</p>
+	<p class=func><span class=keyword>positionMillis</span>();</p>
+	<p class=desc>While playing, return the current time offset, in
+		milliseconds.  When not playing, the return from this function
+		is undefined.
+	</p>
+	<p class=func><span class=keyword>lengthMillis</span>();</p>
+	<p class=desc>Return the total length of the current sound clip,
+		in milliseconds.  When not playing, the return from this function
+		is undefined.
+	</p>
+	<p class=func>static <span class=keyword>addMemoryForRead</span>(mult);</p>
+	<p class=desc>Causes extra buffer memory for pre-loading SD card data
+	to be allocated when play() is called, thus reducing the frequency of SD card accesses. 
+	mult=2 will double the allocated memory, and so on.
+	</p>
+	<p class=func>static <span class=keyword>enableEventReading</span>(bool);</p>
+	<p class=desc>Defaults to false, in which case SD card reads occur within
+	the (interrupt-driven) audio update loop. If set to true then the EventResponder
+	library is used to trigger SD card reads within the foreground code: this requires
+	that loop() exits, or one of yield() or delay() are called within an infinite loop().
+	
+	Event reads generally allow more simultaneous WAV files to be played. This function may
+	be called while one or more files are playing. [DISCLAIMER] there may be audio glitches and/or a loss
+	of synchronisation as a result.
+	</p>
+	<h3>Examples</h3>
+	<p class=exam>File &gt; Examples &gt; Audio &gt; WavFilePlayerI2S
+	</p>
+	<h3>Notes</h3>
+	<p>Only 8- or 16-bit PCM WAV files are supported. 
+		The bit rate of the file must match the configured AUDIO_SAMPLE_RATE.
+		WAV files with from 1 to 8 channels are supported, 
+		with outputs assigned starting from channel 0.
+		Thus stereo WAV files play with the left
+		channel on port 0 and the right channel on port 1.
+	</p>
+	<p>The player attempts to interleave the SD card reads such that simultaneous playback
+	of multiple WAV files does not result in intermittent heavy load on the card, with
+	long idle periods. With enableEventReading set to true, it is easily possible to play 16
+	mono 44kHz 16-bit WAV files at once. Multi-track WAV files also reduce the CPU / SD card load,
+	though they are obviously less flexible.
+	</p>
+	<p>No delay after calling play() is required before
+		isPlaying() returns a valid value, and positionMillis() returns a valid
+		time offset. 
+	</p>
+	<p>While playing, the audio library accesses the SD card automatically.
+		If card access is also required for other purposes, you must
+		<a href="http://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html" target="_blank">use AudioNoInterrupts()</a>
+		to prevent the library from accessing the SD card while you use it.
+		Disabling the audio library interrupt for too long may cause audible
+		dropouts or glitches.
+	</p>
+	<p>An experimental SD library optimization exists, which can remove these
+		SD library restrictions.  It also allows reliable playback of more
+		files at the same time.  To enable this special code, find and edit
+		the SD_t3.h file within your Arduino folder.  See the comments within
+		that file for details. [Is this true?]
+	</p>
 </script>
 
 

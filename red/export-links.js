@@ -130,7 +130,7 @@ RED.export.links = (function () {
 
         for (var li = 0; li < nodeLinks.length; li++) {
             var l = RED.export.copyLink(nodeLinks[li], currPath);
-
+            
             //console.warn(RED.export.printLinkDebug(l));
             ws = RED.export.isClass(l.source.type)
             if (ws)
@@ -141,10 +141,9 @@ RED.export.links = (function () {
             }
             if (isArray != undefined) {
                 l.sourceIsArray = isArray;
-                //if (node.name == "delay[2]") console.error(">>>>>>>>>>>>>>>>>>>>>>>>>>" + l.sourcePath);
                 l.sourcePath = l.sourcePath.replace(isArray.newName, isArray.name + "/i" + isArray.i);
                 l.sourceName = l.source.name.replace(isArray.newName, isArray.name + "/i" + isArray.i);
-                //if (node.name == "delay[2]") console.error(">>>>>>>>>>>>>>>>>>>>>>>>>>" + l.sourcePath);
+
             }else {
                 l.sourceName = l.source.name;
             }
