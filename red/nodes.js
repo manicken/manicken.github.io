@@ -467,8 +467,11 @@ RED.nodes = (function() {
 		}
 	}
 
-	function addWorkspace(ws) {
-		workspaces.push(ws);
+	function addWorkspace(ws,position) {
+        if (position == undefined)
+		    workspaces.push(ws);
+        else
+            workspaces.splice(position, 0, ws);
 		currentWorkspace = ws;
         addClassTabsToPalette();
         RED.events.emit('flows:add',ws);
@@ -2135,6 +2138,11 @@ RED.nodes = (function() {
         },
         get currentWorkspace() {return currentWorkspace;},
         getCurrentWorkspace: function() { return currentWorkspace},
+        getWorkspaceIndex: function(id) {
+            for (var i = 0; i < workspaces.length; i++)
+                if (workspaces[i].id == id) return i;
+            return -1;
+        },
         setNodes:function(_nodes) { nodes = _nodes;},
 		//nodes: nodes, // TODO: exposed for d3 vis
         get nodes() {return nodes;},

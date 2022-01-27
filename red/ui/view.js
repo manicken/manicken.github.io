@@ -790,14 +790,30 @@ RED.view = (function() {
 		var tabId = RED.nodes.id();
 		do {
 			workspaceIndex += 1;
-		} while($("#workspace-tabs a[title='Sheet_"+workspaceIndex+"']").size() !== 0);
+		} while($("#workspace-tabs a[title='"+RED.workspaces.settings.defaultNewName+workspaceIndex+"']").size() !== 0);
 
-		var ws = RED.nodes.createWorkspaceObject(tabId, "Sheet_"+workspaceIndex, 0, 0, true);
-		RED.nodes.addWorkspace(ws);
-		workspace_tabs.addTab(ws);
+		var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, 0, 0, true);
+        var currIndex = RED.nodes.getWorkspaceIndex(activeWorkspace);
+        //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ currIndex " + currIndex);
+        if (RED.workspaces.settings.addNewLocation == 0) {
+            RED.nodes.addWorkspace(ws,0);
+            workspace_tabs.addTab(ws,0);
+        } else if (currIndex != -1 && RED.workspaces.settings.addNewLocation == 1) {
+            RED.nodes.addWorkspace(ws,currIndex);
+            workspace_tabs.addTab(ws,currIndex);
+        } else if (currIndex != -1 && RED.workspaces.settings.addNewLocation == 2) {
+            RED.nodes.addWorkspace(ws,currIndex+1);
+            workspace_tabs.addTab(ws,currIndex+1);
+        } else { // if (RED.workspaces.settings.addNewLocation == 3) { also default
+            RED.nodes.addWorkspace(ws);
+            workspace_tabs.addTab(ws);
+        }
+        
 		workspace_tabs.activateTab(tabId);
 		RED.history.push({t:'add',workspaces:[ws],dirty:dirty});
         RED.view.dirty(true);
+        if (RED.workspaces.settings.addNewAutoEdit == true)
+            RED.view.dialogs.showRenameWorkspaceDialog(ws.id,workspace_tabs.count());
 		//RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
 	}
 	//$('#btn-workspace-add-tab').on("click",addWorkspace);
