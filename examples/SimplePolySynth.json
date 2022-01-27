@@ -1,0 +1,546 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ZipExportUseSubFolder": true,
+            "ProjectName": "SimplePolySynth",
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "BiDirDataWebSocketBridge": {},
+        "workspaces": {},
+        "sidebar": {},
+        "palette": {},
+        "editor": {},
+        "devTest": {},
+        "IndexedDBfiles": {
+            "testFileNames": "testFile.txt"
+        },
+        "NodeDefGenerator": {},
+        "NodeDefManager": {},
+        "NodeHelpManager": {},
+        "OSC": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "Main",
+            "label": "Voice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "Voice_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "OutC",
+                    "comment": "",
+                    "x": 465,
+                    "y": 130,
+                    "z": "Main",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_vars2",
+                    "type": "Variables",
+                    "isClass": false,
+                    "name": "noteFreqs",
+                    "comment": "const float noteFreqs[128] = {8.176, 8.662, 9.177, 9.723, 10.301, 10.913, 11.562, 12.25, 12.978, 13.75, 14.568, 15.434, 16.352, 17.324, 18.354, 19.445, 20.602, 21.827, 23.125, 24.5, 25.957, 27.5, 29.135, 30.868, 32.703, 34.648, 36.708, 38.891, 41.203, 43.654, 46.249, 48.999, 51.913, 55, 58.27, 61.735, 65.406, 69.296, 73.416, 77.782, 82.407, 87.307, 92.499, 97.999, 103.826, 110, 116.541, 123.471, 130.813, 138.591, 146.832, 155.563, 164.814, 174.614, 184.997, 195.998, 207.652, 220, 233.082, 246.942, 261.626, 277.183, 293.665, 311.127, 329.628, 349.228, 369.994, 391.995, 415.305, 440, 466.164, 493.883, 523.251, 554.365, 587.33, 622.254, 659.255, 698.456, 739.989, 783.991, 830.609, 880, 932.328, 987.767, 1046.502, 1108.731, 1174.659, 1244.508, 1318.51, 1396.913, 1479.978, 1567.982, 1661.219, 1760, 1864.655, 1975.533, 2093.005, 2217.461, 2349.318, 2489.016, 2637.02, 2793.826, 2959.955, 3135.963, 3322.438, 3520, 3729.31, 3951.066, 4186.009, 4434.922, 4698.636, 4978.032, 5274.041, 5587.652, 5919.911, 6271.927, 6644.875, 7040, 7458.62, 7902.133, 8372.018, 8869.844, 9397.273, 9956.063, 10548.08, 11175.3, 11839.82, 12543.85};\n",
+                    "x": 75,
+                    "y": 65,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_vars1",
+                    "type": "Variables",
+                    "isClass": false,
+                    "name": "vars",
+                    "comment": "byte note = 0; // to store the current or previous note played\nbyte isNoteOn = 0; // used by the sustain function\nbyte isSustain = 0;\n",
+                    "x": 55,
+                    "y": 110,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin",
+                    "comment": "// used to simplify initialization from the \"parent\" class\nvoid begin()\n{\n    wf.begin(1.0, 110, WAVEFORM_SAWTOOTH);\n}\n",
+                    "x": 60,
+                    "y": 155,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_code2",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "note on/off functions",
+                    "comment": "/*\n * this takes care of all the tasks that\n * needs to be taken care of when doing\n * a note on/off\n */\n \nvoid noteOn(byte Note, byte velocity)\n{\n    float newAmp = 0.0f;\n    if (Note >= sizeof(noteFreqs)) return;\n    \n    note = Note;\n    isNoteOn = 1;\n    \n    newAmp = (float)velocity*(1.0f / 127.0f);\n      \n    wf.frequency(noteFreqs[note]);\n    \n    wf.amplitude(newAmp);\n    \n    env.noteOn();\n}\n\nvoid noteOff()\n{\n    isNoteOn = 0;\n    if (!isSustain)\n    {\n        env.noteOff();\n    }\n}\n\nbool isNotPlaying()\n{\n    if (!env.isActive())\n        return true;\n    else\n        return false;\n}\n",
+                    "x": 110,
+                    "y": 200,
+                    "z": "Main",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_waveform2",
+                    "type": "AudioSynthWaveform",
+                    "isClass": false,
+                    "name": "wf",
+                    "comment": "",
+                    "x": 250,
+                    "y": 130,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_envelope1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_envelope1",
+                    "type": "AudioEffectEnvelope",
+                    "isClass": false,
+                    "name": "env",
+                    "comment": "",
+                    "x": 350,
+                    "y": 130,
+                    "z": "Main",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_Out1:0"
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "9992a3f3.e2a248",
+            "label": "Synth",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "Synth_constValue1",
+                    "type": "ConstValue",
+                    "isClass": false,
+                    "name": "VOICE_COUNT",
+                    "value": "8",
+                    "valueType": "int",
+                    "x": 146,
+                    "y": 52,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#EB9834",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_Voice1",
+                    "type": "Voice",
+                    "isClass": true,
+                    "name": "voices[VOICE_COUNT]",
+                    "x": 140,
+                    "y": 170,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#CCFFCC",
+                    "wires": [
+                        [
+                            "Synth_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Synth_vars1",
+                    "type": "Variables",
+                    "isClass": false,
+                    "name": "const vars",
+                    "comment": "const float DIV127 = (1.0 / 127.0);\nconst float DIV100 = 0.01;\nconst float DIV64 = (1.0/64.0);\nconst float DIV360BY127 = (360.0/127.0);\nconst float DIV360BY120 = (3.0);",
+                    "x": 150,
+                    "y": 220,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin",
+                    "comment": "// used to simplify initialization from the \"parent\" class\nvoid begin()\n{\n    sgtl5000.enable();\n    sgtl5000.volume(0.5);\n    for (int i = 0; i < VOICE_COUNT; i++)\n    {\n        voices[i].begin();\n        mixVoices.gain(i, 0.8f/VOICE_COUNT); // set max to 0.8 to avoid clippin\n    }\n}\n",
+                    "x": 135,
+                    "y": 260,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_code2",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "note on/off functions",
+                    "comment": "void noteOn(byte note, byte velocity)\n{\n    //digitalWrite(NOTE_PRESSED_STATE_LED, HIGH); //any note \"pressed\"\n    // fist checks if this note is allready playing\n    // it that is the case then it \"reuses\" this \"slot\"\n    // this makes sure that not all \"slots\" is filled\n    // with the same playing note\n    // if the MIDI keyboard is for some reason\n    // not sending a noteoff (my keyboard is sometimes glitching)\n    // and when sending MIDI from my computer for fast playing songs\n    for (int i = 0; i < VOICE_COUNT; i++) \n    {\n        // first check if the note was played recently\n        if (voices[i].note == note) \n        {\n            voices[i].noteOn(note, velocity);\n            //digitalWrite(NOTE_OVERFLOWN_LED, LOW);\n            return; \n        }\n    }\n    // then if the note has not allready been played\n    // // second see if there is any free \"spot\"\n    for (int i = 0; i < VOICE_COUNT; i++) \n    {\n        if (voices[i].isNotPlaying())\n        {\n            voices[i].noteOn(note, velocity);\n            //digitalWrite(NOTE_OVERFLOWN_LED, LOW); // clear overflown notification\n            return;\n        }\n    }\n    //digitalWrite(NOTE_OVERFLOWN_LED, HIGH); // this is a notification that there was no free spots\n}\n\nvoid noteOff(byte note)\n{\n    //digitalWrite(NOTE_PRESSED_STATE_LED, LOW); //any note \"released\"\n    for (int i = 0; i < VOICE_COUNT; i++)\n    {\n        if (voices[i].note == note)\n        {\n            voices[i].noteOff();\n            return;\n        }\n    }\n}\n",
+                    "x": 180,
+                    "y": 300,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_code3",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "sustain functions",
+                    "comment": "void activateSustain()\n{\n    for (int i = 0; i < VOICE_COUNT; i++)\n    {\n        voices[i].isSustain = 1;\n    }\n}\n\nvoid deactivateSustain()\n{\n    for (int i = 0; i < VOICE_COUNT; i++)\n    {\n        voices[i].isSustain = 0;\n        if (!voices[i].isNoteOn)\n            voices[i].noteOff();\n    }\n}",
+                    "x": 170,
+                    "y": 340,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixVoices",
+                    "comment": "",
+                    "inputs": "1",
+                    "x": 325,
+                    "y": 169,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Synth_i2s1:0",
+                            "Synth_i2s1:1",
+                            "Synth_pt8211_2_1:0",
+                            "Synth_pt8211_2_1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Synth_pt8211_2_1",
+                    "type": "AudioOutputPT8211_2",
+                    "isClass": false,
+                    "name": "pt8211_2",
+                    "comment": "",
+                    "x": 498,
+                    "y": 116,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_i2s1",
+                    "type": "AudioOutputI2S",
+                    "isClass": false,
+                    "name": "i2s",
+                    "comment": "",
+                    "x": 480,
+                    "y": 170,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_sgtl5000_1",
+                    "type": "AudioControlSGTL5000",
+                    "isClass": false,
+                    "name": "sgtl5000",
+                    "comment": "",
+                    "x": 485,
+                    "y": 225,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "Synth_Comment1",
+                    "type": "Comment",
+                    "isClass": false,
+                    "name": "VOICE_COUNT is just a constant and is just a easy way to define the amount and can then be used in the begin loop for a global way of manipulating the amount of voices",
+                    "comment": "",
+                    "x": 820,
+                    "y": 45,
+                    "z": "9992a3f3.e2a248",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "b266f916.2de8e",
+            "label": "Main",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": true,
+            "mainNameType": "projectName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "Main_Synth1",
+                    "type": "Synth",
+                    "isClass": true,
+                    "name": "synth",
+                    "x": 90,
+                    "y": 80,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "Main_includeDef1",
+                    "type": "IncludeDef",
+                    "isClass": false,
+                    "name": "<MIDI.h>",
+                    "comment": "",
+                    "x": 100,
+                    "y": 35,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_vars1",
+                    "type": "Variables",
+                    "isClass": false,
+                    "name": "global vars",
+                    "comment": "const int ledPin = 13;",
+                    "x": 110,
+                    "y": 120,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code2",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "forward declarations",
+                    "comment": "\nvoid uartMidi_NoteOn(byte channel, byte note, byte velocity);\nvoid uartMidi_NoteOff(byte channel, byte note, byte velocity);\nvoid uartMidi_ControlChange(byte channel, byte control, byte value);\nvoid uartMidi_PitchBend(byte channel, int value);\n\nvoid usbMidi_NoteOn(byte channel, byte note, byte velocity);\nvoid usbMidi_NoteOff(byte channel, byte note, byte velocity);\nvoid usbMidi_ControlChange(byte channel, byte control, byte value);\nvoid usbMidi_PitchBend(byte channel, int value);\n\nvoid blinkLedTask(void);",
+                    "x": 140,
+                    "y": 160,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code3",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "MIDI_CREATE_INSTANCE",
+                    "comment": "MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);",
+                    "x": 160,
+                    "y": 200,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code4",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "setup() function",
+                    "comment": "\n// Arduino setup() function\nvoid setup()\n{\n  AudioMemory(96);\n\n  MIDI.begin();\n  MIDI.setHandleNoteOn(uartMidi_NoteOn);\n  MIDI.setHandleNoteOff(uartMidi_NoteOff);\n  MIDI.setHandleControlChange(uartMidi_ControlChange);\n  MIDI.setHandlePitchBend(uartMidi_PitchBend);\n\n  usbMIDI.setHandleNoteOn(usbMidi_NoteOn);\n  usbMIDI.setHandleNoteOff(usbMidi_NoteOff);\n  usbMIDI.setHandleControlChange(usbMidi_ControlChange);\n  usbMIDI.setHandlePitchChange(usbMidi_PitchBend);\n\n  synth.begin();\n\n  pinMode(ledPin, OUTPUT);\n  digitalWrite(ledPin, LOW);\n}\n",
+                    "x": 130,
+                    "y": 240,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code5",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "loop() function",
+                    "comment": "\n// Arduino loop() function\nvoid loop()\n{\n    usbMIDI.read();\n    MIDI.read();\n    blinkLedTask();\n}",
+                    "x": 125,
+                    "y": 280,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code6",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "uartMidi handler functions",
+                    "comment": "\n// uartMidi handler functions\nvoid uartMidi_NoteOn(byte channel, byte note, byte velocity) {\n    //velocity = 127 - velocity; should not be needed on a normal midi keyboard\n    synth.noteOn(note, velocity);\n    usbMIDI.sendNoteOn(note, velocity, channel, 0);\n}\n\nvoid uartMidi_NoteOff(byte channel, byte note, byte velocity) {\n    //velocity = 127 - velocity; should not be needed on a normal midi keyboard\n    synth.noteOff(note);\n    usbMIDI.sendNoteOff(note, velocity, channel, 0);\n}\n\nvoid uartMidi_ControlChange(byte channel, byte control, byte value) {\n    usbMIDI.sendControlChange(control, value, channel, 0x00);\n}\n\nvoid uartMidi_PitchBend(byte channel, int value) {\n    usbMIDI.sendPitchBend(value, channel, 0x00);\n}",
+                    "x": 160,
+                    "y": 320,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code7",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "usbMidi handler functions",
+                    "comment": "\n// usbMidi handler functions\nvoid usbMidi_NoteOn(byte channel, byte note, byte velocity) {\n    synth.noteOn(note, velocity);\n}\n\nvoid usbMidi_NoteOff(byte channel, byte note, byte velocity) {\n    synth.noteOff(note);    \n}\n\nvoid usbMidi_PitchBend(byte channel, int value) {\n  \n}\n\nvoid usbMidi_ControlChange(byte channel, byte control, byte value) {\n    if (control == 64) {\n        if (value == 0)\n            synth.deactivateSustain();\n        else if (value == 127)\n            synth.activateSustain();\n    }\n}",
+                    "x": 160,
+                    "y": 360,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "blink led task",
+                    "comment": "\n// blinkLedTask() function\nvoid blinkLedTask(void)\n{\n    // set the following to static so that they\n    // be kept here inside\n    static int ledState = LOW;             // ledState used to set the LED\n    static unsigned long previousMillis = 0;        // will store last time LED was updated\n    static unsigned long currentMillis = 0;\n    static unsigned long currentInterval = 0;\n    static unsigned long ledBlinkOnInterval = 100;\n    static unsigned long ledBlinkOffInterval = 2000;\n    currentMillis = millis();\n    currentInterval = currentMillis - previousMillis;\n    \n    if (ledState == LOW)\n    {\n        if (currentInterval > ledBlinkOffInterval)\n        {\n            previousMillis = currentMillis;\n            ledState = HIGH;\n            digitalWrite(ledPin, HIGH);\n        }\n    }\n    else\n    {\n        if (currentInterval > ledBlinkOnInterval)\n        {\n            previousMillis = currentMillis;\n            ledState = LOW;\n            digitalWrite(ledPin, LOW);\n        }\n    }\n}",
+                    "x": 120,
+                    "y": 400,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "873fcd60.e74438",
+            "label": "ClassIO_demo",
+            "inputs": 0,
+            "outputs": 0,
+            "export": false,
+            "isMain": false,
+            "mainNameType": "projectName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "ClassIO_demo_ClassIOorder1",
+                    "type": "ClassIOorder",
+                    "isClass": true,
+                    "name": "classioorder",
+                    "x": 210,
+                    "y": 155,
+                    "z": "873fcd60.e74438",
+                    "bgColor": "#ccffcc",
+                    "wires": [
+                        [],
+                        [],
+                        []
+                    ]
+                },
+                {
+                    "id": "ClassIO_demo_Comment1",
+                    "type": "Comment",
+                    "isClass": false,
+                    "name": "the order of theese outputs represent the inner TabOutput:s order Top-Bottom",
+                    "comment": "",
+                    "x": 565,
+                    "y": 155,
+                    "z": "873fcd60.e74438",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "57ddab8d.76df5c",
+            "label": "ClassIOorder",
+            "inputs": 0,
+            "outputs": 0,
+            "export": false,
+            "isMain": false,
+            "mainNameType": "projectName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "ClassIOorder_Out1",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "OutC",
+                    "comment": "",
+                    "x": 455,
+                    "y": 160,
+                    "z": "57ddab8d.76df5c",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "ClassIOorder_Out2",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "OutB",
+                    "comment": "",
+                    "x": 455,
+                    "y": 210,
+                    "z": "57ddab8d.76df5c",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "ClassIOorder_Out3",
+                    "type": "TabOutput",
+                    "isClass": false,
+                    "name": "OutA",
+                    "comment": "",
+                    "x": 455,
+                    "y": 255,
+                    "z": "57ddab8d.76df5c",
+                    "bgColor": "#CCE6FF",
+                    "wires": []
+                },
+                {
+                    "id": "ClassIOorder_Comment1",
+                    "type": "Comment",
+                    "isClass": false,
+                    "name": "the order (top to bottom) of theese outputs represents the order outside",
+                    "comment": "",
+                    "x": 775,
+                    "y": 165,
+                    "z": "57ddab8d.76df5c",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                }
+            ]
+        }
+    ],
+    "nodeAddons": {}
+}
