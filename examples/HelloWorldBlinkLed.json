@@ -1,0 +1,108 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ZipExportUseSubFolder": true,
+            "ProjectName": "HelloWorldBlinkLed",
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "BiDirDataWebSocketBridge": {},
+        "workspaces": {},
+        "sidebar": {},
+        "palette": {},
+        "editor": {},
+        "devTest": {},
+        "IndexedDBfiles": {
+            "testFileNames": "testFile.txt"
+        },
+        "NodeDefGenerator": {},
+        "NodeDefManager": {},
+        "NodeHelpManager": {},
+        "OSC": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "b266f916.2de8e",
+            "label": "Main",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": true,
+            "mainNameType": "projectName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {},
+            "nodes": [
+                {
+                    "id": "Main_vars1",
+                    "type": "Variables",
+                    "isClass": false,
+                    "name": "global vars",
+                    "comment": "const int ledPin = 13;",
+                    "x": 130,
+                    "y": 100,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code2",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "forward declarations",
+                    "comment": "// forward declarations (so that functions can be put in the end)\nvoid blinkLedTask(void);",
+                    "x": 160,
+                    "y": 140,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code4",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "setup() function",
+                    "comment": "\n// Arduino setup() function\nvoid setup()\n{\n    pinMode(ledPin, OUTPUT);\n    digitalWrite(ledPin, LOW);\n}\n",
+                    "x": 145,
+                    "y": 180,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code5",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "loop() function",
+                    "comment": "\n// Arduino loop() function\nvoid loop()\n{\n    blinkLedTask();\n}",
+                    "x": 140,
+                    "y": 220,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "Main_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "blink led task",
+                    "comment": "\n// blinkLedTask() function\nvoid blinkLedTask(void)\n{\n    // set the following to static so that they\n    // be kept here inside\n    static int ledState = LOW;             // ledState used to set the LED\n    static unsigned long previousMillis = 0;        // will store last time LED was updated\n    static unsigned long currentMillis = 0;\n    static unsigned long currentInterval = 0;\n    static unsigned long ledBlinkOnInterval = 100;\n    static unsigned long ledBlinkOffInterval = 2000;\n    currentMillis = millis();\n    currentInterval = currentMillis - previousMillis;\n    \n    if (ledState == LOW)\n    {\n        if (currentInterval > ledBlinkOffInterval)\n        {\n            previousMillis = currentMillis;\n            ledState = HIGH;\n            digitalWrite(ledPin, HIGH);\n        }\n    }\n    else\n    {\n        if (currentInterval > ledBlinkOnInterval)\n        {\n            previousMillis = currentMillis;\n            ledState = LOW;\n            digitalWrite(ledPin, LOW);\n        }\n    }\n}",
+                    "x": 135,
+                    "y": 260,
+                    "z": "b266f916.2de8e",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                }
+            ]
+        }
+    ],
+    "nodeAddons": {}
+}
