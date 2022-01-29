@@ -522,48 +522,7 @@ RED.export = (function () {
 
     function GetLinkName(l) {
         var dbg = RED.OSC.settings.UseDebugLinkName;
-        // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
-        /*var sourceName = (l.origin?l.origin.source.name:l.source.name);
-        var targetName = (l.origin?l.origin.target.name:l.target.name);
-        sourceName = GetNameWithoutArrayDef(sourceName);
-        targetName = GetNameWithoutArrayDef(targetName);
-        if (l.origin) {
-            if (l.origin.source !== l.source)
-                sourceName += (dbg?"_":"") + GetNameWithoutArrayDef(l.source.name);
-            if (l.origin.target !== l.target)
-                targetName += (dbg?"_":"") + GetNameWithoutArrayDef(l.target.name);
-        }
 
-        var sourcePort = parseInt(l.origin?l.origin.sourcePort:l.sourcePort);
-        var targetPort = parseInt(l.origin?l.origin.targetPort:l.targetPort);
-
-        
-        var sourceId = sourceName + (dbg?"_":"") + sourcePort;
-        var targetId = "";
-        
-        var sourceIsArray = (l.sourcePath != undefined)?getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName):"";
-        var targetIsArray = (l.targetPath != undefined)?getArrayIndexersFromPath(l.targetPath+"/"+l.targetName):"";
-        //console.error(sourceName,sourceIsArray,targetName, targetIsArray);
-        
-        if (sourceIsArray.length != 0 || targetIsArray.length != 0) {
-
-            sourcePort = parseInt(l.sourcePort);
-            sourceId = sourceName + (dbg?"_":"") + sourcePort;
-            targetPort = parseInt(l.targetPort);
-
-            var sourceIsArray = getArrayIndexersFromPath(l.sourcePath+"/"+l.sourceName);
-            //console.error("-------------------------- " +l.sourcePath+"/"+l.sourceName+ " "+srcIsArray);
-            if (sourceIsArray.length != 0) sourceId += (dbg?"_":"") + sourceIsArray;
-
-            var targetIsArray = getArrayIndexersFromPath(l.targetPath+"/"+l.targetName);
-            //console.error("-------------------------- " + l.targetPath+"/"+l.targetName + " " + dstIsArray);
-            if (targetIsArray.length != 0) targetId = targetName + (dbg?"_":"") + targetPort + (dbg?"_":"") + targetIsArray;
-            else targetId = targetName + (dbg?"_":"") + targetPort;
-        }
-        else
-        {
-            targetId = targetName + (dbg?"_":"") + targetPort;
-        }*/
         if (l.origin == undefined) {
             var sourceName = l.source.name;
             var targetName = l.target.name;
@@ -573,18 +532,29 @@ RED.export = (function () {
         else {
             var sourcePath = l.sourcePath!=undefined?(l.sourcePath.replaceAllVal("/", (dbg?"_":""))):"";
             var targetPath = l.targetPath!=undefined?(l.targetPath.replaceAllVal("/", (dbg?"_":""))):"";
+            if (sourcePath.startsWith('_')) sourcePath = sourcePath.substring(1);
+            if (targetPath.startsWith('_')) targetPath = targetPath.substring(1);
             var sourceName = l.sourceName.replaceAllVal("/", (dbg?"_":""));
-            var targetName = l.targetName.replaceAllVal("/", (dbg?"_":""));;
+            var targetName = l.targetName.replaceAllVal("/", (dbg?"_":""));
+            if (l.linkPath != undefined) {
+                var lp = l.linkPath.replaceAllVal("/", (dbg?"_":""));
+                if (lp.startsWith('_')) lp = lp.substring(1);
+                if (sourcePath.startsWith(lp) && targetPath.startsWith(lp)) {
+                    sourcePath = sourcePath.substring(lp.length);
+                    targetPath = targetPath.substring(lp.length);
+                }
+            }
         }
-        
-        var sourceId = sourcePath + (dbg?"_":"") + sourceName + (dbg?"_":"") + l.sourcePort;
-        var targetId = targetPath + (dbg?"_":"") + targetName + (dbg?"_":"") + l.targetPort;
+        if (sourceName.startsWith('_')) sourceName = sourceName.substring(1);
+        if (targetName.startsWith('_')) targetName = targetName.substring(1);
+
+        var sourceId = (sourcePath?(sourcePath+(dbg?"_":"")):"") + sourceName + (dbg?"_":"") + l.sourcePort;
+        var targetId = (targetPath?(targetPath+(dbg?"_":"")):"") + targetName + (dbg?"_":"") + l.targetPort;
 
         if (RED.OSC.settings.HashLinkNames == true)
             var name = RED.OSC.settings.HashLinkNamesHeader||"L" + (cyrb53(sourceId + (dbg?"_":"") + targetId)).toString(16);
         else
             var name = (sourceId + (dbg?"_":"") + targetId);
-
         
         return name;
     }
