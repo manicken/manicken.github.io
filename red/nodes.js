@@ -2009,6 +2009,14 @@ RED.nodes = (function() {
             var valid = false;
             var inValidText = "connecting bus wires to either TabInput or TabOutput not yet supported";
         }
+        else if (isBus && (wsSource != undefined && wsTarget != undefined)) {
+            var valid = false;
+            var inValidText = "connecting bus wires between classes not yet supported";
+        }
+        else if (isBus && wsTarget != undefined) {
+            var valid = false;
+            var inValidText = "connecting bus wires to classes not yet supported";
+        }
         else if ((l.source.type == "BusJoin" || l.target.type == "BusSplit" || l.source.type == "BusSplit" || l.target.type == "BusJoin")) {
             var valid = false;
             var inValidText = "BusJoin and BusSplit not yet supported";
