@@ -554,6 +554,8 @@ var OSC = (function() {
         if (link.target._def.dynInputs == undefined)
             bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
         else {
+            // first update the project, used by getDynInputDynSizePortStartIndex, TODO fix so that it don't need to generated every time
+            RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
             var nextFreeIndex = RED.export.getDynInputDynSizePortStartIndex(link.target, link.source, link.sourcePort);
             bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, nextFreeIndex);
         }
