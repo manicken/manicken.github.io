@@ -690,15 +690,39 @@ RED.main = (function() {
                 showLatestUpdates("<strong>This is a new version, or your browser cache has been cleared!</strong>");
             }
     }
-    $('#btn-latest-updates').click(function() { showLatestUpdates(""); });
+    $('#btn-latest-updates').click(function() { showUpdateHistory(); });
     function showLatestUpdates(header){
         var notes = RED.vernotes[RED.version];
         if (notes == undefined) notes = "";
         else notes = "<br><br>" + notes;
         if (header == undefined) header = "";
         header += "<br><br><strong>Major Updates Fixes</strong>";
-        RED.notify(header+notes+"<br><br> click this to close (it will only be shown once, but can be shown @ 'topright menu' - 'Latest Updates')", "success", true, 2000);
+        RED.notify(header+notes+"<br><br> click this to close (it will only be shown once) the complete update history can be shown at @ 'topright menu' - 'Latest Updates')", "success", true, 2000);
     } 
+
+    function showUpdateHistory() {
+        var header = "<h1>Update history</h1><br>";
+        var notes = "";
+        var names = Object.getOwnPropertyNames(RED.vernotes);
+        for (var i = 0; i < names.length; i++) {
+            notes += "version: " + names[i] + "\n" + RED.vernotes[names[i]];
+        }
+        var textToShow = header+notes;
+
+        RED.view.dialogs.showExportDialog("OSC Export to Dynamic Audio Lib", textToShow.split("<br>").join("\n").split("&nbsp;").join(" "), " Version history ", {okText:"send", tips:""});
+        //var mywindow = window.open('Audio System Design Tool for Teensy Audio Library - Update History', 'UpdateHistory', 'height=400,width=600');
+/* remove this non working 'cross domain'-bullshit problem
+		mywindow.document.write('<html><head>');
+		mywindow.document.write('<link rel="stylesheet" href="style.css" type="text/css" />'); 
+		mywindow.document.write('</head><body >');
+		//mywindow.document.write('<div id="chart">')
+		mywindow.document.write(textToShow);
+		mywindow.document.write('</body></html>');
+
+		mywindow.document.close(); // necessary for IE >= 10
+		mywindow.focus(); // necessary for IE >= 10*/
+        
+    }
 
     function httpDownloadAsync(url, cbOnOk, cbOnError, timeout)
     {
