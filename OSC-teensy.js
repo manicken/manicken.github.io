@@ -354,7 +354,7 @@ var OSC = (function() {
                     if (i < oscRx.packets.length - 1)
                         rxDecoded += "<br>";
                 }*/
-                rxDecoded = GetBundleCompactForm(oscRx).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>');
+                rxDecoded = GetBundleCompactForm(oscRx,true);
             }
             if ((RED.OSC.settings.ShowOutputOscRxRaw == true) || (RED.OSC.settings.ShowOutputOscRxDecoded == true))
                 AddLineToLog(rxDecoded);
@@ -377,7 +377,7 @@ var OSC = (function() {
 
         if (port == undefined || port.writable == undefined) {
             if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("[not connected]", "warning");
+            AddLineToLog("(not connected)", "warning");
             return;
         }
 
@@ -421,13 +421,14 @@ var OSC = (function() {
         delete b.add;
         delete b.addPackets;
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(GetBundleCompactForm(b).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>'));
+            AddLineToLog(GetBundleCompactForm(b,true));
         SendData(CreateBundleData(b));
     }
+    var oscOptions = {metadata:true};
     function SendPacket(p) {
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(GetPacketCompactForm(p).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>'));
-        SendData(osc.writePacket(p));
+            AddLineToLog(GetPacketCompactForm(p,true));
+        SendData(osc.writePacket(p,oscOptions));
     }
     function SendMessage(address, valueTypes, ...values) {
         SendPacket(CreatePacket(address, valueTypes, ...values));
@@ -436,13 +437,16 @@ var OSC = (function() {
         SendRawToSerial(new TextEncoder("utf-8").encode(text));
     }
     function CreateMessageData(address, valueTypes, ...values)  {
-        return osc.writePacket(CreatePacket(address, valueTypes, ...values));
+        var p = CreatePacket(address, valueTypes, ...values);
+        if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
+            AddLineToLog(GetPacketCompactForm(p,true));
+        return osc.writePacket(p);
     }
 
     function CreateBundleData(b) {
         delete b.add;
         delete b.addPackets;
-        return osc.writeBundle(b)
+        return osc.writeBundle(b,oscOptions)
     }
 
     function CreatePacket(address, valueTypes, ...values) {
@@ -452,13 +456,18 @@ var OSC = (function() {
         var minLength = valueTypes.length;
         if (minLength > values.length) {
             minLength = values.length;
-            AddLineToLog("(ERROR) @ OSC.CreatePacket() "+address+" valueTypes \"" +valueTypes+"\" length mismatch count of "+values.join("|")+"<br>nbsp;nbsp;some parameters are trimmed", "error");
+            AddLineToLog("(WARNING) @ OSC.CreatePacket() "+address+" valueTypes \"" +valueTypes+"\" length mismatch count of "+values.join("|")+"<br>nbsp;nbsp;some parameters are trimmed", "warning");
         }
 
         //console.error(valueTypes,valueTypes.length);
         
         for (var i = 0; i < minLength; i++) {
-            packet.args.push({type:valueTypes[i], value:values[i]})
+            if (valueTypes[i] == "T")
+                packet.args.push({type:'T'})
+            else if (valueTypes[i] == "F")
+                packet.args.push({type:'F'})
+            else
+                packet.args.push({type:valueTypes[i], value:values[i]})
         }
         return packet;
     }
@@ -667,12 +676,15 @@ var OSC = (function() {
         }
     }
 
-    function GetBundleCompactForm(bundle) {
+    function GetBundleCompactForm(bundle,htmlFormat) {
         var str = "";
         str = "timeTag:" + JSON.stringify(bundle.timeTag) + "\n";
         str += "packets:\n";
         for (var i = 0; i < bundle.packets.length; i++) {
             str += OSC.GetPacketCompactForm(bundle.packets[i]) + "\n";
+        }
+        if (htmlFormat != undefined && htmlFormat == true) {
+            return str.split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>');
         }
         return str;
     }
@@ -681,6 +693,8 @@ var OSC = (function() {
         var addr = packet.address;
         var argsVF = ""; // VF = Value Format
         var argsV = "";
+
+        //return JSON.stringify(packet);
 
         for (let i = 0; i < packet.args.length; i++) {
             argsVF += packet.args[i].type;

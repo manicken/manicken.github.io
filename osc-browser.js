@@ -846,7 +846,7 @@ var osc = osc || {};
             byteLength: 0,
             parts: []
         };
-
+        //console.warn(msg.args);
         osc.addDataPart(osc.writeString(msg.address), dataCollection);
         return osc.collectArguments(msg.args, options, dataCollection);
     };
@@ -1097,14 +1097,17 @@ var osc = osc || {};
             var arg = args[i],
                 msgArg;
 
-            if (typeof (arg) === "object" && arg.type && arg.value !== undefined) {
+            if (typeof (arg) === "object" && arg.type != undefined && arg.value != undefined) {
                 // We've got an explicitly typed argument.
+                console.trace("osc object:" + JSON.stringify(arg));
                 msgArg = arg;
             } else if (osc.isArray(arg)) {
+                console.log("osc array:" + arg);
                 // We've got an array of arguments,
                 // so they each need to be inferred and expanded.
                 msgArg = osc.annotateArguments(arg);
             } else {
+                console.log("determine:" + arg);
                 var oscType = osc.inferTypeForArgument(arg);
                 msgArg = {
                     type: oscType,
