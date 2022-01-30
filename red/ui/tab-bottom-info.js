@@ -81,14 +81,15 @@ RED.bottombar.info = (function() {
 	}
 
 	return {
-		refresh:refresh,
+		refresh,
 		clear: function() {
 		    $("#tab-output").html("");
 		},
-		setContent: setContent,
-		addContent: addContent,
-        addLine:addLine,
-		addMessageListener: addMessageListener,
-		removeMessageListener: removeMessageListener
+		setContent,
+		addContent,
+        //addElement,
+        addLine,
+		addMessageListener,
+		removeMessageListener
     }
 })();

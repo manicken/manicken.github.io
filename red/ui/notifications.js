@@ -45,6 +45,20 @@ RED.notify = (function() {
             n.style.width = width;
         }
 		n.innerHTML = msg;
+        if (type) {
+            if (type == "warning" && RED.main.settings.LogAddNotificationWarning == true) {
+                RED.bottombar.info.addContent('<div class="alert alert-'+type+' message">'+msg+"</div>");
+            }
+            else if (type == "error" && RED.main.settings.LogAddNotificationError == true) {
+                RED.bottombar.info.addContent('<div class="alert alert-'+type+' message">'+msg+"</div>");
+            }
+            else if (type == "info" && RED.main.settings.LogAddNotificationInfo == true) {
+                RED.bottombar.info.addContent('<div class="alert alert-'+type+' message">'+msg+"</div>");
+            }
+            else if (RED.main.settings.LogAddNotificationOther == true) {
+                RED.bottombar.info.addContent('<div class="alert alert-'+type+' message">'+msg+"</div>");
+            }
+        }
 		$("#notifications").append(n);
 		//$("#notifications").css("left", "50%");
 		$(n).slideDown(100);

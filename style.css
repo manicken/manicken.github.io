@@ -563,6 +563,10 @@
       cursor: text;
       overflow-y:scroll;
   }
+  .message {
+      margin: 0;
+      padding: 5px;
+  }
   
   /* ---------- Layout ---------- */
   #main-container {

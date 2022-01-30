@@ -233,7 +233,9 @@ RED.nodes = (function() {
             if (nodes[i] == node) continue; // don't check against itself
             var splitStarting = nodes[i].name.split('['); // get array name without array def,
 
-			if (splitStarting[0] == name) return true;
+			if (splitStarting[0] == name){
+                return {node:node, nodeDuplicate:nodes[i]};
+            }
 		}
 /*
 		for (i in workspaces) {
@@ -243,13 +245,13 @@ RED.nodes = (function() {
 			if (configNodes.hasOwnProperty(i)) { }
 		}
 */
-		return false;
+		return undefined;
 	}
 
 	function createUniqueCppName(n, wsId, nameShouldEndWithNumber) {
 		//console.log("getUniqueCppName, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
 		var basename = n.name; //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
-		if (!checkName(basename, wsId)) return basename; // no need to change
+		if (checkName(basename, wsId) == undefined) return basename; // no need to change
 		var count = 1;
         if (nameShouldEndWithNumber == undefined) {
             //console.log("generate name from: " + basename);
@@ -270,7 +272,7 @@ RED.nodes = (function() {
 		while (1) {
 			//name = basename + sep + count;
             name = basename + count;
-			if (!checkName(name, wsId)) break;
+			if (checkName(name, wsId) == undefined) break;
 			count++;
 		}
 		//console.log("getUniqueCppName, unique name=" + name);

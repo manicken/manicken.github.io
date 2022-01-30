@@ -152,8 +152,9 @@ RED.editor = (function() {
             RED.notify("not a valid c/cpp name: " + str, "warning", null, 4000);
             return false;
         }
-        if (RED.nodes.checkName(str, node.z, node)) {
-            RED.notify("this name is allready used: " + str, "warning", null, 4000);
+        var chkName = RED.nodes.checkName(str, node.z, node);
+        if (chkName != undefined) {
+            RED.notify("this name is allready used: " + str + " @ " + chkName.nodeDuplicate.z + " " + chkName.nodeDuplicate.id, "warning", null, 4000);
             return false;
         }
         return true;
