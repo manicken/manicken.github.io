@@ -448,27 +448,57 @@ var OSC = (function() {
         delete b.addPackets;
         return osc.writeBundle(b,oscOptions)
     }
+    function countTypesThatHaveValues(types) {
+        var c = 0;
+        for (var i=0;i<types.length;i++) {
+            if (types[i] == "T") continue; // special non value boolean true type
+            if (types[i] == "F") continue; // special non value boolean true type
+            c++;
+        }
+        return c;
+    }
 
-    function CreatePacket(address, valueTypes, ...values) {
+    function CreatePacket(address, vts, ...vs) { // valueTypes, values
         var packet = {address:address, args: []};
-        if (valueTypes == undefined) return packet; // just return a "empty" packet
-
-        var minLength = valueTypes.length;
+        if (vts == undefined || vts == "") return packet; // just return a "empty" packet
+        
+        /*var minLength = countTypesThatHaveValues(valueTypes);
         if (minLength > values.length) {
             minLength = values.length;
-            AddLineToLog("(WARNING) @ OSC.CreatePacket() "+address+" valueTypes \"" +valueTypes+"\" length mismatch count of "+values.join("|")+"<br>nbsp;nbsp;some parameters are trimmed", "warning");
-        }
+            
+        }*/
 
         //console.error(valueTypes,valueTypes.length);
-        
-        for (var i = 0; i < minLength; i++) {
-            /*if (valueTypes[i] == "T")
-                packet.args.push({type:'T'})
-            else if (valueTypes[i] == "F")
-                packet.args.push({type:'F'})
-            else*/
-                packet.args.push({type:valueTypes[i], value:values[i]})
+        var vti = 0; // value type index
+        var vi = 0; // value index
+        while (1) { // this is dangerous so special care must be taken
+            if (vts[vti] == "T" || vts[vti] == "F") {
+                packet.args.push({type:vts[vti++]});
+            }
+            else {
+                packet.args.push({type:vts[vti++], value:vs[vi++]});
+            }
+
+            if (vti == vts.length) break;
+            if (vs.length != 0 && vi == vs.length) break;
         }
+        var skippedItems = "";
+        if (vti < vts.length) skippedItems = "skipped following types (because of types and values mismatch):<br>[";
+        else if (vi < vs.length) skippedItems = "skipped following values: (because of types and values mismatch):<br>[";
+
+        while (vti < vts.length) {
+            skippedItems += vts[vti];
+            if (vti < (vts.length - 1)) skippedItems += ", ";
+            vti++;
+        }
+
+        while (vi < vs.length) {
+            skippedItems += vs[vi];
+            if (vi < (vs.length - 1)) skippedItems += ", ";
+            vi++;
+        }
+        if (skippedItems != "")
+            AddLineToLog("(WARNING) @ OSC.CreatePacket() "+skippedItems + "]", "warning");
         return packet;
     }
 
