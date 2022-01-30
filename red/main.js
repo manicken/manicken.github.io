@@ -21,12 +21,16 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
-        version:1,
+        version:2,
         vernotes:{"1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                         "* OSC live update now works while connecting to dyn. input objects<br><br>"+
                         "* Added new settings @ Global: &nbsp;&nbsp;LogAddNotificationOther,&nbsp;LogAddNotificationInfo,<br>&nbsp;&nbsp;LogAddNotificationWarning&nbsp;and&nbsp;LogAddNotificationError<br>"+
                         "&nbsp;&nbsp;these are used to log notifications in the bottom log panel, for easier debug<br><br>"+
-                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.<br>"},
+                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.<br>",
+                  "2":"* OSC live update don't update the dynmixer size automatically<br>"+
+                      "* no support of bus wires in live update<br>"+
+                      "* OSC send can now send boolean types T F without any mathing value<br>"+
+                      "&nbsp;&nbsp;example OSC.SendMessage(addr,'iiTFiiFTii',0,1,2,3,4,5,6);"},
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
 })();
