@@ -462,11 +462,11 @@ var OSC = (function() {
         //console.error(valueTypes,valueTypes.length);
         
         for (var i = 0; i < minLength; i++) {
-            if (valueTypes[i] == "T")
+            /*if (valueTypes[i] == "T")
                 packet.args.push({type:'T'})
             else if (valueTypes[i] == "F")
                 packet.args.push({type:'F'})
-            else
+            else*/
                 packet.args.push({type:valueTypes[i], value:values[i]})
         }
         return packet;
