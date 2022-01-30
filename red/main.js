@@ -70,6 +70,7 @@ RED.main = (function() {
     var settingsCategory = { label:"Global", expanded:false, popupText: "Global main setttings that don't belong to a specific category", bgColor:"#DDD" };
 
     var settingsEditor = {
+        ClearOutputLog:       {label:"Clear output log", type:"button", action: ClearOutputLog},
         AutoDownloadJSON:     {label:"Auto Download JSON", type:"boolean", popupText:"When enabled this automatically downloads the current design as JSON after the page has loaded,<br>this can be used as a failsafe for important projects.<br><br>future improvement/additional functionality could involve a autosave based on a interval as well."},
         transmitDebug:        {label:"Debug Output", expanded:false, bgColor:"#DDD",
             items: {
@@ -82,6 +83,9 @@ RED.main = (function() {
         
         //AllowLowerCaseWorkspaceName:     {label:"Allow LowerCase WorkspaceName", type:"boolean", popupText:"When enabled this allows the workspace name to begin with lowercase letters.<br>This should be avoided in C++ exports as class names should allways begin with a uppercase to distinct them from the instance name."},
     };
+    function ClearOutputLog() {
+        RED.bottombar.info.setContent("");
+    }
 	//NOTE: code generation save function have moved to arduino-export.js
 	
 	//var classColor = "#E6E0F8"; // standard

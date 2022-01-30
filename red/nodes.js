@@ -2002,7 +2002,7 @@ RED.nodes = (function() {
                     (tabIn != undefined && tabIn.isBus) ||
                     (l.source.type == "BusJoin" || l.target.type == "BusSplit");
 
-        if ((sourceIsArray!=undefined) && (targetIsArray!=undefined) && (l.target._def.defaults.inputs!=undefined)) {// array to array of dynmixers not currently supported
+        if ((sourceIsArray!=undefined) && (targetIsArray!=undefined) && (l.target._def.dynInputs/*_def.defaults.inputs*/!=undefined)) {// array to array of dynmixers not currently supported
             
             var valid = false;
             var inValidText = "array to 'array of dynmixers' not yet supported in OSC export<br> non priority to implement";

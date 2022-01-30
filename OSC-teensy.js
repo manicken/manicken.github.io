@@ -347,13 +347,14 @@ var OSC = (function() {
             
             
             if (RED.OSC.settings.ShowOutputOscRxDecoded == true) {
-                rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
+                /*rxDecoded += "<br>timeTag:" + JSON.stringify(oscRx.timeTag) + "<br>";
                 rxDecoded += "packets: " + "<br>";
                 for (var i = 0; i < oscRx.packets.length; i++) {
                     rxDecoded += JSON.stringify(oscRx.packets[i]);
                     if (i < oscRx.packets.length - 1)
                         rxDecoded += "<br>";
-                }
+                }*/
+                rxDecoded = GetBundleCompactForm(oscRx).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>');
             }
             if ((RED.OSC.settings.ShowOutputOscRxRaw == true) || (RED.OSC.settings.ShowOutputOscRxDecoded == true))
                 AddLineToLog(rxDecoded);
@@ -370,13 +371,13 @@ var OSC = (function() {
 
     async function SendRawToSerial(data) {
         if (available == false){ 
-            AddLineToLog("[Web Serial API not availabe]", "#FF0000", "#FFF0F0");
+            AddLineToLog("[Web Serial API not availabe]", "warning");
             return;
         }
 
         if (port == undefined || port.writable == undefined) {
             if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("[not connected]", "#FF0000", "#FFF0F0");
+            AddLineToLog("[not connected]", "warning");
             return;
         }
 
@@ -413,19 +414,19 @@ var OSC = (function() {
         if (RED.OSC.settings.TransportLayer == 0) // Web Serial API
             SendRawToSerial(data);
         else {
-            AddLineToLog("(WARNING) Try to use Transport Layer NIY "+RED.OSC.LayerOptionTexts[RED.OSC.settings.TransportLayer] + "<brPlease select annother transport layer", "#FF0000", "#FFF0F0");
+            AddLineToLog("(WARNING) Try to use Transport Layer NIY "+RED.OSC.LayerOptionTexts[RED.OSC.settings.TransportLayer] + "<brPlease select annother transport layer", "warning");
         }
     }
     function SendBundle(b) {
         delete b.add;
         delete b.addPackets;
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(JSON.stringify(b));
+            AddLineToLog(GetBundleCompactForm(b).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>'));
         SendData(CreateBundleData(b));
     }
     function SendPacket(p) {
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(JSON.stringify(p));
+            AddLineToLog(GetPacketCompactForm(p).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;').split('\n').join('<br>'));
         SendData(osc.writePacket(p));
     }
     function SendMessage(address, valueTypes, ...values) {
@@ -451,7 +452,7 @@ var OSC = (function() {
         var minLength = valueTypes.length;
         if (minLength > values.length) {
             minLength = values.length;
-            AddLineToLog("(ERROR) @ OSC.CreatePacket() "+address+" valueTypes \"" +valueTypes+"\" length mismatch count of "+values.join("|")+"<br>nbsp;nbsp;some parameters are trimmed", "#FF0000", "#FFF0F0");
+            AddLineToLog("(ERROR) @ OSC.CreatePacket() "+address+" valueTypes \"" +valueTypes+"\" length mismatch count of "+values.join("|")+"<br>nbsp;nbsp;some parameters are trimmed", "error");
         }
 
         //console.error(valueTypes,valueTypes.length);
@@ -486,7 +487,7 @@ var OSC = (function() {
 
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
 
-        if (node._def.defaults.inputs == undefined) // if inputs is defined in defaults that mean it's user editable
+        if (node._def.dynInputs == undefined) //if (node._def.defaults.inputs == undefined) // if inputs is defined in defaults that mean it's user editable
             SendMessage(GetCreateObjectAddr(),"ss", node.type, node.name);
         else
             SendMessage(GetCreateObjectAddr(),"ssi", node.type, node.name,node.inputs);
@@ -550,7 +551,12 @@ var OSC = (function() {
         var linkName = RED.export.GetLinkName(link);
         var bundle = OSC.CreateBundle();
         bundle.add(GetCreateConnectionAddr(), "s", linkName);
-        bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
+        if (link.target._def.dynInputs == undefined)
+            bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
+        else {
+            var nextFreeIndex = RED.export.getDynInputDynSizePortStartIndex(link.target, link.source, link.sourcePort);
+            bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, nextFreeIndex);
+        }
         SendBundle(bundle);
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("added link [" + linkName  + "] " + RED.export.GetLinkDebugName(link));
@@ -638,6 +644,16 @@ var OSC = (function() {
         }
     }
 
+    function GetBundleCompactForm(bundle) {
+        var str = "";
+        str = "timeTag:" + JSON.stringify(bundle.timeTag) + "\n";
+        str += "packets:\n";
+        for (var i = 0; i < bundle.packets.length; i++) {
+            str += OSC.GetPacketCompactForm(bundle.packets[i]) + "\n";
+        }
+        return str;
+    }
+
     function GetPacketCompactForm(packet) {
         var addr = packet.address;
         var argsVF = ""; // VF = Value Format
@@ -656,26 +672,30 @@ var OSC = (function() {
         else // no arguments
             return '("' + addr + '")'
     }
-
-    function AddLineToLog(text, foreColor, bgColor) {
-        var style = "";
-        if (foreColor != undefined)
-            style = "color:" + foreColor + ";";
-        if (bgColor != undefined)
-            style += "background-color:" + bgColor + ";";
+    var lastLogType = "info1";
+    function AddLineToLog(text, type) {
+        if (type != undefined)
+            text = '<div class="alert alert-'+type+' message">'+text+"</div>";
+        else {
+            if (lastLogType == "info1") {
+                lastLogType = "info2";
+            }
+            else {
+                lastLogType = "info1";
+            }
+            text = '<div class="alert alert-'+lastLogType+' message">'+text+"</div>";
+        }
         if (RED.OSC.settings.OnlyShowLastDebug == false)
-            RED.bottombar.info.addLine("<span style=" + style + ">" + text + "</span>");
+            RED.bottombar.info.addContent(text);
         else
-            RED.bottombar.info.setContent("<span style=" + style + ">" + text + "</span>");
+            RED.bottombar.info.setContent(text);
     }
 
-    function SetLog(text, foreColor, bgColor) {
-        var style = "";
-        if (foreColor != undefined)
-            style = "color:" + foreColor + ";";
-        if (bgColor != undefined)
-            style += "background-color:" + bgColor + ";";
-        RED.bottombar.info.setContent("<span style=" + style + ">" + text + "</span>");
+    function SetLog(text, type) {
+        if (type != undefined)
+            text = '<div class="alert alert-'+type+' message">'+text+"</div>";
+
+        RED.bottombar.info.setContent(text);
     }
 
     var Get = {
@@ -696,6 +716,7 @@ var OSC = (function() {
         
         RootAddress: RED.OSC.settings.RootAddress,
         NoteFreqs: [8.176, 8.662, 9.177, 9.723, 10.301, 10.913, 11.562, 12.25, 12.978, 13.75, 14.568, 15.434, 16.352, 17.324, 18.354, 19.445, 20.602, 21.827, 23.125, 24.5, 25.957, 27.5, 29.135, 30.868, 32.703, 34.648, 36.708, 38.891, 41.203, 43.654, 46.249, 48.999, 51.913, 55, 58.27, 61.735, 65.406, 69.296, 73.416, 77.782, 82.407, 87.307, 92.499, 97.999, 103.826, 110, 116.541, 123.471, 130.813, 138.591, 146.832, 155.563, 164.814, 174.614, 184.997, 195.998, 207.652, 220, 233.082, 246.942, 261.626, 277.183, 293.665, 311.127, 329.628, 349.228, 369.994, 391.995, 415.305, 440, 466.164, 493.883, 523.251, 554.365, 587.33, 622.254, 659.255, 698.456, 739.989, 783.991, 830.609, 880, 932.328, 987.767, 1046.502, 1108.731, 1174.659, 1244.508, 1318.51, 1396.913, 1479.978, 1567.982, 1661.219, 1760, 1864.655, 1975.533, 2093.005, 2217.461, 2349.318, 2489.016, 2637.02, 2793.826, 2959.955, 3135.963, 3322.438, 3520, 3729.31, 3951.066, 4186.009, 4434.922, 4698.636, 4978.032, 5274.041, 5587.652, 5919.911, 6271.927, 6644.875, 7040, 7458.62, 7902.133, 8372.018, 8869.844, 9397.273, 9956.063, 10548.08, 11175.3, 11839.82, 12543.85],
+        GetBundleCompactForm, // for debuggin bundles
         GetPacketCompactForm, // for debuggin messages
         SendData, // uses the encoding and transport layer settings
         SendRawToSerial,

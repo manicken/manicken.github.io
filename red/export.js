@@ -75,7 +75,7 @@ RED.export = (function () {
             if (l.invalid != undefined) continue;
             if ((l.target.type == "TabOutput") || (l.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
             
-            if (l.target._def.defaults.inputs == undefined) continue; // skip non dyn input object
+            if (l.target._def.dynInputs == undefined) continue; //if (l.target._def.defaults.inputs == undefined) continue; // skip non dyn input object
             if (l.target._def.nonObject != undefined) continue; // skip virtual objects (such as busJoiner) that have selectable input counts
             
             //dynamic input audio object

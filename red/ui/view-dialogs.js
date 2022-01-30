@@ -39,7 +39,7 @@ RED.view.dialogs = (function() {
 	function showExportNodesDialog() {
 		RED.editor.init_edit_dialog();
 		RED.view.state = RED.state.EXPORT;
-		var nns = RED.nodes.createExportableNodeSet(moving_set);
+		var nns = RED.nodes.createExportableNodeSet(RED.view.moving_set);
 		//$("#dialog-form").html(getForm("dialog-form", "export-clipboard-dialog"));
 		var frm = getForm("dialog-form", "export-clipboard-dialog", function (d, f) {
 			$("#node-input-export").val(JSON.stringify(nns)).focus(function() {
@@ -57,7 +57,7 @@ RED.view.dialogs = (function() {
 	function showExportNodesLibraryDialog() {
 		RED.editor.init_edit_dialog();
 		RED.view.state = RED.state.EXPORT;
-		var nns = RED.nodes.createExportableNodeSet(moving_set);
+		var nns = RED.nodes.createExportableNodeSet(RED.view.moving_set);
 		//$("#dialog-form").html(this.getForm('export-library-dialog'));
 		getForm("dialog-form", "export-library-dialog", function(d, f) {
 		$("#node-input-filename").attr('nodes',JSON.stringify(nns));

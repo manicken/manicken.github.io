@@ -82,9 +82,10 @@ OSC.export = (function () {
         // generate human readable export text
         var exportDialogText = ""; // use this for debug output
 
-        for (var i = 0; i < bundle.packets.length; i++) {
+        exportDialogText = OSC.GetBundleCompactForm(bundle);
+        /*for (var i = 0; i < bundle.packets.length; i++) {
             exportDialogText += OSC.GetPacketCompactForm(bundle.packets[i]) + "\n";
-        }
+        }*/
         removeBundleComments(bundle);
         try {
             var bundleData = OSC.CreateBundleData(bundle);
@@ -176,7 +177,7 @@ OSC.export = (function () {
                         packets.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
                         for (var ai = 0; ai < count; ai++)
                         {
-                            if (node._def.defaults.inputs == undefined) {
+                            if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
                                 packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, fixLeadingSlash(name));
                             }
                             else {
@@ -187,7 +188,7 @@ OSC.export = (function () {
                     }
                     else {
                         //console.warn("is NOT array");
-                        if (node._def.defaults.inputs == undefined) {
+                        if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
                             packets.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
                         }
                         else {
@@ -205,7 +206,7 @@ OSC.export = (function () {
                         packets.add(OSC.GetCreateGroupAddr(),"ss", name, path);
                         for (var ai = 0; ai < count; ai++)
                         {
-                            if (node._def.defaults.inputs == undefined) {
+                            if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
                                 packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, fixLeadingSlash(path + "/" + name));
                             }
                             else {
@@ -216,7 +217,7 @@ OSC.export = (function () {
                     }
                     else {
                         //console.warn("this happen: " + n.name);
-                        if (node._def.defaults.inputs == undefined) {
+                        if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
                             packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, fixLeadingSlash(path));
                         }
                         else {
@@ -411,7 +412,7 @@ OSC.export = (function () {
             if (node.z != activeWorkspace) continue; // workspace filter
             if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
             
-            if (node._def.defaults.inputs == undefined) 
+            if (node._def.dynInputs == undefined) //if (node._def.defaults.inputs == undefined) 
                 apos.add(OSC.GetCreateObjectAddr(),"ss", node.type, node.name);
             else // only happens for dynamic input objects
                 apos.add(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs);

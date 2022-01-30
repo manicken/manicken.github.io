@@ -234,7 +234,7 @@ RED.sidebar.info = (function() {
 		}
 		htmlCode += "</table>";
 		$("#tab-info").html(htmlCode);
-		$('#btn-export-selection').click(function() { RED.view.showExportNodesDialog();	});
+		$('#btn-export-selection').click(function() { RED.view.dialogs.showExportNodesDialog();	});
 		if (sameType)
 			$('#btn-generate-array').click(function() { RED.nodes.generateArrayNode(items);	});
 	}

@@ -567,6 +567,16 @@
       margin: 0;
       padding: 5px;
   }
+  .alert-info1 {
+    color:#164359;
+    background-color:#f5f6fd;
+    border-color:#e2eff1;
+  }
+  .alert-info2 {
+    color:#164359;
+    background-color:#eaebfa;
+    border-color:#e2eff1;
+  }
   
   /* ---------- Layout ---------- */
   #main-container {
