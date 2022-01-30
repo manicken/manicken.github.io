@@ -169,6 +169,7 @@ RED.export.links = (function () {
     }
 
     return {
-        getClassConnections
+        getClassConnections,
+        expandBusWires
     };
 })();

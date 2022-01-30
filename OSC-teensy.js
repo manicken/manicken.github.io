@@ -548,18 +548,39 @@ var OSC = (function() {
 
     function LinkAdded(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
-        var linkName = RED.export.GetLinkName(link);
+        if (link.info.valid == false) { AddLineToLog("Error invalid link skipped: ("+link.info.inValidText+")<br>" + RED.export.printLinkDebug(link), "error"); return; }
+        if (link.info.isBus) {
+            AddLineToLog("Error (cannot create bus links live), skipped: <br>" + RED.export.printLinkDebug(link), "error"); return;
+        }
+        
         var bundle = OSC.CreateBundle();
+        if (link.target._def.dynInputs != undefined){
+            // first update the project, used by getDynInputDynSizePortStartIndex, TODO fix so that it don't need to generated every time
+            RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
+        }
+            
+        
+        
+            var linkName = RED.export.GetLinkName(link);
+            bundle.add(GetCreateConnectionAddr(), "s", linkName);
+            if (link.target._def.dynInputs == undefined)
+                bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
+            else {
+                var nextFreeIndex = RED.export.getDynInputDynSizePortStartIndex(link.target, link.source, link.sourcePort);
+                bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, nextFreeIndex);
+            }
+        
+        var linkName = RED.export.GetLinkName(link);
         bundle.add(GetCreateConnectionAddr(), "s", linkName);
         if (link.target._def.dynInputs == undefined)
             bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
         else {
-            // first update the project, used by getDynInputDynSizePortStartIndex, TODO fix so that it don't need to generated every time
-            RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
             var nextFreeIndex = RED.export.getDynInputDynSizePortStartIndex(link.target, link.source, link.sourcePort);
             bundle.add(GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, nextFreeIndex);
         }
+
         SendBundle(bundle);
+        
         if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("added link [" + linkName  + "] " + RED.export.GetLinkDebugName(link));
     }

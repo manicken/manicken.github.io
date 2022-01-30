@@ -2646,8 +2646,18 @@ RED.view = (function() {
                     }
                 })
                 .on("mouseover",function(d) {
-                    if (d.info.valid == false)
-                        RED.notify(d.info.inValidText, "warning", null, 3000);
+                    if (d.info.valid == false) {
+                        if (current_popup_rect != this)
+                            $(current_popup_rect).popover("destroy"); // destroy prev
+                        showPopOver(this, true, d.info.inValidText, "top");
+                        //RED.notify(d.info.inValidText, "warning", null, 3000);
+                    }
+                        
+                })
+                .on("mouseout",async function(d) {
+                    console.warn(""); // this fixes a glitch
+                    //await delay(10); // this do not
+                    $(current_popup_rect).popover("destroy");
                 })
 				.on("touchstart",function(d) {
 					mousedown_link = d;
@@ -2679,6 +2689,14 @@ RED.view = (function() {
 
 		//console.log("redraw_links_init filter:"+ (t1-t0) +  "ms, select all:" + (t2-t1) + " ms, linkEnterEdit: " + (t3-t2) + " ms");
 	}
+
+    function delay(delayInms) {
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve(2);
+          }, delayInms);
+        });
+      }
 
 	function redraw_links()
 	{
@@ -3437,6 +3455,7 @@ RED.view = (function() {
 	function showPopOver(rect, htmlMode, content,placement)
 	{
 		if (placement == null) placement = "top";
+        
 		current_popup_rect = rect;
 		var options = {
 			placement: placement,

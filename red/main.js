@@ -705,7 +705,7 @@ RED.main = (function() {
         var notes = "";
         var names = Object.getOwnPropertyNames(RED.vernotes);
         for (var i = 0; i < names.length; i++) {
-            notes += "version: " + names[i] + "\n" + RED.vernotes[names[i]];
+            notes += "######## version: " + names[i] + " ########\n" + RED.vernotes[names[i]];
         }
         var textToShow = header+notes;
 
