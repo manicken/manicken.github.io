@@ -21,6 +21,12 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
+        version:1,
+        vernotes:{"1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
+                        "* OSC live update now works while connecting to dyn. input objects<br><br>"+
+                        "* Added new settings @ Global: &nbsp;&nbsp;LogAddNotificationOther,&nbsp;LogAddNotificationInfo,<br>&nbsp;&nbsp;LogAddNotificationWarning&nbsp;and&nbsp;LogAddNotificationError<br>"+
+                        "&nbsp;&nbsp;these are used to log notifications in the bottom log panel, for easier debug<br><br>"+
+                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.<br>"},
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
 })();
@@ -675,7 +681,24 @@ RED.main = (function() {
         
         //console.error("parseInt on bool: " + parseInt("true") + " " + parseInt(true) + " " + parseInt("false") + " " + parseInt(false));
         //
+
+        var version = localStorage.getItem("audio_library_guitool_version");
+            if (version == null) {
+                localStorage.setItem("audio_library_guitool_version", RED.version);
+            }
+            if (version != RED.version) {
+                showLatestUpdates("<strong>This is a new version, or your browser cache has been cleared!</strong>");
+            }
     }
+    $('#btn-latest-updates').click(function() { showLatestUpdates(""); });
+    function showLatestUpdates(header){
+        var notes = RED.vernotes[RED.version];
+        if (notes == undefined) notes = "";
+        else notes = "<br><br>" + notes;
+        if (header == undefined) header = "";
+        header += "<br><br><strong>Major Updates Fixes</strong>";
+        RED.notify(header+notes+"<br><br> click this to close (it will only be shown once, but can be shown @ 'topright menu' - 'Latest Updates')", "success", true, 2000);
+    } 
 
     function httpDownloadAsync(url, cbOnOk, cbOnError, timeout)
     {

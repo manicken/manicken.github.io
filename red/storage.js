@@ -41,11 +41,13 @@ RED.storage = (function() {
 	
 		return archive;
 	}
+    
 	function load() {
 
 		//const t0 = performance.now();
 		if (localStorage) {
 			//console.warn(allStorage());
+            
 			var json_string = localStorage.getItem("audio_library_guitool");
 			//console.log("localStorage read: " );//+ json_string);
 
@@ -61,7 +63,6 @@ RED.storage = (function() {
 		//const t1 = performance.now();
 		//console.log('storage-load took: ' + (t1-t0) +' milliseconds.');
 	}
-    
 
 	function loadContents(json_string) {
 		console.log("loadContents:" +json_string);
