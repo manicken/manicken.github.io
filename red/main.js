@@ -687,12 +687,10 @@ RED.main = (function() {
         //
 
         var version = localStorage.getItem("audio_library_guitool_version");
-            if (version == null) {
-                localStorage.setItem("audio_library_guitool_version", RED.version);
-            }
-            if (version != RED.version) {
-                showLatestUpdates("<strong>This is a new version, or your browser cache has been cleared!</strong>");
-            }
+        if (version != RED.version) {
+            localStorage.setItem("audio_library_guitool_version", RED.version);
+            showLatestUpdates("<strong>This is a new version, or your browser cache has been cleared!</strong>");
+        }
     }
     $('#btn-latest-updates').click(function() { showUpdateHistory(); });
     function showLatestUpdates(header){
