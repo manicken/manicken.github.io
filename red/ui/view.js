@@ -2145,7 +2145,7 @@ RED.view = (function() {
                 RED.editor.edit(d);
             else {
                 var isClass = RED.nodes.isClass(d.type);
-                if (isClass) { reveal(isClass.id)}
+                if (isClass) { $(current_popup_rect).popover("destroy"); reveal(isClass.id)}
             }
 			clickElapsed = 0;
 			d3.event.stopPropagation();
