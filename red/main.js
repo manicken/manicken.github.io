@@ -45,7 +45,10 @@ RED.main = (function() {
         LogAddNotificationInfo:false,
         LogAddNotificationWarning:true,
         LogAddNotificationError:true,
-        
+        LinkDropOnNodeAppend:true,
+        DynInputAutoExpandOnLinkDrop:true,
+        DynInputAutoReduceOnLinkRemove:false,
+        ShowNodeToolTip:true,
         //AllowLowerCaseWorkspaceName: false,
     };
     var _settings = {
@@ -54,7 +57,10 @@ RED.main = (function() {
         LogAddNotificationInfo:defSettings.LogAddNotificationInfo,
         LogAddNotificationWarning:defSettings.LogAddNotificationWarning,
         LogAddNotificationError:defSettings.LogAddNotificationError,
-        
+        LinkDropOnNodeAppend:defSettings.LinkDropOnNodeAppend,
+        DynInputAutoExpandOnLinkDrop:defSettings.DynInputAutoExpandOnLinkDrop,
+        DynInputAutoReduceOnLinkRemove:defSettings.DynInputAutoReduceOnLinkRemove,
+        ShowNodeToolTip:defSettings.ShowNodeToolTip,
         //AllowLowerCaseWorkspaceName:defSettings.AllowLowerCaseWorkspaceName,
     };
     var settings = {
@@ -73,6 +79,18 @@ RED.main = (function() {
         get LogAddNotificationError() { return _settings.LogAddNotificationError; },
         set LogAddNotificationError(state) { _settings.LogAddNotificationError = state; RED.storage.update();},
 
+        get LinkDropOnNodeAppend() { return _settings.LinkDropOnNodeAppend; },
+        set LinkDropOnNodeAppend(state) { _settings.LinkDropOnNodeAppend = state; RED.storage.update();},
+
+        get DynInputAutoExpandOnLinkDrop() { return _settings.DynInputAutoExpandOnLinkDrop; },
+        set DynInputAutoExpandOnLinkDrop(state) { _settings.DynInputAutoExpandOnLinkDrop = state; RED.storage.update();},
+
+        get DynInputAutoReduceOnLinkRemove() { return _settings.DynInputAutoReduceOnLinkRemove; },
+        set DynInputAutoReduceOnLinkRemove(state) { _settings.DynInputAutoReduceOnLinkRemove = state; RED.storage.update();},
+
+        get ShowNodeToolTip() { return _settings.ShowNodeToolTip; },
+        set ShowNodeToolTip(state) { _settings.ShowNodeToolTip = state; RED.storage.update();},
+
 
         //get AllowLowerCaseWorkspaceName() { return _settings.AllowLowerCaseWorkspaceName; },
         //set AllowLowerCaseWorkspaceName(state) { _settings.AllowLowerCaseWorkspaceName = state; RED.storage.update();},
@@ -82,6 +100,16 @@ RED.main = (function() {
     var settingsEditor = {
         ClearOutputLog:       {label:"Clear output log", type:"button", action: ClearOutputLog},
         AutoDownloadJSON:     {label:"Auto Download JSON", type:"boolean", popupText:"When enabled this automatically downloads the current design as JSON after the page has loaded,<br>this can be used as a failsafe for important projects.<br><br>future improvement/additional functionality could involve a autosave based on a interval as well."},
+        nodes:                {label:"Nodes/Links", expanded:false, bgColor:"#DDD",
+            items: {
+                LinkDropOnNodeAppend:  {label:"Auto append dropped links", type:"boolean", popupText: "Auto append dropped links to any free input-slot<br>This makes it possible to just drop new 'input'-links to anywhere on a node to make them automatically add to any free input."},
+				ShowNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
+                DynInputAutoExpandOnLinkDrop:   {label:"Dyn. Input Objects Auto Expand", type:"boolean", popupText:"Auto expand dynamic input objects when new links are dropped.<br><br>note. If 'Auto append dropped links' is disabled this will not work."},
+                DynInputAutoReduceOnLinkRemove: {label:"Dyn. Input Objects Auto Reduce", type:"boolean", popupText:"(not implemented yet) Auto reduce dynamic input objects when the last link is removed."},
+
+                
+            }
+        },
         transmitDebug:        {label:"Debug Output", expanded:false, bgColor:"#DDD",
             items: {
                 LogAddNotificationInfo:     {label:"LogAddNotificationInfo", type:"boolean", popupText:"LogAddNotificationInfo"},

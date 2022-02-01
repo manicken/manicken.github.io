@@ -30,8 +30,7 @@ RED.view = (function() {
     
 
     var defSettings = {
-		LinkDropOnNodeAppend:true,
-		showNodeToolTip:true,
+		/*showNodeToolTip:true,*/
 		guiEditMode: true,
 		lockWindowMouseScrollInRunMode: true,
 		space_width: 5000,
@@ -65,8 +64,8 @@ RED.view = (function() {
 	};
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
-        LinkDropOnNodeAppend: defSettings.LinkDropOnNodeAppend,
-		showNodeToolTip: defSettings.showNodeToolTip,
+        
+		/*showNodeToolTip: defSettings.showNodeToolTip,*/
 		guiEditMode: defSettings.guiEditMode,
 		lockWindowMouseScrollInRunMode: defSettings.lockWindowMouseScrollInRunMode,
 		space_width: defSettings.space_width,
@@ -99,13 +98,10 @@ RED.view = (function() {
         
 	};	
 	var settings = {
-
-        get LinkDropOnNodeAppend() { return _settings.LinkDropOnNodeAppend; },
-		set LinkDropOnNodeAppend(state) { _settings.LinkDropOnNodeAppend = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
-		
+/*
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
 		set showNodeToolTip(state) { _settings.showNodeToolTip = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
-
+*/
 		get guiEditMode() { return _settings.guiEditMode; },
 		set guiEditMode(state) { 
 			_settings.guiEditMode = state; 
@@ -310,8 +306,6 @@ RED.view = (function() {
 		},
 		nodeSubCat: {label:"Nodes", expanded:false, bgColor:"#FFFFFF",
 			items: {
-                LinkDropOnNodeAppend:  {label:"Auto append dropped links", type:"boolean", popupText: "Auto append dropped links to any free input-slot<br>This makes it possible to just drop new 'input'-links to anywhere on a node to make them automatically add to any free input."},
-				showNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
 				nodeDefaultTextSize: {label:"Text Size", type:"number", popupText: "AudioStream-type Node label text size (not used for UI-category nodes as they have their own invidual settings)"},
 				useCenterBasedPositions: {label:"Center Based Positions", type:"boolean", popupText: "Center bases positions is the default mode of 'Node-Red' and this tool.<br><br>Center based locations:<br><img src=\"helpImgs/CenterBasedLocations_sm.png\"><br><br>Top Left based locations:<br><img src=\"helpImgs/TopLeftBasedLocations_sm.png\"><br><br>When this is unchecked everything is drawn from that previous center point<br>and it's using the top-left corner as the object position reference (and vice versa),<br>that makes everything jump when switching between modes.<br><br> (the jumping will be fixed in a future release)"},
 			}
@@ -1682,6 +1676,12 @@ RED.view = (function() {
 			RED.nodes.removeLink(selected_link);
 			removedLinks.push(selected_link);
             //OSC.LinkRemoved(selected_link);// use RED.events instead 
+            if (RED.main.settings.DynInputAutoReduceOnLinkRemove == true && selected_link.target._def.dynInputs != undefined) {
+                if (n == selected_link.target.inputs - 1) { // if last was removed
+                    selected_link.target.inputs--;
+                    redraw_node(undefined, selected_link.target, true);
+                }
+            }
 			setDirty(true);
 		}
 		RED.history.push({t:'delete',nodes:removedNodes,links:removedLinks,dirty:startDirty});
@@ -1966,7 +1966,7 @@ RED.view = (function() {
 			$(current_popup_rect).popover("destroy"); // destroy prev
 			
 
-			if (settings.showNodeToolTip && (d._def.uiObject == undefined)) // dont show popup on gui objects
+			if (RED.main.settings.ShowNodeToolTip && (d._def.uiObject == undefined)) // dont show popup on gui objects
 			{
 				var popoverText = "<b>" + d.type + "</b><br>";
 				if (d.comment && (d.comment.trim().length != 0))
@@ -2156,10 +2156,20 @@ RED.view = (function() {
             return;
         }
 
-        if (settings.LinkDropOnNodeAppend == false) return;
+        if (mouse_mode != RED.state.JOINING) return;
+
+        if (RED.main.settings.LinkDropOnNodeAppend == false) return;
         let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
         console.warn("next free index "+ nextFreeInputIndex);
-        if (nextFreeInputIndex == -1) return;
+        if (nextFreeInputIndex == -1) {
+            if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
+                return;
+
+            nextFreeInputIndex = d.inputs;
+            d.inputs++;
+            redraw_node(undefined, d, true);
+            //redraw_nodes(true,true); // workaround for now
+        }
         
 		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, nextFreeInputIndex); // Jannik add so that input count can be changed on the fly
 		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, nextFreeInputIndex);
@@ -2624,9 +2634,10 @@ RED.view = (function() {
                     lastClickLink = mousedown_link;
                     // double click end
 
-                    if (!d3.event.ctrlKey)
+                    //if (!d3.event.ctrlKey) // don't need this as multiple links cannot be removed anyway, TODO make it possible to select multiple links to remove.
 						clearSelection();
-					selected_link = mousedown_link;
+					
+                    selected_link = mousedown_link;
 					d.selected = true;
 					updateSelection();
 					//redraw();
@@ -3095,8 +3106,6 @@ RED.view = (function() {
 	}
 	function redraw_nodes(fullUpdate,superUpdate) // fullUpdate means that it checks for removed/added nodes as well
 	{
-        
-
 		if (fullUpdate != undefined && fullUpdate == true) {
 			var visNodesAll = redraw_nodes_init();
 		} else {
@@ -3106,47 +3115,63 @@ RED.view = (function() {
 
 			}),function(d){return d.id});
 		}
+
 		visNodesAll.each( function(d,i) { // redraw all nodes in active workspace
 			var nodeRect = d3.select(this);
-			
-			if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
-			{	
-				checkRequirements(d); // this update nodes that allready exist
-				//if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
-				redraw_nodeReqError(nodeRect, d);
-			}
-			if (superUpdate != undefined && superUpdate == true)
-			{
-				d.dirty = true;
-				d.resize = true;
-			}
-            if (d.dirty == false) { return;}
-            //console.log("was dirty"+d.name);
-			d.dirty = false;
-
-			if (d.bgColor == null)
-				d.bgColor = d._def.color;
-				
-			if (RED.view.ui.checkIf_UI_AndUpdate(nodeRect,d) == false) {
-				nodeRect.selectAll(".node").attr("fill", d.bgColor);
-			}
-			if (d.resize == true) {
-				d.resize = false;
-				if (d._def.uiObject == undefined) {
-					d.textSize = settings.nodeDefaultTextSize;
-					redraw_calcNewNodeSize(d);
-					redraw_nodeInputs(nodeRect, d);
-					redraw_nodeOutputs(nodeRect, d);
-				} else {// UI object
-
-				}
-			}
-			redraw_paletteNodesReqError(d);
-			redraw_nodeRefresh(nodeRect, d);
-			if (d.type != "JunctionLR" && d.type != "JunctionRL")
-				redraw_update_label(nodeRect, d);
+			redraw_node(nodeRect, d, superUpdate);			
 		});
 	}
+    function redraw_node(nodeRect,d,superUpdate) {
+        if (nodeRect == undefined) {
+            var visNodesAll2 = visNodes.selectAll("#"+d.id).data(RED.nodes.nodes.filter(function(d2)
+			{ 
+				return (d===d2);
+
+			}),function(d3){return d3.id});
+            visNodesAll2.each( function(d,i) { 
+                nodeRect = d3.select(this); // there should be only one
+            });
+            //nodeRect = d3.select(visNodesAll2[0]);
+            console.warn(nodeRect);
+            //return; // for now
+        }
+        if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
+        {	
+            checkRequirements(d); // this update nodes that allready exist
+            //if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
+            redraw_nodeReqError(nodeRect, d);
+        }
+        if (superUpdate != undefined && superUpdate == true)
+        {
+            d.dirty = true;
+            d.resize = true;
+        }
+        if (d.dirty == false) { return;}
+        //console.log("was dirty"+d.name);
+        d.dirty = false;
+
+        if (d.bgColor == null)
+            d.bgColor = d._def.color;
+            
+        if (RED.view.ui.checkIf_UI_AndUpdate(nodeRect,d) == false) {
+            nodeRect.selectAll(".node").attr("fill", d.bgColor);
+        }
+        if (d.resize == true) {
+            d.resize = false;
+            if (d._def.uiObject == undefined) {
+                d.textSize = settings.nodeDefaultTextSize;
+                redraw_calcNewNodeSize(d);
+                redraw_nodeInputs(nodeRect, d);
+                redraw_nodeOutputs(nodeRect, d);
+            } else {// UI object
+
+            }
+        }
+        redraw_paletteNodesReqError(d);
+        redraw_nodeRefresh(nodeRect, d);
+        if (d.type != "JunctionLR" && d.type != "JunctionRL")
+            redraw_update_label(nodeRect, d);
+    }
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
 	/**

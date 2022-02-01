@@ -140,6 +140,7 @@ OSC.export = (function () {
             var _ws = RED.export.isClass(n.type);
             if (_ws)
             {
+                if (_ws.export == false) continue; // skip inactive objects
                 //console.warn("is class");
                 var isArray = RED.export.isNameDeclarationArray(n.name, class_ws.id, true);
                 if (isArray) {
@@ -182,7 +183,7 @@ OSC.export = (function () {
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(name), RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(name), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
@@ -193,7 +194,7 @@ OSC.export = (function () {
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
@@ -211,7 +212,7 @@ OSC.export = (function () {
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(path + "/" + name), RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(path + "/" + name), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
@@ -222,7 +223,7 @@ OSC.export = (function () {
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, fixLeadingSlash(path), RED.export.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, fixLeadingSlash(path), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
@@ -254,7 +255,7 @@ OSC.export = (function () {
             
             if ((l.target.type == "TabOutput") || (l.source.type == "TabInput")) continue; // failsafe for TabInput or TabOutput objects
 
-            // l.sourceName and l.targetName will be set by RED.export.expandArrays if used
+            // l.sourceName and l.targetName will be set by RED.export.links.expandArrays if used
             var srcName = l.sourceName||l.source.name;//RED.export.GetNameWithoutArrayDef(l.source.name);
             var dstName = l.targetName||l.target.name;//RED.export.GetNameWithoutArrayDef(l.target.name);
             //var srcName = link.source.name;
@@ -264,7 +265,7 @@ OSC.export = (function () {
             
             //packets.add("//");
 
-            var linkName = RED.export.GetLinkName(l);
+            var linkName = RED.export.links.GetName(l);
             var sourcePath = l.sourcePath||"";
             var targetPath = l.targetPath||"";
             var linkPath = l.linkPath||""; // make this work for standard links
@@ -330,11 +331,11 @@ OSC.export = (function () {
         var links = [];
         RED.export.links.getClassConnections(ws, links, ''); // this is a recursive function
         //RED.export.updateNames(links);  // not needed anymore and should never be used either
-        //console.log(RED.export.printLinksDebug(links));
-        links = RED.export.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
-        //console.log(RED.export.printLinksDebug(links));
-        RED.export.fixTargetPortsForDynInputObjects(links);
-        //console.log(RED.export.printLinksDebug(links));
+        //console.log(RED.export.links.getDebug(links));
+        links = RED.export.links.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
+        //console.log(RED.export.links.getDebug(links));
+        RED.export.links.fixTargetPortsForDynInputObjects(links);
+        //console.log(RED.export.links.degDebug(links));
         addLinksToPacketArray(acs, links);
         
         
