@@ -1938,13 +1938,14 @@ RED.nodes = (function() {
     function FindNextFreeInputPort(node) {
         var _links = links.filter(function(l) { return (l.target === node); });
         if (_links.length == 0) return 0; // first index
-        let index = 0;
+        
         let inputs = node.inputs ? node.inputs: node._def.inputs ? node._def.inputs : 0;
         if (inputs == 0) return -1; 
-        //console.error(_links);
+        
         _links.sort(function(a,b){ return (a.targetPort - b.targetPort); });
-        for (let i = 0; i < _links.length ; i++,index++) {
-            if (_links[i].targetPort == index) continue;
+        console.error(_links);
+        for (var index = 0; index < _links.length; index++) {
+            if (_links[index].targetPort == index) continue;
             
             return index;
         }
@@ -1952,6 +1953,29 @@ RED.nodes = (function() {
             return -1;
         else
             return index;
+    }
+    /**
+     * note this can also be used to correct the number of inputs needed, for example when doing undo of removed links
+     * @param {*} node 
+     * @returns 
+     */
+    function recheckAndReduceUnusedDynInputs(node) {
+        if (node._def.dynInputs == undefined) return; // not a dyn inputs object, failsafe abort
+        if (node.inputs == 1) return; // don't change below 1 input, off course we could but could confuse users, and also the OSC dyn mixers
+        var _links = links.filter(function(l) { return (l.target === node); });
+        if (_links.length == 0) return;
+        _links.sort(function(a,b){ return (a.targetPort - b.targetPort); });
+        var newCount = Number(_links[_links.length-1].targetPort)+1;
+        if (newCount != node.inputs) {
+            var oldCount = node.inputs;
+            node.inputs = newCount;
+            //console.warn("newCount: " + newCount);
+            //node.dirty = true;
+            //node.resize = true;
+            //node.changed = true;
+            return {oldCount,newCount};
+        }
+        return undefined;
     }
 
     function subflowContains(sfid,nodeid,path) {
@@ -2041,6 +2065,7 @@ RED.nodes = (function() {
 
 	return {
         //getLinkInfo: setLinkInfo,
+        recheckAndReduceUnusedDynInputs,
         subflowContains,
         init,
         sortNodes,

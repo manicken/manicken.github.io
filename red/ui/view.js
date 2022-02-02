@@ -1621,6 +1621,7 @@ RED.view = (function() {
 	function deleteSelection() {
 		var removedNodes = [];
 		var removedLinks = [];
+        var changedNodes = []; // only for dynamic input objects
 		var startDirty = dirty;
 		if (current_popup_rect)
 			$(current_popup_rect).popover("destroy");
@@ -1643,16 +1644,14 @@ RED.view = (function() {
 					//	+ " -> " + link.target.id + ":" + link.targetPort);
 					if (link.source == node) {
 						// reenable input port
-						var n = link.targetPort;
-						var rect = link.target.inputlist[n];
-						rect.on("mousedown", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
-							.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
-							.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-							.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-							.on("mouseover", nodeInput_mouseover)
-							.on("mouseout", nodePort_mouseout)
-							//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
-							//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
+                        resetAndFreeInputPort(link);
+                        if (RED.main.settings.DynInputAutoReduceOnLinkRemove == true && link.target._def.dynInputs != undefined) {
+                            var ret = RED.nodes.recheckAndReduceUnusedDynInputs(link.target);
+                            if (ret != undefined) {
+                                changedNodes.push({node:link.target, changes:{inputs:ret.oldCount}, changed:true});
+                                redraw_node(getNodeRect(link.target), link.target, true);
+                            }
+                        }
 					}
 				}
 				removedNodes.push(node);
@@ -1661,39 +1660,48 @@ RED.view = (function() {
 			moving_set = [];
 			setDirty(true);
 		}
-		if (selected_link) {
+		if (selected_link != undefined) {
 			// reenable input port
-			var n = selected_link.targetPort;
-			var rect = selected_link.target.inputlist[n];
-			rect.on("mousedown", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
-				.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
-				.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-				.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-				.on("mouseover", nodeInput_mouseover)
-				.on("mouseout", nodePort_mouseout)
-				//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
-				//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
+            resetAndFreeInputPort(selected_link);
 			RED.nodes.removeLink(selected_link);
 			removedLinks.push(selected_link);
-            //OSC.LinkRemoved(selected_link);// use RED.events instead 
+
             if (RED.main.settings.DynInputAutoReduceOnLinkRemove == true && selected_link.target._def.dynInputs != undefined) {
-                if (n == selected_link.target.inputs - 1) { // if last was removed
-                    selected_link.target.inputs--;
-                    redraw_node(undefined, selected_link.target, true);
+                var ret = RED.nodes.recheckAndReduceUnusedDynInputs(selected_link.target);
+                if (ret != undefined) {
+                    changedNodes.push({node:selected_link.target, changes:{inputs:ret.oldCount}, changed:true});
+                    redraw_node(getNodeRect(selected_link.target), selected_link.target, true);
                 }
             }
 			setDirty(true);
 		}
-		RED.history.push({t:'delete',nodes:removedNodes,links:removedLinks,dirty:startDirty});
+        if (changedNodes.length == 0) changedNodes = undefined;
+		RED.history.push({t:'delete',nodes:removedNodes,links:removedLinks,dirty:startDirty,changedNodes});
 
 		clearLinkSelection();
 		updateSelection();
 		
 		redraw(true);
-		redraw_links_init();
+		redraw_links_init(); // this sets anyLinkEnter to false
+        anyLinkEnter = true; // force redraw of links
 		redraw_links();
 		RED.nodes.addUsedNodeTypesToPalette();
 	}
+
+    function resetAndFreeInputPort(link) {
+        var n = link.targetPort;
+		var rect = link.target.inputlist[n];
+        rect.on("mousedown", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
+            .on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
+            .on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
+            .on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
+            .on("mouseover", nodeInput_mouseover)
+            .on("mouseout", nodePort_mouseout)
+            //.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
+            //.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
+
+        
+    }
 
 	function copySelection() {
 		if (moving_set.length > 0) {
@@ -1781,119 +1789,121 @@ RED.view = (function() {
 		d3.event.preventDefault();
 	}
 
-	function portMouseUp(d,portType,portIndex) {
+	function portMouseUp(d,portType,portIndex,changedNodes) { // changedNodes is used by dynInput objects
         console.warn("portMouseUp",portType,portIndex);
 		document.body.style.cursor = "";
-		if (mouse_mode == RED.state.JOINING && mousedown_node) {
-			if (typeof TouchEvent != "undefined" && d3.event instanceof TouchEvent) {
-				RED.nodes.eachNode(function(n) {
-						if (n.z == activeWorkspace) {
-							var hw = n.w/posMode;
-							var hh = n.h/posMode;
-							if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
-								n.y-hh<mouse_position[1] && n.y+hh>mouse_position[1]) {
-									mouseup_node = n;
-									
-									if (mouseup_node.inputs) portType = mouseup_node.inputs>0?1:0; // Jannik add so that input count can be changed on the fly
-									else portType = mouseup_node._def.inputs>0?1:0;
-									
-									portIndex = 0;
-							}
-						}
-				});
-			} else {
-				mouseup_node = d;
-			}
+		if (mouse_mode != RED.state.JOINING || mousedown_node == undefined) return;
 
-			if (mouseup_node === mousedown_node ) { 
-				stopDragLine();
-				RED.notify("<strong>A connection cannot be made directly to itself!!!</strong>" + portType + mousedown_port_type, "warning", false, 2000);
-				return;
-			}
-			if (portType == mousedown_port_type)
-			{
-				stopDragLine(); return;
-			}
+        if (typeof TouchEvent != "undefined" && d3.event instanceof TouchEvent) {
+            RED.nodes.eachNode(function(n) {
+                if (n.z == activeWorkspace) {
+                    var hw = n.w/posMode;
+                    var hh = n.h/posMode;
+                    if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
+                        n.y-hh<mouse_position[1] && n.y+hh>mouse_position[1]) {
+                            mouseup_node = n;
+                            
+                            if (mouseup_node.inputs) portType = mouseup_node.inputs>0?1:0; // Jannik add so that input count can be changed on the fly
+                            else portType = mouseup_node._def.inputs>0?1:0;
+                            
+                            portIndex = 0;
+                    }
+                }
+            });
+        } else {
+            mouseup_node = d;
+        }
 
-			// makes (src allways a output) and (dst allways a input)
-			var src,dst,src_port,dst_port;
-			if (mousedown_port_type === 0) {
-				src = mousedown_node;
-				src_port = mousedown_port_index;
-				dst = mouseup_node;
-				dst_port = portIndex;
-			} else if (mousedown_port_type == 1) {
-				src = mouseup_node;
-				src_port = portIndex;
-				dst = mousedown_node;
-				dst_port = mousedown_port_index;
-			}
-			var srcIsJunction = src.type.startsWith("Junction");
-			var dstIsJunction = dst.type.startsWith("Junction");
-			if (srcIsJunction || dstIsJunction)
-			{
-				var newSrc,newDst;
-				if (srcIsJunction)
-					newSrc = RED.nodes.getJunctionSrcNode(src);
-				else
-					newSrc = src;
-				if (newSrc != null)
-				{
-					if (dstIsJunction)
-					{
-						if (RED.nodes.getJunctionDstNodeEquals(dst, newSrc))
-						{
-							stopDragLine();
-							RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
-							return;
-						}
-					}
-					else
-						newDst = dst;
-					
-					if (newSrc === newDst)
-					{
-						stopDragLine();
-						RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
-						return;
-					}
-					RED.notify("<strong>" + src.name  + "->" + newSrc.name +  ":" + dst.name  + "</strong>", "warning", false, 5000);
-				}
-			}
-            var srcPortType = getOutputPortType(src, src_port);
-            var dstPortType = getInputPortType(dst, dst_port);
-          
-            if (srcPortType != dstPortType) {
-                stopDragLine();
-				RED.notify("<strong> srcPortType: " + srcPortType + " != dstPortType:" + dstPortType + "</strong>", "warning", false, 4000);
-				return;
+        if (mouseup_node === mousedown_node ) { 
+            stopDragLine();
+            RED.notify("<strong>A connection cannot be made directly to itself!!!</strong>" + portType + mousedown_port_type, "warning", false, 2000);
+            return;
+        }
+        if (portType == mousedown_port_type)
+        {
+            stopDragLine(); return;
+        }
+
+        // makes (src allways a output) and (dst allways a input)
+        var src,dst,src_port,dst_port;
+        if (mousedown_port_type === 0) {
+            src = mousedown_node;
+            src_port = mousedown_port_index;
+            dst = mouseup_node;
+            dst_port = portIndex;
+        } else if (mousedown_port_type == 1) {
+            src = mouseup_node;
+            src_port = portIndex;
+            dst = mousedown_node;
+            dst_port = mousedown_port_index;
+        }
+        var srcIsJunction = src.type.startsWith("Junction");
+        var dstIsJunction = dst.type.startsWith("Junction");
+        if (srcIsJunction || dstIsJunction)
+        {
+            var newSrc,newDst;
+            if (srcIsJunction)
+                newSrc = RED.nodes.getJunctionSrcNode(src);
+            else
+                newSrc = src;
+            if (newSrc != null)
+            {
+                if (dstIsJunction)
+                {
+                    if (RED.nodes.getJunctionDstNodeEquals(dst, newSrc))
+                    {
+                        stopDragLine();
+                        RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
+                        return;
+                    }
+                }
+                else
+                    newDst = dst;
+                
+                if (newSrc === newDst)
+                {
+                    stopDragLine();
+                    RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
+                    return;
+                }
+                RED.notify("<strong>" + src.name  + "->" + newSrc.name +  ":" + dst.name  + "</strong>", "warning", false, 5000);
             }
+        }
+        var srcPortType = getOutputPortType(src, src_port);
+        var dstPortType = getInputPortType(dst, dst_port);
+        
+        if (srcPortType != dstPortType) {
+            stopDragLine();
+            RED.notify("<strong> srcPortType: " + srcPortType + " != dstPortType:" + dstPortType + "</strong>", "warning", false, 4000);
+            return;
+        }
 
-			var existingLink = false;
-			RED.nodes.eachLink(function(d) {
-					existingLink = existingLink || (d.source === src && d.target === dst && d.sourcePort == src_port && d.targetPort == dst_port);
+        var existingLink = false;
+        RED.nodes.eachLink(function(d) {
+                existingLink = existingLink || (d.source === src && d.target === dst && d.sourcePort == src_port && d.targetPort == dst_port);
 
-			});
-			if (!existingLink) {
-				var link = {source: src, sourcePort:src_port, target: dst, targetPort: dst_port};
-				RED.nodes.addLink(link);
-				RED.history.push({t:'add',links:[link],dirty:dirty});
-				setDirty(true);
-				// disallow new links to this destination - each input can have only a single link
-				dst.inputlist[dst_port]
-					.classed("port_hovered",false)
-					.on("mousedown",null)
-					.on("touchstart", null)
-					.on("mouseup", null)
-					.on("touchend", null)
-					.on("mouseover", nodeInput_mouseover)
-					.on("mouseout", nodePort_mouseout);
-			}
-			clearLinkSelection();
-			redraw(true);
-			redraw_links_init();
-			redraw_links();
-		}
+        });
+        if (!existingLink) {
+            var link = {source: src, sourcePort:src_port, target: dst, targetPort: dst_port};
+            RED.nodes.addLink(link);
+            RED.history.push({t:'add',links:[link],dirty:dirty,changedNodes});
+            setDirty(true);
+            // disallow new links to this destination - each input can have only a single link
+            // a alternative would be to replace the existing one
+            dst.inputlist[dst_port]
+                .classed("port_hovered",false)
+                .on("mousedown",null)
+                .on("touchstart", null)
+                .on("mouseup", null)
+                .on("touchend", null)
+                .on("mouseover", nodeInput_mouseover)
+                .on("mouseout", nodePort_mouseout);
+        }
+        clearLinkSelection();
+        redraw(true);
+        redraw_links_init();
+        redraw_links();
+		
 	}
     function getInputPortType(node, portIndex) {
         if (node._def.inputTypes != undefined)
@@ -2166,13 +2176,14 @@ RED.view = (function() {
                 return;
 
             nextFreeInputIndex = d.inputs;
+            var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
             d.inputs++;
-            redraw_node(undefined, d, true);
+            redraw_node(getNodeRect(d), d, true);
             //redraw_nodes(true,true); // workaround for now
         }
         
-		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, nextFreeInputIndex); // Jannik add so that input count can be changed on the fly
-		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, nextFreeInputIndex);
+		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, nextFreeInputIndex,changedNodes); // Jannik add so that input count can be changed on the fly
+		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, nextFreeInputIndex,changedNodes);
 	}
 
 	function clearLinkSelection()
@@ -3121,20 +3132,20 @@ RED.view = (function() {
 			redraw_node(nodeRect, d, superUpdate);			
 		});
 	}
-    function redraw_node(nodeRect,d,superUpdate) {
-        if (nodeRect == undefined) {
-            var visNodesAll2 = visNodes.selectAll("#"+d.id).data(RED.nodes.nodes.filter(function(d2)
-			{ 
-				return (d===d2);
+    function getNodeRect(node) {
+        var visNodesAll2 = visNodes.selectAll("#"+node.id).data(RED.nodes.nodes.filter(function(d2)
+        { 
+            return (node===d2);
 
-			}),function(d3){return d3.id});
-            visNodesAll2.each( function(d,i) { 
-                nodeRect = d3.select(this); // there should be only one
-            });
-            //nodeRect = d3.select(visNodesAll2[0]);
-            console.warn(nodeRect);
-            //return; // for now
-        }
+        }),function(d3){return d3.id});
+        var nodeRect; 
+        visNodesAll2.each( function(d,i) { 
+            nodeRect = d3.select(this); // there should be only one
+        });
+        return nodeRect;
+    }
+    function redraw_node(nodeRect,d,superUpdate) {
+        
         if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
         {	
             checkRequirements(d); // this update nodes that allready exist
@@ -3283,6 +3294,7 @@ RED.view = (function() {
 	}
 
 	RED.keyboard.add(/* z */ 90,{ctrl:true},function(){RED.history.pop();});
+    RED.keyboard.add(/* y */ 89,{ctrl:true},function(){RED.history.redo();});
 	//RED.keyboard.add(/* o */ 79,{ctrl:true},function(){arrangeAll();d3.event.preventDefault();}); // have at other place, to close to print
 	RED.keyboard.add(/* a */ 65,{ctrl:true},function(){selectAll();d3.event.preventDefault();});
 	RED.keyboard.add(/* = */ 187,{ctrl:true},function(){zoomIn();d3.event.preventDefault();});

@@ -16,7 +16,94 @@
  **/
 RED.history = (function() {
 	var undo_history = [];
-	
+    var redo_history = [];
+	function exec(ev) {
+        var i;
+        if (ev == undefined) return;
+
+        if (ev.t == 'add') {
+            if (ev.nodes != undefined)
+            {
+                for (i=0;i<ev.nodes.length;i++) {
+                    RED.nodes.remove(ev.nodes[i]);
+                }
+            }
+            if (ev.links != undefined)
+            {
+                for (i=0;i<ev.links.length;i++) {
+                    RED.nodes.removeLink(ev.links[i]);
+                }
+            }
+            if (ev.workspaces != undefined)
+            {
+                for (i=0;i<ev.workspaces.length;i++) {
+                    RED.nodes.removeWorkspace(ev.workspaces[i].id);
+                    RED.view.removeWorkspace(ev.workspaces[i]);
+                }
+            }
+        } else if (ev.t == "delete") {
+            if (ev.workspaces != undefined)
+            {
+                for (i=0;i<ev.workspaces.length;i++) {
+                    RED.nodes.addWorkspace(ev.workspaces[i]);
+                    RED.view.addWorkspace(ev.workspaces[i]);
+                }
+            }
+            if (ev.nodes != undefined)
+            {
+                for (i=0;i<ev.nodes.length;i++) {
+                    RED.nodes.add(ev.nodes[i]);
+                }
+            }
+            if (ev.links != undefined)
+            {
+                for (i=0;i<ev.links.length;i++) {
+                    RED.nodes.addLink(ev.links[i]);
+                }
+            }
+            
+        } else if (ev.t == "move") {
+            for (i=0;i<ev.nodes.length;i++) {
+                var n = ev.nodes[i];
+                n.n.x = n.ox;
+                n.n.y = n.oy;
+                n.n.dirty = true;
+            }
+        } else if (ev.t == "edit") {
+            console.warn(ev);
+            for (i in ev.changes) {
+                if (ev.changes.hasOwnProperty(i)) {
+                    ev.node[i] = ev.changes[i];
+                }
+            }
+            RED.editor.updateNodeProperties(ev.node);
+            for (i=0;i<ev.links.length;i++) {
+                RED.nodes.addLink(ev.links[i]);
+            }
+            RED.editor.validateNode(ev.node);
+            ev.node.dirty = true;
+            ev.node.changed = ev.changed;
+        }
+        if ((ev.t == "add" || ev.t == "delete") && ev.changedNodes != undefined) { // when using dyninput objects
+            for (ni=0;ni<ev.changedNodes.length;ni++) {
+                var node = ev.changedNodes[ni].node;
+                var changes = ev.changedNodes[ni].changes;
+                var changed = ev.changedNodes[ni].changed;
+                for (i in changes) {
+                    if (changes.hasOwnProperty(i)) {
+                        node[i] = changes[i];
+                    }
+                }
+                RED.editor.updateNodeProperties(node);
+                RED.editor.validateNode(node);
+                node.dirty = true;
+                node.changed = changed;
+            }
+        }
+        RED.view.dirty(ev.dirty);
+        RED.view.redraw();
+    }
+
 	return {
 		//TODO: this function is a placeholder until there is a 'save' event that can be listened to
 		markAllDirty: function() {
@@ -31,76 +118,26 @@ RED.history = (function() {
 			undo_history.push(ev);
 			//console.trace();
 		},
+        redo: function() {
+			/*var ev = redo_history.pop();
+            if (ev == undefined) return;
+            console.error(ev);
+            exec(ev);
+            /*if (ev.t == "add") ev.t = "delete";
+            else if (ev.t == "delete") ev.t = "add";
+            undo_history.push(ev);*/
+            //console.error(ev);
+		},
 		pop: function() {
 			var ev = undo_history.pop();
-            //console.warn(ev);
-			var i;
-			if (ev) {
-				if (ev.t == 'add') {
-					if (ev.nodes != undefined)
-					{
-						for (i=0;i<ev.nodes.length;i++) {
-							RED.nodes.remove(ev.nodes[i]);
-						}
-					}
-					if (ev.links != undefined)
-					{
-						for (i=0;i<ev.links.length;i++) {
-							RED.nodes.removeLink(ev.links[i]);
-						}
-					}
-					if (ev.workspaces != undefined)
-					{
-						for (i=0;i<ev.workspaces.length;i++) {
-							RED.nodes.removeWorkspace(ev.workspaces[i].id);
-							RED.view.removeWorkspace(ev.workspaces[i]);
-						}
-					}
-				} else if (ev.t == "delete") {
-                    if (ev.workspaces != undefined)
-					{
-                        for (i=0;i<ev.workspaces.length;i++) {
-                            RED.nodes.addWorkspace(ev.workspaces[i]);
-                            RED.view.addWorkspace(ev.workspaces[i]);
-                        }
-                    }
-                    if (ev.nodes != undefined)
-					{
-                        for (i=0;i<ev.nodes.length;i++) {
-                            RED.nodes.add(ev.nodes[i]);
-                        }
-                    }
-                    if (ev.links != undefined)
-					{
-                        for (i=0;i<ev.links.length;i++) {
-                            RED.nodes.addLink(ev.links[i]);
-                        }
-                    }
-				} else if (ev.t == "move") {
-					for (i=0;i<ev.nodes.length;i++) {
-						var n = ev.nodes[i];
-						n.n.x = n.ox;
-						n.n.y = n.oy;
-						n.n.dirty = true;
-					}
-				} else if (ev.t == "edit") {
-					for (i in ev.changes) {
-						if (ev.changes.hasOwnProperty(i)) {
-							ev.node[i] = ev.changes[i];
-						}
-					}
-					RED.editor.updateNodeProperties(ev.node);
-					for (i=0;i<ev.links.length;i++) {
-						RED.nodes.addLink(ev.links[i]);
-					}
-					RED.editor.validateNode(ev.node);
-					ev.node.dirty = true;
-					ev.node.changed = ev.changed;
-				}
-				RED.view.dirty(ev.dirty);
-				RED.view.redraw();
-				
-			}
+            if (ev == undefined) return;
+            console.error(ev);
+            exec(ev);
+            /* disable redo it for now
+            if (ev.t == "add") ev.t = "delete";
+            else if (ev.t == "delete") ev.t = "add";
+            redo_history.push(ev);
+            */
 		}
 	}
 

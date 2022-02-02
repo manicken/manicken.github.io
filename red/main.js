@@ -21,16 +21,29 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
-        version:2,
+        version:3,
         vernotes:{"1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                         "* OSC live update now works while connecting to dyn. input objects<br><br>"+
-                        "* Added new settings @ Global: &nbsp;&nbsp;LogAddNotificationOther,&nbsp;LogAddNotificationInfo,<br>&nbsp;&nbsp;LogAddNotificationWarning&nbsp;and&nbsp;LogAddNotificationError<br>"+
+                        "* Add new setting to Global-'Debug Output' LogAddNotificationOther<br><br>"+
+                        "* Add new setting to Global-'Debug Output' LogAddNotificationInfo<br><br>"+
+                        "* Add new setting to Global-'Debug Output' LogAddNotificationWarning<br><br>"+
+                        "* Add new setting to Global-'Debug Output' LogAddNotificationError<br>"+
                         "&nbsp;&nbsp;these are used to log notifications in the bottom log panel, for easier debug<br><br>"+
-                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.<br>",
-                  "2":"* OSC live update don't update the dynmixer size automatically<br>"+
-                      "* no support of bus wires in live update<br>"+
+                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.<br><br>",
+                  "2":"* OSC live update don't update the dynmixer size automatically<br><br>"+
+                      "* no support of bus wires in live update<br><br>"+
                       "* OSC send can now send boolean types T F without any mathing value<br>"+
-                      "&nbsp;&nbsp;example OSC.SendMessage(addr,'iiTFiiFTii',0,1,2,3,4,5,6);"},
+                      "&nbsp;&nbsp;example OSC.SendMessage(addr,'iiTFiiFTii',0,1,2,3,4,5,6);",
+                  "3":"* Move setting 'Show Node Tooltip Popup' to Global-Nodes/Links (default is on)<br><br>"+
+                      "* Move setting 'Auto append dropped links' to Global-Nodes/Links (default is on)<br><br>"+
+                      "* Add setting 'Dyn. Input Objects Auto Expand' to Global-Nodes/Links (default is on)<br><br>"+
+                      "* Add setting 'Dyn. Input Objects Auto Reduce' to Global-Nodes/Links (default is off)<br>"+
+                      "note. hover over the settings for more information<br><br>"+
+                      "<strong>The following was added before but are announced now</strong><br>"+
+                      "* Add setting 'Add New Auto Edit' to Workspaces<br><br>"+
+                      "* Add setting 'Add New Location' to Workspaces<br>"+
+                      "&nbsp;&nbsp;makes it easier to add tabs in extreme multitab projects<br>"
+        },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
 })();
@@ -48,6 +61,7 @@ RED.main = (function() {
         LinkDropOnNodeAppend:true,
         DynInputAutoExpandOnLinkDrop:true,
         DynInputAutoReduceOnLinkRemove:false,
+        DynInputAudoRearrangeLinks:false,
         ShowNodeToolTip:true,
         //AllowLowerCaseWorkspaceName: false,
     };
@@ -60,6 +74,7 @@ RED.main = (function() {
         LinkDropOnNodeAppend:defSettings.LinkDropOnNodeAppend,
         DynInputAutoExpandOnLinkDrop:defSettings.DynInputAutoExpandOnLinkDrop,
         DynInputAutoReduceOnLinkRemove:defSettings.DynInputAutoReduceOnLinkRemove,
+        DynInputAudoRearrangeLinks:defSettings.DynInputAudoRearrangeLinks,
         ShowNodeToolTip:defSettings.ShowNodeToolTip,
         //AllowLowerCaseWorkspaceName:defSettings.AllowLowerCaseWorkspaceName,
     };
@@ -88,6 +103,9 @@ RED.main = (function() {
         get DynInputAutoReduceOnLinkRemove() { return _settings.DynInputAutoReduceOnLinkRemove; },
         set DynInputAutoReduceOnLinkRemove(state) { _settings.DynInputAutoReduceOnLinkRemove = state; RED.storage.update();},
 
+        get DynInputAudoRearrangeLinks() { return _settings.DynInputAudoRearrangeLinks; },
+        set DynInputAudoRearrangeLinks(state) { _settings.DynInputAudoRearrangeLinks = state; RED.storage.update();},
+
         get ShowNodeToolTip() { return _settings.ShowNodeToolTip; },
         set ShowNodeToolTip(state) { _settings.ShowNodeToolTip = state; RED.storage.update();},
 
@@ -102,11 +120,11 @@ RED.main = (function() {
         AutoDownloadJSON:     {label:"Auto Download JSON", type:"boolean", popupText:"When enabled this automatically downloads the current design as JSON after the page has loaded,<br>this can be used as a failsafe for important projects.<br><br>future improvement/additional functionality could involve a autosave based on a interval as well."},
         nodes:                {label:"Nodes/Links", expanded:false, bgColor:"#DDD",
             items: {
+                ShowNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
                 LinkDropOnNodeAppend:  {label:"Auto append dropped links", type:"boolean", popupText: "Auto append dropped links to any free input-slot<br>This makes it possible to just drop new 'input'-links to anywhere on a node to make them automatically add to any free input."},
-				ShowNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
                 DynInputAutoExpandOnLinkDrop:   {label:"Dyn. Input Objects Auto Expand", type:"boolean", popupText:"Auto expand dynamic input objects when new links are dropped.<br><br>note. If 'Auto append dropped links' is disabled this will not work."},
-                DynInputAutoReduceOnLinkRemove: {label:"Dyn. Input Objects Auto Reduce", type:"boolean", popupText:"(not implemented yet) Auto reduce dynamic input objects when the last link is removed."},
-
+                DynInputAutoReduceOnLinkRemove: {label:"Dyn. Input Objects Auto Reduce", type:"boolean", popupText:"Auto reduce dynamic input objects to the last used input.<br>i.e. it's the reverse of 'Auto Expand'"},
+                DynInputAudoRearrangeLinks:     {label:"Dyn. Input Objects Auto Rearrange Input Links", type:"boolean", popupText:"(not implemented yet) Auto Rearrange 'dynamic input objects' links to empty slots"},
                 
             }
         },
