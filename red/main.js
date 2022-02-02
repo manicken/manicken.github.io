@@ -29,7 +29,7 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                         "* Add new setting to Global-'Debug Output' LogAddNotificationWarning<br><br>"+
                         "* Add new setting to Global-'Debug Output' LogAddNotificationError<br>"+
                         "&nbsp;&nbsp;these are used to log notifications in the bottom log panel, for easier debug<br><br>"+
-                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.<br><br>",
+                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.",
                   "2":"* OSC live update don't update the dynmixer size automatically<br><br>"+
                       "* no support of bus wires in live update<br><br>"+
                       "* OSC send can now send boolean types T F without any mathing value<br>"+
@@ -39,10 +39,10 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                       "* Add setting 'Dyn. Input Objects Auto Expand' to Global-Nodes/Links (default is on)<br><br>"+
                       "* Add setting 'Dyn. Input Objects Auto Reduce' to Global-Nodes/Links (default is off)<br>"+
                       "note. hover over the settings for more information<br><br>"+
-                      "<strong>The following was added before but are announced now</strong><br>"+
+                      "<strong> The following was added before but are announced now </strong><br>"+
                       "* Add setting 'Add New Auto Edit' to Workspaces<br><br>"+
                       "* Add setting 'Add New Location' to Workspaces<br>"+
-                      "&nbsp;&nbsp;makes it easier to add tabs in extreme multitab projects<br>"
+                      "&nbsp;&nbsp;makes it easier to add tabs in extreme multitab projects"
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
@@ -749,15 +749,17 @@ RED.main = (function() {
     } 
 
     function showUpdateHistory() {
-        var header = "<h1>Update history</h1><br>";
+        var header = "################################\n"+
+                     "######## Update history ########\n"+
+                     "################################\n";
         var notes = "";
         var names = Object.getOwnPropertyNames(RED.vernotes);
         for (var i = 0; i < names.length; i++) {
-            notes += "######## version: " + names[i] + " ########\n" + RED.vernotes[names[i]];
+            notes += "\n######## version: " + names[i] + " ########\n" + RED.vernotes[names[i]] + "\n";
         }
         var textToShow = header+notes;
 
-        RED.view.dialogs.showExportDialog("OSC Export to Dynamic Audio Lib", textToShow.split("<br>").join("\n").split("&nbsp;").join(" "), " Version history ", {okText:"send", tips:""});
+        RED.view.dialogs.showExportDialog("OSC Export to Dynamic Audio Lib", textToShow.split("<br>").join("\n").split("&nbsp;").join(" ").split("<strong>").join("#### ").split("</strong>").join(" ####"), " Version history ", {okText:"send", tips:""});
         //var mywindow = window.open('Audio System Design Tool for Teensy Audio Library - Update History', 'UpdateHistory', 'height=400,width=600');
 /* remove this non working 'cross domain'-bullshit problem
 		mywindow.document.write('<html><head>');
