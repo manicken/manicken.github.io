@@ -1621,7 +1621,7 @@ RED.view = (function() {
 	function deleteSelection() {
 		var removedNodes = [];
 		var removedLinks = [];
-        var changedNodes = []; // only for dynamic input objects
+        var _changedNodes = {}; // only for dynamic input objects
 		var startDirty = dirty;
 		if (current_popup_rect)
 			$(current_popup_rect).popover("destroy");
@@ -1637,6 +1637,7 @@ RED.view = (function() {
 					RED.view.groupbox.removeNodeFromGroup(node.parentGroup, node);
                 //OSC.NodeRemoved(node); // use RED.events instead 
 				var rmlinks = RED.nodes.remove(node.id);
+                
 				for (var j=0; j < rmlinks.length; j++) {
 					var link = rmlinks[j];
                     //OSC.LinkRemoved(link);// use RED.events instead 
@@ -1648,8 +1649,13 @@ RED.view = (function() {
                         if (RED.main.settings.DynInputAutoReduceOnLinkRemove == true && link.target._def.dynInputs != undefined) {
                             var ret = RED.nodes.recheckAndReduceUnusedDynInputs(link.target);
                             if (ret != undefined) {
-                                changedNodes.push({node:link.target, changes:{inputs:ret.oldCount}, changed:true});
-                                redraw_node(getNodeRect(link.target), link.target, true);
+                                if (_changedNodes[link.target.id] == undefined) // only do this once for every target
+                                    _changedNodes[link.target.id] = {node:link.target, changes:{inputs:ret.oldCount}, newChange:{inputs:ret.newCount}, changed:true};
+                                else
+                                    _changedNodes[link.target.id].newChange.inputs = ret.newCount;
+
+                                
+                                //RED.event.emit("nodes:inputs", link.target, ret.oldCount, ret.newCount);
                             }
                         }
 					}
@@ -1669,13 +1675,32 @@ RED.view = (function() {
             if (RED.main.settings.DynInputAutoReduceOnLinkRemove == true && selected_link.target._def.dynInputs != undefined) {
                 var ret = RED.nodes.recheckAndReduceUnusedDynInputs(selected_link.target);
                 if (ret != undefined) {
-                    changedNodes.push({node:selected_link.target, changes:{inputs:ret.oldCount}, changed:true});
-                    redraw_node(getNodeRect(selected_link.target), selected_link.target, true);
+                    if (_changedNodes[selected_link.target.id] == undefined) // only do this once for every target
+                        _changedNodes[selected_link.target.id] = {node:selected_link.target, changes:{inputs:ret.oldCount}, newChange:{inputs:ret.newCount}, changed:true};
+                    else
+                        _changedNodes[selected_link.target.id].newChange.inputs = ret.newCount;
+                    //changedNodes.push({node:selected_link.target, changes:{inputs:ret.oldCount}, changed:true});
+                    //redraw_node(getNodeRect(selected_link.target), selected_link.target, true);
+                    //RED.event.emit("nodes:inputs", selected_link.target, ret.oldCount, ret.newCount);
                 }
             }
 			setDirty(true);
 		}
-        if (changedNodes.length == 0) changedNodes = undefined;
+        var changedNodes;
+        var pNames = Object.getOwnPropertyNames(_changedNodes);
+        if (pNames.length != 0)
+        {
+            //console.warn(_changedNodes);
+            changedNodes = [];
+            for (var i = 0; i < pNames.length; i++) {
+                var pName = pNames[i];
+                var changedItem = _changedNodes[pName];
+                //console.warn(changedItem);
+                changedNodes.push(changedItem);
+                redraw_node(getNodeRect(changedItem.node), changedItem.node, true);
+                RED.events.emit("nodes:inputs", changedItem.node, changedItem.changes.inputs, changedItem.newChange.inputs);
+            }
+        }
 		RED.history.push({t:'delete',nodes:removedNodes,links:removedLinks,dirty:startDirty,changedNodes});
 
 		clearLinkSelection();
@@ -2179,6 +2204,7 @@ RED.view = (function() {
             var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
             d.inputs++;
             redraw_node(getNodeRect(d), d, true);
+            RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs);
             //redraw_nodes(true,true); // workaround for now
         }
         

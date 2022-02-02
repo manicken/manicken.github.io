@@ -22,27 +22,32 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         version:3,
-        vernotes:{"1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
-                        "* OSC live update now works while connecting to dyn. input objects<br><br>"+
-                        "* Add new setting to Global-'Debug Output' LogAddNotificationOther<br><br>"+
-                        "* Add new setting to Global-'Debug Output' LogAddNotificationInfo<br><br>"+
-                        "* Add new setting to Global-'Debug Output' LogAddNotificationWarning<br><br>"+
-                        "* Add new setting to Global-'Debug Output' LogAddNotificationError<br>"+
-                        "&nbsp;&nbsp;these are used to log notifications in the bottom log panel, for easier debug<br><br>"+
-                        "* OSC.AddToLog now prints lines in groups for easier distinguishing them.",
-                  "2":"* OSC live update don't update the dynmixer size automatically<br><br>"+
-                      "* no support of bus wires in live update<br><br>"+
-                      "* OSC send can now send boolean types T F without any mathing value<br>"+
-                      "&nbsp;&nbsp;example OSC.SendMessage(addr,'iiTFiiFTii',0,1,2,3,4,5,6);",
-                  "3":"* Move setting 'Show Node Tooltip Popup' to Global-Nodes/Links (default is on)<br><br>"+
-                      "* Move setting 'Auto append dropped links' to Global-Nodes/Links (default is on)<br><br>"+
-                      "* Add setting 'Dyn. Input Objects Auto Expand' to Global-Nodes/Links (default is on)<br><br>"+
-                      "* Add setting 'Dyn. Input Objects Auto Reduce' to Global-Nodes/Links (default is off)<br>"+
-                      "note. hover over the settings for more information<br><br>"+
-                      "<strong> The following was added before but are announced now </strong><br>"+
-                      "* Add setting 'Add New Auto Edit' to Workspaces<br><br>"+
-                      "* Add setting 'Add New Location' to Workspaces<br>"+
-                      "&nbsp;&nbsp;makes it easier to add tabs in extreme multitab projects"
+        vernotes:{
+            "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
+                "* OSC live update now works while connecting to dyn. input objects<br><br>"+
+                "* Add new setting to Global-'Debug Output' LogAddNotificationOther<br><br>"+
+                "* Add new setting to Global-'Debug Output' LogAddNotificationInfo<br><br>"+
+                "* Add new setting to Global-'Debug Output' LogAddNotificationWarning<br><br>"+
+                "* Add new setting to Global-'Debug Output' LogAddNotificationError<br>"+
+                "&nbsp;&nbsp;these are used to log notifications in the bottom log panel, for easier debug<br><br>"+
+                "* OSC.AddToLog now prints lines in groups for easier distinguishing them.",
+            "2":"* OSC live update don't update the dynmixer size automatically<br><br>"+
+                "* no support of bus wires in live update<br><br>"+
+                "* OSC send can now send boolean types T F without any mathing value<br>"+
+                "&nbsp;&nbsp;example OSC.SendMessage(addr,'iiTFiiFTii',0,1,2,3,4,5,6);",
+            "3":"* Move setting 'Show Node Tooltip Popup' to Global-Nodes/Links (default is on)<br><br>"+
+                "* Move setting 'Auto append dropped links' to Global-Nodes/Links (default is on)<br><br>"+
+                "* Add setting 'Dyn. Input Objects Auto Expand' to Global-Nodes/Links (default is on)<br><br>"+
+                "* Add setting 'Dyn. Input Objects Auto Reduce' to Global-Nodes/Links (default is off)<br>"+
+                "note. hover over the settings for more information<br><br>"+
+                "<strong> The following was added before but are announced now </strong><br>"+
+                "* Add setting 'Add New Auto Edit' to Workspaces<br><br>"+
+                "* Add setting 'Add New Location' to Workspaces<br>"+
+                "&nbsp;&nbsp;makes it easier to add tabs in extreme multitab projects",
+            "4":"* Add setting 'compress Zip file' to 'Teensy/C++'-Export (default is enabled)<br>"+
+                "&nbsp;&nbsp;this don't save much time but could maybe do for very big projects<br>"+
+                "* Fix so that when exporting to zip file, the files don't include the design-JSON string<br>"+
+                "&nbsp;&nbsp;as the design-JSON is put into a seperate file, this saves alot of export time.",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

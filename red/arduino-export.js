@@ -44,13 +44,16 @@ RED.arduino.export = (function () {
         return str;
     }
 
-    function getCppHeader(jsonString, includes) {
+    function getCppHeader(jsonString, includes, generateZip) {
         if (includes == undefined)
             includes = "";
         var returnStr = RED.arduino.settings.StandardIncludeHeader
             + includes + "\n"
             + "// " + RED.arduino.settings.ProjectName + ": begin automatically generated code\n";
-        if (RED.arduino.settings.WriteJSONtoExportedFile == true)
+        // don't include JSON in files when exporting as zip, 
+        // the zip contains the json as separate file.
+        // this makes the zip generating much faster
+        if (RED.arduino.settings.WriteJSONtoExportedFile == true && generateZip == false)
             returnStr += "// the following JSON string contains the whole project, \n// it's included in all generated files.\n"
                 + "// JSON string:" + jsonString + "\n\n";
         return returnStr;
@@ -376,7 +379,7 @@ RED.arduino.export = (function () {
             }
         }
 
-        var cpp = getCppHeader(jsonString, includes);
+        var cpp = getCppHeader(jsonString, includes, false);
         if (mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants); // variants 0 and 4 are taken care of in Mixers.GetCode
             cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
@@ -420,6 +423,7 @@ RED.arduino.export = (function () {
         var majorIncrement = minorIncrement * 2;
         const t0 = performance.now();
         RED.storage.update();
+        if (generateZip == undefined) generateZip = false;
 
         
         var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
@@ -782,7 +786,7 @@ RED.arduino.export = (function () {
             }
 
 
-            newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n") + "\n" + classIncludes.join("\n") + "\n ");
+            newWsCpp.header = getCppHeader(jsonString, classAdditional.join("\n") + "\n" + classIncludes.join("\n") + "\n ", generateZip);
             newWsCpp.footer = getCppFooter();
             wsCppFiles.push(newWsCpp);
 
@@ -796,7 +800,7 @@ RED.arduino.export = (function () {
         // time to generate the final result
         var cpp = "";
         if (useExportDialog)
-            cpp = getCppHeader(jsonString);//, codeFileIncludes.join("\n"));
+            cpp = getCppHeader(jsonString, undefined, false);//, codeFileIncludes.join("\n"));
         for (var i = 0; i < wsCppFiles.length; i++) {
             // don't include beautified json string here
             // and only append to cpp when useExportDialog
@@ -823,7 +827,7 @@ RED.arduino.export = (function () {
         var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
         //if (RED.arduino.isConnected())
 
-        if (generateZip == undefined)
+        if (generateZip == false)
             RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST but not when exporting to zip
         //console.warn(jsonPOSTstring);
 
@@ -835,7 +839,7 @@ RED.arduino.export = (function () {
         const t1 = performance.now();
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
-        if (generateZip != undefined && (generateZip == true)) {
+        if (generateZip == true) {
             var zip = new JSZip();
             let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
             let subFolder = mainFileName != "" ? mainFileName : RED.arduino.settings.ProjectName;
@@ -848,9 +852,19 @@ RED.arduino.export = (function () {
                 else
                     zip.file(subFolder + "\\" + wsCppfile.name, wsCppfile.contents);
             }
-            zip.generateAsync({ type: "blob", compression: "DEFLATE" }).then(function (blob) {
+            var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
+            zip.generateAsync({ type: "blob", compression}).then(function (blob) {
+                const t2 = performance.now();
+                console.log('arduino-export-toZip took: ' + (t2 - t1) + ' milliseconds.');
                 //console.log("typeof:" + typeof content);
-                localStorage.setItem("test.zip", blob);
+                /*var reader = new FileReader();
+                reader.readAsDataURL(blob); 
+                reader.onloadend = function() {
+                    var base64data = reader.result;                
+                    //console.log(base64data);
+                    localStorage.setItem("test.zip", base64data);
+                }*/
+                //
                 RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
             });
         }
@@ -954,7 +968,7 @@ RED.arduino.export = (function () {
         if (n.type == "AudioMixer") {
 
             var tmplDef = getDynamicInputCount(n,true).toString();
-            console.warn(n.name + " " + tmplDef )
+            //console.warn(n.name + " " + tmplDef )
 
             if (RED.arduino.settings.UseAudioMixerTemplate == true)
                 tmplDef = '<' + tmplDef + '>'; // include the template def.

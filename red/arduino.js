@@ -20,6 +20,7 @@ RED.arduino = (function() {
 	
     var defSettings = {
         ZipExportUseSubFolder: false,
+        ZipExportCompress: true,
         UseAudioMixerTemplate: false,
         useExportDialog: false,
 		IOcheckAtExport: true,
@@ -41,6 +42,7 @@ RED.arduino = (function() {
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
         ZipExportUseSubFolder:defSettings.ZipExportUseSubFolder,
+        ZipExportCompress:defSettings.ZipExportCompress,
         UseAudioMixerTemplate: defSettings.UseAudioMixerTemplate,
 		useExportDialog: defSettings.useExportDialog,
 		IOcheckAtExport: defSettings.IOcheckAtExport,
@@ -85,6 +87,9 @@ RED.arduino = (function() {
         get ZipExportUseSubFolder() { return _settings.ZipExportUseSubFolder; },
 		set ZipExportUseSubFolder(state) { _settings.ZipExportUseSubFolder = state; RED.storage.update();},
 
+        get ZipExportCompress() { return _settings.ZipExportCompress; },
+		set ZipExportCompress(state) { _settings.ZipExportCompress = state; RED.storage.update();},
+
 		get useExportDialog() { return _settings.useExportDialog; },
 		set useExportDialog(state) { _settings.useExportDialog = state; RED.storage.update();},
 
@@ -123,7 +128,7 @@ RED.arduino = (function() {
 																						"It's also used at the default savename for the autosave function,<br>when replacing the whole design with a template design.<br>"+
 																						"<br>When naming a tab with  [ProjectName].ino (not including the []),<br>that defines it's the main ino-file when it's exported to Arduino IDE."},
                 ZipExportUseSubFolder:         { label:"Zip file subfolder", type:"boolean", popupText:"When exporting as zip,<br> if this is checked then the files in the zip will be put into a sub folder,<br> this is intended for complete Arduino Sketch exports."},
-                        
+                ZipExportCompress:         { label:"compress Zip file", type:"boolean", popupText:"Whenever to compress the exported zip file, a uncompressed file should generate faster<br> but timing tests show that the times are almost the same."},
                 
                 board: {label:"Board settings", expanded:true, bgColor:"#E6E0F8", 
                     items: {

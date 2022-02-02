@@ -94,6 +94,9 @@ RED.history = (function() {
                         node[i] = changes[i];
                     }
                 }
+                if (node._def.dynInputs != undefined) {
+                    RED.events.emit("nodes:inputs", node, ev.changedNodes[ni].newChange.inputs, ev.changedNodes[ni].changes.inputs);
+                }
                 RED.editor.updateNodeProperties(node);
                 RED.editor.validateNode(node);
                 node.dirty = true;

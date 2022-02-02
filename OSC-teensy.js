@@ -105,7 +105,7 @@ RED.OSC = (function() {
         get Encoding() { return _settings.Encoding; },
         set Encoding(value) { _settings.Encoding = value; RED.storage.update();}
     }
-    var settingsCategory = { label:"OSC", expanded:false, popupText: "Open Sound Control settings", bgColor:"#DDD" };
+    var settingsCategory = { label:"Open Sound Control", expanded:false, popupText: "Open Sound Control settings", bgColor:"#DDD" };
 
     var clearLogNote = "<br><br>the output can be cleared with 'clear output log' button";
     var dataShownNote = "debug data should be shown in the bottom output log";
@@ -448,27 +448,11 @@ var OSC = (function() {
         delete b.addPackets;
         return osc.writeBundle(b,oscOptions)
     }
-    function countTypesThatHaveValues(types) {
-        var c = 0;
-        for (var i=0;i<types.length;i++) {
-            if (types[i] == "T") continue; // special non value boolean true type
-            if (types[i] == "F") continue; // special non value boolean true type
-            c++;
-        }
-        return c;
-    }
 
     function CreatePacket(address, vts, ...vs) { // valueTypes, values
         var packet = {address:address, args: []};
         if (vts == undefined || vts == "") return packet; // just return a "empty" packet
-        
-        /*var minLength = countTypesThatHaveValues(valueTypes);
-        if (minLength > values.length) {
-            minLength = values.length;
-            
-        }*/
-
-        //console.error(valueTypes,valueTypes.length);
+       
         var vti = 0; // value type index
         var vi = 0; // value index
         while (1) { // this is dangerous so special care must be taken
@@ -587,9 +571,17 @@ var OSC = (function() {
 
     function LinkAdded(link) {
         if (RED.OSC.settings.LiveUpdate == false) return;
-        if (link.info.valid == false) { AddLineToLog("Error invalid link skipped: ("+link.info.inValidText+")<br>" + RED.export.links.getDebug(link), "error"); return; }
+        if (link.info.valid == false) {
+            AddLineToLog("Warning invalid link skipped: ("+link.info.inValidText+")<br>" + RED.export.links.getDebug(link), "warning");
+            return;
+        }
         if (link.info.isBus) {
-            AddLineToLog("Error (cannot create bus links live), skipped: <br>" + RED.export.links.getDebug(link), "error"); return;
+            AddLineToLog("Warning (cannot create 'bus links' live yet), skipped: <br>" + RED.export.links.getDebug(link), "warning");
+            return;
+        }
+        if (link.info.sourceIsArray != undefined || link.info.targetIsArray != undefined) {
+            AddLineToLog("Warning (cannot create 'array' links live yet), skipped: <br>" + RED.export.links.getDebug(link), "warning");
+            return;
         }
         
         var bundle = OSC.CreateBundle();
