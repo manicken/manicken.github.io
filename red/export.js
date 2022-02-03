@@ -61,7 +61,7 @@ RED.export = (function () {
     function isNameDeclarationArray(name,wsId,replaceConstWithValue)
 	{
 		var value = 0;
-		//console.warn("isNameDeclarationArray: " + name);
+		console.warn("isNameDeclarationArray: " + name + " @ " + wsId);
 		var startIndex = name.indexOf("[");
 		if (startIndex == -1) return undefined;
 		var endIndex = name.indexOf("]");
@@ -93,6 +93,23 @@ RED.export = (function () {
 	}
     function getConstantNodeValue(name, wsId)
 	{
+        console.warn("getConstantNodeValue: " + name + " @ " + wsId);
+        var node = RED.nodes.namedNode(name, undefined, wsId)
+        if (node == undefined) {
+            console.error("did not found ConstantNodeValue:" + name + " @ wsId:" + wsId);
+            return 0;
+        }
+        if (node.type != "ConstValue") {
+            console.error(name + " is not a ConstValue @ wsId:" + wsId);
+            return 0;
+        }
+        var value = Number(node.value);
+        if (isNaN(value) == true) {
+            console.error("ConstValue " + value + " @ "+name+", wsId:" + wsId);
+            return 0;
+        }
+        return parseInt(value); // only return int part
+/*
 		for (var i = 0; i < RED.nodes.nodes.length; i++)
 		{
 			var n = RED.nodes.nodes[i];
@@ -103,8 +120,8 @@ RED.export = (function () {
 				return Number(n.value);
 			}
 		}
-		console.error("did not found ConstantNodeValue:" + name + " @ wsId:" + wsId);
-		return 0;
+		
+		return 0;*/
 	}
 
     function isClass(type) // TODO rename to getClass

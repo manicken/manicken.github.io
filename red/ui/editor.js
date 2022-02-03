@@ -118,10 +118,12 @@ RED.editor = (function() {
             else if (definition[property].type == "float" && isNaN(parseFloat(value))) valid = false;
             else if (definition[property].type == "hexdec" && isNaN(parseInt(value, 16))) valid = false;
             else if (definition[property].type == "c_cpp_name" && isVarName(value,node) == false) valid = false;
+            else if (definition[property].type == "c_cpp_name_no_array" && isVarName(value,node,true) == false) valid = false;
 		}
 		return valid;
 	}
-    function isVarName(str,node) {
+    function isVarName(str,node,noArray) {
+        if (noArray == undefined) noArray = false;
         if (typeof str !== 'string') {
             RED.notify("is not a string: " + str, "warning", null, 4000);
             return false;
@@ -134,29 +136,97 @@ RED.editor = (function() {
 
         var splitStarting = str.split('[');
         var splitEnding = str.split(']');
+        //console.error(splitStarting);
+        //console.error(splitEnding);
         
+        if (noArray == true && (splitStarting.length > 1 || splitEnding.length > 1)) {
+            RED.notify("this cannot be defined as an array", "warning", null, 4000);
+            return false;
+        }
+
         if (splitStarting.length > 2 || splitEnding.length > 2) {
             RED.notify("array def. can only have one dimension ", "warning", null, 4000);
             return false;
         }
 
         if (splitStarting.length != splitEnding.length) {
-            RED.notify("missing any of [ ] in array def.", "warning", null, 4000);
+            RED.notify("missing any of [ ] in array def.", "warning", null, 5000);
             return false;
         }
-        str = splitStarting[0];
 
-        try {
-            new Function(str, 'var ' + str);
-        } catch (_) {
-            RED.notify("not a valid c/cpp name: " + str, "warning", null, 4000);
+        if (splitEnding.length == 2 && splitEnding[1].length != 0) {
+            RED.notify("cannot have anything after the last ] in array def.", "warning", null, 5000);
             return false;
         }
-        var chkName = RED.nodes.checkName(str, node.z, node);
-        if (chkName != undefined) {
-            RED.notify("this name is allready used: " + str + " @ " + chkName.nodeDuplicate.z + " " + chkName.nodeDuplicate.id, "warning", null, 4000);
+
+        if (splitStarting.length == 2) {
+            var arraySizeDef = splitStarting[1].substring(0, splitStarting[1].indexOf(']'));
+            if(arraySizeDef.length == 0) {
+                RED.notify("array size def cannot be empty", "warning", null, 5000);
+                return false;
+            }
+            if (arraySizeDef.includes('.') || arraySizeDef.includes(',')) {
+                RED.notify("array size def cannot contain '.'(dot) or ','(comma)", "warning", null, 5000);
+                return false;
+            }
+            var isNumber = !isNaN(Number(arraySizeDef));
+            if (isNumber == false) {
+                if (isValidC_Cpp_name(arraySizeDef) == false) {
+                    RED.notify(">>> "+arraySizeDef+" <<< is not a valid 'array size def.' - const name", "warning", null, 5000);
+                    return false;
+                }
+                var anyConst = RED.nodes.namedNode(arraySizeDef, undefined, node.z);
+                if (anyConst == undefined) {
+                    RED.notify("array size def const value >>> " + arraySizeDef + " <<< not found @ " + node.z, "warning", null, 5000);
+                    return false;
+                }
+                if (anyConst.type != "ConstValue") {
+                    RED.notify("array size def. const value node >>> " + arraySizeDef + " <<< is not a ConstValue", "warning", null, 5000);
+                    return false;
+                }
+                var constValue = anyConst.value;
+                if (constValue.includes('.') || constValue.includes(',')) {
+                    RED.notify("array size def. const value >>> " + constValue + " <<< cannot contain '.'(dot) or ','(comma)", "warning", null, 5000);
+                    return false;
+                }
+                var constIsNumber = !isNaN(Number(constValue));
+                if (constIsNumber == false) {
+                    RED.notify("array size def. const value >>> " + constValue + " <<< is not a int value", "warning", null, 5000);
+                    return false;
+                }
+                if (Number(constValue) < 2) {
+                    RED.notify("the const value is less than 2, there is no point defining a array size less than 2", "warning", null, 5000);
+                    return false;
+                }
+            }
+            else {
+                if (Number(arraySizeDef) < 2) {
+                    RED.notify("there is no point defining a array size less than 2", "warning", null, 5000);
+                    return false;
+                }
+            }
+            
+        }
+        
+        str = splitStarting[0];
+        
+        if (isValidC_Cpp_name(str) == false) {
+            RED.notify(">>>"+str+"<<< is not a valid c/cpp name", "warning", null, 4000);
             return false;
         }
+        
+        if (node != undefined) {
+            var chkName = RED.nodes.checkName(str, node.z, node);
+            if (chkName != undefined) {
+                RED.notify("this name is allready used: " + str + " @ " + chkName.nodeDuplicate.z + " " + chkName.nodeDuplicate.id, "warning", null, 4000);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function isValidC_Cpp_name(str) {
+        try { new Function(str, 'var ' + str); } catch (_) {return false;}
         return true;
     }
 
@@ -246,9 +316,10 @@ RED.editor = (function() {
 		if (changed != undefined && changed == true) {
 			var wasChanged = editing_node.changed;
             editing_node.changed = true;
-            RED.events.emit("nodes:change",editing_node);
-            if (changes.name != undefined)
-                RED.events.emit("nodes:renamed",editing_node,changes.name,editing_node.name);
+            RED.events.emit("nodes:change",editing_node,changes);
+            if (changes.name != undefined) {
+                RED.events.emit("nodes:renamed",editing_node,changes.name);
+            }
             if (changes.inputs != undefined)
                 RED.events.emit("nodes:inputs",editing_node,changes.inputs,editing_node.inputs)
 			RED.view.dirty(true);

@@ -362,7 +362,7 @@ RED.nodes = (function() {
 			if (!n.inputs)
 				n.inputs = n._def.inputs;
 		}*/
-        		
+        //n.isArray = RED.export.isNameDeclarationArray(n.name, n.z, true);
         n.dirty = true;
         if (index == undefined)
             nodes.push(n);
@@ -372,6 +372,7 @@ RED.nodes = (function() {
         //console.warn(n);
         RED.events.emit('nodes:add',n);
 	}
+    
 	function addLink(l) {
 		links.push(l);
         if (loadingWorkspaces == false)
@@ -416,14 +417,23 @@ RED.nodes = (function() {
 		return null;
 	}
 
-	function getNodeByName(name,nns) {
+	function getNodeByName(name,nns,wsId) {
         if (nns == undefined) nns = nodes;
-		for (var n in nns) {
-			if (nns[n].name == name) {
-				return nns[n];
+        //console.trace(nns);
+        //console.log("getNodeByName " + name + " @ " + wsId);
+		for (var i=0; i < nns.length; i++) {
+            var node = nns[i];
+            //console.log("checking ", node)
+            if (wsId != undefined && node.z != wsId) continue; // workspace filter
+			if (node.name == name) {
+                console.warn("################# found " + node.name + "==" + name);
+				return node;
 			}
+            //else
+                //console.warn(nns[i].name + "!=" + name);
 		}
-		return null;
+        console.warn("################# did not found " + name + " @ " + wsId);
+		return undefined;
 	}
 	
 
@@ -964,6 +974,7 @@ RED.nodes = (function() {
 		}
         loadingWorkspaces = false;
         refreshLinksInfo();
+        checkForAndSetNodeIsArray();
 	}
 
     function importNewNodes(newNodes, createNewIds) {
@@ -1917,6 +1928,8 @@ RED.nodes = (function() {
         Init_BuiltIn_NodeDefinitions();
         RED.events.on("nodes:inputs", NodeInputsChanged);
         RED.events.on("flows:renamed", workspaceNameChanged);
+        RED.events.on("nodes:renamed", NodeRenamed);
+        RED.events.on("nodes:change", NodeChanged);
     }
     function NodeInputsChanged(node, oldCount, newCount) {
         // update the visuals
@@ -1937,6 +1950,37 @@ RED.nodes = (function() {
         RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount, linksToRemove);
 
         RED.view.redraw();
+    }
+    function NodeRenamed(node, oldName) {
+        console.warn("node renamed: ",node,node.name)
+        node.isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
+        if (node.type == "ConstValue") {
+            var findConstUsage = "[" + oldName + "]";
+            for (var ni=0;ni<nodes.length;ni++) {
+                if (nodes[ni].z != node.z) continue;
+                if (nodes[ni].name.includes(findConstUsage)) {
+                    //RED.events.emit("nodes:renamed", nodes[ni], nodes[ni].name);
+                    nodes[ni].name = nodes[ni].name.replace(findConstUsage, "[" + node.name + "]");
+                    nodes[ni].isArray = RED.export.isNameDeclarationArray(nodes[ni].name, nodes[ni].z, true);
+                    console.error("what the motherfuck");
+                    RED.view.redraw_node(nodes[ni]);
+                }
+            }
+        }
+    }
+    function NodeChanged(node, changes) {
+        if (node.type == "ConstValue" && changes.value != undefined) {
+            var findConstUsage = "[" + node.name + "]";
+            for (var ni=0;ni<nodes.length;ni++) {
+                if (nodes[ni].z != node.z) continue;
+                if (nodes[ni].name.includes(findConstUsage)) {
+                
+                    nodes[ni].isArray = RED.export.isNameDeclarationArray(nodes[ni].name, nodes[ni].z, true);
+                    console.warn("found ", nodes[ni], " applying new const value");
+                    //RED.view.redraw_node(nodes[ni]);
+                }
+            }
+        }
     }
     function FindNextFreeInputPort(node) {
         var _links = links.filter(function(l) { return (l.target === node); });
@@ -2019,17 +2063,17 @@ RED.nodes = (function() {
      * @returns 
      */
     function setLinkInfo(l) {
-        var wsSource = isClass(l.source.type);
-        var wsTarget = isClass(l.target.type);
-        var tabOut = wsSource?getClassIOport(wsSource.id, "Out", l.sourcePort):undefined;
-        var tabIn = wsTarget?getClassIOport(wsTarget.id, "In", l.targetPort):undefined;
-        var sourceIsArray = RED.export.isNameDeclarationArray(l.source.name);
-        var targetIsArray = RED.export.isNameDeclarationArray(l.target.name);
+        //var wsSource = isClass(l.source.type);
+        //var wsTarget = isClass(l.target.type);
+        var tabOut = l.source._def.isClass?getClassIOport(l.source._def.isClass.id, "Out", l.sourcePort):undefined;
+        var tabIn = l.target._def.isClass?getClassIOport(l.target._def.isClass.id, "In", l.targetPort):undefined;
+        //var sourceIsArray = RED.export.isNameDeclarationArray(l.source.name, l.source.z); // theese two are not needed anymore as this info is stored in every node instead
+        //var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z);
         var isBus = (tabOut != undefined && tabOut.isBus) ||
                     (tabIn != undefined && tabIn.isBus) ||
                     (l.source.type == "BusJoin" || l.target.type == "BusSplit");
 
-        if ((sourceIsArray!=undefined) && (targetIsArray!=undefined) && (l.target._def.dynInputs/*_def.defaults.inputs*/!=undefined)) {// array to array of dynmixers not currently supported
+        if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.target._def.dynInputs!=undefined)) {// array to array of dynmixers not currently supported
             
             var valid = false;
             var inValidText = "array to 'array of dynmixers' not yet supported in OSC export<br> non priority to implement";
@@ -2038,11 +2082,11 @@ RED.nodes = (function() {
             var valid = false;
             var inValidText = "connecting bus wires to either TabInput or TabOutput not yet supported";
         }
-        else if (isBus && (wsSource != undefined && wsTarget != undefined)) {
+        else if (isBus && (l.source._def.isClass != undefined && l.target._def.isClass != undefined)) {
             var valid = false;
             var inValidText = "connecting bus wires between classes not yet supported";
         }
-        else if (isBus && wsTarget != undefined) {
+        else if (isBus && l.target._def.isClass != undefined) {
             var valid = false;
             var inValidText = "connecting bus wires to classes not yet supported";
         }
@@ -2053,10 +2097,10 @@ RED.nodes = (function() {
         else
             var valid = true;
         l.info = {
-            wsSource,
-            wsTarget,
-            sourceIsArray,
-            targetIsArray,
+            //wsSource,
+            //wsTarget,
+            //sourceIsArray,
+            //targetIsArray,
             isBus,
             valid,
             inValidText,
@@ -2064,6 +2108,11 @@ RED.nodes = (function() {
             tabIn
         };
         
+    }
+
+    function checkForAndSetNodeIsArray() {
+        for (var i = 0; i < nodes.length; i++)
+            nodes[i].isArray = RED.export.isNameDeclarationArray(nodes[i].name, nodes[i].z, true);
     }
     function getNodeInstancesOfType(type) {
         var nodeNames = [];

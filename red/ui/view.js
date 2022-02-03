@@ -3775,6 +3775,7 @@ RED.view = (function() {
         get workspace_tabs() {return workspace_tabs;},
         get moving_set() {return moving_set;},
         calculateTextSize,
+        redraw_node:function (node) { redraw_node(getNodeRect(node), node, true)},
         redraw_nodes,
 
         get preventRedraw() { return preventRedraw; },

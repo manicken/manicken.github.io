@@ -73,7 +73,10 @@ RED.history = (function() {
             console.warn(ev);
             for (i in ev.changes) {
                 if (ev.changes.hasOwnProperty(i)) {
+                    if (i == "name")
+                        RED.events.emit("nodes:renamed",ev.node,ev.node.name);
                     ev.node[i] = ev.changes[i];
+                    
                 }
             }
             RED.editor.updateNodeProperties(ev.node);
@@ -92,6 +95,8 @@ RED.history = (function() {
                 for (i in changes) {
                     if (changes.hasOwnProperty(i)) {
                         node[i] = changes[i];
+                        if (i == "name") // this would never happend
+                            RED.events.emit("nodes:renamed",node,changes.name);
                     }
                 }
                 if (node._def.dynInputs != undefined) {

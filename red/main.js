@@ -49,7 +49,9 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* Fix so that when exporting to zip file, the files don't include the design-JSON string<br>"+
                 "&nbsp;&nbsp;as the design-JSON is put into a seperate file, this saves alot of export time.<br><br>"+
                 "* holding Ctrl key while scrolling/'clicking scroll buttons' the workspace tabs moves to either end<br><br>"+
-                "* Confirm Delete workspace/tab/class dialog shows all instances.<br><br>",
+                "* Confirm Delete workspace/tab/class dialog shows all instances.<br><br>"+
+                "* Input/Output/Control-objects or ConstValues cannot be defined as arrays<br><br>"+
+                "* Array size def. can only be set to a integer number > 1 or to a existing 'valid integer > 1'-'const value'-name<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

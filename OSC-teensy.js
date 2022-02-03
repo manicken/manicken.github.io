@@ -519,7 +519,7 @@ var OSC = (function() {
             AddLineToLog("added node (" + node.type + ") " + node.name);
     }
 
-    function NodeRenamed(node, oldName, newName) {
+    function NodeRenamed(node, oldName) {
         if (RED.OSC.settings.LiveUpdate == false) return;
 
         if (node._def.nonObject != undefined) return; // don't care about non audio objects
@@ -531,18 +531,18 @@ var OSC = (function() {
             var link = links[i];
             
             var newLinkName = RED.export.links.GetName(link);
-            var oldLinkName = newLinkName.split(newName).join(oldName);
+            var oldLinkName = newLinkName.split(node.newName).join(oldName);
             bundle.add(GetRenameObjectAddr(), "ss", oldLinkName, newLinkName);
             
             if (RED.OSC.settings.ShowOutputDebug == true)
                 AddLineToLog("renamed link: " + oldLinkName + " to " + newLinkName);
         }
-        bundle.add(GetRenameObjectAddr(), "ss", oldName, newName);
+        bundle.add(GetRenameObjectAddr(), "ss", oldName, node.newName);
         
         SendBundle(bundle);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
-            AddLineToLog("renamed node from " + oldName + " to " + newName);
+            AddLineToLog("renamed node from " + oldName + " to " + node.newName);
     }
 
     function NodeRemoved(node, links) {
@@ -579,7 +579,7 @@ var OSC = (function() {
             AddLineToLog("Warning (cannot create 'bus links' live yet), skipped: <br>" + RED.export.links.getDebug(link), "warning");
             return;
         }
-        if (link.info.sourceIsArray != undefined || link.info.targetIsArray != undefined) {
+        if (link.source.isArray != undefined || link.target.isArray != undefined) {
             AddLineToLog("Warning (cannot create 'array' links live yet), skipped: <br>" + RED.export.links.getDebug(link), "warning");
             return;
         }
