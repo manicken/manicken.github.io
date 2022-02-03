@@ -830,7 +830,7 @@ RED.nodes = (function() {
             //console.warn("added new workspace lbl:" + ws.label + ",inputs:" + ws.inputs + ",outputs:" + ws.outputs + ",id:" + ws.id);
 
             initClassNodeDefCategory();
-            registerType(ws.label, getClassNodeDefinition(ws.label, ws.inputs, ws.outputs), "classNodes");
+            registerType(ws.label, getClassNodeDefinition(ws.label, ws.inputs, ws.outputs, ws), "classNodes");
         }
         RED.storage.dontSave = true; // prevent save between tab switch
         for (i=0; i < newWorkspaces.length; i++) {
@@ -1744,7 +1744,9 @@ RED.nodes = (function() {
 			removeNode(n.id);
 		}
 	}
-	
+	/**
+     * this updates all class instances, i.e. nodes that have any type of class
+     */
 	function refreshClassNodes()// Jannik add function
 	{
 	    //console.warn("refreshClassNodes");
@@ -1861,16 +1863,17 @@ RED.nodes = (function() {
 			var outputCount = getClassNrOfOutputs(nodes, ws.id);
 
             initClassNodeDefCategory();
-			registerType(ws.label, getClassNodeDefinition(ws.label, inputCount, outputCount), "classNodes");
+			registerType(ws.label, getClassNodeDefinition(ws.label, inputCount, outputCount, ws), "classNodes");
 		}
 	}
-    function getClassNodeDefinition(shortName, inputCount, outputCount) {
+    function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
+        //console.error("getClassNodeDefinition",ws);
         return {
             defaults:{
                 name:{type:"c_cpp_name"},
                 id:{}
             },
-            shortName: shortName, isClass:"",inputs:inputCount, outputs:outputCount ,category:"tabs",color: RED.main.classColor ,icon:"arrow-in.png"};
+            shortName: shortName, isClass:ws, inputs:inputCount, outputs:outputCount ,category:"tabs",color: RED.main.classColor ,icon:"arrow-in.png"};
     }
 	/*function checkIfTypeShouldBeAddedToUsedCat(nt)
 	{
@@ -2062,8 +2065,16 @@ RED.nodes = (function() {
         };
         
     }
-
+    function getNodeInstancesOfType(type) {
+        var nodeNames = [];
+        for (var i=0;i<nodes.length;i++) {
+            if (nodes[i].type == type)
+                nodeNames.push(nodes[i].name + " @ " + getWorkspaceLabel(nodes[i].z));
+        }
+        return nodeNames;
+    }
 	return {
+        getNodeInstancesOfType,
         //getLinkInfo: setLinkInfo,
         recheckAndReduceUnusedDynInputs,
         subflowContains,

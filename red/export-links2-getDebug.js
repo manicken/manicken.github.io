@@ -1,4 +1,4 @@
-RED.export.links.getDebug = (function () {
+RED.export.links2.getDebug = (function () {
 
     function printLinkDebug(l,options) {
         var txt  = "";

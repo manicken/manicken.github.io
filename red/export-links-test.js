@@ -24,11 +24,11 @@ function testFinalLinksExport() {
         mainWorkSpaceIndex = foundMains.items[0]; // get the only one
     var ws = RED.export.project.workspaces[mainWorkSpaceIndex];
     var links = [];
-    RED.export.links.getClassConnections(ws, links, "");
+    RED.export.links2.getClassConnections(ws, links, "");
     //RED.export.updateNames(links); // not needed anymore and should never be used either
-    links = RED.export.links.expandArrays(links); // for the moment this fixes array defs that the getClassConnections don't currently solve
-    RED.export.links.fixTargetPortsForDynInputObjects(links);
-    var exportDialogText = RED.export.links.getDebug(links);
+    links = RED.export.links2.expandArrays(links); // for the moment this fixes array defs that the getClassConnections don't currently solve
+    RED.export.links2.fixTargetPortsForDynInputObjects(links);
+    var exportDialogText = RED.export.links2.getDebug(links);
 
     RED.view.dialogs.showExportDialog("DevelopmentTest - Export of AudioConnections (links/patchcables)", exportDialogText, " Links: ", {okText:"OK", tips:"This is only a development test"},
     function () {RED.notify("<strong>Nothing sent (development test only)</strong>", "success", null, 2000);});

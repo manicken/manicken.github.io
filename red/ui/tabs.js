@@ -115,8 +115,8 @@ RED.tabs = (function() {
                 
                 //if (dx > 0) scrollContainer.scrollLeft(scrollContainer.scrollLeft() - 75);
                 //else if (dx < 0) scrollContainer.scrollLeft(scrollContainer.scrollLeft() + 75);
-                if (dx < 0) scrollEventHandler(evt,'+=' + scrollSize, true, 250);
-                else if (dx > 0) scrollEventHandler(evt,'-=' + scrollSize, true, 250);
+                if (dx < 0) scrollEventHandler(evt,'+=' + scrollSize, true, 100);
+                else if (dx > 0) scrollEventHandler(evt,'-=' + scrollSize, true, 100);
             });
         }
         
@@ -186,6 +186,9 @@ RED.tabs = (function() {
                 return;
             }
             if (speed == undefined) speed = 100;
+            console.warn(dir);
+            if (dir.startsWith('+') && evt.ctrlKey) dir = "+=1000000";
+            else if (dir.startsWith('-') && evt.ctrlKey) dir = "-=1000000";
             var currentScrollLeft = scrollContainer.scrollLeft();
             scrollContainer.animate( { scrollLeft: dir }, speed);
             var interval = setInterval(function() {

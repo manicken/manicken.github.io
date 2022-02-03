@@ -47,7 +47,9 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
             "4":"* Add setting 'compress Zip file' to 'Teensy/C++'-Export (default is enabled)<br>"+
                 "&nbsp;&nbsp;this don't save much time but could maybe do for very big projects<br>"+
                 "* Fix so that when exporting to zip file, the files don't include the design-JSON string<br>"+
-                "&nbsp;&nbsp;as the design-JSON is put into a seperate file, this saves alot of export time.",
+                "&nbsp;&nbsp;as the design-JSON is put into a seperate file, this saves alot of export time.<br><br>"+
+                "* holding Ctrl key while scrolling/'clicking scroll buttons' the workspace tabs moves to either end<br><br>"+
+                "* Confirm Delete workspace/tab/class dialog shows all instances.<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

@@ -826,6 +826,8 @@ RED.view = (function() {
 		var ws = RED.nodes.workspace(id);
 		$( "#node-dialog-delete-workspace" ).dialog('option','workspace',ws);
 		$( ".node-dialog-delete-workspace-name" ).text(ws.label);
+        var nodeList = RED.nodes.getNodeInstancesOfType(ws.label).join("<br>");
+        $( ".node-dialog-delete-workspace-affected-nodes" ).html(nodeList);
 		//$( "#node-dialog-delete-workspace-name2" ).text(ws.label);
 		$( "#node-dialog-delete-workspace" ).dialog('open');
 	}
