@@ -133,7 +133,8 @@ RED.editor = (function() {
             RED.notify("cannot contain any spaces: >>>" + str + "<<<", "warning", null, 4000);
             return false;
         }
-
+        // TODO. replace this with more efficient method
+        // not using split
         var splitStarting = str.split('[');
         var splitEnding = str.split(']');
         //console.error(splitStarting);
@@ -177,6 +178,7 @@ RED.editor = (function() {
                 }
                 var anyConst = RED.nodes.namedNode(arraySizeDef, undefined, node.z);
                 if (anyConst == undefined) {
+                    console.trace();
                     RED.notify("array size def const value >>> " + arraySizeDef + " <<< not found @ " + node.z, "warning", null, 5000);
                     return false;
                 }

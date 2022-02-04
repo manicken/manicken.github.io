@@ -461,6 +461,8 @@ RED.nodes = (function() {
 
         // normal event
         RED.events.emit('nodes:remove',node);
+
+
 			
 		return removedLinks;
 	}
@@ -977,29 +979,39 @@ RED.nodes = (function() {
         checkForAndSetNodeIsArray();
 	}
 
-    function importNewNodes(newNodes, createNewIds) {
+    function importNewNodes(nns, createNewIds) { // nns = New Node s
         var i;
-		var n;
-        // scan and display list of unknown types
+		var nn;
+        var node_map = {};
+        var new_nodes = [];
+        var new_links = [];
+        // scan and display list of unknown types, also import ConstValues so that they are added first
         var unknownTypes = [];
-        for (i=0;i<newNodes.length;i++) {
-            n = newNodes[i];
+        for (i=0;i<nns.length;i++) {
+            nn = nns[i];
             //if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
-            if (n.type == "Array") n.type = "PointerArray"; // type conversion
+            if (nn.type == "Array") nn.type = "PointerArray"; // type conversion
             // TODO: remove workspace in next release+1(Node-Red team comment)
-            if (n.type != "workspace" && n.type != "tab" && n.type != "settings" && !getType(n.type)) {
+            if (nn.type != "workspace" && nn.type != "tab" && nn.type != "settings" && !getType(nn.type)) {
                 // TODO: get this UI thing out of here! (see below as well) (Node-Red team comment)
                 //n.name = n.type;
                 //n.type = "unknown";
                 //n.unknownType = true;
-                if (unknownTypes.indexOf(n.type + ":" + n.name)==-1) {
-                    unknownTypes.push(n.type + ":" + n.name);
+                if (unknownTypes.indexOf(nn.type + ":" + nn.name)==-1) {
+                    unknownTypes.push(nn.type + ":" + nn.name);
                 }
-                if (n.x == null && n.y == null) {
+                if (nn.x == null && nn.y == null) {
                     // config node - remove it
-                    newNodes.splice(i,1);
+                    nns.splice(i,1);
                     i--;
                 }
+            }
+            if (nn.type == "ConstValue") { // import here so it can be accessed by RED.editor.validateNode(node);
+                var node = importNewNode(nn,createNewIds);
+                if (node == undefined) continue;
+                
+                node_map[nn.id] = node; // node_map is used for simple access to destinations when generating wires
+                new_nodes.push(node);
             }
         }
         if (unknownTypes.length > 0) {
@@ -1009,116 +1021,28 @@ RED.nodes = (function() {
             //"DO NOT DEPLOY while in this state.<br/>Either, add missing types to Node-RED, restart and then reload page,<br/>or delete unknown "+n.name+", rewire as required, and then deploy.","error");
         }
 
-        var node_map = {};
-        var new_nodes = [];
-        var new_links = [];
-
-        for (i=0;i<newNodes.length;i++) {
-            n = newNodes[i];
+        for (i=0;i<nns.length;i++) {
+            nn = nns[i];
 
             // theese two are for backward compatibility
-            if (n.type === "workspace" || n.type === "tab") continue;
-            else if (n.type === "settings") continue
-                
-            //if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
-            //console.warn(n);
+            if (nn.type === "workspace" || nn.type === "tab") continue;
+            else if (nn.type === "settings") continue;
+            else if (nn.type === "ConstValue") continue; // imported above
 
-            var def = getType(n.type);
-            if (def != undefined) {
-                if (def.uiObject == undefined)
-                    var node = {x:n.x,y:n.y,z:n.z,type:n.type,_def:def,wires:n.wires/*,wireNames:n.wireNames*/,changed:false};
-                else
-                    var node = {x:n.x,y:n.y,z:n.z,w:n.w,h:n.h,type:n.type,_def:def,wires:n.wires/*,wireNames:n.wireNames*/,changed:false};
-
-                if (n.parentGroup != undefined)
-                {
-                    node.parentGroup = n.parentGroup;
-                }
-
-                if (!node._def) {
-                    
-                    node._def = {
-                        color:"#fee",
-                        defaults: {"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},
-                        label: n.name,
-                        labelStyle: "node_label_italic",
-                        icon:"arrow-in.png",
-                        outputs: n.outputs||n.wires.length,
-                        inputs: getNodeInputCount(newNodes, n.z, n.id)
-                    }
-                    node.unknownType = true;
-                    n.bgColor = undefined;
-                    node.name = n.name;
-                }
-
-                if (createNewIds) { // this is only used by import dialog and paste function
-                    node.name = n.name; // set temporary
-                    //console.log("@createNewIds srcnode: " + n.id + ":" + n.name);
-                    if (n.z == RED.view.getWorkspace())	{ // only generate new names on currentWorkspace
-                        node.name = createUniqueCppName(node, n.z); // jannik add
-                        //console.warn("make new name: n.name=" + node.name);
-                    }
-                    else {// this allow different workspaces to have nodes that have same name
-                        node.name = n.name;
-                        //console.trace("keep name:" + n.name);
-                    }
-                    // allways create unique id:s
-                    node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
-
-                } else {
-                    node.name = n.name;
-                    node.id = n.id;
-                    if (node.z == null || node.z == "0") { //!workspaces[node.z]) {
-                        var currentWorkspaceId = RED.view.getWorkspace();
-                        console.warn('node.z == null || node.z == "0" -> add node to current workspace ' + currentWorkspaceId);
-                        
-                        node.z = currentWorkspaceId; // failsafe to set node workspace as current
-                    }
-                    else if (getWorkspaceIndex(node.z) == -1)
-                    {
-                        var currentWorkspaceId = RED.view.getWorkspace();
-                        console.warn("getWorkspaceIndex("+node.z+") == -1 -> add node to current workspace " + currentWorkspaceId);
-                        //console.error(workspaces);
-                        node.z = currentWorkspaceId; // failsafe to set node workspace as current
-                    }
-                }
-                for (var d2 in node._def.defaults) {
-                    if (node._def.defaults.hasOwnProperty(d2)) {
-                        if (d2 == "name" || d2 == "id") continue;
-                        node[d2] = n[d2];
-                        
-                    }
-                }
-                if (n.bgColor == undefined)	node.bgColor = node._def.color; 
-                else node.bgColor = n.bgColor;
-
-                //console.warn(n.name + " " + n.outputs + " " + node._def.outputs);
-                node.outputs = n.outputs?n.outputs:node._def.outputs?node._def.outputs:0;
-                //console.warn("rövknullad " +node.outputs);
-
-                /*node.outputs_ = 0;
-                Object.defineProperty(node, 'outputs', {
-                    set: function(value) { console.trace(node.name); this.outputs_ = value;  },
-                    get: function() { console.trace(node.name); return this.outputs_; }
-                });*/
-                
-
-                addNode(node);
-                //if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
-                RED.editor.validateNode(node);
-                //if (node._def.uiObject != undefined) console.log("node.w:" + node.w + ", node.h:"+ node.h);
-                node_map[n.id] = node; // node_map is used for simple access to destinations when generating wires
-                new_nodes.push(node);
-            }
+            var node = importNewNode(nn,createNewIds);
+            if (node == undefined) continue;
+            
+            node_map[nn.id] = node; // node_map is used for simple access to destinations when generating wires
+            new_nodes.push(node);
         }
-        // adding the links (wires)
+        // adding the links (wires) and group childNodes
         for (i=0;i<new_nodes.length;i++)
         {
-            n = new_nodes[i];
+            nn = new_nodes[i];
             //console.error(n);
-            for (var w1=0;w1<n.wires.length;w1++)
+            for (var w1=0;w1<nn.wires.length;w1++)
             {
-                var wires = (n.wires[w1] instanceof Array)?n.wires[w1]:[n.wires[w1]]; // if not array then convert to array
+                var wires = (nn.wires[w1] instanceof Array)?nn.wires[w1]:[nn.wires[w1]]; // if not array then convert to array
 
                 for (var w2=0;w2<wires.length;w2++)
                 {
@@ -1128,7 +1052,7 @@ RED.nodes = (function() {
                             var dst = node_map[parts[0]];
                             
                             
-                            var link = {source:n,sourcePort:w1,target:dst,targetPort:parts[1]};
+                            var link = {source:nn,sourcePort:w1,target:dst,targetPort:parts[1]};
                             /*
                             if (n.wireNames != undefined) {
                                 try {
@@ -1154,27 +1078,115 @@ RED.nodes = (function() {
                     }
                 }
             }
-            if (n.nodes != undefined)
+            // add group childnodes
+            if (nn.nodes != undefined)
             {
                 var newNodesList = [];
-                for (var ni = 0; ni < n.nodes.length; ni++)
+                for (var ni = 0; ni < nn.nodes.length; ni++)
                 {
-                    var nodeRef = node_map[n.nodes[ni]];
+                    var nodeRef = node_map[nn.nodes[ni]];
                     if (nodeRef != undefined) newNodesList.push(nodeRef);
                 }
-                n.nodes = newNodesList;
+                nn.nodes = newNodesList;
             }
-            if (n.parentGroup != undefined)
+            // set node parent group
+            if (nn.parentGroup != undefined)
             {
-                n.parentGroup = node_map[n.parentGroup]; // convert id to ref
+                nn.parentGroup = node_map[nn.parentGroup]; // convert id to ref
             }
             
-            delete n.wires;
+            delete nn.wires;
             
             //delete n.wireNames;
         }
         return [new_nodes,new_links];
     }
+
+    function importNewNode(nn,createNewIds) {
+        var def = getType(nn.type);
+        if (def == undefined) return undefined;
+
+        if (def.uiObject == undefined)
+            var node = {x:nn.x, y:nn.y, z:nn.z, type:nn.type, _def:def, wires:nn.wires/*,wireNames:n.wireNames*/,changed:false};
+        else // ui objects also have width and heigth defined
+            var node = {x:nn.x, y:nn.y, z:nn.z, w:nn.w, h:nn.h, type:nn.type, _def:def, wires:nn.wires/*,wireNames:n.wireNames*/,changed:false};
+
+        if (nn.parentGroup != undefined)
+        {
+            node.parentGroup = nn.parentGroup;
+        }
+
+        if (!node._def) {
+            
+            node._def = {
+                color:"#fee",
+                defaults: {"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},
+                label: nn.name,
+                labelStyle: "node_label_italic",
+                icon:"arrow-in.png",
+                outputs: nn.outputs||nn.wires.length,
+                inputs: getNodeInputCount(newNodes, nn.z, nn.id)
+            }
+            node.unknownType = true;
+            nn.bgColor = undefined;
+            node.name = nn.name;
+        }
+
+        if (createNewIds) { // this is only used by import dialog and paste function
+            node.name = nn.name; // set temporary
+            //console.log("@createNewIds srcnode: " + n.id + ":" + n.name);
+            if (nn.z == RED.view.getWorkspace())	{ // only generate new names on currentWorkspace
+                node.name = createUniqueCppName(node, nn.z); // jannik add
+                //console.warn("make new name: n.name=" + node.name);
+            }
+            else {// this allow different workspaces to have nodes that have same name
+                node.name = nn.name;
+                //console.trace("keep name:" + n.name);
+            }
+            // allways create unique id:s
+            node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
+
+        } else {
+            node.name = nn.name;
+            node.id = nn.id;
+            if (node.z == null || node.z == "0") { //!workspaces[node.z]) {
+                var currentWorkspaceId = RED.view.getWorkspace();
+                console.warn('node.z == null || node.z == "0" -> add node to current workspace ' + currentWorkspaceId);
+                
+                node.z = currentWorkspaceId; // failsafe to set node workspace as current
+            }
+            else if (getWorkspaceIndex(node.z) == -1)
+            {
+                var currentWorkspaceId = RED.view.getWorkspace();
+                console.warn("getWorkspaceIndex("+node.z+") == -1 -> add node to current workspace " + currentWorkspaceId);
+                //console.error(workspaces);
+                node.z = currentWorkspaceId; // failsafe to set node workspace as current
+            }
+        }
+        for (var d2 in node._def.defaults) {
+            if (node._def.defaults.hasOwnProperty(d2)) {
+                if (d2 == "name" || d2 == "id") continue;
+                node[d2] = nn[d2];
+                
+            }
+        }
+        if (nn.bgColor == undefined)	node.bgColor = node._def.color; 
+        else node.bgColor = nn.bgColor;
+
+        node.outputs = nn.outputs?nn.outputs:node._def.outputs?node._def.outputs:0;
+
+        /*node.outputs_ = 0;
+        Object.defineProperty(node, 'outputs', {
+            set: function(value) { console.trace(node.name); this.outputs_ = value;  },
+            get: function() { console.trace(node.name); return this.outputs_; }
+        });*/
+        
+        addNode(node);
+        
+        RED.editor.validateNode(node);
+        return node;
+    }
+
 	function findNodeById(newNodes, id)
 	{
 		for (var i = 0; i < newNodes.length; i++)
@@ -1928,8 +1940,9 @@ RED.nodes = (function() {
         Init_BuiltIn_NodeDefinitions();
         RED.events.on("nodes:inputs", NodeInputsChanged);
         RED.events.on("flows:renamed", workspaceNameChanged);
-        RED.events.on("nodes:renamed", NodeRenamed);
-        RED.events.on("nodes:change", NodeChanged);
+        RED.events.on("nodes:renamed", ConstValueNodeRenamed);
+        RED.events.on("nodes:change", ConstValueNodeChanged);
+        RED.events.on("nodes:remove", ConstValueNodeRemoved);
     }
     function NodeInputsChanged(node, oldCount, newCount) {
         // update the visuals
@@ -1951,8 +1964,7 @@ RED.nodes = (function() {
 
         RED.view.redraw();
     }
-    function NodeRenamed(node, oldName) {
-        console.warn("node renamed: ",node,node.name)
+    function ConstValueNodeRenamed(node, oldName) {
         node.isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
         if (node.type == "ConstValue") {
             var findConstUsage = "[" + oldName + "]";
@@ -1962,13 +1974,12 @@ RED.nodes = (function() {
                     //RED.events.emit("nodes:renamed", nodes[ni], nodes[ni].name);
                     nodes[ni].name = nodes[ni].name.replace(findConstUsage, "[" + node.name + "]");
                     nodes[ni].isArray = RED.export.isNameDeclarationArray(nodes[ni].name, nodes[ni].z, true);
-                    console.error("what the motherfuck");
                     RED.view.redraw_node(nodes[ni]);
                 }
             }
         }
     }
-    function NodeChanged(node, changes) {
+    function ConstValueNodeChanged(node, changes) {
         if (node.type == "ConstValue" && changes.value != undefined) {
             var findConstUsage = "[" + node.name + "]";
             for (var ni=0;ni<nodes.length;ni++) {
@@ -1978,6 +1989,20 @@ RED.nodes = (function() {
                     nodes[ni].isArray = RED.export.isNameDeclarationArray(nodes[ni].name, nodes[ni].z, true);
                     console.warn("found ", nodes[ni], " applying new const value");
                     //RED.view.redraw_node(nodes[ni]);
+                }
+            }
+        }
+    }
+    function ConstValueNodeRemoved(node) {
+        if (node.type == "ConstValue") {
+            var findConstUsage = "[" + node.name + "]";
+            for (var ni=0;ni<nodes.length;ni++) {
+                if (nodes[ni].z != node.z) continue;
+                if (nodes[ni].name.includes(findConstUsage)) {
+                    nodes[ni].name = nodes[ni].name.replace(findConstUsage, "[" + node.value + "]");
+                    nodes[ni].isArray = RED.export.isNameDeclarationArray(nodes[ni].name, nodes[ni].z, true);
+                    console.warn("found ", nodes[ni], " applying new const value");
+                    RED.view.redraw_node(nodes[ni]);
                 }
             }
         }

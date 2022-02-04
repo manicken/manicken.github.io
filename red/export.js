@@ -61,7 +61,7 @@ RED.export = (function () {
     function isNameDeclarationArray(name,wsId,replaceConstWithValue)
 	{
 		var value = 0;
-		console.warn("isNameDeclarationArray: " + name + " @ " + wsId);
+		//console.warn("isNameDeclarationArray: " + name + " @ " + wsId);
 		var startIndex = name.indexOf("[");
 		if (startIndex == -1) return undefined;
 		var endIndex = name.indexOf("]");

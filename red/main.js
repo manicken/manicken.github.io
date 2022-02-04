@@ -21,7 +21,7 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
-        version:3,
+        version:4,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -45,13 +45,24 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* Add setting 'Add New Location' to Workspaces<br>"+
                 "&nbsp;&nbsp;makes it easier to add tabs in extreme multitab projects",
             "4":"* Add setting 'compress Zip file' to 'Teensy/C++'-Export (default is enabled)<br>"+
-                "&nbsp;&nbsp;this don't save much time but could maybe do for very big projects<br>"+
-                "* Fix so that when exporting to zip file, the files don't include the design-JSON string<br>"+
-                "&nbsp;&nbsp;as the design-JSON is put into a seperate file, this saves alot of export time.<br><br>"+
-                "* holding Ctrl key while scrolling/'clicking scroll buttons' the workspace tabs moves to either end<br><br>"+
-                "* Confirm Delete workspace/tab/class dialog shows all instances.<br><br>"+
+                "&nbsp;&nbsp;this don't save much time but could maybe do for very big projects<br><br>"+
+                "* Fix so that when exporting to zip file:<br>"+
+                "&nbsp;&nbsp;the files don't include the design-JSON string<br>"+
+                "&nbsp;&nbsp;as the design-JSON is put into a seperate file,<br>"+
+                "&nbsp;&nbsp;this saves alot of export time.<br><br>"+
+                "* holding Ctrl key while scrolling/'clicking scroll buttons'<br>"+
+                "&nbsp;&nbsp;the workspace tabs moves to either end<br><br>"+
+                "* Confirm Delete workspace/tab/class dialog shows all instances affected.<br><br>"+
                 "* Input/Output/Control-objects or ConstValues cannot be defined as arrays<br><br>"+
-                "* Array size def. can only be set to a integer number > 1 or to a existing 'valid integer > 1'-'const value'-name<br><br>",
+                "* Array size def. can only be set to:<br>"+
+                "&nbsp;&nbsp;a integer number > 1 or<br>"+
+                "&nbsp;&nbsp;to a existing 'const value'-name that has the value set to a 'valid integer > 1'<br><br>"+
+                "* When removing a ConstValue that is in use by array defined objects<br>"+
+                "&nbsp;&nbsp;i.e. name[CONSTNAME],<br>"+
+                "&nbsp;&nbsp;the 'const value name' of those will be replaced by the 'const value'<br><br>"+
+                "<strong> The following was added before but are announced now </strong><br>"+
+                "* Holding Ctrl while 'double click' on a Class/Tab object will open that Tab<br><br>",
+            "5":"",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
