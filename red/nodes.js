@@ -521,10 +521,10 @@ RED.nodes = (function() {
 	}
 	function removeWorkspace(id) {
 		console.trace("workspace removed " + id);
-        var index = getWorkspaceIndex(id);
-        var ws = workspaces[index];
+        var wsIndex = getWorkspaceIndex(id);
+        var ws = workspaces[wsIndex];
 		var wsLbl = ws.label;
-		if (index != -1) workspaces.splice(index, 1);
+		if (wsIndex != -1) workspaces.splice(wsIndex, 1);
 		
 		var removedNodes = [];
 		var removedLinks = [];
@@ -549,7 +549,7 @@ RED.nodes = (function() {
 		addClassTabsToPalette();
         refreshClassNodes();
         RED.events.emit('flows:remove',ws);
-		return {nodes:removedNodes,links:removedLinks};
+		return {nodes:removedNodes,links:removedLinks,workspaceIndex:wsIndex};
 	}
 
 	function getAllFlowNodes(node) {

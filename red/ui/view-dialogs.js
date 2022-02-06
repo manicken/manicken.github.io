@@ -327,7 +327,7 @@ RED.view.dialogs = (function() {
 					var historyEvent = RED.nodes.removeWorkspace(workspace.id);
 					historyEvent.t = 'delete';
 					historyEvent.dirty = RED.view.dirty();
-					historyEvent.workspaces = [workspace];
+					historyEvent.workspace = workspace;
 					RED.history.push(historyEvent);
 					RED.view.dirty(true);
 					$( this ).dialog( "close" );

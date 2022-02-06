@@ -787,7 +787,7 @@ RED.view = (function() {
 			workspaceIndex += 1;
 		} while($("#workspace-tabs a[title='"+RED.workspaces.settings.defaultNewName+workspaceIndex+"']").size() !== 0);
 
-		var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, 0, 0, true);
+		var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, true);
         var currIndex = RED.nodes.getWorkspaceIndex(activeWorkspace);
         //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ currIndex " + currIndex);
         if (RED.workspaces.settings.addNewLocation == 0) {
@@ -3834,7 +3834,7 @@ RED.view = (function() {
 		AddNewNode,
 		resetMouseVars, // exposed for editor
 		
-		addWorkspace: function(ws) { workspace_tabs.addTab(ws); },
+		addWorkspace: function(ws,index) { workspace_tabs.addTab(ws,index); },
 		removeWorkspace: function(ws) { workspace_tabs.removeTab(ws.id); /*RED.arduino.httpGetAsync("removeFile:" + ws.label + ".h")*/ },
 		getWorkspace: function() { return activeWorkspace; },
 		showWorkspace: function(id) { workspace_tabs.activateTab(id); },
