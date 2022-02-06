@@ -187,38 +187,54 @@ RED.nodes = (function() {
         return Math.floor(Math.random() * max);
     }
 
-	function getID() {
-		var str = (1+Math.random()*4294967295).toString(16);
-        //var str = new Date().toISOString().split('-').join('').split(':').join('').replace('.','_') + "_" + getRandomInt(10000).toString(16);
+	function getNewUID() {
+		//var str = (1+Math.random()*4294967295).toString(16);
+        var str = new Date().toISOString().split('-').join('').split(':').join('').replace('.','_') + "_" + getRandomInt(65535).toString(16);
 		console.log("getID = " + str);
 		return str;
 	}
 
 	function checkID(id) {
         return eachNodeRet(function(n,ws){
-            if (n == id) return true;
+            if (n.id == id) return true;
         },false);
 	}
 	function checkName(name, wsId, node) { // jannik add
-		var _nodes = getWorkspace(wsId).nodes;
-		for (var i=0;i<_nodes.length;i++) {
+		var nodes = getWorkspace(wsId).nodes;
+        //var arrayName = getArrayName(name);
+		for (var i=0;i<nodes.length;i++) {
 			//console.log("checkID, nodes[i].id = " + nodes[i].id);
 			//if (wsId && (wsId != _nodes[i].z)) continue; // skip nodes that is not in current workspace
-            if (_nodes[i]._def.nonObject != undefined) continue; // don't check against nonObjects
-            if (_nodes[i] == node) continue; // don't check against itself
-            var splitStarting = _nodes[i].name.split('['); // get array name without array def,
-
-			if (splitStarting[0] == name){
-                return {node:node, nodeDuplicate:_nodes[i]};
+            if (nodes[i]._def.nonObject != undefined) continue; // don't check against nonObjects
+            if (nodes[i] == node) continue; // don't check against itself
+            var nodeName = getArrayName(nodes[i].name);//.split('['); // get array name without array def,
+            
+			if (nodeName == name){
+                return {node:node, nodeDuplicate:nodes[i]};
             }
 		}
 		return undefined;
 	}
+    function getArrayName(name) {
+        var si = name.indexOf("[");
+        if (si == -1) return name;
+        return name.substring(0,si);
+    }
+    function getArrayDef(name) {
+        var si = name.indexOf("[");
+        if (si == -1) return "";
+        return name.substring(si);
+    }
+    
 
 	function createUniqueCppName(n, wsId, nameShouldEndWithNumber) {
 		//console.log("getUniqueCppName, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
-		var basename = n.name; //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
-		if (checkName(basename, wsId) == undefined) return basename; // no need to change
+		var arrayDef = getArrayDef(n.name);
+        var basename = getArrayName(n.name); //(n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
+		if (checkName(basename, wsId) == undefined) {
+            console.warn("name dont need change " + basename);
+            return basename; // no need to change
+        }
 		var count = 1;
         if (nameShouldEndWithNumber == undefined) {
             //console.log("generate name from: " + basename);
@@ -243,7 +259,7 @@ RED.nodes = (function() {
 			count++;
 		}
 		//console.log("getUniqueCppName, unique name=" + name);
-		return name;
+		return name + arrayDef; // add arrayDef if it had that
 	}
     function getBaseName(name) {
         var index = name.length - 1;
@@ -264,8 +280,8 @@ RED.nodes = (function() {
 	function createUniqueCppId(n, workspaceName) {
 		//console.log("getUniqueCppId, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
 		var basename = (n._def.shortName) ? n._def.shortName : n.type.replace(/^Analog/, "");
-		
-		if (workspaceName)
+		console.warn("createUniqueCppId:", n.id, " @ " + workspaceName);
+		if (workspaceName != undefined)
 			basename = workspaceName + "_" + basename; // Jannik added
 
 		//console.log("getUniqueCppId, using basename=" + basename);
@@ -274,7 +290,7 @@ RED.nodes = (function() {
 		var name;
 		while (1) {
 			name = basename + sep + count;
-			if (!checkID(name)) break;
+			if (checkID(name) == false) break;
 			count++;
 		}
 		//console.log("getUniqueCppId, unique id=" + name);
@@ -1142,8 +1158,9 @@ RED.nodes = (function() {
             node.name = nn.name;
         }
 
-        if (createNewIds) { // this is only used by import dialog and paste function
+        if (createNewIds == true) { // this is only used by import dialog and paste function
             node.name = nn.name; // set temporary
+            //node.id = nn.id;
             //console.log("@createNewIds srcnode: " + n.id + ":" + n.name);
             if (nn.z == RED.view.getWorkspace())	{ // only generate new names on currentWorkspace
                 node.name = createUniqueCppName(node, nn.z); // jannik add
@@ -1151,11 +1168,12 @@ RED.nodes = (function() {
             }
             else {// this allow different workspaces to have nodes that have same name
                 node.name = nn.name;
-                //console.trace("keep name:" + n.name);
+                console.trace("keep name:" + n.name);
             }
+            node.z = RED.view.getWorkspace();
             // allways create unique id:s
-            node.id = RED.nodes.cppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
-
+            node.id = getNewUID();// createUniqueCppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
+            console.warn("############## new id #########" + node.id);
         } else {
             node.name = nn.name;
             node.id = nn.id;
@@ -2274,7 +2292,7 @@ RED.nodes = (function() {
 		getAllFlowNodes,
 		createExportableNodeSet,
 		createCompleteNodeSet,
-		id: getID,
+		getNewUID,
 		getUniqueName:getUniqueName,
 		cppName: createUniqueCppName,
 		cppId: createUniqueCppId,

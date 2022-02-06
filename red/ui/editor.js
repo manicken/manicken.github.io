@@ -220,7 +220,7 @@ RED.editor = (function() {
         if (node != undefined) {
             var chkName = RED.nodes.checkName(str, node.z, node);
             if (chkName != undefined) {
-                RED.notify("this name is allready used: " + str + " @ " + chkName.nodeDuplicate.z + " " + chkName.nodeDuplicate.id, "warning", null, 4000);
+                RED.notify("this name is allready used: " + str + " @ " + RED.nodes.getWorkspace(chkName.nodeDuplicate.z).label + " " + chkName.nodeDuplicate.id + " " + chkName.nodeDuplicate.name, "warning", null, 4000);
                 return false;
             }
         }

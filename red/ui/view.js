@@ -782,7 +782,7 @@ RED.view = (function() {
 	var workspaceIndex = 0;
 
 	function addWorkspace() {
-		var tabId = RED.nodes.id();
+		var tabId = RED.nodes.getNewUID();
 		do {
 			workspaceIndex += 1;
 		} while($("#workspace-tabs a[title='"+RED.workspaces.settings.defaultNewName+workspaceIndex+"']").size() !== 0);
@@ -834,6 +834,7 @@ RED.view = (function() {
 	}
 
 	function canvasMouseDown() {
+        if (d3.event.button != 0) return;
         if (RED.view.ui.allowUiItemTextInput == true) return;
         
 		if (!mousedown_node && !mousedown_link) {
@@ -1097,6 +1098,7 @@ RED.view = (function() {
     }
 	
 	function canvasMouseUp() {
+        if (d3.event.button != 0) return;
         if (RED.view.ui.allowUiItemTextInput == true) return;
 
 		if (mousedown_node && mouse_mode == RED.state.JOINING) {
@@ -1271,7 +1273,7 @@ RED.view = (function() {
         
 		nn.bgColor = nn._def.color;
 		
-		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
+		nn.id = RED.nodes.getNewUID(); //RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
 		nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
 		nn.name = RED.nodes.cppName(nn, activeWorkspace, nameShouldEndWithNumber); // jannik add/change create unique name
         if (nn._def.category == "tabs")
@@ -1807,6 +1809,7 @@ RED.view = (function() {
     var mouse_down_pos = [];
 
 	function portMouseDown(d,portType,portIndex) {
+        if (d3.event.button != 0) return;
 		// disable zoom
 		//vis.call(d3.behavior.zoom().on("zoom"), null);
 		mousedown_node = d;
@@ -1820,6 +1823,7 @@ RED.view = (function() {
 	}
 
 	function portMouseUp(d,portType,portIndex,changedNodes) { // changedNodes is used by dynInput objects
+        if (d3.event.button != 0) return;
         //console.warn("portMouseUp",portType,portIndex);
 		document.body.style.cursor = "";
 		if (mouse_mode != RED.state.JOINING || mousedown_node == undefined) return;
@@ -2045,6 +2049,7 @@ RED.view = (function() {
 	}
 	
 	function nodeMouseDown(d,i) { // this only happens once
+        if (d3.event.button != 0) return;
 
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
@@ -2166,6 +2171,7 @@ RED.view = (function() {
 	}
 
 	function nodeMouseUp(d,i) {
+        if (d3.event.button != 0) return;
 		//console.log("nodeMouseUp "+ d.name+" i:" + i);
 
 		
@@ -2617,8 +2623,8 @@ RED.view = (function() {
 		    .attr("class","port port_output").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
 			.attr("nodeType",d.type)
             .attr("nodeId",d.id)
-			.on("mousedown",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseDown(node,0,i);}})() )
-			.on("mouseup",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseUp(node,0,i);}})() )
+			.on("mousedown",(function(){var node = d; return function(d,i){/*console.error(d +":"+ i);*/ portMouseDown(node,0,i);}})() )
+			.on("mouseup",(function(){var node = d; return function(d,i){/*console.error(d +":"+ i);*/ portMouseUp(node,0,i);}})() )
 			//.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
 			//.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
 			.on("mouseover", nodeOutput_mouseover)
@@ -2669,6 +2675,8 @@ RED.view = (function() {
             //console.warn(d);
 			l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
+                    if (d3.event.button != 0) return;
+                    console.warn(d3.event);
 					mousedown_link = d;
 
                     // double click functionality start
@@ -2711,7 +2719,7 @@ RED.view = (function() {
                         
                 })
                 .on("mouseout",async function(d) {
-                    console.warn(""); // this fixes a glitch
+                    //console.warn(""); // this fixes a glitch but only if the dev tools is open
                     //await delay(10); // this do not
                     $(current_popup_rect).popover("destroy");
                 })
@@ -3417,7 +3425,13 @@ RED.view = (function() {
 			
 			var new_nodes = result[0];
 			var new_links = result[1];
-			var new_ms = new_nodes.map(function(n) { n.z = activeWorkspace; return {n:n};});
+			var new_ms = new_nodes.map(function(n) {
+                console.warn(n.z);
+                n.z = activeWorkspace;
+                console.warn(n.z);
+                return {n:n};
+            });
+            console.warn(new_ms);
 			var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
 			// TODO: pick a more sensible root node
@@ -3782,6 +3796,8 @@ RED.view = (function() {
     }
 
 	return {
+        get clipboard() {return clipboard;},
+        set clipboard(val) {clipboard = val;},
         defSettings,
 		settings,
 		settingsCategory,

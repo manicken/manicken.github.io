@@ -62,7 +62,12 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "&nbsp;&nbsp;the 'const value name' of those will be replaced by the 'const value'<br><br>"+
                 "<strong> The following was added before but are announced now </strong><br>"+
                 "* Holding Ctrl while 'double click' on a Class/Tab object will open that Tab<br><br>",
-            "5":"",
+            "5":"* change internal 'working' structure so that each workspace have their own set of nodes and links<br>"+
+                "&nbsp;&nbsp;before all nodes and links where in two big arrays<br>"+
+                "&nbsp;&nbsp;this new 'working' structure makes it much easier to white export code<br><br>"+
+                "* node id:s are now generated from current utc date/time + a 16bit random number<br><br>"+
+                "* now array defined names gets new name<br>"+
+                "&nbsp;&nbsp;i.e. array1[2] when copied become array2[2]<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
