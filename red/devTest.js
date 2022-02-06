@@ -279,16 +279,11 @@ RED.devTest = (function() {
         
         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++)
         {
-            var ws = RED.nodes.workspaces[wsi];
+            var ws = RED.nodes.createExportableWorkspace(RED.nodes.workspaces[wsi]);
             ws.nodes = new Array();
-            for (var ni = 0; ni < RED.nodes.nodes.length; ni++)
+            for (var ni = 0; ni < RED.nodes.cwsNodes.length; ni++)
             {
-                var n = RED.nodes.nodes[ni];
-                if (n.z == ws.id)
-                {
-                    ws.nodes.push(RED.nodes.convertNode(n));
-                    //ws.nodes.push(n); // this is only to see structure of raw nodes
-                }
+                ws.nodes.push(RED.nodes.convertNode(RED.nodes.cwsNodes[ni]));
             }            
         }
         

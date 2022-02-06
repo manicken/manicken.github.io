@@ -352,9 +352,10 @@ RED.view.groupbox = (function() {
 	}
 	function redraw_groups_init()
 	{
-		activeGroups = RED.nodes.nodes.filter(function(d)
+        var _nodes = RED.nodes.getWorkspace(RED.view.activeWorkspace).nodes;
+		activeGroups = /*RED.nodes.*/_nodes.filter(function(d)
 		{
-			return (d.z == RED.view.activeWorkspace && d.type == "group");
+			return (/*d.z == RED.view.activeWorkspace && */d.type == "group");
 		});
 		//console.error(activeGroups);
 		// just use .nodegroup for now

@@ -110,7 +110,7 @@ RED.tabs = (function() {
             $(".red-ui-tabs-scroll-container").on('DOMMouseScroll mousewheel', function (evt) {
                 evt.preventDefault();
                 evt.stopPropagation();
-                console.warn("workspace tabs mouse scroll");
+                //console.warn("workspace tabs mouse scroll");
                 var dx = -(evt.originalEvent.detail) || evt.originalEvent.wheelDelta;
                 
                 //if (dx > 0) scrollContainer.scrollLeft(scrollContainer.scrollLeft() - 75);
@@ -186,7 +186,7 @@ RED.tabs = (function() {
                 return;
             }
             if (speed == undefined) speed = 100;
-            console.warn(dir);
+            //console.warn(dir);
             if (dir.startsWith('+') && evt.ctrlKey) dir = "+=1000000";
             else if (dir.startsWith('-') && evt.ctrlKey) dir = "-=1000000";
             var currentScrollLeft = scrollContainer.scrollLeft();

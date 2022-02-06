@@ -688,7 +688,7 @@ RED.view = (function() {
         var scrollStartTop = chart.scrollTop();
 
         
-        RED.nodes.selectWorkspace(activeWorkspace);
+        //RED.nodes.selectWorkspace(activeWorkspace);
 
         if (workspaceScrollPositions[activeWorkspace]) {
             chart.scrollLeft(workspaceScrollPositions[activeWorkspace].left);
@@ -705,7 +705,8 @@ RED.view = (function() {
         }
 
         clearSelection();
-        RED.nodes.eachNode(function(n) {
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+        RED.nodes.wsEachNode(ws,function(n) {
                 n.dirty = true;
         });
         redraw(true);
@@ -1110,8 +1111,9 @@ RED.view = (function() {
 			if (!d3.event.ctrlKey) {
 				clearSelection();
 			}
-			RED.nodes.eachNode(function(n) {
-				if (n.z == activeWorkspace && !n.selected) {
+            var ws = RED.nodes.getWorkspace(activeWorkspace);
+			RED.nodes.wsEachNode(ws, function(n) {
+				if (/*n.z == activeWorkspace && */!n.selected) {
 					// don't select groups with lasso (only with ctrl pressed) 
 					if (n.type == "group" && !d3.event.ctrlKey)
 						return; // return is used because this is a function not a loop
@@ -1340,14 +1342,15 @@ RED.view = (function() {
 	}
 
 	function selectAll() {
-		RED.nodes.eachNode(function(n) {
-			if (n.z == activeWorkspace) {
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+		RED.nodes.wsEachNode(ws, function(n) {
+			//if (n.z == activeWorkspace) {
 				if (!n.selected) {
 					n.selected = true;
 					n.dirty = true;
 					moving_set.push({n:n});
 				}
-			}
+			//}
 		});
 		clearLinkSelection();
 		updateSelection();
@@ -1417,8 +1420,8 @@ RED.view = (function() {
 		for (var i = 0; i < moving_set.length; i++)
 		{
 			var n = moving_set[i].n;
-			var links = RED.nodes.links.filter(function(l) {  return l.source.z == activeWorkspace && l.target.z == activeWorkspace; });
-			vis.selectAll(".link").data(links,function(l) {  if (l.source == n) { l.selected = true; } if (l.target == n){ l.selected = true; } return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
+			//var links = RED.nodes.links.filter(function(l) {  return l.source.z == activeWorkspace && l.target.z == activeWorkspace; });
+            vis.selectAll(".link").data(RED.nodes.cwsLinks,function(l) {  if (l.source == n) { l.selected = true; } if (l.target == n){ l.selected = true; } return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 		}
 		redraw_links_init();
 	}
@@ -1817,13 +1820,14 @@ RED.view = (function() {
 	}
 
 	function portMouseUp(d,portType,portIndex,changedNodes) { // changedNodes is used by dynInput objects
-        console.warn("portMouseUp",portType,portIndex);
+        //console.warn("portMouseUp",portType,portIndex);
 		document.body.style.cursor = "";
 		if (mouse_mode != RED.state.JOINING || mousedown_node == undefined) return;
 
         if (typeof TouchEvent != "undefined" && d3.event instanceof TouchEvent) {
-            RED.nodes.eachNode(function(n) {
-                if (n.z == activeWorkspace) {
+            var ws = RED.nodes.getWorkspace(activeWorkspace);
+            RED.nodes.wsEachNode(ws, function(n) {
+                //if (n.z == activeWorkspace) {
                     var hw = n.w/posMode;
                     var hh = n.h/posMode;
                     if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
@@ -1835,7 +1839,7 @@ RED.view = (function() {
                             
                             portIndex = 0;
                     }
-                }
+                //}
             });
         } else {
             mouseup_node = d;
@@ -2197,7 +2201,7 @@ RED.view = (function() {
 
         if (RED.main.settings.LinkDropOnNodeAppend == false) return;
         let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
-        console.warn("next free index "+ nextFreeInputIndex);
+        //console.warn("next free index "+ nextFreeInputIndex);
         if (nextFreeInputIndex == -1) {
             if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
                 return;
@@ -2217,8 +2221,9 @@ RED.view = (function() {
 	function clearLinkSelection()
 	{
 		selected_link = null;
-		var links = RED.nodes.links.filter(function(l) { return l.source.z == activeWorkspace && l.target.z == activeWorkspace });
-		vis.selectAll(".link").data(links, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
+        if (RED.nodes.loadingWorkspaces == true) return;
+		//var links = RED.nodes.links.filter(function(l) { return l.source.z == activeWorkspace && l.target.z == activeWorkspace });
+		vis.selectAll(".link").data(RED.nodes.cwsLinks, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 	}
 
 	function nodeButtonClicked(d) {
@@ -2264,7 +2269,7 @@ RED.view = (function() {
 		// above could be:
 		// d.requirements = RED.main.requirements[d.type];
 		// if the structure is changed a little
-
+        
 		//check for conflicts with other nodes:
 		d.requirements.forEach(function(r) {
 			RED.nodes.eachNode(function (n2) {
@@ -2536,7 +2541,7 @@ RED.view = (function() {
 		
 		var inputlist = [];
 		for (var n=0; n < numInputs; n++) {
-			var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
+			var link = RED.nodes.cwsLinks.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
 			
 			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance; // allways divide by 2
 			//console.error("in node y:" + y);
@@ -2640,16 +2645,17 @@ RED.view = (function() {
 	function redraw_links_init()
 	{
         if (preventRedraw == true) return;
+        if (RED.nodes.loadingWorkspaces == true) return;
 		//const t0 = performance.now();
-		var wsLinks = RED.nodes.links.filter(function(d)
+		/*var wsLinks = RED.nodes.cwsLinks.filter(function(d)
 		{ 
 			return (d.source.z == activeWorkspace) &&
 					(d.target.z == activeWorkspace);
 
-		});
+		});*/
         //console.log(wsLinks);
 		//const t1 = performance.now();
-		var visLinksAll = visLinks.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
+		var visLinksAll = visLinks.selectAll(".link").data(RED.nodes.cwsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
 		//const t2 = performance.now();
         //console.warn(visLinksAll);
 
@@ -3081,10 +3087,26 @@ RED.view = (function() {
 
 	function redraw_nodes_init()
 	{
-		var nodesFilter = RED.nodes.nodes.filter(function(d)
+        //const t0 = performance.now();
+        
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+        //console.trace(ws.nodes);
+        //var nodesFilter = ;
+		var nodesFilter = ws.nodes.filter(function(d)
+		{ 
+			return (d.type != "group");
+		});
+        /*const t1 = performance.now();
+        console.warn("redraw_nodes_init new structure time:" + (t1-t0));
+        const t2 = performance.now();
+        var nodesFilter = RED.nodes.nodes.filter(function(d)
 		{ 
 			return (d.z == activeWorkspace && d.type != "group");
 		});
+
+        const t3 = performance.now();
+        console.warn("redraw_nodes_init old structure time:" + (t3-t2));
+*/
 		var visNodesAll = visNodes.selectAll(".nodegroup").data(nodesFilter, function(d){return d.id;}); // second parameter is the name given to each item
 
 		var updatedClassTypes =	false; // flag so that it only run once at each redraw()
@@ -3148,11 +3170,18 @@ RED.view = (function() {
 		if (fullUpdate != undefined && fullUpdate == true) {
 			var visNodesAll = redraw_nodes_init();
 		} else {
-			var visNodesAll = visNodes.selectAll(".node_selected").data(RED.nodes.nodes.filter(function(d)
+            var ws = RED.nodes.getWorkspace(activeWorkspace);
+            //console.trace(ws.nodes);
+            //var nodesFilter = ;
+            var nodesFilter = ws.nodes.filter(function(d)
+            { 
+                return (d.type != "group");
+            });
+			var visNodesAll = visNodes.selectAll(".node_selected").data(nodesFilter /*RED.nodes.nodes.filter(function(d)
 			{ 
 				return ((d.z == activeWorkspace) && (d.type != "group"));
 
-			}),function(d){return d.id});
+			})*/,function(d){return d.id});
 		}
 
 		visNodesAll.each( function(d,i) { // redraw all nodes in active workspace
@@ -3161,7 +3190,8 @@ RED.view = (function() {
 		});
 	}
     function getNodeRect(node) {
-        var visNodesAll2 = visNodes.selectAll("#"+node.id).data(RED.nodes.nodes.filter(function(d2)
+        var ws = RED.nodes.getWorkspace(node.z);
+        var visNodesAll2 = visNodes.selectAll("#"+node.id).data(/*RED.nodes*/ws.nodes.filter(function(d2)
         { 
             return (node===d2);
 
@@ -3218,7 +3248,7 @@ RED.view = (function() {
 	 * @param {boolean} fullUpdate 
 	 */
 	function redraw(fullUpdate) {
-        if (preventRedraw == true) return;
+        if (preventRedraw == true || RED.nodes.loadingWorkspaces == true) return;
 		const t0 = performance.now();
 
         RED.view.navigator.refresh();
@@ -3278,9 +3308,9 @@ RED.view = (function() {
 		var ioMultiple = [];
 		var ioNoOut = [];
 		var ioCtrl = [];
-
-		RED.nodes.eachNode(function (node) {
-			if (node.z != activeWorkspace) return;
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+		RED.nodes.wsEachNode(ws, function (node) {
+			//if (node.z != activeWorkspace) return;
 			var inputs = 0;
 			if (node.inputs == undefined)
 				inputs = node._def.inputs;
@@ -3450,6 +3480,7 @@ RED.view = (function() {
 
 	function getIOpinInfo(pinRect, node, index)
 	{
+        //console.warn(node);
 		var classAttr = pinRect.getAttribute("class");
 		//console.log("classAttr:"+classAttr); // development debug
 		var portDir;
@@ -3463,7 +3494,8 @@ RED.view = (function() {
 		{
 			nodeType = pinRect.getAttribute("nodeType");
 			portDir = "Out";
-			var node = RED.nodes.node(pinRect.getAttribute("nodeId"));
+			var node = RED.nodes.node(pinRect.getAttribute("nodeId"), activeWorkspace);
+            //console.warn(pinRect.getAttribute("nodeId"),node);
 		}
 		
 		var data = RED.NodeHelpManager.getHelp(nodeType); //$("script[data-help-name|='" + nodeType + "']");
@@ -3794,12 +3826,12 @@ RED.view = (function() {
 		dirty: function(d) { if (d == null) { return dirty; } else { setDirty(d); } },
 		importNodes: importNodes,
 		resize: function() { workspace_tabs.resize(); },
-		status: function(s) {
+		/*status: function(s) {
 			showStatus = s;
 			RED.nodes.eachNode(function(n) { n.dirty = true;});
 			//TODO: subscribe/unsubscribe here
 			redraw(false);
-		},
+		},*/
 		calculateTextSize: calculateTextSize,
 		showPopOver:showPopOver,
 		defaults: {
@@ -3809,11 +3841,13 @@ RED.view = (function() {
         select: selectnode,
         reveal,
         getActiveNodes: function() {
-            var nodesFilter = RED.nodes.nodes.filter(function(d)
-            { 
-                return (d.z == activeWorkspace /*&& d.type != "group"*/);
-            });
-            return nodesFilter;
+            
+            //var nodesFilter = RED.nodes.nodes.filter(function(d)
+            //{ 
+            //    return (d.z == activeWorkspace /*&& d.type != "group"*/);
+            //});
+            //return nodesFilter;
+            return RED.nodes.getWorkspace(activeWorkspace).nodes;
         },
         scale: function() {
             return settings.scaleFactor;

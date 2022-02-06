@@ -3,6 +3,32 @@
 
 RED.export.links2 = (function () {
 
+    //this new structure should not create a new set of links
+    // except when making links for arrays and buslinks
+    // but then the new links should be stored inside the 'master'-link
+    // also it should just add the necessary information to them
+    // the origin should be replaced with a array containing only one or more links
+    // that is then used at the export
+    // also the source target sourcePort targetPort should be kept
+    // at the original states
+    var exampleLink = {
+        source:{/*node*/}, sourcePort:0, target:{/*node*/}, targetPort:0, // original propeties
+
+        export:[ // should be added by this module, and contains the 'real' wires
+            {linkPath:"",
+             source:{/*node*/}, sourcePort:0, sourcePath:"", sourceName:"", 
+             target:{/*node*/}, targetPort:0, targetPath:"", targetName:""}
+        ],
+        
+        /*info:{ // added by setLinkInfo @ RED.nodes, but should maybe also be set here instead???
+            isBus,
+            valid,
+            inValidText,
+            tabOut,
+            tabIn
+        }*/
+    }
+
     function getClassConnections(class_ws, links, currPath) {
         //console.log("*******************************************");
         console.error("getClassConnections  path: \"" + currPath + "\"");
@@ -79,7 +105,8 @@ RED.export.links2 = (function () {
     }
 
     function getNodeLinks(node, currPath, nodeIsArray) {
-        var nodeLinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
+        var ws = RED.nodes.getWorkspace(node.z);
+        var nodeLinks = ws.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
         nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
         //console.error(node.name + "\nlinks:\n" + RED.export.links.getDebug(nodeLinks));
         console.warn(nodeIsArray);
@@ -140,7 +167,8 @@ RED.export.links2 = (function () {
      * @returns 
      */
      function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) { // TODO fix support for bus links
-        var links = RED.nodes.links.filter(function(l) {return l.target === dynInputObj;});
+        var ws = RED.nodes.getWorkspace(dynInputObj.z);
+        var links = ws.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
         //console.log("getDynInputDynSizePortStartIndex \n" + RED.export.links.getDebug(links));
         var offset = 0;
@@ -298,7 +326,8 @@ RED.export.links2 = (function () {
             l.tabIn = port.node;
         }
         // port can have multiple connections out from it
-        var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
+        var ws = RED.nodes.getWorkspace(port.node.z);
+        var portLinks = ws.links.filter(function(d) { return d.source === port.node;});
 
         var newTargetPath = newLink.targetPath + "/" + link.target.name;
         console.warn('newTargetPath "' + newTargetPath + '"');
@@ -573,6 +602,16 @@ RED.export.links2 = (function () {
         //console.warn("link copy to: " + RED.export.links.getDebug(newL));
         return newL;
     }
+    function getLinksDebug(links) {
+        var txt = "";
+        for (var i = 0; i < links.length; i++) {
+            txt += getLinkDebugInfo(links[i]) + "\n";
+        }
+        return txt;
+    }
+    function getLinkDebugInfo(link) {
+        return "(" + link.source.z + ", " + link.source.name + ", " + link.sourcePort + ", " + link.target.z + ", " + link.target.name + ", " + link.targetPort + ")";
+    }
 
     return {
         getClassConnections,
@@ -582,5 +621,7 @@ RED.export.links2 = (function () {
         expandArrays,
         GetName,
         copy,
+        getLinksDebug
+
     };
-})();
+})(); // RED.export.links2

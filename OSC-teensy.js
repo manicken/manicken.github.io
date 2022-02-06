@@ -526,7 +526,7 @@ var OSC = (function() {
 
         var bundle = CreateBundle();
 
-        var links = RED.nodes.links.filter(function(d) { return (d.source === node) || (d.target === node);});
+        var links = RED.nodes.cwsLinks.filter(function(d) { return (d.source === node) || (d.target === node);});
 		for (var i=0;i<links.length;i++) {
             var link = links[i];
             
@@ -628,7 +628,8 @@ var OSC = (function() {
     function NodeInputsUpdated(node, oldCount, newCount, removedLinks) {
         AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount);
         console.warn("NodeInputsUpdated");
-        var linksToUpdate = RED.nodes.links.filter(function(l) { return (l.source === node) || (l.target === node); });
+        var ws = RED.nodes.getWorkspace(node.z);
+        var linksToUpdate = ws.links.filter(function(l) { return (l.source === node) || (l.target === node); });
 
         var bundle = CreateBundle();
         if (removedLinks != undefined) AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links
