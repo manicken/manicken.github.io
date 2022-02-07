@@ -717,7 +717,7 @@ RED.view = (function() {
         RED.view.navigator.refresh();
             RED.view.navigator.resize();
     }
-
+    $("#btn-delete").click(function() {deleteSelection();});
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
 	$('#btn-paste').click(function() {importNodes(clipboard,null, true)});
@@ -1144,7 +1144,8 @@ RED.view = (function() {
 					ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy});
 				}
 				RED.history.push({t:'move',nodes:ns,dirty:dirty});
-				RED.storage.update();
+				RED.storage.update(); // this also do node re-sort
+                RED.events.emit("nodes:moved",ns);
 			}
 		}
 		if (mouse_mode == RED.state.MOVING || mouse_mode == RED.state.MOVING_ACTIVE) {

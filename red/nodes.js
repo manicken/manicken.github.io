@@ -463,8 +463,6 @@ RED.nodes = (function() {
         // normal event
         RED.events.emit('nodes:remove',node);
 
-
-			
 		return removedLinks;
 	}
 
@@ -1395,6 +1393,24 @@ RED.nodes = (function() {
 	{
         if (!wsId) return;
         var ws = getWorkspace(wsId);
+        if (index < 0) index = 0; // failsafe
+        if (type == "Out" && ws.tabOutputs != undefined) {
+            if (index >= ws.tabOutputs.length) index = (ws.tabOutputs.length - 1); // failsafe
+            if (ws.tabOutputs[index].inputs > 1)
+                return {name:ws.tabOutputs[index].name + "[" + ws.tabOutputs[index].inputs + "]", node: ws.tabOutputs[index], isBus:true};
+            else
+                return {name:ws.tabOutputs[index].name, node: ws.tabOutputs[index], isBus:false};
+        }
+        else if (type == "In" && ws.tabInputs != undefined) {
+            if (index >= ws.tabInputs.length) index = (ws.tabInputs.length - 1); // failsafe
+            if (ws.tabInputs[index].outputs > 1)
+                return {name:ws.tabInputs[index].name + "[" + ws.tabInputs[index].outputs + "]", node: ws.tabInputs[index], isBus:true};
+            else
+                return {name:ws.tabInputs[index].name, node: ws.tabInputs[index], isBus:false};
+        }
+        else  // failsafe
+            return {name:"Tab" + type + "put not found @ " + ws.label, node: undefined, isBus:false};
+
         var _nodes = ws.nodes;
 
 		var retNodes = [];
@@ -1973,9 +1989,11 @@ RED.nodes = (function() {
         Init_BuiltIn_NodeDefinitions();
         RED.events.on("nodes:inputs", NodeInputsChanged);
         RED.events.on("flows:renamed", workspaceNameChanged);
-        RED.events.on("nodes:renamed", ConstValueNodeRenamed);
-        RED.events.on("nodes:change", ConstValueNodeChanged);
-        RED.events.on("nodes:remove", ConstValueNodeRemoved);
+        RED.events.on("nodes:add", NodeAdded);
+        RED.events.on("nodes:renamed", NodeRenamed);
+        RED.events.on("nodes:change", NodeChanged);
+        RED.events.on("nodes:remove", NodeRemoved);
+        RED.events.on("nodes:moved", NodesMoved);
     }
     function NodeInputsChanged(node, oldCount, newCount) {
         // update the visuals
@@ -1997,7 +2015,7 @@ RED.nodes = (function() {
 
         RED.view.redraw();
     }
-    function ConstValueNodeRenamed(node, oldName) {
+    function NodeRenamed(node, oldName) {
         node.isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
         if (node.type == "ConstValue") {
             var findConstUsage = "[" + oldName + "]";
@@ -2013,7 +2031,7 @@ RED.nodes = (function() {
             }
         }
     }
-    function ConstValueNodeChanged(node, changes) {
+    function NodeChanged(node, changes) {
         if (node.type == "ConstValue" && changes.value != undefined) {
             var findConstUsage = "[" + node.name + "]";
             var ws = getWorkspace(node.z);
@@ -2027,8 +2045,9 @@ RED.nodes = (function() {
                 }
             }
         }
+        console.warn("node changed:", node, changes);
     }
-    function ConstValueNodeRemoved(node) {
+    function NodeRemoved(node) {
         if (node.type == "ConstValue") {
             var findConstUsage = "[" + node.name + "]";
             var ws = getWorkspace(node.z);
@@ -2041,6 +2060,33 @@ RED.nodes = (function() {
                     RED.view.redraw_node(ws.nodes[ni]);
                 }
             }
+        }
+        else if (node.type == "TabOutput" || node.type == "TabInput")
+            TabIOsChanged(node);
+    }
+    function NodeAdded(node) {
+        if (node.type == "TabOutput" || node.type == "TabInput")
+            TabIOsChanged(node);
+    }
+    function NodesMoved(ns) {
+        console.warn(ns);
+        for (var i=0;i<ns.length;i++) {
+            if (ns[i].n.type == "TabOutput" || ns[i].n.type == "TabInput") {
+                TabIOsChanged(ns[i].n);
+            }
+        }
+    }
+    function TabIOsChanged(node) {
+        var ws = getWorkspace(node.z);
+        if (node.type == "TabOutput") {
+            var tabOs = ws.nodes.filter(function (n) { return (n.type == "TabOutput"); });
+            tabOs.sort(function (a,b) { return (a.y - b.y); });
+            ws.tabOutputs = tabOs;
+        }
+        else if (node.type == "TabInput") {
+            var tabIs = ws.nodes.filter(function (n) { return (n.type == "TabInput"); });
+            tabIs.sort(function (a,b) { return (a.y - b.y); });
+            ws.tabInputs = tabIs;
         }
     }
     function FindNextFreeInputPort(node) {
@@ -2111,11 +2157,14 @@ RED.nodes = (function() {
 
     function refreshLinksInfo(links) { // _links allow just a set of links to be updated
         if (links == undefined) {
-            for (var wsi=0;wsi<workspaces.length;wsi++) {
+            eachLink(function (l, ws) {
+                setLinkInfo(l);
+            });
+            /*for (var wsi=0;wsi<workspaces.length;wsi++) {
                 var ws = workspaces[wsi];
                 for (var li = 0; li < ws.links.length; li++)
                     setLinkInfo(ws.links[li]);
-            }
+            }*/
         }
         else {
             for (var li = 0; li < links.length; li++)

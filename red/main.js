@@ -67,7 +67,8 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "&nbsp;&nbsp;this new 'working' structure makes it much easier to white export code<br><br>"+
                 "* node id:s are now generated from current utc date/time + a 16bit random number<br><br>"+
                 "* now array defined names gets new name<br>"+
-                "&nbsp;&nbsp;i.e. array1[2] when copied become array2[2]<br><br>",
+                "&nbsp;&nbsp;i.e. array1[2] when copied become array2[2]<br><br>"+
+                "* toolbar add delete button (drop down confirm)<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

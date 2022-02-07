@@ -16,11 +16,11 @@ RED.export.links2 = (function () {
 
         export:[ // should be added by this module, and contains the 'real' wires
             {linkPath:"",
-             source:{/*node*/}, sourcePort:0, sourcePath:"", sourceName:"", 
-             target:{/*node*/}, targetPort:0, targetPath:"", targetName:""}
+             source:{/*node*/}, sourcePort:0, sourcePath:[], sourceName:"", 
+             target:{/*node*/}, targetPort:0, targetPath:[], targetName:""}
         ],
         
-        /*info:{ // added by setLinkInfo @ RED.nodes, but should maybe also be set here instead???
+        /*info:{ // added by setLinkInfo @ RED.nodes, but should maybe also be set here instead??? but it's not really related
             isBus,
             valid,
             inValidText,
