@@ -66,9 +66,12 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "&nbsp;&nbsp;before all nodes and links where in two big arrays<br>"+
                 "&nbsp;&nbsp;this new 'working' structure makes it much easier to white export code<br><br>"+
                 "* node id:s are now generated from current utc date/time + a 16bit random number<br><br>"+
-                "* now array defined names gets new name<br>"+
+                "* now array defined names gets new name when copies are made<br>"+
                 "&nbsp;&nbsp;i.e. array1[2] when copied become array2[2]<br><br>"+
-                "* toolbar add delete button (drop down confirm)<br><br>",
+                "* toolbar add delete button (drop down confirm)<br><br>"+
+                "* add link notation: array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array<br><br>"+
+                "* add link notation: the array source size don't match the target array size<br><br>"+
+                "* notation of a forgotten function: when holding ctrl while selecting groups the whole group gets selected<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

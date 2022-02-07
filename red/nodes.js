@@ -421,7 +421,7 @@ RED.nodes = (function() {
             var node = nns[i];
             //console.log("checking ", node)
             if (wsId != undefined && node.z != wsId) continue; // workspace filter
-			if (node.name == name) {
+			if (getArrayName(node.name) == name) {
                 console.warn("################# found " + node.name + "==" + name);
 				return node;
 			}
@@ -997,8 +997,9 @@ RED.nodes = (function() {
 		}
         loadingWorkspaces = false;
         //console.warn(workspaces);
-        refreshLinksInfo();
         checkForAndSetNodeIsArray();
+        refreshLinksInfo();
+        
 	}
 
     function importNewNodes(nns, createNewIds, ws) { // nns = New Node s
@@ -2029,7 +2030,13 @@ RED.nodes = (function() {
                     RED.view.redraw_node(ws.nodes[ni]);
                 }
             }
+        }else {
+            console.warn("######### node renamed - refreshLinksInfo");
+            var links = getWorkspace(node.z).links.filter(function (l) { return (l.source === node || l.target === node); });
+            refreshLinksInfo(links);
+            RED.view.redraw_links_notations(links);
         }
+
     }
     function NodeChanged(node, changes) {
         if (node.type == "ConstValue" && changes.value != undefined) {
@@ -2156,6 +2163,7 @@ RED.nodes = (function() {
     }
 
     function refreshLinksInfo(links) { // _links allow just a set of links to be updated
+        //console.warn("refreshLinksInfo:",links);
         if (links == undefined) {
             eachLink(function (l, ws) {
                 setLinkInfo(l);
@@ -2178,6 +2186,7 @@ RED.nodes = (function() {
      * @returns 
      */
     function setLinkInfo(l) {
+        //
         //var wsSource = isClass(l.source.type);
         //var wsTarget = isClass(l.target.type);
         var tabOut = l.source._def.isClass?getClassIOport(l.source._def.isClass.id, "Out", l.sourcePort):undefined;
@@ -2188,8 +2197,7 @@ RED.nodes = (function() {
                     (tabIn != undefined && tabIn.isBus) ||
                     (l.source.type == "BusJoin" || l.target.type == "BusSplit");
 
-        if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.target._def.dynInputs!=undefined)) {// array to array of dynmixers not currently supported
-            
+        if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.target._def.dynInputs!=undefined)) {
             var valid = false;
             var inValidText = "array to 'array of dynmixers' not yet supported in OSC export<br> non priority to implement";
         }
@@ -2209,6 +2217,14 @@ RED.nodes = (function() {
             var valid = false;
             var inValidText = "BusJoin and BusSplit not yet supported";
         }
+        else if ((l.source.isArray!=undefined) && (l.target._def.dynInputs==undefined) && (l.target.isArray==undefined)) {
+            var valid = false;
+            var inValidText = "array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array";
+        }
+        else if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.source.isArray.arrayLength != l.target.isArray.arrayLength)) {
+            var valid = false;
+            var inValidText = "the array source size don't match the target array size";
+        }
         else
             var valid = true;
         l.info = {
@@ -2222,6 +2238,7 @@ RED.nodes = (function() {
             tabOut,
             tabIn
         };
+        
         
     }
 

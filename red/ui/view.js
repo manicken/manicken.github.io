@@ -1106,21 +1106,43 @@ RED.view = (function() {
 		}
 		if (lasso) {
 			//console.warn("canvasMouseUp lasso happend");
-			var x = parseInt(lasso.attr("x"));
-			var y = parseInt(lasso.attr("y"));
-			var x2 = x+parseInt(lasso.attr("width"));
-			var y2 = y+parseInt(lasso.attr("height"));
+			var lx1 = parseInt(lasso.attr("x"));
+			var ly1 = parseInt(lasso.attr("y"));
+			var lx2 = lx1+parseInt(lasso.attr("width"));
+			var ly2 = ly1+parseInt(lasso.attr("height"));
+
+            //var laRect = {x1,y1,x2,y2};
+
 			if (!d3.event.ctrlKey) {
 				clearSelection();
 			}
+            //console.log("lasso:",laRect);
             var ws = RED.nodes.getWorkspace(activeWorkspace);
 			RED.nodes.wsEachNode(ws, function(n) {
 				if (/*n.z == activeWorkspace && */!n.selected) {
-					// don't select groups with lasso (only with ctrl pressed) 
-					if (n.type == "group" && !d3.event.ctrlKey)
+					// don't select groups with lasso (only with ctrl pressed)
+                    // otherwise it's hard to select items inside it with lasso
+                    // one solution is to only select the group with lasso 
+                    // if the whole group is inside the lasso
+					if (n.type == "group" && !d3.event.ctrlKey) // think the functionality of ctrl key at this moment could be user selectable
 						return; // return is used because this is a function not a loop
+                    var nx1 = parseInt(n.x);
+                    var ny1 = parseInt(n.y);
+                    var nx2 = nx1 + parseInt(n.w)/posMode;
+                    var ny2 = ny1 + parseInt(n.h)/posMode;
+					
+                    //var noRect = {x1:n.x, y1:n.y, x2:n.x+n.w/posMode, y2:n.y+n.h/posMode};
 
-					n.selected = (n.x > x && n.x < x2 && n.y > y && n.y < y2);
+                    //n.selected = between(nx1,lx1,lx2)&&between(ny1,ly1,ly2); // original
+
+                    n.selected = overlap(lx1,ly1,lx2,ly2,nx1,ny1,nx2,ny2); // partial selection (normal)
+
+                    //n.selected = 
+
+                    // TODO fix the above so it only selects nodes that are completely inside the lasso (full selection)
+                    // alternative is to have a selection mode (partial selection)
+                    // where it's only nesessary to have little part of the node inside the lasso
+                    // it needs to take the posMode in action
 					if (n.selected) {
 						n.dirty = true;
 						moving_set.push({n:n});
@@ -1165,6 +1187,12 @@ RED.view = (function() {
         resetMouseVars();
         //RED.notify("canvas mouse up");
 	}
+    function overlap(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
+        return (ax1<bx2)&&(ax2>bx1)&&(ay1<by2)&&(ay2>by1);
+    }
+    function between(x,min,max) {
+        return (x>=min&&x<=max);
+    }
 
 	$('#btn-zoom-out').click(function() {zoomOut();});
 	$('#btn-zoom-zero').click(function() {zoomZero();});
@@ -2670,11 +2698,11 @@ RED.view = (function() {
 		anyLinkEnter = false;
 		linkEnter.each(function(d,i) {
 			anyLinkEnter = true;
-			
+			d.svgPath = {};
 			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
             //console.warn(d);
-			l.append("svg:path").attr("class","link_background link_path")
+			d.svgPath.background = l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
                     if (d3.event.button != 0) return;
                     console.warn(d3.event);
@@ -2736,14 +2764,20 @@ RED.view = (function() {
 				});
             //var linkInfo = RED.nodes.getLinkInfo(d);
             //d.info = linkInfo;
-            if (d.info.isBus == true) {
-                l.append("svg:path").attr("class","link_path link_outline_bus"/* + ((d.info.valid==false)?" link_invalid":"")*/);
+            
+            
+            d.svgPath.outline = l.append("svg:path").attr("class","link_path link_outline");
+            d.svgPath.line = l.append("svg:path").attr("class","link_path link_line");
+            
+            //console.log("do this happen???");
+            /*if (d.info.isBus == true) {
+                l.append("svg:path").attr("class","link_path link_outline_bus");
                 l.append("svg:path").attr("class","link_path link_line_bus" + ((d.info.valid==false)?" link_invalid":""));
             }
             else {
-                l.append("svg:path").attr("class","link_path link_outline"/* + ((d.info.valid==false)?" link_invalid":"")*/);
+                l.append("svg:path").attr("class","link_path link_outline");
                 l.append("svg:path").attr("class","link_path link_line" + ((d.info.valid==false)?" link_invalid":""));
-            }
+            }*/
 		});
 
 		visLinksAll.exit().remove();
@@ -2763,22 +2797,50 @@ RED.view = (function() {
         });
       }
 
-	function redraw_links()
+    function redraw_links_notations(links) {
+        for (var li=0;li<links.length;li++) {
+            redraw_link_notation(links[li]);
+        }
+    }
+	function redraw_links(links)
 	{
+        // this allows only a specific set of links to be redrawn
+        if (links != undefined) {
+            for (var li=0;li<links.length;li++) {
+                var l=links[li];
+                var d=redraw_link(l);
+                l.svgPath.background.attr("d", d);
+                l.svgPath.outline.attr("d", d);
+                l.svgPath.line.attr("d", d);
+            }
+            return;
+        }
         if (preventRedraw == true) return;
 		//const t0 = performance.now();
 		// only redraw links that is selected and where the node is moving
 		if (anyLinkEnter)
-			var links = vis.selectAll(".link_path");
+			var links = visLinks.selectAll(".link_path");
 		else
-			var links = vis.selectAll(".link_selected").selectAll(".link_path");
+			var links = visLinks.selectAll(".link_selected").selectAll(".link_path");
 		anyLinkEnter = false;
 		links.attr("d",redraw_link);
 		//const t1 = performance.now();
 		//console.log("redraw_links :"+ (t1-t0) +  "ms");
 	}
+    function redraw_link_notation(l) {
+        if (l.info.isBus == true) {
+            l.svgPath.outline.attr("class","link_path link_outline_bus");
+            l.svgPath.line.attr("class","link_path link_line_bus" + ((l.info.valid==false)?" link_invalid":""));
+        }
+        else {
+            l.svgPath.outline.attr("class","link_path link_outline");
+            l.svgPath.line.attr("class","link_path link_line" + ((l.info.valid==false)?" link_invalid":""));
+        }
+    }
 	function redraw_link(d)
 	{
+        redraw_link_notation(d);
+
 		var numOutputs = d.source.outputs || 1;
 		var sourcePort = d.sourcePort || 0;
 		
@@ -3824,6 +3886,8 @@ RED.view = (function() {
         get workspace_tabs() {return workspace_tabs;},
         get moving_set() {return moving_set;},
         calculateTextSize,
+        redraw_links,
+        redraw_links_notations,
         redraw_node:function (node) { redraw_node(getNodeRect(node), node, true)},
         redraw_nodes,
 
