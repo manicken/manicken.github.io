@@ -382,8 +382,8 @@ RED.view.groupbox = (function() {
                     var sew = selExtents.xmax - selExtents.xmin;
                     var chgw = chgExtents.xmax - chgExtents.xmin;
                     if (sew > chgw) {
-                        setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (seq-chgw)/2 - 30);
-                        setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (seq-chgw)/2 + 30);
+                        setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (sew-chgw)/2 - 30);
+                        setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (sew-chgw)/2 + 30);
                     } // else no width resize needed
                 }
                 else if (groupAt.el == "ml") {
@@ -409,8 +409,8 @@ RED.view.groupbox = (function() {
                     var sew = selExtents.xmax - selExtents.xmin;
                     var chgw = chgExtents.xmax - chgExtents.xmin;
                     if (sew > chgw) {
-                        setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (seq-chgw)/2 - 30);
-                        setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (seq-chgw)/2 + 30);
+                        setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (sew-chgw)/2 - 30);
+                        setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (sew-chgw)/2 + 30);
                     } // else no width resize needed
                 }
                 
