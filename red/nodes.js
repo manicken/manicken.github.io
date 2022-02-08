@@ -2052,7 +2052,7 @@ RED.nodes = (function() {
                 }
             }
         }
-        console.warn("node changed:", node, changes);
+        //console.warn("node changed:", node, changes);
     }
     function NodeRemoved(node) {
         if (node.type == "ConstValue") {
@@ -2076,7 +2076,7 @@ RED.nodes = (function() {
             TabIOsChanged(node);
     }
     function NodesMoved(ns) {
-        console.warn(ns);
+        //console.warn(ns);
         for (var i=0;i<ns.length;i++) {
             if (ns[i].n.type == "TabOutput" || ns[i].n.type == "TabInput") {
                 TabIOsChanged(ns[i].n);

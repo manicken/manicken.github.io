@@ -34,20 +34,16 @@ RED.view.groupbox = (function() {
 
 	function getSelectionExtents()
 	{
-		var xmin=settings.space_width,xmax=0,ymin=settings.space_height,ymax=0;
-        var posMode = RED.view.posMode;
-		for (var i = 0; i < moving_set.length; i++)
+		var xmin=RED.view.settings.space_width,xmax=0,ymin=RED.view.settings.space_height,ymax=0;
+		for (var i = 0; i < RED.view.moving_set.length; i++)
 		{
-			var n = moving_set[i].n;
-			var nxmin = (n.x - n.w/posMode);
-			var nxmax = (n.x + n.w/posMode);
-			var nymin = (n.y - n.h/posMode);
-			var nymax = (n.y + n.h/posMode);
+			var n = RED.view.moving_set[i].n;
+            var nr = getNodeExtents(n);
 
-			if (nxmin < xmin) xmin = nxmin;
-			if (nxmax > xmax) xmax = nxmax;
-			if (nymin < ymin) ymin = nymin;
-			if (nymax > ymax) ymax = nymax;
+			if (nr.xmin < xmin) xmin = nr.xmin;
+			if (nr.xmax > xmax) xmax = nr.xmax;
+			if (nr.ymin < ymin) ymin = nr.ymin;
+			if (nr.ymax > ymax) ymax = nr.ymax;
 		}
 		return {xmin:xmin,xmax:xmax,ymin:ymin,ymax:ymax};
 	}
@@ -74,40 +70,50 @@ RED.view.groupbox = (function() {
 		}
 	}
 	function getGroupAt(x,y) {
-		var candidates = [];
+		//var candidates = [];
+        var group = undefined;
+        var gxmi=0, gymi=0, gxma=0, gyma=0;
         var posMode = RED.view.posMode;
+		var enterLocation = "none";
+
 		for (var gi = 0; gi < activeGroups.length; gi++)
 		{
 			var g = activeGroups[gi];
-			// because the nodes are middle point based
-			if (posMode === 2)
+			
+			if (posMode == 2) // middle point based pos
 			{
-				var gxmi = g.x - g.w/posMode; 
-				var gymi = g.y - g.h/posMode;
-				var gxma = g.x + g.w/posMode;
-				var gyma = g.y + g.h/posMode;
+				gxmi = g.x - g.w/posMode; 
+				gymi = g.y - g.h/posMode;
+				gxma = g.x + g.w/posMode;
+				gyma = g.y + g.h/posMode;
 			}
 			else
 			{
-				var gxmi = g.x; 
-				var gymi = g.y;
-				var gxma = g.x + g.w;
-				var gyma = g.y + g.h;
+				gxmi = g.x; 
+				gymi = g.y;
+				gxma = g.x + g.w;
+				gyma = g.y + g.h;
 			}
+            
             if ((x >= gxmi) && (x <= gxma) && (y >= gymi) && (y <= gyma)) {
-				if (g !== RED.view.mousedown_node)
-                	candidates.push(g);
+				if (g !== RED.view.mousedown_node) {
+                	group = g;
+                    if ((x >= gxmi) && (x <= (gxmi + 10))) enterLocation = "l"; // left
+                    else if ((x <= gxma) && (x >= (gxma - 10))) enterLocation = "r" // right
+                    else if ((y >= gymi) && (y <= (gymi + 10))) enterLocation = "t" // top
+                    else if ((y <= gyma) && (y >= (gyma - 10))) enterLocation = "b" // bottom
+                }
             }
 		}
-		if (candidates.length != 0)
-			return candidates[candidates.length-1]; // return last item
-		return undefined;
+        if (group == undefined) return undefined;
+
+        return {g:group, enterLocation};
 	}
 
 	
 	function removeNodeFromGroup(group, node)
 	{
-		console.warn(" try remove " + node.name + " from the group " + group.name)
+		//console.warn(" try remove " + node.name + " from the group " + group.name)
 		for (var i = 0; i < group.nodes.length; i++)
 		{
             if (group.nodes[i] == node)
@@ -118,7 +124,7 @@ RED.view.groupbox = (function() {
                 group.nodes.splice(i,1);
                 //RED.events.emit("nodes:add",node);
 
-				console.warn(node.name + " was removed from the group " + group.name)
+				//console.warn(node.name + " was removed from the group " + group.name)
                 RED.notify(node.name + " was removed from the group " + group.name,false,false, 2000);
 
                 
@@ -161,6 +167,10 @@ RED.view.groupbox = (function() {
 				// if any parent of currentHoveredGroup is equal to d
 				// then that parent should never be added
 				if (ifAnyRootParent(currentHoveredGroup, node)){ console.log("(recursive prevention) cannot add " + node.name + " into " + currentHoveredGroup.name); continue; }
+
+                // TODO. check so that the whole node is actually inside the group rectangle 
+                // otherwise don't add it
+
 
                 //RED.events.emit("nodes:remove", node);
                 currentHoveredGroup.nodes.push(node);
@@ -305,18 +315,20 @@ RED.view.groupbox = (function() {
 		var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
 		if (groupAt != undefined)
 		{
+            
+
 			if (currentHoveredGroup != undefined) // used when hovering from child-to-parent or parent-to-child
 			{
-				if (groupAt == currentHoveredGroup) return;
+				if (groupAt.g == currentHoveredGroup) return;
                 currentHoveredGroup.hovered = false;
-                if (RED.workspaces.settings.addToGroupAutosize == true)
+                if (RED.main.settings.addToGroupAutosize == true)
 				    restoreOldSizeAndPos(currentHoveredGroup);
 				lastHoveredGroup = currentHoveredGroup;
-				console.warn("group leave2:" + currentHoveredGroup.name);
+				//console.warn("group leave2:" + currentHoveredGroup.name);
 			}
-			currentHoveredGroup = groupAt;
+			currentHoveredGroup = groupAt.g;
 			currentHoveredGroup.hovered = true;
-			console.trace("group enter:" + currentHoveredGroup.name);
+			//console.trace("group enter:" + currentHoveredGroup.name);
 
 			if (mousedown_node.type == "group")
 			{
@@ -324,27 +336,37 @@ RED.view.groupbox = (function() {
 				if (currentHoveredGroup.parentGroup !== mousedown_node)
 					moveGroupToFront(mousedown_node);
 			}
-			// prevents child group to be resized outside parent
-			if (currentHoveredGroup.parentGroup !== mousedown_node && RED.workspaces.settings.addToGroupAutosize == true)
+			// currentHoveredGroup.parentGroup !== mousedown_node  ???prevents child group to be resized outside parent???
+			if (currentHoveredGroup.parentGroup !== mousedown_node && RED.main.settings.addToGroupAutosize == true)
 			{
+                //console.log("enterLocation: " + groupAt.enterLocation);
+
 				var selExtents = getSelectionExtents();
 				var chgExtents = getNodeExtents(currentHoveredGroup);
 				saveOldSizeAndPos(currentHoveredGroup);
-				if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
+
+                // TODO. make us of tl, tr, bl, br scheme instead that will work much better I think
+                if (groupAt.enterLocation == "t") setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
+                else if (groupAt.enterLocation == "b") setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
+                else if (groupAt.enterLocation == "l") setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
+                else if (groupAt.enterLocation == "r") setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
+
+				/*
+                if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
 				if (selExtents.xmax > chgExtents.xmax){setUInode_Xmax(currentHoveredGroup, selExtents.xmax + 30); }
 				if (selExtents.ymin < chgExtents.ymin){setUInode_Ymin(currentHoveredGroup, selExtents.ymin - 30); }
 				if (selExtents.ymax > chgExtents.ymax){setUInode_Ymax(currentHoveredGroup, selExtents.ymax + 30); }
-
-				console.log(selExtents);
+                */
+				
 			}
 			redraw_groups(true);
 		}
 		else if (currentHoveredGroup != undefined)
 		{
 			lastHoveredGroup = currentHoveredGroup;
-			console.warn("group leave1:" + currentHoveredGroup.name);
+			//console.warn("group leave1:" + currentHoveredGroup.name);
 			currentHoveredGroup.hovered = false;
-            if (RED.workspaces.settings.addToGroupAutosize == true)
+            if (RED.main.settings.addToGroupAutosize == true)
                 restoreOldSizeAndPos(currentHoveredGroup);
 			currentHoveredGroup = undefined;
 			redraw_groups(true);
@@ -352,10 +374,9 @@ RED.view.groupbox = (function() {
 	}
 	function redraw_groups_init()
 	{
-        var _nodes = RED.nodes.getWorkspace(RED.view.activeWorkspace).nodes;
-		activeGroups = /*RED.nodes.*/_nodes.filter(function(d)
+		activeGroups = RED.nodes.getWorkspace(RED.view.activeWorkspace).nodes.filter(function(d)
 		{
-			return (/*d.z == RED.view.activeWorkspace && */d.type == "group");
+			return (d.type == "group");
 		});
 		//console.error(activeGroups);
 		// just use .nodegroup for now

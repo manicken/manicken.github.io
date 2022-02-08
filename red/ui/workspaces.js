@@ -5,7 +5,6 @@ RED.workspaces = (function() {
     var defSettings = {
         workspaceMinimumTabSize: 50,
         showWorkspaceToolbar: true,
-        addToGroupAutosize: false,
         addNewAutoEdit:true,
         addNewLocation:2, // 0 = beginning, 1 = before current, 2 = after current, 3 = end
         defaultNewName:"Class_",
@@ -14,7 +13,6 @@ RED.workspaces = (function() {
     var _settings = {
         workspaceMinimumTabSize: defSettings.workspaceMinimumTabSize,
         showWorkspaceToolbar: defSettings.showWorkspaceToolbar,
-        addToGroupAutosize: defSettings.addToGroupAutosize,
         addNewAutoEdit: defSettings.addNewAutoEdit,
         addNewLocation: defSettings.addNewLocation,
         defaultNewName: defSettings.defaultNewName,
@@ -28,9 +26,6 @@ RED.workspaces = (function() {
 
         get showWorkspaceToolbar() { return _settings.showWorkspaceToolbar; },
         set showWorkspaceToolbar(state) { _settings.showWorkspaceToolbar = state; updateWorkspaceToolbarVisible(); RED.storage.update();},
-
-        get addToGroupAutosize() { return _settings.addToGroupAutosize; },
-        set addToGroupAutosize(state) { _settings.addToGroupAutosize = state; RED.storage.update(); },
 
         get addNewAutoEdit() { return _settings.addNewAutoEdit; },
         set addNewAutoEdit(state) { _settings.addNewAutoEdit = state; RED.storage.update(); },
@@ -50,7 +45,7 @@ RED.workspaces = (function() {
         defaultNewName:  {label:"Default New Name", type:"string", popupText: "The default name that is used for new tabs."},
         workspaceMinimumTabSize:  { label:"Min Workspace Tab Size", type:"number", valueId:"", popupText: "set the minimum workspace tab size" },
         showWorkspaceToolbar:  {label:"Show toolbar.", type:"boolean"},
-        addToGroupAutosize:  { label:"Add to group autosize", type:"boolean", valueId:"", popupText: "make the group autosize to fit while hovering with new items" },
+        
     }
 
     function updateWorkspaceToolbarVisible()

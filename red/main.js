@@ -71,7 +71,14 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* toolbar add delete button (drop down confirm)<br><br>"+
                 "* add link notation: array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array<br><br>"+
                 "* add link notation: the array source size don't match the target array size<br><br>"+
-                "* notation of a forgotten function: when holding ctrl while selecting groups the whole group gets selected<br><br>",
+                "* notation of a forgotten function: when holding ctrl while selecting groups the whole group gets selected<br><br>"+
+                "* splitted settings sub category Nodes/Links @ Global to two categories: Nodes and Links<br><br>"+
+                "* Move setting 'Auto append dropped links' from Global-Nodes/Links to Global-Links<br><br>"+
+                "* Move setting 'Dyn. Input Objects Auto Expand' from Global-Nodes/Links to Global-Links<br><br>"+
+                "* Move setting 'Dyn. Input Objects Auto Reduce' from Global-Nodes/Links to Global-Links<br><br>"+
+                "* Move setting 'Show Node Tooltip Popup' from Global-Nodes/Links to Global-Nodes<br><br>"+
+                "* Move setting 'Add to group autosize' from Workspaces to Global-Groups<br><br>"+
+                "* add setting LassoSelectNodeMode @ Global-Node that selects the behaivour of the select lasso<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
@@ -92,6 +99,8 @@ RED.main = (function() {
         DynInputAutoReduceOnLinkRemove:false,
         DynInputAudoRearrangeLinks:false,
         ShowNodeToolTip:true,
+        LassoSelectNodeMode:0,
+        addToGroupAutosize: false,
         //AllowLowerCaseWorkspaceName: false,
     };
     var _settings = {
@@ -105,6 +114,8 @@ RED.main = (function() {
         DynInputAutoReduceOnLinkRemove:defSettings.DynInputAutoReduceOnLinkRemove,
         DynInputAudoRearrangeLinks:defSettings.DynInputAudoRearrangeLinks,
         ShowNodeToolTip:defSettings.ShowNodeToolTip,
+        LassoSelectNodeMode:defSettings.LassoSelectNodeMode,
+        addToGroupAutosize: defSettings.addToGroupAutosize,
         //AllowLowerCaseWorkspaceName:defSettings.AllowLowerCaseWorkspaceName,
     };
     var settings = {
@@ -138,6 +149,11 @@ RED.main = (function() {
         get ShowNodeToolTip() { return _settings.ShowNodeToolTip; },
         set ShowNodeToolTip(state) { _settings.ShowNodeToolTip = state; RED.storage.update();},
 
+        get LassoSelectNodeMode() { return _settings.LassoSelectNodeMode; },
+        set LassoSelectNodeMode(mode) { _settings.LassoSelectNodeMode = mode; RED.storage.update();},
+
+        get addToGroupAutosize() { return _settings.addToGroupAutosize; },
+        set addToGroupAutosize(state) { _settings.addToGroupAutosize = state; RED.storage.update(); },
 
         //get AllowLowerCaseWorkspaceName() { return _settings.AllowLowerCaseWorkspaceName; },
         //set AllowLowerCaseWorkspaceName(state) { _settings.AllowLowerCaseWorkspaceName = state; RED.storage.update();},
@@ -147,14 +163,23 @@ RED.main = (function() {
     var settingsEditor = {
         ClearOutputLog:       {label:"Clear output log", type:"button", action: ClearOutputLog},
         AutoDownloadJSON:     {label:"Auto Download JSON", type:"boolean", popupText:"When enabled this automatically downloads the current design as JSON after the page has loaded,<br>this can be used as a failsafe for important projects.<br><br>future improvement/additional functionality could involve a autosave based on a interval as well."},
-        nodes:                {label:"Nodes/Links", expanded:false, bgColor:"#DDD",
+        groups:               {label:"Groups", expanded:false, bgColor:"#DDD",
+            items: {
+                addToGroupAutosize:  { label:"Add to group autosize", type:"boolean", valueId:"", popupText: "make the group autosize to fit while hovering with new items" },
+            }
+        },
+        nodes:                {label:"Nodes", expanded:false, bgColor:"#DDD",
             items: {
                 ShowNodeToolTip:  {label:"Show Node Tooltip Popup.", type:"boolean", popupText: "When a node is hovered a popup is shown.<br>It shows the node-type + the comment (if this is a code type the comment is the code-text and will be shown in the popup)."},
+                LassoSelectNodeMode:  { label:"Lasso Select Node Mode", type:"combobox", actionOnChange:true, options:[0,1], optionTexts:["Partial", "Complete"], popupText: "Selects how the node select lasso behaves<br><br>partial: the node:s don't need to be completely inside the lasso to be selected.<br><br>complete: the node:s need to be completely inside the lasso to be selected." },
+            }
+        },
+        links:                {label:"Links", expanded:false, bgColor:"#DDD",
+            items: {
                 LinkDropOnNodeAppend:  {label:"Auto append dropped links", type:"boolean", popupText: "Auto append dropped links to any free input-slot<br>This makes it possible to just drop new 'input'-links to anywhere on a node to make them automatically add to any free input."},
                 DynInputAutoExpandOnLinkDrop:   {label:"Dyn. Input Objects Auto Expand", type:"boolean", popupText:"Auto expand dynamic input objects when new links are dropped.<br><br>note. If 'Auto append dropped links' is disabled this will not work."},
                 DynInputAutoReduceOnLinkRemove: {label:"Dyn. Input Objects Auto Reduce", type:"boolean", popupText:"Auto reduce dynamic input objects to the last used input.<br>i.e. it's the reverse of 'Auto Expand'"},
                 DynInputAudoRearrangeLinks:     {label:"Dyn. Input Objects Auto Rearrange Input Links", type:"boolean", popupText:"(not implemented yet) Auto Rearrange 'dynamic input objects' links to empty slots"},
-                
             }
         },
         transmitDebug:        {label:"Debug Output", expanded:false, bgColor:"#DDD",

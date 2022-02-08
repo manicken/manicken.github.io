@@ -247,7 +247,7 @@ RED.view = (function() {
 
         RED.notify("current tab settings was applied to other tabs", "warning", null, 2000);
     }
-    var catLabel = "Workspace/View"; // so that this can be used in the "apply to other tabs" popuptext
+    var catLabel = "Tab/Workspace/View"; // so that this can be used in the "apply to other tabs" popuptext
 	var settingsCategory = { label:catLabel, expanded:false, bgColor:"#DDD", dontSave:true, menuItems:[{label:"apply to other tabs",iconClass:"fa fa-copy",popupText: "uses the current "+catLabel+" settings for all other tabs", action:applySettingToOtherTabs}] }; // don't save is special now when we have individual settings for each tab
 
 	var settingsEditor = {
@@ -1116,6 +1116,7 @@ RED.view = (function() {
 			if (!d3.event.ctrlKey) {
 				clearSelection();
 			}
+            var selectMode = RED.main.settings.LassoSelectNodeMode;
             //console.log("lasso:",laRect);
             var ws = RED.nodes.getWorkspace(activeWorkspace);
 			RED.nodes.wsEachNode(ws, function(n) {
@@ -1126,23 +1127,25 @@ RED.view = (function() {
                     // if the whole group is inside the lasso
 					if (n.type == "group" && !d3.event.ctrlKey) // think the functionality of ctrl key at this moment could be user selectable
 						return; // return is used because this is a function not a loop
-                    var nx1 = parseInt(n.x);
-                    var ny1 = parseInt(n.y);
-                    var nx2 = nx1 + parseInt(n.w)/posMode;
-                    var ny2 = ny1 + parseInt(n.h)/posMode;
-					
-                    //var noRect = {x1:n.x, y1:n.y, x2:n.x+n.w/posMode, y2:n.y+n.h/posMode};
 
+                    if (posMode == 1) {
+                        var nx1 = parseInt(n.x);
+                        var ny1 = parseInt(n.y);
+                        var nx2 = nx1 + parseInt(n.w);
+                        var ny2 = ny1 + parseInt(n.h);
+                    } else { // posMode = 2
+                        var nx1 = parseInt(n.x) - parseInt(n.w)/2;
+                        var ny1 = parseInt(n.y) - parseInt(n.h)/2;
+                        var nx2 = nx1 + parseInt(n.w);
+                        var ny2 = ny1 + parseInt(n.h);
+                    }
+                    if (selectMode == 1)
+                        n.selected = include(lx1,ly1,lx2,ly2,nx1,ny1,nx2,ny2); // 'complete'-inside selection lasso
+                    else // if (selectMode == 0) default and failsafe
+                        n.selected = overlap(lx1,ly1,lx2,ly2,nx1,ny1,nx2,ny2); // partial selection (normal)
+                    
                     //n.selected = between(nx1,lx1,lx2)&&between(ny1,ly1,ly2); // original
 
-                    n.selected = overlap(lx1,ly1,lx2,ly2,nx1,ny1,nx2,ny2); // partial selection (normal)
-
-                    //n.selected = 
-
-                    // TODO fix the above so it only selects nodes that are completely inside the lasso (full selection)
-                    // alternative is to have a selection mode (partial selection)
-                    // where it's only nesessary to have little part of the node inside the lasso
-                    // it needs to take the posMode in action
 					if (n.selected) {
 						n.dirty = true;
 						moving_set.push({n:n});
@@ -1189,6 +1192,9 @@ RED.view = (function() {
 	}
     function overlap(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
         return (ax1<bx2)&&(ax2>bx1)&&(ay1<by2)&&(ay2>by1);
+    }
+    function include(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
+        return (ay1<by1)&&(ax1<bx1)&&(by2<ay2)&&(bx2<ax2);
     }
     function between(x,min,max) {
         return (x>=min&&x<=max);
