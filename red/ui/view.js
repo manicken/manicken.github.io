@@ -912,7 +912,7 @@ RED.view = (function() {
 		if (mouse_mode != RED.state.IMPORT_DRAGGING && !mousedown_node && selected_link == null) {
 			return;
 		}
-
+        var movingNodes = false;
 		var mousePos;
 		if (mouse_mode == RED.state.JOINING) {
 			// update drag line
@@ -1009,18 +1009,28 @@ RED.view = (function() {
 			showHideGrid(true);
 			moveSelection_mouse();
 			RED.view.groupbox.moveToFromGroup_update();
-			
+			movingNodes = true;
+            for (var ni=0;ni<moving_set.length;ni++) {
+                redraw_nodeMoved(moving_set[ni].n);
+            }
 		} 
 		// ui object resize mouse move
 		else
 		{ 
 			RED.view.ui.uiNodeResize();
 		}
-		redraw(false);
+        if (movingNodes == false)
+		    redraw(false);
 		//redraw_links_init();
 		redraw_links();
 		//console.log("redraw from canvas mouse move");
 	}
+    function redraw_nodeMoved(d) {
+        if (posMode === 2)
+			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+		else
+			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
+    }
     function generateDragLinkPath(origX,origY, destX, destY, sc) {
         var dy = destY-origY;
         var dx = destX-origX;
@@ -3094,6 +3104,7 @@ RED.view = (function() {
 				5000
 				)});
 	}
+    
 	
 	function redraw_nodeRefresh(nodeRect, d) // this contains the rest until they get own functions
 	{
@@ -3202,6 +3213,7 @@ RED.view = (function() {
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
 			anyNodeEnter = true;
+            
 			d.oldNodeText = undefined;
 			d.oldWidth = undefined;
 			d.oldHeight = undefined;
@@ -3213,6 +3225,7 @@ RED.view = (function() {
 			}
 			
 			var nodeRect = d3.select(this);
+            d.svgRect = nodeRect;
 			nodeRect.attr("id",d.id);
 			if (d._def.uiObject == undefined)
 			{
@@ -3226,7 +3239,7 @@ RED.view = (function() {
 				checkRequirements(d); // this update nodes that allready exist
 				if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
 				redraw_nodeReqError(nodeRect, d);
-				redraw_paletteNodesReqError(d);
+				//redraw_paletteNodesReqError(d);
 			}
 
 			redraw_nodeMainRect_init(nodeRect, d);
@@ -3281,14 +3294,17 @@ RED.view = (function() {
     }
     function redraw_node(nodeRect,d,superUpdate) {
         
+        // the following (requirementError check) don't belong here
         if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
         {	
             checkRequirements(d); // this update nodes that allready exist
             //if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
             redraw_nodeReqError(nodeRect, d);
+            //redraw_paletteNodesReqError(d);
         }
         if (superUpdate != undefined && superUpdate == true)
         {
+            //console.warn("super update");
             d.dirty = true;
             d.resize = true;
         }
@@ -3313,7 +3329,7 @@ RED.view = (function() {
 
             }
         }
-        redraw_paletteNodesReqError(d);
+        
         redraw_nodeRefresh(nodeRect, d);
         if (d.type != "JunctionLR" && d.type != "JunctionRL")
             redraw_update_label(nodeRect, d);

@@ -327,12 +327,12 @@ RED.view.groupbox = (function() {
 	{
         var mouse_position = RED.view.mouse_position;
         var mousedown_node = RED.view.mousedown_node;
-        
+        //const t0 = performance.now();
 		var groupAt = getGroupAt(mouse_position[0], mouse_position[1]);
+        //const t1 = performance.now();
+        //console.warn((t1-t0)+"ms");
 		if (groupAt != undefined)
 		{
-            
-
 			if (currentHoveredGroup != undefined) // used when hovering from child-to-parent or parent-to-child
 			{
 				if (groupAt.g == currentHoveredGroup) return;
@@ -467,6 +467,7 @@ RED.view.groupbox = (function() {
 			anyGroupEnter = true; // could probally just check if (groupEnter.length > 0)
 
 			var groupRect = d3.select(this);
+            d.svgRect = groupRect;
 			groupRect.attr("id",d.id);
 
 			d.oldNodeText = undefined;
