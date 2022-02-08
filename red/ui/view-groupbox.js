@@ -98,16 +98,17 @@ RED.view.groupbox = (function() {
             if ((x >= gxmin) && (x <= gxmax) && (y >= gymin) && (y <= gymax)) {
 				if (g !== RED.view.mousedown_node) {
                 	foundGroup = g;
-                    var gxmid1 = gxmin + (gxmax-gxmin)/3;
-                    var gxmid2 = gxmax - (gxmax-gxmin)/3;
-                    var gymid1 = gymin + (gymax-gymin)/3;
-                    var gymid2 = gymax - (gymax-gymin)/3;
+                    var gxmid1 = gxmin + 10;//(gxmax-gxmin)/3;
+                    var gxmid2 = gxmax - 10;//(gxmax-gxmin)/3;
+                    var gymid1 = gymin + 10;//(gymax-gymin)/3;
+                    var gymid2 = gymax - 10;//(gymax-gymin)/3;
+                    
 
-                    if      ((x >= gxmin) && (x < gxmid1) && (y >= gymin) && (y < gymid1)) el = "tl"; // top left
+                    /*if      ((x >= gxmin) && (x < gxmid1) && (y >= gymin) && (y < gymid1)) el = "tl"; // top left
                     else if ((x > gxmid2) && (x <= gxmax) && (y >= gymin) && (y < gymid1)) el = "tr"; // top right
                     else if ((x >= gxmin) && (x < gxmid1) && (y > gymid2) && (y <= gymax)) el = "bl"; // bottom left
                     else if ((x > gxmid2) && (x <= gxmax) && (y > gymid2) && (y <= gymax)) el = "br"; // bottom right
-                    else if ((x > gxmid1) && (x < gxmid2) && (y >= gymin) && (y < gymid1)) el = "tm"; // top middle
+                    else */if ((x > gxmid1) && (x < gxmid2) && (y >= gymin) && (y < gymid1)) el = "tm"; // top middle
                     else if ((x >= gxmin) && (x < gxmid1) && (y > gymid1) && (y < gymid2)) el = "ml"; // middle left
                     else if ((x > gxmid2) && (x <= gxmax) && (y > gymid1) && (y < gymid2)) el = "mr"; // middle right
                     else if ((x > gxmid1) && (x < gxmid2) && (y > gymid2) && (y <= gymax)) el = "bm"; // bottom middle
@@ -361,7 +362,7 @@ RED.view.groupbox = (function() {
 				saveOldSizeAndPos(currentHoveredGroup);
 
                 // TODO. make us of tl, tr, bl, br scheme instead that will work much better I think
-                if (groupAt.el == "tl") {
+                /*if (groupAt.el == "tl") {
                     setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
                     setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
                 }
@@ -377,7 +378,7 @@ RED.view.groupbox = (function() {
                     setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
                     setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
                 }
-                else if (groupAt.el == "tm") {
+                else */if (groupAt.el == "tm") {
                     setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
                     var sew = selExtents.xmax - selExtents.xmin;
                     var chgw = chgExtents.xmax - chgExtents.xmin;
