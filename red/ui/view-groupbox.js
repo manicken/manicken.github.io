@@ -71,10 +71,10 @@ RED.view.groupbox = (function() {
 	}
 	function getGroupAt(x,y) {
 		//var candidates = [];
-        var group = undefined;
-        var gxmi=0, gymi=0, gxma=0, gyma=0;
+        var foundGroup = undefined;
+        var gxmin=0, gymin=0, gxmax=0, gymax=0;
         var posMode = RED.view.posMode;
-		var enterLocation = "none";
+		var el = "none";
 
 		for (var gi = 0; gi < activeGroups.length; gi++)
 		{
@@ -82,32 +82,47 @@ RED.view.groupbox = (function() {
 			
 			if (posMode == 2) // middle point based pos
 			{
-				gxmi = g.x - g.w/posMode; 
-				gymi = g.y - g.h/posMode;
-				gxma = g.x + g.w/posMode;
-				gyma = g.y + g.h/posMode;
+				gxmin = g.x - g.w/posMode; 
+				gymin = g.y - g.h/posMode;
+				gxmax = g.x + g.w/posMode;
+				gymax = g.y + g.h/posMode;
 			}
 			else
 			{
-				gxmi = g.x; 
-				gymi = g.y;
-				gxma = g.x + g.w;
-				gyma = g.y + g.h;
+				gxmin = g.x; 
+				gymin = g.y;
+				gxmax = g.x + g.w;
+				gymax = g.y + g.h;
 			}
             
-            if ((x >= gxmi) && (x <= gxma) && (y >= gymi) && (y <= gyma)) {
+            if ((x >= gxmin) && (x <= gxmax) && (y >= gymin) && (y <= gymax)) {
 				if (g !== RED.view.mousedown_node) {
-                	group = g;
-                    if ((x >= gxmi) && (x <= (gxmi + 10))) enterLocation = "l"; // left
-                    else if ((x <= gxma) && (x >= (gxma - 10))) enterLocation = "r" // right
-                    else if ((y >= gymi) && (y <= (gymi + 10))) enterLocation = "t" // top
-                    else if ((y <= gyma) && (y >= (gyma - 10))) enterLocation = "b" // bottom
+                	foundGroup = g;
+                    var gxmid1 = gxmin + (gxmax-gxmin)/3;
+                    var gxmid2 = gxmax - (gxmax-gxmin)/3;
+                    var gymid1 = gymin + (gymax-gymin)/3;
+                    var gymid2 = gymax - (gymax-gymin)/3;
+
+                    if      ((x >= gxmin) && (x < gxmid1) && (y >= gymin) && (y < gymid1)) el = "tl"; // top left
+                    else if ((x > gxmid2) && (x <= gxmax) && (y >= gymin) && (y < gymid1)) el = "tr"; // top right
+                    else if ((x >= gxmin) && (x < gxmid1) && (y > gymid2) && (y <= gymax)) el = "bl"; // bottom left
+                    else if ((x > gxmid2) && (x <= gxmax) && (y > gymid2) && (y <= gymax)) el = "br"; // bottom right
+                    else if ((x > gxmid1) && (x < gxmid2) && (y >= gymin) && (y < gymid1)) el = "tm"; // top middle
+                    else if ((x >= gxmin) && (x < gxmid1) && (y > gymid1) && (y < gymid2)) el = "ml"; // middle left
+                    else if ((x > gxmid2) && (x <= gxmax) && (y > gymid1) && (y < gymid2)) el = "mr"; // middle right
+                    else if ((x > gxmid1) && (x < gxmid2) && (y > gymid2) && (y <= gymax)) el = "bm"; // bottom middle
+                    //if ((x >= gxmi) && (x <= (gxmi + 10))) enterLocation = "l"; // left
+                    //else if ((x <= gxma) && (x >= (gxma - 10))) enterLocation = "r" // right
+                    //else if ((y >= gymi) && (y <= (gymi + 10))) enterLocation = "t" // top
+                    //else if ((y <= gyma) && (y >= (gyma - 10))) enterLocation = "b" // bottom
+
+
                 }
             }
 		}
-        if (group == undefined) return undefined;
+        if (foundGroup == undefined) return undefined;
 
-        return {g:group, enterLocation};
+        return {g:foundGroup, el};
 	}
 
 	
@@ -321,7 +336,7 @@ RED.view.groupbox = (function() {
 			{
 				if (groupAt.g == currentHoveredGroup) return;
                 currentHoveredGroup.hovered = false;
-                if (RED.main.settings.addToGroupAutosize == true)
+                if (RED.main.settings.addToGroupAutosize == true || d3.event.shiftKey)
 				    restoreOldSizeAndPos(currentHoveredGroup);
 				lastHoveredGroup = currentHoveredGroup;
 				//console.warn("group leave2:" + currentHoveredGroup.name);
@@ -337,19 +352,73 @@ RED.view.groupbox = (function() {
 					moveGroupToFront(mousedown_node);
 			}
 			// currentHoveredGroup.parentGroup !== mousedown_node  ???prevents child group to be resized outside parent???
-			if (currentHoveredGroup.parentGroup !== mousedown_node && RED.main.settings.addToGroupAutosize == true)
+			if (currentHoveredGroup.parentGroup !== mousedown_node && (RED.main.settings.addToGroupAutosize == true || d3.event.shiftKey))
 			{
-                //console.log("enterLocation: " + groupAt.enterLocation);
+                console.log("enterLocation: " + groupAt.el);
 
 				var selExtents = getSelectionExtents();
 				var chgExtents = getNodeExtents(currentHoveredGroup);
 				saveOldSizeAndPos(currentHoveredGroup);
 
                 // TODO. make us of tl, tr, bl, br scheme instead that will work much better I think
-                if (groupAt.enterLocation == "t") setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
-                else if (groupAt.enterLocation == "b") setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
-                else if (groupAt.enterLocation == "l") setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
-                else if (groupAt.enterLocation == "r") setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
+                if (groupAt.el == "tl") {
+                    setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
+                    setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
+                }
+                else if (groupAt.el == "tr") {
+                    setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
+                    setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
+                }
+                else if (groupAt.el == "bl") {
+                    setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
+                    setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
+                }
+                else if (groupAt.el == "br") {
+                    setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
+                    setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
+                }
+                else if (groupAt.el == "tm") {
+                    setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
+                    var sew = selExtents.xmax - selExtents.xmin;
+                    var chgw = chgExtents.xmax - chgExtents.xmin;
+                    if (sew > chgw) {
+                        setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (seq-chgw)/2 - 30);
+                        setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (seq-chgw)/2 + 30);
+                    } // else no width resize needed
+                }
+                else if (groupAt.el == "ml") {
+                    setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
+                    var seh = selExtents.ymax - selExtents.ymin;
+                    var chgh = chgExtents.ymax -chgExtents.ymin;
+                    if (seh > chgh) {
+                        setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (seh-chgh)/2 - 30);
+                        setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (seh-chgh)/2 + 30);
+                    }
+                }
+                else if (groupAt.el == "mr") {
+                    setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
+                    var seh = selExtents.ymax - selExtents.ymin;
+                    var chgh = chgExtents.ymax -chgExtents.ymin;
+                    if (seh > chgh) {
+                        setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (seh-chgh)/2 - 30);
+                        setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (seh-chgh)/2 + 30);
+                    }
+                }
+                else if (groupAt.el == "bm") {
+                    setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
+                    var sew = selExtents.xmax - selExtents.xmin;
+                    var chgw = chgExtents.xmax - chgExtents.xmin;
+                    if (sew > chgw) {
+                        setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (seq-chgw)/2 - 30);
+                        setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (seq-chgw)/2 + 30);
+                    } // else no width resize needed
+                }
+                
+                //if (groupAt.enterLocation == "t") setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
+                //else if (groupAt.enterLocation == "b") setUInode_Ymax(currentHoveredGroup, chgExtents.ymax + (selExtents.ymax - selExtents.ymin) + 30);
+                //else if (groupAt.enterLocation == "l") setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
+                //else if (groupAt.enterLocation == "r") setUInode_Xmax(currentHoveredGroup, chgExtents.xmax + (selExtents.xmax - selExtents.xmin) + 30);
+
 
 				/*
                 if (selExtents.xmin < chgExtents.xmin){setUInode_Xmin(currentHoveredGroup, selExtents.xmin - 30); }
@@ -366,7 +435,7 @@ RED.view.groupbox = (function() {
 			lastHoveredGroup = currentHoveredGroup;
 			//console.warn("group leave1:" + currentHoveredGroup.name);
 			currentHoveredGroup.hovered = false;
-            if (RED.main.settings.addToGroupAutosize == true)
+            if (RED.main.settings.addToGroupAutosize == true || d3.event.shiftKey)
                 restoreOldSizeAndPos(currentHoveredGroup);
 			currentHoveredGroup = undefined;
 			redraw_groups(true);
