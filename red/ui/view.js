@@ -472,6 +472,8 @@ RED.view = (function() {
     
 	function initView() // called from main.js - document ready function
 	{
+        generateTextSizeCache();
+
         window.addEventListener('resize', resizeMainContainerBasedOnNavBar);
         resizeMainContainerBasedOnNavBar(); // run it once
 
@@ -1791,17 +1793,55 @@ RED.view = (function() {
 			RED.notify(moving_set.length+" node"+(moving_set.length>1?"s":"")+" copied");
 		}
 	}
+    var textSizeCache = [];
+
+    function generateTextSizeCache() {
+        const t0 = performance.now();
+        var numbers = "0123456789_[]";
+        var lowerCase = "abcdefghijklmnopqrstuvwxyz";
+        var upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var all = numbers+lowerCase+upperCase;
+        textSizeCache.length = 0;
+        textSizeCache.push({}); //  for size 0
+        for (var ts=1; ts < 64;ts++) {
+            var size = {};
+            
+            for (var chi=0;chi<all.length;chi++) {
+                size[all[chi]] = _calculateTextSize(all[chi],ts);
+            }
+            textSizeCache.push(size)
+        }
+        const t1 = performance.now();
+        console.log("took:" + (t1-t0) + " ms");
+        console.log(textSizeCache);
+    }
+    function calculateTextSize(str,size) {
+        //if (textSizeCache.length == 0) generateTextSizeCache();
+        var width = 0;
+        if (size == undefined)
+            size = 14;
+        var cs = textSizeCache[size];
+        if (cs == undefined) {
+            console.warn("size not found:" + size);
+            return _calculateTextSize(str, size); // failsafe for now, 
+        }
+        for (var i=0;i<str.length;i++) {
+            width += cs[str[i]].w;
+        }
+        return {w:width, h:cs['0'].h};
+    }
+
 	var calculateTextSizeElement = undefined;
     var calculateTextSizeCache = {};
-	function calculateTextSize(str,textSize) {
+	function _calculateTextSize(str,textSize) {
         //const t0 = performance.now();
 		var name = str + "_" + textSize;
 
-        if (calculateTextSizeCache[name] != undefined) {
+        /*if (calculateTextSizeCache[name] != undefined) {
             //const t1 = performance.now();
 		    //console.error("@calculateTextSize time @ " + name + " : " + (t1-t0));
             return calculateTextSizeCache[name];
-        }
+        }*/
 
 		//if (str == undefined)
 		//	return {w:0, h:0};
@@ -1812,7 +1852,8 @@ RED.view = (function() {
 			var sp = document.createElement("span");
 			sp.className = "node_label";
 			sp.style.position = "absolute";
-			sp.style.top = "-1000px";
+			sp.style.top = "300px";
+            sp.style.left = "300px";
 			document.body.appendChild(sp);
 			calculateTextSizeElement = sp;
 		}
@@ -1832,9 +1873,11 @@ RED.view = (function() {
 		var w = sp.offsetWidth;
 		var h = sp.offsetHeight;
 		//document.body.removeChild(sp);
-		
-
-        var sizes = {w:parseFloat(w), h:parseFloat(h)};
+		var rect = sp.getBoundingClientRect();
+        //var w = rect.width;
+        //var h = rect.height;
+        //var sizes = {w:parseFloat(w), h:parseFloat(h)};
+        var sizes = {w, h};
         calculateTextSizeCache[name] = sizes; // cache it for performance boost
 
         //const t1 = performance.now();
@@ -3511,12 +3554,12 @@ RED.view = (function() {
 			var new_nodes = result[0];
 			var new_links = result[1];
 			var new_ms = new_nodes.map(function(n) {
-                console.warn(n.z);
+                //console.warn(n.z);
                 n.z = activeWorkspace;
-                console.warn(n.z);
+                //console.warn(n.z);
                 return {n:n};
             });
-            console.warn(new_ms);
+            //console.warn(new_ms);
 			var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
 			// TODO: pick a more sensible root node
@@ -3935,7 +3978,8 @@ RED.view = (function() {
 			//TODO: subscribe/unsubscribe here
 			redraw(false);
 		},*/
-		calculateTextSize: calculateTextSize,
+		calculateTextSize,
+        _calculateTextSize, // old function
 		showPopOver:showPopOver,
 		defaults: {
 			width: node_def.width,

@@ -190,7 +190,7 @@ RED.nodes = (function() {
 	function getNewUID() {
 		//var str = (1+Math.random()*4294967295).toString(16);
         var str = new Date().toISOString().split('-').join('').split(':').join('').replace('.','_') + "_" + getRandomInt(65535).toString(16);
-		console.log("getID = " + str);
+		//console.log("getID = " + str);
 		return str;
 	}
 
@@ -1172,7 +1172,7 @@ RED.nodes = (function() {
             node.z = RED.view.getWorkspace();
             // allways create unique id:s
             node.id = getNewUID();// createUniqueCppId(node, getWorkspace(RED.view.getWorkspace()).label); // jannik add
-            console.warn("############## new id #########" + node.id);
+            //console.warn("############## new id #########" + node.id);
         } else {
             node.name = nn.name;
             node.id = nn.id;
