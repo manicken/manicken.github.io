@@ -62,6 +62,8 @@ RED.view.groupbox = (function() {
 		for (var ni = 0;ni < group.nodes.length; ni++)
 		{
 			group.nodes[ni].selected = true;
+            group.nodes[ni].svgRect.classed("node_selected", true);
+            group.nodes[ni].svgRect.selectAll(".node").classed("node_selected", true);
 			group.nodes[ni].dirty = true;
 			RED.view.moving_set.push({n:group.nodes[ni]});
 
@@ -525,27 +527,31 @@ RED.view.groupbox = (function() {
 
 			RED.view.redraw_update_label(groupRect, d);
 			
-			groupRect.selectAll(".nodeGroupSelOutlineBG")
-				.attr("x", -6).attr("y", -6)
-				.attr("rx", 4).attr("ry", 4)
-				.attr("width", d.w + 12)
-				.attr("height", d.h + 12)
-				.attr("class", function(d) { if (d.selected) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-selected";
-											 else if (d.hovered) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-hovered"; 
-											else return "nodeGroupSelOutlineBG"});
-			groupRect.selectAll(".nodeGroupSelOutline")
-				.attr("x", -6).attr("y", -6)
-				.attr("rx", 4).attr("ry", 4)
-				.attr("width", d.w + 12)
-				.attr("height", d.h + 12)
-				.attr("class", function(d) { if (d.selected) return "nodeGroupSelOutline nodeGroupSelOutline-selected";
-											 else if (d.hovered) return "nodeGroupSelOutline nodeGroupSelOutline-hovered"; 
-											else return "nodeGroupSelOutline"});
+			redrawGroupOutline(d);
 		});
 	}
+    function redrawGroupOutline(d) {
+        d.svgRect.selectAll(".nodeGroupSelOutlineBG")
+            .attr("x", -6).attr("y", -6)
+            .attr("rx", 4).attr("ry", 4)
+            .attr("width", d.w + 12)
+            .attr("height", d.h + 12)
+            .attr("class", function(d) { if (d.selected) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-selected";
+                                        else if (d.hovered) return "nodeGroupSelOutlineBG nodeGroupSelOutlineBG-hovered"; 
+                                        else return "nodeGroupSelOutlineBG"});
+        d.svgRect.selectAll(".nodeGroupSelOutline")
+            .attr("x", -6).attr("y", -6)
+            .attr("rx", 4).attr("ry", 4)
+            .attr("width", d.w + 12)
+            .attr("height", d.h + 12)
+            .attr("class", function(d) { if (d.selected) return "nodeGroupSelOutline nodeGroupSelOutline-selected";
+                                        else if (d.hovered) return "nodeGroupSelOutline nodeGroupSelOutline-hovered"; 
+                                        else return "nodeGroupSelOutline"});
+    }
     return {
         redraw_groups,
         redraw_groups_init,
+        redrawGroupOutline,
         moveToFromGroup_update,
         moveSelectionToFromGroupMouseUp,
         removeNodeFromGroup,

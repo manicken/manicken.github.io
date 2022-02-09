@@ -659,7 +659,7 @@ RED.view = (function() {
         RED.nodes.getWorkspace(activeWorkspace).settings = RED.settings.getChangedSettings(RED.view);
     }
 
-    function setSelectWorkspace(tab)
+    function setSelectedWorkspace(tab)
     {
         var chart = $("#chart");
         if (activeWorkspace !== 0) {
@@ -726,7 +726,7 @@ RED.view = (function() {
     //console.warn("view loading...");
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
-		onchange: setSelectWorkspace,
+		onchange: setSelectedWorkspace,
 		ondblclick: function(tab) {
 			RED.view.dialogs.showRenameWorkspaceDialog(tab.id,workspace_tabs.count());
 		},
@@ -838,11 +838,11 @@ RED.view = (function() {
 	function canvasMouseDown() {
         if (d3.event.button != 0) return;
         if (RED.view.ui.allowUiItemTextInput == true) return;
-        
+        //console.warn("canvasMouseDown");
 		if (!mousedown_node && !mousedown_link) {
 			clearLinkSelection();
 			updateSelection();
-			redraw(true);
+			//redraw(true);
 		}
 		if (mouse_mode === 0) {
 			if (lasso) {
@@ -1015,16 +1015,17 @@ RED.view = (function() {
             for (var ni=0;ni<moving_set.length;ni++) {
                 redraw_nodeMoved(moving_set[ni].n);
             }
+            redraw_links();
 		} 
 		// ui object resize mouse move
 		else
 		{ 
 			RED.view.ui.uiNodeResize();
 		}
-        if (movingNodes == false)
+        if (movingNodes == false) // needed for ui objects resize
 		    redraw(false);
 		//redraw_links_init();
-		redraw_links();
+		//redraw_links();
 		//console.log("redraw from canvas mouse move");
 	}
     function redraw_nodeMoved(d) {
@@ -1160,8 +1161,15 @@ RED.view = (function() {
 
 					if (n.selected) {
 						n.dirty = true;
+                        n.svgRect.classed("node_selected", true);
+                        n.svgRect.selectAll(".node").classed("node_selected", true);
 						moving_set.push({n:n});
 					}
+                    else {
+                        n.svgRect.classed("node_selected", false);
+                        n.svgRect.selectAll(".node").classed("node_selected", false);
+                    }
+                    if (n.type == "group") RED.view.groupbox.redrawGroupOutline(n);
 				}
 			});
 			updateSelection();
@@ -1195,9 +1203,9 @@ RED.view = (function() {
 			RED.keyboard.remove(/* ESCAPE */ 27);
 			setDirty(true);
 		}
-		redraw(true);
+		//redraw(true);
 		//redraw_links_init();
-		redraw_links();
+		//redraw_links();
 		// clear mouse event vars
         resetMouseVars();
         //RED.notify("canvas mouse up");
@@ -1390,22 +1398,50 @@ RED.view = (function() {
 		settings.scaleFactor = 1;
 	}
 
+    function showEverything() {
+        visLinks.attr("class", "workspace-chart-links");
+        visNodes.attr("class", "workspace-chart-nodes");
+    }
+    function hideEverything() {
+        visLinks.attr("class", "workspace-chart-links hidden");
+        visNodes.attr("class", "workspace-chart-nodes hidden");
+    }
+
 	function selectAll() {
+        //hideEverything();
         var ws = RED.nodes.getWorkspace(activeWorkspace);
-		RED.nodes.wsEachNode(ws, function(n) {
+		const t0 = performance.now();
+        RED.nodes.wsEachNode(ws, function(n) {
 			//if (n.z == activeWorkspace) {
-				if (!n.selected) {
+				//if (!n.selected) {
 					n.selected = true;
+                    n.svgRect.classed("node_selected", true);
+                    n.svgRect.selectAll(".node").classed("node_selected", true);
+                    if (n.type == "group") RED.view.groupbox.redrawGroupOutline(n);
 					n.dirty = true;
 					moving_set.push({n:n});
-				}
+				//}
 			//}
 		});
+        const t1 = performance.now();
 		clearLinkSelection();
-		updateSelection();
-		redraw(true);
-		redraw_links_init();
-		redraw_links();
+        const t2 = performance.now();
+		updateSelection(true);
+        const t3 = performance.now();
+		//redraw(true);
+        const t4 = performance.now();
+		//redraw_links_init();
+        const t5 = performance.now();
+		//redraw_links();
+        const t6 = performance.now();
+        //showEverything();
+        // the following times are on a design with ~2000 nodes & ~2000 links
+        console.log("putting nodes into moving_set: " + (t1-t0)); // < 1mS
+        console.log("clearLinkSelection: " + (t2-t1)); // ~14.5mS
+        console.log("updateSelection: " + (t3-t2)); // ~27741ms
+        console.log("redraw(true): " + (t4-t3)); // ~500mS
+        console.log("redraw_links_init: " + (t5-t4)); // ~31mS
+        console.log("redraw_links: " + (t6-t5)); // ~119mS
 	}
 
 	function clearSelection() {
@@ -1414,12 +1450,16 @@ RED.view = (function() {
 			var n = moving_set[i];
 			n.n.dirty = true;
 			n.n.selected = false;
+            if (n.n.svgRect != undefined) // undefined on newly dropped nodes
+                n.n.svgRect.classed("node_selected", false);
+                n.n.svgRect.selectAll(".node").classed("node_selected", false);
+                if (n.n.type == "group") RED.view.groupbox.redrawGroupOutline(n.n);
 		}
 		moving_set = [];
 		clearLinkSelection();
 	}
 
-	function updateSelection() {
+	function updateSelection(allSelected) {
 		if (moving_set.length === 0) {
 			$("#li-menu-export").addClass("disabled");
 			$("#li-menu-export-clipboard").addClass("disabled");
@@ -1460,19 +1500,36 @@ RED.view = (function() {
 			RED.sidebar.info.refresh(moving_set[0].n);
 			RED.nodes.selectNode(moving_set[0].n.type);
 		} else if (moving_set.length > 1) {
-			RED.sidebar.info.showSelection(moving_set);
+            //const t0 = performance.now();
+			RED.sidebar.info.showSelection(moving_set); // 27mS for 2000nodes
+            //const t1 = performance.now();
+            //console.log("RED.sidebar.info.showSelection(moving_set): " + (t1-t0));
 		} else {
             RED.sidebar.info.clear();
             RED.nodes.selectNode("");
 		}
-
-		for (var i = 0; i < moving_set.length; i++)
-		{
-			var n = moving_set[i].n;
-			//var links = RED.nodes.links.filter(function(l) {  return l.source.z == activeWorkspace && l.target.z == activeWorkspace; });
-            vis.selectAll(".link").data(RED.nodes.cwsLinks,function(l) {  if (l.source == n) { l.selected = true; } if (l.target == n){ l.selected = true; } return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
-		}
-		redraw_links_init();
+        
+        var links = RED.nodes.cwsLinks;
+        if (allSelected != undefined && allSelected == true) { // extreme improvement when selecting all nodes
+            for (var li=0; li<links.length;li++) {
+                links[li].selected = true;
+                links[li].svgRoot.classed("link_selected", true);
+            }
+        }
+        else {// the following takes 1.5s for 2000 nodes and 2000 links
+            for (var i = 0; i < moving_set.length; i++)
+            {
+                var n = moving_set[i].n;
+                for (var li=0; li<links.length;li++) {
+                    var l = links[li];
+                    if ((l.source == n) || (l.target == n)) {
+                        l.selected = true;
+                        l.svgRoot.classed("link_selected", true);
+                    }
+                }
+            }
+        }
+		//redraw_links_init();
 	}
 	$('#btn-debugShowSelection').click(function() {RED.sidebar.info.showSelection(moving_set);});
 
@@ -1797,22 +1854,26 @@ RED.view = (function() {
 
     function generateTextSizeCache() {
         const t0 = performance.now();
-        var numbers = "0123456789_[]";
+        var numbers = "0123456789";
+        var specialChars = "!\"#¤%&/()=?½§@£$€{[]}\\+,;.:-_¨^~'*<>| ";
         var lowerCase = "abcdefghijklmnopqrstuvwxyz";
         var upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var all = numbers+lowerCase+upperCase;
+        var all = numbers+lowerCase+upperCase+specialChars;
         textSizeCache.length = 0;
         textSizeCache.push({}); //  for size 0
         for (var ts=1; ts < 64;ts++) {
             var size = {};
             
             for (var chi=0;chi<all.length;chi++) {
-                size[all[chi]] = _calculateTextSize(all[chi],ts);
+                if (all[chi] != " ")
+                    size[all[chi]] = _calculateTextSize(all[chi],ts);
+                else
+                    size[all[chi]] = _calculateTextSize("]",ts); // calculate space after similar sized char ]
             }
             textSizeCache.push(size)
         }
         const t1 = performance.now();
-        console.log("took:" + (t1-t0) + " ms");
+        console.log("generateTextSizeCache took:" + (t1-t0) + " ms");
         console.log(textSizeCache);
     }
     function calculateTextSize(str,size) {
@@ -1852,8 +1913,8 @@ RED.view = (function() {
 			var sp = document.createElement("span");
 			sp.className = "node_label";
 			sp.style.position = "absolute";
-			sp.style.top = "300px";
-            sp.style.left = "300px";
+			sp.style.top = "-300px";
+            sp.style.left = "-300px";
 			document.body.appendChild(sp);
 			calculateTextSizeElement = sp;
 		}
@@ -2179,6 +2240,10 @@ RED.view = (function() {
 		if (d.selected && d3.event.ctrlKey) {
 			console.error("selection splice");
 			d.selected = false;
+            d.svgRect.classed("node_selected", false);
+            d.svgRect.selectAll(".node").classed("node_selected", false);
+            if (d.type == "group") RED.view.groupbox.redrawGroupOutline(d);
+
 			for (i=0;i<moving_set.length;i+=1) {
 				if (moving_set[i].n === d) {
 					moving_set.splice(i,1);
@@ -2191,8 +2256,11 @@ RED.view = (function() {
 				clearSelection();
 				var cnodes = RED.nodes.getAllFlowNodes(mousedown_node);
 				for (var n=0;n<cnodes.length;n++) {
-					console.log("asmfjkl.nodes[ni].name:" +cnodes[n].name);
+					//console.log("asmfjkl.cnodes[ni].name:" +cnodes[n].name);
 					cnodes[n].selected = true;
+                    cnodes[n].svgRect.classed("node_selected", true);
+                    cnodes[n].svgRect.selectAll(".node").classed("node_selected", true);
+                    if (cnodes[n].type == "group") RED.view.groupbox.redrawGroupOutline(cnodes[n]);
 					cnodes[n].dirty = true;
 					moving_set.push({n:cnodes[n]});
 				}
@@ -2203,6 +2271,9 @@ RED.view = (function() {
 					clearSelection();
 				}
 				mousedown_node.selected = true;
+                mousedown_node.svgRect.classed("node_selected", true);
+                mousedown_node.svgRect.selectAll(".node").classed("node_selected", true);
+                if (mousedown_node.type == "group") RED.view.groupbox.redrawGroupOutline(mousedown_node);
 				moving_set.push({n:mousedown_node});//, rect:this});
 
 				if (mousedown_node.nodes != undefined && mousedown_node.nodes.length != 0)
@@ -2252,9 +2323,9 @@ RED.view = (function() {
 		
 		//console.log("nodeMouseDown:" + d.name);
 		
-		redraw(true);
-		redraw_links_init();
-		redraw_links();
+		//redraw(true);
+		//redraw_links_init();
+		//redraw_links();
 		d3.event.stopPropagation();
 	}
 
@@ -2317,7 +2388,13 @@ RED.view = (function() {
 		selected_link = null;
         if (RED.nodes.loadingWorkspaces == true) return;
 		//var links = RED.nodes.links.filter(function(l) { return l.source.z == activeWorkspace && l.target.z == activeWorkspace });
-		vis.selectAll(".link").data(RED.nodes.cwsLinks, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
+        var links = RED.nodes.cwsLinks;
+        for (var li=0; li<links.length;li++) {
+            links[li].selected = false;
+            if (links[li].svgRoot != undefined)
+                links[li].svgRoot.classed("link_selected", false);
+        }
+        //vis.selectAll(".link").data(RED.nodes.cwsLinks, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 	}
 
 	function nodeButtonClicked(d) {
@@ -2760,6 +2837,7 @@ RED.view = (function() {
 			d.svgPath = {};
 			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
+            d.svgRoot = l;
             //console.warn(d);
 			d.svgPath.background = l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
@@ -3336,7 +3414,7 @@ RED.view = (function() {
         return nodeRect;
     }
     function redraw_node(nodeRect,d,superUpdate) {
-        
+        //console.error("whello");
         // the following (requirementError check) don't belong here
         if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
         {	
