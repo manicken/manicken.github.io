@@ -87,7 +87,7 @@ RED.palette = (function() {
         
         if (settings.categoryHeaderShowAsRainBow == true)
         {
-            var colorMap = RED.view.generateColorMap();
+            var colorMap = RED.color.generateColorMap();
             var colorMapDeltaIndex = parseInt(colorMap.length/($(".palette-header").length));
             var minVal = settings.categoryHeaderShowAsRainBowMinVal;
         }
@@ -99,9 +99,9 @@ RED.palette = (function() {
             if (settings.categoryHeaderShowAsRainBow == true)
             {
                 if (settings.categoryHeaderShowAsRainBowAlt == true)
-                    $(e).css('background-color', RED.view.setMinColor(colorMap[colorMapDeltaIndex*i], bgColor, minVal));
+                    $(e).css('background-color', RED.color.setMinColor(colorMap[colorMapDeltaIndex*i], bgColor, minVal));
                 else
-                    $(e).css('background-color', RED.view.addColors(colorMap[colorMapDeltaIndex*i], bgColor, minVal));
+                    $(e).css('background-color', RED.color.addColors(colorMap[colorMapDeltaIndex*i], bgColor, minVal));
             }
             else
                 $(e).css('background-color', bgColor);
