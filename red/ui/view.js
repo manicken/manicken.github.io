@@ -1891,8 +1891,8 @@ RED.view = (function() {
             size = 14;
         var tsc = textSizeCache[size];
         if (tsc == undefined) {
-            console.warn("size not found:" + size);
-            console.warn("generating...");
+            //console.warn("size not found:" + size);
+            console.warn("generating charCache for size: " + size);
             tsc = generateCharSizesCache(size);
             textSizeCache[size] = tsc;
         }
