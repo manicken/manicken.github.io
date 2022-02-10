@@ -999,6 +999,8 @@ RED.view = (function() {
             
 
 			d3.event.preventDefault();
+            //return; // greatly improve performance
+
 		} else if (mouse_mode == RED.state.MOVING) {
 			
 			mousePos = mouse_position;
@@ -1018,12 +1020,14 @@ RED.view = (function() {
             redraw_links();
 		} 
 		// ui object resize mouse move
-		else
+		else if (selected_link == null)
 		{ 
 			RED.view.ui.uiNodeResize();
+            redraw_node(mousedown_node);
+            //redraw(false);
 		}
-        if (movingNodes == false) // needed for ui objects resize
-		    redraw(false);
+        //if (movingNodes == false) // needed for ui objects resize
+		    
 		//redraw_links_init();
 		//redraw_links();
 		//console.log("redraw from canvas mouse move");
@@ -1808,7 +1812,7 @@ RED.view = (function() {
                 var changedItem = _changedNodes[pName];
                 //console.warn(changedItem);
                 changedNodes.push(changedItem);
-                redraw_node(getNodeRect(changedItem.node), changedItem.node, true);
+                redraw_node(changedItem.node, true);
                 RED.events.emit("nodes:inputs", changedItem.node, changedItem.changes.inputs, changedItem.newChange.inputs);
             }
         }
@@ -1850,46 +1854,55 @@ RED.view = (function() {
 			RED.notify(moving_set.length+" node"+(moving_set.length>1?"s":"")+" copied");
 		}
 	}
-    var textSizeCache = [];
+    var textSizeCache = {};
+    var tsc_numbers = "0123456789";
+    var tsc_specialChars = "!\"#¤%&/()=?½§@£$€{[]}\\+,;.:-_¨^~'*<>| ";
+    var tsc_lowerCase = "abcdefghijklmnopqrstuvwxyz";
+    var tsc_upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var tsc_all = tsc_numbers+tsc_lowerCase+tsc_upperCase+tsc_specialChars;
 
     function generateTextSizeCache() {
         const t0 = performance.now();
-        var numbers = "0123456789";
-        var specialChars = "!\"#¤%&/()=?½§@£$€{[]}\\+,;.:-_¨^~'*<>| ";
-        var lowerCase = "abcdefghijklmnopqrstuvwxyz";
-        var upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var all = numbers+lowerCase+upperCase+specialChars;
-        textSizeCache.length = 0;
-        textSizeCache.push({}); //  for size 0
-        for (var ts=1; ts < 64;ts++) {
-            var size = {};
-            
-            for (var chi=0;chi<all.length;chi++) {
-                if (all[chi] != " ")
-                    size[all[chi]] = _calculateTextSize(all[chi],ts);
-                else
-                    size[all[chi]] = _calculateTextSize("]",ts); // calculate space after similar sized char ]
-            }
-            textSizeCache.push(size)
+        
+        textSizeCache = {};
+        for (var ts=10; ts < 24;ts++) { // generate standard sizes
+            textSizeCache[ts] = generateCharSizesCache(ts);
         }
         const t1 = performance.now();
         console.log("generateTextSizeCache took:" + (t1-t0) + " ms");
         console.log(textSizeCache);
+    }
+    function generateCharSizesCache(size) {
+        var sizes = {};
+            
+        for (var chi=0;chi<tsc_all.length;chi++) {
+            var char = tsc_all[chi];
+            if (char != " ")
+                sizes[char] = _calculateTextSize(char,size);
+            else
+                sizes[char] = _calculateTextSize("]",size); // calculate space after similar sized char ]
+        }
+        return sizes;
     }
     function calculateTextSize(str,size) {
         //if (textSizeCache.length == 0) generateTextSizeCache();
         var width = 0;
         if (size == undefined)
             size = 14;
-        var cs = textSizeCache[size];
-        if (cs == undefined) {
+        var tsc = textSizeCache[size];
+        if (tsc == undefined) {
             console.warn("size not found:" + size);
-            return _calculateTextSize(str, size); // failsafe for now, 
+            console.warn("generating...");
+            tsc = generateCharSizesCache(size);
+            textSizeCache[size] = tsc;
         }
+        var height = 0;
         for (var i=0;i<str.length;i++) {
-            width += cs[str[i]].w;
+            var ccs = tsc[str[i]]; // ccs = current char size
+            width += ccs.w;
+            if (height < ccs.h) height = ccs.h;
         }
-        return {w:width, h:cs['0'].h};
+        return {w:width, h:height};
     }
 
 	var calculateTextSizeElement = undefined;
@@ -2343,6 +2356,13 @@ RED.view = (function() {
 			RED.view.ui.uiObjectMouseUp(d, x, y, rect); // here the event is passed down to the ui object
 			return;
 		}
+        else if (d._def.uiObject != undefined)
+        {
+            console.log("ui nodeMouseUp");
+            if (RED.view.ui.uiNodeResize_changedCheck() == true)
+                RED.storage.update();
+        }
+
 		showHideGrid(false);
 		RED.view.groupbox.moveSelectionToFromGroupMouseUp();
 		
@@ -2374,7 +2394,7 @@ RED.view = (function() {
             nextFreeInputIndex = d.inputs;
             var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
             d.inputs++;
-            redraw_node(getNodeRect(d), d, true);
+            redraw_node(d, true);
             RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs);
             //redraw_nodes(true,true); // workaround for now
         }
@@ -2496,7 +2516,8 @@ RED.view = (function() {
 		//console.error(d.textDimensions);
 		d.w = Math.max(node_def.width, d.textDimensions.w + 50 /*+ (inputs>0?7:0) */);
 		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
-	}
+        
+    }
 	
 	function redraw_nodeMainRect_init(nodeRect, d)
 	{
@@ -2966,11 +2987,11 @@ RED.view = (function() {
 	}
     function redraw_link_notation(l) {
         if (l.info.isBus == true) {
-            l.svgPath.outline.attr("class","link_path link_outline_bus");
+            l.svgPath.outline.attr("class","link_path link_outline_bus"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line_bus" + ((l.info.valid==false)?" link_invalid":""));
         }
         else {
-            l.svgPath.outline.attr("class","link_path link_outline");
+            l.svgPath.outline.attr("class","link_path link_outline"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line" + ((l.info.valid==false)?" link_invalid":""));
         }
     }
@@ -3229,6 +3250,7 @@ RED.view = (function() {
 	
 	function redraw_nodeRefresh(nodeRect, d) // this contains the rest until they get own functions
 	{
+        //console.warn("node refreh");
 		//nodeRect.selectAll(".centerDot").attr({"cx":function(d) { return d.w/posMode;},"cy":function(d){return d.h/posMode}});
 		if (posMode === 2)
 			nodeRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
@@ -3241,6 +3263,7 @@ RED.view = (function() {
 		;
 		if (d.type != "UI_Piano")
 		{
+            //console.warn(d.name + " resized " + d.w +" "+ d.h);
 			nodenodeRect.attr("width",function(d){return d.w});
 			nodenodeRect.attr("height",function(d){return d.h;});
 		}
@@ -3396,8 +3419,8 @@ RED.view = (function() {
 		}
 
 		visNodesAll.each( function(d,i) { // redraw all nodes in active workspace
-			var nodeRect = d3.select(this);
-			redraw_node(nodeRect, d, superUpdate);			
+			//var nodeRect = d3.select(this);
+			redraw_node(d, superUpdate);			
 		});
 	}
     function getNodeRect(node) {
@@ -3413,7 +3436,8 @@ RED.view = (function() {
         });
         return nodeRect;
     }
-    function redraw_node(nodeRect,d,superUpdate) {
+    function redraw_node(d,superUpdate) {
+        var nodeRect = d.svgRect;
         //console.error("whello");
         // the following (requirementError check) don't belong here
         if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
@@ -3464,10 +3488,10 @@ RED.view = (function() {
 	function redraw(fullUpdate) {
         if (preventRedraw == true || RED.nodes.loadingWorkspaces == true) return;
 		const t0 = performance.now();
-
-        RED.view.navigator.refresh();
-        RED.view.navigator.resize();
-		
+        if (RED.view.navigator.isShowing == true) {
+            RED.view.navigator.refresh();
+            RED.view.navigator.resize();
+        }
 		
 		vis.attr("transform","scale("+settings.scaleFactor+")");
 		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
@@ -4031,7 +4055,7 @@ RED.view = (function() {
         calculateTextSize,
         redraw_links,
         redraw_links_notations,
-        redraw_node:function (node) { redraw_node(getNodeRect(node), node, true)},
+        redraw_node:function (node) { redraw_node(node, true)},
         redraw_nodes,
 
         get preventRedraw() { return preventRedraw; },

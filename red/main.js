@@ -78,7 +78,11 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* Move setting 'Dyn. Input Objects Auto Reduce' from Global-Nodes/Links to Global-Links<br><br>"+
                 "* Move setting 'Show Node Tooltip Popup' from Global-Nodes/Links to Global-Nodes<br><br>"+
                 "* Move setting 'Add to group autosize' from Workspaces to Global-Groups<br><br>"+
-                "* add setting LassoSelectNodeMode @ Global-Node that selects the behaivour of the select lasso<br><br>",
+                "* add setting LassoSelectNodeMode @ Global-Node that selects the behaivour of the select lasso<br><br>"+
+                "* greatly improved performance, specially for huge 'one tab'-designs (tried for 1800 nodes, 2000 links design)<br>"+
+                "&nbsp;&nbsp;@ selecting nodes, @ selecting all nodes (ctrl+a), @ moving nodes around, @ copy paste nodes<br><br>"+
+                "* bus wires are now blue without any dots<br><br>"+
+                "* selected wires use outline when selected, instead of 'inside line', that makes 'invalid wires' keep their color even when selected<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

@@ -998,11 +998,15 @@
     cursor: crosshair;
     fill: none;
   }
-  .link_invalid {
+  path.link_invalid {
     stroke: #f00;
     stroke-dasharray: 10, 5;
   }
-
+  /*
+  g.link_selected .link_outline .link_invalid{
+    stroke: #5f4efc;
+    stroke-dasharray: 10, 5;
+  }*/
   
   
   /*g.link_selected path.link_line{
@@ -1021,6 +1025,8 @@
     stroke: #ff7f0e;
     stroke-width: 10;
   }
+  
+
   g.link_unknown path.link_line {
      stroke: #f00;
      stroke-width: 2;

@@ -59,7 +59,7 @@ RED.devTest = (function() {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
 
         exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList, urlCmd:"exportCompleteFunctionList"},
-        
+        hideSelection:      { label:"Hide selection", type:"button", buttonClass:"btn-primary btn-sm", action: hideSelection},
         refreshComports:      { label:"Refresh serial ports", type:"button", buttonClass:"btn-primary btn-sm", action: refreshComports},
 		comports:            { label:"Serial Ports", type:"combobox", actionOnChange:true, valueId:""}, // valueId is se
         testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
@@ -81,6 +81,17 @@ RED.devTest = (function() {
         
         
     };
+    function hideSelection() {
+        for (var i=0; i < RED.view.moving_set.length;i++)
+        {
+            RED.view.moving_set[i].n.svgRect.attr("display","none");//.classed("hidden",true);
+        }
+        for (var i=0; i < RED.nodes.cwsLinks.length;i++)
+        {
+            if (RED.nodes.cwsLinks[i].selected == true)
+                RED.nodes.cwsLinks[i].svgRoot.attr("display","none");//.classed("hidden",true);
+        }
+    }
 
     var isPlaying = false;
     var testWebKitSound_scope = undefined;
