@@ -17,7 +17,7 @@
 RED.notify = (function() {
 	var currentNotifications = [];
 	var c = 0;
-	return function(msg,type,fixed,timeout,width) {
+	return function(msg,type,fixed,timeout,width,leftPos,closeCb) {
 		if (currentNotifications.length > 4) {
 			var ll = currentNotifications.length;
 			for (var i = 0;ll > 4 && i<currentNotifications.length;i+=1) {
@@ -42,8 +42,18 @@ RED.notify = (function() {
         {
             if (typeof width == "number")
                 width = width + "px";
-            n.style.width = width;
+            $("#notifications").css("width", width);
+            //console.log("using notification width:" + width);
+        }else $("#notifications").css("width", null);
+
+        if (leftPos != undefined) {
+            if (typeof leftPos == "number")
+            leftPos = leftPos + "px";
+            //console.log("using notification leftPos:" + leftPos);
+            $("#notifications").css("left", leftPos);
         }
+        else $("#notifications").css("left", null);
+
 		n.innerHTML = msg;
         if (type) {
             if (type == "warning" && RED.main.settings.LogAddNotificationWarning == true) {
@@ -80,6 +90,9 @@ RED.notify = (function() {
             return function() {
                 nn.close();
                 window.clearTimeout(nn.timeoutid);
+                if (closeCb != undefined) {
+                    closeCb();
+                }
             };
         })());
 		currentNotifications.push(n);

@@ -422,6 +422,8 @@ RED.view = (function() {
 		.on("mousemove", canvasMouseMove)
 		.on("mousedown", canvasMouseDown)
 		.on("mouseup", canvasMouseUp)
+        .on("mouseenter", canvasMouseEnter)
+        .on("mouseleave", canvasMouseLeave)
 		.on("touchend", canvasTouchEnd)
 		.on("touchcancel", canvasMouseUp)
 		.on("touchstart", canvasTouchStart)
@@ -872,9 +874,14 @@ RED.view = (function() {
 		mouse_position = d3.touches(this)[0]||d3.mouse(this);
 		// Prevent touch scrolling...
 		//if (d3.touches(this)[0]) {
-		//    d3.event.preventDefault();
+		    //d3.event.preventDefault();
 		//}
 		var chart = $("#chart");
+
+        chart.onscroll = (event) => {
+            // handle the scroll event
+            console.trace();
+        };
 		
 		// TODO: auto scroll the container
 		//var point = d3.mouse(this);
@@ -908,6 +915,8 @@ RED.view = (function() {
 				.attr("width",w)
 				.attr("height",h)
 			;
+            var point = d3.mouse(this);
+		    if (point[0]-chart.scrollLeft < 5 && chart.scrollLeft > 0) { chart.scrollLeft(chart.scrollLeft-15); }
 			return;
 		}
 
@@ -1113,8 +1122,18 @@ RED.view = (function() {
                     destX+" "+destY
         }
     }
+
+    function canvasMouseEnter() {
+        //console.warn("canvasMouseEnter");
+        RED.keyboard.enable();
+    }
+    function canvasMouseLeave() {
+        //console.warn("canvasMouseLeave");
+        RED.keyboard.disable();
+    }
 	
 	function canvasMouseUp() {
+        
         if (d3.event.button != 0) return;
         if (RED.view.ui.allowUiItemTextInput == true) return;
 

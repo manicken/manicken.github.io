@@ -21,7 +21,7 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
-        version:4,
+        version:5,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -66,23 +66,24 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "&nbsp;&nbsp;before all nodes and links where in two big arrays<br>"+
                 "&nbsp;&nbsp;this new 'working' structure makes it much easier to white export code<br><br>"+
                 "* node id:s are now generated from current utc date/time + a 16bit random number<br><br>"+
-                "* now array defined names gets new name when copies are made<br>"+
-                "&nbsp;&nbsp;i.e. array1[2] when copied become array2[2]<br><br>"+
+                "* now array defined names gets new name when copies are made: i.e. array1[2] when copied become array2[2]<br><br>"+
                 "* toolbar add delete button (drop down confirm)<br><br>"+
-                "* add link notation: array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array<br><br>"+
+                "* add link notation: array sources can only be connected to: dynInput objects such as AudioMixer and AudioMixerStereo, unless the target is a array<br><br>"+
                 "* add link notation: the array source size don't match the target array size<br><br>"+
                 "* notation of a forgotten function: when holding ctrl while selecting groups the whole group gets selected<br><br>"+
                 "* splitted settings sub category Nodes/Links @ Global to two categories: Nodes and Links<br><br>"+
-                "* Move setting 'Auto append dropped links' from Global-Nodes/Links to Global-Links<br><br>"+
+                "* Move setting 'Auto append dropped links'from Global-Nodes/Links to Global-Links<br><br>"+
                 "* Move setting 'Dyn. Input Objects Auto Expand' from Global-Nodes/Links to Global-Links<br><br>"+
                 "* Move setting 'Dyn. Input Objects Auto Reduce' from Global-Nodes/Links to Global-Links<br><br>"+
                 "* Move setting 'Show Node Tooltip Popup' from Global-Nodes/Links to Global-Nodes<br><br>"+
                 "* Move setting 'Add to group autosize' from Workspaces to Global-Groups<br><br>"+
                 "* add setting LassoSelectNodeMode @ Global-Node that selects the behaivour of the select lasso<br><br>"+
-                "* greatly improved performance, specially for huge 'one tab'-designs (tried for 1800 nodes, 2000 links design)<br>"+
+                "* greatly improved performance, specially for huge 'one tab'-designs (test design: was 1800 nodes & 2000 links)<br>"+
                 "&nbsp;&nbsp;@ selecting nodes, @ selecting all nodes (ctrl+a), @ moving nodes around, @ copy paste nodes<br><br>"+
                 "* bus wires are now blue without any dots<br><br>"+
-                "* selected wires use outline when selected, instead of 'inside line', that makes 'invalid wires' keep their color even when selected<br><br>",
+                "* selected wires use outline when selected, instead of 'inside line', that makes 'invalid wires' keep their color even when selected<br><br>"+
+                "* fixed annoying thing that don't allow normal keys outside the design view, that mean arrow keys can now be used while edit fields in the settings tab<br>"+
+                "&nbsp;&nbsp;that also fixes a bug that don't allow ctrl+a in the export or import dialogs, or any other dialogs.<br><br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
@@ -792,7 +793,7 @@ RED.main = (function() {
 
         var version = localStorage.getItem("audio_library_guitool_version");
         if (version != RED.version) {
-            localStorage.setItem("audio_library_guitool_version", RED.version);
+            
             showLatestUpdates("<strong>This is a new version (" + RED.version + "), or your browser cache has been cleared!</strong>");
         }
     }
@@ -803,7 +804,10 @@ RED.main = (function() {
         else notes = "<br><br>" + notes;
         if (header == undefined) header = "";
         header += "<br><br><strong>Major Updates Fixes</strong>";
-        RED.notify(header+notes+"<br><br> click this to close (it will only be shown once) the complete update history can be shown at @ 'topright menu' - 'Latest Updates')", "success", true, 2000);
+        RED.notify(header+notes+"<br><br> click this to close (it will only be shown once) the complete update history can be shown at @ 'topright menu' - 'Latest Updates')",
+            "success", true, null, "50%", "20%", function() {
+                localStorage.setItem("audio_library_guitool_version", RED.version); // this makes it much easier when doing dev. tests
+            });
     } 
 
     function showUpdateHistory() {
