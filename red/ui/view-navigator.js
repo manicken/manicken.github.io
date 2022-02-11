@@ -157,7 +157,8 @@
         },
         refresh: refreshNodes,
         resize: resizeNavBorder,
-        toggle: toggle
+        toggle: toggle,
+        get isShowing() {return isShowing},
     }
 
 

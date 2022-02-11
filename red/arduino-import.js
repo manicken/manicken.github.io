@@ -101,7 +101,7 @@ RED.arduino.import = (function() {
 					/*
 					if ((RED.nodes.node(node.id) !== null) && !replaceFlow) {
 						node.z = RED.view.getWorkspace();
-						node.id = RED.nodes.id();
+						node.id = RED.nodes.getNewUID();
 						node.name = RED.nodes.getUniqueName(node); // this "crash" import when nodes with theese names allready exists
 					}*/
 					newNodes.push(node);

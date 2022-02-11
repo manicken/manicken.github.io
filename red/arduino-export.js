@@ -217,12 +217,15 @@ RED.arduino.export = (function () {
 
         var minorIncrement = RED.arduino.settings.CodeIndentations;
         var majorIncrement = minorIncrement * 2;
-        var tabNodes = RED.nodes.getClassIOportsSorted();
 
+        
         const t0 = performance.now();
         RED.storage.update();
 
         var nns = RED.nodes.createCompleteNodeSet({newVer:false});
+
+        var tabNodes = RED.nodes.getClassIOportsSorted(undefined, nns);
+        console.warn(tabNodes);
         // sort is made inside createCompleteNodeSet
         var wsCppFiles = [];
         wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(nns, null, 4))); // JSON beautifier
@@ -431,7 +434,7 @@ RED.arduino.export = (function () {
         var nns = RED.nodes.createCompleteNodeSet({newVer:false});
         // sort is made inside createCompleteNodeSet
 
-        var tabNodes = RED.nodes.getClassIOportsSorted();
+        var tabNodes = RED.nodes.getClassIOportsSorted(undefined,nns);
 
         //console.log(JSON.stringify(nns)); // debug test
 

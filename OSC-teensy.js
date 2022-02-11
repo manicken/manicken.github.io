@@ -372,19 +372,19 @@ var OSC = (function() {
     async function SendRawToSerial(data) {
         if (available == false){ 
             AddLineToLog("[Web Serial API not availabe]", "warning");
-            return;
+            return false;
         }
 
         if (port == undefined || port.writable == undefined) {
             if (RED.OSC.settings.ShowOutputDebug == true)
             AddLineToLog("(not connected)", "warning");
-            return;
+            return false;
         }
 
         if (port.writable.locked == true) {
             console.error("enqueue data " + dataIndex);
             txFIFO.push({data:data, index:dataIndex++});
-            return;
+            return false;
         }
         const writer = port.writable.getWriter();
 
@@ -392,30 +392,34 @@ var OSC = (function() {
             function (value) { writer.releaseLock(); SendNextInBuffer();},
             function (error) { console.warn("serial write error "+ error); writer.releaseLock(); SendNextInBuffer();}
         );
+        return true;
     }
 
     function SendNextInBuffer() {
         if (txFIFO.length != 0) {
             var item = txFIFO.shift();
             console.error("dequeue data " + item.index);
-            SendRawToSerial(item.data);
+            var dataSent = SendRawToSerial(item.data);
+            if (RED.OSC.settings.ShowOutputOscTxRaw == true && dataSent)
+                AddLineToLog("raw send:<br>" + getDataArrayAsAsciiAndHex(item.data).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;'));
         }
     }
     function SendData(data) {
-        
         if (RED.OSC.settings.Encoding == 1) // SLIP
         {
             //AddLineToLog("using SLIP");
             data = Slip.encode(data);
         }
-        if (RED.OSC.settings.ShowOutputOscTxRaw == true)
-            AddLineToLog("raw send:<br>" + getDataArrayAsAsciiAndHex(data).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;'));
-
+        
+        var dataSent = false;
         if (RED.OSC.settings.TransportLayer == 0) // Web Serial API
-            SendRawToSerial(data);
+            dataSent = SendRawToSerial(data);
         else {
             AddLineToLog("(WARNING) Try to use Transport Layer NIY "+RED.OSC.LayerOptionTexts[RED.OSC.settings.TransportLayer] + "<brPlease select annother transport layer", "warning");
         }
+
+        if (RED.OSC.settings.ShowOutputOscTxRaw == true && dataSent)
+            AddLineToLog("raw send:<br>" + getDataArrayAsAsciiAndHex(data).split('<').join('&lt;').split('>').join('&gt;').split('\0').join('&Oslash;'));
     }
     function SendBundle(b) {
         delete b.add;
@@ -526,7 +530,7 @@ var OSC = (function() {
 
         var bundle = CreateBundle();
 
-        var links = RED.nodes.links.filter(function(d) { return (d.source === node) || (d.target === node);});
+        var links = RED.nodes.cwsLinks.filter(function(d) { return (d.source === node) || (d.target === node);});
 		for (var i=0;i<links.length;i++) {
             var link = links[i];
             
@@ -628,7 +632,8 @@ var OSC = (function() {
     function NodeInputsUpdated(node, oldCount, newCount, removedLinks) {
         AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount);
         console.warn("NodeInputsUpdated");
-        var linksToUpdate = RED.nodes.links.filter(function(l) { return (l.source === node) || (l.target === node); });
+        var ws = RED.nodes.getWorkspace(node.z);
+        var linksToUpdate = ws.links.filter(function(l) { return (l.source === node) || (l.target === node); });
 
         var bundle = CreateBundle();
         if (removedLinks != undefined) AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links

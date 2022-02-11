@@ -59,7 +59,7 @@ RED.devTest = (function() {
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
 
         exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList, urlCmd:"exportCompleteFunctionList"},
-        
+        hideSelection:      { label:"Hide selection", type:"button", buttonClass:"btn-primary btn-sm", action: hideSelection},
         refreshComports:      { label:"Refresh serial ports", type:"button", buttonClass:"btn-primary btn-sm", action: refreshComports},
 		comports:            { label:"Serial Ports", type:"combobox", actionOnChange:true, valueId:""}, // valueId is se
         testSelectFileByApi:    { label:"test select file from API server", type:"button", action: testSelectFileByApi},
@@ -81,6 +81,17 @@ RED.devTest = (function() {
         
         
     };
+    function hideSelection() {
+        for (var i=0; i < RED.view.moving_set.length;i++)
+        {
+            RED.view.moving_set[i].n.svgRect.attr("display","none");//.classed("hidden",true);
+        }
+        for (var i=0; i < RED.nodes.cwsLinks.length;i++)
+        {
+            if (RED.nodes.cwsLinks[i].selected == true)
+                RED.nodes.cwsLinks[i].svgRoot.attr("display","none");//.classed("hidden",true);
+        }
+    }
 
     var isPlaying = false;
     var testWebKitSound_scope = undefined;
@@ -279,16 +290,11 @@ RED.devTest = (function() {
         
         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++)
         {
-            var ws = RED.nodes.workspaces[wsi];
+            var ws = RED.nodes.createExportableWorkspace(RED.nodes.workspaces[wsi]);
             ws.nodes = new Array();
-            for (var ni = 0; ni < RED.nodes.nodes.length; ni++)
+            for (var ni = 0; ni < RED.nodes.cwsNodes.length; ni++)
             {
-                var n = RED.nodes.nodes[ni];
-                if (n.z == ws.id)
-                {
-                    ws.nodes.push(RED.nodes.convertNode(n));
-                    //ws.nodes.push(n); // this is only to see structure of raw nodes
-                }
+                ws.nodes.push(RED.nodes.convertNode(RED.nodes.cwsNodes[ni]));
             }            
         }
         

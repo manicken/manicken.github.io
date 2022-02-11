@@ -42,20 +42,20 @@ RED.history = (function() {
                 }
             }
         } else if (ev.t == "delete") {
-            if (ev.workspaces != undefined)
+            if (ev.workspace != undefined)
             {
-                for (i=0;i<ev.workspaces.length;i++) {
-                    RED.nodes.addWorkspace(ev.workspaces[i]);
-                    RED.view.addWorkspace(ev.workspaces[i]);
-                }
+                //for (i=0;i<ev.workspaces.length;i++) {
+                    RED.nodes.addWorkspace(ev.workspace, ev.workspaceIndex);
+                    RED.view.addWorkspace(ev.workspace, ev.workspaceIndex);
+                //}
             }
-            if (ev.nodes != undefined)
+            if (ev.nodes != undefined && ev.workspace == undefined) // not needed for new structure, as this will then make duplicates
             {
                 for (i=0;i<ev.nodes.length;i++) {
                     RED.nodes.add(ev.nodes[i]);
                 }
             }
-            if (ev.links != undefined)
+            if (ev.links != undefined && ev.workspace == undefined) // not needed for new structure, as this will then make duplicates
             {
                 for (i=0;i<ev.links.length;i++) {
                     RED.nodes.addLink(ev.links[i]);
@@ -141,6 +141,7 @@ RED.history = (function() {
             if (ev == undefined) return;
             console.error(ev);
             exec(ev);
+            RED.storage.update();
             /* disable redo it for now
             if (ev.t == "add") ev.t = "delete";
             else if (ev.t == "delete") ev.t = "add";

@@ -291,6 +291,13 @@ RED.view.ui = (function() {
 		if (rect.attr("strokeOld") != undefined)
 			rect.attr("stroke", rect.attr("strokeOld"));
 	}
+    function uiNodeResize_changedCheck() {
+        var mousedown_node = RED.view.mousedown_node;
+        return ((mousedown_node_resize.w != mousedown_node.w) ||
+                (mousedown_node_resize.h != mousedown_node.h) ||
+                (mousedown_node_resize.x != mousedown_node.x) ||
+                (mousedown_node_resize.y != mousedown_node.y))
+    }
 
     function uiNodeResize()
 	{
@@ -775,6 +782,7 @@ RED.view.ui = (function() {
         get allowUiItemTextInput() {return allowUiItemTextInput;},
         uiNodeResizeMouseDown,
         uiNodeResize,
+        uiNodeResize_changedCheck,
 
         uiObjectMouseScroll,
         uiObjectMouseOver,

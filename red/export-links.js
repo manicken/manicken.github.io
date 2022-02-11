@@ -79,7 +79,8 @@ RED.export.links = (function () {
     }
 
     function getNodeLinks(node, currPath, nodeIsArray) {
-        var nodeLinks = RED.nodes.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
+        var ws = RED.nodes.getWorkspace(node.z);
+        var nodeLinks = ws.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
         nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
         //console.error(node.name + "\nlinks:\n" + RED.export.links.getDebug(nodeLinks));
         console.warn(nodeIsArray);
@@ -140,7 +141,8 @@ RED.export.links = (function () {
      * @returns 
      */
      function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) { // TODO fix support for bus links
-        var links = RED.nodes.links.filter(function(l) {return l.target === dynInputObj;});
+        var ws = RED.nodes.getWorkspace(dynInputObj.z);
+        var links = ws.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
         //console.log("getDynInputDynSizePortStartIndex \n" + RED.export.links.getDebug(links));
         var offset = 0;
@@ -298,7 +300,8 @@ RED.export.links = (function () {
             l.tabIn = port.node;
         }
         // port can have multiple connections out from it
-        var portLinks = RED.nodes.links.filter(function(d) { return d.source === port.node;});
+        var ws = RED.nodes.getWorkspace(port.node.z);
+        var portLinks = ws.links.filter(function(d) { return d.source === port.node;});
 
         var newTargetPath = newLink.targetPath + "/" + link.target.name;
         console.warn('newTargetPath "' + newTargetPath + '"');

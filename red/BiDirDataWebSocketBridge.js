@@ -109,9 +109,9 @@ RED.BiDirDataWebSocketBridge = (function() {
 	}
 	function setUiItemValue(midiId, value)
 	{
-		for (var i = 0; i < RED.nodes.nodes.length; i++)
+		for (var i = 0; i < RED.nodes.cwsNodes.length; i++)
 		{
-			var n = RED.nodes.nodes[i];
+			var n = RED.nodes.cwsNodes[i];
 			if (n._def.uiObject == undefined) continue;
 
 			if (n.midiId == undefined) continue;

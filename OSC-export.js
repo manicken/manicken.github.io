@@ -71,7 +71,7 @@ OSC.export = (function () {
         var clearAllAddr = "/dynamic/clearAl*";
         if (groupBased == undefined)
             //var result = getSimpleExport_bundle(false);
-            var result = getSuperSimpleExport_bundle(false);
+            var result = getSimpleExport_bundle(false);
         else
             var result = getGroupExport_bundle(false);
         if (result == undefined) return; // only happens at getGroupExport_bundle
@@ -291,7 +291,6 @@ OSC.export = (function () {
                 packets.add(OSC.GetCreateConnectionAddr(),"ss", linkName, linkPath);
                 packets.add(OSC.GetConnectAddr(linkPath +"/"+ linkName),"sisi", sourcePath + "/" + srcName, sourcePort, targetPath + "/" + dstName, targetPort);
             }
-            
         }
     }
     
@@ -337,8 +336,6 @@ OSC.export = (function () {
         RED.export.links.fixTargetPortsForDynInputObjects(links);
         //console.log(RED.export.links.degDebug(links));
         addLinksToPacketArray(acs, links);
-        
-        
 
         var bundle = OSC.CreateBundle(0);
         bundle.add(OSC.GetClearAllAddr());
@@ -354,7 +351,7 @@ OSC.export = (function () {
         if (getBundleOnly == true) return bundle;
         else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
     }
-
+/*
     function getSimpleExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
         RED.storage.update(); // this will also sort the nodes
@@ -399,18 +396,20 @@ OSC.export = (function () {
         if (getBundleOnly == true) return bundle;
         else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
     }
-
-    function getSuperSimpleExport_bundle(getBundleOnly) {
+*/
+    function getSimpleExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
         RED.storage.update(); // this will also sort the nodes
         RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // used by isClass and getDynInputDynSizePortStartIndex
-        var activeWorkspace = RED.view.activeWorkspace;
+        //var activeWorkspace = RED.view.activeWorkspace;
         var apos = new PacketArray(); // Audio Processing Objects
         var acs = new PacketArray(); // Audio Connections 
-        var nodes = RED.nodes.nodes;
-        for (var i = 0; i < nodes.length; i++) {
-            var node = nodes[i];
-            if (node.z != activeWorkspace) continue; // workspace filter
+        //var nodes = RED.nodes.nodes; // this actually returns the current workspace nodes only
+        var ws = RED.nodes.getWorkspace(RED.view.activeWorkspace);
+        //RED.nodes.wsEachNode(ws, function(node) {
+        for (var i = 0; i < ws.nodes.length; i++) {
+            var node = ws.nodes[i];
+        //    if (node.z != activeWorkspace) continue; // workspace filter
             if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
             
             if (node._def.dynInputs == undefined) //if (node._def.defaults.inputs == undefined) 
@@ -418,7 +417,7 @@ OSC.export = (function () {
             else // only happens for dynamic input objects
                 apos.add(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs);
 
-            var links = RED.nodes.links.filter(function (l) {return l.source === node});
+            var links = ws.links.filter(function (l) {return l.source === node});
             addLinksToPacketArray(acs, links);
         }
         var bundle = OSC.CreateBundle(0);
@@ -434,7 +433,6 @@ OSC.export = (function () {
 
     return {
         getSimpleExport_bundle,
-        getSuperSimpleExport_bundle,
         getGroupExport_bundle,
         InitButtonPopups
     };

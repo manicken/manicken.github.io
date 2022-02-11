@@ -247,7 +247,7 @@ RED.view = (function() {
 
         RED.notify("current tab settings was applied to other tabs", "warning", null, 2000);
     }
-    var catLabel = "Workspace/View"; // so that this can be used in the "apply to other tabs" popuptext
+    var catLabel = "Tab/Workspace/View"; // so that this can be used in the "apply to other tabs" popuptext
 	var settingsCategory = { label:catLabel, expanded:false, bgColor:"#DDD", dontSave:true, menuItems:[{label:"apply to other tabs",iconClass:"fa fa-copy",popupText: "uses the current "+catLabel+" settings for all other tabs", action:applySettingToOtherTabs}] }; // don't save is special now when we have individual settings for each tab
 
 	var settingsEditor = {
@@ -422,6 +422,8 @@ RED.view = (function() {
 		.on("mousemove", canvasMouseMove)
 		.on("mousedown", canvasMouseDown)
 		.on("mouseup", canvasMouseUp)
+        .on("mouseenter", canvasMouseEnter)
+        .on("mouseleave", canvasMouseLeave)
 		.on("touchend", canvasTouchEnd)
 		.on("touchcancel", canvasMouseUp)
 		.on("touchstart", canvasTouchStart)
@@ -472,6 +474,8 @@ RED.view = (function() {
     
 	function initView() // called from main.js - document ready function
 	{
+        generateTextSizeCache();
+
         window.addEventListener('resize', resizeMainContainerBasedOnNavBar);
         resizeMainContainerBasedOnNavBar(); // run it once
 
@@ -657,7 +661,7 @@ RED.view = (function() {
         RED.nodes.getWorkspace(activeWorkspace).settings = RED.settings.getChangedSettings(RED.view);
     }
 
-    function setSelectWorkspace(tab)
+    function setSelectedWorkspace(tab)
     {
         var chart = $("#chart");
         if (activeWorkspace !== 0) {
@@ -688,7 +692,7 @@ RED.view = (function() {
         var scrollStartTop = chart.scrollTop();
 
         
-        RED.nodes.selectWorkspace(activeWorkspace);
+        //RED.nodes.selectWorkspace(activeWorkspace);
 
         if (workspaceScrollPositions[activeWorkspace]) {
             chart.scrollLeft(workspaceScrollPositions[activeWorkspace].left);
@@ -705,7 +709,8 @@ RED.view = (function() {
         }
 
         clearSelection();
-        RED.nodes.eachNode(function(n) {
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+        RED.nodes.wsEachNode(ws,function(n) {
                 n.dirty = true;
         });
         redraw(true);
@@ -716,14 +721,14 @@ RED.view = (function() {
         RED.view.navigator.refresh();
             RED.view.navigator.resize();
     }
-
+    $("#btn-delete").click(function() {deleteSelection();});
 	$('#btn-cut').click(function() {copySelection();deleteSelection();});
 	$('#btn-copy').click(function() {copySelection()});
 	$('#btn-paste').click(function() {importNodes(clipboard,null, true)});
     //console.warn("view loading...");
 	var workspace_tabs = RED.tabs.create({
 		id: "workspace-tabs",
-		onchange: setSelectWorkspace,
+		onchange: setSelectedWorkspace,
 		ondblclick: function(tab) {
 			RED.view.dialogs.showRenameWorkspaceDialog(tab.id,workspace_tabs.count());
 		},
@@ -781,12 +786,12 @@ RED.view = (function() {
 	var workspaceIndex = 0;
 
 	function addWorkspace() {
-		var tabId = RED.nodes.id();
+		var tabId = RED.nodes.getNewUID();
 		do {
 			workspaceIndex += 1;
 		} while($("#workspace-tabs a[title='"+RED.workspaces.settings.defaultNewName+workspaceIndex+"']").size() !== 0);
 
-		var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, 0, 0, true);
+		var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, true);
         var currIndex = RED.nodes.getWorkspaceIndex(activeWorkspace);
         //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ currIndex " + currIndex);
         if (RED.workspaces.settings.addNewLocation == 0) {
@@ -833,12 +838,13 @@ RED.view = (function() {
 	}
 
 	function canvasMouseDown() {
+        if (d3.event.button != 0) return;
         if (RED.view.ui.allowUiItemTextInput == true) return;
-        
+        //console.warn("canvasMouseDown");
 		if (!mousedown_node && !mousedown_link) {
 			clearLinkSelection();
 			updateSelection();
-			redraw(true);
+			//redraw(true);
 		}
 		if (mouse_mode === 0) {
 			if (lasso) {
@@ -868,9 +874,14 @@ RED.view = (function() {
 		mouse_position = d3.touches(this)[0]||d3.mouse(this);
 		// Prevent touch scrolling...
 		//if (d3.touches(this)[0]) {
-		//    d3.event.preventDefault();
+		    //d3.event.preventDefault();
 		//}
 		var chart = $("#chart");
+
+        chart.onscroll = (event) => {
+            // handle the scroll event
+            console.trace();
+        };
 		
 		// TODO: auto scroll the container
 		//var point = d3.mouse(this);
@@ -904,13 +915,15 @@ RED.view = (function() {
 				.attr("width",w)
 				.attr("height",h)
 			;
+            var point = d3.mouse(this);
+		    if (point[0]-chart.scrollLeft < 5 && chart.scrollLeft > 0) { chart.scrollLeft(chart.scrollLeft-15); }
 			return;
 		}
 
 		if (mouse_mode != RED.state.IMPORT_DRAGGING && !mousedown_node && selected_link == null) {
 			return;
 		}
-
+        var movingNodes = false;
 		var mousePos;
 		if (mouse_mode == RED.state.JOINING) {
 			// update drag line
@@ -995,6 +1008,8 @@ RED.view = (function() {
             
 
 			d3.event.preventDefault();
+            //return; // greatly improve performance
+
 		} else if (mouse_mode == RED.state.MOVING) {
 			
 			mousePos = mouse_position;
@@ -1007,18 +1022,31 @@ RED.view = (function() {
 			showHideGrid(true);
 			moveSelection_mouse();
 			RED.view.groupbox.moveToFromGroup_update();
-			
+			movingNodes = true;
+            for (var ni=0;ni<moving_set.length;ni++) {
+                redraw_nodeMoved(moving_set[ni].n);
+            }
+            redraw_links();
 		} 
 		// ui object resize mouse move
-		else
+		else if (selected_link == null)
 		{ 
 			RED.view.ui.uiNodeResize();
+            redraw_node(mousedown_node);
+            //redraw(false);
 		}
-		redraw(false);
+        //if (movingNodes == false) // needed for ui objects resize
+		    
 		//redraw_links_init();
-		redraw_links();
+		//redraw_links();
 		//console.log("redraw from canvas mouse move");
 	}
+    function redraw_nodeMoved(d) {
+        if (posMode === 2)
+			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+		else
+			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
+    }
     function generateDragLinkPath(origX,origY, destX, destY, sc) {
         var dy = destY-origY;
         var dx = destX-origX;
@@ -1094,8 +1122,19 @@ RED.view = (function() {
                     destX+" "+destY
         }
     }
+
+    function canvasMouseEnter() {
+        //console.warn("canvasMouseEnter");
+        RED.keyboard.enable();
+    }
+    function canvasMouseLeave() {
+        //console.warn("canvasMouseLeave");
+        RED.keyboard.disable();
+    }
 	
 	function canvasMouseUp() {
+        
+        if (d3.event.button != 0) return;
         if (RED.view.ui.allowUiItemTextInput == true) return;
 
 		if (mousedown_node && mouse_mode == RED.state.JOINING) {
@@ -1103,24 +1142,57 @@ RED.view = (function() {
 		}
 		if (lasso) {
 			//console.warn("canvasMouseUp lasso happend");
-			var x = parseInt(lasso.attr("x"));
-			var y = parseInt(lasso.attr("y"));
-			var x2 = x+parseInt(lasso.attr("width"));
-			var y2 = y+parseInt(lasso.attr("height"));
+			var lx1 = parseInt(lasso.attr("x"));
+			var ly1 = parseInt(lasso.attr("y"));
+			var lx2 = lx1+parseInt(lasso.attr("width"));
+			var ly2 = ly1+parseInt(lasso.attr("height"));
+
+            //var laRect = {x1,y1,x2,y2};
+
 			if (!d3.event.ctrlKey) {
 				clearSelection();
 			}
-			RED.nodes.eachNode(function(n) {
-				if (n.z == activeWorkspace && !n.selected) {
-					// don't select groups with lasso (only with ctrl pressed) 
-					if (n.type == "group" && !d3.event.ctrlKey)
+            var selectMode = RED.main.settings.LassoSelectNodeMode;
+            //console.log("lasso:",laRect);
+            var ws = RED.nodes.getWorkspace(activeWorkspace);
+			RED.nodes.wsEachNode(ws, function(n) {
+				if (/*n.z == activeWorkspace && */!n.selected) {
+					// don't select groups with lasso (only with ctrl pressed)
+                    // otherwise it's hard to select items inside it with lasso
+                    // one solution is to only select the group with lasso 
+                    // if the whole group is inside the lasso
+					if (n.type == "group" && !d3.event.ctrlKey) // think the functionality of ctrl key at this moment could be user selectable
 						return; // return is used because this is a function not a loop
 
-					n.selected = (n.x > x && n.x < x2 && n.y > y && n.y < y2);
+                    if (posMode == 1) {
+                        var nx1 = parseInt(n.x);
+                        var ny1 = parseInt(n.y);
+                        var nx2 = nx1 + parseInt(n.w);
+                        var ny2 = ny1 + parseInt(n.h);
+                    } else { // posMode = 2
+                        var nx1 = parseInt(n.x) - parseInt(n.w)/2;
+                        var ny1 = parseInt(n.y) - parseInt(n.h)/2;
+                        var nx2 = nx1 + parseInt(n.w);
+                        var ny2 = ny1 + parseInt(n.h);
+                    }
+                    if (selectMode == 1)
+                        n.selected = include(lx1,ly1,lx2,ly2,nx1,ny1,nx2,ny2); // 'complete'-inside selection lasso
+                    else // if (selectMode == 0) default and failsafe
+                        n.selected = overlap(lx1,ly1,lx2,ly2,nx1,ny1,nx2,ny2); // partial selection (normal)
+                    
+                    //n.selected = between(nx1,lx1,lx2)&&between(ny1,ly1,ly2); // original
+
 					if (n.selected) {
 						n.dirty = true;
+                        n.svgRect.classed("node_selected", true);
+                        n.svgRect.selectAll(".node").classed("node_selected", true);
 						moving_set.push({n:n});
 					}
+                    else {
+                        n.svgRect.classed("node_selected", false);
+                        n.svgRect.selectAll(".node").classed("node_selected", false);
+                    }
+                    if (n.type == "group") RED.view.groupbox.redrawGroupOutline(n);
 				}
 			});
 			updateSelection();
@@ -1140,7 +1212,8 @@ RED.view = (function() {
 					ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy});
 				}
 				RED.history.push({t:'move',nodes:ns,dirty:dirty});
-				RED.storage.update();
+				RED.storage.update(); // this also do node re-sort
+                RED.events.emit("nodes:moved",ns);
 			}
 		}
 		if (mouse_mode == RED.state.MOVING || mouse_mode == RED.state.MOVING_ACTIVE) {
@@ -1153,13 +1226,22 @@ RED.view = (function() {
 			RED.keyboard.remove(/* ESCAPE */ 27);
 			setDirty(true);
 		}
-		redraw(true);
+		//redraw(true);
 		//redraw_links_init();
-		redraw_links();
+		//redraw_links();
 		// clear mouse event vars
         resetMouseVars();
         //RED.notify("canvas mouse up");
 	}
+    function overlap(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
+        return (ax1<bx2)&&(ax2>bx1)&&(ay1<by2)&&(ay2>by1);
+    }
+    function include(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
+        return (ay1<by1)&&(ax1<bx1)&&(by2<ay2)&&(bx2<ax2);
+    }
+    function between(x,min,max) {
+        return (x>=min&&x<=max);
+    }
 
 	$('#btn-zoom-out').click(function() {zoomOut();});
 	$('#btn-zoom-zero').click(function() {zoomZero();});
@@ -1269,7 +1351,7 @@ RED.view = (function() {
         
 		nn.bgColor = nn._def.color;
 		
-		nn.id = RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
+		nn.id = RED.nodes.getNewUID(); //RED.nodes.cppId(nn, RED.nodes.getWorkspace(activeWorkspace).label);  // jannik add/change
 		nn.name = (nn._def.shortName) ? nn._def.shortName : nn.type.replace(/^Analog/, "");// jannik add/change temp name
 		nn.name = RED.nodes.cppName(nn, activeWorkspace, nameShouldEndWithNumber); // jannik add/change create unique name
         if (nn._def.category == "tabs")
@@ -1339,21 +1421,50 @@ RED.view = (function() {
 		settings.scaleFactor = 1;
 	}
 
+    function showEverything() {
+        visLinks.attr("class", "workspace-chart-links");
+        visNodes.attr("class", "workspace-chart-nodes");
+    }
+    function hideEverything() {
+        visLinks.attr("class", "workspace-chart-links hidden");
+        visNodes.attr("class", "workspace-chart-nodes hidden");
+    }
+
 	function selectAll() {
-		RED.nodes.eachNode(function(n) {
-			if (n.z == activeWorkspace) {
-				if (!n.selected) {
+        //hideEverything();
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+		const t0 = performance.now();
+        RED.nodes.wsEachNode(ws, function(n) {
+			//if (n.z == activeWorkspace) {
+				//if (!n.selected) {
 					n.selected = true;
+                    n.svgRect.classed("node_selected", true);
+                    n.svgRect.selectAll(".node").classed("node_selected", true);
+                    if (n.type == "group") RED.view.groupbox.redrawGroupOutline(n);
 					n.dirty = true;
 					moving_set.push({n:n});
-				}
-			}
+				//}
+			//}
 		});
+        const t1 = performance.now();
 		clearLinkSelection();
-		updateSelection();
-		redraw(true);
-		redraw_links_init();
-		redraw_links();
+        const t2 = performance.now();
+		updateSelection(true);
+        const t3 = performance.now();
+		//redraw(true);
+        const t4 = performance.now();
+		//redraw_links_init();
+        const t5 = performance.now();
+		//redraw_links();
+        const t6 = performance.now();
+        //showEverything();
+        // the following times are on a design with ~2000 nodes & ~2000 links
+        console.log("putting nodes into moving_set: " + (t1-t0)); // < 1mS
+        console.log("clearLinkSelection: " + (t2-t1)); // ~14.5mS
+        console.log("updateSelection: " + (t3-t2)); // ~27741ms
+        console.log("redraw(true): " + (t4-t3)); // ~500mS
+        console.log("redraw_links_init: " + (t5-t4)); // ~31mS
+        console.log("redraw_links: " + (t6-t5)); // ~119mS
 	}
 
 	function clearSelection() {
@@ -1362,12 +1473,16 @@ RED.view = (function() {
 			var n = moving_set[i];
 			n.n.dirty = true;
 			n.n.selected = false;
+            if (n.n.svgRect != undefined) // undefined on newly dropped nodes
+                n.n.svgRect.classed("node_selected", false);
+                n.n.svgRect.selectAll(".node").classed("node_selected", false);
+                if (n.n.type == "group") RED.view.groupbox.redrawGroupOutline(n.n);
 		}
 		moving_set = [];
 		clearLinkSelection();
 	}
 
-	function updateSelection() {
+	function updateSelection(allSelected) {
 		if (moving_set.length === 0) {
 			$("#li-menu-export").addClass("disabled");
 			$("#li-menu-export-clipboard").addClass("disabled");
@@ -1408,19 +1523,36 @@ RED.view = (function() {
 			RED.sidebar.info.refresh(moving_set[0].n);
 			RED.nodes.selectNode(moving_set[0].n.type);
 		} else if (moving_set.length > 1) {
-			RED.sidebar.info.showSelection(moving_set);
+            //const t0 = performance.now();
+			RED.sidebar.info.showSelection(moving_set); // 27mS for 2000nodes
+            //const t1 = performance.now();
+            //console.log("RED.sidebar.info.showSelection(moving_set): " + (t1-t0));
 		} else {
             RED.sidebar.info.clear();
             RED.nodes.selectNode("");
 		}
-
-		for (var i = 0; i < moving_set.length; i++)
-		{
-			var n = moving_set[i].n;
-			var links = RED.nodes.links.filter(function(l) {  return l.source.z == activeWorkspace && l.target.z == activeWorkspace; });
-			vis.selectAll(".link").data(links,function(l) {  if (l.source == n) { l.selected = true; } if (l.target == n){ l.selected = true; } return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
-		}
-		redraw_links_init();
+        
+        var links = RED.nodes.cwsLinks;
+        if (allSelected != undefined && allSelected == true) { // extreme improvement when selecting all nodes
+            for (var li=0; li<links.length;li++) {
+                links[li].selected = true;
+                links[li].svgRoot.classed("link_selected", true);
+            }
+        }
+        else {// the following takes 1.5s for 2000 nodes and 2000 links
+            for (var i = 0; i < moving_set.length; i++)
+            {
+                var n = moving_set[i].n;
+                for (var li=0; li<links.length;li++) {
+                    var l = links[li];
+                    if ((l.source == n) || (l.target == n)) {
+                        l.selected = true;
+                        l.svgRoot.classed("link_selected", true);
+                    }
+                }
+            }
+        }
+		//redraw_links_init();
 	}
 	$('#btn-debugShowSelection').click(function() {RED.sidebar.info.showSelection(moving_set);});
 
@@ -1699,7 +1831,7 @@ RED.view = (function() {
                 var changedItem = _changedNodes[pName];
                 //console.warn(changedItem);
                 changedNodes.push(changedItem);
-                redraw_node(getNodeRect(changedItem.node), changedItem.node, true);
+                redraw_node(changedItem.node, true);
                 RED.events.emit("nodes:inputs", changedItem.node, changedItem.changes.inputs, changedItem.newChange.inputs);
             }
         }
@@ -1741,17 +1873,68 @@ RED.view = (function() {
 			RED.notify(moving_set.length+" node"+(moving_set.length>1?"s":"")+" copied");
 		}
 	}
+    var textSizeCache = {};
+    var tsc_numbers = "0123456789";
+    var tsc_specialChars = "!\"#¤%&/()=?½§@£$€{[]}\\+,;.:-_¨^~'*<>| ";
+    var tsc_lowerCase = "abcdefghijklmnopqrstuvwxyz";
+    var tsc_upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var tsc_all = tsc_numbers+tsc_lowerCase+tsc_upperCase+tsc_specialChars;
+
+    function generateTextSizeCache() {
+        const t0 = performance.now();
+        
+        textSizeCache = {};
+        for (var ts=10; ts < 24;ts++) { // generate standard sizes
+            textSizeCache[ts] = generateCharSizesCache(ts);
+        }
+        const t1 = performance.now();
+        console.log("generateTextSizeCache took:" + (t1-t0) + " ms");
+        console.log(textSizeCache);
+    }
+    function generateCharSizesCache(size) {
+        var sizes = {};
+            
+        for (var chi=0;chi<tsc_all.length;chi++) {
+            var char = tsc_all[chi];
+            if (char != " ")
+                sizes[char] = _calculateTextSize(char,size);
+            else
+                sizes[char] = _calculateTextSize("]",size); // calculate space after similar sized char ]
+        }
+        return sizes;
+    }
+    function calculateTextSize(str,size) {
+        //if (textSizeCache.length == 0) generateTextSizeCache();
+        var width = 0;
+        if (size == undefined)
+            size = 14;
+        var tsc = textSizeCache[size];
+        if (tsc == undefined) {
+            //console.warn("size not found:" + size);
+            console.warn("generating charCache for size: " + size);
+            tsc = generateCharSizesCache(size);
+            textSizeCache[size] = tsc;
+        }
+        var height = 0;
+        for (var i=0;i<str.length;i++) {
+            var ccs = tsc[str[i]]; // ccs = current char size
+            width += ccs.w;
+            if (height < ccs.h) height = ccs.h;
+        }
+        return {w:width, h:height};
+    }
+
 	var calculateTextSizeElement = undefined;
     var calculateTextSizeCache = {};
-	function calculateTextSize(str,textSize) {
+	function _calculateTextSize(str,textSize) {
         //const t0 = performance.now();
 		var name = str + "_" + textSize;
 
-        if (calculateTextSizeCache[name] != undefined) {
+        /*if (calculateTextSizeCache[name] != undefined) {
             //const t1 = performance.now();
 		    //console.error("@calculateTextSize time @ " + name + " : " + (t1-t0));
             return calculateTextSizeCache[name];
-        }
+        }*/
 
 		//if (str == undefined)
 		//	return {w:0, h:0};
@@ -1762,7 +1945,8 @@ RED.view = (function() {
 			var sp = document.createElement("span");
 			sp.className = "node_label";
 			sp.style.position = "absolute";
-			sp.style.top = "-1000px";
+			sp.style.top = "-300px";
+            sp.style.left = "-300px";
 			document.body.appendChild(sp);
 			calculateTextSizeElement = sp;
 		}
@@ -1782,9 +1966,11 @@ RED.view = (function() {
 		var w = sp.offsetWidth;
 		var h = sp.offsetHeight;
 		//document.body.removeChild(sp);
-		
-
-        var sizes = {w:parseFloat(w), h:parseFloat(h)};
+		var rect = sp.getBoundingClientRect();
+        //var w = rect.width;
+        //var h = rect.height;
+        //var sizes = {w:parseFloat(w), h:parseFloat(h)};
+        var sizes = {w, h};
         calculateTextSizeCache[name] = sizes; // cache it for performance boost
 
         //const t1 = performance.now();
@@ -1804,6 +1990,7 @@ RED.view = (function() {
     var mouse_down_pos = [];
 
 	function portMouseDown(d,portType,portIndex) {
+        if (d3.event.button != 0) return;
 		// disable zoom
 		//vis.call(d3.behavior.zoom().on("zoom"), null);
 		mousedown_node = d;
@@ -1817,13 +2004,15 @@ RED.view = (function() {
 	}
 
 	function portMouseUp(d,portType,portIndex,changedNodes) { // changedNodes is used by dynInput objects
-        console.warn("portMouseUp",portType,portIndex);
+        if (d3.event.button != 0) return;
+        //console.warn("portMouseUp",portType,portIndex);
 		document.body.style.cursor = "";
 		if (mouse_mode != RED.state.JOINING || mousedown_node == undefined) return;
 
         if (typeof TouchEvent != "undefined" && d3.event instanceof TouchEvent) {
-            RED.nodes.eachNode(function(n) {
-                if (n.z == activeWorkspace) {
+            var ws = RED.nodes.getWorkspace(activeWorkspace);
+            RED.nodes.wsEachNode(ws, function(n) {
+                //if (n.z == activeWorkspace) {
                     var hw = n.w/posMode;
                     var hh = n.h/posMode;
                     if (n.x-hw<mouse_position[0] && n.x+hw> mouse_position[0] &&
@@ -1835,7 +2024,7 @@ RED.view = (function() {
                             
                             portIndex = 0;
                     }
-                }
+                //}
             });
         } else {
             mouseup_node = d;
@@ -2041,6 +2230,7 @@ RED.view = (function() {
 	}
 	
 	function nodeMouseDown(d,i) { // this only happens once
+        if (d3.event.button != 0) return;
 
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
@@ -2082,6 +2272,10 @@ RED.view = (function() {
 		if (d.selected && d3.event.ctrlKey) {
 			console.error("selection splice");
 			d.selected = false;
+            d.svgRect.classed("node_selected", false);
+            d.svgRect.selectAll(".node").classed("node_selected", false);
+            if (d.type == "group") RED.view.groupbox.redrawGroupOutline(d);
+
 			for (i=0;i<moving_set.length;i+=1) {
 				if (moving_set[i].n === d) {
 					moving_set.splice(i,1);
@@ -2094,8 +2288,11 @@ RED.view = (function() {
 				clearSelection();
 				var cnodes = RED.nodes.getAllFlowNodes(mousedown_node);
 				for (var n=0;n<cnodes.length;n++) {
-					console.log("asmfjkl.nodes[ni].name:" +cnodes[n].name);
+					//console.log("asmfjkl.cnodes[ni].name:" +cnodes[n].name);
 					cnodes[n].selected = true;
+                    cnodes[n].svgRect.classed("node_selected", true);
+                    cnodes[n].svgRect.selectAll(".node").classed("node_selected", true);
+                    if (cnodes[n].type == "group") RED.view.groupbox.redrawGroupOutline(cnodes[n]);
 					cnodes[n].dirty = true;
 					moving_set.push({n:cnodes[n]});
 				}
@@ -2106,6 +2303,9 @@ RED.view = (function() {
 					clearSelection();
 				}
 				mousedown_node.selected = true;
+                mousedown_node.svgRect.classed("node_selected", true);
+                mousedown_node.svgRect.selectAll(".node").classed("node_selected", true);
+                if (mousedown_node.type == "group") RED.view.groupbox.redrawGroupOutline(mousedown_node);
 				moving_set.push({n:mousedown_node});//, rect:this});
 
 				if (mousedown_node.nodes != undefined && mousedown_node.nodes.length != 0)
@@ -2155,13 +2355,14 @@ RED.view = (function() {
 		
 		//console.log("nodeMouseDown:" + d.name);
 		
-		redraw(true);
-		redraw_links_init();
-		redraw_links();
+		//redraw(true);
+		//redraw_links_init();
+		//redraw_links();
 		d3.event.stopPropagation();
 	}
 
 	function nodeMouseUp(d,i) {
+        if (d3.event.button != 0) return;
 		//console.log("nodeMouseUp "+ d.name+" i:" + i);
 
 		
@@ -2174,6 +2375,13 @@ RED.view = (function() {
 			RED.view.ui.uiObjectMouseUp(d, x, y, rect); // here the event is passed down to the ui object
 			return;
 		}
+        else if (d._def.uiObject != undefined)
+        {
+            console.log("ui nodeMouseUp");
+            if (RED.view.ui.uiNodeResize_changedCheck() == true)
+                RED.storage.update();
+        }
+
 		showHideGrid(false);
 		RED.view.groupbox.moveSelectionToFromGroupMouseUp();
 		
@@ -2197,7 +2405,7 @@ RED.view = (function() {
 
         if (RED.main.settings.LinkDropOnNodeAppend == false) return;
         let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
-        console.warn("next free index "+ nextFreeInputIndex);
+        //console.warn("next free index "+ nextFreeInputIndex);
         if (nextFreeInputIndex == -1) {
             if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
                 return;
@@ -2205,7 +2413,7 @@ RED.view = (function() {
             nextFreeInputIndex = d.inputs;
             var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
             d.inputs++;
-            redraw_node(getNodeRect(d), d, true);
+            redraw_node(d, true);
             RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs);
             //redraw_nodes(true,true); // workaround for now
         }
@@ -2217,8 +2425,15 @@ RED.view = (function() {
 	function clearLinkSelection()
 	{
 		selected_link = null;
-		var links = RED.nodes.links.filter(function(l) { return l.source.z == activeWorkspace && l.target.z == activeWorkspace });
-		vis.selectAll(".link").data(links, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
+        if (RED.nodes.loadingWorkspaces == true) return;
+		//var links = RED.nodes.links.filter(function(l) { return l.source.z == activeWorkspace && l.target.z == activeWorkspace });
+        var links = RED.nodes.cwsLinks;
+        for (var li=0; li<links.length;li++) {
+            links[li].selected = false;
+            if (links[li].svgRoot != undefined)
+                links[li].svgRoot.classed("link_selected", false);
+        }
+        //vis.selectAll(".link").data(RED.nodes.cwsLinks, function(l) { l.selected = false; return l.source.id+":"+l.sourcePort+":"+l.target.id+":"+l.targetPort;});
 	}
 
 	function nodeButtonClicked(d) {
@@ -2264,7 +2479,7 @@ RED.view = (function() {
 		// above could be:
 		// d.requirements = RED.main.requirements[d.type];
 		// if the structure is changed a little
-
+        
 		//check for conflicts with other nodes:
 		d.requirements.forEach(function(r) {
 			RED.nodes.eachNode(function (n2) {
@@ -2320,7 +2535,8 @@ RED.view = (function() {
 		//console.error(d.textDimensions);
 		d.w = Math.max(node_def.width, d.textDimensions.w + 50 /*+ (inputs>0?7:0) */);
 		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
-	}
+        
+    }
 	
 	function redraw_nodeMainRect_init(nodeRect, d)
 	{
@@ -2536,7 +2752,7 @@ RED.view = (function() {
 		
 		var inputlist = [];
 		for (var n=0; n < numInputs; n++) {
-			var link = RED.nodes.links.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
+			var link = RED.nodes.cwsLinks.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
 			
 			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance; // allways divide by 2
 			//console.error("in node y:" + y);
@@ -2612,8 +2828,8 @@ RED.view = (function() {
 		    .attr("class","port port_output").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
 			.attr("nodeType",d.type)
             .attr("nodeId",d.id)
-			.on("mousedown",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseDown(node,0,i);}})() )
-			.on("mouseup",(function(){var node = d; return function(d,i){console.error(d +":"+ i); portMouseUp(node,0,i);}})() )
+			.on("mousedown",(function(){var node = d; return function(d,i){/*console.error(d +":"+ i);*/ portMouseDown(node,0,i);}})() )
+			.on("mouseup",(function(){var node = d; return function(d,i){/*console.error(d +":"+ i);*/ portMouseUp(node,0,i);}})() )
 			//.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
 			//.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
 			.on("mouseover", nodeOutput_mouseover)
@@ -2640,16 +2856,17 @@ RED.view = (function() {
 	function redraw_links_init()
 	{
         if (preventRedraw == true) return;
+        if (RED.nodes.loadingWorkspaces == true) return;
 		//const t0 = performance.now();
-		var wsLinks = RED.nodes.links.filter(function(d)
+		/*var wsLinks = RED.nodes.cwsLinks.filter(function(d)
 		{ 
 			return (d.source.z == activeWorkspace) &&
 					(d.target.z == activeWorkspace);
 
-		});
+		});*/
         //console.log(wsLinks);
 		//const t1 = performance.now();
-		var visLinksAll = visLinks.selectAll(".link").data(wsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
+		var visLinksAll = visLinks.selectAll(".link").data(RED.nodes.cwsLinks, function(d) { return d.source.id+":"+d.sourcePort+":"+d.target.id+":"+d.targetPort;});
 		//const t2 = performance.now();
         //console.warn(visLinksAll);
 
@@ -2657,12 +2874,15 @@ RED.view = (function() {
 		anyLinkEnter = false;
 		linkEnter.each(function(d,i) {
 			anyLinkEnter = true;
-			
+			d.svgPath = {};
 			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
+            d.svgRoot = l;
             //console.warn(d);
-			l.append("svg:path").attr("class","link_background link_path")
+			d.svgPath.background = l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
+                    if (d3.event.button != 0) return;
+                    console.warn(d3.event);
 					mousedown_link = d;
 
                     // double click functionality start
@@ -2705,7 +2925,7 @@ RED.view = (function() {
                         
                 })
                 .on("mouseout",async function(d) {
-                    console.warn(""); // this fixes a glitch
+                    //console.warn(""); // this fixes a glitch but only if the dev tools is open
                     //await delay(10); // this do not
                     $(current_popup_rect).popover("destroy");
                 })
@@ -2721,14 +2941,20 @@ RED.view = (function() {
 				});
             //var linkInfo = RED.nodes.getLinkInfo(d);
             //d.info = linkInfo;
-            if (d.info.isBus == true) {
-                l.append("svg:path").attr("class","link_path link_outline_bus"/* + ((d.info.valid==false)?" link_invalid":"")*/);
+            
+            
+            d.svgPath.outline = l.append("svg:path").attr("class","link_path link_outline");
+            d.svgPath.line = l.append("svg:path").attr("class","link_path link_line");
+            
+            //console.log("do this happen???");
+            /*if (d.info.isBus == true) {
+                l.append("svg:path").attr("class","link_path link_outline_bus");
                 l.append("svg:path").attr("class","link_path link_line_bus" + ((d.info.valid==false)?" link_invalid":""));
             }
             else {
-                l.append("svg:path").attr("class","link_path link_outline"/* + ((d.info.valid==false)?" link_invalid":"")*/);
+                l.append("svg:path").attr("class","link_path link_outline");
                 l.append("svg:path").attr("class","link_path link_line" + ((d.info.valid==false)?" link_invalid":""));
-            }
+            }*/
 		});
 
 		visLinksAll.exit().remove();
@@ -2748,22 +2974,50 @@ RED.view = (function() {
         });
       }
 
-	function redraw_links()
+    function redraw_links_notations(links) {
+        for (var li=0;li<links.length;li++) {
+            redraw_link_notation(links[li]);
+        }
+    }
+	function redraw_links(links)
 	{
+        // this allows only a specific set of links to be redrawn
+        if (links != undefined) {
+            for (var li=0;li<links.length;li++) {
+                var l=links[li];
+                var d=redraw_link(l);
+                l.svgPath.background.attr("d", d);
+                l.svgPath.outline.attr("d", d);
+                l.svgPath.line.attr("d", d);
+            }
+            return;
+        }
         if (preventRedraw == true) return;
 		//const t0 = performance.now();
 		// only redraw links that is selected and where the node is moving
 		if (anyLinkEnter)
-			var links = vis.selectAll(".link_path");
+			var links = visLinks.selectAll(".link_path");
 		else
-			var links = vis.selectAll(".link_selected").selectAll(".link_path");
+			var links = visLinks.selectAll(".link_selected").selectAll(".link_path");
 		anyLinkEnter = false;
 		links.attr("d",redraw_link);
 		//const t1 = performance.now();
 		//console.log("redraw_links :"+ (t1-t0) +  "ms");
 	}
+    function redraw_link_notation(l) {
+        if (l.info.isBus == true) {
+            l.svgPath.outline.attr("class","link_path link_outline_bus"/* + ((l.info.valid==false)?" link_invalid":"")*/);
+            l.svgPath.line.attr("class","link_path link_line_bus" + ((l.info.valid==false)?" link_invalid":""));
+        }
+        else {
+            l.svgPath.outline.attr("class","link_path link_outline"/* + ((l.info.valid==false)?" link_invalid":"")*/);
+            l.svgPath.line.attr("class","link_path link_line" + ((l.info.valid==false)?" link_invalid":""));
+        }
+    }
 	function redraw_link(d)
 	{
+        redraw_link_notation(d);
+
 		var numOutputs = d.source.outputs || 1;
 		var sourcePort = d.sourcePort || 0;
 		
@@ -3011,9 +3265,11 @@ RED.view = (function() {
 				5000
 				)});
 	}
+    
 	
 	function redraw_nodeRefresh(nodeRect, d) // this contains the rest until they get own functions
 	{
+        //console.warn("node refreh");
 		//nodeRect.selectAll(".centerDot").attr({"cx":function(d) { return d.w/posMode;},"cy":function(d){return d.h/posMode}});
 		if (posMode === 2)
 			nodeRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
@@ -3026,6 +3282,7 @@ RED.view = (function() {
 		;
 		if (d.type != "UI_Piano")
 		{
+            //console.warn(d.name + " resized " + d.w +" "+ d.h);
 			nodenodeRect.attr("width",function(d){return d.w});
 			nodenodeRect.attr("height",function(d){return d.h;});
 		}
@@ -3081,10 +3338,26 @@ RED.view = (function() {
 
 	function redraw_nodes_init()
 	{
-		var nodesFilter = RED.nodes.nodes.filter(function(d)
+        //const t0 = performance.now();
+        
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+        //console.trace(ws.nodes);
+        //var nodesFilter = ;
+		var nodesFilter = ws.nodes.filter(function(d)
+		{ 
+			return (d.type != "group");
+		});
+        /*const t1 = performance.now();
+        console.warn("redraw_nodes_init new structure time:" + (t1-t0));
+        const t2 = performance.now();
+        var nodesFilter = RED.nodes.nodes.filter(function(d)
 		{ 
 			return (d.z == activeWorkspace && d.type != "group");
 		});
+
+        const t3 = performance.now();
+        console.warn("redraw_nodes_init old structure time:" + (t3-t2));
+*/
 		var visNodesAll = visNodes.selectAll(".nodegroup").data(nodesFilter, function(d){return d.id;}); // second parameter is the name given to each item
 
 		var updatedClassTypes =	false; // flag so that it only run once at each redraw()
@@ -3103,6 +3376,7 @@ RED.view = (function() {
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
 			anyNodeEnter = true;
+            
 			d.oldNodeText = undefined;
 			d.oldWidth = undefined;
 			d.oldHeight = undefined;
@@ -3114,6 +3388,7 @@ RED.view = (function() {
 			}
 			
 			var nodeRect = d3.select(this);
+            d.svgRect = nodeRect;
 			nodeRect.attr("id",d.id);
 			if (d._def.uiObject == undefined)
 			{
@@ -3127,7 +3402,7 @@ RED.view = (function() {
 				checkRequirements(d); // this update nodes that allready exist
 				if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
 				redraw_nodeReqError(nodeRect, d);
-				redraw_paletteNodesReqError(d);
+				//redraw_paletteNodesReqError(d);
 			}
 
 			redraw_nodeMainRect_init(nodeRect, d);
@@ -3148,20 +3423,28 @@ RED.view = (function() {
 		if (fullUpdate != undefined && fullUpdate == true) {
 			var visNodesAll = redraw_nodes_init();
 		} else {
-			var visNodesAll = visNodes.selectAll(".node_selected").data(RED.nodes.nodes.filter(function(d)
+            var ws = RED.nodes.getWorkspace(activeWorkspace);
+            //console.trace(ws.nodes);
+            //var nodesFilter = ;
+            var nodesFilter = ws.nodes.filter(function(d)
+            { 
+                return (d.type != "group");
+            });
+			var visNodesAll = visNodes.selectAll(".node_selected").data(nodesFilter /*RED.nodes.nodes.filter(function(d)
 			{ 
 				return ((d.z == activeWorkspace) && (d.type != "group"));
 
-			}),function(d){return d.id});
+			})*/,function(d){return d.id});
 		}
 
 		visNodesAll.each( function(d,i) { // redraw all nodes in active workspace
-			var nodeRect = d3.select(this);
-			redraw_node(nodeRect, d, superUpdate);			
+			//var nodeRect = d3.select(this);
+			redraw_node(d, superUpdate);			
 		});
 	}
     function getNodeRect(node) {
-        var visNodesAll2 = visNodes.selectAll("#"+node.id).data(RED.nodes.nodes.filter(function(d2)
+        var ws = RED.nodes.getWorkspace(node.z);
+        var visNodesAll2 = visNodes.selectAll("#"+node.id).data(/*RED.nodes*/ws.nodes.filter(function(d2)
         { 
             return (node===d2);
 
@@ -3172,16 +3455,20 @@ RED.view = (function() {
         });
         return nodeRect;
     }
-    function redraw_node(nodeRect,d,superUpdate) {
-        
+    function redraw_node(d,superUpdate) {
+        var nodeRect = d.svgRect;
+        //console.error("whello");
+        // the following (requirementError check) don't belong here
         if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
         {	
             checkRequirements(d); // this update nodes that allready exist
             //if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
             redraw_nodeReqError(nodeRect, d);
+            //redraw_paletteNodesReqError(d);
         }
         if (superUpdate != undefined && superUpdate == true)
         {
+            //console.warn("super update");
             d.dirty = true;
             d.resize = true;
         }
@@ -3206,7 +3493,7 @@ RED.view = (function() {
 
             }
         }
-        redraw_paletteNodesReqError(d);
+        
         redraw_nodeRefresh(nodeRect, d);
         if (d.type != "JunctionLR" && d.type != "JunctionRL")
             redraw_update_label(nodeRect, d);
@@ -3218,12 +3505,12 @@ RED.view = (function() {
 	 * @param {boolean} fullUpdate 
 	 */
 	function redraw(fullUpdate) {
-        if (preventRedraw == true) return;
+        if (preventRedraw == true || RED.nodes.loadingWorkspaces == true) return;
 		const t0 = performance.now();
-
-        RED.view.navigator.refresh();
-        RED.view.navigator.resize();
-		
+        if (RED.view.navigator.isShowing == true) {
+            RED.view.navigator.refresh();
+            RED.view.navigator.resize();
+        }
 		
 		vis.attr("transform","scale("+settings.scaleFactor+")");
 		outer.attr("width", settings.space_width*settings.scaleFactor).attr("height", settings.space_height*settings.scaleFactor);
@@ -3278,9 +3565,9 @@ RED.view = (function() {
 		var ioMultiple = [];
 		var ioNoOut = [];
 		var ioCtrl = [];
-
-		RED.nodes.eachNode(function (node) {
-			if (node.z != activeWorkspace) return;
+        var ws = RED.nodes.getWorkspace(activeWorkspace);
+		RED.nodes.wsEachNode(ws, function (node) {
+			//if (node.z != activeWorkspace) return;
 			var inputs = 0;
 			if (node.inputs == undefined)
 				inputs = node._def.inputs;
@@ -3387,7 +3674,13 @@ RED.view = (function() {
 			
 			var new_nodes = result[0];
 			var new_links = result[1];
-			var new_ms = new_nodes.map(function(n) { n.z = activeWorkspace; return {n:n};});
+			var new_ms = new_nodes.map(function(n) {
+                //console.warn(n.z);
+                n.z = activeWorkspace;
+                //console.warn(n.z);
+                return {n:n};
+            });
+            //console.warn(new_ms);
 			var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
 			// TODO: pick a more sensible root node
@@ -3450,6 +3743,7 @@ RED.view = (function() {
 
 	function getIOpinInfo(pinRect, node, index)
 	{
+        //console.warn(node);
 		var classAttr = pinRect.getAttribute("class");
 		//console.log("classAttr:"+classAttr); // development debug
 		var portDir;
@@ -3463,7 +3757,8 @@ RED.view = (function() {
 		{
 			nodeType = pinRect.getAttribute("nodeType");
 			portDir = "Out";
-			var node = RED.nodes.node(pinRect.getAttribute("nodeId"));
+			var node = RED.nodes.node(pinRect.getAttribute("nodeId"), activeWorkspace);
+            //console.warn(pinRect.getAttribute("nodeId"),node);
 		}
 		
 		var data = RED.NodeHelpManager.getHelp(nodeType); //$("script[data-help-name|='" + nodeType + "']");
@@ -3750,6 +4045,8 @@ RED.view = (function() {
     }
 
 	return {
+        get clipboard() {return clipboard;},
+        set clipboard(val) {clipboard = val;},
         defSettings,
 		settings,
 		settingsCategory,
@@ -3775,7 +4072,9 @@ RED.view = (function() {
         get workspace_tabs() {return workspace_tabs;},
         get moving_set() {return moving_set;},
         calculateTextSize,
-        redraw_node:function (node) { redraw_node(getNodeRect(node), node, true)},
+        redraw_links,
+        redraw_links_notations,
+        redraw_node:function (node) { redraw_node(node, true)},
         redraw_nodes,
 
         get preventRedraw() { return preventRedraw; },
@@ -3786,7 +4085,7 @@ RED.view = (function() {
 		AddNewNode,
 		resetMouseVars, // exposed for editor
 		
-		addWorkspace: function(ws) { workspace_tabs.addTab(ws); },
+		addWorkspace: function(ws,index) { workspace_tabs.addTab(ws,index); },
 		removeWorkspace: function(ws) { workspace_tabs.removeTab(ws.id); /*RED.arduino.httpGetAsync("removeFile:" + ws.label + ".h")*/ },
 		getWorkspace: function() { return activeWorkspace; },
 		showWorkspace: function(id) { workspace_tabs.activateTab(id); },
@@ -3794,13 +4093,14 @@ RED.view = (function() {
 		dirty: function(d) { if (d == null) { return dirty; } else { setDirty(d); } },
 		importNodes: importNodes,
 		resize: function() { workspace_tabs.resize(); },
-		status: function(s) {
+		/*status: function(s) {
 			showStatus = s;
 			RED.nodes.eachNode(function(n) { n.dirty = true;});
 			//TODO: subscribe/unsubscribe here
 			redraw(false);
-		},
-		calculateTextSize: calculateTextSize,
+		},*/
+		calculateTextSize,
+        _calculateTextSize, // old function
 		showPopOver:showPopOver,
 		defaults: {
 			width: node_def.width,
@@ -3809,11 +4109,13 @@ RED.view = (function() {
         select: selectnode,
         reveal,
         getActiveNodes: function() {
-            var nodesFilter = RED.nodes.nodes.filter(function(d)
-            { 
-                return (d.z == activeWorkspace /*&& d.type != "group"*/);
-            });
-            return nodesFilter;
+            
+            //var nodesFilter = RED.nodes.nodes.filter(function(d)
+            //{ 
+            //    return (d.z == activeWorkspace /*&& d.type != "group"*/);
+            //});
+            //return nodesFilter;
+            return RED.nodes.getWorkspace(activeWorkspace).nodes;
         },
         scale: function() {
             return settings.scaleFactor;

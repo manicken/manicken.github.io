@@ -217,7 +217,7 @@ RED.settings = (function() {
                 UpdateSettingsEditorCat(RED_Class, RED_Class.settingsEditor);
                 if (RED_Class == RED.view) {
                     console.error("reset settings for RED.view");
-                    RED.nodes.getCurrentWorkspace().settings = {};
+                    RED.nodes.currentWorkspace.settings = {};
                     RED.view.redraw();
                 }
                 //generateSettingsFromClasses("tab-settings"); // don't work
