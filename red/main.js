@@ -463,12 +463,18 @@ RED.main = (function() {
 	});
 
 	
-	function saveToFile(name)
+	function saveToFile(name,useLocalStorage)
 	{
 		try
 		{
-            var nns = RED.nodes.createCompleteNodeSet({newVer:true});
-            var jsonString  = JSON.stringify(nns, null, 4);
+            if (useLocalStorage != undefined && useLocalStorage == true) {
+                var jsonString = RED.storage.getData();
+            }
+            else {
+                var nns = RED.nodes.createCompleteNodeSet({newVer:true});
+                var jsonString  = JSON.stringify(nns, null, 4);
+            }
+            
 			download(name, jsonString);
 		}catch (err)
 		{
@@ -561,8 +567,9 @@ RED.main = (function() {
         $("#palette-search").show();
         
         RED.storage.load();
+
         if (settings.AutoDownloadJSON == true) {
-            saveToFile(RED.arduino.settings.ProjectName + ".json");
+            saveToFile(RED.arduino.settings.ProjectName + ".json", true);
         }
 
         RED.nodes.addClassTabsToPalette();
