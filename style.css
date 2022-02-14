@@ -900,7 +900,7 @@
   }
   .node_selected {
      stroke: #ff7f0e;
-     stroke-width: 2;
+     stroke-width: 3;
   }
   .node_highlighted {
      stroke: #dd1616;
