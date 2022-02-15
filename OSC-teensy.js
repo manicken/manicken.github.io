@@ -591,7 +591,8 @@ var OSC = (function() {
         var bundle = OSC.CreateBundle();
         if (link.target._def.dynInputs != undefined){
             // first update the project, used by getDynInputDynSizePortStartIndex, TODO fix so that it don't need to generated every time
-            RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
+            // fixed by new internal structure
+            //RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
         }
             
         

@@ -286,7 +286,7 @@ RED.arduino.export = (function () {
 
             if (haveIO(node)) {
                 // generate code for audio processing node instance
-                if (RED.nodes.isClass(n.type))
+                if (node._def.isClass != undefined)//RED.nodes.isClass(n.type))
                     cppAPN += warningClassUse + "\n";
                 cppAPN += getTypeName(nns, n);
                 var name = RED.nodes.make_name(n)
@@ -307,7 +307,7 @@ RED.arduino.export = (function () {
                         if (dst.type.startsWith("Junction"))// && )
                         {
                             var dstNodes = { nodes: [] };
-                            getJunctionFinalDestinations(dst, dstNodes);
+                            getJunctionFinalDestinations(dst, dstNodes); // this will return the actual nodes, non export node
                             for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
                                 if (src === dstNodes.nodes[dni].node) continue; // can't make connections back to itself
 
@@ -320,7 +320,7 @@ RED.arduino.export = (function () {
                                 ac.dstPort = dstNodes.nodes[dni].dstPortIndex;
 
                                 ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
-                                if (RED.nodes.isClass(n.type)) { // if source is class
+                                if (node._def.isClass != undefined) {//RED.nodes.isClass(n.type)) { // if source is class
                                     ac.srcIsClass = true;
                                     //console.log("root src is class:" + ac.srcName);
                                     RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
@@ -329,7 +329,7 @@ RED.arduino.export = (function () {
                                     ac.srcIsClass = false;
 
                                 ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
-                                if (RED.nodes.isClass(dst.type)) {
+                                if (dst._def.isClass != undefined) {//RED.nodes.isClass(dst.type)) {
                                     ac.dstIsClass = true;
                                     //console.log("dst is class:" + dst.name + " from:" + n.name);
                                     RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
@@ -350,7 +350,7 @@ RED.arduino.export = (function () {
                             ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
 
                             // classes not supported in simple export yet but we have it still here until then
-                            if (RED.nodes.isClass(n.type)) { // if source is class
+                            if (node._def.isClass != undefined) {//RED.nodes.isClass(n.type)) { // if source is class
                                 ac.srcIsClass = true;
                                 //console.log("root src is class:" + ac.srcName);
                                 RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
@@ -362,7 +362,7 @@ RED.arduino.export = (function () {
                             ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
 
                             // classes not supported in simple export yet but we have it still here until then
-                            if (RED.nodes.isClass(dst.type)) {
+                            if (dst._def.isClass != undefined) {//RED.nodes.isClass(dst.type)) {
                                 ac.dstIsClass = true;
                                 //console.log("dst is class:" + dst.name + " from:" + n.name);
                                 RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
@@ -527,10 +527,10 @@ RED.arduino.export = (function () {
             var classIncludes = [];
             var arrayNodes = [];
 
-            for (var i = 0; i < nns.length; i++) {
-                var n = nns[i];
+            for (var i = 0; i < ws.nodes.length; i++) {
+                var n = ws.nodes[i];
 
-                if (n.z != ws.id) continue; // workspace filter
+                //if (n.z != ws.id) continue; // workspace filter
                 if (n.type == "ClassComment") {
                     //if (n.name == "TestMultiline")
                     //	RED.nodes.node(n.id).name = "Test\nMultiline";
@@ -546,7 +546,7 @@ RED.arduino.export = (function () {
                 {
                     arrayNodes.push({ type: n.objectType, name: n.name, cppCode: n.arrayItems, objectCount: n.arrayItems.split(",").length });
                 }
-                else if (RED.nodes.isClass(n.type)) {
+                else if (n._def.isClass != undefined) {//RED.nodes.isClass(n.type)) {
                     var includeName = '#include "' + n.type + '.h"';
                     if (!classAdditional.includes(includeName)) classAdditional.push(includeName);
                 }
@@ -678,13 +678,13 @@ RED.arduino.export = (function () {
                                 ac.dstPort = dstNodes.nodes[dni].dstPortIndex;
 
                                 ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
-                                if (RED.nodes.isClass(n.type)) { // if source is class
+                                if (src._def.isClass != undefined) { //RED.nodes.isClass(n.type)) { // if source is class
                                     //console.log("root src is class:" + ac.srcName);
                                     RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
                                 }
 
                                 ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
-                                if (RED.nodes.isClass(dst.type)) {
+                                if (dst._def.isClass != undefined) { //RED.nodes.isClass(dst.type)) {
                                     //console.log("dst is class:" + dst.name + " from:" + n.name);
                                     RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
                                 } else {
@@ -704,13 +704,13 @@ RED.arduino.export = (function () {
                             ac.dstPort = dstPortIndex;
 
                             ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
-                            if (RED.nodes.isClass(n.type)) { // if source is class
+                            if (src._def.isClass != undefined) { //RED.nodes.isClass(n.type)) { // if source is class
                                 //console.log("root src is class:" + ac.srcName);
                                 RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
                             }
 
                             ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
-                            if (RED.nodes.isClass(dst.type)) {
+                            if (dst._def.isClass != undefined) { //RED.nodes.isClass(dst.type)) {
                                 //console.log("dst is class:" + dst.name + " from:" + n.name);
                                 RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
                             } else {
@@ -914,7 +914,7 @@ RED.arduino.export = (function () {
     function getJunctionFinalDestinations(junctionNode, dstNodes) {
         junctionNode = RED.nodes.convertNode(junctionNode);
         RED.nodes.eachWire(junctionNode, function (pi, dstId, dstPortIndex) {
-            var dst = RED.nodes.node(dstId)
+            var dst = RED.nodes.node(dstId, junctionNode.z); 
 
             if (dst.type.startsWith("Junction"))
                 getJunctionFinalDestinations(dst, dstNodes);

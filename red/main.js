@@ -568,7 +568,11 @@ RED.main = (function() {
         
         RED.storage.load();
 
+        // actually this needs to be done after loading project
+        // as this setting belongs to the project
         if (settings.AutoDownloadJSON == true) {
+            // true means to load direct from local storage
+            // there was a glitch while saving from loaded structure at this time
             saveToFile(RED.arduino.settings.ProjectName + ".json", true);
         }
 

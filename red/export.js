@@ -3,7 +3,7 @@
 
 RED.export = (function () {
 
-    var project = {};
+    //var project = {};
 
     function getArrayDef(s) 
     {
@@ -123,7 +123,7 @@ RED.export = (function () {
 		
 		return 0;*/
 	}
-
+/*
     function isClass(type) // TODO rename to getClass
 	{
 		for (var wsi = 0; wsi < project.workspaces.length; wsi++)
@@ -134,14 +134,14 @@ RED.export = (function () {
 		}
 		return undefined;
 	}
-
+*/
     function findMainWs() {
         var foundMains = [];
         var mainSelected = -1;
-        for (var wi=0; wi < project.workspaces.length; wi++) {
-            if (project.workspaces[wi].isAudioMain == true) {
+        for (var wi=0; wi < RED.nodes.workspaces.length; wi++) {
+            if (RED.nodes.workspaces[wi].isAudioMain == true) {
                 foundMains.push(wi);
-                if (project.workspaces[wi].id == RED.view.activeWorkspace) {
+                if (RED.nodes.workspaces[wi].id == RED.view.activeWorkspace) {
                     mainSelected = wi;
                 }
             }
@@ -154,10 +154,10 @@ RED.export = (function () {
     }
 
     return {
-        set project(_nns) {project = _nns; },
-        get project() { return project;},
+        //set project(_nns) {project = _nns; },
+        //get project() { return project;},
         findMainWs,
-        isClass,
+        //isClass,
         GetNameWithoutArrayDef,
         haveIO,
         isNameDeclarationArray,

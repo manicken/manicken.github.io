@@ -137,7 +137,7 @@ OSC.export = (function () {
 
             //console.warn("node:" + n.name);
 
-            var _ws = RED.export.isClass(n.type);
+            var _ws = n._def.isClass;//RED.export.isClass(n.type);
             if (_ws)
             {
                 if (_ws.export == false) continue; // skip inactive objects
@@ -299,7 +299,7 @@ OSC.export = (function () {
 
         RED.storage.update();
 
-        RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
+        //RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
 
         var foundMains = RED.export.findMainWs();
         var mainWorkSpaceIndex;
@@ -324,7 +324,7 @@ OSC.export = (function () {
         var apos = new PacketArray(); // Audio Processing Objects
         var acs = new PacketArray(); // Audio Connections 
 
-        var ws = RED.export.project.workspaces[mainWorkSpaceIndex];
+        var ws = RED.nodes.workspaces[mainWorkSpaceIndex];
         console.warn("AudioMain ", mainWorkSpaceIndex, ws);
         addObjectsToPacketArray(ws, apos, '');
         var links = [];
@@ -400,7 +400,7 @@ OSC.export = (function () {
     function getSimpleExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
         RED.storage.update(); // this will also sort the nodes
-        RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // used by isClass and getDynInputDynSizePortStartIndex
+        //RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // used by isClass and getDynInputDynSizePortStartIndex
         //var activeWorkspace = RED.view.activeWorkspace;
         var apos = new PacketArray(); // Audio Processing Objects
         var acs = new PacketArray(); // Audio Connections 

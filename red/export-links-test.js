@@ -4,9 +4,9 @@ $('#btn-deploy-osc-group-links').click(testFinalLinksExport);
 
 function testFinalLinksExport() {
     
-    RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
+    //RED.export.project = RED.nodes.createCompleteNodeSet({newVer:true}); // true mean we get the new structure
 
-    var foundMains = RED.export.findMainWs(RED.export.project);
+    var foundMains = RED.export.findMainWs();
     var mainWorkSpaceIndex;
 
     if (foundMains == undefined) {
@@ -22,13 +22,13 @@ function testFinalLinksExport() {
     }
     else
         mainWorkSpaceIndex = foundMains.items[0]; // get the only one
-    var ws = RED.export.project.workspaces[mainWorkSpaceIndex];
+    var ws = RED.nodes.workspaces[mainWorkSpaceIndex];
     var links = [];
-    RED.export.links2.getClassConnections(ws, links, "");
+    RED.export.links.getClassConnections(ws, links, "");
     //RED.export.updateNames(links); // not needed anymore and should never be used either
-    links = RED.export.links2.expandArrays(links); // for the moment this fixes array defs that the getClassConnections don't currently solve
-    RED.export.links2.fixTargetPortsForDynInputObjects(links);
-    var exportDialogText = RED.export.links2.getDebug(links);
+    links = RED.export.links.expandArrays(links); // for the moment this fixes array defs that the getClassConnections don't currently solve
+    RED.export.links.fixTargetPortsForDynInputObjects(links);
+    var exportDialogText = RED.export.links.getDebug(links);
 
     RED.view.dialogs.showExportDialog("DevelopmentTest - Export of AudioConnections (links/patchcables)", exportDialogText, " Links: ", {okText:"OK", tips:"This is only a development test"},
     function () {RED.notify("<strong>Nothing sent (development test only)</strong>", "success", null, 2000);});

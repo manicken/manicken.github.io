@@ -4,6 +4,11 @@
         other_array.forEach(function(v) {this.push(v)}, this);
     }
 
+    Array.prototype.addToBeginningOfEach = function (str) {
+        for (var i=0;i<this.length;i++)
+            this[i] = str + this[i];
+    }
+
     String.prototype.replaceAllVal = function (oldVal, newVal) {
         return this.split(oldVal).join(newVal);
     }

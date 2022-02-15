@@ -1383,6 +1383,22 @@ RED.nodes = (function() {
 		}
 		return {outCount:outNodesCount, inCount:inNodesCount};
 	}
+    function getIndexes(name, ...params) {
+        var indexes = [];
+        for (var i=0;i<params.length;i++) {
+            var index = name.indexOf(params[i]);
+            if (index == -1) continue;
+            indexes.push(index);
+        }
+        return indexes;
+    }
+    function getBusWireNames(name) {
+        var si = name.indexOf('[');
+        if (si == -1) return [];
+        var ei = name.indexOf(']');
+        if (ei == -1) return [];
+        return name.substring(si+1,ei).split(",");
+    }
 	/**
 	 * Gets all TabInput or TabOutput belonging to a class, and then sorting them vertically top->bottom (normal view)
 	 * then the correct port-node based by index is returned
@@ -1397,20 +1413,43 @@ RED.nodes = (function() {
         if (index < 0) index = 0; // failsafe
         if (type == "Out" && ws.tabOutputs != undefined) {
             if (index >= ws.tabOutputs.length) index = (ws.tabOutputs.length - 1); // failsafe
-            if (ws.tabOutputs[index].inputs > 1)
-                return {name:ws.tabOutputs[index].name + "[" + ws.tabOutputs[index].inputs + "]", node: ws.tabOutputs[index], isBus:true};
-            else
-                return {name:ws.tabOutputs[index].name, node: ws.tabOutputs[index], isBus:false};
+            if (ws.tabOutputs[index].inputs > 1) {
+                var indexes = getIndexes(ws.tabOutputs[index].name, '[', ']');
+                if (indexes.length == 2) {
+                    ws.tabOutputs[index].busWireNames = ws.tabOutputs[index].name.substring(indexes[0]+1, indexes[1]).split(",");
+                    ws.tabOutputs[index].namename = ws.tabOutputs[index].name.substring(0, indexes[0]);
+                }
+                ws.tabOutputs[index].isBus = true;
+            }
+            else {
+                ws.tabOutputs[index].isBus = false;
+            }
+            return ws.tabOutputs[index];
+            //
+            //    return {name:ws.tabOutputs[index].name, busWireNames:getBusWireNames(ws.tabOutputs[index].name), node: ws.tabOutputs[index], isBus:true};
+            //else
+            //    return {name:ws.tabOutputs[index].name, node: ws.tabOutputs[index], isBus:false};
         }
         else if (type == "In" && ws.tabInputs != undefined) {
             if (index >= ws.tabInputs.length) index = (ws.tabInputs.length - 1); // failsafe
-            if (ws.tabInputs[index].outputs > 1)
-                return {name:ws.tabInputs[index].name + "[" + ws.tabInputs[index].outputs + "]", node: ws.tabInputs[index], isBus:true};
-            else
-                return {name:ws.tabInputs[index].name, node: ws.tabInputs[index], isBus:false};
+            if (ws.tabInputs[index].outputs > 1) {
+                var indexes = getIndexes(ws.tabInputs[index].name, '[', ']');
+                if (indexes.length == 2) {
+                    ws.tabInputs[index].busWireNames = ws.tabInputs[index].name.substring(indexes[0]+1, indexes[1]).split(",");
+                    ws.tabInputs[index].namename = ws.tabInputs[index].name.substring(0, indexes[0]);
+                }
+                ws.tabInputs[index].isBus = true;
+            }
+            else {
+                ws.tabInputs[index].isBus = false;
+            }
+            return ws.tabInputs[index];
+            //    return {name:ws.tabInputs[index].name, busWireNames:getBusWireNames(ws.tabInputs[index].name), node: ws.tabInputs[index], isBus:true};
+            //else
+            //    return {name:ws.tabInputs[index].name, node: ws.tabInputs[index], isBus:false};
         }
         else  // failsafe
-            return {name:"Tab" + type + "put not found @ " + ws.label, node: undefined, isBus:false};
+            return undefined;
 
         var _nodes = ws.nodes;
 
@@ -1597,7 +1636,7 @@ RED.nodes = (function() {
 		ac.srcName += "." + make_name(newSrc.node);
 		ac.srcPort = newSrc.srcPortIndex;
 
-		if (isClass(newSrc.node.type))
+		if (newSrc.node._def.isClass != undefined)//isClass(newSrc.node.type))
 		{
 			//console.log("isClass(" + newSrc.node.name + ")");
 
@@ -2245,6 +2284,7 @@ RED.nodes = (function() {
     function checkForAndSetNodeIsArray() {
         
         eachNode(function(n,ws) {
+            if (n._def.nonObject != undefined) return; // skip 'non objects'(AudioObjects) 
             n.isArray = RED.export.isNameDeclarationArray(n.name, ws.id, true);
         });
     }

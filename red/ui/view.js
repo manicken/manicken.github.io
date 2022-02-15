@@ -1745,7 +1745,7 @@ RED.view = (function() {
 					.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
 					.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
 					.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-					.on("mouseover", nodeInput_mouseover)
+					.on("mouseenter", nodeInput_mouseover)
 					.on("mouseout", nodePort_mouseout)
 					//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
 					//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
@@ -1854,7 +1854,7 @@ RED.view = (function() {
             .on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
             .on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
             .on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-            .on("mouseover", nodeInput_mouseover)
+            .on("mouseenter", nodeInput_mouseover)
             .on("mouseout", nodePort_mouseout)
             //.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
             //.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
@@ -2112,7 +2112,7 @@ RED.view = (function() {
                 .on("touchstart", null)
                 .on("mouseup", null)
                 .on("touchend", null)
-                .on("mouseover", nodeInput_mouseover)
+                .on("mouseenter", nodeInput_mouseover)
                 .on("mouseout", nodePort_mouseout);
         }
         clearLinkSelection();
@@ -2389,7 +2389,7 @@ RED.view = (function() {
 			if (!d3.event.ctrlKey)
                 RED.editor.edit(d);
             else {
-                var isClass = RED.nodes.isClass(d.type);
+                var isClass = d._def.isClass;//RED.nodes.isClass(d.type);
                 if (isClass) { $(current_popup_rect).popover("destroy"); reveal(isClass.id)}
             }
 			clickElapsed = 0;
@@ -2775,7 +2775,7 @@ RED.view = (function() {
 				    .on("mouseup", null)
 					//.on("touchstart", null)
 					//.on("touchend", null)
-					.on("mouseover", nodeInput_mouseover) // used by popOver
+					.on("mouseenter", nodeInput_mouseover) // used by popOver
 					.on("mouseout", nodePort_mouseout) // used by popOver
 					.classed("port_hovered",false);
 			} else {
@@ -2784,7 +2784,7 @@ RED.view = (function() {
 				    .on("mouseup", (function(nn){return function(d2){portMouseUp(d2,1,nn);}})(n))
 					//.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
 					//.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
-					.on("mouseover", nodeInput_mouseover)
+					.on("mouseenter", nodeInput_mouseover)
 					.on("mouseout", nodePort_mouseout)
 					//.on("mouseover", function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
 					//.on("mouseout", function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
@@ -2915,7 +2915,7 @@ RED.view = (function() {
                         return;
                     }
                 })
-                .on("mouseover",function(d) {
+                .on("mouseenter",function(d) {
                     if (d.info.valid == false) {
                         if (current_popup_rect != this)
                             $(current_popup_rect).popover("destroy"); // destroy prev
@@ -2924,7 +2924,7 @@ RED.view = (function() {
                     }
                         
                 })
-                .on("mouseout",async function(d) {
+                .on("mouseleave",async function(d) {
                     //console.warn(""); // this fixes a glitch but only if the dev tools is open
                     //await delay(10); // this do not
                     $(current_popup_rect).popover("destroy");
@@ -3769,17 +3769,37 @@ RED.view = (function() {
 		if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
-            var ws = RED.nodes.isClass(nodeType)
+            var ws = RED.nodes.isClass(nodeType);
 			if (ws)
 			{
-				portName = portName + ": " + RED.nodes.getClassIOport(ws.id, portDir, index).name;
+                var tabIOnode = RED.nodes.getClassIOport(ws.id, portDir, index);
+                if (tabIOnode.isBus == true) {
+                    if (tabIOnode.inputs > 1) {
+                        portName += ": BusOutput(" + tabIOnode.inputs + "):<br>";
+                    } else if (tabIOnode.outputs > 1) {
+                        portName += ": BusInput(" + tabIOnode.outputs + "):<br>";
+                        
+                    }
+                    if (tabIOnode.busWireNames != undefined && tabIOnode.busWireNames.length > 0) {
+                        tabIOnode.busWireNames.addToBeginningOfEach(tabIOnode.namename);
+                        portName += tabIOnode.busWireNames.join("<br>");
+                    }
+                }
+                else {
+                    portName = portName + ": " + tabIOnode.name;
+                }
 			}
+            else if (node._def.dynInputs != undefined) {
+                var links = RED.nodes.cwsLinks.filter(function(l) { return (l.target == node) && (l.targetPort == index);});
+                if (links.length != 0) {
+                    var link = links[0]; // should be only one
+                    var oi = RED.export.links.getDynInputDynSizePortStartIndex(node, link.source, link.sourcePort);
+                    var size = RED.export.links.getSourceSize(link);
+                    portName = "Dynamic Input Port:" + ((size>1)?"(" + oi + " -> "+(oi+size-1) + ")":oi);
+                }
+            }
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
 		}
-		/*else if (nodeType == "AudioMixer" && portType == "In")
-		{
-			data2 = $("<div/>").append("<p>" + portName + ": Input Signal #" + (Number(index) + 1) + "</p></div>").html();
-		}*/
 		else // here we must extract info from Audio Connections table
 		{
 			var tableRows = data2.split("\n");

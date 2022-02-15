@@ -15,7 +15,7 @@ RED.export.links = (function () {
             
             var isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
             console.warn("isArray " + node.name,isArray);
-            var classWs = RED.export.isClass(node.type)
+            var classWs = node._def.isClass;//RED.export.isClass(node.type)
 
             if (classWs) {
 
@@ -60,10 +60,10 @@ RED.export.links = (function () {
                 // need to expand bus links
                 if ((l.info.tabOut != undefined) && (l.info.tabIn == undefined)) { // only support this combination for now
                     //console.error("***************cloning: " + RED.export.links.getDebug(l));
-                    for (var topi = 0; topi < l.info.tabOut.node.inputs; topi++) {
+                    for (var topi = 0; topi < l.info.tabOut.inputs; topi++) {
                         //console.error("***********Making copy of: " + RED.export.links.getDebug(l));
                         l = RED.export.links.copy(l);
-                        //var newSrc = RED.nodes.getWireInputSourceNode(l.info.tabOut.node, topi);
+                        //var newSrc = RED.nodes.getWireInputSourceNode(l.info.tabOut, topi);
                         l.tabOutPortIndex = topi;
                         console.error("########################## setting tabOutPortIndex to " + l.tabOutPortIndex + " @ " + RED.export.links.getDebug(l));
                         newLinks.push(l);
@@ -98,7 +98,7 @@ RED.export.links = (function () {
             var l = RED.export.links.copy(nodeLinks[li], currPath);
             var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z, true);
             //console.warn(RED.export.links.getDebug(l));
-            ws = RED.export.isClass(l.source.type)
+            ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
             if (ws)
             {
                 var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
@@ -113,7 +113,7 @@ RED.export.links = (function () {
             }else {
                 l.sourceName = l.source.name;
             }
-            ws = RED.export.isClass(l.target.type);
+            ws = l.target._def.isClass;//RED.export.isClass(l.target.type);
             if (ws)
             {
                 getFinalTarget_s(ws,l, newLinks, currPath);
@@ -140,7 +140,7 @@ RED.export.links = (function () {
      * @param {*} source if this is null then the total amount of inputs needed is returned
      * @returns 
      */
-     function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) { // TODO fix support for bus links
+     function getDynInputDynSizePortStartIndex(dynInputObj, source, sourcePort) {
         var ws = RED.nodes.getWorkspace(dynInputObj.z);
         var links = ws.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
@@ -153,37 +153,37 @@ RED.export.links = (function () {
                 return offset;
             }
             else {
-                var toAdd = 0;
-                var isArray = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
-                if (isArray) {
-                    //console.error("is array " + l.source.name + " " + isArray.arrayLength)
-                    toAdd = isArray.arrayLength;
-                    
-                }
-                else {
-                    toAdd = 1; // non array sources still have one output
-                }
-                if (l.info.isBus == true) {
-                    toAdd *= l.info.tabOut.node.inputs;
-                }
-                // the following adds support for object array output from class/tab
-                var ws = RED.export.isClass(l.source.type)
-                if (ws){
-                    var lc = RED.export.links.copy(l, ""); // so that it don't mess up the original links
-                    getFinalSource(lc, ws);
-                    var isArray = RED.export.isNameDeclarationArray(lc.source.name, lc.source.z, true);
-                    if (isArray) {
-                        //console.error("is array " + l.source.name + " " + isArray.arrayLength)
-                        toAdd *= isArray.arrayLength;
-                        
-                    }
-                }
-
-                offset += toAdd;
+                offset += getSourceSize(l);
             }
         }
         //console.error("did not found source " + source.name + " @" + offset )
         return offset;
+    }
+    function getSourceSize(l) {
+        var toAdd = 0;
+        var isArray = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
+        if (isArray) {
+            //console.error("is array " + l.source.name + " " + isArray.arrayLength)
+            toAdd = isArray.arrayLength;
+        }
+        else {
+            toAdd = 1; // non array sources still have one output
+        }
+        if (l.info.isBus == true) {
+            toAdd *= l.info.tabOut.inputs;
+        }
+        // the following adds support for object array output from class/tab
+        var ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
+        if (ws){
+            var lc = RED.export.links.copy(l, ""); // so that it don't mess up the original links
+            getFinalSource(lc, ws);
+            var isArray = RED.export.isNameDeclarationArray(lc.source.name, lc.source.z, true);
+            if (isArray) {
+                //console.error("is array " + l.source.name + " " + isArray.arrayLength)
+                toAdd *= isArray.arrayLength;
+            }
+        }
+        return toAdd;
     }
 
     function tagSameSourceLinksThatConnectsTo(_links,source,target) {
@@ -294,14 +294,14 @@ RED.export.links = (function () {
         console.error("expandLinks classPath:\"" + classPath);
         var newLink = RED.export.links.copy(link, classPath);
         
-        var port = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
-        if (port.isBus == true) {
+        var portNode = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
+        if (portNode.isBus == true) {
             // store it for later use
-            l.tabIn = port.node;
+            l.tabIn = portNode;
         }
         // port can have multiple connections out from it
-        var ws = RED.nodes.getWorkspace(port.node.z);
-        var portLinks = ws.links.filter(function(d) { return d.source === port.node;});
+        var ws = RED.nodes.getWorkspace(portNode.z);
+        var portLinks = ws.links.filter(function(d) { return d.source === portNode;});
 
         var newTargetPath = newLink.targetPath + "/" + link.target.name;
         console.warn('newTargetPath "' + newTargetPath + '"');
@@ -314,7 +314,7 @@ RED.export.links = (function () {
             newPortLink.targetPort = pl.targetPort;
             newPortLink.targetName = pl.target.name;
             
-            ws = RED.export.isClass(newPortLink.target.type);
+            ws = newPortLink.target._def.isClass;//RED.export.isClass(newPortLink.target.type);
             if (ws)
             {
                 getFinalTarget_s(ws,newPortLink,links,newTargetPath);
@@ -341,17 +341,17 @@ RED.export.links = (function () {
         
         //console.warn("l.source isclass " + l.source.name + " to " + l.target.name);
 
-        var port = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
+        var portNode = RED.nodes.getClassIOport(ws.id, "Out", l.sourcePort);
         //console.error(port);
-        if (port.isBus == true) {
+        if (portNode.isBus == true) {
             // store it for later use
             //console.error("**** port.inputs > 1 " + port.node.inputs);
-            l.tabOut = port.node;
+            l.tabOut = portNode;
             //l.sourcePort = tabOutPortIndex;
         }
         if (tabOutPortIndex == undefined) tabOutPortIndex = 0;
         
-        var newSrc = RED.nodes.getWireInputSourceNode(port.node, tabOutPortIndex); // TODO. take care of bus output TabOutputs
+        var newSrc = RED.nodes.getWireInputSourceNode(portNode, tabOutPortIndex); // TODO. take care of bus output TabOutputs
         if (newSrc == undefined) {
             l.invalid = " the class output is unconnected";
             return;
@@ -360,7 +360,7 @@ RED.export.links = (function () {
         l.source = newSrc.node;
         l.sourceName = l.source.name;
         l.sourcePort = newSrc.srcPortIndex;
-        var _ws = RED.export.isClass(l.source.type);
+        var _ws = l.source._def.isClass;//RED.export.isClass(l.source.type);
         if (_ws)
         {
             getFinalSource(l,_ws);
@@ -581,6 +581,7 @@ RED.export.links = (function () {
         getClassConnections,
         expandBusWires,
         getDynInputDynSizePortStartIndex,
+        getSourceSize,
         fixTargetPortsForDynInputObjects,
         expandArrays,
         GetName,

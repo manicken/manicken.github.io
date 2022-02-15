@@ -18,10 +18,10 @@ RED.export.links.getDebug = (function () {
 
         if (l.info != undefined) {
             if (l.info.tabIn != undefined) {
-                var tabInInfo = ", tabIn:(" + l.info.tabIn.node.name + " [" + l.info.tabIn.node.outputs + "])";
+                var tabInInfo = ", tabIn:(" + l.info.tabIn.name + " [" + l.info.tabIn.outputs + "])";
             }
             if (l.info.tabOut != undefined) {
-                var tabOutInfo = ", tabOut:(" + l.info.tabOut.node.name + " [" + l.info.tabOut.node.inputs + "])"
+                var tabOutInfo = ", tabOut:(" + l.info.tabOut.name + " [" + l.info.tabOut.inputs + "])"
             }
             var linkInfo = "isBus:" + l.info.isBus + ", valid:" + l.info.valid + (tabInInfo?tabInInfo:"") + (tabOutInfo?tabOutInfo:"");
         }
