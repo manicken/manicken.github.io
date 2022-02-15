@@ -694,7 +694,8 @@ var OSC = (function() {
             return;
         }
         else if (faultCode < OSC_REPLY_CODES.length) {
-            RED.bottombar.info.addLine(OSC_REPLY_CODES[faultCode]);
+            if (RED.OSC.settings.ShowOutputOscRxDecoded)
+                RED.bottombar.info.addLine(OSC_REPLY_CODES[faultCode]);
             return;
         }
         else

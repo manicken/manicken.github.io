@@ -48,6 +48,7 @@ RED.bottombar.info = (function() {
 	}
 
 	function addContent(txt) {
+        console.trace(txt);
 	    mText += txt;
 	    refresh();
         RED.bottombar.show('output');
