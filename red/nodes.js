@@ -2035,10 +2035,10 @@ RED.nodes = (function() {
         RED.events.on("nodes:remove", NodeRemoved);
         RED.events.on("nodes:moved", NodesMoved);
     }
-    function NodeInputsChanged(node, oldCount, newCount) {
+    function NodeInputsChanged(node, oldCount, newCount, dynExpand) {
         // update the visuals
         if (newCount >= oldCount) {
-            RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount);
+            RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount,undefined, dynExpand);
             return;
         }
         var ws = getWorkspace(node.z);
@@ -2051,7 +2051,7 @@ RED.nodes = (function() {
             }
         }
         console.error("links removed");
-        RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount, linksToRemove);
+        RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount, linksToRemove, dynExpand);
 
         RED.view.redraw();
     }

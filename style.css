@@ -997,6 +997,24 @@
     fill: none;
     pointer-events: none;
   }
+
+  .link_line_array {
+    /*stroke: #7f7f7f;*/
+    stroke: #ffbf00;
+    stroke-width: 6;
+    fill: none;
+    pointer-events: none;
+    /*stroke-dasharray: 10, 5;*/
+  }
+
+  .link_outline_array {
+    stroke:#ffebb0;
+    /*stroke: blue;*/
+    stroke-width: 10;
+    cursor: crosshair;
+    fill: none;
+    pointer-events: none;
+  }
   .link_background {
     stroke: #fff;
     opacity: 0;
@@ -1028,6 +1046,10 @@
     stroke-width: 8;
   }
   g.link_selected path.link_outline_bus{
+    stroke: #ff7f0e;
+    stroke-width: 10;
+  }
+  g.link_selected path.link_outline_array{
     stroke: #ff7f0e;
     stroke-width: 10;
   }

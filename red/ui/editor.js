@@ -494,6 +494,13 @@ RED.editor = (function() {
 							$("#node-input-blackKeysColor").val(editing_node.blackKeysColor);
 						}
 						jscolor.install();
+                        if (editing_node._def.dynInputs != undefined && RED.main.settings.LinkDropOnNodeAppend == true && 
+                            (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true))
+                        {
+                            console.warn("edit dyn input object with LinkDropOnNodeAppend & DynInputAutoExpand/Reduce")
+                            $("#node-input-inputs").attr("readonly", "true");
+                            $("#dialog-form").append('note. Prealocate Inputs is intended to replace the Inputs in future exports, this will make it possible to create a dyn. input object with a size bigger than the dynamic allocated, to make it possible to add patchcables on demand without futher need to change the size of the mixer in runtime.<br><br> note. Inputs is disabled when using LinkDropOnNodeAppend together with<br>DynInputAutoExpandOnLinkDrop or DynInputAutoReduceOnLinkRemove<br><br>actually I don\'t see any point of having either the settings or this Inputs field, as this could be the normal behaviour.');
+                        }
 					}
                     else if (editing_link != undefined) {
                         $("#node-input-color").val(editing_link.color);

@@ -2414,7 +2414,7 @@ RED.view = (function() {
             var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
             d.inputs++;
             redraw_node(d, true);
-            RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs);
+            RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs, true);
             //redraw_nodes(true,true); // workaround for now
         }
         
@@ -3008,6 +3008,10 @@ RED.view = (function() {
         if (l.info.isBus == true) {
             l.svgPath.outline.attr("class","link_path link_outline_bus"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line_bus" + ((l.info.valid==false)?" link_invalid":""));
+        }
+        else if (l.source.isArray!=undefined) {
+            l.svgPath.outline.attr("class","link_path link_outline_array"/* + ((l.info.valid==false)?" link_invalid":"")*/);
+            l.svgPath.line.attr("class","link_path link_line_array" + ((l.info.valid==false)?" link_invalid":""));
         }
         else {
             l.svgPath.outline.attr("class","link_path link_outline"/* + ((l.info.valid==false)?" link_invalid":"")*/);

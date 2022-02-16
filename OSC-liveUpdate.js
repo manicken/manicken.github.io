@@ -163,7 +163,7 @@ OSC.LiveUpdate = (function() {
     var NodeInputsUpdated_postponed_newCount = 0;
     var NodeInputsUpdated_postponed_removedLinks = [];
 
-    function NodeInputsUpdated(node, oldCount, newCount, removedLinks) {
+    function NodeInputsUpdated(node, oldCount, newCount, removedLinks, dynExpand) {
         // skip if not liveupdate
         if (RED.OSC.settings.LiveUpdate == false) return;
         // skip non dynamic input objects
@@ -176,12 +176,14 @@ OSC.LiveUpdate = (function() {
 
         // this event happens to early, so the new links added what leaded to this change
         // have not yet been added
-        if (RED.main.settings.LinkDropOnNodeAppend && RED.main.settings.DynInputAutoExpandOnLinkDrop && NodeInputsUpdated_postponed == false) {
+        if (dynExpand != undefined && dynExpand == true && NodeInputsUpdated_postponed == false) {
             NodeInputsUpdated_postponed = true;
             NodeInputsUpdated_postponed_node = node;
             NodeInputsUpdated_postponed_oldCount = oldCount;
             NodeInputsUpdated_postponed_newCount = newCount;
             NodeInputsUpdated_postponed_removedLinks = removedLinks;
+            console.log("NodeInputsUpdated postponed until link add event");
+            console.trace();
             return;
         }
         NodeInputsUpdated_postponed = false;

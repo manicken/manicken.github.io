@@ -85,15 +85,16 @@ RED.export.links = (function () {
         //console.error(node.name + "\nlinks:\n" + RED.export.links.getDebug(nodeLinks));
         console.warn(nodeIsArray);
 
-        nodeLinks = expandBusWires(nodeLinks);
+        
         //console.error(node.name + "\nlinks after:\n" + RED.export.links.getDebug(nodeLinks));
         var newLinks = [];
         
-        if (nodeLinks.length != 0)
+        if (nodeLinks.length != 0) // this is only a 'debug output' link
             newLinks.push({invalid:currPath + "/" + (nodeIsArray?(nodeIsArray.name+"/i"+nodeIsArray.i):node.name)});
         //else
         //    newLinks.push({invalid:nodeLinks.length + "not array " + currPath + "/" + node.name});
 
+        nodeLinks = expandBusWires(nodeLinks);
         for (var li = 0; li < nodeLinks.length; li++) {
             var l = RED.export.links.copy(nodeLinks[li], currPath);
             var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z, true);
