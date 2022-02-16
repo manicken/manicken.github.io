@@ -728,7 +728,7 @@ RED.main = (function() {
             closeButton:true
         };
         jscolor.trigger('input change');
-        jscolor.installByClassName("jscolor");
+        //jscolor.installByClassName("jscolor");
 
         $(".palette-spinner").show();
 
@@ -761,6 +761,7 @@ RED.main = (function() {
         RED.settings.createTab();
         RED.storage.dontSave = false;
         OSC.RegisterEvents();
+        OSC.LiveUpdate.RegisterEvents();
 
         //RED.OCPview.init()
 

@@ -587,4 +587,4 @@ RED.export.links = (function () {
         GetName,
         copy,
     };
-})();
+})(); // RED.export.links = (function () {

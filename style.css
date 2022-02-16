@@ -106,6 +106,12 @@
       text-align: right;
       float: right;
   }
+
+  #bottombar-controls {
+    position: absolute;
+    right:16px;
+    bottom:0px;
+}
   
   #palette {
      background: #f3f3f3;

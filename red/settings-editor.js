@@ -373,6 +373,8 @@ RED.settings.editor = (function() {
         {
             $('#btn-' + id).click(function() { cb[param] = $('#' + id).val(); });
             $('#' + id).val(cb[param]);
+            $('#' + id).val(cb[param]);
+            //console.warn("setting color setting:" + typeof cb[param]);
         }
         //<div class="form-row">
         //<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
@@ -382,6 +384,7 @@ RED.settings.editor = (function() {
         {
             RED.main.SetPopOver("#divSetting-" + id, popupText, "left");
         }
+        jscolor.install();
     }
     function createButton(containerId, id, label, buttonClass, cb, popupText, isFileInput)
     {

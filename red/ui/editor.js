@@ -484,6 +484,7 @@ RED.editor = (function() {
 							$(this).scrollTop(aceEditor.scrollHeight);
 							
 						}
+                        //console.error("typeof:" + typeof editing_node.bgColor);
 						$("#node-input-color").val(editing_node.bgColor);
 						if (editing_node.type == "UI_ListBox")
 							$("#node-input-itemBGcolor").val(editing_node.itemBGcolor);

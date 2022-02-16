@@ -8,7 +8,7 @@ RED.export.links.getDebug = (function () {
         if (l.invalid != undefined) return l.invalid + "\n";
 
         if (options.simple == true) {
-            return "(" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")";
+            return "(" + l.source.name + ", " + l.sourcePort + ", " + l.target.name + ", " + l.targetPort + ")";
         }
         
         var afp = (options.asFullPath != undefined && options.asFullPath == true);

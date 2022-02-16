@@ -48,7 +48,7 @@ RED.bottombar.info = (function() {
 	}
 
 	function addContent(txt) {
-        console.trace(txt);
+        //console.trace(txt);
 	    mText += txt;
 	    refresh();
         RED.bottombar.show('output');
@@ -59,6 +59,8 @@ RED.bottombar.info = (function() {
     }
 
     $('#btn-clear-output').click(function () { setContent("") });
+    $('#btn-clear-log').click(function () { setContent("") });
+    
 
 	function message_listener_error(jqXHR, textStatus, errorThrown)
     {

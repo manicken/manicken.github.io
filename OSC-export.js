@@ -88,6 +88,7 @@ OSC.export = (function () {
         }*/
         removeBundleComments(bundle);
         try {
+            if (RED.OSC.settings)
             var bundleData = OSC.CreateBundleData(bundle);
             if (RED.OSC.settings.DirectExport == true) {
                 OSC.SendData(bundleData);
