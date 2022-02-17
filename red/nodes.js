@@ -368,8 +368,10 @@ RED.nodes = (function() {
 
         ws.links.push(l);
 
-        if (loadingWorkspaces == false)
+        if (loadingWorkspaces == false) {
             setLinkInfo(l);
+            RED.export.links2.generateAndAddExportInfo(l);
+        }
         RED.events.emit('links:add',l);
 	}
     
@@ -2206,6 +2208,7 @@ RED.nodes = (function() {
         if (links == undefined) {
             eachLink(function (l, ws) {
                 setLinkInfo(l);
+                RED.export.links2.generateAndAddExportInfo(l);
             });
             /*for (var wsi=0;wsi<workspaces.length;wsi++) {
                 var ws = workspaces[wsi];
@@ -2214,8 +2217,10 @@ RED.nodes = (function() {
             }*/
         }
         else {
-            for (var li = 0; li < links.length; li++)
+            for (var li = 0; li < links.length; li++) {
                 setLinkInfo(links[li]);
+                RED.export.links2.generateAndAddExportInfo(links[li]);
+            }
         }
     }
     /**
@@ -2256,7 +2261,7 @@ RED.nodes = (function() {
             var valid = false;
             var inValidText = "BusJoin and BusSplit not yet supported";
         }
-        else if ((l.source.isArray!=undefined) && (l.target._def.dynInputs==undefined) && (l.target.isArray==undefined)) {
+        else if ((l.source.type != "TabInput") && (l.source.isArray!=undefined) && (l.target._def.dynInputs==undefined) && (l.target.isArray==undefined)) {
             var valid = false;
             var inValidText = "array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array";
         }

@@ -20,17 +20,18 @@ RED.actions = (function() {
     function listActions() {
         var result = [];
         Object.keys(actions).forEach(function(action) {
-            var shortcut = RED.keyboard.getShortcut(action);
+            //var shortcut = RED.keyboard.getShortcut(action);
             var isUser = false;
-            if (shortcut) {
-                isUser = shortcut.user;
-            } else {
-                isUser = !!RED.keyboard.getUserShortcut(action);
-            }
+            //if (shortcut) {
+            //    isUser = shortcut.user;
+            //} else {
+            //    isUser = !!RED.keyboard.getUserShortcut(action);
+            //}
             result.push({
                 id:action,
-                scope:shortcut?shortcut.scope:undefined,
-                key:shortcut?shortcut.key:undefined,
+                action:actions[action],
+                //scope:shortcut?shortcut.scope:undefined,
+                //key:shortcut?shortcut.key:undefined,
                 user:isUser
             })
         })

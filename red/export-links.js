@@ -13,32 +13,32 @@ RED.export.links = (function () {
             if (node._def.nonObject != undefined) continue;
             if (node.type == "TabInput") continue; 
             
-            var isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
-            console.warn("isArray " + node.name,isArray);
-            var classWs = node._def.isClass;//RED.export.isClass(node.type)
+            //var isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
+            //console.warn("isArray " + node.name,isArray);
+            //var classWs = node._def.isClass;//RED.export.isClass(node.type)
 
-            if (classWs) {
+            if (node._def.isClass) {
 
-                if (isArray) {
-                    for (var ai = 0; ai < isArray.arrayLength; ai++) {
-                        links.push({invalid:currPath + "/" + isArray.name + "/i" + ai});
+                if (node.isArray) {
+                    for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
+                        links.push({invalid:currPath + "/" + node.isArray.name + "/i" + ai});
                         
-                        getClassConnections(classWs, links, currPath + "/" + isArray.name + "/i" + ai);
-                        isArray.i = ai;
-                        links.pushArray(getNodeLinks(node, currPath, isArray));
+                        getClassConnections(node._def.isClass, links, currPath + "/" + node.isArray.name + "/i" + ai);
+                        node.isArray.i = ai;
+                        links.pushArray(getNodeLinks(node, currPath));
                     }
                 }
                 else {
-                    getClassConnections(classWs, links, currPath + "/" + node.name);
+                    getClassConnections(node._def.isClass, links, currPath + "/" + node.name);
                     links.pushArray(getNodeLinks(node, currPath));
                 }
             } else {
 
-                if (isArray) {
+                if (node.isArray) {
                     //console.error("********************" + node.name + " is array");
-                    for (var ai = 0; ai < isArray.arrayLength; ai++) {
-                        isArray.i = ai;
-                        links.pushArray(getNodeLinks(node, currPath, isArray)); 
+                    for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
+                        node.isArray.i = ai;
+                        links.pushArray(getNodeLinks(node, currPath)); 
                     }
                 }
                 else {
@@ -70,7 +70,7 @@ RED.export.links = (function () {
                     }
                 }
                 else // only have this here for debugging proposes, should be replaced with a invalid link containing just info to show in the export
-                    newLinks.push(l);
+                    newLinks.push({invalid:"//(not supported yet)" + RED.export.links.getDebug(l)});
             }
             else
                 newLinks.push(l);
@@ -78,19 +78,19 @@ RED.export.links = (function () {
         return newLinks;
     }
 
-    function getNodeLinks(node, currPath, nodeIsArray) {
+    function getNodeLinks(node, currPath) {
         var ws = RED.nodes.getWorkspace(node.z);
         var nodeLinks = ws.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
         nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
         //console.error(node.name + "\nlinks:\n" + RED.export.links.getDebug(nodeLinks));
-        console.warn(nodeIsArray);
+        console.warn(node.isArray);
 
         
         //console.error(node.name + "\nlinks after:\n" + RED.export.links.getDebug(nodeLinks));
         var newLinks = [];
         
         if (nodeLinks.length != 0) // this is only a 'debug output' link
-            newLinks.push({invalid:currPath + "/" + (nodeIsArray?(nodeIsArray.name+"/i"+nodeIsArray.i):node.name)});
+            newLinks.push({invalid:currPath + "/" + (node.isArray?(node.isArray.name+"/i"+node.isArray.i):node.name)});
         //else
         //    newLinks.push({invalid:nodeLinks.length + "not array " + currPath + "/" + node.name});
 
@@ -106,10 +106,10 @@ RED.export.links = (function () {
                 //console.error("############################################## " + l.tabOutPortIndex + " # " + tabOutPortIndex + " #" + port.node.name);
                 getFinalSource(l,ws,tabOutPortIndex);
             }
-            if (nodeIsArray != undefined) {
-                l.sourceIsArray = nodeIsArray;
-                l.sourcePath = l.sourcePath.replace(nodeIsArray.newName, nodeIsArray.name + "/i" + nodeIsArray.i);
-                l.sourceName = l.source.name.replace(nodeIsArray.newName, nodeIsArray.name + "/i" + nodeIsArray.i);
+            if (node.isArray != undefined) {
+                l.sourceIsArray = node.isArray;
+                l.sourcePath = l.sourcePath.replace(node.isArray.newName, node.isArray.name + "/i" + node.isArray.i);
+                l.sourceName = l.source.name.replace(node.isArray.newName, node.isArray.name + "/i" + node.isArray.i);
 
             }else {
                 l.sourceName = l.source.name;
@@ -120,8 +120,8 @@ RED.export.links = (function () {
                 getFinalTarget_s(ws,l, newLinks, currPath);
             }
             else {
-                if (targetIsArray != undefined && nodeIsArray != undefined) {
-                    l.targetName = l.target.name.replace(targetIsArray.newName, targetIsArray.name + "/i" + nodeIsArray.i);
+                if (targetIsArray != undefined && node.isArray != undefined) {
+                    l.targetName = l.target.name.replace(targetIsArray.newName, targetIsArray.name + "/i" + node.isArray.i);
                 }
                 else
                     l.targetName = l.target.name;
@@ -292,7 +292,7 @@ RED.export.links = (function () {
      */
      function getFinalTarget_s(ws,link,links,classPath) {
         //console.log("*******************************************");
-        console.error("expandLinks classPath:\"" + classPath);
+        //console.error("expandLinks classPath:\"" + classPath);
         var newLink = RED.export.links.copy(link, classPath);
         
         var portNode = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
@@ -305,7 +305,7 @@ RED.export.links = (function () {
         var portLinks = ws.links.filter(function(d) { return d.source === portNode;});
 
         var newTargetPath = newLink.targetPath + "/" + link.target.name;
-        console.warn('newTargetPath "' + newTargetPath + '"');
+        //console.warn('newTargetPath "' + newTargetPath + '"');
         for (var pli = 0; pli < portLinks.length; pli++)
         {
             var pl = portLinks[pli];
@@ -587,5 +587,7 @@ RED.export.links = (function () {
         expandArrays,
         GetName,
         copy,
+        getFinalSource,
+        getFinalTarget_s,
     };
 })(); // RED.export.links = (function () {
