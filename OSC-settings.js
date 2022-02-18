@@ -23,7 +23,7 @@ RED.OSC = (function() {
     var defSettings = {
         HashLinkNames: false,
         HashLinkNamesHeader: "CON",
-        LiveUpdate: true,
+        LiveUpdate: false, // disabled by default, as it slows down the Tool alot
         DirectExport: false,
         WildcardArrayObjects: true,
         OnlyShowLastDebug: false,

@@ -150,14 +150,14 @@ RED.export.links = (function () {
         for (var li = 0; li < links.length; li++) {
             var l = links[li];
             if (l.source === source && l.sourcePort === sourcePort) {
-                //console.warn("found source " + source.name + " @" + offset );
+                //console.warn("found source " + l.source.name + ", sourcePort:" + sourcePort  + " @" + offset );
                 return offset;
             }
             else {
                 offset += getSourceSize(l);
             }
         }
-        //console.error("did not found source " + source.name + " @" + offset )
+        //console.error("did not found source " + l.source.name + ", sourcePort:" + sourcePort +" @" + offset )
         return offset;
     }
     function getSourceSize(l) {
@@ -174,6 +174,7 @@ RED.export.links = (function () {
             toAdd *= l.info.tabOut.inputs;
         }
         // the following adds support for object array output from class/tab
+        // still don't know if it's a really good idea to support this
         var ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
         if (ws){
             var lc = RED.export.links.copy(l, ""); // so that it don't mess up the original links
@@ -589,5 +590,6 @@ RED.export.links = (function () {
         copy,
         getFinalSource,
         getFinalTarget_s,
+        tagSameSourceLinksThatConnectsTo,
     };
 })(); // RED.export.links = (function () {

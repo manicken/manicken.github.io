@@ -1,46 +1,60 @@
 RED.export.links2.getDebug = (function () {
 
     function printLinkDebug(l,options) {
-        var txt  = "";
-        if (options.initialSpaces != undefined) {
-            for (var i = 0; i < options.initialSpaces; i++) txt += " ";
-        }
+        var dbg  = "";
+
         if (l.invalid != undefined) return l.invalid + "\n";
 
         if (options.simple == true) {
-            return "(" + link.source.name + ", " + link.sourcePort + ", " + link.target.name + ", " + link.targetPort + ")";
+            return getSimpleLinkDebug(l);
         }
-        
-        var afp = (options.asFullPath != undefined && options.asFullPath == true);
+        dbg += getSimpleLinkDebug(l) + " " + getLink_InfoDebug(l) + "\n";
 
+        if (l.export != undefined)
+            dbg += getExportLinksDebug(l.export,options);
+        
+        return dbg + "\n";
+    }
+
+    function getSimpleLinkDebug(l) {
+        return '("' + l.source.name + '", ' + l.sourcePort + ', "' + l.target.name + '", ' + l.targetPort + ')';
+    }
+
+    function getExtendedLinkDebug(l,afp) {
         var sourceInfo = '("' + l.sourcePath + (afp==true?"/":'","') + (l.sourceName||l.source.name) + '",' + l.sourcePort + ')';
         var targetInfo = '("' + l.targetPath + (afp==true?"/":'","') + (l.targetName||l.target.name) + '",' + l.targetPort + ')';
+        return sourceInfo + ' -> ' + targetInfo + ' @ "' + l.linkPath + '"';
+    }
 
-        if (l.info != undefined) {
-            if (l.info.tabIn != undefined) {
-                var tabInInfo = ", tabIn:(" + l.info.tabIn.node.name + " [" + l.info.tabIn.node.outputs + "])";
-            }
-            if (l.info.tabOut != undefined) {
-                var tabOutInfo = ", tabOut:(" + l.info.tabOut.node.name + " [" + l.info.tabOut.node.inputs + "])"
-            }
-            var linkInfo = "isBus:" + l.info.isBus + ", valid:" + l.info.valid + (tabInInfo?tabInInfo:"") + (tabOutInfo?tabOutInfo:"");
+    function getExportLinksDebug(els,options) { // els = export link:s
+        var dbg = "";
+        for (var eli=0;eli<els.length;eli++) {
+            dbg += "    " + getExportLinkDebug(els[eli],options);
         }
+        return dbg;
+    }
+    function getExportLinkDebug(l,options) {
+        var dbg = "";
+        var afp = (options.asFullPath != undefined && options.asFullPath == true);
         
-
-        txt += sourceInfo + ' -> ' + targetInfo + ' @ "' + l.linkPath + '"  tabOutPortIndex:' + l.tabOutPortIndex + (linkInfo?" "+linkInfo:"");
+        dbg += getExtendedLinkDebug(l,afp) + (l.tabOutPortIndex!=undefined?('", tabOutPortIndex:' + l.tabOutPortIndex):"") /*+ ", "+ getLink_InfoDebug(l)*/;
+        
         if (l.groupFirstLink)
-            txt += "\n############ groupFirstLink: " + printLinkDebug(l.groupFirstLink,options);
-        /*if (l.nextLink != undefined) {
-            initialSpaces += 2;
-            txt += "\n" + printLinkDebug(l.nextLink, undefined, initialSpaces);
-        }*/
-        if (l.origin && options.origin == true) {
-        //for (var i = 0; i < (l.linkPath.length + 3); i++) txt += " ";
+            dbg += "\n############ groupFirstLink: " + getExtendedLinkDebug(l.groupFirstLink,afp);
+        return dbg + "\n";
+    }
 
-            txt += '  origin (' + l.origin.source.name + "," + l.origin.sourcePort + ') -> ('+ l.origin.target.name + "," + l.origin.targetPort + ")";
-            
+    function getLink_InfoDebug(l) {
+        if (l.info == undefined)
+            return "";
+
+        if (l.info.tabIn != undefined) {
+            var tabInInfo = ', tabIn:{ "' + l.info.tabIn.name + '"' + (l.info.tabIn.outputs>1?(", (" + l.info.tabIn.outputs + ")"):"") + " }";
         }
-        return txt + "\n";
+        if (l.info.tabOut != undefined) {
+            var tabOutInfo = ', tabOut:{ "' + l.info.tabOut.name + '"' + (l.info.tabOut.inputs>1?(", (" + l.info.tabOut.inputs + ")"):"") + " }"
+        }
+        return "info:{ isBus:" + l.info.isBus + (tabInInfo?tabInInfo:"") + (tabOutInfo?tabOutInfo:"") + ", valid:" + l.info.valid + " }";
     }
 
     function printLinksDebug(links,options) {
@@ -52,7 +66,7 @@ RED.export.links2.getDebug = (function () {
     }
 
     return function (link_s,options) {
-        if( options == undefined) options = {asFullPath:false, initialSpaces:0, simple:false, origin:false};
+        if( options == undefined) options = {asFullPath:false, simple:false};
         if (Array.isArray(link_s)) return printLinksDebug(link_s,options);
         else return printLinkDebug(link_s,options);
     };

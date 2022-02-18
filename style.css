@@ -373,6 +373,31 @@
   .palette_port_output {
       right:-5px;
   }
+
+  .palette_port1 {
+    position: absolute;
+    top:2px;
+    box-sizing: border-box;
+     -moz-box-sizing: border-box;    
+    background:#d9d9d9;
+    border-radius: 3px;
+    width: 10px;
+    height: 10px;
+    border: 1px solid #999;
+ }
+ 
+ .palette_port2 {
+    position: absolute;
+    top:13px;
+    box-sizing: border-box;
+     -moz-box-sizing: border-box;    
+    background:#d9d9d9;
+    border-radius: 3px;
+    width: 10px;
+    height: 10px;
+    border: 1px solid #999;
+ }
+
   .palette_req_error {
       position: absolute;
       top:-8px;

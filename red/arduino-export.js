@@ -133,7 +133,7 @@ RED.arduino.export = (function () {
                 }
                 else if (this.srcRootIsArray) {
                     if (this.staticType==false) {
-                        this.cppCode += this.base() + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", i);";
+                        this.cppCode += this.base() + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", i"+(this.dstPort>0?("+"+this.dstPort):"")+");";
                         this.cppCode += "\n";
                     }
                     else {
@@ -655,9 +655,11 @@ RED.arduino.export = (function () {
                     if (n.z != ws.id) continue; // workspace check
                     if (n.type.startsWith("Junction")) continue;
 
+                    var src = RED.nodes.node(n.id, n.z);
+
                     RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
 
-                        var src = RED.nodes.node(n.id);
+                        
                         var dst = RED.nodes.node(dstId);
 
                         if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
@@ -701,7 +703,7 @@ RED.arduino.export = (function () {
                             ac.srcName = RED.nodes.make_name(src);
                             ac.dstName = RED.nodes.make_name(dst);
                             ac.srcPort = pi;
-                            ac.dstPort = dstPortIndex;
+                            ac.dstPort = dstPortIndex; // default
 
                             ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
                             if (src._def.isClass != undefined) { //RED.nodes.isClass(n.type)) { // if source is class
@@ -714,6 +716,11 @@ RED.arduino.export = (function () {
                                 //console.log("dst is class:" + dst.name + " from:" + n.name);
                                 RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
                             } else {
+                                if (dst._def.dynInputs != undefined){
+                                    //console.error(dstPortIndex);
+                                    ac.dstPort = RED.export.links.getDynInputDynSizePortStartIndex(dst, src, pi);
+                                    //console.error(ac.dstPort);
+                                }
                                 ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
                             }
                             if (ac.ifAnyIsArray())
@@ -943,6 +950,9 @@ RED.arduino.export = (function () {
 
     function getDynamicInputCount(n, replaceConstWithValue) { // rename to getDynamicInputCount?
         // check if source is a array
+        n = RED.nodes.node(n.id, n.z);
+        return RED.export.links.getDynInputDynSizePortStartIndex(n, undefined);
+
         if (n.inputs != 1) return n.inputs;
 
         var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);

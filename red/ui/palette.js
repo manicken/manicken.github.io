@@ -289,10 +289,17 @@ RED.palette = (function() {
 			if (def.textColor != undefined)
 			d.style.color = def.textColor;
 			
-			if (def.outputs > 0) {
+            if (def.outputs > 1) {
+				var portOut = document.createElement("div");
+				portOut.className = "palette_port1 palette_port_output";
+				d.appendChild(portOut);
+                portOut = document.createElement("div");
+				portOut.className = "palette_port2 palette_port_output";
+				d.appendChild(portOut);
+			}
+			else if (def.outputs > 0) {
 				var portOut = document.createElement("div");
 				portOut.className = "palette_port palette_port_output";
-				//def.palettePortOut = portOut; // not used anywhere
 				d.appendChild(portOut);
 			}
 
@@ -301,10 +308,17 @@ RED.palette = (function() {
 
 			d.appendChild(reqError);
 			
-			if (def.inputs > 0) {
+            if (def.inputs > 1) {
+                var portIn = document.createElement("div");
+				portIn.className = "palette_port1 palette_port_input";
+				d.appendChild(portIn);
+                portIn = document.createElement("div");
+				portIn.className = "palette_port2 palette_port_input";
+				d.appendChild(portIn);
+            }
+			else if (def.inputs > 0) {
 				var portIn = document.createElement("div");
 				portIn.className = "palette_port palette_port_input";
-				//def.palettePortIn = portIn; // not used anywhere
 				d.appendChild(portIn);
 			}
 			

@@ -21,6 +21,8 @@
     String.prototype.setCharAt = function(index, chr) {
         return this.substring(0, index) + chr + this.substring(index + chr.length);
     }
+    function isDef(object) { return object != undefined;}
+    function isUDef(object) { return object == undefined;}
 
     function isValidIdentifierName(str)
     {

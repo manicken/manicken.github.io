@@ -102,7 +102,16 @@ RED.view = (function() {
 		get showNodeToolTip() { return _settings.showNodeToolTip; },
 		set showNodeToolTip(state) { _settings.showNodeToolTip = state; saveSettingsToActiveWorkspace(); RED.storage.update();},
 */
-		get guiEditMode() { return _settings.guiEditMode; },
+		get guiEditMode() {
+            if (d3 != undefined && d3.event != undefined && d3.event.shiftKey) {
+                $('#btn-guiRunEditMode').prop('checked', _settings.guiEditMode);
+                return !_settings.guiEditMode;
+            }
+            else {
+                $('#btn-guiRunEditMode').prop('checked', !_settings.guiEditMode);
+                return _settings.guiEditMode;
+            }
+        },
 		set guiEditMode(state) { 
 			_settings.guiEditMode = state; 
 			$('#' + settingsEditor.otherSubCat.items.guiEditMode.valueId).prop('checked', state);
@@ -122,8 +131,6 @@ RED.view = (function() {
                 $('.ui_textbox_textarea').css("pointer-events", "none");
                
             }
-            
-            
 		},
 
 		get lockWindowMouseScrollInRunMode() { return _settings.lockWindowMouseScrollInRunMode; },
@@ -3799,7 +3806,7 @@ RED.view = (function() {
                     var link = links[0]; // should be only one
                     var oi = RED.export.links.getDynInputDynSizePortStartIndex(node, link.source, link.sourcePort);
                     var size = RED.export.links.getSourceSize(link);
-                    portName = "Dynamic Input Port:" + ((size>1)?"(" + oi + " -> "+(oi+size-1) + ")":oi);
+                    portName = "In " + index +  ", Dynamic Input Port:" + ((size>1)?"(" + oi + " -> "+(oi+size-1) + ")":oi);
                 }
             }
 			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
