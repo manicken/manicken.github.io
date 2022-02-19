@@ -174,7 +174,7 @@ RED.export.links2 = (function () {
     }
 
     function generateAndAddExportInfo(link) {
-        return;
+        //return;
         //console.log("generateAndAddExportInfo", link);
         if (link.source.type == "TabInput" || link.target.type == "TabOutput") return; // don't generate export info for tabIO links as they are virtual only
 

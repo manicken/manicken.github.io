@@ -2285,12 +2285,12 @@ RED.nodes = (function() {
         });
     }
     function getNodeInstancesOfType(type) {
-        var nodeNames = [];
-        eachNode(function(n,ws) {
-            if (n.type == type)
-                nodeNames.push(n.name + " @ " + ws.label);
+        var nodes = [];
+        eachNode(function(node,ws) {
+            if (node.type == type)
+                nodes.push({node,ws});
         });
-        return nodeNames;
+        return nodes;
     }
     function wsEachNode(ws,cb) {
         for (var ni=0;ni<ws.nodes.length;ni++) {

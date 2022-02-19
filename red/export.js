@@ -152,6 +152,65 @@ RED.export = (function () {
         
         return {items:foundMains, mainSelected}; // let the caller decide what to do
     }
+    $("#btn-debugPrintClassUsage").click(function() {getUsageTreeFrom(RED.view.activeWorkspace);});
+
+    function getUsageTreeFrom(wsId) {
+        var ws = RED.nodes.getWorkspace(wsId);
+        var nodes = RED.nodes.getNodeInstancesOfType(ws.label);
+        if (nodes.length == 0) {
+            console.warn("no usage found @ " + ws.label);
+            return;
+        }
+        var tree = [];//{items:[]};
+        //console.log("\n:getting instances of "+ws.label+" { \n" + getUsageTree(nodes, tree, ws.label) + " }\n\n");
+        getUsageTree(nodes, tree, ws.label);
+        var paths = [];
+        getPathsFromTree(paths, tree, [], "MainWaves");
+        //console.log(JSON.stringify(tree, null, 2));
+        console.log(JSON.stringify(paths, null, 2));
+    }
+
+    function getPathsFromTree(paths,items,path,onlyIncludeWs) {
+        for (var i=0;i<items.length;i++) {
+            //var np = path + "/" + items[i].name;
+
+            var np = [];
+            np.pushArray(path);
+            np.push(items[i].name);
+            if (items[i].items.length != 0)
+                getPathsFromTree(paths, items[i].items, np, onlyIncludeWs);
+            else {
+                if (items[i].ws == onlyIncludeWs)
+                    paths.push(np.reverse());
+            }
+        }
+    }
+
+    function getUsageTree(nodes, paths, wsLabel) {
+        var txt = "";
+        //var paths = [];
+        
+        for (var ni=0;ni<nodes.length;ni++) {
+            var n = nodes[ni];
+            //var path = [];
+            var item = {ws:n.ws.label, name:n.node.name, type:n.node.type, items:[]};
+            //path.push(item);
+
+            //txt += "@" + wsLabel + " -> " + n.node.name + " @ " + n.ws.label;
+            var nodes2 = RED.nodes.getNodeInstancesOfType(n.ws.label);
+            if (nodes2.length == 0) {
+                //console.warn("found root @ " + n.ws.label);
+                //txt += " root\n"
+                paths.push(item);
+                continue;
+            }
+            //txt += "\n\n:getting instances of "+n.ws.label+" { \n" + getUsageTree(nodes2,item.items,n.ws.label) + " }\n\n";
+            getUsageTree(nodes2,item.items,n.ws.label);
+            paths.push(item);
+        }
+        
+        return txt;
+    }
 
     return {
         //set project(_nns) {project = _nns; },
@@ -163,5 +222,7 @@ RED.export = (function () {
         isNameDeclarationArray,
         cyrb53,
         getArrayDef,
+        getUsageTree,
+        getUsageTreeFrom,
     };
 })();

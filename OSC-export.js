@@ -9,6 +9,8 @@ class PacketArray extends Array {
 
 OSC.export = (function () {
 
+    var ActiveAudioMain;
+
     function InitButtonPopups(notavailable) {
         var a = "";
         if (notavailable != undefined && notavailable == true)
@@ -326,6 +328,8 @@ OSC.export = (function () {
         var acs = new PacketArray(); // Audio Connections 
 
         var ws = RED.nodes.workspaces[mainWorkSpaceIndex];
+        ActiveAudioMain = ws; // this is used by the live edit to determine the path:s for used objects
+
         console.warn("AudioMain ", mainWorkSpaceIndex, ws);
         addObjectsToPacketArray(ws, apos, '');
         var links = [];
@@ -352,52 +356,7 @@ OSC.export = (function () {
         if (getBundleOnly == true) return bundle;
         else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
     }
-/*
-    function getSimpleExport_bundle(getBundleOnly) {
-        if (getBundleOnly == undefined) getBundleOnly = false;
-        RED.storage.update(); // this will also sort the nodes
-        var nns = RED.nodes.createCompleteNodeSet({newVer:false}); // don't think this is needed anymore
-        var activeWorkspace = RED.view.activeWorkspace;
-        var apos = new PacketArray(); // Audio Processing Objects
-        var acs = new PacketArray(); // Audio Connections 
 
-        for (var i = 0; i < nns.length; i++) {
-            var n = nns[i];
-            if (n.type == "tab" || n.type == "settings") continue;
-            if (n.z != activeWorkspace) continue; // workspace filter
-            var node = RED.nodes.node(n.id); // to get access to node.outputs and node._def.inputs
-            if (node == null) { console.warn("node == null:" + "type:" + n.type + ",id:" + n.id); continue; } // this should never happen (because now "tab" type checked at top)
-            
-            if (node._def.nonObject != undefined) continue; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
-
-            if (node.type != "AudioMixer")
-                apos.add(OSC.GetCreateObjectAddr(),"ss", node.type, node.name);
-            else
-                apos.add(OSC.GetCreateObjectAddr(),"ssi", node.type, node.name, node.inputs);
-
-            if (RED.export.haveIO(node)) {
-                RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
-                    var src = RED.nodes.node(n.id);
-                    var dst = RED.nodes.node(dstId);
-                    var src_name = RED.nodes.make_name(src);
-                    var dst_name = RED.nodes.make_name(dst);
-                    if (RED.OSC.settings.UseDebugLinkName == false)
-                        var linkName = src_name + pi + dst_name + dstPortIndex;
-                    else
-                        var linkName = src_name + "_" + pi +"_"+ dst_name +"_"+ dstPortIndex;
-                    acs.add(OSC.GetCreateConnectionAddr(),"s", linkName);
-                    acs.add(OSC.GetConnectAddr(linkName),"sisi", src_name, pi, dst_name, dstPortIndex);
-                });
-            }
-        }
-        var bundle = OSC.CreateBundle(0);
-        bundle.add(OSC.GetClearAllAddr());
-        bundle.addPackets(apos); // first add all Audio Processing Objects
-        bundle.addPackets(acs); // second add all Audio Connections
-        if (getBundleOnly == true) return bundle;
-        else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
-    }
-*/
     function getSimpleExport_bundle(getBundleOnly) {
         if (getBundleOnly == undefined) getBundleOnly = false;
         RED.storage.update(); // this will also sort the nodes
@@ -429,12 +388,10 @@ OSC.export = (function () {
         else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
     }
 
-    
-
-
     return {
         getSimpleExport_bundle,
         getGroupExport_bundle,
-        InitButtonPopups
+        InitButtonPopups,
+        get ActiveAudioMain() {return ActiveAudioMain;},
     };
 })();
