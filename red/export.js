@@ -163,11 +163,26 @@ RED.export = (function () {
         }
         var tree = [];//{items:[]};
         //console.log("\n:getting instances of "+ws.label+" { \n" + getUsageTree(nodes, tree, ws.label) + " }\n\n");
-        getUsageTree(nodes, tree, ws.label);
+        //getUsageTree(nodes, tree, ws.label);
         var paths = [];
-        getPathsFromTree(paths, tree, [], "MainWaves");
+        //getPathsFromTree(paths, tree, [], "MainWaves");
         //console.log(JSON.stringify(tree, null, 2));
+
+        getUsageTree2(paths, nodes, [], "MainWaves");
         console.log(JSON.stringify(paths, null, 2));
+        console.log(JSON.stringify(getSimpleOSCpaths(paths), null, 2));
+    }
+
+    function getSimpleOSCpaths(paths) {
+        var nps = [];
+        for (var pi=0;pi<paths.length;pi++) {
+            var path = "";
+            for (var i=0;i<paths[pi].length;i++) {
+                path += "/" + paths[pi][i].name;
+            }
+            nps.push(path);
+        }
+        return nps;
     }
 
     function getPathsFromTree(paths,items,path,onlyIncludeWs) {
@@ -176,7 +191,7 @@ RED.export = (function () {
 
             var np = [];
             np.pushArray(path);
-            np.push(items[i].name);
+            np.push(items[i]);
             if (items[i].items.length != 0)
                 getPathsFromTree(paths, items[i].items, np, onlyIncludeWs);
             else {
@@ -185,9 +200,8 @@ RED.export = (function () {
             }
         }
     }
-
     function getUsageTree(nodes, paths, wsLabel) {
-        var txt = "";
+        //var txt = "";
         //var paths = [];
         
         for (var ni=0;ni<nodes.length;ni++) {
@@ -209,7 +223,35 @@ RED.export = (function () {
             paths.push(item);
         }
         
-        return txt;
+        //return txt;
+    }
+    
+    // TODO make combined function (getUsageTree + getPathsFromTree)
+    // yeah really simple now when it's done
+    function getUsageTree2(paths, nodes, path, onlyIncludeWs) {
+
+        for (var ni=0;ni<nodes.length;ni++) {
+            var n = nodes[ni];
+            
+
+            var nodes2 = RED.nodes.getNodeInstancesOfType(n.ws.label);
+            if (nodes2.length != 0) {
+                var np = [];
+                np.pushArray(path);
+                np.push({ws:n.ws.label, name:n.node.name, type:n.node.type});
+                
+                getUsageTree2(paths,nodes2,np,onlyIncludeWs);
+            }
+            else {
+                if (n.ws.label == onlyIncludeWs) {
+                    var np = [];
+                    np.pushArray(path);
+                    np.push({ws:n.ws.label, name:n.node.name, type:n.node.type});
+
+                    paths.push(np.reverse());
+                }
+            }
+        }
     }
 
     return {
