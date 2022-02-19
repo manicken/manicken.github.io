@@ -2238,6 +2238,7 @@ RED.view = (function() {
 	
 	function nodeMouseDown(d,i) { // this only happens once
         if (d3.event.button != 0) return;
+        d3.event.preventDefault(); // this fixes a annoying bug while draggin nodes, i.e. selecting other text-elements
 
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
