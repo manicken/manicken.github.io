@@ -3168,7 +3168,7 @@ RED.view = (function() {
 	
 	
 	var linksPosMode = 2;
-	function generateLinkPath(orig, dest, origX,origY, destX, destY, sc1, sc2) {
+	function generateLinkPath(orig, dest, origX, origY, destX, destY, sc1, sc2) {
 		var node_height = orig.h; //node_def.height;
 		var node_width = node_def.width;
 		var node_dest_height = node_def.height;
@@ -3204,7 +3204,7 @@ RED.view = (function() {
                 midY = destY + node_height;
             }
 			var cp_height = node_height/linksPosMode;
-			var cp_dest_height = node_dest_height/linksPosMode;
+			//var cp_dest_height = dest.h/linksPosMode;
             var y1 = (destY + midY)/linksPosMode
             var topX =origX + sc1*node_width*scale;
             var topY = dy>0?Math.min(y1 - dy/linksPosMode , origY+cp_height):Math.max(y1 - dy/linksPosMode , origY-cp_height);
@@ -3233,6 +3233,20 @@ RED.view = (function() {
                 }
                 cp[2][0] = topX;
             }
+            //midX -= 10;
+            /*
+            if (posMode == 1) {
+                var destY1 = dest.y
+                var destY2 = dest.y+dest.h;
+            }
+            else {
+                var destY1 = dest.y - dest.h/2;
+                var destY2 = dest.y + dest.h/2;
+            }
+            console.warn("dx:"+dx+", dy:"+dy+", midX:" + midX + ", midY:" + midY + ", origX:" + origX + ", origY:" + origY + ", destX:" + destX + ", destY:" + destY + ", destY1:" + destY1);
+            if (origY < destY && midY < destY1) midY = destY1 - 10;
+            else if (origY > destY && midY < destY2) midY = destY2 + 10;
+*/
             return "M "+origX+" "+origY+
                 " C "+
                    cp[0][0]+" "+cp[0][1]+" "+
