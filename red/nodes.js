@@ -1395,14 +1395,15 @@ RED.nodes = (function() {
 	/**
 	 * Gets all TabInput or TabOutput belonging to a class, and then sorting them vertically top->bottom (normal view)
 	 * then the correct port-node based by index is returned
-	 * @param {String} wsId workspace id
+	 * @param {String} ws_id workspace id
 	 * @param {String} type "TabInput" or "TabOutput"
 	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
 	 */
-	function getClassIOport(wsId, type, index) // this 
+	function getClassIOport(ws_id, type, index) // this 
 	{
-        if (!wsId) return;
-        var ws = getWorkspace(wsId);
+        if (!ws_id) return;
+        if (typeof ws_id == "string") var ws = getWorkspace(ws_id);
+        else var ws = ws_id
         if (index < 0) index = 0; // failsafe
         if (type == "Out" && ws.tabOutputs != undefined) {
             if (index >= ws.tabOutputs.length) index = (ws.tabOutputs.length - 1); // failsafe

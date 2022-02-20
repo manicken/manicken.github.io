@@ -232,20 +232,20 @@ RED.export = (function () {
 
         for (var ni=0;ni<nodes.length;ni++) {
             var n = nodes[ni];
-            
+            var np = [];
 
             var nodes2 = RED.nodes.getNodeInstancesOfType(n.ws.label);
             if (nodes2.length != 0) {
-                var np = [];
-                np.pushArray(path);
+                
+                np.push(...path);
                 np.push({ws:n.ws.label, name:n.node.name, type:n.node.type});
                 
                 getUsageTree2(paths,nodes2,np,onlyIncludeWs);
             }
             else {
                 if (n.ws.label == onlyIncludeWs) {
-                    var np = [];
-                    np.pushArray(path);
+
+                    np.push(...path);
                     np.push({ws:n.ws.label, name:n.node.name, type:n.node.type});
 
                     paths.push(np.reverse());

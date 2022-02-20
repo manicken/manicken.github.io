@@ -21,8 +21,8 @@ RED.export.links2.getDebug = (function () {
     }
 
     function getExtendedLinkDebug(l,afp) {
-        var sourceInfo = '("' + l.sourcePath + (afp==true?"/":'","') + (l.sourceName||l.source.name) + '",' + l.sourcePort + ')';
-        var targetInfo = '("' + l.targetPath + (afp==true?"/":'","') + (l.targetName||l.target.name) + '",' + l.targetPort + ')';
+        var sourceInfo = '(' + JSON.stringify(l.sourcePath) + (afp==true?"/":',"') + (l.sourceName||l.source.name) + '",' + l.sourcePort + ')';
+        var targetInfo = '(' + JSON.stringify(l.targetPath) + (afp==true?"/":',"') + (l.targetName||l.target.name) + '",' + l.targetPort + ')';
         return sourceInfo + ' -> ' + targetInfo + ' @ "' + l.linkPath + '"';
     }
 
