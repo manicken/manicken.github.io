@@ -884,6 +884,8 @@ RED.view = (function() {
 
 	function canvasMouseMove() {
 		mouse_position = d3.touches(this)[0]||d3.mouse(this);
+        if (RED.devTest.settings.DebugCanvasMousePos == true)
+            console.log(mouse_position);
 		// Prevent touch scrolling...
 		//if (d3.touches(this)[0]) {
 		    //d3.event.preventDefault();
@@ -2895,7 +2897,7 @@ RED.view = (function() {
 			d.svgPath.background = l.append("svg:path").attr("class","link_background link_path")
 			   .on("mousedown",function(d) {
                     if (d3.event.button != 0) return;
-                    console.warn(d3.event);
+                    //console.warn(d3.event);
 					mousedown_link = d;
 
                     // double click functionality start
@@ -3197,70 +3199,111 @@ RED.view = (function() {
                 destX+" "+destY
         } else {
 			//console.error("Test");
+            if (dest != undefined) {
+                // the following makes the wires go
+                // around big nodes much cleaner
+                // i.e. less chance that wires go throught nodes
+                if (posMode == 1) {
+                    var origY1 = orig.y;
+                    var origY2 = orig.y+orig.h;
+                    var destY1 = dest.y;
+                    var destY2 = dest.y+dest.h;
+                }
+                else {
+                    var origY1 = orig.y - orig.h/2;
+                    var origY2 = orig.y + orig.h/2;
+                    var destY1 = dest.y - dest.h/2;
+                    var destY2 = dest.y + dest.h/2;
+                }
+                if (dy > 0)
+                    var midY = Math.floor(origY2 - (origY2 -destY1)/2);
+                else
+                    var midY = Math.floor(destY2 - (destY2 -origY1)/2);
+            }
+            else
+                var midY = Math.floor(destY-dy/linksPosMode);
+            
             var midX = Math.floor(destX-dx/linksPosMode);
-            var midY = Math.floor(destY-dy/linksPosMode);
-            //
             if (dy === 0) {
                 midY = destY + node_height;
             }
 			var cp_height = node_height/linksPosMode;
 			//var cp_dest_height = dest.h/linksPosMode;
             var y1 = (destY + midY)/linksPosMode
-            var topX =origX + sc1*node_width*scale;
+            var topX = origX + sc1*node_width*scale;
             var topY = dy>0?Math.min(y1 - dy/linksPosMode , origY+cp_height):Math.max(y1 - dy/linksPosMode , origY-cp_height);
             var bottomX = destX - sc2*node_width*scale;
             var bottomY = dy>0?Math.max(y1, destY-cp_height):Math.min(y1, destY+cp_height);
             var x1 = (origX+topX)/linksPosMode;
-            var scy = dy>0?1:-1;
-            var cp = [
+            
+            /*var cp = [
                 // Orig -> Top
+                //Cx1,Cy1
                 [x1,origY],
+                //Cx2,Cy2
                 [topX,dy>0?Math.max(origY, topY-cp_height):Math.min(origY, topY+cp_height)],
                 // Top -> Mid
                 // [Mirror previous cp]
+                //S1x,S1y
                 [x1,dy>0?Math.min(midY, topY+cp_height):Math.max(midY, topY-cp_height)],
                 // Mid -> Bottom
                 // [Mirror previous cp]
+                //S2x,S2y    
                 [bottomX,dy>0?Math.max(midY, bottomY-cp_height):Math.min(midY, bottomY+cp_height)],
                 // Bottom -> Dest
                 // [Mirror previous cp]
+                //S3x,S3y
                 [(destX+bottomX)/linksPosMode,destY]
-            ];
-            if (cp[2][1] === topY+scy*cp_height) {
+            ];*/
+
+            // Orig -> Top
+            var Cx1 = x1;
+            var Cy1 = origY;
+            var Cx2 = topX;
+            var Cy2 = dy>0?Math.max(origY, topY-cp_height):Math.min(origY, topY+cp_height);
+            // Top -> Mid
+            // [Mirror previous cp]
+            var S1x = x1;
+            var S1y = dy>0?Math.min(midY, topY+cp_height):Math.max(midY, topY-cp_height);
+            // Mid -> Bottom
+            // [Mirror previous cp]
+            var S2x = bottomX;
+            var S2y = dy>0?Math.max(midY, bottomY-cp_height):Math.min(midY, bottomY+cp_height);
+            // Bottom -> Dest
+            // [Mirror previous cp]
+            var S3x = (destX+bottomX)/linksPosMode;
+            var S3y = destY;
+
+            //var scy = dy>0?1:-1;
+            //console.log("S1y:"+S1y + ", topY:"+topY + ", scy:"+scy + ", cp_height:"+cp_height);
+            /*if (S1y === topY+scy*cp_height) {
+
                 if (Math.abs(dy) < cp_height*10) {
-                    cp[1][1] = topY-scy*cp_height/linksPosMode;
-                    cp[3][1] = bottomY-scy*cp_height/linksPosMode;
+
+                    //Cy2 = topY-scy*cp_height/linksPosMode; // make the part of line that go out, clumsy
+                    //S2y = bottomY-scy*cp_height/linksPosMode; // make the part of line that go out, clumsy
+                    if (dy < 0)
+                        midY += 20;
+                    else
+                        midY -= 20;
                 }
-                cp[2][0] = topX;
-            }
-            //midX -= 10;
-            /*
-            if (posMode == 1) {
-                var destY1 = dest.y
-                var destY2 = dest.y+dest.h;
-            }
-            else {
-                var destY1 = dest.y - dest.h/2;
-                var destY2 = dest.y + dest.h/2;
-            }
-            console.warn("dx:"+dx+", dy:"+dy+", midX:" + midX + ", midY:" + midY + ", origX:" + origX + ", origY:" + origY + ", destX:" + destX + ", destY:" + destY + ", destY1:" + destY1);
-            if (origY < destY && midY < destY1) midY = destY1 - 10;
-            else if (origY > destY && midY < destY2) midY = destY2 + 10;
-*/
+                //S1x = topX; // make the part of line that go out, clumsy
+            }*/
+
             return "M "+origX+" "+origY+
                 " C "+
-                   cp[0][0]+" "+cp[0][1]+" "+
-                   cp[1][0]+" "+cp[1][1]+" "+
+                   Cx1+" "+Cy1+" "+
+                   Cx2+" "+Cy2+" "+
                    topX+" "+topY+
                 " S "+
-                   cp[2][0]+" "+cp[2][1]+" "+
+                   S1x+" "+S1y+" "+
                    midX+" "+midY+
                " S "+
-                  cp[3][0]+" "+cp[3][1]+" "+
-                  bottomX+" "+bottomY+
+                   S2x+" "+S2y+" "+
+                   bottomX+" "+bottomY+
                 " S "+
-                    cp[4][0]+" "+cp[4][1]+" "+
-                    destX+" "+destY
+                   S3x+" "+S3y+" "+
+                   destX+" "+destY
         }
 	}
 	

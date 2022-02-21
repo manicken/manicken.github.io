@@ -73,31 +73,26 @@ RED.export.links2 = (function () {
         }
     }
     function fixFinal_Sources_Targets(link) {
-        var ws = RED.nodes.getWorkspace(link.source.z);
         var node = link.source;
 
         var newLinks = [];
         for (var li = 0; li < link.export.length; li++)
         {
             if (link.export[li].invalid != undefined) continue; // skip invalid/unsupported links
-
             var l = link.export[li];
-            
-            ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
-            if (ws)
+            if (l.source._def.isClass != undefined)
             {
                 var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
-                getFinalSource(l,ws,tabOutPortIndex);
+                getFinalSource(l,l.source._def.isClass,tabOutPortIndex);
             }
             if (node.isArray != undefined) {
                 l.sourceIsArray = node.isArray;
             }else {
                 l.sourceName = l.source.name;
             }
-            ws = l.target._def.isClass;
-            if (ws)
+            if (l.target._def.isClass != undefined)
             {
-                getFinalTarget_s(ws,l, newLinks);
+                getFinalTarget_s(l, newLinks);
                 link.export = newLinks;
             }
             else {
@@ -106,37 +101,36 @@ RED.export.links2 = (function () {
         }
     }
 
-    function getFinalTarget_s(ws,link,links) {
+    function getFinalTarget_s(link,links) {
+        var ws = link.target._def.isClass;
         var newLink = copy(link);
         
         var portNode = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
         if (portNode.isBus == true) {
-            l.tabIn = portNode;// store it for later use
+            link.tabIn = portNode;// store it for later use
         }
         // port can have multiple connections out from it
         var ws = RED.nodes.getWorkspace(portNode.z);
         var portLinks = ws.links.filter(function(d) { return d.source === portNode;});
         
-        var newTargetPath = [];
-        newTargetPath.push(...newLink.targetPath);
-        newTargetPath.push(link.target.name);
         for (var pli = 0; pli < portLinks.length; pli++)
         {
             var pl = portLinks[pli];
-            var newPortLink = copy(newLink);
-            newPortLink.targetPath = newTargetPath;
-            newPortLink.target = pl.target;
-            newPortLink.targetPort = pl.targetPort;
-            newPortLink.targetName = pl.target.name;
-            
-            ws = newPortLink.target._def.isClass;
-            if (ws)
+            var npl = copy(newLink); // npl = new port link
+            npl.targetPath = []; // this makes sure that every targetPath array is unique
+            npl.targetPath.push(...newLink.targetPath);
+            npl.targetPath.push(link.target.name);
+            npl.target = pl.target;
+            npl.targetPort = pl.targetPort;
+            npl.targetName = pl.target.name;
+
+            if (npl.target._def.isClass != undefined)
             {
-                getFinalTarget_s(ws,newPortLink,links);
+                getFinalTarget_s(npl,links);
             }
             else
             {
-                links.push(newPortLink);
+                links.push(npl);
             }
         }       
     }
@@ -149,7 +143,7 @@ RED.export.links2 = (function () {
         }
         if (tabOutPortIndex == undefined) tabOutPortIndex = 0;
         
-        var newSrc = RED.nodes.getWireInputSourceNode(portNode, tabOutPortIndex); // TODO. take care of bus output TabOutputs
+        var newSrc = RED.nodes.getWireInputSourceNode(portNode, tabOutPortIndex);
         if (newSrc == undefined) {
             l.invalid = " the class output is unconnected";
             return;

@@ -26,7 +26,8 @@ RED.devTest = (function() {
         testGet: "cmd",
         testWsSend: "data",
         getFuncHelp: "AudioEffectFade",
-        startupTabRightSidebar: "info"
+        startupTabRightSidebar: "info",
+        DebugCanvasMousePos: false,
     };
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
     var _settings = {
@@ -34,7 +35,8 @@ RED.devTest = (function() {
         testGet: defSettings.testGet,
         testWsSend: defSettings.testWsSend,
         getFuncHelp: defSettings.getFuncHelp,
-        startupTabRightSidebar: defSettings.startupTabRightSidebar
+        startupTabRightSidebar: defSettings.startupTabRightSidebar,
+        DebugCanvasMousePos: defSettings.DebugCanvasMousePos
     };
 
     var settings = {
@@ -52,10 +54,14 @@ RED.devTest = (function() {
 
         get startupTabRightSidebar() { return _settings.startupTabRightSidebar; },
 		set startupTabRightSidebar(value) { _settings.startupTabRightSidebar = value; RED.storage.update();},
+
+        get DebugCanvasMousePos() { return _settings.DebugCanvasMousePos; },
+		set DebugCanvasMousePos(value) { _settings.DebugCanvasMousePos = value; RED.storage.update();},
     }
 
     var settingsCategory = { label:"Development Tests", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
+        DebugCanvasMousePos: { label:"Debug Canvas Mouse Pos", type:"boolean"},
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
 
         exportCompleteFunctionList: { label:"Export complete function list", type:"button", action: exportCompleteFunctionList, urlCmd:"exportCompleteFunctionList"},
