@@ -94,7 +94,7 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* add setting to show/hide decoded OSC replies<br><br>"+
                 "* bottom log now have clear button @ bottom left corner when open<br><br>"+
                 "* object/node edit fields can now have popup text help, the text is defined in the node def. check AudioMixer or AudioMixerStereo for examples.<br><br>"+
-                "* better(not perfect) when wires going backwards to avoid crossing the nodes<br><br>",
+                "* better(not perfect) when wires going backwards do less crossing the nodes<br><br>",
             "7":"",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
