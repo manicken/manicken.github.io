@@ -58,9 +58,9 @@ var OSC = (function() {
     //const serialLEDController = new SerialLEDController();
     $('#btn-connectSerial').click(async function() { 
         port = await navigator.serial.requestPort();
-        console.warn("connection"+Date.now());
+        console.warn("connection "+new Date().toISOString());
         await port.open({baudRate:115200, bufferSize:1024});
-        console.warn("done"+Date.now());
+        console.warn("done "+new Date().toISOString());
 
         readUntilClosed();
         RED.notify("serial port opened", "info", null, 3000);
@@ -406,8 +406,18 @@ var OSC = (function() {
             RED.bottombar.info.addLine("ERROR: reply last argument fault code value cannot be less than zero");
             return;
         }
-        else if (faultCode < OSC_REPLY_CODES.length) {
-            if (RED.OSC.settings.ShowOutputOscRxDecoded)
+        if (faultCode < OSC_REPLY_CODES.length) {
+            var oscReplyType = OSC_REPLY_CODES[faultCode];
+            if (oscReplyType == "OK") {
+                if (RED.OSC.settings.RedirectDebugToConsole == true) {
+                    console.log("OK");
+                }
+                else {
+                    RED.bottombar.info.addLine("OK");
+                }
+                return;
+            }
+            if (RED.OSC.settings.DebugOscRxDecodedReplies)
                 RED.bottombar.info.addLine(OSC_REPLY_CODES[faultCode]);
             return;
         }
@@ -454,10 +464,32 @@ var OSC = (function() {
     var lastLogType = "info1";
     var llt = 0;
     var bgColor1 = "#f5f6fd";
+
+    var rootStyle =
+                'padding: 5px;'+
+                /*'margin-bottom: 20px;'+*/
+                'border: 1px solid #fbeed5;'+
+                '-webkit-border-radius: 4px;'+
+                '-moz-border-radius: 4px;'+
+                'border-radius: 4px;';
+
     function AddLineToLog(text, type, style) {
         if (type != undefined && style == undefined)
+        {
+            if (RED.OSC.settings.RedirectDebugToConsole == true) {
+                console.log(text.split('<br>').join("\n"));
+                return;
+            }
+            
             text = '<div class="alert alert-'+type+' message">'+text+"</div>";
+        }
         else if (style != undefined) {
+            if (RED.OSC.settings.RedirectDebugToConsole == true) {
+                //console.warn(text);
+                if (text.endsWith('<br>')) text = text.substring(0, text.length - 4);
+                console.log('%c'+text.split('<br>').join("\n"), rootStyle + style);
+                return;
+            }
             text = '<div class="alert alert-info1 message" style="'+style+'">'+text+"</div>";
         }
         else {
@@ -469,6 +501,8 @@ var OSC = (function() {
             }
             text = '<div class="alert alert-'+lastLogType+' message">'+text+"</div>";
         }
+        
+
         if (RED.OSC.settings.OnlyShowLastDebug == false)
             RED.bottombar.info.addContent(text);
         else

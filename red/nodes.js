@@ -369,7 +369,11 @@ RED.nodes = (function() {
         ws.links.push(l);
 
         if (loadingWorkspaces == false) {
+            
+            
             setLinkInfo(l);
+
+            
             RED.export.links2.generateAndAddExportInfo(l);
         }
         RED.events.emit('links:add',l);
@@ -932,6 +936,7 @@ RED.nodes = (function() {
 					createNewDefaultWorkspace();
                     loadingWorkspaces = false;
                     refreshLinksInfo();
+                    refreshDynInputsObjects_connectedTo();
 					return;
 				}
 				newNodes = JSON.parse(newNodesObj);
@@ -970,6 +975,7 @@ RED.nodes = (function() {
                     RED.notify("newNodes.workspaces is undefined, cannot import workspaces", "warning", null, 2000);
                     loadingWorkspaces = false;
                     refreshLinksInfo();
+                    refreshDynInputsObjects_connectedTo();
                     return;
                 }
             }
@@ -986,6 +992,7 @@ RED.nodes = (function() {
                 }
                 loadingWorkspaces = false;
                 refreshLinksInfo();
+                refreshDynInputsObjects_connectedTo();
                 return importNewNodes(newNodes, createNewIds);
             }
 		}
@@ -1001,7 +1008,7 @@ RED.nodes = (function() {
         //console.warn(workspaces);
         checkForAndSetNodeIsArray();
         refreshLinksInfo();
-        
+        refreshDynInputsObjects_connectedTo();
 	}
 
     function importNewNodes(nns, createNewIds, ws) { // nns = New Node s
@@ -2044,7 +2051,7 @@ RED.nodes = (function() {
                 ws.links.splice(index,1);
             }
         }
-        console.error("links removed");
+        //console.error("links removed");
         RED.events.emit("nodes:inputsUpdated", node, oldCount, newCount, linksToRemove, dynExpand);
 
         RED.view.redraw();
@@ -2067,6 +2074,7 @@ RED.nodes = (function() {
             console.warn("######### node renamed - refreshLinksInfo");
             var links = getWorkspace(node.z).links.filter(function (l) { return (l.source === node || l.target === node); });
             refreshLinksInfo(links);
+            refreshDynInputsObjects_connectedTo(links);
             RED.view.redraw_links_notations(links);
         }
 
@@ -2197,6 +2205,8 @@ RED.nodes = (function() {
 
     function refreshLinksInfo(links) { // _links allow just a set of links to be updated
         //console.warn("refreshLinksInfo:",links);
+        if (loadingWorkspaces == true) return;
+
         if (links == undefined) {
             eachLink(function (l, ws) {
                 setLinkInfo(l);
@@ -2212,6 +2222,30 @@ RED.nodes = (function() {
             for (var li = 0; li < links.length; li++) {
                 setLinkInfo(links[li]);
                 RED.export.links2.generateAndAddExportInfo(links[li]);
+            }
+        }
+    }
+    
+    function refreshDynInputsObjects_connectedTo(links) {
+        if (loadingWorkspaces == true) return;
+        
+        if (links == undefined) {
+            eachLink(function (l, ws) {
+
+                if (l.target._def.dynInputs != undefined){
+                    var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(l.target, null);
+                    l.target.RealInputs = inputCount;
+                }
+            });
+        }
+        else {
+            console.warn("refreshDynInputsObjects_connectedTo links.length:" + links.length);
+            for (var li = 0; li < links.length; li++) {
+                var l = links[li];
+                if (l.target._def.dynInputs != undefined){
+                    var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(l.target, null);
+                    l.target.RealInputs = inputCount;
+                }
             }
         }
     }
@@ -2274,7 +2308,6 @@ RED.nodes = (function() {
             tabOut,
             tabIn
         };
-        
         
     }
 

@@ -186,7 +186,9 @@ OSC.export = (function () {
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(name), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                                var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(node, null);
+                                node.RealInputs = inputCount;
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(name), inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
@@ -197,7 +199,9 @@ OSC.export = (function () {
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                            var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(node, null);
+                            node.RealInputs = inputCount;
+                            packets.add(OSC.GetCreateObjectAddr(),"ssi", n.type, n.name, inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
@@ -226,7 +230,9 @@ OSC.export = (function () {
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
-                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, fixLeadingSlash(path), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                            var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(node, null);
+                            node.RealInputs = inputCount;
+                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, fixLeadingSlash(path), inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }

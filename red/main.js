@@ -21,7 +21,7 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
-        version:5,
+        version:6,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -84,6 +84,17 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* selected wires use outline when selected, instead of 'inside line', that makes 'invalid wires' keep their color even when selected<br><br>"+
                 "* fixed annoying thing that don't allow normal keys outside the design view, that mean arrow keys can now be used while edit fields in the settings tab<br>"+
                 "&nbsp;&nbsp;that also fixes a bug that don't allow ctrl+a in the export or import dialogs, or any other dialogs.<br><br>",
+            "6":"* fix annoying bug that selects all text while moving nodes<br><br>"+
+                "* holding shift inverts the gui run/edit function temporary, so while in 'gui run' holding the shift while double click a object open the edit dialog, and while in 'gui edit' holding shift make it possible to interact with the gui object.<br><br>"+
+                "* array source wires are now yellow<br><br>"+
+                "* exported zip files containing a sketch folder can now be imported<br><br>"+
+                "* add setting @ Global-Debug'global'-'Redirect Debug', to redirect debug output from bottom 'log' to the browser development tools console,<br>"+
+                "&nbsp;&nbsp;this makes the gui much more responsive while sending a lot of messages.<br>"+
+                "&nbsp;&nbsp;note. the decoded OSC replies != OK are unaffected<br><br>"+
+                "* add setting to show/hide decoded OSC replies<br><br>"+
+                "* bottom log now have clear button @ bottom left corner when open<br><br>"+
+                "* object/node edit fields can now have popup text help, the text is defined in the node def. check AudioMixer or AudioMixerStereo for examples.<br><br>",
+            "7":"",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
@@ -253,6 +264,7 @@ RED.main = (function() {
 
     document.getElementById('btn-file-import').addEventListener('change', readSingleFile, false);
 	function readSingleFile(e) {
+        console.log("readSingleFile");
 		var file = e.target.files[0];
 		if (!file) {
 		  return;
@@ -281,9 +293,10 @@ RED.main = (function() {
             var rawContents = e.target.result;
             var zip = new JSZip();
             zip.loadAsync(rawContents).then(function(contents) {
+                //console.log(contents.files);
                 Object.keys(contents.files).forEach(function(filename) {
 
-                    if (filename.toLowerCase() == "gui_tool.json") {
+                    if (filename.toLowerCase().endsWith("gui_tool.json")) {
                         zip.file(filename).async('string').then(function(content) {
                             //console.warn(content);
                             RED.storage.loadContents(content);

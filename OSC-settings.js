@@ -28,11 +28,13 @@ RED.OSC = (function() {
         WildcardArrayObjects: true,
         OnlyShowLastDebug: false,
         ShowOutputDebug: true,
+        RedirectDebugToConsole: true,
         ShowOutputOscTxRaw: true,
         ShowOutputOscTxDecoded: true,
         ShowOutputOscTxColor: "#C7F2FF",
         ShowOutputOscRxRaw: true,
         ShowOutputOscRxDecoded: true,
+        DebugOscRxDecodedReplies: true,
         ShowOutputOscRxColor: "#FFD4F5",
         UseDebugLinkName: false,
         RootAddress: "/teensy*",
@@ -48,12 +50,14 @@ RED.OSC = (function() {
         OnlyShowLastDebug: defSettings.OnlyShowLastDebug,
         ShowOutputDebug: defSettings.ShowOutputDebug,
 
+        RedirectDebugToConsole: defSettings.RedirectDebugToConsole,
         ShowOutputOscTxRaw: defSettings.ShowOutputOscTxRaw,
         ShowOutputOscTxDecoded: defSettings.ShowOutputOscTxDecoded,
         ShowOutputOscTxColor: defSettings.ShowOutputOscTxColor,
 
         ShowOutputOscRxRaw: defSettings.ShowOutputOscRxRaw,
         ShowOutputOscRxDecoded: defSettings.ShowOutputOscRxDecoded,
+        DebugOscRxDecodedReplies: defSettings.DebugOscRxDecodedReplies,
         ShowOutputOscRxColor: defSettings.ShowOutputOscRxColor,
 
         UseDebugLinkName: defSettings.UseDebugLinkName,
@@ -90,6 +94,9 @@ RED.OSC = (function() {
         get ShowOutputDebug() { return _settings.ShowOutputDebug; },
         set ShowOutputDebug(value) { _settings.ShowOutputDebug = value; RED.storage.update();},
 
+        get RedirectDebugToConsole() { return _settings.RedirectDebugToConsole; },
+        set RedirectDebugToConsole(value) { _settings.RedirectDebugToConsole = value; RED.storage.update();},
+
         // transmitt stuff
         get ShowOutputOscTxDecoded() { return _settings.ShowOutputOscTxDecoded; },
         set ShowOutputOscTxDecoded(value) { _settings.ShowOutputOscTxDecoded = value; RED.storage.update();},
@@ -110,6 +117,8 @@ RED.OSC = (function() {
         get ShowOutputOscRxColor() { return _settings.ShowOutputOscRxColor; },
         set ShowOutputOscRxColor(value) { _settings.ShowOutputOscRxColor = value; RED.storage.update();},
 
+        get DebugOscRxDecodedReplies() { return _settings.DebugOscRxDecodedReplies; },
+        set DebugOscRxDecodedReplies(value) { _settings.DebugOscRxDecodedReplies = value; RED.storage.update();},
 
         get UseDebugLinkName() { return _settings.UseDebugLinkName; },
         set UseDebugLinkName(value) { _settings.UseDebugLinkName = value; RED.storage.update();},
@@ -150,6 +159,7 @@ RED.OSC = (function() {
                 WildcardArrayObjects: {label:"Wildcard Array Export", type:"boolean", popupText:"If checked and when doing OSC-'export' (Group), the object creating inside arrays will use wildcard.<br>Not when this is enabled the generated message will be much shorter for big arrays.<br> Disabling wildcard can be used for debugging."},
                 OnlyShowLastDebug:    {label:"Only show last", type:"boolean", popupText:"If enabled then only the last message will be shown<br>this should speed up the GUI alot"},
                 ShowOutputDebug:      {label:"Show event info", type:"boolean", popupText:"If basic debug info " + dataShownNote + clearLogNote},
+                RedirectDebugToConsole:      {label:"Redirect Debug", type:"boolean", popupText:"Redirect Debug to browser developer console"},
             }
         },
         transmitDebug:        {label:"Transmit Debug Output", expanded:true, bgColor:"#EEE",
@@ -163,6 +173,7 @@ RED.OSC = (function() {
             items: {
                 ShowOutputOscRxColor:   { label:"Receive base color", type:"color", popupText:""},
                 ShowOutputOscRxDecoded: { label:"Show JSON", type:"boolean", popupText:"If receive JSON message " + dataShownNote + clearLogNote},
+                DebugOscRxDecodedReplies: { label:"Show Decoded Replies", type:"boolean", popupText:""},
                 ShowOutputOscRxRaw:     { label:"Show raw data", type:"boolean", popupText:"If receive raw " + dataShownNote + clearLogNote},
             }
         },

@@ -342,13 +342,13 @@ RED.editor = (function() {
 		}
 
 		editing_node.bgColor = $("#node-input-color").val();
-		if (editing_node.type == "UI_ListBox")
+		/*if (editing_node.type == "UI_ListBox")
 			editing_node.itemBGcolor = $("#node-input-itemBGcolor").val();
 		else if (editing_node.type == "UI_Piano")
 		{
 			editing_node.whiteKeysColor = $("#node-input-whiteKeysColor").val();
 			editing_node.blackKeysColor = $("#node-input-blackKeysColor").val();
-		}
+		}*/
 		RED.view.redraw();
 		console.log("edit node saved!");
 		RED.storage.update();
@@ -486,21 +486,21 @@ RED.editor = (function() {
 						}
                         //console.error("typeof:" + typeof editing_node.bgColor);
 						$("#node-input-color").val(editing_node.bgColor);
-						if (editing_node.type == "UI_ListBox")
+						/*if (editing_node.type == "UI_ListBox")
 							$("#node-input-itemBGcolor").val(editing_node.itemBGcolor);
 						else if (editing_node.type == "UI_Piano")
 						{
 							$("#node-input-whiteKeysColor").val(editing_node.whiteKeysColor);
 							$("#node-input-blackKeysColor").val(editing_node.blackKeysColor);
-						}
+						}*/
 						jscolor.install();
-                        if (editing_node._def.dynInputs != undefined && RED.main.settings.LinkDropOnNodeAppend == true && 
+                        /*if (editing_node._def.dynInputs != undefined && RED.main.settings.LinkDropOnNodeAppend == true && 
                             (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true))
                         {
                             console.warn("edit dyn input object with LinkDropOnNodeAppend & DynInputAutoExpand/Reduce")
                             $("#node-input-inputs").attr("readonly", "true");
-                            $("#dialog-form").append('note. Prealocate Inputs is intended to replace the Inputs in future exports, this will make it possible to create a dyn. input object with a size bigger than the dynamic allocated, to make it possible to add patchcables on demand without futher need to change the size of the mixer in runtime.<br><br> note. Inputs is disabled when using LinkDropOnNodeAppend together with<br>DynInputAutoExpandOnLinkDrop or DynInputAutoReduceOnLinkRemove<br><br>actually I don\'t see any point of having either the settings or this Inputs field, as this could be the normal behaviour.');
-                        }
+                            
+                        }*/
 					}
                     else if (editing_link != undefined) {
                         $("#node-input-color").val(editing_link.color);
@@ -639,6 +639,9 @@ RED.editor = (function() {
             var form = $("#dialog-form");
 			$(form).html(data);
             prepareEditDialog(node, "node-input");
+            setInputPopupTexts(node);
+            if (node._def.editorhelp != undefined)
+                $("#dialog-form").append(node._def.editorhelp);
             $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
         }
         else // use advanced raw-html custom editors
@@ -653,10 +656,25 @@ RED.editor = (function() {
             
             RED.view.dialogs.getForm("dialog-form", editorType, function (d, f) {
                 prepareEditDialog(node, "node-input");
+                setInputPopupTexts(node);
+                if (node._def.editorhelp != undefined)
+                    $("#dialog-form").append(node._def.editorhelp);
                 $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
             });
         }
 	}
+    function setInputPopupTexts(node) {
+        for (var d in node._def.defaults) {
+            if (!node._def.defaults.hasOwnProperty(d)) continue;
+
+            var propEditor = node._def.defaults[d].editor;
+            if (propEditor == undefined) continue;
+            if (propEditor.help == undefined) continue;
+
+            RED.main.SetPopOver("#node-input-" + d, propEditor.help, "right");
+
+        }
+    }
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
       }
@@ -666,11 +684,12 @@ RED.editor = (function() {
         var type=(editor.type!=undefined)?editor.type:"text";
         var rowClass=(editor.rowClass!=undefined)?editor.rowClass:"form-row";
         var label=(editor.label!=undefined)?editor.label:capitalizeFirstLetter(propName);
+        var readonly=((editor.readonly!=undefined && eval(editor.readonly))?'readonly="true"':"");
 
         var html = '<div class="'+rowClass+'">\n';
         html += '<label for="node-input-'+propName+'"><i class="fa fa-tag"></i> '+label+'</label>\n';
         if (type == 'text')
-            html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off">\n';
+            html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off" '+readonly+'>\n';
         else if (type == 'color')
             html += '<a class="node-input-color-group-bg"><input id="node-input-'+propName+'" data-jscolor=""></a>\n';
 

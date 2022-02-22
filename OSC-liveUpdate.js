@@ -169,7 +169,7 @@ OSC.LiveUpdate = (function() {
         // skip non dynamic input objects
         if (node._def.dynInputs == undefined) return;
 
-        OSC.AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount + (removedLinks?(", removedLinks.length:" + removedLinks.length):""));
+        OSC.AddLineToLog(node.name + " node inputs changed from " + oldCount + " to " + newCount + (removedLinks?(", removedLinks.length:" + removedLinks.length):", remLL:0"));
         console.warn(node.name + " node inputs changed from " + oldCount + " to " + newCount);
 
         if (newCount < oldCount) { OSC.AddLineToLog("skipping because newCount < oldCount");return; }// no changes needed for now, TODO add setting so the end user could decide what happens
