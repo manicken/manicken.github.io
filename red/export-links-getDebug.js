@@ -52,7 +52,7 @@ RED.export.links.getDebug = (function () {
     }
 
     return function (link_s,options) {
-        if( options == undefined) options = {asFullPath:false, initialSpaces:0, simple:false, origin:false};
+        if( options == undefined) options = {asFullPath:false, initialSpaces:0, simple:false, origin:true};
         if (Array.isArray(link_s)) return printLinksDebug(link_s,options);
         else return printLinkDebug(link_s,options);
     };

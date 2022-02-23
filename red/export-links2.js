@@ -180,7 +180,8 @@ RED.export.links2 = (function () {
 
     
 
-    //$("#btn-debugPrintLinks").click(function() {console.warn(RED.export.links2.getDebug(RED.nodes.cwsLinks));});
+    $("#btn-debugPrintLinks2").click(function() {console.warn(RED.export.links2.getDebug(RED.nodes.cwsLinks));});
+    $("#btn-debugPrintLinks3").click(function() {console.warn(RED.nodes.cwsLinks);});
     return {
         generateAndAddExportInfo,
     };

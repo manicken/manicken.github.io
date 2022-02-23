@@ -365,12 +365,15 @@ OSC.export = (function () {
         addObjectsToPacketArray(ws, apos, '');
         var links = [];
         RED.export.links.getClassConnections(ws, links, ''); // this is a recursive function
-        //RED.export.updateNames(links);  // not needed anymore and should never be used either
         //console.log(RED.export.links.getDebug(links));
         links = RED.export.links.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
         //console.log(RED.export.links.getDebug(links));
         RED.export.links.fixTargetPortsForDynInputObjects(links);
-        //console.log(RED.export.links.degDebug(links));
+
+        setLinksExport(links);
+        // as the instancied classes gets the wrong names?
+
+        console.log(RED.export.links.getDebug(links));
         addLinksToCreateToPacketArray(acs, links);
 
         var bundle = OSC.CreateBundle(0);
@@ -386,6 +389,22 @@ OSC.export = (function () {
 
         if (getBundleOnly == true) return bundle;
         else return {bundle:bundle, aposCount:apos.length, acsCount:acs.length};
+    }
+
+    function setLinksExport(links) {
+        // first clear prev export info
+        for (var li=0;li<links.length;li++) {
+            var l = links[li];
+            if (l.invalid != undefined) continue; // skip invalid/debug info links
+            l.origin.export = [];
+        }
+        // then append the new export info
+        // to each origin link
+        for (var li=0;li<links.length;li++) {
+            var l = links[li];
+            if (l.invalid != undefined) continue; // skip invalid/debug info links
+            l.origin.export.push(l);
+        }
     }
 
     function getSimpleExport_bundle(getBundleOnly) {

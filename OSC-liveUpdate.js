@@ -66,6 +66,7 @@ OSC.LiveUpdate = (function() {
             console.log("node is still array");
         }
         else {
+
             console.log("node is still non array");
         }
         var bundle = OSC.CreateBundle();
@@ -262,6 +263,7 @@ OSC.LiveUpdate = (function() {
         }
         links = RED.export.links.expandArrays(links);
         RED.export.links.fixTargetPortsForDynInputObjects(links);
+        link.export = links; // save this so if anything changes, we have a 'old' state
         return links;
     }
 

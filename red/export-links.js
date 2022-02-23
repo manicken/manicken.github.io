@@ -9,7 +9,7 @@ RED.export.links = (function () {
         
         for (var ni = 0; ni < class_ws.nodes.length; ni++) {
             var node = RED.nodes.node(class_ws.nodes[ni].id);
-
+            //node.export = [];
             if (node._def.nonObject != undefined) continue;
             if (node.type == "TabInput") continue; 
             
@@ -37,6 +37,7 @@ RED.export.links = (function () {
             } else {
 
                 if (node.isArray) {
+                    
                     for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
                         node.isArray.i = ai;
                         links.push(...getNodeLinks(node, currPath)); 
@@ -59,10 +60,18 @@ RED.export.links = (function () {
             newLinks.push({invalid:currPath + "/" + (node.isArray?(node.isArray.name+"/i"+node.isArray.i):node.name)});
         //else
         //    newLinks.push({invalid:nodeLinks.length + "not array " + currPath + "/" + node.name});
-
+        
         for (var li = 0; li < nodeLinks.length; li++) {
-            newLinks.push(...generateExportableLinks(nodeLinks[li], currPath));
+            var link = nodeLinks[li];
+            var exportableLinks = generateExportableLinks(link, currPath);
+            
+            //exportableLinks = RED.export.links.expandArrays(exportableLinks);// for the moment this fixes array defs that the getClassConnections don't currently solve
+            //RED.export.links.fixTargetPortsForDynInputObjects(exportableLinks);
+            
+            //link.export = exportableLinks;
+            newLinks.push(...exportableLinks);
         }
+        console.log(node.export);
         return newLinks;
     }
 
