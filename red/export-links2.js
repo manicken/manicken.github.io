@@ -161,6 +161,8 @@ RED.export.links2 = (function () {
         }
     }
 
+    //function expandArrays()
+
     function generateAndAddExportInfo(link) {
         //return;
         //console.log("generateAndAddExportInfo", link);
@@ -174,11 +176,11 @@ RED.export.links2 = (function () {
 
         fixFinal_Sources_Targets(link);
     }
-    $("#btn-debugPrintLinks").click(function() {console.warn(RED.export.links2.getDebug(RED.nodes.cwsLinks));});
+    
 
     
 
-
+    //$("#btn-debugPrintLinks").click(function() {console.warn(RED.export.links2.getDebug(RED.nodes.cwsLinks));});
     return {
         generateAndAddExportInfo,
     };

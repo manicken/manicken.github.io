@@ -97,7 +97,12 @@ OSC.LiveUpdate = (function() {
 
         var bundle = OSC.CreateBundle();
         AddLinksRemovedToBundle(bundle, links);
-        bundle.add(OSC.DestroyObjectAddr, "s", node.name);
+        if (node.isArray != undefined) {
+            bundle.add(OSC.DestroyObjectAddr, "s", node.isArray.name);
+        }
+        else {
+            bundle.add(OSC.DestroyObjectAddr, "s", node.name);
+        }
         OSC.SendBundle(bundle);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
@@ -118,17 +123,21 @@ OSC.LiveUpdate = (function() {
             OSC.AddLineToLog("Warning invalid link skipped: ("+link.info.inValidText+")<br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
             return;
         }
-        if (link.info.isBus) {
+        /*if (link.info.isBus) {
             OSC.AddLineToLog("Warning (cannot create 'bus links' live yet), skipped: <br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
             return;
         }
         if (link.source.isArray != undefined || link.target.isArray != undefined) {
             OSC.AddLineToLog("Warning (cannot create 'array' links live yet), skipped: <br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
             return;
-        }
+        }*/
         
         var bundle = OSC.CreateBundle();
-        if (link.target._def.dynInputs != undefined){
+
+        console.error("TODO fix currPath for getExportableLinks");
+        var exportableLinks = getExportableLinks(link,"");
+        OSC.export.addLinksToCreateToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
+        /*if (link.target._def.dynInputs != undefined){
             
         }
             
@@ -139,23 +148,29 @@ OSC.LiveUpdate = (function() {
         else {
             var nextFreeIndex = RED.export.links.getDynInputDynSizePortStartIndex(link.target, link.source, link.sourcePort);
             bundle.add(OSC.GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, nextFreeIndex);
-        }
+        }*/
 
         OSC.SendBundle(bundle);
         
-        if (RED.OSC.settings.ShowOutputDebug == true)
-            OSC.AddLineToLog("added link [" + linkName  + "] " + RED.export.links.getDebug(link, {simple:true}));
+        //if (RED.OSC.settings.ShowOutputDebug == true)
+        //    OSC.AddLineToLog("added link [" + linkName  + "] " + RED.export.links.getDebug(link, {simple:true}));
     }
     
     function LinkRemoved(link) {
         // skip if not liveupdate
         if (RED.OSC.settings.LiveUpdate == false) return;
 
-        var linkName = RED.export.links.GetName(link);
+        /* var linkName = RED.export.links.GetName(link);
         OSC.SendMessage(OSC.DestroyObjectAddr,"s", linkName);
+*/
+        var bundle = OSC.CreateBundle();
+        console.error("TODO fix currPath for getExportableLinks");
+        var exportableLinks = getExportableLinks(link,"");
+        OSC.export.addLinksToDestroyToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
+        OSC.SendBundle(bundle);
 
-        if (RED.OSC.settings.ShowOutputDebug == true)
-            OSC.AddLineToLog("removed link [" + linkName  + "] " + RED.export.links.getDebug(link, {simple:true}));
+        //if (RED.OSC.settings.ShowOutputDebug == true)
+        //    OSC.AddLineToLog("removed link [" + linkName  + "] " + RED.export.links.getDebug(link, {simple:true}));
     }
     var NodeInputsUpdated_postponed = false;
     var NodeInputsUpdated_postponed_node = {};
@@ -194,6 +209,7 @@ OSC.LiveUpdate = (function() {
 
         var bundle = OSC.CreateBundle();
         if (removedLinks != undefined) AddLinksRemovedToBundle(bundle, removedLinks); // destroy additional links
+
         AddLinksRemovedToBundle(bundle, linksToUpdate); // destroy other links temporary
         bundle.add(OSC.DestroyObjectAddr, "s", node.name); // destroy node temporary to change number of inputs
         bundle.add(OSC.CreateObjectAddr,"ssi", node.type, node.name, newCount); // create new node with new number of inputs
@@ -205,22 +221,48 @@ OSC.LiveUpdate = (function() {
     // ***** helper functions *******
     // ******************************
     function AddLinksToCreateToBundle(bundle, links) {
+        console.log("hello");
         for (var i = 0; i < links.length; i++) {
-            var l = links[i];
+            console.error("TODO fix currPath for getExportableLinks");
+            var exportableLinks = getExportableLinks(links[i],"");
+            OSC.export.addLinksToCreateToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
+            /*var l = links[i];
             var linkName = RED.export.links.GetName(l);
             bundle.add(OSC.CreateConnectionAddr, "s", linkName);
-            bundle.add(OSC.GetConnectAddr(linkName), "sisi", l.source.name, l.sourcePort, l.target.name, l.targetPort);
+            bundle.add(OSC.GetConnectAddr(linkName), "sisi", l.source.name, l.sourcePort, l.target.name, l.targetPort);*/
         }
     }
     
     function AddLinksRemovedToBundle(bundle, links) {
+        //var pa = new PacketArray();
         for (var i = 0; i < links.length; i++) {
-            var link = links[i];
-            if (RED.OSC.settings.ShowOutputDebug == true)
+            console.error("TODO fix currPath for getExportableLinks");
+            var exportableLinks = getExportableLinks(links[i],"");
+            OSC.export.addLinksToDestroyToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
+            
+            /*if (RED.OSC.settings.ShowOutputDebug == true)
                 OSC.AddLineToLog("removed link " + RED.export.links.getDebug(link, {simple:true}));
+            
             var linkName = RED.export.links.GetName(link);
-            bundle.add(OSC.DestroyObjectAddr, "s", linkName);
+            bundle.add(OSC.DestroyObjectAddr, "s", linkName);*/
         }
+        //bundle.addPackets()
+    }
+
+    function getExportableLinks(link, currPath) {
+        var links = [];
+        if (link.source.isArray) {
+            for (var ai = 0; ai < link.source.isArray.arrayLength; ai++) {
+                link.source.isArray.i = ai;
+                links.push(...RED.export.links.generateExportableLinks(link, currPath));
+            }
+        }
+        else {
+            links.push(...RED.export.links.generateExportableLinks(link, currPath));
+        }
+        links = RED.export.links.expandArrays(links);
+        RED.export.links.fixTargetPortsForDynInputObjects(links);
+        return links;
     }
 
     function RegisterEvents() {

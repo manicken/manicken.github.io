@@ -28,7 +28,7 @@ RED.storage = (function() {
             localStorage.setItem(STORAGE_ITEM_NAME, JSON_string);
             RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON_string);
             //console.trace("localStorage write");
-            RED.notify("<strong>Saved..</strong>", "success", null, 2000, 30);
+            RED.notify("<strong>Saved..</strong>", "success", null, 2000, 70);
 		}
 	}
 	function allStorage() {

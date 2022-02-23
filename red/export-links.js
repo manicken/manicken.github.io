@@ -5,7 +5,7 @@ RED.export.links = (function () {
 
     function getClassConnections(class_ws, links, currPath) {
         //console.log("*******************************************");
-        console.error("getClassConnections  path: \"" + currPath + "\"");
+        //console.error("getClassConnections  path: \"" + currPath + "\"");
         
         for (var ni = 0; ni < class_ws.nodes.length; ni++) {
             var node = RED.nodes.node(class_ws.nodes[ni].id);
@@ -21,117 +21,110 @@ RED.export.links = (function () {
 
                 if (node.isArray) {
                     for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
-                        links.push({invalid:currPath + "/" + node.isArray.name + "/i" + ai});
+                        
+                        links.push({invalid:currPath + "/" + node.isArray.name + "/i" + ai}); // debug info
                         
                         getClassConnections(node._def.isClass, links, currPath + "/" + node.isArray.name + "/i" + ai);
+                        
                         node.isArray.i = ai;
-                        links.pushArray(getNodeLinks(node, currPath));
+                        links.push(...getNodeLinks(node, currPath));
                     }
                 }
                 else {
                     getClassConnections(node._def.isClass, links, currPath + "/" + node.name);
-                    links.pushArray(getNodeLinks(node, currPath));
+                    links.push(...getNodeLinks(node, currPath));
                 }
             } else {
 
                 if (node.isArray) {
-                    //console.error("********************" + node.name + " is array");
                     for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
                         node.isArray.i = ai;
-                        links.pushArray(getNodeLinks(node, currPath)); 
+                        links.push(...getNodeLinks(node, currPath)); 
                     }
                 }
                 else {
-                    //console.error("********************" + node.name + " is NOT array");
-                    links.pushArray(getNodeLinks(node, currPath)); 
+                    links.push(...getNodeLinks(node, currPath)); 
                 }
             }
         }
-    }
-
-    function expandBusWires(links) {
-        var newLinks = [];
-        // precheck for bus lines
-        // and expand/clone them
-        for (var li = 0; li < links.length; li++) {
-            var l = links[li];
-            if (l.info.isBus == true) {
-                console.error("*************is bus: " + RED.export.links.getDebug(l));
-                // need to expand bus links
-                if ((l.info.tabOut != undefined) && (l.info.tabIn == undefined)) { // only support this combination for now
-                    //console.error("***************cloning: " + RED.export.links.getDebug(l));
-                    for (var topi = 0; topi < l.info.tabOut.inputs; topi++) {
-                        //console.error("***********Making copy of: " + RED.export.links.getDebug(l));
-                        l = RED.export.links.copy(l);
-                        //var newSrc = RED.nodes.getWireInputSourceNode(l.info.tabOut, topi);
-                        l.tabOutPortIndex = topi;
-                        console.error("########################## setting tabOutPortIndex to " + l.tabOutPortIndex + " @ " + RED.export.links.getDebug(l));
-                        newLinks.push(l);
-                    }
-                }
-                else // only have this here for debugging proposes, should be replaced with a invalid link containing just info to show in the export
-                    newLinks.push({invalid:"//(not supported yet)" + RED.export.links.getDebug(l)});
-            }
-            else
-                newLinks.push(l);
-        }
-        return newLinks;
     }
 
     function getNodeLinks(node, currPath) {
         var ws = RED.nodes.getWorkspace(node.z);
         var nodeLinks = ws.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
         nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
-        //console.error(node.name + "\nlinks:\n" + RED.export.links.getDebug(nodeLinks));
-        console.warn(node.isArray);
-
-        
-        //console.error(node.name + "\nlinks after:\n" + RED.export.links.getDebug(nodeLinks));
         var newLinks = [];
         
-        if (nodeLinks.length != 0) // this is only a 'debug output' link
+        if (nodeLinks.length != 0) // this is only a 'debug output'-info link
             newLinks.push({invalid:currPath + "/" + (node.isArray?(node.isArray.name+"/i"+node.isArray.i):node.name)});
         //else
         //    newLinks.push({invalid:nodeLinks.length + "not array " + currPath + "/" + node.name});
 
-        nodeLinks = expandBusWires(nodeLinks);
         for (var li = 0; li < nodeLinks.length; li++) {
-            var l = RED.export.links.copy(nodeLinks[li], currPath);
-            var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z, true);
-            //console.warn(RED.export.links.getDebug(l));
-            ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
-            if (ws)
-            {
-                var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
-                //console.error("############################################## " + l.tabOutPortIndex + " # " + tabOutPortIndex + " #" + port.node.name);
-                getFinalSource(l,ws,tabOutPortIndex);
-            }
-            if (node.isArray != undefined) {
-                l.sourceIsArray = node.isArray;
-                l.sourcePath = l.sourcePath.replace(node.isArray.newName, node.isArray.name + "/i" + node.isArray.i);
-                l.sourceName = l.source.name.replace(node.isArray.newName, node.isArray.name + "/i" + node.isArray.i);
+            newLinks.push(...generateExportableLinks(nodeLinks[li], currPath));
+        }
+        return newLinks;
+    }
 
-            }else {
-                l.sourceName = l.source.name;
-            }
-            ws = l.target._def.isClass;//RED.export.isClass(l.target.type);
-            if (ws)
+    function generateExportableLinks(link,currPath) {
+        var newLinks = [];
+        if (link.info.isBus == true) {
+            if ((link.info.tabOut != undefined) && (link.info.tabIn == undefined)) // only support this combination for now
             {
-                getFinalTarget_s(ws,l, newLinks, currPath);
+                for (var topi = 0; topi < link.info.tabOut.inputs; topi++)
+                {
+                    var nl = copy(link,currPath);
+                    nl.tabOutPortIndex = topi;
+                    newLinks.push(...fixFinal_Sources_Targets(nl,currPath));
+                }
+            }
+            else if ((link.info.tabOut != undefined) && (link.info.tabIn != undefined)) { // only this would also be supported as buswires are only virtual objects
+                newLinks.push({invalid:"//(connecting buswires between classes, not yet supported)" + RED.export.links.getDebug(link)});
             }
             else {
-                if (targetIsArray != undefined && node.isArray != undefined) {
-                    l.targetName = l.target.name.replace(targetIsArray.newName, targetIsArray.name + "/i" + node.isArray.i);
-                }
-                else
-                    l.targetName = l.target.name;
-                newLinks.push(l);
+                newLinks.push({invalid:"//(invalid wire, cannot connect AudioStream object to a class buswire input)" + RED.export.links.getDebug(link)});
             }
-            // this needs to be taken care of before 'for (var li = 0; li < nodeLinks.length; li++)'
-            // in some kind of prescan
-            
         }
-        
+        else {
+            newLinks.push(...fixFinal_Sources_Targets(link,currPath));
+        }
+        return newLinks;
+    }
+
+    function fixFinal_Sources_Targets(link,currPath) {
+        var newLinks = [];
+        var nl = copy(link, currPath);
+        var targetIsArray = RED.export.isNameDeclarationArray(nl.target.name, nl.target.z, true);
+        //console.warn(RED.export.links.getDebug(l));
+        if (nl.source._def.isClass != undefined)
+        {
+            var tabOutPortIndex = nl.tabOutPortIndex?nl.tabOutPortIndex:0;
+            //console.error("############################################## " + l.tabOutPortIndex + " # " + tabOutPortIndex + " #" + port.node.name);
+            getFinalSource(nl,nl.source._def.isClass,tabOutPortIndex);
+            if (link.source.isArray != undefined) {
+                nl.sourceIsArray = link.source.isArray;
+                nl.sourcePath = nl.sourcePath.replace(link.source.isArray.newName, link.source.isArray.name + "/i" + link.source.isArray.i);
+            }
+        }
+        else if (link.source.isArray != undefined) {
+            nl.sourceIsArray = link.source.isArray;
+            nl.sourceName = nl.source.name.replace(link.source.isArray.newName, link.source.isArray.name + "/i" + link.source.isArray.i);
+        }
+        else {
+            nl.sourceName = nl.source.name;
+        }
+
+        if (nl.target._def.isClass != undefined) {
+            getFinalTarget_s(nl.target._def.isClass,nl, newLinks, currPath);
+        }
+        else {
+            if (targetIsArray != undefined && link.source.isArray != undefined) {
+                nl.targetName = nl.target.name.replace(targetIsArray.newName, targetIsArray.name + "/i" + link.source.isArray.i);
+            }
+            else
+                nl.targetName = nl.target.name;
+            newLinks.push(nl);
+        }
         return newLinks;
     }
 
@@ -145,6 +138,7 @@ RED.export.links = (function () {
         var ws = RED.nodes.getWorkspace(dynInputObj.z);
         var links = ws.links.filter(function(l) {return l.target === dynInputObj;});
         links = links.sort(function (a,b) {return (parseInt(a.targetPort) - parseInt(b.targetPort)); });
+        
         //console.log("getDynInputDynSizePortStartIndex \n" + RED.export.links.getDebug(links));
         var offset = 0;
         for (var li = 0; li < links.length; li++) {
@@ -216,19 +210,19 @@ RED.export.links = (function () {
             //console.error("common Links: " + commonLinkCount);
             //if (l.groupFirstLink == undefined)
             var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l.origin.source, l.target);
-            console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ groupItemCount:" + groupItemCount);
+            //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ groupItemCount:" + groupItemCount);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
             //packets.add("//************* array source and dyn input  " + l.sourcePath + "/" + l.sourceName + " -> " + l.targetPath + "/" + l.targetName);
             if (l.groupFirstLink == undefined) {
-                console.error("######################## l.groupFirstLink == undefined " + RED.export.links.getDebug(l));
+                //console.error("######################## l.groupFirstLink == undefined " + RED.export.links.getDebug(l));
                 var startIndex = getDynInputDynSizePortStartIndex(l.target, l.origin?l.origin.source:l.source, l.origin?l.origin.sourcePort:l.sourcePort);
             }
             else {
-                console.error("######################## l.groupFirstLink != undefined " + RED.export.links.getDebug(l));
+                //console.error("######################## l.groupFirstLink != undefined " + RED.export.links.getDebug(l));
                 var startIndex = getDynInputDynSizePortStartIndex(l.groupFirstLink.target, l.groupFirstLink.origin?l.groupFirstLink.origin.source:l.groupFirstLink.source, l.groupFirstLink.origin?l.groupFirstLink.origin.sourcePort:l.groupFirstLink.sourcePort);
             }
-            console.error("############## startindex #######" + startIndex);
+            //console.error("############## startindex #######" + startIndex);
             //packets.add("// dstPort: " + dstPort + " ");
             if (pathIndices.length == 0 && nameIndices.length == 1) {
                 var isArraySn = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
@@ -236,7 +230,7 @@ RED.export.links = (function () {
                     l.targetPort = startIndex + nameIndices[0];
                 else
                     l.targetPort = startIndex + nameIndices[0]*(groupItemCount/isArraySn.arrayLength) + ((l.tabOutPortIndex!=undefined)?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
-                console.warn("01 pathIndices.length == 0 && ["+nameIndices.join(",")+"].length == 1 ");
+                //console.warn("01 pathIndices.length == 0 && ["+nameIndices.join(",")+"].length == 1 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 0) {
                 var isArraySn = RED.export.isNameDeclarationArray(l.origin.source.name, l.source.z, true);
@@ -247,26 +241,26 @@ RED.export.links = (function () {
                         //console.error("############" + startIndex  + " + " + pathIndices[0] +" * (" + groupItemCount+"/"+isArraySn.arrayLength + ") +" + "("+l.tabOutPortIndex+"?"+l.tabOutPortIndex+":("+l.origin+"?"+l.origin.sourcePort+":"+l.sourcePort+"))");
                         l.targetPort = startIndex + pathIndices[0]*(groupItemCount/isArraySn.arrayLength) + ((l.tabOutPortIndex!=undefined)?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
                     }
-                    console.warn("l.source.z != l.target.z ");
+                    //console.warn("l.source.z != l.target.z ");
                 }
                 else {
                     //l.targetPort = dstPort + pathIndices[0];
-                    console.warn("l.source.z == l.target.z ");
+                    //console.warn("l.source.z == l.target.z ");
                 }
-                console.warn("10 ["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 ");
+                //console.warn("10 ["+pathIndices.join(",")+"].length == 1 && nameIndices.length == 0 ");
             }
             else if (pathIndices.length == 1 && nameIndices.length == 1)  {
                 
                 var isArraySn = RED.export.isNameDeclarationArray(l.source.name, l.source.z, true);
                 if (l.source.z != l.target.z) {
                     l.targetPort = startIndex + isArraySn.arrayLength*pathIndices[0] + nameIndices[0];
-                    console.warn("l.source.z != l.target.z ");
+                    //console.warn("l.source.z != l.target.z ");
                 }
                 else {
                     l.targetPort = startIndex + nameIndices[0];
-                    console.warn("l.source.z == l.target.z ");
+                    //console.warn("l.source.z == l.target.z ");
                 }
-                console.warn("11 ["+pathIndices.join(",") + "].length == 1 && [" + nameIndices.join(",")+"].length == 1 ");
+                //console.warn("11 ["+pathIndices.join(",") + "].length == 1 && [" + nameIndices.join(",")+"].length == 1 ");
             }
             else {
                 if (l.groupFirstLink == undefined) {
@@ -275,9 +269,9 @@ RED.export.links = (function () {
                 else {
                     l.targetPort = startIndex + (l.tabOutPortIndex?l.tabOutPortIndex:(l.origin?l.origin.sourcePort:l.sourcePort));
                 }
-                console.warn("pathIndices.length == 0 && nameIndices.length == 0 ");
+                //console.warn("pathIndices.length == 0 && nameIndices.length == 0 ");
             }
-            console.warn("final >>" + RED.export.links.getDebug(l) + "<<");
+            //console.warn("final >>" + RED.export.links.getDebug(l) + "<<");
         }
     }
 
@@ -579,9 +573,11 @@ RED.export.links = (function () {
         return newL;
     }
 
+    $("#btn-debugPrintLinks").click(function() {console.warn(RED.export.links.getDebug(RED.nodes.cwsLinks));});
     return {
         getClassConnections,
-        expandBusWires,
+        getNodeLinks,
+        generateExportableLinks,
         getDynInputDynSizePortStartIndex,
         getSourceSize,
         fixTargetPortsForDynInputObjects,
@@ -593,3 +589,95 @@ RED.export.links = (function () {
         tagSameSourceLinksThatConnectsTo,
     };
 })(); // RED.export.links = (function () {
+
+
+/* old getNodeLinks
+
+    function getNodeLinks(node, currPath) {
+        var ws = RED.nodes.getWorkspace(node.z);
+        var nodeLinks = ws.links.filter(function(l) { return (l.source === node) && (l.target.type != "TabOutput"); });
+        nodeLinks.sort(function (a,b) {return a.target.y-b.target.y});
+        //console.error(node.name + "\nlinks:\n" + RED.export.links.getDebug(nodeLinks));
+        //console.warn(node.isArray);
+
+        
+        //console.error(node.name + "\nlinks after:\n" + RED.export.links.getDebug(nodeLinks));
+        var newLinks = [];
+        
+        if (nodeLinks.length != 0) // this is only a 'debug output'-info link
+            newLinks.push({invalid:currPath + "/" + (node.isArray?(node.isArray.name+"/i"+node.isArray.i):node.name)});
+        //else
+        //    newLinks.push({invalid:nodeLinks.length + "not array " + currPath + "/" + node.name});
+
+        //nodeLinks = expandBusWires(nodeLinks);
+        for (var li = 0; li < nodeLinks.length; li++) {
+            //newLinks.push(...generateExportableLinks(nodeLinks[li], currPath));
+            var l = RED.export.links.copy(nodeLinks[li], currPath);
+            var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z, true);
+            //console.warn(RED.export.links.getDebug(l));
+            ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
+            if (ws)
+            {
+                var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
+                //console.error("############################################## " + l.tabOutPortIndex + " # " + tabOutPortIndex + " #" + port.node.name);
+                getFinalSource(l,ws,tabOutPortIndex);
+            }
+            if (node.isArray != undefined) {
+                l.sourceIsArray = node.isArray;
+                l.sourcePath = l.sourcePath.replace(node.isArray.newName, node.isArray.name + "/i" + node.isArray.i);
+                l.sourceName = l.source.name.replace(node.isArray.newName, node.isArray.name + "/i" + node.isArray.i);
+
+            }else {
+                l.sourceName = l.source.name;
+            }
+            ws = l.target._def.isClass;//RED.export.isClass(l.target.type);
+            if (ws)
+            {
+                getFinalTarget_s(ws,l, newLinks, currPath);
+            }
+            else {
+                if (targetIsArray != undefined && node.isArray != undefined) {
+                    l.targetName = l.target.name.replace(targetIsArray.newName, targetIsArray.name + "/i" + node.isArray.i);
+                }
+                else
+                    l.targetName = l.target.name;
+                newLinks.push(l);
+            }
+            // this needs to be taken care of before 'for (var li = 0; li < nodeLinks.length; li++)'
+            // in some kind of prescan
+            
+        }
+        
+        return newLinks;
+    }
+
+    // now this function is baked into the generateExportableLinks
+    function expandBusWires(links) {
+        var newLinks = [];
+        // precheck for bus lines
+        // and expand/clone them
+        for (var li = 0; li < links.length; li++) {
+            var l = links[li];
+            if (l.info.isBus == true) {
+                //console.error("*************is bus: " + RED.export.links.getDebug(l));
+                // need to expand bus links
+                if ((l.info.tabOut != undefined) && (l.info.tabIn == undefined)) { // only support this combination for now
+                    //console.error("***************cloning: " + RED.export.links.getDebug(l));
+                    for (var topi = 0; topi < l.info.tabOut.inputs; topi++) {
+                        //console.error("***********Making copy of: " + RED.export.links.getDebug(l));
+                        l = RED.export.links.copy(l);
+                        //var newSrc = RED.nodes.getWireInputSourceNode(l.info.tabOut, topi);
+                        l.tabOutPortIndex = topi;
+                        //console.error("########################## setting tabOutPortIndex to " + l.tabOutPortIndex + " @ " + RED.export.links.getDebug(l));
+                        newLinks.push(l);
+                    }
+                }
+                else // only have this here for debugging proposes, should be replaced with a invalid link containing just info to show in the export
+                    newLinks.push({invalid:"//(not supported yet)" + RED.export.links.getDebug(l)});
+            }
+            else
+                newLinks.push(l);
+        }
+        return newLinks;
+    }
+    */

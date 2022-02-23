@@ -374,7 +374,7 @@ RED.nodes = (function() {
             setLinkInfo(l);
 
             
-            RED.export.links2.generateAndAddExportInfo(l);
+            //RED.export.links2.generateAndAddExportInfo(l); // should be used when exporting links instead, this was only a dev-test
         }
         RED.events.emit('links:add',l);
 	}
@@ -474,11 +474,12 @@ RED.nodes = (function() {
 
 	function removeLink(l) {
         var ws = getWorkspace(l.source.z);
+        RED.events.emit('links:remove',l); // OSC liveupdate need this to happen before actually removing the link
 		var index = ws.links.indexOf(l);
 		if (index != -1) {
 			ws.links.splice(index,1);
 		}
-        RED.events.emit('links:remove',l);
+        
 	}
 
 	function refreshValidation() {
@@ -2166,9 +2167,15 @@ RED.nodes = (function() {
         var ws = getWorkspace(node.z);
 
         if (node._def.dynInputs == undefined) return; // not a dyn inputs object, failsafe abort
-        if (node.inputs == 1) return; // don't change below 1 input, off course we could but could confuse users, and also the OSC dyn mixers
+        if (node.inputs == 1) return; // don't change below 1 input
         var links = ws.links.filter(function(l) { return (l.target === node); });
-        if (links.length == 0) return;
+        if (links.length == 0) {
+            if (newCount != node.inputs) {
+                var oldCount = node.inputs;
+                node.inputs = 1; // don't change below 1 input
+                return {oldCount,newCount:1};
+            }
+        }
         links.sort(function(a,b){ return (a.targetPort - b.targetPort); });
         var newCount = Number(links[links.length-1].targetPort)+1;
         if (newCount != node.inputs) {
@@ -2210,7 +2217,7 @@ RED.nodes = (function() {
         if (links == undefined) {
             eachLink(function (l, ws) {
                 setLinkInfo(l);
-                RED.export.links2.generateAndAddExportInfo(l);
+                //RED.export.links2.generateAndAddExportInfo(l); // should be used when exporting links instead, this was only a dev-test
             });
             /*for (var wsi=0;wsi<workspaces.length;wsi++) {
                 var ws = workspaces[wsi];
@@ -2221,7 +2228,7 @@ RED.nodes = (function() {
         else {
             for (var li = 0; li < links.length; li++) {
                 setLinkInfo(links[li]);
-                RED.export.links2.generateAndAddExportInfo(links[li]);
+                //RED.export.links2.generateAndAddExportInfo(links[li]); // should be used when exporting links instead, this was only a dev-test
             }
         }
     }

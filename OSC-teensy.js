@@ -226,7 +226,7 @@ var OSC = (function() {
                     if (i < oscRx.packets.length - 1)
                         rxDecoded += "<br>";
                 }*/
-                rxDecoded = GetBundleCompactForm(oscRx,true);
+                rxDecoded = GetBundleCompactForm(oscRx,RED.OSC.settings.RedirectDebugToConsole == false);
             }
             if ((RED.OSC.settings.ShowOutputOscRxRaw == true) || (RED.OSC.settings.ShowOutputOscRxDecoded == true)) {
                 AddLineToLog(rxDecoded, undefined, getCurrentRxLogStyle());
@@ -299,13 +299,13 @@ var OSC = (function() {
         delete b.add;
         delete b.addPackets;
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(GetBundleCompactForm(b,true), undefined, getCurrentTxLogStyle());
+            AddLineToLog(GetBundleCompactForm(b,RED.OSC.settings.RedirectDebugToConsole == false), undefined, getCurrentTxLogStyle());
         SendData(CreateBundleData(b, true));
     }
     var oscOptions = {metadata:true};
     function SendPacket(p) {
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(GetPacketCompactForm(p,true), undefined, getCurrentTxLogStyle());
+            AddLineToLog(GetPacketCompactForm(p,RED.OSC.settings.RedirectDebugToConsole == false), undefined, getCurrentTxLogStyle());
         SendData(osc.writePacket(p,oscOptions));
     }
     function SendMessage(address, valueTypes, ...values) {
@@ -317,7 +317,7 @@ var OSC = (function() {
     function CreateMessageData(address, valueTypes, ...values)  {
         var p = CreatePacket(address, valueTypes, ...values);
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
-            AddLineToLog(GetPacketCompactForm(p,true), undefined, getCurrentTxLogStyle());
+            AddLineToLog(GetPacketCompactForm(p,RED.OSC.settings.RedirectDebugToConsole == false), undefined, getCurrentTxLogStyle());
         return osc.writePacket(p);
     }
 
@@ -325,7 +325,7 @@ var OSC = (function() {
         delete b.add;
         delete b.addPackets;
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true && dontShowDebug == undefined)
-            AddLineToLog(GetBundleCompactForm(b,true), undefined, getCurrentTxLogStyle());
+            AddLineToLog(GetBundleCompactForm(b,RED.OSC.settings.RedirectDebugToConsole == false), undefined, getCurrentTxLogStyle());
         return osc.writeBundle(b,oscOptions)
     }
 
@@ -465,19 +465,20 @@ var OSC = (function() {
     var llt = 0;
     var bgColor1 = "#f5f6fd";
 
-    var rootStyle =
+    var rootStyle ='display: inline-block;'+
                 'padding: 5px;'+
                 /*'margin-bottom: 20px;'+*/
                 'border: 1px solid #fbeed5;'+
                 '-webkit-border-radius: 4px;'+
                 '-moz-border-radius: 4px;'+
-                'border-radius: 4px;';
+                'border-radius: 4px;'+
+                'text-decoration: none;';
 
     function AddLineToLog(text, type, style) {
         if (type != undefined && style == undefined)
         {
             if (RED.OSC.settings.RedirectDebugToConsole == true) {
-                console.log(text.split('<br>').join("\n"));
+                console.log('%c'+text.split('<br>').join("\n"), rootStyle );
                 return;
             }
             
@@ -487,7 +488,8 @@ var OSC = (function() {
             if (RED.OSC.settings.RedirectDebugToConsole == true) {
                 //console.warn(text);
                 if (text.endsWith('<br>')) text = text.substring(0, text.length - 4);
-                console.log('%c'+text.split('<br>').join("\n"), rootStyle + style);
+
+                console.log('%c'+text.split('<br>').join("\n").split(":").join("_"), rootStyle + style);
                 return;
             }
             text = '<div class="alert alert-info1 message" style="'+style+'">'+text+"</div>";
