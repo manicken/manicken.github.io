@@ -191,7 +191,7 @@ RED.export.links = (function () {
         return toAdd;
     }
 
-    function tagSameSourceLinksThatConnectsTo(_links,link) {
+    function tagSame_SourceTarget_Links(_links,link) {
         var links = _links.filter(function(l) {
             return (l.invalid == undefined) &&
                    (l.origin.source === link.origin.source) &&
@@ -226,7 +226,7 @@ RED.export.links = (function () {
             
             //console.error("common Links: " + commonLinkCount);
             //if (l.groupFirstLink == undefined)
-            var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l);
+            var groupItemCount = tagSame_SourceTarget_Links(links,l);
             //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ groupItemCount:" + groupItemCount);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
