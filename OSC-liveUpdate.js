@@ -55,6 +55,8 @@ OSC.LiveUpdate = (function() {
         // 2. array object rename
         // 3. array resized
         // 4. to/from array happens
+        var bundle = OSC.CreateBundle();
+        var links = RED.nodes.cwsLinks.filter(function(d) { return (d.source === node) || (d.target === node);});
 
         if (node.name.includes("[") == true && oldName.includes("[") == false) {
             console.log("node is now array");
@@ -64,14 +66,21 @@ OSC.LiveUpdate = (function() {
         }
         else if (node.name.includes("[") == true && oldName.includes("[") == true) {
             console.log("node is still array");
+            var exportableLinks = getExportableLinksFromLinks(links,"");
+            OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
+            
         }
         else {
 
             console.log("node is still non array");
-        }
-        var bundle = OSC.CreateBundle();
 
-        var links = RED.nodes.cwsLinks.filter(function(d) { return (d.source === node) || (d.target === node);});
+            var exportableLinks = getExportableLinksFromLinks(links,"");
+            OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
+            
+        }
+        OSC.SendBundle(bundle);
+
+        /*
 		for (var i=0;i<links.length;i++) {
             var link = links[i];
             
@@ -87,7 +96,7 @@ OSC.LiveUpdate = (function() {
         OSC.SendBundle(bundle);
 
         if (RED.OSC.settings.ShowOutputDebug == true)
-            OSC.AddLineToLog("renamed node from " + oldName + " to " + node.newName);
+            OSC.AddLineToLog("renamed node from " + oldName + " to " + node.newName);*/
     }
 
     function NodeRemoved(node, links) {
@@ -222,6 +231,14 @@ OSC.LiveUpdate = (function() {
             bundle.add(OSC.DestroyObjectAddr, "s", linkName);*/
         }
         //bundle.addPackets()
+    }
+
+    function getExportableLinksFromLinks(links, currPath) {
+        var exportableLinks = [];
+        for (var li=0;li<links.length;li++) {
+            exportableLinks.push(...getExportableLinks(links[li],currPath));
+        }
+        return exportableLinks;
     }
 
     function getExportableLinks(link, currPath) {

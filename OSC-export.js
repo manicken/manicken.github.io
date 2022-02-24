@@ -240,6 +240,32 @@ OSC.export = (function () {
         }
     }
 
+    // need function
+    function addLinksToRenameToPacketArray(packets, links, newName, oldName) {
+        for (var li = 0; li < links.length; li++) {
+            addLinkToRenameToPacketArray(packets, links[li], newName, oldName);
+        }
+    }
+    function addLinkToRenameToPacketArray(packets, l, newName, oldName) {
+        if (l.invalid != undefined) {
+            packets.add("//********************************************");
+            packets.add("//  " + l.invalid);
+            packets.add("//********************************************");
+            return;
+        }
+        if ((l.target.type == "TabOutput") || (l.source.type == "TabInput")) return; // failsafe for TabInput or TabOutput objects
+
+        var newLinkName = RED.export.links.GetName(l);
+        var linkPath = l.linkPath||""; // make this work for standard links
+        var oldLinkName = newLinkName.replace(newName, oldName);
+        
+        if (linkPath == "") {
+            packets.add(OSC.RenameObjectAddr,"ss", oldLinkName, newLinkName);
+        }
+        else {
+            packets.add(OSC.RenameObjectAddr,"ss", linkPath + '/' + oldLinkName, linkPath + '/' + newLinkName);
+        }
+    }
     
     /**
      * 
@@ -276,6 +302,7 @@ OSC.export = (function () {
         //packets.add("//");
 
         var linkName = RED.export.links.GetName(l);
+        l.exportLinkName = linkName;
         var sourcePath = l.sourcePath||"";
         var targetPath = l.targetPath||"";
         var linkPath = l.linkPath||""; // make this work for standard links
@@ -445,6 +472,7 @@ OSC.export = (function () {
         InitButtonPopups,
         addLinksToCreateToPacketArray,
         addLinksToDestroyToPacketArray,
+        addLinksToRenameToPacketArray,
         get ActiveAudioMain() {return ActiveAudioMain;},
     };
 })();
