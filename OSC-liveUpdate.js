@@ -118,60 +118,31 @@ OSC.LiveUpdate = (function() {
                               NodeInputsUpdated_postponed_oldCount,
                               NodeInputsUpdated_postponed_newCount,
                               NodeInputsUpdated_postponed_removedLinks);
+            return; // this would only happen when adding new links dynamically, and thus NodeInputsUpdated will also add the new links
         }
 
         if (link.info.valid == false) {
             OSC.AddLineToLog("Warning invalid link skipped: ("+link.info.inValidText+")<br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
             return;
         }
-        /*if (link.info.isBus) {
-            OSC.AddLineToLog("Warning (cannot create 'bus links' live yet), skipped: <br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
-            return;
-        }
-        if (link.source.isArray != undefined || link.target.isArray != undefined) {
-            OSC.AddLineToLog("Warning (cannot create 'array' links live yet), skipped: <br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
-            return;
-        }*/
-        
+
         var bundle = OSC.CreateBundle();
 
         console.error("TODO fix currPath for getExportableLinks");
         var exportableLinks = getExportableLinks(link,"");
         OSC.export.addLinksToCreateToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
-        /*if (link.target._def.dynInputs != undefined){
-            
-        }
-            
-        var linkName = RED.export.links.GetName(link);
-        bundle.add(OSC.CreateConnectionAddr, "s", linkName);
-        if (link.target._def.dynInputs == undefined)
-            bundle.add(OSC.GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, link.targetPort);
-        else {
-            var nextFreeIndex = RED.export.links.getDynInputDynSizePortStartIndex(link.target, link.source, link.sourcePort);
-            bundle.add(OSC.GetConnectAddr(linkName), "sisi", link.source.name, link.sourcePort, link.target.name, nextFreeIndex);
-        }*/
-
-        OSC.SendBundle(bundle);
         
-        //if (RED.OSC.settings.ShowOutputDebug == true)
-        //    OSC.AddLineToLog("added link [" + linkName  + "] " + RED.export.links.getDebug(link, {simple:true}));
+        OSC.SendBundle(bundle);
     }
     
     function LinkRemoved(link) {
         // skip if not liveupdate
         if (RED.OSC.settings.LiveUpdate == false) return;
 
-        /* var linkName = RED.export.links.GetName(link);
-        OSC.SendMessage(OSC.DestroyObjectAddr,"s", linkName);
-*/
         var bundle = OSC.CreateBundle();
-        //console.error("TODO fix currPath for getExportableLinks");
-        //var exportableLinks = getExportableLinks(link,"");
+
         OSC.export.addLinksToDestroyToPacketArray(bundle, link.export); // actually bundle have the save add function that PacketArray has
         OSC.SendBundle(bundle);
-
-        //if (RED.OSC.settings.ShowOutputDebug == true)
-        //    OSC.AddLineToLog("removed link [" + linkName  + "] " + RED.export.links.getDebug(link, {simple:true}));
     }
     var NodeInputsUpdated_postponed = false;
     var NodeInputsUpdated_postponed_node = {};
@@ -239,6 +210,9 @@ OSC.LiveUpdate = (function() {
         for (var i = 0; i < links.length; i++) {
             //console.error("TODO fix currPath for getExportableLinks");
             //var exportableLinks = getExportableLinks(links[i],"");
+
+            if (links[i].export == undefined) {console.log("link have no export data:" + RED.export.links.getDebug(links[i])); continue;} // this happens when new links are added, think that's because of some remove order problem
+
             OSC.export.addLinksToDestroyToPacketArray(bundle, links[i].export); // actually bundle have the save add function that PacketArray has
             
             /*if (RED.OSC.settings.ShowOutputDebug == true)
