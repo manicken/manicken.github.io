@@ -43,6 +43,9 @@ OSC.LiveUpdate = (function() {
         
     }
 
+    function extractArraySize(str) {
+        return str.substring(str.indexOf('[')+1, str.indexOf(']'));
+    }
     function NodeRenamed(node, oldName) {
         // skip if not liveupdate
         if (RED.OSC.settings.LiveUpdate == false) return;
@@ -57,28 +60,51 @@ OSC.LiveUpdate = (function() {
         // 4. to/from array happens
         var bundle = OSC.CreateBundle();
         var links = RED.nodes.cwsLinks.filter(function(d) { return (d.source === node) || (d.target === node);});
+        var oldIsArray = oldName.includes("[");
+        var newIsArray = node.name.includes("[");
 
-        if (node.name.includes("[") == true && oldName.includes("[") == false) {
+        if ((newIsArray == true) && (oldIsArray == false)) {
             console.log("node is now array");
             RED.bottombar.info.addContent("WARNING still no support for converting node to array");
+            return;
         }
-        else if (node.name.includes("[") == false && oldName.includes("[") == true) {
+        else if ((newIsArray == false) && (oldIsArray == true)) {
             console.log("node was array");
             RED.bottombar.info.addContent("WARNING still no support for converting node from array");
+            return;
         }
-        else if (node.name.includes("[") == true && oldName.includes("[") == true) {
+        else if ((newIsArray == true) && (oldIsArray == true)) {
             console.log("node is still array");
-            var exportableLinks = getExportableLinksFromLinks(links,"");
-            OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
-            
+            // todo take care of array resize here
+            var oldSize = extractArraySize(oldName);
+            var newSize = extractArraySize(node.name);
+            var oldNameOnly = oldName.substring(0,oldName.indexOf('['));
+            var newNameOnly = node.name.substring(0,node.name.indexOf('['));
+            if (oldSize != newSize) {
+                console.log("array resized from:" + oldSize + " to " + newSize);
+                RED.bottombar.info.addContent("WARNING still no support for changing array size");
+                return;
+                // this will either add new items to the group 
+                if (newSize > oldSize) {
+
+                } else { // or remove existing
+
+                }
+                
+            }
+                
+            if (oldNameOnly != newNameOnly) {
+                console.log("array name from:" + oldNameOnly + " to " + newNameOnly);
+                var exportableLinks = getExportableLinksFromLinks(links,"");
+                OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
+                bundle.add(OSC.RenameObjectAddr, "ss", oldName, node.newName);
+            }
         }
         else {
-
             console.log("node is still non array");
-
             var exportableLinks = getExportableLinksFromLinks(links,"");
             OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
-            
+            bundle.add(OSC.RenameObjectAddr, "ss", oldName, node.newName);
         }
         OSC.SendBundle(bundle);
 
