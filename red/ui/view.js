@@ -1816,6 +1816,10 @@ RED.view = (function() {
 		}
 		if (selected_link != undefined) {
 			// reenable input port
+            if (RED.OSC.settings.LiveUpdate == true && selected_link.export == undefined) {
+                RED.notify("cannot remove this unexported link, while using OSC live update<br>please make a complete OSC export first", "warning", null, 4000, 300);
+                return;
+            }
             resetAndFreeInputPort(selected_link);
 			RED.nodes.removeLink(selected_link);
 			removedLinks.push(selected_link);

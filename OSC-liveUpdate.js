@@ -165,9 +165,9 @@ OSC.LiveUpdate = (function() {
         OSC.SendMessage(OSC.DestroyObjectAddr,"s", linkName);
 */
         var bundle = OSC.CreateBundle();
-        console.error("TODO fix currPath for getExportableLinks");
-        var exportableLinks = getExportableLinks(link,"");
-        OSC.export.addLinksToDestroyToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
+        //console.error("TODO fix currPath for getExportableLinks");
+        //var exportableLinks = getExportableLinks(link,"");
+        OSC.export.addLinksToDestroyToPacketArray(bundle, link.export); // actually bundle have the save add function that PacketArray has
         OSC.SendBundle(bundle);
 
         //if (RED.OSC.settings.ShowOutputDebug == true)
@@ -237,9 +237,9 @@ OSC.LiveUpdate = (function() {
     function AddLinksRemovedToBundle(bundle, links) {
         //var pa = new PacketArray();
         for (var i = 0; i < links.length; i++) {
-            console.error("TODO fix currPath for getExportableLinks");
-            var exportableLinks = getExportableLinks(links[i],"");
-            OSC.export.addLinksToDestroyToPacketArray(bundle, exportableLinks); // actually bundle have the save add function that PacketArray has
+            //console.error("TODO fix currPath for getExportableLinks");
+            //var exportableLinks = getExportableLinks(links[i],"");
+            OSC.export.addLinksToDestroyToPacketArray(bundle, links[i].export); // actually bundle have the save add function that PacketArray has
             
             /*if (RED.OSC.settings.ShowOutputDebug == true)
                 OSC.AddLineToLog("removed link " + RED.export.links.getDebug(link, {simple:true}));
