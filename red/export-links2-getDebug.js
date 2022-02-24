@@ -40,7 +40,7 @@ RED.export.links2.getDebug = (function () {
         dbg += getExtendedLinkDebug(l,afp) + (l.tabOutPortIndex!=undefined?('", tabOutPortIndex:' + l.tabOutPortIndex):"") /*+ ", "+ getLink_InfoDebug(l)*/;
         
         if (l.groupFirstLink)
-            dbg += "\n############ groupFirstLink: " + getExtendedLinkDebug(l.groupFirstLink,afp);
+            dbg += "  ############ groupFirstLink: " + getExtendedLinkDebug(l.groupFirstLink,afp);
         return dbg + "\n";
     }
 

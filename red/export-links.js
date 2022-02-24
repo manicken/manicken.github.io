@@ -19,7 +19,7 @@ RED.export.links = (function () {
 
             if (node._def.isClass) {
 
-                if (node.isArray) {
+                if (node.isArray != undefined) {
                     for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
                         
                         links.push({invalid:currPath + "/" + node.isArray.name + "/i" + ai}); // debug info
@@ -36,7 +36,7 @@ RED.export.links = (function () {
                 }
             } else {
 
-                if (node.isArray) {
+                if (node.isArray != undefined) {
                     
                     for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
                         node.isArray.i = ai;
@@ -191,8 +191,16 @@ RED.export.links = (function () {
         return toAdd;
     }
 
-    function tagSameSourceLinksThatConnectsTo(_links,source,target) {
-        var links = _links.filter(function(l) { return (l.invalid == undefined) && (l.origin.source === source) && (l.target === target); });
+    function tagSameSourceLinksThatConnectsTo(_links,link) {
+        var links = _links.filter(function(l) {
+            return (l.invalid == undefined) &&
+                   (l.origin.source === link.origin.source) &&
+                   (l.target === link.target) &&
+                   (l.linkPath == link.linkPath);
+                   /*
+                   (l.sourcePath == link.sourcePath) && // could surely use linkpath instead of theese two
+                   (l.targetPath == link.targetPath);*/
+        });
         links.sort(function(a,b) { return a.sourcePort-b.sourcePort;});
 
         for (var i = 1; i < links.length; i++) {
@@ -218,7 +226,7 @@ RED.export.links = (function () {
             
             //console.error("common Links: " + commonLinkCount);
             //if (l.groupFirstLink == undefined)
-            var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l.origin.source, l.target);
+            var groupItemCount = tagSameSourceLinksThatConnectsTo(links,l);
             //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ groupItemCount:" + groupItemCount);
             var pathIndices = getOSCIndices(l.sourcePath);
             var nameIndices = getOSCIndices(l.sourceName);
@@ -595,7 +603,6 @@ RED.export.links = (function () {
         copy,
         getFinalSource,
         getFinalTarget_s,
-        tagSameSourceLinksThatConnectsTo,
     };
 })(); // RED.export.links = (function () {
 

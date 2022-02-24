@@ -367,8 +367,9 @@ OSC.export = (function () {
         RED.export.links.getClassConnections(ws, links, ''); // this is a recursive function
         //console.log(RED.export.links.getDebug(links));
         links = RED.export.links.expandArrays(links);// for the moment this fixes array defs that the getClassConnections don't currently solve
-        //console.log(RED.export.links.getDebug(links));
+        console.log(RED.export.links.getDebug(links));
         RED.export.links.fixTargetPortsForDynInputObjects(links);
+        console.log(RED.export.links.getDebug(links));
 
         setLinksExport(links);
         // as the instancied classes gets the wrong names?
