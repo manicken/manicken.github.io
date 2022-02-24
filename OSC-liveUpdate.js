@@ -60,9 +60,11 @@ OSC.LiveUpdate = (function() {
 
         if (node.name.includes("[") == true && oldName.includes("[") == false) {
             console.log("node is now array");
+            RED.bottombar.info.addContent("WARNING still no support for converting node to array");
         }
         else if (node.name.includes("[") == false && oldName.includes("[") == true) {
             console.log("node was array");
+            RED.bottombar.info.addContent("WARNING still no support for converting node from array");
         }
         else if (node.name.includes("[") == true && oldName.includes("[") == true) {
             console.log("node is still array");
