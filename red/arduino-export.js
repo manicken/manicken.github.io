@@ -19,6 +19,7 @@
 
 RED.arduino.export = (function () {
     const warningClassUse = " // warning this is referring to a class, which is not direct supported in simple export";
+	const DynAudioMixers = ["AudioMixer","AudioMixerStereo"];
 
     /**
    * this take a multiline text, 
@@ -215,10 +216,10 @@ RED.arduino.export = (function () {
     });
     function export_simple() {
 
+		var useDynMixers = RED.arduino.settings.UseVariableMixers; // set to true to assume that variable-width mixers are built into the Audio library
         var minorIncrement = RED.arduino.settings.CodeIndentations;
         var majorIncrement = minorIncrement * 2;
 
-        
         const t0 = performance.now();
         RED.storage.update();
 
@@ -288,7 +289,7 @@ RED.arduino.export = (function () {
                 // generate code for audio processing node instance
                 if (node._def.isClass != undefined)//RED.nodes.isClass(n.type))
                     cppAPN += warningClassUse + "\n";
-                cppAPN += getTypeName(nns, n);
+                cppAPN += getTypeName(nns, n, useDynMixers);
                 var name = RED.nodes.make_name(n)
                 cppAPN += name + "; ";
                 for (var j = n.id.length; j < 14; j++) cppAPN += " ";
@@ -383,7 +384,7 @@ RED.arduino.export = (function () {
         }
 
         var cpp = getCppHeader(jsonString, includes, false);
-        if (mixervariants != undefined && mixervariants.length > 0) {
+        if (!useDynMixers && mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants); // variants 0 and 4 are taken care of in Mixers.GetCode
             cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
             cpp += mfiles.cpp.replace('#include "mixers.h"', '') + "\n";
@@ -422,14 +423,14 @@ RED.arduino.export = (function () {
         showIOcheckWarning(function() {export_classBased(true);});
     });
     function export_classBased(generateZip) {
+		var useDynMixers = RED.arduino.settings.UseVariableMixers; // set to true to assume that variable-width mixers are built into the Audio library
         var minorIncrement = RED.arduino.settings.CodeIndentations;
         var majorIncrement = minorIncrement * 2;
         const t0 = performance.now();
         RED.storage.update();
         if (generateZip == undefined) generateZip = false;
 
-        
-        var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
+		var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 
         var nns = RED.nodes.createCompleteNodeSet({newVer:false});
         // sort is made inside createCompleteNodeSet
@@ -481,7 +482,7 @@ RED.arduino.export = (function () {
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
         }
-        if (mixervariants != undefined && mixervariants.length > 0) {
+        if (!useDynMixers && mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants);
             var file = getNewWsCppFile("mixers.h", mfiles.h);
             file.header = mfiles.copyrightNote;
@@ -609,10 +610,14 @@ RED.arduino.export = (function () {
                     if (isArray) {
                         n.name = isArray.newName;
                     }
-
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getTypeName(nns, n);
+					
+					var typeName = getTypeName(nns, n, useDynMixers);
+                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + typeName;
+					typeName = typeName.trim();
                     //console.log(">>>" + n.type +"<<<"); // debug test
                     var name = RED.nodes.make_name(n)
+					if (DynAudioMixers.includes(typeName))
+						name += "{" + getDynamicInputCount(n,true).toString() + "}";
 
                     if (n.comment && (n.comment.trim().length != 0))
                         newWsCpp.contents += name + "; /* " + n.comment + "*/\n";
@@ -975,10 +980,10 @@ RED.arduino.export = (function () {
      * @param {*} nns nodeArray
      * @param {Node} n node
      */
-     function getTypeName(nns, n) {
+     function getTypeName(nns, n, useDynMixers) {
         var cpp = "";
         var typeLength = n.type.length;
-        if (n.type == "AudioMixer") {
+        if (!useDynMixers && n.type == "AudioMixer") {
 
             var tmplDef = getDynamicInputCount(n,true).toString();
             //console.warn(n.name + " " + tmplDef )
