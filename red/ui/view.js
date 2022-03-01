@@ -2543,6 +2543,8 @@ RED.view = (function() {
 		{
 			l = d.name + " (" + d.valueType + ")=" + d.value;
 		}
+        if (d.arraySize != undefined && d.arraySize > 1 && d.name.includes('[') == false)
+            l = d.name ? (d.name + '['+d.arraySize+']'): "";
 
 		if (d.inputs != undefined) // Jannik
 			var inputs = d.inputs;
@@ -2690,7 +2692,11 @@ RED.view = (function() {
 				
 				return nodeText + "";
 			}
-			nodeText = d.name ? d.name : "";// d.id;
+            if (d.arraySize != undefined && d.arraySize > 1 && d.name.includes('[') == false) {
+                nodeText = d.name ? (d.name + '['+d.arraySize+']'): "";
+            }
+            else
+			    nodeText = d.name ? d.name : "";// d.id;
 			return nodeText;
 		})
 		.attr('class',function(d){
@@ -2704,19 +2710,19 @@ RED.view = (function() {
 		if (d.textSize != undefined)
 			nodeRects.attr("style", "font-size: "+d.textSize+"px;");
 
-		if (d.textDimensions != undefined && d.oldNodeText != undefined)
+		/*if (d.textDimensions != undefined && d.oldNodeText != undefined)
 		{
 			if ((nodeText.localeCompare(d.oldNodeText) != 0) ||
 				((d.textSize != undefined) && (d.textSize != d.oldTextSize)))
 				d.textDimensions = calculateTextSize(nodeText, d.textSize);
 		}
-		else
+		else*/
 			d.textDimensions = calculateTextSize(nodeText, d.textSize);
 
-		d.oldNodeText = nodeText;
+		//d.oldNodeText = nodeText;
 
-		if (d.textSize != undefined)
-			d.oldTextSize = parseFloat(d.textSize);
+		//if (d.textSize != undefined)
+		//	d.oldTextSize = parseFloat(d.textSize);
 
 		//var textSize = calculateTextSize(nodeText, d.textSize);
 		
