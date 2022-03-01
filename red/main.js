@@ -388,7 +388,7 @@ RED.main = (function() {
                             function(err) {
                                 RED.notify("could not download json" + err, "info", null, 3000);
                             }
-                        );
+                        ,20000);
                         return;
                     }
                     var contents = $("script[data-container-name|='"+id+"']").html();
