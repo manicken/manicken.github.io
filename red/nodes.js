@@ -597,10 +597,6 @@ RED.nodes = (function() {
 		var node = {};
 		node.id = n.id;
 		node.type = n.type;
-        if (n._def.isClass != undefined)
-            node.isClass = true; // just for the export to quick check if class
-        else
-            node.isClass = false;
 
 		for (var d in n._def.defaults) {
 			if (n._def.defaults.hasOwnProperty(d)) {
@@ -1982,15 +1978,7 @@ RED.nodes = (function() {
 			registerType(ws.label, getClassNodeDefinition(ws.label, inputCount, outputCount, ws), "classNodes");
 		}
 	}
-    function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
-        //console.error("getClassNodeDefinition",ws);
-        return {
-            defaults:{
-                name:{type:"c_cpp_name"},
-                id:{}
-            },
-            shortName: shortName, isClass:ws, inputs:inputCount, outputs:outputCount ,category:"tabs",color: RED.main.classColor ,icon:"arrow-in.png"};
-    }
+    
 	/*function checkIfTypeShouldBeAddedToUsedCat(nt)
 	{
 		if (nt == "TabInput") return false;
@@ -2059,6 +2047,8 @@ RED.nodes = (function() {
     }
     function NodeRenamed(node, oldName) {
         node.isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
+        if (node.isArray != undefined) node.arraySize = node.isArray.arrayLength;
+
         if (node.type == "ConstValue") {
             var findConstUsage = "[" + oldName + "]";
             var ws = getWorkspace(node.z); // consts allways on the same workspace/tab, in the same class 
@@ -2068,6 +2058,8 @@ RED.nodes = (function() {
                     //RED.events.emit("nodes:renamed", nodes[ni], nodes[ni].name);
                     ws.nodes[ni].name = ws.nodes[ni].name.replace(findConstUsage, "[" + node.name + "]");
                     ws.nodes[ni].isArray = RED.export.isNameDeclarationArray(ws.nodes[ni].name, ws.nodes[ni].z, true);
+                    if (ws.nodes[ni].isArray != undefined) ws.nodes[ni].arraySize = ws.nodes[ni].isArray.arrayLength;
+
                     RED.view.redraw_node(ws.nodes[ni]);
                 }
             }
@@ -2089,6 +2081,8 @@ RED.nodes = (function() {
                 if (ws.nodes[ni].name.includes(findConstUsage)) {
                 
                     ws.nodes[ni].isArray = RED.export.isNameDeclarationArray(ws.nodes[ni].name, ws.nodes[ni].z, true);
+                    if (ws.nodes[ni].isArray != undefined) ws.nodes[ni].arraySize = ws.nodes[ni].isArray.arrayLength;
+
                     console.warn("found ", ws.nodes[ni], " applying new const value");
                     //RED.view.redraw_node(nodes[ni]);
                 }
@@ -2105,6 +2099,8 @@ RED.nodes = (function() {
                 if (ws.nodes[ni].name.includes(findConstUsage)) {
                     ws.nodes[ni].name = ws.nodes[ni].name.replace(findConstUsage, "[" + node.value + "]");
                     ws.nodes[ni].isArray = RED.export.isNameDeclarationArray(ws.nodes[ni].name, ws.nodes[ni].z, true);
+                    if (ws.nodes[ni].isArray != undefined) ws.nodes[ni].arraySize = ws.nodes[ni].isArray.arrayLength;
+                    
                     console.warn("found ", ws.nodes[ni], " applying new const value");
                     RED.view.redraw_node(ws.nodes[ni]);
                 }
@@ -2323,6 +2319,7 @@ RED.nodes = (function() {
         eachNode(function(n,ws) {
             if (n._def.nonObject != undefined) return; // skip 'non objects'(AudioObjects) 
             n.isArray = RED.export.isNameDeclarationArray(n.name, ws.id, true);
+            if (n.isArray != undefined) n.arraySize = n.isArray.arrayLength;
         });
     }
     function getNodeInstancesOfType(type) {

@@ -215,8 +215,7 @@ RED.main = (function() {
     }
 	//NOTE: code generation save function have moved to arduino-export.js
 	
-	//var classColor = "#E6E0F8"; // standard
-	var classColor = "#ccffcc"; // new
+	
 	var requirements;
 	$('#btn-help').click(function(){showHelp();});
 
@@ -974,8 +973,7 @@ RED.main = (function() {
 		settings:settings,
 		settingsCategory:settingsCategory,
         settingsEditor:settingsEditor,
-		
-		classColor:classColor,
+
 		requirements:requirements,
 		print:PrintElem,
 		download:download,

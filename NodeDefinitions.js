@@ -28,13 +28,15 @@ var dynInputMixers_RealInputs_Help="this is to show the real input count of the 
 // instead of hardcoding it into the editor.js module
 var dynInputMixers_Inputs_ReadOnly="RED.main.settings.LinkDropOnNodeAppend == true && (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true)";
 
+
+
 var UiTypeBase = {
     "defaults":{
         "name":{},
         "tag":{"value":""},
         "id":{"noEdit":""},
         "comment":{},
-        "color":{"type":"color"},
+        "color":{"editor":{"type":"color"}},
         "w":{"value":100, "minval":5, "type":"int"},
         "h":{"value":30, "minval":5, "type":"int"},
         "textSize":{"value":14, "minval":5, "type":"int"},
@@ -54,7 +56,7 @@ var AudioTypeBase = {
         "name":{"type":"c_cpp_name_no_array"},
         "id":{"noEdit":""},
         "comment":{},
-        "color":{"type":"color"},
+        "color":{"editor":{"type":"color"}},
     },
     "editor":"autogen",
     "shortName":"newType",
@@ -65,7 +67,7 @@ var AudioTypeBase = {
     "color":"#E6E0F8",
     "icon":"arrow-in.png"
 };
-var arraySize_Help = "selects the array size,<br>a value of 0 or 1 mean no array<br>the max value is 255";
+var arraySize_Help = "(not in use yet, as there is a lot of dependencies on the old style)<br>selects the array size,<br>a value of 0 or 1 mean no array<br>the max value is 255";
 
 var AudioTypeArrayBase = {
     ...AudioTypeBase,
@@ -80,6 +82,16 @@ var AudioTypeArrayBase = {
         }
     }
 };
+
+function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
+    //console.error("getClassNodeDefinition",ws);
+    return {
+        ...AudioTypeArrayBase,
+        shortName: shortName,
+        isClass:ws, inputs:inputCount, outputs:outputCount,
+        category:"tabs",color: "#ccffcc" ,icon:"arrow-in.png"
+    };
+}
 
 var NodeDefinitions = {
     "manickenNodes": {

@@ -502,9 +502,7 @@ RED.editor = (function() {
                             
                         }*/
 					}
-                    else if (editing_link != undefined) {
-                        $("#node-input-color").val(editing_link.color);
-                    }
+                    
 				},
 				close: function(e) {
 					RED.keyboard.enable();
@@ -691,7 +689,8 @@ RED.editor = (function() {
         if (type == 'text')
             html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off" '+readonly+'>\n';
         else if (type == 'color')
-            html += '<a class="node-input-color-group-bg"><input id="node-input-'+propName+'" data-jscolor=""></a>\n';
+            //html += '<a class="node-input-color-group-bg"><input id="node-input-'+propName+'" data-jscolor=""></a>\n';
+            html += '<input id="node-input-'+propName+'" data-jscolor="" class="jscolor jscolor-active">\n';
 
         
         html += '</div>\n'
