@@ -1,0 +1,2604 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "OSC": {},
+        "arduino": {
+            "ProjectName": "GroupBasedDesign",
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "BiDirDataWebSocketBridge": {
+            "MidiDeviceOut": 1
+        },
+        "workspaces": {},
+        "sidebar": {},
+        "palette": {},
+        "editor": {},
+        "devTest": {},
+        "IndexedDBfiles": {
+            "testFileNames": "testFile.txt"
+        },
+        "NodeDefGenerator": {},
+        "NodeDefManager": {},
+        "NodeHelpManager": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "f063b7c9.3ec2c8",
+            "label": "MainWithGroupsOnly",
+            "nodes": [
+                {
+                    "id": "NoteGen_group1",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "Voice voices[8]",
+                    "comment": "",
+                    "w": 1362,
+                    "h": 637,
+                    "textSize": 14,
+                    "nodes": [
+                        "Voice_ClassComment1",
+                        "VFOenvelope",
+                        "Voice_MixerX1",
+                        "NoteGen_code1",
+                        "VFOfilter",
+                        "VFOfilterMix",
+                        "NoteGen_group2",
+                        "NoteGen_mixer2",
+                        "NoteGen_userObject3"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 1838,
+                    "y": 430,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "rgba(184,255,201,0.69)",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_group2",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "VFO vfo[2]",
+                    "comment": "",
+                    "w": 631,
+                    "h": 361,
+                    "textSize": 14,
+                    "nodes": [
+                        "NoteGen_waveformMod1",
+                        "NoteGen_waveformMod2",
+                        "NoteGen_waveformMod3",
+                        "NoteGen_waveformMod4",
+                        "NoteGen_string1",
+                        "NoteGen_noise1",
+                        "NoteGen_pink1",
+                        "NoteGen_tonesweep1",
+                        "NoteGen_mixer4_1",
+                        "NoteGen_mixer4_2",
+                        "NoteGen_code2",
+                        "NoteGen_ClassComment1",
+                        "NoteGen_mixer1",
+                        "NoteGen_Junction1"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "parentGroup": "NoteGen_group1",
+                    "x": 1650,
+                    "y": 345,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "rgba(221,255,187,1)",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_group3",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "LFO_A lfoA[2]",
+                    "comment": "",
+                    "w": 580,
+                    "h": 384,
+                    "textSize": 14,
+                    "nodes": [
+                        "NoteGen_dc1",
+                        "NoteGen_waveformMod5",
+                        "NoteGen_waveformMod6",
+                        "NoteGen_waveformMod7",
+                        "NoteGen_waveformMod8",
+                        "NoteGen_ClassComment2",
+                        "NoteGen_mixer4_3",
+                        "NoteGen_code3"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 320,
+                    "y": 235,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "rgba(179,247,255,0.76)",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_group4",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "LFO_B lfoB[2]",
+                    "comment": "",
+                    "w": 474,
+                    "h": 322,
+                    "textSize": 14,
+                    "nodes": [
+                        "NoteGen_waveformMod9",
+                        "NoteGen_waveformMod10",
+                        "NoteGen_mixer5",
+                        "NoteGen_ClassComment3",
+                        "NoteGen_code4"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 272.1428680419922,
+                    "y": 670,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "rgba(202,179,255,0.66)",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_scriptBtn1",
+                    "type": "UI_ScriptButton",
+                    "isClass": false,
+                    "name": "auto place full size piano - script1",
+                    "comment": "var niw = 150; // new item width\nvar nih = 150; // new item height\nvar nis = 0; // item spacing\nvar count = 11;\nvar newType = \"UI_Piano\";\n\n// note that all positions x and y \n// are based from the middle of the rects\n\n//RED.view.PianoNodeListTemp is used\n// to store the prev. added items (sliders)\n// so they can be removed before the script is run\n// again (to avoid \"duplicates\")\n// this list is NOT saved between instances of this \"program\"\n\nif (d.nodes == undefined)\n    d.nodes = [];\nelse // prev items exists\n{\n    // this clears previously added items\n    for (var i = 0; i < d.nodes.length; i++)\n    {\n        removeNode(d.nodes[i]);\n    }\n    d.nodes = [];\n}\nredraw(true);\nconsole.warn(\"script name:\" + d.name +\":\"+ d.x + \":\" + d.y + \":\" + d.w + \":\" +d.h);\nfor (var i = 0; i < count; i++)\n{\n    var newPiano = AddNewNode(0, 0, newType);\n    newPiano.name = \"octave\" + i;\n    newPiano.midiCh = 0;\n    newPiano.octave = i;\n    newPiano.sendCommand = '\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"'\n    newPiano.h = nih;\n    newPiano.w = niw;\n    if (posMode === 2)\n    {\n        newPiano.x = i*(niw+nis) + (d.x-d.w/2 + niw/2);\n        newPiano.y = (d.y+d.h/2+nih/2);\n    }\n    else\n    {\n        newPiano.x = i*(niw+nis) + (d.x);\n        newPiano.y = (d.y+d.h);\n    }\n    newPiano.blackKeysWidthDiff = 10;\n    newPiano.dirty = true;\n    \n    newPiano.parentGroup = d;\n    d.nodes.push(newPiano);\n    \n    //RED.view.PianoNodeListTemp.push(newPiano);\n    \n}\nredraw(true);",
+                    "w": 299,
+                    "h": 30,
+                    "textSize": 14,
+                    "nodes": [
+                        "MainWithGroupsOnly_Piano1",
+                        "MainWithGroupsOnly_Piano2",
+                        "MainWithGroupsOnly_Piano3",
+                        "MainWithGroupsOnly_Piano4",
+                        "MainWithGroupsOnly_Piano5",
+                        "MainWithGroupsOnly_Piano6",
+                        "MainWithGroupsOnly_Piano7",
+                        "MainWithGroupsOnly_Piano8",
+                        "MainWithGroupsOnly_Piano9",
+                        "MainWithGroupsOnly_Piano10",
+                        "MainWithGroupsOnly_Piano11"
+                    ],
+                    "x": 445,
+                    "y": 1025,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#DDFFBB",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano1",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave0",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 0,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 370.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano2",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave1",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 1,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 520.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano3",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave2",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 2,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 670.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano4",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave3",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 3,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 820.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano5",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave4",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 4,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 970.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano6",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave5",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 5,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 1120.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano7",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave6",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 6,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 1270.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano8",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave7",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 7,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 1420.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano9",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave8",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 8,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 1570.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano10",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave9",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 9,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 1720.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "MainWithGroupsOnly_Piano11",
+                    "type": "UI_Piano",
+                    "isClass": false,
+                    "name": "octave10",
+                    "comment": "",
+                    "w": 150,
+                    "h": 150,
+                    "textSize": 14,
+                    "midiCh": 0,
+                    "midiId": "0",
+                    "octave": 10,
+                    "sendCommand": "\"midiSend(\"+(d.keyDown+d.midiCh)+\",\"+(d.octave*12+d.keyIndex) +\",127)\"",
+                    "headerHeight": 30,
+                    "whiteKeysColor": "#FFFFFF",
+                    "blackKeysColor": "#A0A0A0",
+                    "blackKeysWidthDiff": 10,
+                    "x": 1870.5,
+                    "y": 1115,
+                    "parentGroup": "MainWithGroupsOnly_scriptBtn1",
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#F6F8BC",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_dc1",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "pulseFilterDutyCycle",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 130,
+                    "y": 240,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_waveformMod8:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_ClassComment3",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is LFO with 2 modulators (saw,sampleHold)",
+                    "parentGroup": "NoteGen_group4",
+                    "x": 270,
+                    "y": 565,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_waveformMod10",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sawMod",
+                    "parentGroup": "NoteGen_group4",
+                    "x": 230,
+                    "y": 615,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer5:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod9",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sampleholdMod",
+                    "comment": "",
+                    "parentGroup": "NoteGen_group4",
+                    "x": 200,
+                    "y": 665,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer5:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_ClassComment2",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is LFO with 4 modulated filter generators (sine,square,pulse,triangle)",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 305,
+                    "y": 100,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_waveformMod7",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sineFilter",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 345,
+                    "y": 160,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod6",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "squareFilter",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 340,
+                    "y": 195,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_3:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod8",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "pulseFilter",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 345,
+                    "y": 235,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_3:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod5",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "triangleFilter",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 340,
+                    "y": 270,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_3:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_code3",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    sineFilter.begin(WAVEFORM_SINE);\n    squareFilter.begin(WAVEFORM_SQUARE);\n    pulseFilter.begin(WAVEFORM_PULSE);\n    triangleFilter.begin(WAVEFORM_TRIANGLE);\n    filterMix.gain(0, 0.25);\n    filterMix.gain(1, 0.25);\n    filterMix.gain(2, 0.25);\n    filterMix.gain(3, 0.25);\n}",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 350,
+                    "y": 330,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_code4",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    sawMod.begin(WAVEFORM_SAWTOOTH);\n    sampleholdMod.begin(WAVEFORM_SAMPLE_HOLD);\n    modMix.gain(0, 0.5);\n    modMix.gain(1, 0.5);\n}",
+                    "parentGroup": "NoteGen_group4",
+                    "x": 330,
+                    "y": 725,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_mixer5",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "modMix",
+                    "inputs": "2",
+                    "parentGroup": "NoteGen_group4",
+                    "x": 415,
+                    "y": 640,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_userObject2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer4_3",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "filterMix",
+                    "parentGroup": "NoteGen_group3",
+                    "x": 540,
+                    "y": 215,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_userObject1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_userObject2",
+                    "type": "AudioStreamObject",
+                    "isClass": false,
+                    "name": "arrayOut(Splitter)",
+                    "subType": "",
+                    "includeFile": "",
+                    "inputs": "1",
+                    "outputs": "2",
+                    "comment": "",
+                    "x": 600,
+                    "y": 640,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#CAB3FF",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_4:1",
+                            "NoteGen_mixer4_5:1"
+                        ],
+                        [
+                            "NoteGen_mixer4:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_userObject1",
+                    "type": "AudioStreamObject",
+                    "isClass": false,
+                    "name": "arrayOut(Splitter)",
+                    "subType": "",
+                    "includeFile": "",
+                    "inputs": "1",
+                    "outputs": "2",
+                    "comment": "",
+                    "x": 700,
+                    "y": 215,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#B3F7FF",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_4:0",
+                            "NoteGen_mixer4_5:0"
+                        ],
+                        [
+                            "NoteGen_mixer4:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_dc2",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "VFOtuningA",
+                    "comment": "",
+                    "x": 745,
+                    "y": 305,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_4:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_dc4",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "PBend",
+                    "comment": "",
+                    "x": 730,
+                    "y": 355,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_4:3",
+                            "NoteGen_mixer4_5:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_dc3",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "VFOtuningB",
+                    "comment": "",
+                    "x": 740,
+                    "y": 410,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_5:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_sgtl5000_1",
+                    "type": "AudioControlSGTL5000",
+                    "isClass": false,
+                    "name": "sgtl5000_1",
+                    "x": 880,
+                    "y": 90,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_Comment1",
+                    "type": "Comment",
+                    "isClass": false,
+                    "name": "\"kd5rxt-mark\" made the structure that i base this demoflow on2",
+                    "x": 1010,
+                    "y": 20,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_mixer4_4",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "LFOmodMixA",
+                    "comment": "",
+                    "x": 1000,
+                    "y": 305,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_userObject3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer4_5",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "LFOmodMixB",
+                    "comment": "",
+                    "x": 1000,
+                    "y": 405,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_userObject3:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer4",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "LFOfilterMixC",
+                    "comment": "",
+                    "inputs": "2",
+                    "x": 1005,
+                    "y": 490,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "VFOfilter:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_userObject3",
+                    "type": "AudioStreamObject",
+                    "isClass": false,
+                    "name": "arrayIn(Joiner)",
+                    "subType": "",
+                    "includeFile": "",
+                    "inputs": "2",
+                    "outputs": "1",
+                    "comment": "",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 1245,
+                    "y": 355,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#DDFFBB",
+                    "wires": [
+                        [
+                            "NoteGen_Junction1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_Junction1",
+                    "type": "JunctionLR",
+                    "isClass": false,
+                    "name": "Junction",
+                    "comment": "",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1475,
+                    "y": 300,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#4D54FF",
+                    "wires": [
+                        [
+                            "NoteGen_waveformMod1:0",
+                            "NoteGen_waveformMod2:0",
+                            "NoteGen_waveformMod3:0",
+                            "NoteGen_waveformMod4:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_code2",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    sine.begin(WAVEFORM_SINE);\n    square.begin(WAVEFORM_SQUARE);\n    triangle.begin(WAVEFORM_TRIANGLE);\n    saw.begin(WAVEFORM_SAWTOOTH);\n    string.noteOff(0);\n    white.amplitude(0);\n    pink.amplitude(0);\n    for (int i = 0; i < 4; i++)\n    {\n        mix1.gain(i, 0.125);\n        mix2.gain(i, 0.125);\n    }\n}",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1460,
+                    "y": 425,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_ClassComment1",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is a VFO with mod:(sine, square, triangle, saw) + string,whiteNoise,pinkNoise and sweeper",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1680,
+                    "y": 205,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#CCFFCC",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sine",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 245,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod2",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "square",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 280,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod3",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "triangle",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 315,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_1:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_waveformMod4",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "saw",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 350,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_1:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_string1",
+                    "type": "AudioSynthKarplusStrong",
+                    "isClass": false,
+                    "name": "string",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 385,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_noise1",
+                    "type": "AudioSynthNoiseWhite",
+                    "isClass": false,
+                    "name": "white",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 420,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_2:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_pink1",
+                    "type": "AudioSynthNoisePink",
+                    "isClass": false,
+                    "name": "pink",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 455,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_2:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_tonesweep1",
+                    "type": "AudioSynthToneSweep",
+                    "isClass": false,
+                    "name": "sweeper",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1655,
+                    "y": 490,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer4_2:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer4_1",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "mix1",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1790,
+                    "y": 300,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer4_2",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "mix2",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1785,
+                    "y": 435,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": "2",
+                    "parentGroup": "NoteGen_group2",
+                    "x": 1905,
+                    "y": 370,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_mixer2",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "vfo_mixer",
+                    "comment": "",
+                    "inputs": "1",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2040,
+                    "y": 390,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_MixerX1:0",
+                            "VFOenvelope:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "VFOenvelope",
+                    "type": "AudioEffectEnvelope",
+                    "isClass": false,
+                    "name": "VFOenvelope",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2180,
+                    "y": 430,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Voice_MixerX1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin ()\n{\n    VFO1.begin();\n    VFO2.begin();\n    waveMix.gain(0, 0.25);\n    waveMix.gain(1, 0.25);\n    waveMix.gain(2, 0.25);\n    waveMix.gain(3, 0.25);\n    VFOenvelopeMix.gain(0, 0.5);\n    VFOenvelopeMix.gain(1, 0.5);\n    VFOfilterMix.gain(0, 0.25);\n    VFOfilterMix.gain(1, 0.25);\n    VFOfilterMix.gain(2, 0.25);\n    VFOfilterMix.gain(3, 0.25);\n}",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2260,
+                    "y": 310,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Voice_MixerX1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "VFOenvelopeMix",
+                    "inputs": "2",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2225,
+                    "y": 375,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "VFOfilter:0",
+                            "VFOfilterMix:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "VFOfilter",
+                    "type": "AudioFilterStateVariable",
+                    "isClass": false,
+                    "name": "VFOfilter",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2275,
+                    "y": 510,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "VFOfilterMix:1"
+                        ],
+                        [
+                            "VFOfilterMix:2"
+                        ],
+                        [
+                            "VFOfilterMix:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Voice_ClassComment1",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is a voice with two VFO:s, envelope, vfo-filter",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2300,
+                    "y": 255,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "VFOfilterMix",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "VFOfilterMix",
+                    "comment": "",
+                    "parentGroup": "NoteGen_group1",
+                    "x": 2440,
+                    "y": 480,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_mixer3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "MainWithGroupsOnly_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    LFO_A1.begin();\n    LFO_A2.begin();\n    LFO_B1.begin();\n    LFO_B2.begin();\n    for (int i = 0; i < 16; i++)\n    {\n        voices[i].begin();\n        mixFinal.gain(i, 1.0/16); // set equal gain\n    }\n    for (int i = 0; i < 4; i++)\n    {\n         LFOmodMixA.gain(i, 0.25);\n         LFOmodMixB.gain(i, 0.25);\n    }\n    LFOfilterMixC.gain(0, 0.5);\n    LFOfilterMixC.gain(1, 0.5);\n}",
+                    "x": 2665,
+                    "y": 370,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "NoteGen_mixer3",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixFinal",
+                    "inputs": "1",
+                    "x": 2665,
+                    "y": 480,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_amp1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_amp1",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "ampFinal",
+                    "comment": "this is used for easier gain adj. of mixFinal",
+                    "x": 2825,
+                    "y": 480,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "NoteGen_i2s1:0",
+                            "NoteGen_i2s1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "NoteGen_i2s1",
+                    "type": "AudioOutputI2S",
+                    "isClass": false,
+                    "name": "i2s3",
+                    "x": 2990,
+                    "y": 475,
+                    "z": "f063b7c9.3ec2c8",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ],
+            "links": [],
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "guiEditMode": false,
+                "workspaceBgColor": "#FFF",
+                "scaleFactor": 0.5,
+                "gridMinorColor": "#eee",
+                "gridMajorColor": "#ddd"
+            }
+        },
+        {
+            "type": "tab",
+            "id": "d6e5c179.63802",
+            "label": "MainWithGroupsOnlyNoSubArrays",
+            "nodes": [
+                {
+                    "id": "Sheet_1_group1",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "Voice voices[8]",
+                    "comment": "",
+                    "w": 1362,
+                    "h": 866,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_ClassComment3",
+                        "Sheet_1_envelope1",
+                        "Sheet_1_mixer4",
+                        "Sheet_1_code3",
+                        "Sheet_1_filter1",
+                        "Sheet_1_mixer4_6",
+                        "Sheet_1_group2",
+                        "Sheet_1_mixer3",
+                        "Sheet_1_group7"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 1885,
+                    "y": 599,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(184,255,201,0.69)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_group2",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "VFO vfo[2]",
+                    "comment": "",
+                    "w": 631,
+                    "h": 361,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_waveformMod5",
+                        "Sheet_1_waveformMod6",
+                        "Sheet_1_waveformMod7",
+                        "Sheet_1_waveformMod8",
+                        "Sheet_1_string1",
+                        "Sheet_1_noise1",
+                        "Sheet_1_pink1",
+                        "Sheet_1_tonesweep1",
+                        "Sheet_1_mixer4_4",
+                        "Sheet_1_mixer4_5",
+                        "Sheet_1_code2",
+                        "Sheet_1_ClassComment2",
+                        "Sheet_1_mixer2",
+                        "Sheet_1_Junction1"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 1570,
+                    "y": 400,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(221,255,187,1)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_group3",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "LFO_A lfoA1",
+                    "comment": "",
+                    "w": 580,
+                    "h": 317,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_dc1",
+                        "Sheet_1_waveformMod4",
+                        "Sheet_1_waveformMod2",
+                        "Sheet_1_waveformMod1",
+                        "Sheet_1_waveformMod3",
+                        "Sheet_1_ClassComment1",
+                        "Sheet_1_mixer4_1",
+                        "Sheet_1_code1"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 345,
+                    "y": 215,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(179,247,255,0.76)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_group4",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "LFO_B lfoB1",
+                    "comment": "",
+                    "w": 474,
+                    "h": 248,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_waveformMod9",
+                        "Sheet_1_waveformMod10",
+                        "Sheet_1_mixer6",
+                        "Sheet_1_ClassComment4",
+                        "Sheet_1_code4"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 320,
+                    "y": 865,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(202,179,255,0.66)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_group5",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "LFO_B lfoB2",
+                    "comment": "",
+                    "w": 474,
+                    "h": 245,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_waveformMod11",
+                        "Sheet_1_waveformMod12",
+                        "Sheet_1_mixer7",
+                        "Sheet_1_ClassComment5",
+                        "Sheet_1_code6"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 325,
+                    "y": 1145,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(202,179,255,0.66)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_group6",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "LFO_A lfoA2",
+                    "comment": "",
+                    "w": 580,
+                    "h": 317,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_dc5",
+                        "Sheet_1_waveformMod13",
+                        "Sheet_1_waveformMod14",
+                        "Sheet_1_waveformMod15",
+                        "Sheet_1_waveformMod16",
+                        "Sheet_1_ClassComment6",
+                        "Sheet_1_mixer4_7",
+                        "Sheet_1_code7"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "x": 350,
+                    "y": 570,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(179,247,255,0.76)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_group7",
+                    "type": "group",
+                    "isClass": false,
+                    "name": "VFO vfo[2]1",
+                    "comment": "",
+                    "w": 713,
+                    "h": 361,
+                    "textSize": 14,
+                    "nodes": [
+                        "Sheet_1_waveformMod17",
+                        "Sheet_1_waveformMod18",
+                        "Sheet_1_waveformMod19",
+                        "Sheet_1_waveformMod20",
+                        "Sheet_1_string2",
+                        "Sheet_1_noise2",
+                        "Sheet_1_pink2",
+                        "Sheet_1_tonesweep2",
+                        "Sheet_1_mixer4_8",
+                        "Sheet_1_mixer4_9",
+                        "Sheet_1_code8",
+                        "Sheet_1_ClassComment7",
+                        "Sheet_1_mixer8",
+                        "Sheet_1_Junction2"
+                    ],
+                    "border_color": "rgba(153,153,153,1)",
+                    "individualListBoxMode": true,
+                    "exportAsClass": true,
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 1610,
+                    "y": 785,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "rgba(221,255,187,1)",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_dc1",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "pulseFilterDutyCycle",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 155,
+                    "y": 255,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_waveformMod3:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_dc5",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "pulseFilterDutyCycle1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 160,
+                    "y": 610,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_waveformMod16:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod10",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sawMod",
+                    "parentGroup": "Sheet_1_group4",
+                    "x": 280,
+                    "y": 850,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer6:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod9",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sampleholdMod",
+                    "comment": "",
+                    "parentGroup": "Sheet_1_group4",
+                    "x": 250,
+                    "y": 900,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer6:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod12",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sawMod1",
+                    "parentGroup": "Sheet_1_group5",
+                    "x": 285,
+                    "y": 1130,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer7:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod11",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sampleholdMod1",
+                    "comment": "",
+                    "parentGroup": "Sheet_1_group5",
+                    "x": 255,
+                    "y": 1180,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer7:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_ClassComment1",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is LFO with 4 modulated filter generators (sine,square,pulse,triangle)",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 330,
+                    "y": 115,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_waveformMod1",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sineFilter",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 370,
+                    "y": 175,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod2",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "squareFilter",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 365,
+                    "y": 210,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod3",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "pulseFilter",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 370,
+                    "y": 250,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_1:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod4",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "triangleFilter",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 365,
+                    "y": 285,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_1:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_code1",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    sineFilter.begin(WAVEFORM_SINE);\n    squareFilter.begin(WAVEFORM_SQUARE);\n    pulseFilter.begin(WAVEFORM_PULSE);\n    triangleFilter.begin(WAVEFORM_TRIANGLE);\n    filterMix.gain(0, 0.25);\n    filterMix.gain(1, 0.25);\n    filterMix.gain(2, 0.25);\n    filterMix.gain(3, 0.25);\n}",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 375,
+                    "y": 345,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_ClassComment6",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is LFO with 4 modulated filter generators (sine,square,pulse,triangle)1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 335,
+                    "y": 470,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_waveformMod15",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sineFilter1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 375,
+                    "y": 530,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_7:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod14",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "squareFilter1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 370,
+                    "y": 565,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_7:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod16",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "pulseFilter1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 375,
+                    "y": 605,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_7:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod13",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "triangleFilter1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 370,
+                    "y": 640,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_7:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_code7",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function2",
+                    "comment": "void begin()\n{\n    sineFilter.begin(WAVEFORM_SINE);\n    squareFilter.begin(WAVEFORM_SQUARE);\n    pulseFilter.begin(WAVEFORM_PULSE);\n    triangleFilter.begin(WAVEFORM_TRIANGLE);\n    filterMix.gain(0, 0.25);\n    filterMix.gain(1, 0.25);\n    filterMix.gain(2, 0.25);\n    filterMix.gain(3, 0.25);\n}",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 380,
+                    "y": 700,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_ClassComment4",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is LFO with 2 modulators (saw,sampleHold)",
+                    "parentGroup": "Sheet_1_group4",
+                    "x": 320,
+                    "y": 800,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_code4",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    sawMod.begin(WAVEFORM_SAWTOOTH);\n    sampleholdMod.begin(WAVEFORM_SAMPLE_HOLD);\n    modMix.gain(0, 0.5);\n    modMix.gain(1, 0.5);\n}",
+                    "parentGroup": "Sheet_1_group4",
+                    "x": 380,
+                    "y": 960,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_ClassComment5",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is LFO with 2 modulators (saw,sampleHold)1",
+                    "parentGroup": "Sheet_1_group5",
+                    "x": 325,
+                    "y": 1080,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_code6",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function1",
+                    "comment": "void begin()\n{\n    sawMod.begin(WAVEFORM_SAWTOOTH);\n    sampleholdMod.begin(WAVEFORM_SAMPLE_HOLD);\n    modMix.gain(0, 0.5);\n    modMix.gain(1, 0.5);\n}",
+                    "parentGroup": "Sheet_1_group5",
+                    "x": 385,
+                    "y": 1240,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_mixer6",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "modMix",
+                    "inputs": "2",
+                    "parentGroup": "Sheet_1_group4",
+                    "x": 465,
+                    "y": 875,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_2:1",
+                            "Sheet_1_mixer4_3:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer7",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "modMix1",
+                    "inputs": "2",
+                    "parentGroup": "Sheet_1_group5",
+                    "x": 470,
+                    "y": 1155,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_1",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "filterMix",
+                    "parentGroup": "Sheet_1_group3",
+                    "x": 565,
+                    "y": 230,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_2:0",
+                            "Sheet_1_mixer4_3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_7",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "filterMix1",
+                    "parentGroup": "Sheet_1_group6",
+                    "x": 570,
+                    "y": 585,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_dc2",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "VFOtuningA",
+                    "comment": "",
+                    "x": 765,
+                    "y": 500,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_2:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_dc4",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "PBend",
+                    "comment": "",
+                    "x": 750,
+                    "y": 550,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_2:3",
+                            "Sheet_1_mixer4_3:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_dc3",
+                    "type": "AudioSynthWaveformDc",
+                    "isClass": false,
+                    "name": "VFOtuningB",
+                    "comment": "",
+                    "x": 760,
+                    "y": 605,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_3:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_sgtl5000_1",
+                    "type": "AudioControlSGTL5000",
+                    "isClass": false,
+                    "name": "sgtl5000_1",
+                    "x": 930,
+                    "y": 145,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_Comment1",
+                    "type": "Comment",
+                    "isClass": false,
+                    "name": "\"kd5rxt-mark\" made the structure that i base this demoflow on2",
+                    "x": 1060,
+                    "y": 75,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_mixer4_2",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "LFOmodMixA",
+                    "comment": "",
+                    "x": 1020,
+                    "y": 495,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_Junction1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_3",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "LFOmodMixB",
+                    "comment": "",
+                    "x": 1020,
+                    "y": 600,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_Junction2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer1",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "LFOfilterMixC",
+                    "comment": "",
+                    "inputs": "2",
+                    "x": 1000,
+                    "y": 1075,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_filter1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_Junction1",
+                    "type": "JunctionLR",
+                    "isClass": false,
+                    "name": "Junction",
+                    "comment": "",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1395,
+                    "y": 355,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#4D54FF",
+                    "wires": [
+                        [
+                            "Sheet_1_waveformMod5:0",
+                            "Sheet_1_waveformMod6:0",
+                            "Sheet_1_waveformMod7:0",
+                            "Sheet_1_waveformMod8:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_code2",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    sine.begin(WAVEFORM_SINE);\n    square.begin(WAVEFORM_SQUARE);\n    triangle.begin(WAVEFORM_TRIANGLE);\n    saw.begin(WAVEFORM_SAWTOOTH);\n    string.noteOff(0);\n    white.amplitude(0);\n    pink.amplitude(0);\n    for (int i = 0; i < 4; i++)\n    {\n        mix1.gain(i, 0.125);\n        mix2.gain(i, 0.125);\n    }\n}",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1380,
+                    "y": 480,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_Junction2",
+                    "type": "JunctionLR",
+                    "isClass": false,
+                    "name": "Junction1",
+                    "comment": "",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1435,
+                    "y": 740,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#4D54FF",
+                    "wires": [
+                        [
+                            "Sheet_1_waveformMod17:0",
+                            "Sheet_1_waveformMod18:0",
+                            "Sheet_1_waveformMod19:0",
+                            "Sheet_1_waveformMod20:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_code8",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function3",
+                    "comment": "void begin()\n{\n    sine.begin(WAVEFORM_SINE);\n    square.begin(WAVEFORM_SQUARE);\n    triangle.begin(WAVEFORM_TRIANGLE);\n    saw.begin(WAVEFORM_SAWTOOTH);\n    string.noteOff(0);\n    white.amplitude(0);\n    pink.amplitude(0);\n    for (int i = 0; i < 4; i++)\n    {\n        mix1.gain(i, 0.125);\n        mix2.gain(i, 0.125);\n    }\n}",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1420,
+                    "y": 865,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_waveformMod5",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sine",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 300,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_4:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod6",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "square",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 335,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_4:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod7",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "triangle",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 370,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_4:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod8",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "saw",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 405,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_4:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_string1",
+                    "type": "AudioSynthKarplusStrong",
+                    "isClass": false,
+                    "name": "string",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 440,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_5:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_noise1",
+                    "type": "AudioSynthNoiseWhite",
+                    "isClass": false,
+                    "name": "white",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 475,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_5:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_pink1",
+                    "type": "AudioSynthNoisePink",
+                    "isClass": false,
+                    "name": "pink",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 510,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_5:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_tonesweep1",
+                    "type": "AudioSynthToneSweep",
+                    "isClass": false,
+                    "name": "sweeper",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1575,
+                    "y": 545,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_5:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_ClassComment2",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is a VFO with mod:(sine, square, triangle, saw) + string,whiteNoise,pinkNoise and sweeper",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1600,
+                    "y": 260,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#CCFFCC",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_ClassComment7",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is a VFO with mod:(sine, square, triangle, saw) + string,whiteNoise,pinkNoise and sweeper1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1640,
+                    "y": 645,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#CCFFCC",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_waveformMod17",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "sine1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 685,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_8:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod18",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "square1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 720,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_8:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod19",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "triangle1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 755,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_8:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_waveformMod20",
+                    "type": "AudioSynthWaveformModulated",
+                    "isClass": false,
+                    "name": "saw1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 790,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_8:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_string2",
+                    "type": "AudioSynthKarplusStrong",
+                    "isClass": false,
+                    "name": "string1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 825,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_9:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_noise2",
+                    "type": "AudioSynthNoiseWhite",
+                    "isClass": false,
+                    "name": "white1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 860,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_9:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_pink2",
+                    "type": "AudioSynthNoisePink",
+                    "isClass": false,
+                    "name": "pink1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 895,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_9:2"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_tonesweep2",
+                    "type": "AudioSynthToneSweep",
+                    "isClass": false,
+                    "name": "sweeper1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1615,
+                    "y": 930,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_9:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_4",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "mix1",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1710,
+                    "y": 355,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer2:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_5",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "mix2",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1705,
+                    "y": 490,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer2:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_8",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "mix1_1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1750,
+                    "y": 740,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer8:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_9",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "mix2_1",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1745,
+                    "y": 875,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer8:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer2",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer",
+                    "comment": "",
+                    "inputs": "2",
+                    "parentGroup": "Sheet_1_group2",
+                    "x": 1825,
+                    "y": 425,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer3:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer8",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixer1",
+                    "comment": "",
+                    "inputs": "2",
+                    "parentGroup": "Sheet_1_group7",
+                    "x": 1865,
+                    "y": 810,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer3:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_envelope1",
+                    "type": "AudioEffectEnvelope",
+                    "isClass": false,
+                    "name": "VFOenvelope",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2080,
+                    "y": 430,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer3",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "vfo_mixer",
+                    "comment": "",
+                    "inputs": "2",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2030,
+                    "y": 520,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4:0",
+                            "Sheet_1_envelope1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_ClassComment3",
+                    "type": "ClassComment",
+                    "isClass": false,
+                    "name": "This is a voice with two VFO:s, envelope, vfo-filter",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2350,
+                    "y": 310,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ccffcc",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_code3",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin ()\n{\n    VFO1.begin();\n    VFO2.begin();\n    waveMix.gain(0, 0.25);\n    waveMix.gain(1, 0.25);\n    waveMix.gain(2, 0.25);\n    waveMix.gain(3, 0.25);\n    VFOenvelopeMix.gain(0, 0.5);\n    VFOenvelopeMix.gain(1, 0.5);\n    VFOfilterMix.gain(0, 0.25);\n    VFOfilterMix.gain(1, 0.25);\n    VFOfilterMix.gain(2, 0.25);\n    VFOfilterMix.gain(3, 0.25);\n}",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2310,
+                    "y": 365,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_mixer4",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "VFOenvelopeMix",
+                    "inputs": "2",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2320,
+                    "y": 425,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_filter1:0",
+                            "Sheet_1_mixer4_6:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_filter1",
+                    "type": "AudioFilterStateVariable",
+                    "isClass": false,
+                    "name": "VFOfilter",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2325,
+                    "y": 565,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer4_6:1"
+                        ],
+                        [
+                            "Sheet_1_mixer4_6:2"
+                        ],
+                        [
+                            "Sheet_1_mixer4_6:3"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_mixer4_6",
+                    "type": "AudioMixer4",
+                    "isClass": false,
+                    "name": "VFOfilterMix",
+                    "comment": "",
+                    "parentGroup": "Sheet_1_group1",
+                    "x": 2490,
+                    "y": 535,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_mixer5:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_code5",
+                    "type": "Function",
+                    "isClass": false,
+                    "name": "begin function",
+                    "comment": "void begin()\n{\n    LFO_A1.begin();\n    LFO_A2.begin();\n    LFO_B1.begin();\n    LFO_B2.begin();\n    for (int i = 0; i < 16; i++)\n    {\n        voices[i].begin();\n        mixFinal.gain(i, 1.0/16); // set equal gain\n    }\n    for (int i = 0; i < 4; i++)\n    {\n         LFOmodMixA.gain(i, 0.25);\n         LFOmodMixB.gain(i, 0.25);\n    }\n    LFOfilterMixC.gain(0, 0.5);\n    LFOfilterMixC.gain(1, 0.5);\n}",
+                    "x": 2715,
+                    "y": 425,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#ddffbb",
+                    "wires": []
+                },
+                {
+                    "id": "Sheet_1_mixer5",
+                    "type": "AudioMixer",
+                    "isClass": false,
+                    "name": "mixFinal",
+                    "inputs": "1",
+                    "x": 2715,
+                    "y": 535,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_amp1:0"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_amp1",
+                    "type": "AudioAmplifier",
+                    "isClass": false,
+                    "name": "ampFinal",
+                    "comment": "this is used for easier gain adj. of mixFinal",
+                    "x": 2875,
+                    "y": 535,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": [
+                        [
+                            "Sheet_1_i2s1:0",
+                            "Sheet_1_i2s1:1"
+                        ]
+                    ]
+                },
+                {
+                    "id": "Sheet_1_i2s1",
+                    "type": "AudioOutputI2S",
+                    "isClass": false,
+                    "name": "i2s3",
+                    "x": 3040,
+                    "y": 530,
+                    "z": "d6e5c179.63802",
+                    "bgColor": "#E6E0F8",
+                    "wires": []
+                }
+            ],
+            "links": [],
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "guiEditMode": false,
+                "workspaceBgColor": "#FFF",
+                "scaleFactor": 0.5,
+                "gridMinorColor": "#eee",
+                "gridMajorColor": "#ddd"
+            }
+        }
+    ],
+    "nodeAddons": {}
+}

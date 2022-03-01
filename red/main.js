@@ -352,11 +352,13 @@ RED.main = (function() {
         var uid = menuId+'-btn-'+id;
         if (item.dividerBefore != undefined && item.dividerBefore == true)
             html += '<li class="divider"></li>';
+        //if (item.url != undefined) var url = item.url;
+        //else var url = "";
         html += '<li><a id="'+uid+'" tabindex="-1" href="#"><i class="'+className+'"></i> '+item.label+'</a></li>';
         if (item.dividerAfter != undefined && item.dividerAfter == true)
             html += '<li class="divider"></li>';
         $("#" + menuId).append(html);
-        $("#"+ uid).click(function() { action(id, item.label); });
+        $("#"+ uid).click(function() { action(id, item.label, item.url); });
 
         SetPopOver("#" + uid, item.description, "left");
     }
@@ -372,10 +374,23 @@ RED.main = (function() {
         {
             var name = names[mi];
             var item = data[name];
-            addMenuItem(menuName, name, "fa fa-file", item, function(id) {
+            addMenuItem(menuName, name, "fa fa-file", item, function(id,lbl,url) {
                 verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(id), function(okPressed) { 
                     if (okPressed == false) return;
-                    
+                    if (url != undefined) {
+                        RED.notify("downloading JSON " + url, "info", null, 3000);
+                        RED.main.httpDownloadAsync(url, 
+                            function(data) {
+                                saveToFile(RED.arduino.settings.ProjectName + ".json");
+                                RED.storage.loadContents(data);
+                            }
+                            , 
+                            function(err) {
+                                RED.notify("could not download json" + err, "info", null, 3000);
+                            }
+                        );
+                        return;
+                    }
                     var contents = $("script[data-container-name|='"+id+"']").html();
                     var parsedContents = JSON.parse(contents);
                     // failsafe checks before loading data
