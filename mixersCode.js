@@ -5,6 +5,12 @@ Mixers = (function () {
     var mixers_h_base = "#ifndef mixers_h_\n#define mixers_h_\n\n#include \"Arduino.h\"\n#include \"AudioStream.h\"\n\n#if defined(__ARM_ARCH_7EM__)\n#define MIXERS_MAX_MULT_I 65536\n#define MIXERS_MAX_MULT_F 65536.0f\n#define MIXERS_MIN_GAIN -32767.0f\n#define MIXERS_MAX_GAIN 32767.0f\n#define MIXERS_MULT_TYPE int32_t\n#elif defined(KINETISL)\n#define MIXERS_MAX_MULT_I 256\n#define MIXERS_MAX_MULT_F 256.0f\n#define MIXERS_MIN_GAIN -127.0f\n#define MIXERS_MAX_GAIN 127.0f\n#define MIXERS_MULT_TYPE int16_t\n#endif\n\n<templatecode>\n\n#endif";
     var mixers_h_template = "class AudioMixerNNN : public AudioStream\n{\npublic:\n\tAudioMixerNNN(void) : AudioStream(NNN, inputQueueArray) {\n\t\tfor (int i=0; i<NNN; i++) multiplier[i] = MIXERS_MAX_MULT_I;\n\t}\n\tvirtual void update(void);\n\tvoid gain(unsigned int channel, float gain) {\n\t\tif (channel >= NNN) return;\n\t\tif (gain > MIXERS_MAX_GAIN) gain = MIXERS_MAX_GAIN;\n\t\telse if (gain < MIXERS_MIN_GAIN) gain = MIXERS_MIN_GAIN;\n\t\tmultiplier[channel] = gain * MIXERS_MAX_MULT_F; // TODO: proper roundoff?\n\t}\n\tvoid gain(float gain) {\n\t    if (gain > MIXERS_MAX_GAIN) gain = MIXERS_MAX_GAIN;\n\t\telse if (gain < MIXERS_MIN_GAIN) gain = MIXERS_MIN_GAIN;\n\t\tfor (int i=0; i<NNN; i++) multiplier[i] = gain * MIXERS_MAX_MULT_F;\n\t}\nprivate:\n\tMIXERS_MULT_TYPE multiplier[NNN];\n\taudio_block_t *inputQueueArray[NNN];\n};";
 
+    var copyrightNote_stereo = "/* no stereo mixer code generated*/";
+    var mixers_cpp_base_stereo =  "/* no stereo mixer code generated*/";
+    var mixers_cpp_template_stereo =  "/* no stereo mixer code generated*/";
+    var mixers_h_base_stereo =  "/* no stereo mixer code generated*/";
+    var mixers_h_template_stereo =  "/* no stereo mixer code generated*/";
+
     function GetCode(variants) {
         var mixersCpp = "";
         var mixersH = "";
@@ -24,7 +30,28 @@ Mixers = (function () {
                 cpp:mixers_cpp_base.replace("<templatecode>", mixersCpp),
                 h:mixers_h_base.replace("<templatecode>", mixersH)};
     }
+
+    function GetCodeStereo(variants) {
+        var mixersCpp = "";
+        var mixersH = "";
+
+        console.warn("mixer stereo variants",variants);
+        
+        for (var vi = 0; vi < variants.length; vi++)
+        {
+            if (variants[vi] <= 0) continue; // cannot have a mixer with zero or less inputs
+            if (variants[vi] == 4) continue; // mixer with 4 inputs allready exists in the lib
+            if (variants[vi] > 255) variants[vi] = 255; // a AudioObject cannot have more than 255 inputs
+
+            mixersCpp += mixers_cpp_template_stereo.split('NNN').join(variants[vi].toString()) + "\n";
+            mixersH += mixers_h_template_stereo.split('NNN').join(variants[vi].toString()) + "\n";
+        }
+        return {copyrightNote:copyrightNote_stereo,
+                cpp:mixers_cpp_base_stereo.replace("<templatecode>", mixersCpp),
+                h:mixers_h_base_stereo.replace("<templatecode>", mixersH)};
+    }
     return {
-        GetCode:GetCode
+        GetCode,
+        GetCodeStereo
     };
 })();

@@ -107,9 +107,7 @@ var NodeDefinitions = {
             "BusJoin":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"inputs":{"value":1,"maxval":255,"minval":2,"type":"int"}},"editor":"autogen","shortName":"BusJoin","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "help":"not implemented yet"},
             "BusSplit":{"defaults":{"name":{},"id":{"noEdit":""},"comment":{},"outputs":{"value":1,"maxval":255,"minval":2,"type":"int"}},"editor":"autogen","shortName":"BusSplit","nonObject":"","inputs":1,"outputs":1,"category":"special","color":"#cce6ff","icon":"arrow-in.png", "align":"right"},
             
-
             "PointerArray":{"defaults":{"name":{},"id":{},"objectType":{},"arrayItems":{}},"shortName":"pArray","nonObject":"","dontShowInPalette":"","category":"special","color":"#aaffdd","icon":"range.png"},
-            //"AudioMixer":{"defaults":{"name":{"type":"c_cpp_name"},"id":{"noEdit":""},"comment":{},"color":{"editor":{"type":"color"}},"inputs":{"value":1,"maxval":255,"minval":1,"type":"int"},"PreallocateInputs":{"value":1,"maxval":255,"minval":1,"type":"int","editor":{"label":"Preallocate Inputs","rowClass":"form-row-mid"}}},"dynInputs":"","editor":"autogen","shortName":"mixer","inputs":1,"outputs":1,"category":"mixer","color":"#E6E0F8","icon":"arrow-in.png"},
             
             "AudioMixer":{...AudioTypeArrayBase,
                 "shortName":"mixer","dynInputs":"","editor":"autogen","inputs":1,"outputs":1,"category":"mixer",
@@ -131,7 +129,7 @@ var NodeDefinitions = {
             "Function":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"code","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"function.png"},
             "Variables":{"defaults":{"name":{},"id":{},"comment":{}},"shortName":"vars","nonObject":"","useAceEditor":"c_cpp","category":"special","color":"#ddffbb","icon":"hash.png"},
             "AudioStreamObject":{
-                "shortName":"userObject","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"debug.png",
+                "shortName":"userObject","dynInputs":"","inputs":0,"outputs":0,"category":"special","color":"#ddffbb","icon":"debug.png",
                 "editorhelp":"note. this object is only intended to quickly include and use custom objects,<br>consider using ('Node Definitions Manager' @ 'top-right menu') instead,<br>that way it's much easier to reuse the object,<br>and you have more freedoom customization the object.<br><br>note. Objects created in node def. mgr. are saved in the 'project' json",
                 "defaults":{
                     "name":{"type":"c_cpp_name","editor":{"help":"the name given to the instance"}},

@@ -589,6 +589,9 @@ RED.export.links = (function () {
         //console.warn("link copy to: " + RED.export.links.getDebug(newL));
         return newL;
     }
+    function getDynInputDynSize(node) {
+        return getDynInputDynSizePortStartIndex(node, undefined); // this will get the total input count needed of the dyn input object
+    }
 
     $("#btn-debugPrintLinks").click(function() {console.warn(RED.export.links.getDebug(RED.nodes.cwsLinks));});
     return {
@@ -596,6 +599,7 @@ RED.export.links = (function () {
         getNodeLinks,
         generateExportableLinks,
         getDynInputDynSizePortStartIndex,
+        getDynInputDynSize,
         getSourceSize,
         fixTargetPortsForDynInputObjects,
         expandArrays,

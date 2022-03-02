@@ -245,8 +245,14 @@ RED.arduino.export = (function () {
 
         console.log("save1(simple) workspace:" + activeWorkspace);
 
-        if (RED.arduino.settings.UseAudioMixerTemplate != true)
+        if (RED.arduino.settings.UseAudioMixerTemplate != true) {
             var mixervariants = [];
+            var mixerStereoVariants = [];
+        }
+        else {
+            var mixervariants = undefined;
+            var mixerStereoVariants = undefined;
+        }
 
         var ac = getNewAudioConnectionType(activeWorkspace, minorIncrement, majorIncrement, true);
         ac.count = 1;
@@ -274,9 +280,15 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
-            else if (node.type == "AudioMixer" && mixervariants != undefined) {
-                var inputCount = getDynamicInputCount(node, true); // variants 0 and 4 are taken care of in Mixers.GetCode
+            else if (node.type == "AudioMixer" && mixervariants != undefined && (RED.arduino.settings.ExportMode != 3)) { // mode 3 == OSC ) {
+                var inputCount = RED.export.links.getDynInputDynSize(node); // variants 0 and 4 are taken care of in Mixers.GetCode
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
+            }
+            else if (node.type == "AudioMixerStereo" && mixerStereoVariants != undefined && (RED.arduino.settings.ExportMode != 3)) { // mode 3 == OSC ) {
+                //don't export AudioMixerStereo for the moment, as no code is currently availabe at Mixers.GetCodeStereo
+
+                //var inputCount = RED.export.links.getDynInputDynSize(node);
+                //if (!mixerStereoVariants.includes(inputCount)) mixerStereoVariants.push(inputCount);
             }
             else if (n.type == "ConstValue") {
                 defines += "#define " + n.name  + " " + n.value + "\n";
@@ -288,8 +300,16 @@ RED.arduino.export = (function () {
                 // generate code for audio processing node instance
                 if (node._def.isClass != undefined)//RED.nodes.isClass(n.type))
                     cppAPN += warningClassUse + "\n";
-                cppAPN += getTypeName(nns, n);
-                var name = RED.nodes.make_name(n)
+                cppAPN += getTypeName(node);
+                var name = RED.nodes.make_name(n);
+                if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
+                    if (node._def.dynInputs != undefined)
+                        name += '{"' +name+ '"' + RED.export.links.getDynInputDynSize(node) + "}";
+                    else
+                        name += '{"' +name+ '"}';
+                }
+                
+
                 cppAPN += name + "; ";
                 for (var j = n.id.length; j < 14; j++) cppAPN += " ";
                 cppAPN += "//xy=" + n.x + "," + n.y + "\n";
@@ -388,6 +408,11 @@ RED.arduino.export = (function () {
             cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
             cpp += mfiles.cpp.replace('#include "mixers.h"', '') + "\n";
         }
+        if (mixerStereoVariants != undefined && mixerStereoVariants.length > 0) {
+            var mfiles = Mixers.GetCodeStereo(mixerStereoVariants); // variants 0 and 4 are taken care of in Mixers.GetCode
+            cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
+            cpp += mfiles.cpp.replace('#include "mixers.h"', '') + "\n";
+        }
         //console.warn("cpparray:\n"+cppArray)
         cpp += "\n" + codeFiles + "\n" + defines + "\n" + cppAPN + "\n" + cppAC + "\n" + cppCN + "\n" + globalVars + "\n" + functions + "\n";
         cpp += getCppFooter();
@@ -452,8 +477,14 @@ RED.arduino.export = (function () {
         wsCppFiles.push(getNewWsCppFile("preferences.txt", RED.arduino.board.export_arduinoIDE()));
         wsCppFiles.push(getNewWsCppFile("platformio.ini", RED.arduino.board.export_platformIO()));
         // first scan for code files to include them first
-        if (RED.arduino.settings.UseAudioMixerTemplate != true)
+        if (RED.arduino.settings.UseAudioMixerTemplate != true) {
             var mixervariants = [];
+            var mixerStereoVariants = [];
+        }
+        else {
+            var mixervariants = undefined;
+            var mixerStereoVariants = undefined;
+        }
 
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
@@ -474,11 +505,14 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
-            else if (n.type == "AudioMixer" && mixervariants != undefined) {
-                var inputCount = getDynamicInputCount(n, true);
+            else if (n.type == "AudioMixer" && mixervariants != undefined && RED.arduino.settings.ExportMode != 3) {
+                var inputCount = RED.export.links.getDynInputDynSize(RED.nodes.node(n.id,n.z));
                 if (inputCount == 4) continue; // this variant is allready in the audio lib
 
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
+            }
+            else if (n.type == "AudioMixerStereo" && mixerStereoVariants != undefined && RED.arduino.settings.ExportMode != 3) {
+
             }
         }
         if (mixervariants != undefined && mixervariants.length > 0) {
@@ -610,9 +644,16 @@ RED.arduino.export = (function () {
                         n.name = isArray.newName;
                     }
 
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getTypeName(nns, n);
+                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getTypeName(node);
                     //console.log(">>>" + n.type +"<<<"); // debug test
-                    var name = RED.nodes.make_name(n)
+                    var name = RED.nodes.make_name(n);
+
+                    if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
+                        if (node._def.dynInputs != undefined)
+                            name += '{"' +name+ '", ' + RED.export.links.getDynInputDynSize(node) + "}";
+                        else
+                            name += '{"' +name+ '"}';
+                    }
 
                     if (n.comment && (n.comment.trim().length != 0))
                         newWsCpp.contents += name + "; /* " + n.comment + "*/\n";
@@ -945,14 +986,13 @@ RED.arduino.export = (function () {
         RED.view.dialogs.showExportDialog("Single line JSON", json, " JSON:");
     }
 
-    // TODO: allow multiple array source signals to be connected to the mixer
-    // the mixer will then expand to meet the requirements
-
-    function getDynamicInputCount(n, replaceConstWithValue) { // rename to getDynamicInputCount?
+/* obsolete replaced by RED.export.links.getDynInputDynSize(node);
+    function getDynamicInputCount(node) { // rename to getDynamicInputCount?
         // check if source is a array
-        n = RED.nodes.node(n.id, n.z);
-        return RED.export.links.getDynInputDynSizePortStartIndex(n, undefined);
-
+        //n = RED.nodes.node(n.id, n.z);
+        return RED.export.links.getDynInputDynSizePortStartIndex(node, undefined);
+    */
+/*
         if (n.inputs != 1) return n.inputs;
 
         var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
@@ -967,37 +1007,32 @@ RED.arduino.export = (function () {
             }
         }
         
-        return n.inputs;
-    }
+        return n.inputs;*/
+    //}
 
     /**
      * This is only for the moment to get special type AudioMixer<n>, AudioMixerNNN or AudioStreamObject
-     * @param {*} nns nodeArray
-     * @param {Node} n node
+     * @param {Node} node node(internal)
      */
-     function getTypeName(nns, n) {
-        var cpp = "";
-        var typeLength = n.type.length;
-        if (n.type == "AudioMixer") {
+     function getTypeName(node)
+     {
+        if (node.type == "AudioStreamObject") // special case
+            var cpp = node.subType;
+        else
+            var cpp = node.type;
 
-            var tmplDef = getDynamicInputCount(n,true).toString();
-            //console.warn(n.name + " " + tmplDef )
+        if (node._def.dynInputs != undefined && RED.arduino.settings.ExportMode != 3)
+        {
+            var dynInputSize = RED.export.links.getDynInputDynSize(node).toString();
 
             if (RED.arduino.settings.UseAudioMixerTemplate == true)
-                tmplDef = '<' + tmplDef + '>'; // include the template def.
+                dynInputSize = '<' + dynInputSize + '>'; // include the template def.
 
-            
-            cpp += n.type + tmplDef + " ";
-            typeLength += tmplDef.length;
+            cpp += dynInputSize;
         }
-        else if (n.type == "AudioStreamObject") {
-            cpp += n.subType + " ";
-            typeLength = n.subType.toString().length;
-        }
-        else
-            cpp += n.type + " ";
 
-        for (var j = typeLength; j < 32; j++) cpp += " ";
+        cpp += " "; // add at least one space
+        for (var j = cpp.length; j < 32; j++) cpp += " ";
         return cpp;
     }
 
@@ -1012,8 +1047,6 @@ RED.arduino.export = (function () {
             }).focus();*/
 
     return {
-        //isSpecialNode:isSpecialNode,
-        getDynamicInputCount:getDynamicInputCount,
         pushJSON: pushJSON,
         generate_OSC_function_decode:generate_OSC_function_decode,
         showIOcheckWarning:showIOcheckWarning // to be removed and replaced by warning instead

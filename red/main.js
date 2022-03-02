@@ -689,6 +689,7 @@ RED.main = (function() {
 	//$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
 	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = !$('#btn-guiRunEditMode').prop('checked'); });
     $('#btn-oscLiveUpdateMode').click(function() { RED.OSC.settings.LiveUpdate = $('#btn-oscLiveUpdateMode').prop('checked'); });
+    $('#option-export-mode').change(function() { RED.arduino.settings.ExportMode = $('#option-export-mode').val(); });
 
     $('#btn-save').click(function() { RED.storage.update(); updateProjectsMenu(); });
     

@@ -19,6 +19,7 @@ RED.arduino = (function() {
 	var serverIsActive = false;
 	
     var defSettings = {
+        ExportMode:0,
         ZipExportUseSubFolder: false,
         ZipExportCompress: true,
         UseAudioMixerTemplate: false,
@@ -41,6 +42,7 @@ RED.arduino = (function() {
     }
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
+        ExportMode:defSettings.ExportMode,
         ZipExportUseSubFolder:defSettings.ZipExportUseSubFolder,
         ZipExportCompress:defSettings.ZipExportCompress,
         UseAudioMixerTemplate: defSettings.UseAudioMixerTemplate,
@@ -81,6 +83,15 @@ RED.arduino = (function() {
         */
     }
 	var settings = {
+        get ExportMode() {
+            return _settings.ExportMode;
+        },
+		set ExportMode(mode) {
+            _settings.ExportMode = mode;
+            $('#option-export-mode').val(mode);
+            RED.storage.update();
+        },
+
         get UseAudioMixerTemplate() { return _settings.UseAudioMixerTemplate; },
 		set UseAudioMixerTemplate(state) { _settings.UseAudioMixerTemplate = state; RED.storage.update();},
 
