@@ -1017,7 +1017,7 @@ RED.arduino.export = (function () {
      function getTypeName(node)
      {
         if (node.type == "AudioStreamObject") // special case
-            var cpp = node.subType;
+            var cpp = node.subType?node.subType:"// warning AudioStreamObject subType not set";
         else
             var cpp = node.type;
 
