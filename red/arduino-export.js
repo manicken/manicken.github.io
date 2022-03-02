@@ -1031,6 +1031,9 @@ RED.arduino.export = (function () {
             cpp += dynInputSize;
         }
 
+        if (RED.arduino.settings.ExportMode == 3)
+            cpp = cpp.replace("Audio", "OSCAudio");
+
         cpp += " "; // add at least one space
         for (var j = cpp.length; j < 32; j++) cpp += " ";
         return cpp;
