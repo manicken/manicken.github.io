@@ -70,7 +70,7 @@ RED.OSC = (function() {
         get LiveUpdate() { return _settings.LiveUpdate; },
         set LiveUpdate(state) { 
             _settings.LiveUpdate = state; 
-            
+            console.log("live update:" + state);
             //$('#' + settingsEditor.LiveUpdate.valueId).prop('checked', state);
             $('#btn-oscLiveUpdateMode').prop('checked', state);
             RED.storage.update();
