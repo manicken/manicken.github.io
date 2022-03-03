@@ -84,7 +84,7 @@ RED.arduino = (function() {
     }
 	var settings = {
         get ExportMode() {
-            return _settings.ExportMode;
+            return parseInt(_settings.ExportMode);
         },
 		set ExportMode(mode) {
             _settings.ExportMode = mode;

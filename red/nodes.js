@@ -1022,6 +1022,7 @@ RED.nodes = (function() {
             if (nn.type == "Array") nn.type = "PointerArray"; // type conversion
             // TODO: remove workspace in next release+1(Node-Red team comment)
             if (nn.type != "workspace" && nn.type != "tab" && nn.type != "settings" && !getTypeDef(nn.type)) {
+                console.warn("whello");
                 // TODO: get this UI thing out of here! (see below as well) (Node-Red team comment)
                 //n.name = n.type;
                 //n.type = "unknown";
@@ -1147,7 +1148,7 @@ RED.nodes = (function() {
                 labelStyle: "node_label_italic",
                 icon:"arrow-in.png",
                 outputs: nn.outputs||nn.wires.length,
-                inputs: getNodeInputCount(newNodes, nn.z, nn.id)
+                inputs: nn.inputs||1//getNodeInputCount(newNodes, nn.z, nn.id)
             }
             node.unknownType = true;
             nn.bgColor = undefined;
@@ -1573,7 +1574,7 @@ RED.nodes = (function() {
 			var n = nns[ni];
 			if (n.z != wsId) continue; // workspace check
 
-			var retVal = RED.nodes.eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
+			var retVal = eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
 			{
 				if (dstId == nId)
 				{
@@ -1651,9 +1652,9 @@ RED.nodes = (function() {
 		if (!inputNode) return false; // abort
 
 		// here we need to go througt all wires of that virtual port
-		var retVal = RED.nodes.eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
+		var retVal = eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
 		{
-			var dst = RED.nodes.node(dstId);
+			var dst = node(dstId);
 			//console.log("found dest:" + dst.name);
 			ac.dstPort = dstPortIndex;
 			ac.dstName = currRootName + "." + make_name(dst);
@@ -2456,7 +2457,7 @@ RED.nodes = (function() {
 		addUsedNodeTypesToPalette,
 		addClassTabsToPalette,
 		refreshClassNodes,
-		make_name:make_name,
+		make_name,
         get currentWorkspace() {return getWorkspace(RED.view.activeWorkspace);},
         getWorkspaceIndex: function(id) {
             for (var i = 0; i < workspaces.length; i++)
