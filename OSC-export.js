@@ -10,7 +10,6 @@ class PacketArray extends Array {
 OSC.export = (function () {
 
     var ActiveAudioMain;
-
     function InitButtonPopups(notavailable) {
         var a = "";
         if (notavailable != undefined && notavailable == true)

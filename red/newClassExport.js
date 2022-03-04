@@ -51,7 +51,8 @@ class WsExport
      */
     generateWsFile()
     {
-        var wse = new WsExport({label:"hello"});
+        var n = new REDNode();
+        
 
         var newWsCpp = getNewWsCppFile(this.fileName, "");
         if (classComment.length > 0) {
@@ -72,7 +73,13 @@ class WsExport
 RED.arduino.export2 = (function () {
     'use strict';
 
-
+    /**
+     * 
+     * @param {REDNode} n 
+     * @param {WSExport} wse 
+     * @param {Array} globalCppFiles 
+     * @returns 
+     */
     function checkAndAddNonAudioObject(n,wse,globalCppFiles) {
         if (n.type == "ClassComment") {
             wse.comments.push(" * " + n.name);

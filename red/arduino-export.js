@@ -922,6 +922,7 @@ RED.arduino.export = (function () {
             RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST but not when exporting to zip
         //console.warn(jsonPOSTstring);
 
+        
 
         // only show dialog when server is active and not generating zip
         if (useExportDialog)

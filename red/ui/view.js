@@ -797,8 +797,8 @@ RED.view = (function() {
 		do {
 			workspaceIndex += 1;
 		} while($("#workspace-tabs a[title='"+RED.workspaces.settings.defaultNewName+workspaceIndex+"']").size() !== 0);
-
-		var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, true);
+        var ws = new REDWorkspace(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, true);
+		//var ws = RED.nodes.createWorkspaceObject(tabId, RED.workspaces.settings.defaultNewName+workspaceIndex, true);
         var currIndex = RED.nodes.getWorkspaceIndex(activeWorkspace);
         //console.error("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ currIndex " + currIndex);
         if (RED.workspaces.settings.addNewLocation == 0) {

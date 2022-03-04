@@ -14,39 +14,138 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
+/**
+ * A Node-RED Node object, (cannot use Node because that is a reserved name for DOM Node:s)
+ */
 class REDNode
 {
     type = "";
+    /** the node UID, should never be changed, except when a new node is created */
     id = "";
+    /** the name of the node, also used for the node label */
     name = "";
+    /** this is used mostly to create a comment for objects, but is also used to store scripts/c++ code @ such node types */
     comment = "";
 
-    tag = ""; // only used by UI objects
+    /** only used by UI objects */
+    tag = ""; // 
     x = 0;
     y = 0;
-    z = ""; // defines which workspace it belongs to
+    /** defines which workspace it belongs to */
+    z = ""; // 
+    /** node width */
     w = 0;
+    /** node height */
     h = 0;
 
+    /** in some cases this would be used for the text color */
     color = "";
+    /** the node background color */
     bgColor = "";
 
     outputs = 0;
     inputs = 0;
 
-    // used specifically by RED.view
-    changed = false;
-    dirty = false;
-    valid = true;
-    selected = false;
-    resize  = false;
-    inputlist = []; // contains a list of the actual svgRect:s used to visualize the input ports
-    ports = []; // this is actually the output port list, only contains numbers (should be the same as)
-    svgRect = {};
-    textDimensions = {};
-    textSize = 14;
+    /** Child nodes of the current node, only used by 'groupbox' and 'scriptbutton'
+     * @type {REDNode[]} 
+     */
+    nodes = [];
 
-    constructor() {
+    /** used in RED.view */
+    changed = false;
+    /** used in RED.view */
+    dirty = false;
+    /** used in RED.view */
+    valid = true;
+    /** used in RED.view */
+    selected = false;
+    /** used in RED.view */
+    resize  = false;
+    /** used in RED.view, contains a list of the actual svgRect:s used to visualize the input ports */
+    inputlist = [];
+    /** used in RED.view, this is actually the output port list, only contains numbers */
+    ports = [];
+    /** used in RED.view, contains a list of the actual svgRect:s used to visualize the output ports */
+    _ports = [];
+    /** used in RED.view, the root svg rect used to visualize this node object, this is used to improve the performance when updating a node */
+    svgRect = {};
+    /** used in RED.view, to buffer the label text dimensions, may be obsolete because of the new text dimensions cache system*/
+    textDimensions = {};
+    /** used in RED.view */
+    textSize = 14;
+    /** used in RED.view, by the move function (old x) */
+    ox = 0;
+    /** used in RED.view, by the move function (old y) */
+    oy = 0;
+
+    /**
+     * 
+     * @param {*} nn new node (type JSON node)
+     * @param {*} def node definition
+     */
+    constructor(nn, def) {
+        this.x = nn.x;
+        this.y = nn.y;
+        this.z = nn.z;
+        this.type = nn.type;
+        this._def = def;
+        this.wires = nn.wires; // wires is only a temporary property used at node import, it will be deleted after node is imported
+        /*,wireNames:n.wireNames*/
+        this.changed = false;
+
+        if (def.uiObject != undefined) {
+            this.w = nn.w;
+            this.h = nn.h;
+        }
+    }
+};
+
+class REDWorkspace 
+{
+    /** defines the type of this object, will never be changed, only used by old export structure */
+    type = "tab";
+
+    id = "";
+    label = "";
+    /** @type {REDNode[]} */
+    nodes = [];
+    links = [];
+    _export = true;
+    isMain = false;
+    mainNameType = "";
+    mainNameExt = "";
+    isAudioMain = false;
+    generateCppDestructor = false;
+    extraClassDeclarations = "";
+    settings = {};
+    constructor(id, label, _export, isMain, mainNameType, mainNameExt, isAudioMain, settings, generateCppDestructor, extraClassDeclarations)
+    {
+        this.id = id;
+        this.label = label;
+        this._export = (_export != undefined)?_export:true;
+        this.isMain = (isMain != undefined)?isMain:false;
+        this.mainNameType = (mainNameType != undefined)?mainNameType:"tabName";
+        this.mainNameExt = (mainNameExt != undefined)?mainNameExt:".ino";
+        this.isAudioMain = (isAudioMain != undefined)?isAudioMain:false;
+        this.generateCppDestructor = (generateCppDestructor != undefined)?generateCppDestructor:false;
+        this.extraClassDeclarations = (extraClassDeclarations != undefined)?extraClassDeclarations:"";
+        if (settings == undefined){ this.settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
+        else this.settings = settings;
+    }
+};
+
+class REDLink
+{
+    /** @type {REDNode} */
+    source = {};
+    sourcePort = 0;
+    /** @type {REDNode} */
+    target = {};
+    targetPort = 0;
+
+    constructor()
+    {
 
     }
 };
@@ -54,26 +153,10 @@ class REDNode
 RED.nodes = (function() {
 
 	var node_defs = {};
+    /** @type {REDWorkspace[]} */
     var workspaces = [];
     //var iconSets = {};
 
-	/**
-	 * this creates a workspace object
-	 */
-	function createWorkspaceObject(id, label, _export, isMain, mainNameType, mainNameExt, isAudioMain, settings, generateCppDestructor, extraClassDeclarations) // export is a reserved word
-	{
-        // first set all default values if inputs are undefined
-        if (_export == undefined) _export = true;
-        if (isMain == undefined) isMain = false;
-        if (mainNameType == undefined) mainNameType = "tabName";
-        if (mainNameExt == undefined) mainNameExt = ".ino";
-        if (isAudioMain == undefined) isAudioMain = false;
-        if (generateCppDestructor == undefined) generateCppDestructor = false;
-        if (extraClassDeclarations == undefined) extraClassDeclarations = "";
-        if (settings == undefined){ settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
-        // return new structure
-		return { type:"tab", id:id, label:label, nodes:[], links:[], export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, isAudioMain:isAudioMain, generateCppDestructor:generateCppDestructor, extraClassDeclarations:extraClassDeclarations, settings:settings}; // nodes is for future version
-	}
 	function moveNodeToEnd(node)
 	{
         // new structure
@@ -236,6 +319,13 @@ RED.nodes = (function() {
             if (n.id == id) return true;
         },false);
 	}
+    /**
+     * 
+     * @param {String} name 
+     * @param {String} wsId 
+     * @param {REDNode} node 
+     * @returns 
+     */
 	function checkName(name, wsId, node) { // jannik add
 		var nodes = getWorkspace(wsId).nodes;
         //var arrayName = getArrayName(name);
@@ -374,7 +464,8 @@ RED.nodes = (function() {
 	}
 	/**
 	 * 
-	 * @param {Node} n 
+	 * @param {REDNode} n
+     * @param {REDWorkspace} ws
 	 */
 	function addNode(n,ws) {
 		/*if (n.type == "AudioMixerX")
@@ -394,7 +485,11 @@ RED.nodes = (function() {
         
         RED.events.emit('nodes:add',n);
 	}
-    
+    /**
+     * 
+     * @param {*} l 
+     * @param {REDWorkspace} ws 
+     */
 	function addLink(l,ws) {
 		//links.push(l);
 
@@ -406,17 +501,12 @@ RED.nodes = (function() {
         ws.links.push(l);
 
         if (loadingWorkspaces == false) {
-            
-            
             setLinkInfo(l);
-
-            
             //RED.export.links2.generateAndAddExportInfo(l); // should be used when exporting links instead, this was only a dev-test
         }
         RED.events.emit('links:add',l);
 	}
     
-
 	function checkForIO() {
 		var hasIO = false;
 		eachNode(function (node) {
@@ -440,6 +530,12 @@ RED.nodes = (function() {
 		return hasAudio;
 	}
 
+    /**
+     * 
+     * @param {String} id 
+     * @param {String} wsId 
+     * @returns {REDNode}
+     */
 	function getNode(id,wsId) {
         if (wsId == undefined) {
             return eachNodeRet(function(n,ws) {
@@ -454,14 +550,21 @@ RED.nodes = (function() {
         }
 	}
 
-	function getNodeByName(name,nns,wsId) {
+    /**
+     * 
+     * @param {String} name 
+     * @param {REDNode[]} nodes 
+     * @param {String} wsId 
+     * @returns {REDNode}
+     */
+	function getNodeByName(name,nodes,wsId) {
         if (wsId == undefined) wsId = RED.view.activeWorkspace;
         var ws = getWorkspace(wsId);
-        if (nns == undefined) nns = ws.nodes;
+        if (nodes == undefined) nodes = ws.nodes;
         //console.trace(nns);
         //console.log("getNodeByName " + name + " @ " + wsId);
-		for (var i=0; i < nns.length; i++) {
-            var node = nns[i];
+		for (var i=0; i < nodes.length; i++) {
+            var node = nodes[i];
             //console.log("checking ", node)
             if (wsId != undefined && node.z != wsId) continue; // workspace filter
 			if (getArrayName(node.name) == name) {
@@ -469,7 +572,7 @@ RED.nodes = (function() {
 				return node;
 			}
             //else
-                //console.warn(nns[i].name + "!=" + name);
+                //console.warn(nodes[i].name + "!=" + name);
 		}
         console.warn("################# did not found " + name + " @ " + wsId);
 		return undefined;
@@ -525,6 +628,10 @@ RED.nodes = (function() {
         });
 	}
 
+    /**
+     * @param {REDWorkspace} ws 
+     * @param {Number} position 
+     */
 	function addWorkspace(ws,position) {
         if (position == undefined)
 		    workspaces.push(ws);
@@ -534,6 +641,10 @@ RED.nodes = (function() {
         addClassTabsToPalette();
         RED.events.emit('flows:add',ws);
 	}
+    /**
+     * @param {String} id 
+     * @returns {String}
+     */
 	function getWorkspaceLabel(id)
 	{
 		//console.warn("getWorkspaceLabel:" +id);
@@ -544,6 +655,10 @@ RED.nodes = (function() {
 		}
 		return undefined;
 	}
+    /**
+     * @param {String} id 
+     * @returns {Number} -1 if not found
+     */
 	function getWorkspaceIndex(id)
 	{
 		for (var i = 0; i < workspaces.length; i++)
@@ -553,13 +668,17 @@ RED.nodes = (function() {
 		}
 		return -1;
 	}
+    /**
+     * @param {String} id 
+     * @returns {REDWorkspace} or undefined if not found
+     */
 	function getWorkspace(id) {
 		for (var i = 0; i < workspaces.length; i++)
 		{
 			if (workspaces[i].id == id)
 				return workspaces[i];
 		}
-		return null;
+		return undefined;
 	}
 	function removeWorkspace(id) {
 		console.trace("workspace removed " + id);
@@ -594,6 +713,11 @@ RED.nodes = (function() {
 		return {nodes:removedNodes,links:removedLinks,workspaceIndex:wsIndex};
 	}
 
+    /**
+     * 
+     * @param {REDNode} node 
+     * @returns {REDNode[]}
+     */
 	function getAllFlowNodes(node) {
 		var visited = {};
 		visited[node.id] = true;
@@ -614,19 +738,27 @@ RED.nodes = (function() {
 		}
 		return nns;
 	}
-	function getNodesIds(_nodes)
+    /**
+     * 
+     * @param {REDNode[]} nodes 
+     * @returns {String[]}
+     */
+	function getNodesIds(nodes)
 	{
-		if (_nodes == undefined) return [];
+		if (nodes == undefined) return [];
 		var nids = [];
-		for (var i = 0; i < _nodes.length; i++)
+		for (var i = 0; i < nodes.length; i++)
 		{
-			if (_nodes[i] == undefined) continue;
-			nids.push(_nodes[i].id);
+			if (nodes[i] == undefined) continue;
+			nids.push(nodes[i].id);
 		}
 		return nids;
 	}
 	/**
 	 * Converts a node to an exportable JSON Object
+     * @param {REDNode} node 
+     * @param {REDWorkspace} ws
+     * @returns {*} exportable node JSON, TODO create a type for this called JSONNode
 	 **/
 	function convertNode(n,ws) {
         if (n.wires != undefined) return n; // if wires is defined, node is allready converted
@@ -779,8 +911,14 @@ RED.nodes = (function() {
         
         //console.error("nodecount after sort: "+nodes.length);
     }
+    /**
+     * 
+     * @param {REDWorkspace} ws 
+     * @returns {REDWorkspace} copy with empty arrays of nodes and links(not used at export)
+     */
 	function createExportableWorkspace(ws) {
-        return createWorkspaceObject(ws.id, ws.label, ws.export, ws.isMain, ws.mainNameType, ws.mainNameExt, ws.isAudioMain, ws.settings, ws.generateCppDestructor, ws.extraClassDeclarations);
+        return new REDWorkspace(ws.id, ws.label, ws.export, ws.isMain, ws.mainNameType, ws.mainNameExt, ws.isAudioMain, ws.settings, ws.generateCppDestructor, ws.extraClassDeclarations);
+        //return createWorkspaceObject(ws.id, ws.label, ws.export, ws.isMain, ws.mainNameType, ws.mainNameExt, ws.isAudioMain, ws.settings, ws.generateCppDestructor, ws.extraClassDeclarations);
         //return JSON.parse(JSON.stringify(ws));
     }
 
@@ -872,13 +1010,14 @@ RED.nodes = (function() {
 	{
 		console.trace();
 		if (workspaces.length != 0) return;
-		var newWorkspace = createWorkspaceObject("Main","Main");
+        var newWorkspace = new REDWorkspace("Main", "Main");
+		//var newWorkspace = createWorkspaceObject("Main","Main");
 		console.warn("add new default workspace Main");
 		addWorkspace(newWorkspace);
 		RED.view.addWorkspace(newWorkspace);
 	}
 
-	function importWorkspaces(nns, createNewIds) // nns = new node s
+	function importWorkspaces(nns, createNewIds) // nns = (new node s) or maybe (new node set)
 	{
 		var newWorkspaces = [];
         // scan and load workspaces and settings first
@@ -891,7 +1030,8 @@ RED.nodes = (function() {
             if (n.type === "workspace") n.type = "tab"; // type conversion
 
             //var cIOs = getClassIOportCounts(n.id, nns);
-            var ws = createWorkspaceObject(n.id, n.label, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.isAudioMain, n.settings, n.generateCppDestructor, n.extraClassDeclarations);
+            var ws = new REDWorkspace(n.id, n.label, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.isAudioMain, n.settings, n.generateCppDestructor, n.extraClassDeclarations);
+            //var ws = createWorkspaceObject(n.id, n.label, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.isAudioMain, n.settings, n.generateCppDestructor, n.extraClassDeclarations);
             
             addWorkspace(ws);
             newWorkspaces.push(ws);
@@ -1045,6 +1185,13 @@ RED.nodes = (function() {
         refreshDynInputsObjects_connectedTo();
 	}
 
+    /**
+     * 
+     * @param {*} nns 
+     * @param {*} createNewIds 
+     * @param {REDWorkspace} ws 
+     * @returns 
+     */
     function importNewNodes(nns, createNewIds, ws) { // nns = New Node s
         var i;
 		var nn;
@@ -1160,36 +1307,36 @@ RED.nodes = (function() {
         return [new_nodes,new_links];
     }
 
+    function createUnknownNodeTypeDef(nn) {
+        return {
+            unknownType:true,
+            color:"#fee",
+            defaults: {"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},
+            label: nn.name,
+            labelStyle: "node_label_italic",
+            icon:"arrow-in.png",
+            outputs: nn.outputs||nn.wires.length,
+            inputs: nn.inputs||1    //getNodeInputCount(newNodes, nn.z, nn.id)
+        }
+    }
+
+    /**
+     * 
+     * @param {*} nn JSONNode type
+     * @param {Boolean} createNewIds 
+     * @param {REDWorkspace} ws 
+     * @returns 
+     */
     function importNewNode(nn,createNewIds,ws) {
         var def = getTypeDef(nn.type);
-        if (def == undefined) return undefined;
+        if (def == undefined) def = createUnknownNodeTypeDef(nn);// return undefined;
 
-        var node = {x:nn.x, y:nn.y, z:nn.z, type:nn.type, _def:def, wires:nn.wires/*,wireNames:n.wireNames*/,changed:false};
-
-        if (def.uiObject != undefined) {
-            node.w = nn.w;
-            node.h = nn.h;
-        }
+        //var node = {x:nn.x, y:nn.y, z:nn.z, type:nn.type, _def:def, wires:nn.wires/*,wireNames:n.wireNames*/,changed:false};
+        var node = new REDNode(nn, def);
 
         if (nn.parentGroup != undefined)
         {
             node.parentGroup = nn.parentGroup;
-        }
-
-        if (!node._def) {
-            
-            node._def = {
-                color:"#fee",
-                defaults: {"name":{"value":"new"},"id":{"value":"new"},"comment":{"value":""}},
-                label: nn.name,
-                labelStyle: "node_label_italic",
-                icon:"arrow-in.png",
-                outputs: nn.outputs||nn.wires.length,
-                inputs: nn.inputs||1//getNodeInputCount(newNodes, nn.z, nn.id)
-            }
-            node.unknownType = true;
-            nn.bgColor = undefined;
-            node.name = nn.name;
         }
 
         if (createNewIds == true) { // this is only used by import dialog and paste function
@@ -1288,7 +1435,7 @@ RED.nodes = (function() {
 	}
 	/**
 	 * 
-	 * @param {*} srcNode 
+	 * @param {REDNode} srcNode 
 	 * @param {*} cb is function pointer with following format cb(link);
 	 */
 	function getEachLink(srcNode, cb)
@@ -1561,14 +1708,13 @@ RED.nodes = (function() {
 		return "";
 	}
 	
-	/**
-	 * This is used to find what is connected to a input-pin
+    /**
+     * This is used to find what is connected to a input-pin
      * Only used to get whats connected to DynInput objects such as AudioMixer and AudioMixerStereo
-	 * @param {Array} nns array of all nodes
-	 * @param {String} wsId workspace id
-	 * @param {String} nId node id
-	 * @returns {*} as {node:n, srcPortIndex: srcPortIndex}
-	 */
+     * @param {REDNode} node 
+     * @param {Number} port 
+     * @returns 
+     */
 	function getWireInputSourceNode(node, port)
 	{
 		//console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
@@ -1809,6 +1955,11 @@ RED.nodes = (function() {
 		}
 		return items;
 	}
+    /**
+     * 
+     * @param {REDNode} functionNode 
+     * @param {Array} completeItems 
+     */
 	function getFunctions(functionNode, completeItems)
 	{
 		var functions = [...functionNode.comment.matchAll(/\s*(unsigned|signed)?\s*(void|int|byte|char|short|long|float|double|bool)\s+(\w+)\s*(\([^)]*\))\s*/g)];
@@ -1825,6 +1976,11 @@ RED.nodes = (function() {
 			completeItems.push({ name:(name+param), value:(name+param), type:returnType, html: "@ " + functionNode.name + "<br> returns " + returnType, meta: returnType, score:(1000)  });
 		}
 	}
+    /**
+     * 
+     * @param {REDNode} varNode 
+     * @param {Array} completeItems 
+     */
     function getVaribles(varNode, completeItems)
     {
         //var vars = [...varNode.comment.matchAll(/(?:\w+\s+)([a-zA-Z_][a-zA-Z0-9_]*)\s*[\[;,=]/g)];
@@ -1844,9 +2000,12 @@ RED.nodes = (function() {
 		    
         }
     }
-	/**
+
+    /**
 	 * function used by addClassTabsToPalette()
-	 */
+     * @param {String} wsId 
+     * @returns {Number}
+     */
 	function getClassNrOfInputs(wsId)// Jannik add function
 	{
 		var count = 0;
@@ -1867,6 +2026,8 @@ RED.nodes = (function() {
 	}
 	/**
 	 * function used by addClassTabsToPalette()
+     * @param {String} wsId 
+     * @returns {Number}
 	 */
 	function getClassNrOfOutputs(wsId)// Jannik add function
 	{
@@ -1943,6 +2104,11 @@ RED.nodes = (function() {
             });
 		}
 	}
+    /**
+     * 
+     * @param {REDNode} junctionNode 
+     * @returns {REDNode}
+     */
 	function getJunctionSrcNode(junctionNode)
 	{
         var ws = getWorkspace(junctionNode.z);
@@ -1959,6 +2125,12 @@ RED.nodes = (function() {
 		}
 		return null;
 	}
+    /**
+     * 
+     * @param {REDNode} junctionNode 
+     * @param {REDNode} dstNode 
+     * @returns {Boolean}
+     */
 	function getJunctionDstNodeEquals(junctionNode, dstNode)
 	{
 		var found = false;
@@ -1978,6 +2150,10 @@ RED.nodes = (function() {
 		}
 		return false;
 	}
+    /**
+     * 
+     * @param {REDNode} node 
+     */
 	function removeUnusedWires(node)
 	{
         var ws = getWorkspace(node.z);
@@ -2038,7 +2214,7 @@ RED.nodes = (function() {
         eachNode(function (n,ws) {
             if (n._def.nonObject != undefined) return; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
             if (n._def.isClass != undefined) return;
-            if (n.unknownType != undefined) return;
+            if (n._def.unknownType != undefined) return;
             if (n._def.category == undefined) {console.error("error at addUsedNodeTypesToPalette(): nodes[i].type=" + n.type); return;}
             if (n._def.category.startsWith("input")) return;
             if (n._def.category.startsWith("output")) return;
@@ -2063,6 +2239,14 @@ RED.nodes = (function() {
         RED.events.on("nodes:remove", NodeRemoved);
         RED.events.on("nodes:moved", NodesMoved);
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     * @param {Number} oldCount 
+     * @param {Number} newCount 
+     * @param {Boolean} dynExpand 
+     * @returns 
+     */
     function NodeInputsChanged(node, oldCount, newCount, dynExpand) {
         // update the visuals
         if (newCount >= oldCount) {
@@ -2083,6 +2267,11 @@ RED.nodes = (function() {
 
         RED.view.redraw();
     }
+    /**
+     * 
+     * @param {REDNNode} node 
+     * @param {String} oldName 
+     */
     function NodeRenamed(node, oldName) {
         node.isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
         if (node.isArray != undefined) node.arraySize = node.isArray.arrayLength;
@@ -2110,6 +2299,11 @@ RED.nodes = (function() {
         }
 
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     * @param {Object} changes 
+     */
     function NodeChanged(node, changes) {
         if (node.type == "ConstValue" && changes.value != undefined) {
             var findConstUsage = "[" + node.name + "]";
@@ -2128,6 +2322,10 @@ RED.nodes = (function() {
         }
         //console.warn("node changed:", node, changes);
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     */
     function NodeRemoved(node) {
         if (node.type == "ConstValue") {
             var findConstUsage = "[" + node.name + "]";
@@ -2147,10 +2345,18 @@ RED.nodes = (function() {
         else if (node.type == "TabOutput" || node.type == "TabInput")
             TabIOsChanged(node);
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     */
     function NodeAdded(node) {
         if (node.type == "TabOutput" || node.type == "TabInput")
             TabIOsChanged(node);
     }
+    /**
+     * 
+     * @param {REDNode[]} ns 
+     */
     function NodesMoved(ns) {
         //console.warn(ns);
         for (var i=0;i<ns.length;i++) {
@@ -2159,6 +2365,10 @@ RED.nodes = (function() {
             }
         }
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     */
     function TabIOsChanged(node) {
         var ws = getWorkspace(node.z);
         if (node.type == "TabOutput") {
@@ -2172,6 +2382,11 @@ RED.nodes = (function() {
             ws.tabInputs = tabIs;
         }
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     * @returns {Number}
+     */
     function FindNextFreeInputPort(node) {
         var ws = getWorkspace(node.z);
         var links = ws.links.filter(function(l) { return (l.target === node); });
@@ -2194,7 +2409,7 @@ RED.nodes = (function() {
     }
     /**
      * note this can also be used to correct the number of inputs needed, for example when doing undo of removed links
-     * @param {*} node 
+     * @param {REDNode} node 
      * @returns 
      */
     function recheckAndReduceUnusedDynInputs(node) {
@@ -2354,7 +2569,12 @@ RED.nodes = (function() {
 
     function checkForAndSetNodeIsArray() {
         
-        eachNode(function(n,ws) {
+        eachNode(
+            /**
+             * @param {REDNode} n 
+             * @param {REDWorkspace} ws 
+             */
+            function(n,ws) {
             if (n._def.nonObject != undefined) return; // skip 'non objects'(AudioObjects) 
             n.isArray = RED.export.isNameDeclarationArray(n.name, ws.id, true);
             if (n.isArray != undefined) n.arraySize = n.isArray.arrayLength;
@@ -2362,17 +2582,34 @@ RED.nodes = (function() {
     }
     function getNodeInstancesOfType(type) {
         var nodes = [];
-        eachNode(function(node,ws) {
+        eachNode(
+            /**
+             * @param {REDNode} n 
+             * @param {REDWorkspace} ws 
+             */
+            function(node,ws) {
             if (node.type == type)
                 nodes.push({node,ws});
         });
         return nodes;
     }
+    /**
+     * 
+     * @param {REDWorkspace} ws 
+     * @param {(REDNode)} cb 
+     */
     function wsEachNode(ws,cb) {
         for (var ni=0;ni<ws.nodes.length;ni++) {
             cb(ws.nodes[ni]);
         }
     }
+    /**
+     * 
+     * @param {REDWorkspace} ws 
+     * @param {(REDNode)} cb 
+     * @param {*} defRet 
+     * @returns 
+     */
     function wsEachNodeRet(ws,cb,defRet) {
         for (var ni=0;ni<ws.nodes.length;ni++) {
             var ret = cb(ws.nodes[ni]);
@@ -2380,6 +2617,9 @@ RED.nodes = (function() {
         }
         return defRet;
     }
+    /**
+     * @param {(REDNode,Workspace)} cb 
+     */
     function eachNode(cb) {
         for (var wsi=0;wsi<workspaces.length;wsi++) {
             for (var ni=0;ni<workspaces[wsi].nodes.length;ni++) {
@@ -2387,6 +2627,11 @@ RED.nodes = (function() {
             }
         }
     }
+    /**
+     * @param {(REDNode,Workspace)} cb 
+     * @param {*} defRet 
+     * @returns 
+     */
     function eachNodeRet(cb,defRet) {
         for (var wsi=0;wsi<workspaces.length;wsi++) {
             for (var ni=0;ni<workspaces[wsi].nodes.length;ni++) {
@@ -2432,7 +2677,7 @@ RED.nodes = (function() {
         moveWorkspace,
         FindNextFreeInputPort,
 		moveNodeToEnd,
-		createWorkspaceObject,
+		//createWorkspaceObject, // obsolete replaced by Workspace class
         createExportableWorkspace,
 		createNewDefaultWorkspace,
         Init_BuiltIn_NodeDefinitions,
@@ -2506,7 +2751,12 @@ RED.nodes = (function() {
             ws.nodes.length = 0;
             ws.nodes.addArray(nodes);
         },
-        get cwsNodes() {
+        /**
+         * Returns the Current Workspace Nodes
+         * @type {REDNode[]}
+         */
+        get cwsNodes()
+        {
             return getWorkspace(RED.view.activeWorkspace).nodes;
         },
         set cwsNodes(nodes) {
@@ -2536,3 +2786,23 @@ RED.nodes = (function() {
         checkName:checkName
 	};
 })();
+
+
+/**
+	 * this creates a workspace object
+	 */
+    /* obsolete
+ function createWorkspaceObject(id, label, _export, isMain, mainNameType, mainNameExt, isAudioMain, settings, generateCppDestructor, extraClassDeclarations) // export is a reserved word
+ {
+     // first set all default values if inputs are undefined
+     if (_export == undefined) _export = true;
+     if (isMain == undefined) isMain = false;
+     if (mainNameType == undefined) mainNameType = "tabName";
+     if (mainNameExt == undefined) mainNameExt = ".ino";
+     if (isAudioMain == undefined) isAudioMain = false;
+     if (generateCppDestructor == undefined) generateCppDestructor = false;
+     if (extraClassDeclarations == undefined) extraClassDeclarations = "";
+     if (settings == undefined){ settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
+     // return new structure
+     return { type:"tab", id:id, label:label, nodes:[], links:[], export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, isAudioMain:isAudioMain, generateCppDestructor:generateCppDestructor, extraClassDeclarations:extraClassDeclarations, settings:settings}; // nodes is for future version
+ }*/
