@@ -14,6 +14,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+class REDNode
+{
+    type = "";
+    id = "";
+    name = "";
+    comment = "";
+
+    tag = ""; // only used by UI objects
+    x = 0;
+    y = 0;
+    z = ""; // defines which workspace it belongs to
+    w = 0;
+    h = 0;
+
+    color = "";
+    bgColor = "";
+
+    outputs = 0;
+    inputs = 0;
+
+    // used specifically by RED.view
+    changed = false;
+    dirty = false;
+    valid = true;
+    selected = false;
+    resize  = false;
+    inputlist = []; // contains a list of the actual svgRect:s used to visualize the input ports
+    ports = []; // this is actually the output port list, only contains numbers (should be the same as)
+    svgRect = {};
+    textDimensions = {};
+    textSize = 14;
+
+    constructor() {
+
+    }
+};
+
 RED.nodes = (function() {
 
 	var node_defs = {};
@@ -1654,7 +1691,7 @@ RED.nodes = (function() {
 		// here we need to go througt all wires of that virtual port
 		var retVal = eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
 		{
-			var dst = node(dstId);
+			var dst = getNode(dstId);
 			//console.log("found dest:" + dst.name);
 			ac.dstPort = dstPortIndex;
 			ac.dstName = currRootName + "." + make_name(dst);

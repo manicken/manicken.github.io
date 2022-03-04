@@ -1,71 +1,77 @@
-RED.arduino.export2 = (function () {
+
+class WsExport
+{
     
-    class WsExport
+    fileName = "";
+    name = ""; // the actual name of the workspace/class
+    comments = []; //  user specified class comment node(s) contents
+    constructorCode = []; // user specified constructor node(s) contents
+    destructorCode = []; // user specified destructor node(s) contents
+    eofCode = []; // user specified eof node(s) contents
+    functions = []; // user function node(s) contents
+    variables = []; // user variable node(s) contents
+    workspaceIncludes = []; // the design workspace includes, i.e. the dependencies  
+    userIncludes = []; // user specified includes
+    arrayNodes = {}; // this would contain all code that will be put into different for loops in the constructor
+
+    audioObjects = []; // contain all AudioStream Objects
+    audioControlObjects = []; // contain all Audio Control Objects
+    audioConnections = []; // contain all AudioConnection code that don't belong to the array code
+
+    isMain = false;
+
+    constructor(ws)
     {
-        fileName = "";
-        name = ""; // the actual name of the workspace/class
-        comments = []; //  user specified class comment node(s) contents
-        constructorCode = []; // user specified constructor node(s) contents
-        destructorCode = []; // user specified destructor node(s) contents
-        eofCode = []; // user specified eof node(s) contents
-        functions = []; // user function node(s) contents
-        variables = []; // user variable node(s) contents
-        workspaceIncludes = []; // the design workspace includes, i.e. the dependencies  
-        userIncludes = []; // user specified includes
-        arrayNodes = {}; // this would contain all code that will be put into different for loops in the constructor
-
-        audioObjects = []; // contain all AudioStream Objects
-        audioControlObjects = []; // contain all Audio Control Objects
-        audioConnections = []; // contain all AudioConnection code that don't belong to the array code
-
-        isMain = false;
-
-        constructor(ws)
+        this.name = ws.label;
+        if (ws.isMain == true)
         {
-            this.name = ws.label;
-            if (ws.isMain == true)
-            {
-                this.isMain = true;
+            this.isMain = true;
 
-                var fileName = "";
-                if (ws.mainNameType == "main")
-                    fileName = "main";
-                else if (ws.mainNameType == "projectName")
-                    fileName = RED.arduino.settings.ProjectName;
-                else // this includes if (ws.mainNameType == "tabName")
-                    fileName = ws.label;
-                this.fileName = fileName + ws.mainNameExt;
-            }
-            else if (ws.label == "main.cpp") {
-                this.isMain = true;
-                this.fileName = ws.label;
-            }
-            else {
-                this.fileName = ws.label + ".h";
-            }
+            var fileName = "";
+            if (ws.mainNameType == "main")
+                fileName = "main";
+            else if (ws.mainNameType == "projectName")
+                fileName = RED.arduino.settings.ProjectName;
+            else // this includes if (ws.mainNameType == "tabName")
+                fileName = ws.label;
+            this.fileName = fileName + ws.mainNameExt;
         }
-        
-        /**
-         * used to generate a 'wsfile' object
-         * from all collected data
-         */
-        generateWsFile()
-        {
-            var newWsCpp = getNewWsCppFile(this.fileName, "");
-            if (classComment.length > 0) {
-                newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
-            }
-            if (isMain == false) {
-                newWsCpp.contents += "\nclass " + this.name + " " + ws.extraClassDeclarations +"\n{\npublic:\n";
-            }
-            if (this.variables.trim().length > 0) {
-                if (newWsCpp.isMain == false)
-                    newWsCpp.contents += incrementTextLines(this.variables, RED.arduino.settings.CodeIndentations);
-                else
-                    newWsCpp.contents += this.variables;
-            }
+        else if (ws.label == "main.cpp") {
+            this.isMain = true;
+            this.fileName = ws.label;
+        }
+        else {
+            this.fileName = ws.label + ".h";
         }
     }
+    
+    /**
+     * used to generate a 'wsfile' object
+     * from all collected data
+     */
+    generateWsFile()
+    {
+        var wse = new WsExport({label:"hello"});
+
+        var newWsCpp = getNewWsCppFile(this.fileName, "");
+        if (classComment.length > 0) {
+            newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
+        }
+        if (isMain == false) {
+            newWsCpp.contents += "\nclass " + this.name + " " + ws.extraClassDeclarations +"\n{\npublic:\n";
+        }
+        if (this.variables.trim().length > 0) {
+            if (newWsCpp.isMain == false)
+                newWsCpp.contents += incrementTextLines(this.variables, RED.arduino.settings.CodeIndentations);
+            else
+                newWsCpp.contents += this.variables;
+        }
+    }
+}
+
+RED.arduino.export2 = (function () {
+    'use strict';
+
 
     function checkAndAddNonAudioObject(n,wse,globalCppFiles) {
         if (n.type == "ClassComment") {
@@ -110,7 +116,7 @@ RED.arduino.export2 = (function () {
             }
 
             var includeName = '#include "' + n.name + '"';
-            if (includeName.toLowerCase().endsWith(".c") || includeName.toLowerCase().endsWith(".cpp")) continue;
+            if (includeName.toLowerCase().endsWith(".c") || includeName.toLowerCase().endsWith(".cpp")) return true; // return true because type taken care of
 
             if (!wse.userIncludes.includes(includeName)) wse.userIncludes.push(includeName);
         }
@@ -137,15 +143,16 @@ RED.arduino.export2 = (function () {
     }
 
     /**
-     * 
+     * // TODO create class for NewAudioConnection
      * @param {WsExport} wse 
-     * @param {*} ac 
+     * @param {RED.arduino.export.getNewAudioConnectionType} ac 
      * @param {*} src 
      * @param {*} dst 
      * @param {*} pi 
      * @param {*} dstPortIndex 
      */
     function appendAudioConnection_s(wse, ac, src, dst, pi, dstPortIndex) {
+        
         ac.cppCode = "";
         ac.srcName = RED.nodes.make_name(src);
         ac.dstName = RED.nodes.make_name(dst);

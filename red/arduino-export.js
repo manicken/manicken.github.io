@@ -941,7 +941,7 @@ RED.arduino.export = (function () {
                 if (useSubfolder == false)
                     zip.file(wsCppfile.name, wsCppfile.contents);
                 else
-                    zip.file(subFolder + "\\" + wsCppfile.name, wsCppfile.contents);
+                    zip.file(subFolder + "/" + wsCppfile.name, wsCppfile.contents);
             }
             var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
             zip.generateAsync({ type: "blob", compression}).then(function (blob) {
@@ -1090,8 +1090,9 @@ RED.arduino.export = (function () {
             }).focus();*/
 
     return {
-        pushJSON: pushJSON,
-        generate_OSC_function_decode:generate_OSC_function_decode,
-        showIOcheckWarning:showIOcheckWarning // to be removed and replaced by warning instead
+        pushJSON,
+        generate_OSC_function_decode,
+        showIOcheckWarning,
+        getNewAudioConnectionType
     };
 })();
