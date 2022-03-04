@@ -17,6 +17,9 @@
 
 /**
  * A Node-RED Node object, (cannot use Node because that is a reserved name for DOM Node:s)
+ * note. this only acts as a base structure and some nodes types can contain properties
+ * that is not documented here, see NodeDefinitions.js specially the default properties
+ * for more information
  */
 class REDNode
 {
@@ -85,6 +88,13 @@ class REDNode
      * @param {*} def node definition
      */
     constructor(nn, def) {
+        this.id = nn.id;
+        this.name = nn.name;
+        this.nodes = nn.nodes;
+        this.inputs = nn.inputs;
+        this.outputs = nn.outputs;
+        this.bgColor = nn.bgColor;
+        this.color = nn.color||nn.bgColor;
         this.x = nn.x;
         this.y = nn.y;
         this.z = nn.z;
@@ -101,6 +111,9 @@ class REDNode
     }
 };
 
+/**
+ * Defines a workspace/class/tab object
+ */
 class REDWorkspace 
 {
     /** defines the type of this object, will never be changed, only used by old export structure */
@@ -110,8 +123,9 @@ class REDWorkspace
     label = "";
     /** @type {REDNode[]} */
     nodes = [];
+    /** @type {REDLink[]} */
     links = [];
-    _export = true;
+    export = true;
     isMain = false;
     mainNameType = "";
     mainNameExt = "";
@@ -121,9 +135,10 @@ class REDWorkspace
     settings = {};
     constructor(id, label, _export, isMain, mainNameType, mainNameExt, isAudioMain, settings, generateCppDestructor, extraClassDeclarations)
     {
+        
         this.id = id;
         this.label = label;
-        this._export = (_export != undefined)?_export:true;
+        this.export = (_export != undefined)?_export:true;
         this.isMain = (isMain != undefined)?isMain:false;
         this.mainNameType = (mainNameType != undefined)?mainNameType:"tabName";
         this.mainNameExt = (mainNameExt != undefined)?mainNameExt:".ino";
@@ -144,11 +159,56 @@ class REDLink
     target = {};
     targetPort = 0;
 
-    constructor()
-    {
+    // the following are mostly used by RED.view visuals
+    selected = false;
+    /** @type {REDLinkInfo} */
+    info = new REDLinkInfo();
+    /** @type {REDLinkSvgPaths} */
+    svgPath = undefined;
+    svgRoot = undefined;
+    x1 = 0;
+    x2 = 0;
+    y1 = 0;
+    y2 = 0;
 
+    constructor(source, sourcePort, target, targetPort)
+    {
+        this.source = source;
+        this.sourcePort = parseInt(sourcePort);
+        this.target = target;
+        this.targetPort = parseInt(targetPort);
     }
 };
+
+class REDLinkSvgPaths
+{
+    background = undefined;
+    outline = undefined;
+    line = undefined;
+    constructor() {}
+}
+
+class REDLinkInfo
+{
+    /** @type {Boolean} */
+    isBus = false;
+    /** @type {Boolean} */
+    valid = true;
+    /** @type {String} */
+    invalidText = undefined;
+    /** @type {REDNode} */
+    tabOut = undefined;
+    /** @type {REDNode} */
+    tabIn = undefined;
+
+    constructor() {}
+    /*constructor(isBus,valid,invalidText,tabOut,tabIn) {
+        this.isBus = isBus; this.valid = valid; this.invalidText = invalidText; this.tabOut = tabOut; this.tabIn = tabIn;
+    }
+    setAll(isBus,valid,invalidText,tabOut,tabIn) {
+        this.isBus = isBus; this.valid = valid; this.invalidText = invalidText; this.tabOut = tabOut; this.tabIn = tabIn;
+    }*/
+}
 
 RED.nodes = (function() {
 
@@ -157,6 +217,10 @@ RED.nodes = (function() {
     var workspaces = [];
     //var iconSets = {};
 
+    /**
+     * 
+     * @param {REDNode} node 
+     */
 	function moveNodeToEnd(node)
 	{
         // new structure
@@ -487,7 +551,7 @@ RED.nodes = (function() {
 	}
     /**
      * 
-     * @param {*} l 
+     * @param {REDLink} l 
      * @param {REDWorkspace} ws 
      */
 	function addLink(l,ws) {
@@ -580,6 +644,7 @@ RED.nodes = (function() {
 	
 
 	function removeNode(id) {
+        /** @type {REDLink[]} */
 		var removedLinks = [];
 		
         var node = getNode(id);
@@ -599,7 +664,7 @@ RED.nodes = (function() {
         //if (ws == undefined)
         var ws = getWorkspace(node.z);
         ws.nodes.splice(ws.nodes.indexOf(node),1);
-
+    
         removedLinks = ws.links.filter(function(l) { return (l.source === node) || (l.target === node); });
         removedLinks.map(function(l) {ws.links.splice(ws.links.indexOf(l), 1); });
 		
@@ -1196,7 +1261,9 @@ RED.nodes = (function() {
         var i;
 		var nn;
         var node_map = {};
+        /** @type {REDNode[]} */
         var new_nodes = [];
+        /** @type {REDLink[]} */
         var new_links = [];
         // scan and display list of unknown types, also import ConstValues so that they are added first
         var unknownTypes = [];
@@ -1271,7 +1338,10 @@ RED.nodes = (function() {
                     if ((parts[0] in node_map) == false) continue;
 
                     var dst = node_map[parts[0]];
-                    var link = {source:nn,sourcePort:w1,target:dst,targetPort:parts[1]};
+                    
+                    var link = new REDLink(nn, w1, dst, parts[1]);
+                    //var link = {source:nn,sourcePort:w1,target:dst,targetPort:parts[1]};
+                    //link.info = new REDLinkInfo();
                     /*
                     if (n.wireNames != undefined) {
                         try { var linkName = n.wireNames[w1][w2]; }
@@ -2508,63 +2578,49 @@ RED.nodes = (function() {
     /**
      * this function gets the linktype
      * and TODO is to check for validity
-     * @param {*} l 
+     * @param {REDLink} l 
      * @returns 
      */
     function setLinkInfo(l) {
-        //
-        //var wsSource = isClass(l.source.type);
-        //var wsTarget = isClass(l.target.type);
-        var tabOut = l.source._def.isClass?getClassIOport(l.source._def.isClass.id, "Out", l.sourcePort):undefined;
-        var tabIn = l.target._def.isClass?getClassIOport(l.target._def.isClass.id, "In", l.targetPort):undefined;
-        //var sourceIsArray = RED.export.isNameDeclarationArray(l.source.name, l.source.z); // theese two are not needed anymore as this info is stored in every node instead
-        //var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z);
-        var isBus = (tabOut != undefined && tabOut.isBus) ||
-                    (tabIn != undefined && tabIn.isBus) ||
+        l.info.tabOut = l.source._def.isClass?getClassIOport(l.source._def.isClass.id, "Out", l.sourcePort):undefined;
+        l.info.tabIn = l.target._def.isClass?getClassIOport(l.target._def.isClass.id, "In", l.targetPort):undefined;
+        
+        l.info.isBus = (l.info.tabOut != undefined && l.info.tabOut.isBus) ||
+                    (l.info.tabIn != undefined && l.info.tabIn.isBus) ||
                     (l.source.type == "BusJoin" || l.target.type == "BusSplit");
 
         if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.target._def.dynInputs!=undefined)) {
-            var valid = false;
-            var inValidText = "array to 'array of dynmixers' not yet supported in OSC export<br> non priority to implement";
+            l.info.valid = false;
+            l.info.invalidText = "array to 'array of dynmixers' not yet supported in OSC export<br> non priority to implement";
         }
-        else if (isBus && (l.source.type == "TabInput" || l.target.type == "TabOutput")) {
-            var valid = false;
-            var inValidText = "connecting bus wires to either TabInput or TabOutput not yet supported";
+        else if (l.info.isBus && (l.source.type == "TabInput" || l.target.type == "TabOutput")) {
+            l.info.valid = false;
+            l.info.invalidText = "connecting bus wires to either TabInput or TabOutput not yet supported";
         }
-        else if (isBus && (l.source._def.isClass != undefined && l.target._def.isClass != undefined)) {
-            var valid = false;
-            var inValidText = "connecting bus wires between classes not yet supported";
+        else if (l.info.isBus && (l.source._def.isClass != undefined && l.target._def.isClass != undefined)) {
+            l.info.valid = false;
+            l.info.invalidText = "connecting bus wires between classes not yet supported";
         }
-        else if (isBus && l.target._def.isClass != undefined) {
-            var valid = false;
-            var inValidText = "connecting bus wires to classes not yet supported";
+        else if (l.info.isBus && l.target._def.isClass != undefined) {
+            l.info.valid = false;
+            l.info.invalidText = "connecting bus wires to classes not yet supported";
         }
         else if ((l.source.type == "BusJoin" || l.target.type == "BusSplit" || l.source.type == "BusSplit" || l.target.type == "BusJoin")) {
-            var valid = false;
-            var inValidText = "BusJoin and BusSplit not yet supported";
+            l.info.valid = false;
+            l.info.invalidText = "BusJoin and BusSplit not yet supported";
         }
         else if ((l.source.type != "TabInput") && (l.source.isArray!=undefined) && (l.target._def.dynInputs==undefined) && (l.target.isArray==undefined)) {
-            var valid = false;
-            var inValidText = "array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array";
+            l.info.valid = false;
+            l.info.invalidText = "array sources can only be connected to dynInput objects such as AudioMixer and AudioMixerStereo<br>unless the target is a array";
         }
         else if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.source.isArray.arrayLength != l.target.isArray.arrayLength)) {
-            var valid = false;
-            var inValidText = "the array source size don't match the target array size";
+            l.info.valid = false;
+            l.info.invalidText = "the array source size don't match the target array size";
         }
-        else
-            var valid = true;
-        l.info = {
-            //wsSource,
-            //wsTarget,
-            //sourceIsArray,
-            //targetIsArray,
-            isBus,
-            valid,
-            inValidText,
-            tabOut,
-            tabIn
-        };
-        
+        else {
+            l.info.valid = true;
+            l.info.invalidText = "";
+        }
     }
 
     function checkForAndSetNodeIsArray() {

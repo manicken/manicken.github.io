@@ -159,7 +159,7 @@ OSC.LiveUpdate = (function() {
         }
 
         if (link.info.valid == false) {
-            OSC.AddLineToLog("Warning invalid link skipped: ("+link.info.inValidText+")<br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
+            OSC.AddLineToLog("Warning invalid link skipped: ("+link.info.invalidText+")<br>" + RED.export.links.getDebug(link), undefined, "background-color:#fcf8e3;");
             return;
         }
 

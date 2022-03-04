@@ -23,7 +23,7 @@ RED.export.links2 = (function () {
         /*info:{ // added by setLinkInfo @ RED.nodes
             isBus,
             valid,
-            inValidText,
+            invalidText,
             tabOut,
             tabIn
         }*/

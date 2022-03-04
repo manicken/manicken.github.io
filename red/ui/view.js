@@ -1356,6 +1356,7 @@ RED.view = (function() {
 	});
 	function AddNewNode(xPos, yPos, typeName, nameShouldEndWithNumber)
 	{
+
 		var nn = {x: xPos,y:yPos,w:node_def.width,z:activeWorkspace};
 		
 
@@ -1378,7 +1379,7 @@ RED.view = (function() {
 
 		nn.changed = true;
 
-        
+        nn = new REDNode(nn, nn._def);
 		
 		for (var d in nn._def.defaults) {
 			if (nn._def.defaults.hasOwnProperty(d)) {
@@ -2897,9 +2898,9 @@ RED.view = (function() {
 
 		var linkEnter = visLinksAll.enter().insert("g",".node").attr("class","link");
 		anyLinkEnter = false;
-		linkEnter.each(function(d,i) {
+		linkEnter.each(/** @param {REDLink} d */function(d,i) {
 			anyLinkEnter = true;
-			d.svgPath = {};
+			d.svgPath = new REDLinkSvgPaths();
 			//console.log("link enter" + Object.getOwnPropertyNames(d));
 			var l = d3.select(this);
             d.svgRoot = l;
@@ -2944,8 +2945,8 @@ RED.view = (function() {
                     if (d.info.valid == false) {
                         if (current_popup_rect != this)
                             $(current_popup_rect).popover("destroy"); // destroy prev
-                        showPopOver(this, true, d.info.inValidText, "top");
-                        //RED.notify(d.info.inValidText, "warning", null, 3000);
+                        showPopOver(this, true, d.info.invalidText, "top");
+                        //RED.notify(d.info.invalidText, "warning", null, 3000);
                     }
                         
                 })
