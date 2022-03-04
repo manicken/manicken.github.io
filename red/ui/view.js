@@ -1354,6 +1354,14 @@ RED.view = (function() {
                 }
 			}
 	});
+    /**
+     * 
+     * @param {*} xPos 
+     * @param {*} yPos 
+     * @param {*} typeName 
+     * @param {*} nameShouldEndWithNumber 
+     * @returns {REDNode}
+     */
 	function AddNewNode(xPos, yPos, typeName, nameShouldEndWithNumber)
 	{
 

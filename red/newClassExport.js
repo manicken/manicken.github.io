@@ -70,6 +70,8 @@ class WsExport
     }
 }
 
+
+
 RED.arduino.export2 = (function () {
     'use strict';
 
@@ -243,8 +245,12 @@ RED.arduino.export2 = (function () {
             mixerStereoVariants = [];
         }
         // only create one object that is reused
-        var ac = getNewAudioConnectionType("", minorIncrement, majorIncrement, false);
-            
+        //var ac = getNewAudioConnectionType("", minorIncrement, majorIncrement, false);
+        var ac = new ACExport();
+        ac.minorIncrement = minorIncrement;
+        ac.majorIncrement = majorIncrement;
+        //ac.staticType = false;
+        
         var keywords = [];
         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
         {

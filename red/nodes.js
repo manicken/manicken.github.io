@@ -217,10 +217,7 @@ RED.nodes = (function() {
     var workspaces = [];
     //var iconSets = {};
 
-    /**
-     * 
-     * @param {REDNode} node 
-     */
+    /** @param {REDNode} node */
 	function moveNodeToEnd(node)
 	{
         // new structure
