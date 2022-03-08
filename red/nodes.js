@@ -1500,6 +1500,26 @@ RED.nodes = (function() {
 			}
 		}
 	}
+    /**
+     * This callback is displayed as a global member.
+     * @callback nodeEachLinkCallback
+     * @param {number} sourcePort
+     * @param {REDNode} target
+     * @param {number} targetPort
+     */
+    /**
+     * 
+     * @param {REDNode} node 
+     * @param {nodeEachLinkCallback} cb 
+     */
+    function nodeEachLink(node, cb) {
+        var ws = getWorkspace(node.z);
+        var links = ws.links.filter(function (l) { return l.source === node});
+        for (var li=0;li<links.length;li++)
+        {
+            cb(links[li].sourcePort, links[li].target, links[li].targetPort);
+        }
+    }
 	/**
 	 * 
 	 * @param {REDNode} srcNode 
@@ -2758,6 +2778,7 @@ RED.nodes = (function() {
 		eachLink,
 		getEachLink,
 		eachWire,
+        nodeEachLink, // to replace eachWire in most cases
 		workspaceNameChanged,
 		workspaceNameCheck,
 		node: getNode,

@@ -4,7 +4,7 @@ class WsExport
     
     fileName = "";
     name = ""; // the actual name of the workspace/class
-    comments = []; //  user specified class comment node(s) contents
+    classComments = []; //  user specified class comment node(s) contents
     constructorCode = []; // user specified constructor node(s) contents
     destructorCode = []; // user specified destructor node(s) contents
     eofCode = []; // user specified eof node(s) contents
@@ -54,7 +54,7 @@ class WsExport
         var n = new REDNode();
         
 
-        var newWsCpp = getNewWsCppFile(this.fileName, "");
+        var newWsCpp = new ExportFile(this.fileName, "");
         if (classComment.length > 0) {
             newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
         }
@@ -67,6 +67,142 @@ class WsExport
             else
                 newWsCpp.contents += this.variables;
         }
+
+        // TODO move the following to a function
+        var cppPcs = "";
+        var cppArray = "";
+        /*for (var i = 0; i < nns.length; i++) {
+            var n = nns[i];
+
+            if (n.z != ws.id) continue; // workspace check
+            if (n.type.startsWith("Junction")) continue;
+
+            
+        }*/
+        if (ac.totalCount != 0) {
+            newWsCpp.contents += getNrOfSpaces(minorIncrement) + getAudioConnectionTypeName() + " ";
+            newWsCpp.contents += getNrOfSpaces(32 - getAudioConnectionTypeName().length);
+            newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
+        }
+        for (var ani = 0; ani < arrayNodes.length; ani++) {
+            var arrayNode = arrayNodes[ani];
+            newWsCpp.contents += getNrOfSpaces(minorIncrement) + arrayNode.type + " ";
+            newWsCpp.contents += getNrOfSpaces(32 - arrayNode.type.length);
+            newWsCpp.contents += "*" + arrayNode.name + ";\n";
+        }
+
+        // generate constructor code
+        newWsCpp.contents += "\n// constructor (this is called when class-object is created)\n";
+        if (RED.arduino.settings.ExportMode < 3)
+            newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "() { \n";
+        else {
+            newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "(const char* _name,OSCAudioGroup* parent) : \n";
+            newWsCpp.contents += getNrOfSpaces(minorIncrement) + "  OSCAudioGroup(_name,parent), // construct our base class instance\n";
+        }
+
+        if (ac.totalCount != 0)
+            newWsCpp.contents += getNrOfSpaces(majorIncrement) + "int pci = 0; // used only for adding new patchcords\n"
+        if (RED.arduino.settings.ExportMode == 3)
+            newWsCpp.contents += getNrOfSpaces(majorIncrement) + "OSCAudioGroup& grp = *this;\n"
+        
+        newWsCpp.contents += "\n";
+        for (var ani = 0; ani < arrayNodes.length; ani++) {
+            var arrayNode = arrayNodes[ani];
+            newWsCpp.contents += getNrOfSpaces(majorIncrement) + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
+            if (arrayNode.autoGenerate)
+                newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
+            else
+                newWsCpp.contents += arrayNode.cppCode;
+
+            newWsCpp.contents += "; // pointer array\n";
+        }
+        newWsCpp.contents += "\n";
+        newWsCpp.contents += cppPcs;
+        if (ac.arrayLength != 0) {
+            newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.arrayLength + "; i++) {\n";
+            newWsCpp.contents += cppArray;
+            newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
+        }else {
+            newWsCpp.contents += cppArray;
+        }
+        newWsCpp.contents += incrementTextLines(classConstructorCode, majorIncrement);
+        newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
+
+        
+        // generate destructor code if enabled
+        if (ws.generateCppDestructor == true) {
+            newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + "~" + ws.label + "() { // destructor (this is called when the class-object is deleted)\n";
+            if (ac.totalCount != 0) {
+                newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.totalCount + "; i++) {\n";
+                newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "patchCord[i]->disconnect();\n"
+                newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "delete patchCord[i];\n"
+                newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
+            }
+            newWsCpp.contents += incrementTextLines(classDestructorCode, majorIncrement);
+            newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
+        }
+
+
+        if (classFunctions.trim().length > 0) {
+            if (newWsCpp.isMain == false)
+                newWsCpp.contents += "\n" + incrementTextLines(classFunctions, minorIncrement);
+            else
+                newWsCpp.contents += "\n" + classFunctions;
+        }
+
+        if (newWsCpp.isMain == false) {// don't include end of class marker when doing main.cpp 
+            newWsCpp.contents += "};\n"; // end of class
+            newWsCpp.contents += class_eofCode; // after end of class
+        }
+
+
+        newWsCpp.header = getCppHeader(jsonString, classAdditionalIncludes.join("\n") + "\n" + classIncludes.join("\n") + "\n ", generateZip);
+        newWsCpp.footer = getCppFooter();
+        wsCppFiles.push(newWsCpp);
+    }
+}
+
+class ExportFile
+{
+    name = "";
+    contents = "";
+    /** just temporary storage, will be deleted before JSON post */
+    header = ""; 
+    /** just temporary storage, will be deleted before JSON post */
+    footer = "";
+    /** used by Http Post Bridge, 
+     * this is normally set to true, 
+     * but can be set to false if some target files need to preserved, 
+     * otherwise all excess files will be removed*/
+    overwrite_file = true;
+    isMain = false;
+
+    constructor(name, contents) {
+        this.name = name;
+        this.contents = contents;
+    }
+}
+
+class CompleteExport
+{
+    /** contain files that need to be before all wsCppFiles
+     * @type {ExportFile[]} */
+    globalCppFiles = [];
+    /** contains all generated workspace/class files @type {ExportFile[]} */
+    wsCppFiles = [];
+    /** this would contain the end result,
+     * but are used for files that need to be before globalCppFiles
+     * @type {ExportFile[]} */
+    allFiles = [];
+
+    /** @type {String[]} */
+    keywords = [];
+
+    constructor() {}
+
+    finalize() {
+        this.allFiles.push(...this.globalCppFiles);
+        this.allFiles.push(...this.wsCppFiles);
     }
 }
 
@@ -78,13 +214,13 @@ RED.arduino.export2 = (function () {
     /**
      * 
      * @param {REDNode} n 
-     * @param {WSExport} wse 
-     * @param {Array} globalCppFiles 
+     * @param {WsExport} wse 
+     * @param {CompleteExport} completeExport 
      * @returns 
      */
-    function checkAndAddNonAudioObject(n,wse,globalCppFiles) {
+    function checkAndAddNonAudioObject(n,wse,completeExport) {
         if (n.type == "ClassComment") {
-            wse.comments.push(" * " + n.name);
+            wse.classComments.push(" * " + n.name);
         }
         else if (n.type == "Function") {
             wse.functions.push(n.comment); // we use comment field for function-data
@@ -118,10 +254,10 @@ RED.arduino.export2 = (function () {
         else if (n.type == "CodeFile") // very special case
         {
             if (n.comment.length != 0) {
-                var wsFile = getNewWsCppFile(n.name, n.comment);
+                var wsFile = new ExportFile(n.name, n.comment);
                 wsFile.header = "\n// ****** Start Of Included File:" + n.name + " ****** \n";
                 wsFile.footer = "\n// ****** End Of Included file:" + n.name + " ******\n";
-                globalCppFiles.push(wsFile);
+                completeExport.globalCppFiles.push(wsFile);
             }
 
             var includeName = '#include "' + n.name + '"';
@@ -132,9 +268,9 @@ RED.arduino.export2 = (function () {
         else if (n.type == "DontRemoveCodeFiles") {
             var files = n.comment.split("\n");
             for (var fi = 0; fi < files.length; fi++) {
-                var wsFile = getNewWsCppFile(files[fi], "");
+                var wsFile = new ExportFile(files[fi].trim(), "");
                 wsFile.overwrite_file = false;
-                globalCppFiles.push(wsFile);
+                completeExport.allFiles.push(wsFile); // push special files to the beginning 
             }
         }
         else if (n.type.startsWith("Junction")) {
@@ -155,8 +291,8 @@ RED.arduino.export2 = (function () {
      * // TODO create class for NewAudioConnection
      * @param {WsExport} wse 
      * @param {RED.arduino.export.getNewAudioConnectionType} ac 
-     * @param {*} src 
-     * @param {*} dst 
+     * @param {REDNode} src 
+     * @param {REDNode} dst 
      * @param {*} pi 
      * @param {*} dstPortIndex 
      */
@@ -221,21 +357,11 @@ RED.arduino.export2 = (function () {
 
         RED.storage.update(); // sort is made inside update
         var jsonString = RED.storage.getData(); //RED.nodes.createCompleteNodeSet({newVer:false});
+        var coex = new CompleteExport();
         
-        var tabNodes = RED.nodes.getClassIOportsSorted(undefined,nns);
-
-        // to make splitting the classes to different files
-        // wsCpp and newWsCpp is used
-        var globalCppFiles = []; // contain files that need to be before all wsCppFiles
-        var wsCppFiles = [];
-        var exportFiles = []; // contain all export files
-        var newWsCpp; // would not be needed as the WsExport.generateWsFile would generate all file contents in one go
-        //var mainFileName = ""; // only used by zip function to determine the folder name
-        //var codeFileIncludes = []; // don't know what this did, it's now obsolete?
-
-        exportFiles.push(getNewWsCppFile("GUI_TOOL.json", JSON.stringify(JSON.parse(jsonString), null, 4))); // JSON beautifier
-        exportFiles.push(getNewWsCppFile("preferences.txt", RED.arduino.board.export_arduinoIDE()));
-        exportFiles.push(getNewWsCppFile("platformio.ini", RED.arduino.board.export_platformIO()));
+        coex.allFiles.push(new ExportFile("GUI_TOOL.json", JSON.stringify(JSON.parse(jsonString), null, 4))); // JSON beautifier
+        coex.allFiles.push(new ExportFile("preferences.txt", RED.arduino.board.export_arduinoIDE()));
+        coex.allFiles.push(new ExportFile("platformio.ini", RED.arduino.board.export_platformIO()));
 
         var mixervariants = undefined;
         var mixerStereoVariants = undefined;
@@ -250,8 +376,7 @@ RED.arduino.export2 = (function () {
         ac.minorIncrement = minorIncrement;
         ac.majorIncrement = majorIncrement;
         //ac.staticType = false;
-        
-        var keywords = [];
+
         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++) // workspaces
         {
             var ws = RED.nodes.workspaces[wsi];
@@ -259,6 +384,7 @@ RED.arduino.export2 = (function () {
             if (RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false) continue; // don't export classes/tabs not in use
             
             var wse = new WsExport(ws);
+            coex.keywords.push({token:ws.label, type:"KEYWORD2"});
 
             ac.workspaceId = ws.id;
             ac.count = 1;
@@ -268,8 +394,7 @@ RED.arduino.export2 = (function () {
             for (var i = 0; i < ws.nodes.length; i++) {
                 var n = ws.nodes[i];
 
-                //if (n.z != ws.id) continue; // workspace filter
-                if (checkAndAddNonAudioObject(n, wse, globalCppFiles)) {
+                if (checkAndAddNonAudioObject(n, wse, coex.globalCppFiles)) {
                     continue;
                 }
                 else if (n.type == "AudioMixer" && mixervariants != undefined && RED.arduino.settings.ExportMode < 3) {
@@ -308,198 +433,126 @@ RED.arduino.export2 = (function () {
                 // add audio object wires/connections
                 var src = n;//RED.nodes.node(n.id, n.z);
 
-                RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
-
-                    var dst = RED.nodes.node(dstId);
-
+                RED.nodes.nodeEachLink(n, function (srcPortIndex, dst, dstPortIndex)
+                {
                     if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
 
-                    if (dst.type.startsWith("Junction"))// && )
+                    if (dst.type.startsWith("Junction"))
                     {
                         var dstNodes = { nodes: [] };
                         getJunctionFinalDestinations(dst, dstNodes);
                         for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
                             if (src === dstNodes.nodes[dni].node) continue; // can't make connections back to itself
-                            appendAudioConnection_s(wse, ac, src, dstNodes.nodes[dni].node, pi, dstNodes.nodes[dni].dstPortIndex);
+                            appendAudioConnection_s(wse, ac, src, dstNodes.nodes[dni].node, srcPortIndex, dstNodes.nodes[dni].dstPortIndex);
                         }
                     }
                     else {
-                        appendAudioConnection_s(wse, ac,src,dst, pi, dstPortIndex);
+                        appendAudioConnection_s(wse, ac,src,dst, srcPortIndex, dstPortIndex);
                     }
                 });
             }
-
-                // TODO move the following to a function
-                var cppPcs = "";
-                var cppArray = "";
-                for (var i = 0; i < nns.length; i++) {
-                    var n = nns[i];
-
-                    if (n.z != ws.id) continue; // workspace check
-                    if (n.type.startsWith("Junction")) continue;
-
-                    
-                }
-                if (ac.totalCount != 0) {
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getAudioConnectionTypeName() + " ";
-                    newWsCpp.contents += getNrOfSpaces(32 - getAudioConnectionTypeName().length);
-                    newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
-                }
-                for (var ani = 0; ani < arrayNodes.length; ani++) {
-                    var arrayNode = arrayNodes[ani];
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + arrayNode.type + " ";
-                    newWsCpp.contents += getNrOfSpaces(32 - arrayNode.type.length);
-                    newWsCpp.contents += "*" + arrayNode.name + ";\n";
-                }
-
-                // generate constructor code
-                newWsCpp.contents += "\n// constructor (this is called when class-object is created)\n";
-                if (RED.arduino.settings.ExportMode < 3)
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "() { \n";
-                else {
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "(const char* _name,OSCAudioGroup* parent) : \n";
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + "  OSCAudioGroup(_name,parent), // construct our base class instance\n";
-                }
-
-                if (ac.totalCount != 0)
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + "int pci = 0; // used only for adding new patchcords\n"
-                if (RED.arduino.settings.ExportMode == 3)
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + "OSCAudioGroup& grp = *this;\n"
-                
-                newWsCpp.contents += "\n";
-                for (var ani = 0; ani < arrayNodes.length; ani++) {
-                    var arrayNode = arrayNodes[ani];
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
-                    if (arrayNode.autoGenerate)
-                        newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
-                    else
-                        newWsCpp.contents += arrayNode.cppCode;
-
-                    newWsCpp.contents += "; // pointer array\n";
-                }
-                newWsCpp.contents += "\n";
-                newWsCpp.contents += cppPcs;
-                if (ac.arrayLength != 0) {
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.arrayLength + "; i++) {\n";
-                    newWsCpp.contents += cppArray;
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
-                }else {
-                    newWsCpp.contents += cppArray;
-                }
-                newWsCpp.contents += incrementTextLines(classConstructorCode, majorIncrement);
-                newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
-
-                
-                // generate destructor code if enabled
-                if (ws.generateCppDestructor == true) {
-                    newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + "~" + ws.label + "() { // destructor (this is called when the class-object is deleted)\n";
-                    if (ac.totalCount != 0) {
-                        newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.totalCount + "; i++) {\n";
-                        newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "patchCord[i]->disconnect();\n"
-                        newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "delete patchCord[i];\n"
-                        newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
-                    }
-                    newWsCpp.contents += incrementTextLines(classDestructorCode, majorIncrement);
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
-                }
-
-
-            if (classFunctions.trim().length > 0) {
-                if (newWsCpp.isMain == false)
-                    newWsCpp.contents += "\n" + incrementTextLines(classFunctions, minorIncrement);
-                else
-                    newWsCpp.contents += "\n" + classFunctions;
-            }
-
-            if (newWsCpp.isMain == false) {// don't include end of class marker when doing main.cpp 
-                newWsCpp.contents += "};\n"; // end of class
-                newWsCpp.contents += class_eofCode; // after end of class
-            }
-
-
-            newWsCpp.header = getCppHeader(jsonString, classAdditionalIncludes.join("\n") + "\n" + classIncludes.join("\n") + "\n ", generateZip);
-            newWsCpp.footer = getCppFooter();
-            wsCppFiles.push(newWsCpp);
-
-            /*if (useExportDialog)
-                for (var cai = 0; cai < classIncludes.length; cai++) {
-                    if (!codeFileIncludes.includes(classIncludes[cai]))
-                        codeFileIncludes.push(classIncludes[cai]);
-                }*/
+            coex.wsCppFiles.push(wse.generateWsFile());
         } // workspaces loop
 
         if (mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants);
-            var file = getNewWsCppFile("mixers.h", mfiles.h);
+            var file = new ExportFile("mixers.h", mfiles.h);
             file.header = mfiles.copyrightNote;
-            globalCppFiles.push(file);
-            file = getNewWsCppFile("mixers.cpp", mfiles.cpp);
+            coex.globalCppFiles.push(file);
+            file = new ExportFile("mixers.cpp", mfiles.cpp);
             file.header = mfiles.copyrightNote;
-            globalCppFiles.push(file);
+            coex.globalCppFiles.push(file);
         }
         console.error("@export as class RED.arduino.serverIsActive=" + RED.arduino.serverIsActive());
-        // time to generate the final result
-        var cpp = "";
-        if (useExportDialog)
-            cpp = getCppHeader(jsonString, undefined, false);//, codeFileIncludes.join("\n"));
-        for (var i = 0; i < wsCppFiles.length; i++) {
-            // don't include beautified json string here
-            // and only append to cpp when useExportDialog
-            if (isCodeFile(wsCppFiles[i].name) && useExportDialog) {
-                if (wsCppFiles[i].name == "mixers.cpp") { // special case
-                    cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
-                }
-                else if (wsCppFiles[i].name == "mixers.h") // special case
-                    cpp += wsCppFiles[i].header + "\n" + wsCppFiles[i].contents + "\n"; // to include the copyright note
-                else
-                    cpp += wsCppFiles[i].contents;
-            }
-
-            wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
-            delete wsCppFiles[i].header;
-            delete wsCppFiles[i].footer;
-        }
-        cpp += getCppFooter();
-        //console.log(cpp);
-
-        //console.log(jsonString);
-        var wsCppFilesJson = getPOST_JSON(wsCppFiles, true);
-        wsCppFilesJson.keywords = keywords;
-        var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
-        //if (RED.arduino.isConnected())
-
-        if (generateZip == false)
-            RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST but not when exporting to zip
-        //console.warn(jsonPOSTstring);
-
 
         // only show dialog when server is active and not generating zip
         if (useExportDialog)
-            RED.view.dialogs.showExportDialog("Class Export to Arduino", cpp, " Source Code:");
-        //RED.view.dialogs.showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
+            ShowExportDialog(coex);
+
+        FinalizeFiles(coex); // this must happen after ShowExportDialog
+
+        coex.finalize(); // this will put all files into one array 'coex.allFiles'
+
         const t1 = performance.now();
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
-        if (generateZip == true) {
-            var zip = new JSZip();
-            let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
-            let subFolder = /*(mainFileName != "") ? mainFileName : */RED.arduino.settings.ProjectName;
-            for (var i = 0; i < wsCppFiles.length; i++) {
-                var wsCppfile = wsCppFiles[i];
+        if (generateZip == false)
+            SendToHttpBridge(coex); // allways try to POST but not when exporting to zip
+        else
+            GenerateZip(coex);
 
-                if (wsCppfile.overwrite_file == false) continue; // don't include in zip as it's only a placeholder for existing files
-                if (useSubfolder == false)
-                    zip.file(wsCppfile.name, wsCppfile.contents);
-                else
-                    zip.file(subFolder + "\\" + wsCppfile.name, wsCppfile.contents);
-            }
-            var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
-            zip.generateAsync({ type: "blob", compression}).then(function (blob) {
-                const t2 = performance.now();
-                console.log('arduino-export-toZip took: ' + (t2 - t1) + ' milliseconds.');
-                RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
-            });
+        //RED.view.dialogs.showExportDialog("Class Export to Arduino", JSON.stringify(wsCppFilesJson, null, 4));	// dev. test
+    }
+
+    /** @param {CompleteExport} ce */
+    function FinalizeFiles(ce)
+    {
+        for (var i = 0; i < ce.wsCppFiles.length; i++) {
+            ce.wsCppFiles[i].contents = ce.wsCppFiles[i].header + ce.wsCppFiles[i].contents + ce.wsCppFiles[i].footer;
+            delete ce.wsCppFiles[i].header;
+            delete ce.wsCppFiles[i].footer;
         }
+        for (var i = 0; i < ce.globalCppFiles.length; i++) {
+            ce.globalCppFiles[i].contents = ce.globalCppFiles[i].header + ce.globalCppFiles[i].contents + ce.globalCppFiles[i].footer;
+            delete ce.globalCppFiles[i].header;
+            delete ce.globalCppFiles[i].footer;
+        }
+    }
+
+    /** @param {CompleteExport} ce */
+    function GenerateZip(ce)
+    {
+        const t1 = performance.now();
+        var zip = new JSZip();
+        let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
+        let subFolder = /*(mainFileName != "") ? mainFileName : */RED.arduino.settings.ProjectName;
+        for (var i = 0; i < ce.allFiles.length; i++) {
+            var file = ce.allFiles[i];
+
+            if (file.overwrite_file == false) continue; // don't include in zip as it's only a placeholder for existing files
+            
+            if (useSubfolder == false)
+                zip.file(file.name, file.contents);
+            else
+                zip.file(subFolder + "\\" + file.name, file.contents);
+        }
+        var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
+        zip.generateAsync({ type: "blob", compression}).then(function (blob) {
+            const t2 = performance.now();
+            console.log('arduino-export-toZip took: ' + (t2 - t1) + ' milliseconds.');
+            RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); });//RED.main.download(fileName, content); });
+        });
+    }
+
+    /** @param {CompleteExport} ce */
+    function SendToHttpBridge(ce)
+    {
+        var wsCppFilesJson = getPOST_JSON(ce.allFiles, true);
+        wsCppFilesJson.keywords = ce.keywords;
+        var jsonPOSTstring = JSON.stringify(wsCppFilesJson, null, 4);
+        RED.arduino.httpPostAsync(jsonPOSTstring);
+    }
+
+    /** @param {CompleteExport} ce */
+    function ShowExportDialog(ce)
+    {
+        // time to generate the final result
+        var cpp = "";
+        cpp = getCppHeader(jsonString, undefined, false); // false mean zip mode, which in this case appends the design JSON to the export 
+        for (var i = 0; i < ce.globalCppFiles.length; i++) {
+            if (ce.globalCppFiles[i].name == "mixers.cpp") { // special case
+                cpp += ce.globalCppFiles[i].contents.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
+            }
+            else if (ce.globalCppFiles[i].name == "mixers.h") // special case
+                cpp += ce.globalCppFiles[i].header + "\n" + ce.globalCppFiles[i].contents + "\n"; // to include the copyright note
+            else
+                cpp += ce.globalCppFiles[i].contents;
+        }
+        for (var i = 0; i < ce.wsCppFiles.length; i++) {
+            cpp += ce.wsCppFiles[i].contents;
+        }
+        cpp += getCppFooter();
+        RED.view.dialogs.showExportDialog("Class Export to Arduino", cpp, " Source Code:");
     }
 
     return {

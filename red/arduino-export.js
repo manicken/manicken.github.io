@@ -114,7 +114,6 @@ class ACExport
             this.count++;
             this.totalCount++;
         }
-
     }
     checkIfDstIsArray()
     {
