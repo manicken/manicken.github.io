@@ -11,6 +11,19 @@ Mixers = (function () {
     var mixers_h_base_stereo =  "/* no stereo mixer code generated*/";
     var mixers_h_template_stereo =  "/* no stereo mixer code generated*/";
 
+    function GetFiles(mixervariants)
+    {
+        var files = [];
+        var mfiles = GetCode(mixervariants);
+        var file = new ExportFile("mixers.h", mfiles.h);
+        file.header = mfiles.copyrightNote;
+        files.push(file);
+        file = new ExportFile("mixers.cpp", mfiles.cpp);
+        file.header = mfiles.copyrightNote;
+        files.push(file);
+        return files;
+    }
+
     function GetCode(variants) {
         var mixersCpp = "";
         var mixersH = "";
@@ -52,6 +65,7 @@ Mixers = (function () {
     }
     return {
         GetCode,
+        GetFiles,
         GetCodeStereo
     };
 })();
