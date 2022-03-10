@@ -32,6 +32,7 @@ class WsExport
     */
     audioConnections = [];
 
+    /** @type {String[]} */
     depends = []; // used by (h4yn0nnym0u5e) depend order
 
     isMain = false;
@@ -71,6 +72,7 @@ class WsExport
         
 
         var newWsCpp = new ExportFile(this.fileName, "");
+        newWsCpp.depends = this.depends; // h4yn0nnym0u5e class depending sorter
         
         if (classComment.length > 0) {
             newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
@@ -175,7 +177,7 @@ class WsExport
 
         newWsCpp.header = getCppHeader(jsonString, classAdditionalIncludes.join("\n") + "\n" + classIncludes.join("\n") + "\n ", generateZip);
         newWsCpp.footer = getCppFooter();
-        wsCppFiles.push(newWsCpp);
+         return newWsCpp;
     }
 }
 
@@ -194,7 +196,9 @@ class ExportFile
     overwrite_file = true;
     isMain = false;
 
+    /** @type {String[]} */
     depends = []; // used by h4yn0nnym0u5e depend sorting
+    /** @type {Boolean} */
     isExported = false; // used by h4yn0nnym0u5e depend sorting
 
     constructor(name, contents) {
