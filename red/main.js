@@ -585,11 +585,11 @@ RED.main = (function() {
 
 	function loadNodes() {
 		
-		setTimeout(function() {
+		/*setTimeout(function() {
 			$("#menu-import").removeClass("disabled").addClass("btn-success");
 			$("#menu-export").removeClass("disabled").addClass("btn-danger");
 			$("#menu-ide").removeClass("disabled").addClass("btn-warning");
-		}, 1000);
+		}, 1000);*/
 
         $(".palette-scroll").show();
         $("#palette-search").show();
@@ -728,6 +728,8 @@ RED.main = (function() {
 
         addDemoFlowsToMenu();
         RED.view.init();
+
+        RED.arduino.export2.init();
 
         //SetButtonPopOver("#btn-
         SetPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");

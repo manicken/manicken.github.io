@@ -70,7 +70,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<span class="brand">Audio System Design Tool++ for <a href="http://www.pjrc.com/teensy/td_libs_Audio.html" target="_blank">Teensy Audio Library</a></span>
 			
 			<div class="btn-group pull-left">
-				<a id="menu-import" class="btn dropdown-toggle btn-success disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Import <span class="caret"></span></a>
+				<a id="menu-import" class="btn dropdown-toggle btn-success" data-toggle="dropdown" href="#"><i class="icon-download"></i> Import <span class="caret"></span></a>
 				<ul class="dropdown-menu">
                     <li><a id="btn-import-arduino" class="btn action-import" href="#"><i class="fa fa-ellipsis-v"></i> Arduino Code</a></li>
 					<li><a id="btn-import-json" class="btn action-import" href="#"><i class="fa fa-code"></i> JSON</a></li>
@@ -81,7 +81,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				</ul>
 			</div>
 			<div class="btn-group pull-left">
-				<a id="menu-export" class="btn dropdown-toggle btn-danger disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export <span class="caret"></span></a>
+				<a id="menu-export" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
                     <li><a id="btn-deploy2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class-based</a></li>
@@ -91,8 +91,19 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     <li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
 				</ul>
 			</div>
+
             <div class="btn-group pull-left">
-				<a id="menu-export" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
+				<a id="menu-export2" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export2 <span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a id="btn-deploy-simple2" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
+                    <li><a id="btn-deploy-class2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class</a></li>
+                    <li><a id="btn-deploy-class-dev2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class single dev test</a></li>
+                    <li><a id="btn-deploy-zip2" class="btn action-deploy" href="#"><i class="fa fa-database"></i>&nbsp;&nbsp;&nbsp;<i class="fa fa-file-zip-o"></i> Class-based to Zip</a></li>
+				</ul>
+			</div>
+
+            <div class="btn-group pull-left">
+				<a id="menu-export-osc" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
 				<ul class="dropdown-menu">
                     <li><a id="btn-deploy-osc-group" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export </a></li>
                     <li class="divider"></li>
@@ -109,7 +120,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				</ul>
 			</div>
 			<div class="btn-group pull-left">
-				<a id="menu-ide" class="btn dropdown-toggle btn-info disabled" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
+				<a id="menu-ide" class="btn dropdown-toggle btn-info" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-verify-compile" class="btn action-deploy" href="#"><i class="fa fa-refresh"></i> Verify/Compile</a></li>
 					<li><a id="btn-compile-upload" class="btn action-deploy" href="#"><i class="fa fa-send"></i> Upload</a></li>
