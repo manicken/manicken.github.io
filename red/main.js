@@ -729,7 +729,10 @@ RED.main = (function() {
         addDemoFlowsToMenu();
         RED.view.init();
 
+        RED.export.init();
+        RED.arduino.export.init();
         RED.arduino.export2.init();
+        RED.arduino.export.osc.init();
 
         //SetButtonPopOver("#btn-
         SetPopOver("#menu-ide", "Arduino IDE/VSCODE IDE<br>Compie/Verify/Upload", "right");
@@ -741,14 +744,8 @@ RED.main = (function() {
         SetPopOver("#lbl-guiRunEditMode", "Toggles the UI nodes<br> between <b>Edit</b> and <b>Run</b> mode<br>When it's <b>unchecked</b> that means it's <b>edit</b> mode.<br><br>Keyboard shortcut is Ctrl+e");
         SetPopOver("#lbl-oscLiveUpdateMode", "Toggles the OSC live update functionality<br> i.e. when objects/links are added/removed/renamed");
 
-
-        SetPopOver("#btn-deploy", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
-        SetPopOver("#btn-deploy2", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");
-        SetPopOver("#btn-deploy2zip", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function.","left");
         SetPopOver("#btn-saveTofile", "Uses the browser download function<br> to download the design as a JSON. <br>&nbsp;<br> It asks for the filename<br> the default filename is <br>the project name set in settings tab","left");
-        SetPopOver("#btn-deploy2singleLineJson", "Exports the design to a single line non formatted JSON,<br>that is usable when a design is shared,<br> for example on a forum.<br><br> tip. if shared the last ] could be on a new line <br>to make it easier to copy the whole line","left");
-        SetPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
-
+        
         SetPopOver("#btn-get-design-json", "Loads the design JSON from the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
         SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
 

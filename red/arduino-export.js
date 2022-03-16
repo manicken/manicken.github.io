@@ -228,7 +228,7 @@ RED.arduino.export = (function () {
             okCB();
     }
 
-    $('#btn-deploy').click(function () {
+    $('#btn-export-simple1').click(function () {
         showIOcheckWarning(export_simple);
     });
     function export_simple() {
@@ -462,10 +462,10 @@ RED.arduino.export = (function () {
     //nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
 			
 
-    $('#btn-deploy2').click(function () {
+    $('#btn-export-class1').click(function () {
         showIOcheckWarning(export_classBased);
     });
-    $('#btn-deploy2zip').click(function () {
+    $('#btn-export-class-zip1').click(function () {
         showIOcheckWarning(function() {export_classBased(true);});
     });
     function export_classBased(generateZip) {
@@ -1019,45 +1019,6 @@ RED.arduino.export = (function () {
         });
     }
 
-    $('#btn-pushJSON').click(function () { pushJSON(); });
-    function pushJSON() {
-        var json = localStorage.getItem("audio_library_guitool");
-        var wsCppFiles = [];
-        wsCppFiles.push(getNewWsCppFile("GUI_TOOL.json", json)); // JSON beautifier
-        var wsCppFilesJson = getPOST_JSON(wsCppFiles, false); // false == don't remove other files
-
-        RED.arduino.httpPostAsync(JSON.stringify(wsCppFilesJson));
-    }
-    $('#btn-deploy2singleLineJson').click(function () { exportSingleLineJSON(); });
-    function exportSingleLineJSON() {
-        var json = localStorage.getItem("audio_library_guitool");
-        RED.view.dialogs.showExportDialog("Single line JSON", json, " JSON:");
-    }
-
-/* obsolete replaced by RED.export.links.getDynInputDynSize(node);
-    function getDynamicInputCount(node) { // rename to getDynamicInputCount?
-        // check if source is a array
-        //n = RED.nodes.node(n.id, n.z);
-        return RED.export.links.getDynInputDynSizePortStartIndex(node, undefined);
-    */
-/*
-        if (n.inputs != 1) return n.inputs;
-
-        var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
-        if (src && (src.node.name)) // if not src.node.name is defined then it is not an array
-        {
-            var isArray = RED.export.isNameDeclarationArray(src.node.name,src.node.z,replaceConstWithValue);
-            if (isArray) {
-                console.log("special case "+n.type+" connected from array " + src.node.name + " " + isArray.arrayLength);
-                if (isArray.arrayLength <= 0) return 1;
-                if (isArray.arrayLength > 255) return 255;
-                return isArray.arrayLength;
-            }
-        }
-        
-        return n.inputs;*/
-    //}
-
     /**
      * This is only for the moment to get special type AudioMixer<n>, AudioMixerNNN or AudioStreamObject
      * @param {Node} node node(internal)
@@ -1087,7 +1048,27 @@ RED.arduino.export = (function () {
         return cpp;
     }
 
-    /*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
+    function init() // called from main.js @ init()
+    {
+        RED.main.SetPopOver("#btn-export-simple1", "Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)","left");
+        RED.main.SetPopOver("#btn-export-class1", "Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')","left");
+        RED.main.SetPopOver("#btn-export-class-zip1", "Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function.","left");
+    }
+
+    
+
+    return {
+        init,
+        generate_OSC_function_decode,
+        showIOcheckWarning,
+        getNrOfSpaces,
+        getAudioConnectionTypeName,
+        //getNewAudioConnectionType
+    };
+})();
+
+
+/*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
             // future is now and with direct communication to from arduino ide this is no longer needed.
             var textarea = $(this);
             textarea.select();
@@ -1097,12 +1078,27 @@ RED.arduino.export = (function () {
             });
             }).focus();*/
 
-    return {
-        pushJSON,
-        generate_OSC_function_decode,
-        showIOcheckWarning,
-        getNrOfSpaces,
-        getAudioConnectionTypeName,
-        //getNewAudioConnectionType
-    };
-})();
+
+            /* obsolete replaced by RED.export.links.getDynInputDynSize(node);
+    function getDynamicInputCount(node) { // rename to getDynamicInputCount?
+        // check if source is a array
+        //n = RED.nodes.node(n.id, n.z);
+        return RED.export.links.getDynInputDynSizePortStartIndex(node, undefined);
+    */
+/*
+        if (n.inputs != 1) return n.inputs;
+
+        var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
+        if (src && (src.node.name)) // if not src.node.name is defined then it is not an array
+        {
+            var isArray = RED.export.isNameDeclarationArray(src.node.name,src.node.z,replaceConstWithValue);
+            if (isArray) {
+                console.log("special case "+n.type+" connected from array " + src.node.name + " " + isArray.arrayLength);
+                if (isArray.arrayLength <= 0) return 1;
+                if (isArray.arrayLength > 255) return 255;
+                return isArray.arrayLength;
+            }
+        }
+        
+        return n.inputs;*/
+    //}

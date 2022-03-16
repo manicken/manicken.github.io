@@ -18,8 +18,8 @@ OSC.export = (function () {
         RED.main.SetPopOver("#btn-load-osc-sd", a+"Loads a .osc file from the SD-card and applies the design");
         RED.main.SetPopOver("#btn-save-json-sd", a+"Saves the current (whole) Design to a .json file on the connected teensy SD-card");
         RED.main.SetPopOver("#btn-load-json-sd", a+"Load/Retreives a saved .json from the connected Teensy SD-Card<br>this is then loaded into this tool.");
-        RED.main.SetPopOver("#btn-deploy-osc", a+"Exports this flat (no arrays/no classes) design to a Teensy Running The Dynamic Audio Framework");
-        RED.main.SetPopOver("#btn-deploy-osc-group", a+"Exports this grouped (full support) design to a Teensy Running The Dynamic Audio Framework<br><br><b>note. This is under development, and may not yet work as intended.</b>");
+        RED.main.SetPopOver("#btn-export-osc", a+"Exports this flat (no arrays/no classes) design to a Teensy Running The Dynamic Audio Framework");
+        RED.main.SetPopOver("#btn-export-osc-group", a+"Exports this grouped (full support) design to a Teensy Running The Dynamic Audio Framework<br><br><b>note. This is under development, and may not yet work as intended.</b>");
         RED.main.SetPopOver("#btn-osc-clearAll", a+"Clears the current design in the teensy<br>this is good if something got messed up and you want a fresh start.");
     }
     $('#btn-save-osc-sd').click(function () {RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName, saveOscToSDcard, "Save as .osc (.osc is added automatically)");});
@@ -53,11 +53,11 @@ OSC.export = (function () {
         //OSC.SetLog("not implemented yet")
     }
 
-    $('#btn-deploy-osc').click(function() {
+    $('#btn-export-osc').click(function() {
         RED.arduino.export.showIOcheckWarning(do_export);
     });
 
-    $('#btn-deploy-osc-group').click(function () {
+    $('#btn-export-osc-group').click(function () {
         RED.arduino.export.showIOcheckWarning(function() {do_export(true);});
     });
 

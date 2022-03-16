@@ -482,17 +482,18 @@ RED.arduino.export2 = (function () {
     var nns = {}; // workaround for now, used by appendAudioConnection_s
     var tabNodes = []; // workaround for now, used by appendAudioConnection_s
     
-    function init() {
+    function init() // called from main.js @ init()
+    {
         RED.main.SetPopOver("#menu-export2", "(under development)", "right");
-        RED.main.SetPopOver("#btn-deploy-simple2", "(under development)", "right");
-        RED.main.SetPopOver("#btn-deploy-class2", "(under development)", "right");
-        RED.main.SetPopOver("#btn-deploy-class-dev2", "(under development)", "right");
-        RED.main.SetPopOver("#btn-deploy-zip2", "(under development)", "right");
+        RED.main.SetPopOver("#btn-export-simple2", "(under development)", "right");
+        RED.main.SetPopOver("#btn-export-class2", "(under development)", "right");
+        RED.main.SetPopOver("#btn-export-class-dev2", "(under development)", "right");
+        RED.main.SetPopOver("#btn-export-class-zip2", "(under development)", "right");
     }
-    $('#btn-deploy-simple2').click(function () { Export(CPP_EXPORT_MODE.SIMPLE_FLAT); });
-    $('#btn-deploy-class2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE); });
-    $('#btn-deploy-class-dev2').click(function () { Export(CPP_EXPORT_MODE.CLASS_SINGLE); });
-    $('#btn-deploy-zip2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP); });
+    $('#btn-export-simple2').click(function () { Export(CPP_EXPORT_MODE.SIMPLE_FLAT); });
+    $('#btn-export-class2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE); });
+    $('#btn-export-class-dev2').click(function () { Export(CPP_EXPORT_MODE.CLASS_SINGLE); });
+    $('#btn-export-class-zip2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP); });
     
     
     

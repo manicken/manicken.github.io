@@ -31,7 +31,7 @@ var OSC = (function() {
             $("#btn-osc-clearAll").addClass("disabled");
             $("#btn-connectSerial").addClass("disabled");
             $("#btn-disConnectSerial").addClass("disabled");
-            $("#btn-deploy-osc").addClass("disabled");
+            $("#btn-export-osc").addClass("disabled");
             $("#btn-save-osc-sd").addClass("disabled");
             $("#btn-load-osc-sd").addClass("disabled");
             $("#btn-save-json-sd").addClass("disabled");

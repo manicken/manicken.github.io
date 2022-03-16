@@ -254,7 +254,25 @@ RED.export = (function () {
         }
     }
 
+    function init() // called from main.js @ init()
+    {
+        RED.main.SetPopOver("#btn-export-singleLineJson", "Exports the design to a single line non formatted JSON,<br>that is usable when a design is shared,<br> for example on a forum.<br><br> tip. if shared the last ] could be on a new line <br>to make it easier to copy the whole line","left");
+        RED.main.SetPopOver("#btn-pushJSON", "Push the JSON to the IDE<br><br>Only functional when using the IDE Webserver extension.","left");
+    }
+
+    $('#btn-pushJSON').click(function () { pushJSON(); });
+    function pushJSON() {
+        RED.arduino.httpPostAsync(JSON.stringify({files:[new ExportFile("GUI_TOOL.json",localStorage.getItem("audio_library_guitool"))]}));
+    }
+
+    $('#btn-export-singleLineJson').click(function () { exportSingleLineJSON(); });
+    function exportSingleLineJSON() {
+        var json = localStorage.getItem("audio_library_guitool");
+        RED.view.dialogs.showExportDialog("Single line JSON", json, " JSON:");
+    }
+
     return {
+        init,
         //set project(_nns) {project = _nns; },
         //get project() { return project;},
         findMainWs,

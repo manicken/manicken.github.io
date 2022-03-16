@@ -223,7 +223,7 @@
             okCB();
     }
 
-    $('#btn-deploy-osc').click(function () {
+    $('#btn-export-simple-osc').click(function () {
         showIOcheckWarning(export_simple);
     });
     function export_simple() {
@@ -429,10 +429,10 @@
     //nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
 			
 
-    $('#btn-deploy2-osc').click(function () {
+    $('#btn-export-class-osc').click(function () {
         showIOcheckWarning(export_classBased);
     });
-    $('#btn-deploy2zip-osc').click(function () {
+    $('#btn-export-class-zip-osc').click(function () {
         showIOcheckWarning(function() {export_classBased(true);});
     });
     function export_classBased(generateZip) {
@@ -1123,7 +1123,7 @@
      * @param {*} nns nodeArray
      * @param {Node} n node
      */
-     function getTypeName(nns, n, useDynMixers) {
+    function getTypeName(nns, n, useDynMixers) {
         var cpp = "";
         var typeLength = n.type.length;
         if (!useDynMixers && n.type == "AudioMixer") {
@@ -1188,16 +1188,16 @@
 	  /**
      * Convert type name if we're wanting to export OSCAudio objects
      */
-     function getConnectionName() 
-	 {
-		var name = "AudioConnection";
-		if (RED.arduino.settings.ExportForOSC && name.search("Audio") >= 0)
-		{
-			name = name.replace("Audio","OSCAudio");
-		}
-		
-		return name;
-	 }
+    function getConnectionName() 
+    {
+        var name = "AudioConnection";
+        if (RED.arduino.settings.ExportForOSC && name.search("Audio") >= 0)
+        {
+            name = name.replace("Audio","OSCAudio");
+        }
+        
+        return name;
+    }
 	 
     /**
      * Create required constructor, if any
@@ -1205,125 +1205,143 @@
      * @param typeName type name
      * @param n index into nodes
      */
-	 function makeCtor(name,typeName,n)
-	 {
-		var result = "";
-		var ctor = [];
-		
-		if (RED.arduino.settings.ExportForOSC)
-			ctor.push('"' + name + '"');
-		ctor.push("*this");
-		if (DynAudioMixers.includes(typeName))
-			ctor.push(getDynamicInputCount(n,true).toString());
-		if (ctor.length > 0)
-			result += "{" + ctor.join() + "}";
-		
-		return result;
-	 }
+    function makeCtor(name,typeName,n)
+    {
+        var result = "";
+        var ctor = [];
+        
+        if (RED.arduino.settings.ExportForOSC)
+            ctor.push('"' + name + '"');
+        ctor.push("*this");
+        if (DynAudioMixers.includes(typeName))
+            ctor.push(getDynamicInputCount(n,true).toString());
+        if (ctor.length > 0)
+            result += "{" + ctor.join() + "}";
+        
+        return result;
+    }
 	 
-	 function scanBusses(nodeArray)
-	 {
-		 var result = {};
-		 var dsts = {};
-		 
-		 for (i=0;i<nodeArray.length;i++)
-		 {
-			var na = nodeArray[i];
-						
-			if (na.isClass && /\[[0-9]+\]/.test(na.name))
-			{
-				var sz = /\[([0-9]+)\]/.exec(na.name);
-				sz = sz[1];
-				var nm = na.name.slice(0,-sz.length-2);
-				var wir = Array();
-				for (j=0;j<na.wires.length;j++)
-					for (k=0;k<na.wires[j].length;k++)
-					{
-						var s = na.wires[j][k];
-						if (!(j in wir))
-							wir[j] = Array();
-					
-						wir[j][k] = s.split(":");
-						if (!(wir[j][k][0] in dsts))
-							dsts[wir[j][k][0]] = {};
-						dsts[wir[j][k][0]][wir[j][k][1]] = na.id;
-					}
-				result[na.id] = {name: nm, size: parseInt(sz), outputs: wir};
-			}
-		 }
-		 
-		 for (mixID in dsts)
-		 {
-			 var port = 0; // how far we've got down the physical ports...
-			 var lprt = 0; // ...and the logical ports
-			 var portList = Object.keys(dsts[mixID]).sort();
-			 for (lp of portList)
-			 {
-				var logPort = parseInt(lp);
-				if (logPort != lprt) // some ports skipped, not bus ports
-					port += logPort - lprt;
-				lprt = logPort+1; // next expected
-				
-				var dst = result[dsts[mixID][logPort]];
-				for (wi of Object.keys(dst.outputs))
-					for (wir of Object.keys(dst.outputs[wi]))
-						if (dst.outputs[wi][wir][0] == mixID && dst.outputs[wi][wir][1] == lp)
-							dst.outputs[wi][wir][2] = port;
-				//["physPort"] = port; // say where first connection really is
-				port += result[dsts[mixID][logPort]].size;
-			 }
-			 
-		 }
-		 
-		 return result;
-	 }
+    function scanBusses(nodeArray)
+    {
+        var result = {};
+        var dsts = {};
+        
+        for (i=0;i<nodeArray.length;i++)
+        {
+            var na = nodeArray[i];
+                        
+            if (na.isClass && /\[[0-9]+\]/.test(na.name))
+            {
+                var sz = /\[([0-9]+)\]/.exec(na.name);
+                sz = sz[1];
+                var nm = na.name.slice(0,-sz.length-2);
+                var wir = Array();
+                for (j=0;j<na.wires.length;j++)
+                    for (k=0;k<na.wires[j].length;k++)
+                    {
+                        var s = na.wires[j][k];
+                        if (!(j in wir))
+                            wir[j] = Array();
+                    
+                        wir[j][k] = s.split(":");
+                        if (!(wir[j][k][0] in dsts))
+                            dsts[wir[j][k][0]] = {};
+                        dsts[wir[j][k][0]][wir[j][k][1]] = na.id;
+                    }
+                result[na.id] = {name: nm, size: parseInt(sz), outputs: wir};
+            }
+        }
+        
+        for (mixID in dsts)
+        {
+            var port = 0; // how far we've got down the physical ports...
+            var lprt = 0; // ...and the logical ports
+            var portList = Object.keys(dsts[mixID]).sort();
+            for (lp of portList)
+            {
+                var logPort = parseInt(lp);
+                if (logPort != lprt) // some ports skipped, not bus ports
+                    port += logPort - lprt;
+                lprt = logPort+1; // next expected
+                
+                var dst = result[dsts[mixID][logPort]];
+                for (wi of Object.keys(dst.outputs))
+                    for (wir of Object.keys(dst.outputs[wi]))
+                        if (dst.outputs[wi][wir][0] == mixID && dst.outputs[wi][wir][1] == lp)
+                            dst.outputs[wi][wir][2] = port;
+                //["physPort"] = port; // say where first connection really is
+                port += result[dsts[mixID][logPort]].size;
+            }
+            
+        }
+        
+        return result;
+    }
 	 
-	 function addPortToInits(inits,ac)
-	 {
-		 var src = ac.srcName.split(".");
-		 src[0] = src[0].replace("[i]","["+ac.arrayLength+"]");
-		 
-		 for (i=0;i<inits.length;i++)
-			 if (inits[i].name == src[0])
-			 {
-				 inits[i].outputs[ac.outPort] = {src: src[1], srcPort: ac.srcPort, dst: ac.dstName, dstPort: ac.dstPort};
-				 break;
-			 }
-	 }
+    function addPortToInits(inits,ac)
+    {
+        var src = ac.srcName.split(".");
+        src[0] = src[0].replace("[i]","["+ac.arrayLength+"]");
+        
+        for (i=0;i<inits.length;i++)
+            if (inits[i].name == src[0])
+            {
+                inits[i].outputs[ac.outPort] = {src: src[1], srcPort: ac.srcPort, dst: ac.dstName, dstPort: ac.dstPort};
+                break;
+            }
+    }
 	 
-	 function id2index(nodeArray)
-	 {
-		 var result = {};
-		 
-		 for (i=0;i<nodeArray.length;i++)
-			 result[nodeArray[i].id] = i;
-		 
-		 return result;
-	 }
+    function id2index(nodeArray)
+    {
+        var result = {};
+        
+        for (i=0;i<nodeArray.length;i++)
+            result[nodeArray[i].id] = i;
+        
+        return result;
+    }
 	 
-	 function getMaxConnName(init,bus)
-	 {
-		 var name = init.isArray.name;
-		 var width = init.isArray.arrayLength;
-		 var maxLen = 0;
-		 var maxInStart = 0;
-		 
-		 for (i=0;i<bus.outputs.length;i++)
-			 for (j=0;j<bus.outputs[i].length;j++)
-				 if (maxInStart < bus.outputs[i][j][2])
-					 maxInStart = bus.outputs[i][j][2];
-		 
-		 for (i=0;i<init.outputs.length;i++)
-		 {
-			var cName = `${name}_${width}_${init.outputs[i].src}_${init.outputs[i].srcPort}_${init.outputs[i].dst}_${init.outputs[i].dstPort+maxInStart}`;
-			if (cName.length > maxLen)
-				maxLen = cName.length;
-		 }
-		 
-		 return maxLen+1; // allow for zero terminator
-	 }
-	 
-    /*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
+    function getMaxConnName(init,bus)
+    {
+        var name = init.isArray.name;
+        var width = init.isArray.arrayLength;
+        var maxLen = 0;
+        var maxInStart = 0;
+        
+        for (i=0;i<bus.outputs.length;i++)
+            for (j=0;j<bus.outputs[i].length;j++)
+                if (maxInStart < bus.outputs[i][j][2])
+                    maxInStart = bus.outputs[i][j][2];
+        
+        for (i=0;i<init.outputs.length;i++)
+        {
+            var cName = `${name}_${width}_${init.outputs[i].src}_${init.outputs[i].srcPort}_${init.outputs[i].dst}_${init.outputs[i].dstPort+maxInStart}`;
+            if (cName.length > maxLen)
+                maxLen = cName.length;
+        }
+        
+        return maxLen+1; // allow for zero terminator
+    }
+
+    function init() // called from main.js @ init()
+    {
+        var title = "<b>Arduino/Teensy/Cpp code export</b><br><br></br>";
+        var oscExportCredits = "<br><br>OSC export credits: h4yn0nnym0u5e"
+        RED.main.SetPopOver("#btn-export-simple-osc", title+"Exports the current tab only,<br><br>note. this is only intended for<br>exporting simple/classic designs,<br><br>and have currently no support<br>for Arrays and Tabs(classes)"+oscExportCredits,"left");
+        RED.main.SetPopOver("#btn-export-class-osc", title+"Exports all tabs that have the setting<br>(export workspace set)<br><br>When using the IDE Webserver extension <br>the export dialog is not shown<br>and the export is seperated by<br>the individual files and sent to the IDE,<br><br> to force that dialog to show<br> use the setting<br>(Arduino-Export-'Force Show export dialog')" + oscExportCredits,"left");
+        RED.main.SetPopOver("#btn-export-class-zip-osc", title+"Exports All class-tabs,<br>CodeFile-nodes and<br>the design JSON<br>to seperate files and <br>then puts them all in a zipfile,<br>then asks for filename<br> then that zip file is<br>downloaded using the browser<br>download function."+oscExportCredits,"left");
+    }
+    
+    return {
+        init,
+        //isSpecialNode:isSpecialNode,
+        getDynamicInputCount,
+        generate_OSC_function_decode,
+        showIOcheckWarning // to be removed and replaced by warning instead
+    };
+})();
+
+/*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
             // future is now and with direct communication to from arduino ide this is no longer needed.
             var textarea = $(this);
             textarea.select();
@@ -1332,12 +1350,3 @@
               return false;
             });
             }).focus();*/
-
-    return {
-        //isSpecialNode:isSpecialNode,
-        getDynamicInputCount:getDynamicInputCount,
-        pushJSON: pushJSON,
-        generate_OSC_function_decode:generate_OSC_function_decode,
-        showIOcheckWarning:showIOcheckWarning // to be removed and replaced by warning instead
-    };
-})();

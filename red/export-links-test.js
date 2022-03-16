@@ -1,6 +1,6 @@
 
 
-$('#btn-deploy-osc-group-links').click(testFinalLinksExport);
+$('#btn-export-osc-group-links').click(testFinalLinksExport);
 
 function testFinalLinksExport() {
     
