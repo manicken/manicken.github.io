@@ -73,10 +73,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="menu-import" class="btn dropdown-toggle btn-success" data-toggle="dropdown" href="#"><i class="icon-download"></i> Import <span class="caret"></span></a>
 				<ul class="dropdown-menu">
                     <li><a id="btn-import-arduino" class="btn action-import" href="#"><i class="fa fa-ellipsis-v"></i> Arduino Code</a></li>
-					<li><a id="btn-import-json" class="btn action-import" href="#"><i class="fa fa-code"></i> JSON</a></li>
-					<li><a id="btn-get-design-json" class="btn action-deploy" href="#"><i class="fa fa-cloud-download"></i> Load From IDE</a></li>
-					<input id="btn-file-import" class="btn action-import" type="file" style="display:none;">
+					<li class="divider"></li>
+                    <li><a id="btn-import-json" class="btn action-import" href="#"><i class="fa fa-code"></i> JSON</a></li>
+					<li class="divider"></li>
+                    <input id="btn-file-import" class="btn action-import" type="file" style="display:none;">
                     <li><label for="btn-file-import" style="width:87%;" id="lbl-file-import" class="btn action-import" ><i class="fa fa-folder-open"></i> JSON LoadFromFile</label></li>
+                    <li class="divider"></li>
+                    <li><a id="btn-get-design-json" class="btn action-deploy" href="#"><i class="fa fa-cloud-download"></i> Load From IDE</a></li>
                    
 				</ul>
 			</div>
@@ -84,10 +87,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="menu-export" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
+                    <li class="divider"></li>
                     <li><a id="btn-deploy2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class-based</a></li>
                     <li><a id="btn-deploy2zip" class="btn action-deploy" href="#"><i class="fa fa-database"></i>&nbsp;&nbsp;&nbsp;<i class="fa fa-file-zip-o"></i> Class-based to Zip</a></li>
+                    <li class="divider"></li>
                     <li><a id="btn-saveTofile" class="btn action-deploy" href="#"><i class="fa fa-sm fa-download"></i> JSON SaveToFile</a></li>
                     <li><a id="btn-deploy2singleLineJson" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-h"></i> Single Line JSON</a></li>
+                    <li class="divider"></li>
                     <li><a id="btn-pushJSON" class="btn action-deploy" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
 				</ul>
 			</div>
@@ -96,9 +102,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="menu-export2" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export2 <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-deploy-simple2" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
+                    <li class="divider"></li>
                     <li><a id="btn-deploy-class2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class</a></li>
-                    <li><a id="btn-deploy-class-dev2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class single dev test</a></li>
                     <li><a id="btn-deploy-zip2" class="btn action-deploy" href="#"><i class="fa fa-database"></i>&nbsp;&nbsp;&nbsp;<i class="fa fa-file-zip-o"></i> Class-based to Zip</a></li>
+                    <li class="divider"></li>
+                    <li><a id="btn-deploy-class-dev2" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class single dev test</a></li>
 				</ul>
 			</div>
 
@@ -106,6 +114,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="menu-export-osc" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
 				<ul class="dropdown-menu">
                     <li><a id="btn-deploy-osc-group" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export </a></li>
+                    <li class="divider"></li>
+                    <li><a id="btn-deploy-osc" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Simple</a></li>
+                    <li><a id="btn-deploy2-osc" class="btn action-deploy" href="#"><i class="fa fa-database"></i> Class-based</a></li>
+                    <li><a id="btn-deploy2zip-osc" class="btn action-deploy" href="#"><i class="fa fa-database"></i>&nbsp;&nbsp;&nbsp;<i class="fa fa-file-zip-o"></i> Class-based to Zip</a></li>
                     <li class="divider"></li>
                     <li><a id="btn-deploy-osc" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export Basic (failsafe)</a></li>
                     <li><a id="btn-deploy-osc-group-links" class="btn action-deploy" href="#"><i class="fa fa-ellipsis-v"></i> Export Links (development test)</a></li>
@@ -629,6 +641,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/arduino.js"></script>
 <script src="red/arduino-import.js"></script>
 <script src="red/arduino-export.js"></script>
+<script src="red/arduino-export-osc.js"></script>
 <script src="red/arduino-export2.js"></script>
 <script src="red/arduino-board.js"></script>
 <script src="red/BiDirDataWebSocketBridge.js"></script>

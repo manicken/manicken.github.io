@@ -15,8 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-RED.arduino.export = (function () {
-    
+
+
+ RED.arduino.export.osc = (function () {
+    const warningClassUse = " // warning this is referring to a class, which is not direct supported in simple export";
+	const DynAudioMixers = ["AudioMixer","AudioMixerStereo"];
 
     /**
    * this take a multiline text, 
@@ -41,12 +44,7 @@ RED.arduino.export = (function () {
             str += " ";
         return str;
     }
-    function getAudioConnectionTypeName() {
-        if (RED.arduino.settings.ExportMode < 3)
-            return "AudioConnection";
-        else
-            return "OSCAudioConnection";
-    }
+
     function getCppHeader(jsonString, includes, generateZip) {
         if (includes == undefined)
             includes = "";
@@ -76,31 +74,28 @@ RED.arduino.export = (function () {
     function getPOST_JSON(wsCppFiles, removeOtherFiles) {
         return { files: wsCppFiles, removeOtherFiles: removeOtherFiles };
     }
-
     
-    /*
     function getNewAudioConnectionType(workspaceId, minorIncrement, majorIncrement, staticType) {
         return {
             staticType:staticType,
             workspaceId: workspaceId,
             base: function() {
-                if (this.staticType==true) return getAudioConnectionTypeName() + "        patchCord"+this.count + "(";
+				const acn = getConnectionName();
+                if (this.staticType==true) return acn + "        patchCord"+this.count + "(";
                 else {
                     if (this.dstRootIsArray || this.srcRootIsArray)
-                        return getNrOfSpaces(majorIncrement+minorIncrement) + "patchCord[pci++] = new "+getAudioConnectionTypeName()+"(";
+                        return getNrOfSpaces(majorIncrement+minorIncrement) + "patchCord[pci++] = new " + acn + "(";
                     else
-                        return getNrOfSpaces(majorIncrement) + "patchCord[pci++] = new "+getAudioConnectionTypeName()+"(";
+                        return getNrOfSpaces(majorIncrement) + "patchCord[pci++] = new " + acn + "(";
                 }
             },
             
             dstRootIsArray: false,
             srcRootIsArray: false,
             arrayLength: 0,
-            src: {},
             srcName: "",
             srcPort: 0,
             srcIsClass:0,
-            dst: {},
             dstName: "",
             dstPort: 0,
             dstIsClass:0,
@@ -110,17 +105,15 @@ RED.arduino.export = (function () {
             ifAnyIsArray: function () {
                 return (this.dstRootIsArray || this.srcRootIsArray);
             },
-            makeOSCname: function (n) {
+			makeOSCname: function (n) {
 				var result = this.srcName + '_' + this.srcPort + '_' + this.dstName + '_' + this.dstPort;
 				result.replace("[","${").replace("]","}").replace(".","_")
 				return result;
 			},
 			makeOSCnameQC: function (n) {
-                if (RED.arduino.settings.ExportMode < 3)
-                    return "";
-                else
-				    return '"' + this.makeOSCname(n) + '", ';
+				return '"' + this.makeOSCname(n) + '", ';
 			},
+			
             appendToCppCode: function () {
                 //if ((this.srcPort == 0) && (this.dstPort == 0))
                 //	this.cppCode	+= "\n" + this.base + this.count + "(" + this.srcName + ", " + this.dstName + ");"; // this could be used but it's generating code that looks more blurry
@@ -165,7 +158,9 @@ RED.arduino.export = (function () {
                     this.totalCount += this.arrayLength;
                 }
                 else {
-                    this.cppCode += this.base() + this.makeOSCnameQC(-1) + this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");";
+                    this.cppCode += this.base();
+					this.cppCode += this.makeOSCnameQC(-1);
+					this.cppCode += this.srcName + ", " + this.srcPort + ", " + this.dstName + ", " + this.dstPort + ");";
                     if (this.staticType == true && (this.srcIsClass || this.dstIsClass)) this.cppCode += warningClassUse;
                     this.cppCode += "\n";
                     this.count++;
@@ -197,7 +192,7 @@ RED.arduino.export = (function () {
                 return true;
             }
         };
-    }*/
+    }
     /**
      * Checks if a node have any Input(s)/Output(s)
      * @param {Node} node 
@@ -228,11 +223,12 @@ RED.arduino.export = (function () {
             okCB();
     }
 
-    $('#btn-deploy').click(function () {
+    $('#btn-deploy-osc').click(function () {
         showIOcheckWarning(export_simple);
     });
     function export_simple() {
 
+		const useDynMixers = RED.arduino.settings.UseVariableMixers; // set to true to assume that variable-width mixers are built into the Audio library
         var minorIncrement = RED.arduino.settings.CodeIndentations;
         var majorIncrement = minorIncrement * 2;
 
@@ -262,22 +258,11 @@ RED.arduino.export = (function () {
 
         console.log("save1(simple) workspace:" + activeWorkspace);
 
-        if (RED.arduino.settings.UseAudioMixerTemplate != true) {
+        if (RED.arduino.settings.UseAudioMixerTemplate != true)
             var mixervariants = [];
-            var mixerStereoVariants = [];
-        }
-        else {
-            var mixervariants = undefined;
-            var mixerStereoVariants = undefined;
-        }
 
-        //var ac = getNewAudioConnectionType(activeWorkspace, minorIncrement, majorIncrement, true);
-        var ac = new AudioConnectionExport();
-        ac.minorIncrement = minorIncrement;
-        ac.majorIncrement = majorIncrement;
+        var ac = getNewAudioConnectionType(activeWorkspace, minorIncrement, majorIncrement, true);
         ac.count = 1;
-        ac.activeWorkspace = activeWorkspace;
-        ac.staticType = true;
 
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
@@ -302,15 +287,9 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
-            else if (node.type == "AudioMixer" && mixervariants != undefined && (RED.arduino.settings.ExportMode < 3)) { // mode 3 == OSC ) {
-                var inputCount = RED.export.links.getDynInputDynSize(node); // variants 0 and 4 are taken care of in Mixers.GetCode
+            else if (node.type == "AudioMixer" && mixervariants != undefined) {
+                var inputCount = getDynamicInputCount(node, true); // variants 0 and 4 are taken care of in Mixers.GetCode
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
-            }
-            else if (node.type == "AudioMixerStereo" && mixerStereoVariants != undefined && (RED.arduino.settings.ExportMode < 3)) { // mode 3 == OSC ) {
-                //don't export AudioMixerStereo for the moment, as no code is currently availabe at Mixers.GetCodeStereo
-
-                //var inputCount = RED.export.links.getDynInputDynSize(node);
-                //if (!mixerStereoVariants.includes(inputCount)) mixerStereoVariants.push(inputCount);
             }
             else if (n.type == "ConstValue") {
                 defines += "#define " + n.name  + " " + n.value + "\n";
@@ -322,17 +301,10 @@ RED.arduino.export = (function () {
                 // generate code for audio processing node instance
                 if (node._def.isClass != undefined)//RED.nodes.isClass(n.type))
                     cppAPN += warningClassUse + "\n";
-                cppAPN += getTypeName(node);
+				var typeName = getTypeName(nns, n, useDynMixers);
+                cppAPN += mapTypeName(typeName);
                 var name = RED.nodes.make_name(n);
-                if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
-                    if (node._def.dynInputs != undefined)
-                        name += '{"' +name+ '"' + RED.export.links.getDynInputDynSize(node) + "}";
-                    else
-                        name += '{"' +name+ '"}';
-                }
-                
-
-                cppAPN += name + "; ";
+                cppAPN += name + makeCtor(name,typeName,n) + "; ";
                 for (var j = n.id.length; j < 14; j++) cppAPN += " ";
                 cppAPN += "//xy=" + n.x + "," + n.y + "\n";
 
@@ -342,35 +314,68 @@ RED.arduino.export = (function () {
                 RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
 
                     var src = RED.nodes.node(n.id);
-                    var dst = RED.nodes.node(dstId);
+                        var dst = RED.nodes.node(dstId);
 
-                    if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
+                        if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
 
-                    if (dst.type.startsWith("Junction"))// && )
-                    {
-                        var dstNodes = { nodes: [] };
-                        getJunctionFinalDestinations(dst, dstNodes); // this will return the actual nodes, non export node
-                        for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
-                            if (src === dstNodes.nodes[dni].node) continue; // can't make connections back to itself
+                        if (dst.type.startsWith("Junction"))// && )
+                        {
+                            var dstNodes = { nodes: [] };
+                            getJunctionFinalDestinations(dst, dstNodes); // this will return the actual nodes, non export node
+                            for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
+                                if (src === dstNodes.nodes[dni].node) continue; // can't make connections back to itself
 
-                            //console.error(src.name +":"+ pi + "->" + dstNodes.nodes[dni].node.name + ":" + dstNodes.nodes[dni].dstPortIndex);
-                            dst = dstNodes.nodes[dni].node;
+                                //console.error(src.name +":"+ pi + "->" + dstNodes.nodes[dni].node.name + ":" + dstNodes.nodes[dni].dstPortIndex);
+                                dst = dstNodes.nodes[dni].node;
+                                ac.cppCode = "";
+                                ac.srcName = RED.nodes.make_name(src);
+                                ac.dstName = RED.nodes.make_name(dst);
+                                ac.srcPort = pi;
+                                ac.dstPort = dstNodes.nodes[dni].dstPortIndex;
+
+                                ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
+                                if (node._def.isClass != undefined) {//RED.nodes.isClass(n.type)) { // if source is class
+                                    ac.srcIsClass = true;
+                                    //console.log("root src is class:" + ac.srcName);
+                                    RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
+                                }
+                                else
+                                    ac.srcIsClass = false;
+
+                                ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
+                                if (dst._def.isClass != undefined) {//RED.nodes.isClass(dst.type)) {
+                                    ac.dstIsClass = true;
+                                    //console.log("dst is class:" + dst.name + " from:" + n.name);
+                                    RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
+                                } else {
+                                    ac.dstIsClass = false;
+                                    ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
+                                }
+                                cppAC += ac.cppCode;
+                            }
+                        }
+                        else {
                             ac.cppCode = "";
                             ac.srcName = RED.nodes.make_name(src);
                             ac.dstName = RED.nodes.make_name(dst);
                             ac.srcPort = pi;
-                            ac.dstPort = dstNodes.nodes[dni].dstPortIndex;
+                            ac.dstPort = dstPortIndex;
 
                             ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
+
+                            // classes not supported in simple export yet but we have it still here until then
                             if (node._def.isClass != undefined) {//RED.nodes.isClass(n.type)) { // if source is class
                                 ac.srcIsClass = true;
                                 //console.log("root src is class:" + ac.srcName);
                                 RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
                             }
-                            else
-                                ac.srcIsClass = false;
+                            else {
+                                ac.dstIsClass = false;
+                            }
 
                             ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
+
+                            // classes not supported in simple export yet but we have it still here until then
                             if (dst._def.isClass != undefined) {//RED.nodes.isClass(dst.type)) {
                                 ac.dstIsClass = true;
                                 //console.log("dst is class:" + dst.name + " from:" + n.name);
@@ -381,39 +386,6 @@ RED.arduino.export = (function () {
                             }
                             cppAC += ac.cppCode;
                         }
-                    }
-                    else {
-                        ac.cppCode = "";
-                        ac.srcName = RED.nodes.make_name(src);
-                        ac.dstName = RED.nodes.make_name(dst);
-                        ac.srcPort = pi;
-                        ac.dstPort = dstPortIndex;
-
-                        ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
-
-                        // classes not supported in simple export yet but we have it still here until then
-                        if (node._def.isClass != undefined) {//RED.nodes.isClass(n.type)) { // if source is class
-                            ac.srcIsClass = true;
-                            //console.log("root src is class:" + ac.srcName);
-                            RED.nodes.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
-                        }
-                        else {
-                            ac.dstIsClass = false;
-                        }
-
-                        ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
-
-                        // classes not supported in simple export yet but we have it still here until then
-                        if (dst._def.isClass != undefined) {//RED.nodes.isClass(dst.type)) {
-                            ac.dstIsClass = true;
-                            //console.log("dst is class:" + dst.name + " from:" + n.name);
-                            RED.nodes.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
-                        } else {
-                            ac.dstIsClass = false;
-                            ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
-                        }
-                        cppAC += ac.cppCode;
-                    }
                 });
             } else { // generate code for control node (no inputs or outputs)
                 cppCN += n.type + " ";
@@ -425,13 +397,8 @@ RED.arduino.export = (function () {
         }
 
         var cpp = getCppHeader(jsonString, includes, false);
-        if (mixervariants != undefined && mixervariants.length > 0) {
+        if (!useDynMixers && mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants); // variants 0 and 4 are taken care of in Mixers.GetCode
-            cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
-            cpp += mfiles.cpp.replace('#include "mixers.h"', '') + "\n";
-        }
-        if (mixerStereoVariants != undefined && mixerStereoVariants.length > 0) {
-            var mfiles = Mixers.GetCodeStereo(mixerStereoVariants); // variants 0 and 4 are taken care of in Mixers.GetCode
             cpp += mfiles.copyrightNote + "\n" + mfiles.h + "\n";
             cpp += mfiles.cpp.replace('#include "mixers.h"', '') + "\n";
         }
@@ -462,24 +429,31 @@ RED.arduino.export = (function () {
     //nns.sort(function(a,b){ return (a.x + a.y/250) - (b.x + b.y/250); });
 			
 
-    $('#btn-deploy2').click(function () {
+    $('#btn-deploy2-osc').click(function () {
         showIOcheckWarning(export_classBased);
     });
-    $('#btn-deploy2zip').click(function () {
+    $('#btn-deploy2zip-osc').click(function () {
         showIOcheckWarning(function() {export_classBased(true);});
     });
     function export_classBased(generateZip) {
+		const useDynMixers = RED.arduino.settings.UseVariableMixers; // set to true to assume that variable-width mixers are built into the Audio library
         var minorIncrement = RED.arduino.settings.CodeIndentations;
+        var exportOSC = RED.arduino.settings.ExportForOSC;
         var majorIncrement = minorIncrement * 2;
+		const acn = getConnectionName();
+		const baseClass = getBaseClass();
         const t0 = performance.now();
+		
         RED.storage.update();
         if (generateZip == undefined) generateZip = false;
 
-        
-        var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
+		var useExportDialog = (RED.arduino.settings.useExportDialog || !RED.arduino.serverIsActive() && (generateZip == undefined))
 
         var nns = RED.nodes.createCompleteNodeSet({newVer:false});
-        // sort is made inside createCompleteNodeSet
+    	const busses = scanBusses(nns);
+		const idMap = id2index(nns);
+		
+	    // sort is made inside createCompleteNodeSet
 
         var tabNodes = RED.nodes.getClassIOportsSorted(undefined,nns);
 
@@ -499,14 +473,8 @@ RED.arduino.export = (function () {
         wsCppFiles.push(getNewWsCppFile("preferences.txt", RED.arduino.board.export_arduinoIDE()));
         wsCppFiles.push(getNewWsCppFile("platformio.ini", RED.arduino.board.export_platformIO()));
         // first scan for code files to include them first
-        if (RED.arduino.settings.UseAudioMixerTemplate != true) {
+        if (RED.arduino.settings.UseAudioMixerTemplate != true)
             var mixervariants = [];
-            var mixerStereoVariants = [];
-        }
-        else {
-            var mixervariants = undefined;
-            var mixerStereoVariants = undefined;
-        }
 
         for (var i = 0; i < nns.length; i++) {
             var n = nns[i];
@@ -527,17 +495,14 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
-            else if (n.type == "AudioMixer" && mixervariants != undefined && RED.arduino.settings.ExportMode < 3) {
-                var inputCount = RED.export.links.getDynInputDynSize(RED.nodes.node(n.id,n.z));
+            else if (n.type == "AudioMixer" && mixervariants != undefined) {
+                var inputCount = getDynamicInputCount(n, true);
                 if (inputCount == 4) continue; // this variant is allready in the audio lib
 
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
-            else if (n.type == "AudioMixerStereo" && mixerStereoVariants != undefined && RED.arduino.settings.ExportMode < 3) {
-
-            }
         }
-        if (mixervariants != undefined && mixervariants.length > 0) {
+        if (!useDynMixers && mixervariants != undefined && mixervariants.length > 0) {
             var mfiles = Mixers.GetCode(mixervariants);
             var file = getNewWsCppFile("mixers.h", mfiles.h);
             file.header = mfiles.copyrightNote;
@@ -551,7 +516,6 @@ RED.arduino.export = (function () {
         {
             var ws = RED.nodes.workspaces[wsi];
             if (!ws.export) continue; // this skip export
-            if (RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false) continue; // don't export classes/tabs not in use
             if (ws.isMain == true)
             {
                 var fileName = "";
@@ -571,8 +535,10 @@ RED.arduino.export = (function () {
             }
             else {
                 newWsCpp = getNewWsCppFile(ws.label + ".h", "");
+				newWsCpp.className = ws.label;
                 keywords.push({token:ws.label, type:"KEYWORD2"});
             }
+			newWsCpp.depends = [];
             // first go through special types
             var classComment = "";
             var classConstructorCode = "";
@@ -638,9 +604,12 @@ RED.arduino.export = (function () {
             if (classComment.length > 0) {
                 newWsCpp.contents += "\n/**\n" + classComment + " */"; // newline not needed because it allready in beginning of class definer (check down)
             }
+			
+			// Create start of class declaration:
             if (newWsCpp.isMain == false) {
-                newWsCpp.contents += "\nclass " + ws.label + " " + ws.extraClassDeclarations +"\n{\npublic:\n";
+                newWsCpp.contents += "\nclass " + ws.label + baseClass+ " " + ws.extraClassDeclarations +"\n{\npublic:\n";
             }
+			
             if (classVars.trim().length > 0) {
                 if (newWsCpp.isMain == false)
                     newWsCpp.contents += incrementTextLines(classVars, minorIncrement);
@@ -648,6 +617,7 @@ RED.arduino.export = (function () {
                     newWsCpp.contents += classVars;
             }
 
+			inits = [];
             if (newWsCpp.isMain == false) // audio processing nodes should not be in the main file
             {
                 // generate code for all audio processing nodes
@@ -666,22 +636,29 @@ RED.arduino.export = (function () {
                     if (isArray) {
                         n.name = isArray.newName;
                     }
-
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getTypeName(node);
+					
+					if (n.isClass) // keep track of class dependencies so we can export in valid order
+						newWsCpp.depends.push(n.type);
+					
+					var typeName = getTypeName(nns, n, useDynMixers);
+					var typeNameOSC = mapTypeName(typeName).trim();
+                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + mapTypeName(typeName);
+					typeName = typeName.trim();
                     //console.log(">>>" + n.type +"<<<"); // debug test
-                    var name = RED.nodes.make_name(n);
-
-                    if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
-                        if (node._def.dynInputs != undefined)
-                            name += '{"' +name+ '", ' + RED.export.links.getDynInputDynSize(node) + "}";
-                        else
-                            name += '{"' +name+ '"}';
-                    }
-
+                    var name = RED.nodes.make_name(n); 	// variable / class member name
+					var ctor = makeCtor(name,typeName,n);	// add constructor, if needed
                     if (n.comment && (n.comment.trim().length != 0))
                         newWsCpp.contents += name + "; /* " + n.comment + "*/\n";
-                    else
+                    else if (isArray)
+                        newWsCpp.contents += "*" + name + ";\n";
+                    else 
                         newWsCpp.contents += name + ";\n";
+					
+					inits.push({idx: i, id: n.id, name: name, ctor: ctor, type: typeName, 
+								typeOSC: typeNameOSC.replace("&",""),
+								isArray: isArray,
+								outputs: []
+								})
                 }
             }
             // generate code for all control/standard class nodes (no inputs or outputs)
@@ -700,28 +677,16 @@ RED.arduino.export = (function () {
                 if (newWsCpp.isMain == false)
                     newWsCpp.contents += getNrOfSpaces(minorIncrement);
 
-                newWsCpp.contents += getTypeName(node);
-                for (var j = node.type.length; j < 32; j++) cpp += " ";
-                var name = RED.nodes.make_name(node)
-
-                if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
-                    if (node._def.dynInputs != undefined)
-                        name += '{"' +name+ '", ' + RED.export.links.getDynInputDynSize(node) + "}";
-                    else
-                        name += '{"' +name+ '"}';
-                }
-
+                newWsCpp.contents += n.type + " ";
+                for (var j = n.type.length; j < 32; j++) cpp += " ";
+                var name = RED.nodes.make_name(n)
                 newWsCpp.contents += name + ";\n";
             }
 
             if (newWsCpp.isMain == false) // don't generate either audio connections or constructor in main file
             {
                 // generate code for all connections (aka wires or links)
-                //var ac = getNewAudioConnectionType(ws.id, minorIncrement, majorIncrement, false);
-                var ac = new AudioConnectionExport();
-                ac.totalCount = 0;
-                ac.minorIncrement = minorIncrement;
-                ac.majorIncrement = majorIncrement;
+                var ac = getNewAudioConnectionType(ws.id, minorIncrement, majorIncrement, false);
                 ac.count = 1;
                 var cppPcs = "";
                 var cppArray = "";
@@ -732,10 +697,12 @@ RED.arduino.export = (function () {
                     if (n.type.startsWith("Junction")) continue;
 
                     var src = RED.nodes.node(n.id, n.z);
+					var outPort = -1;
+					ac.srcName = "";
 
                     RED.nodes.eachWire(n, function (pi, dstId, dstPortIndex) {
-
-                        
+						var oldSrcName = ac.srcName;
+						
                         var dst = RED.nodes.node(dstId);
 
                         if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
@@ -751,7 +718,7 @@ RED.arduino.export = (function () {
                                 dst = dstNodes.nodes[dni].node;
                                 ac.cppCode = "";
                                 ac.srcName = RED.nodes.make_name(src);
-                                ac.dstName = RED.nodes.make_name(dst);
+								ac.dstName = RED.nodes.make_name(dst);
                                 ac.srcPort = pi;
                                 ac.dstPort = dstNodes.nodes[dni].dstPortIndex;
 
@@ -768,6 +735,15 @@ RED.arduino.export = (function () {
                                 } else {
                                     ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
                                 }
+								
+								// try to figure out tab port number:
+								if (oldSrcName != ac.srcName)
+								{
+									outPort++;
+									oldSrcName = ac.srcName;
+								}
+								ac.outPort = outPort;
+							
                                 if (ac.ifAnyIsArray())
                                     cppArray += ac.cppCode;
                                 else
@@ -780,7 +756,7 @@ RED.arduino.export = (function () {
                             ac.dstName = RED.nodes.make_name(dst);
                             ac.srcPort = pi;
                             ac.dstPort = dstPortIndex; // default
-
+                                
                             ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
                             if (src._def.isClass != undefined) { //RED.nodes.isClass(n.type)) { // if source is class
                                 //console.log("root src is class:" + ac.srcName);
@@ -799,16 +775,28 @@ RED.arduino.export = (function () {
                                 }
                                 ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
                             }
+							
+							// try to figure out tab port number:
+							if (oldSrcName != ac.srcName)
+							{
+								outPort++;
+								oldSrcName = ac.srcName;
+							}
+							ac.outPort = outPort;
+							
                             if (ac.ifAnyIsArray())
+							{
+								addPortToInits(inits,ac);
                                 cppArray += ac.cppCode;
+							}
                             else
                                 cppPcs += ac.cppCode;
                         }
                     });
                 }
                 if (ac.totalCount != 0) {
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + getAudioConnectionTypeName() + " ";
-                    newWsCpp.contents += getNrOfSpaces(32 - getAudioConnectionTypeName().length);
+                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + acn + " ";
+                    newWsCpp.contents += getNrOfSpaces(32 - acn.length);
                     newWsCpp.contents += "*patchCord[" + ac.totalCount + "]; // total patchCordCount:" + ac.totalCount + " including array typed ones.\n";
                 }
                 for (var ani = 0; ani < arrayNodes.length; ani++) {
@@ -819,23 +807,60 @@ RED.arduino.export = (function () {
                 }
 
                 // generate constructor code
-                newWsCpp.contents += "\n// constructor (this is called when class-object is created)\n";
-                if (RED.arduino.settings.ExportMode < 3)
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "() { \n";
-                else {
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "(const char* _name,OSCAudioGroup* parent) : \n";
-                    newWsCpp.contents += getNrOfSpaces(minorIncrement) + "  OSCAudioGroup(_name,parent), // construct our base class instance\n";
-                }
-
+                newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + ws.label; 
+				newWsCpp.contents +=  "(const char* _name,OSCAudioGroup* parent) : // constructor \n";
+				newWsCpp.contents +=  getNrOfSpaces(minorIncrement) + "    OSCAudioGroup(_name,parent),\n";
+				// initialisers
+				var firstInit = true;
+				for (i=0; i < inits.length; i++)
+				{
+					if (!inits[i].isArray)
+					{
+						if (!firstInit)
+						{
+							newWsCpp.contents += ",\n";
+						}
+						else
+							firstInit = false;
+						newWsCpp.contents +=  getNrOfSpaces(minorIncrement);
+						newWsCpp.contents +=  `    ${inits[i].name}(*new ${inits[i].typeOSC}${inits[i].ctor})`;
+					}
+				}
+				newWsCpp.contents +=  "\n" + getNrOfSpaces(minorIncrement) + "{\n";
+				
+				// constructor code:
+				var indent = getNrOfSpaces(majorIncrement);
+				var grpStr = 'this';
                 if (ac.totalCount != 0)
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + "int pci = 0; // used only for adding new patchcords\n"
-                if (RED.arduino.settings.ExportMode == 3)
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + "OSCAudioGroup& grp = *this;\n"
-                
-                newWsCpp.contents += "\n";
+                    newWsCpp.contents += indent + "int pci = 0; // used only for adding new patchcords\n\n"
+				
+				for (i=0; i < inits.length; i++)
+				{
+					if (inits[i].isArray)
+					{
+						var maxConnName = getMaxConnName(inits[i],busses[inits[i].id]);
+						maxConnName = inits[i].isArray.name.length + 5; // don't need to account for connection names now we have auto-naming
+						newWsCpp.contents += indent + `for (uint8_t i=0;i<${inits[i].isArray.arrayLength};i++)\n`;
+						newWsCpp.contents += indent + '{\n';
+						newWsCpp.contents += indent + `  char buf[${maxConnName}];\n\n`;
+						newWsCpp.contents += indent + `  sprintf(buf,"${inits[i].isArray.name}_%d",i);\n`;
+						newWsCpp.contents += indent + `  ${inits[i].isArray.name}[i] = new ${inits[i].type}(&buf[0], ${grpStr});\n`;
+						for (opn=0;opn < busses[inits[i].id].outputs.length;opn++)
+						{
+							output = busses[inits[i].id].outputs[opn]; // {dstID,logPort,physPort}
+							for (wire of output)
+							{
+							//for (src of inits[i].src)
+							//	newWsCpp.contents += "\n" + indent + `  sprintf(buf,"${inits[i].isArray.name}_%d_${inits[i].outputs[opn].src}_${inits[i].outputs[opn].srcPort}_${nns[idMap[wire[0]]].name}_%d",i,i+${wire[2]});\n`;
+								newWsCpp.contents +=        indent + `  patchCord[pci++] = new ${acn}{&buf[0],*${grpStr},${inits[i].isArray.name}[i]->${inits[i].outputs[opn].src},${inits[i].outputs[opn].srcPort},${nns[idMap[wire[0]]].name},(uint8_t)(i+${wire[2]}),OSCAudioConnection::AutoName::Underscores};\n`;
+							}
+						}
+						newWsCpp.contents += indent + '}\n';
+					}
+				}
                 for (var ani = 0; ani < arrayNodes.length; ani++) {
                     var arrayNode = arrayNodes[ani];
-                    newWsCpp.contents += getNrOfSpaces(majorIncrement) + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
+                    newWsCpp.contents += indent + arrayNode.name + " = new " + arrayNode.type + "[" + arrayNode.objectCount + "]";
                     if (arrayNode.autoGenerate)
                         newWsCpp.contents += "{" + arrayNode.cppCode.substring(0, arrayNode.cppCode.length - 1) + "}"
                     else
@@ -844,22 +869,32 @@ RED.arduino.export = (function () {
                     newWsCpp.contents += "; // pointer array\n";
                 }
                 newWsCpp.contents += "\n";
-                newWsCpp.contents += cppPcs;
-                if (ac.arrayLength != 0) {
+				
+				// non-array connections
+                newWsCpp.contents += cppPcs.replace(/",/g, `", *${grpStr},`); // use RegExp to get all instances replaced
+				
+				// disable this for now, it's not working too well!
+                if (false && ac.arrayLength != 0) {
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.arrayLength + "; i++) {\n";
                     newWsCpp.contents += cppArray;
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
-                }else {
-                    newWsCpp.contents += cppArray;
                 }
+				
+				// end of constructor
                 newWsCpp.contents += incrementTextLines(classConstructorCode, majorIncrement);
                 newWsCpp.contents += getNrOfSpaces(minorIncrement) + "}\n";
-
+				
+				// constructor at root
+				newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + "// constructor in root:"; 
+				newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + ws.label; 
+				newWsCpp.contents +=  `(const char* _name) : ${ws.label}(_name,NULL) {}\n`;
+	
                 
                 // generate destructor code if enabled
                 if (ws.generateCppDestructor == true) {
                     newWsCpp.contents += "\n" + getNrOfSpaces(minorIncrement) + "~" + ws.label + "() { // destructor (this is called when the class-object is deleted)\n";
-                    if (ac.totalCount != 0) {
+                    if (false && ac.totalCount != 0) // explicitly deleting connections causes problems!
+					{
                         newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.totalCount + "; i++) {\n";
                         newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "patchCord[i]->disconnect();\n"
                         newWsCpp.contents += getNrOfSpaces(majorIncrement + minorIncrement) + "delete patchCord[i];\n"
@@ -895,27 +930,52 @@ RED.arduino.export = (function () {
                 }
         } // workspaces loop
         console.error("@export as class RED.arduino.serverIsActive=" + RED.arduino.serverIsActive());
+		
         // time to generate the final result
         var cpp = "";
+		var exported = [];
         if (useExportDialog)
             cpp = getCppHeader(jsonString, undefined, false);//, codeFileIncludes.join("\n"));
-        for (var i = 0; i < wsCppFiles.length; i++) {
-            // don't include beautified json string here
-            // and only append to cpp when useExportDialog
-            if (isCodeFile(wsCppFiles[i].name) && useExportDialog) {
-                if (wsCppFiles[i].name == "mixers.cpp") { // special case
-                    cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
-                }
-                else if (wsCppFiles[i].name == "mixers.h") // special case
-                    cpp += wsCppFiles[i].header + "\n" + wsCppFiles[i].contents + "\n"; // to include the copyright note
-                else
-                    cpp += wsCppFiles[i].contents;
-            }
+		var exportComplete = true;
+		do
+		{
+			exportComplete = true;
+			for (var i = 0; i < wsCppFiles.length; i++) 
+			{
+				// don't include beautified json string here
+				// and only append to cpp when useExportDialog
+				if (!wsCppFiles[i].isExported && isCodeFile(wsCppFiles[i].name) && useExportDialog) 
+				{
+					// check that anything we depend on has already been output
+					var skip = false;
+					for (depend of wsCppFiles[i].depends)
+						if (!exported.includes(depend))
+						{
+							exportComplete = false;
+							skip = true;
+							break;
+						}
+					if (skip)
+						continue;
+					
+					if (wsCppFiles[i].name == "mixers.cpp") { // special case
+						cpp += wsCppFiles[i].contents.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
+					}
+					else if (wsCppFiles[i].name == "mixers.h") // special case
+						cpp += wsCppFiles[i].header + "\n" + wsCppFiles[i].contents + "\n"; // to include the copyright note
+					else
+						cpp += wsCppFiles[i].contents;
+				}
 
-            wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
-            delete wsCppFiles[i].header;
-            delete wsCppFiles[i].footer;
-        }
+				wsCppFiles[i].contents = wsCppFiles[i].header + wsCppFiles[i].contents + wsCppFiles[i].footer;
+				wsCppFiles[i].header = "";
+				wsCppFiles[i].footer = "";
+				wsCppFiles[i].isExported = true;
+				if (wsCppFiles[i].className)
+					exported.push(wsCppFiles[i].className);
+			}
+		} while (!exportComplete);
+		
         cpp += getCppFooter();
         //console.log(cpp);
 
@@ -929,7 +989,6 @@ RED.arduino.export = (function () {
             RED.arduino.httpPostAsync(jsonPOSTstring); // allways try to POST but not when exporting to zip
         //console.warn(jsonPOSTstring);
 
-        
 
         // only show dialog when server is active and not generating zip
         if (useExportDialog)
@@ -949,7 +1008,7 @@ RED.arduino.export = (function () {
                 if (useSubfolder == false)
                     zip.file(wsCppfile.name, wsCppfile.contents);
                 else
-                    zip.file(subFolder + "/" + wsCppfile.name, wsCppfile.contents);
+                    zip.file(subFolder + "\\" + wsCppfile.name, wsCppfile.contents);
             }
             var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
             zip.generateAsync({ type: "blob", compression}).then(function (blob) {
@@ -1018,7 +1077,7 @@ RED.arduino.export = (function () {
                 dstNodes.nodes.push({ node: dst, dstPortIndex: dstPortIndex });
         });
     }
-
+/* creates duplicate function
     $('#btn-pushJSON').click(function () { pushJSON(); });
     function pushJSON() {
         var json = localStorage.getItem("audio_library_guitool");
@@ -1033,14 +1092,15 @@ RED.arduino.export = (function () {
         var json = localStorage.getItem("audio_library_guitool");
         RED.view.dialogs.showExportDialog("Single line JSON", json, " JSON:");
     }
+*/
+    // TODO: allow multiple array source signals to be connected to the mixer
+    // the mixer will then expand to meet the requirements
 
-/* obsolete replaced by RED.export.links.getDynInputDynSize(node);
-    function getDynamicInputCount(node) { // rename to getDynamicInputCount?
-        // check if source is a array
-        //n = RED.nodes.node(n.id, n.z);
-        return RED.export.links.getDynInputDynSizePortStartIndex(node, undefined);
-    */
-/*
+    function getDynamicInputCount(n, replaceConstWithValue) { // rename to getDynamicInputCount?
+        // check if source is an array
+        n = RED.nodes.node(n.id, n.z);
+        return RED.export.links.getDynInputDynSizePortStartIndex(n, undefined);
+
         if (n.inputs != 1) return n.inputs;
 
         var src = RED.nodes.getWireInputSourceNode(RED.nodes.node(n.id), 0);
@@ -1055,38 +1115,214 @@ RED.arduino.export = (function () {
             }
         }
         
-        return n.inputs;*/
-    //}
+        return n.inputs;
+    }
 
     /**
      * This is only for the moment to get special type AudioMixer<n>, AudioMixerNNN or AudioStreamObject
-     * @param {Node} node node(internal)
+     * @param {*} nns nodeArray
+     * @param {Node} n node
      */
-     function getTypeName(node)
-     {
-        if (node.type == "AudioStreamObject") // special case
-            var cpp = node.subType?node.subType:"// warning AudioStreamObject subType not set";
-        else
-            var cpp = node.type;
+     function getTypeName(nns, n, useDynMixers) {
+        var cpp = "";
+        var typeLength = n.type.length;
+        if (!useDynMixers && n.type == "AudioMixer") {
 
-        if (node._def.dynInputs != undefined && RED.arduino.settings.ExportMode < 3)
-        {
-            var dynInputSize = RED.export.links.getDynInputDynSize(node).toString();
+            var tmplDef = getDynamicInputCount(n,true).toString();
+            //console.warn(n.name + " " + tmplDef )
 
             if (RED.arduino.settings.UseAudioMixerTemplate == true)
-                dynInputSize = '<' + dynInputSize + '>'; // include the template def.
+                tmplDef = '<' + tmplDef + '>'; // include the template def.
 
-            cpp += dynInputSize;
+            
+            cpp += n.type + tmplDef + " ";
+            typeLength += tmplDef.length;
         }
+        else if (n.type == "AudioStreamObject") {
+            cpp += n.subType + " ";
+            typeLength = n.subType.toString().length;
+        }
+        else
+            cpp += n.type + " ";
 
-        if (RED.arduino.settings.ExportMode == 3)
-            cpp = cpp.replace("Audio", "OSCAudio");
-
-        cpp += " "; // add at least one space
-        for (var j = cpp.length; j < 32; j++) cpp += " ";
+        for (var j = typeLength; j < 32; j++) cpp += " ";
         return cpp;
     }
-
+	
+    /**
+     * Convert type name if we're wanting to export OSCAudio objects
+     * @param type name
+     */
+     function mapTypeName(name) 
+	 {
+		var kys = Object.keys(NodeDefinitions.officialNodes.types);
+		if (RED.arduino.settings.UseVariableMixers)
+			kys = kys.concat(DynAudioMixers);
+			 
+		if (RED.arduino.settings.ExportForOSC && kys.includes(name.trim()))
+		{	
+			
+			
+			name = name.replace("Audio","OSCAudio");
+			name = name.replace(/([^ ]) /,"$1&");
+			name = name.slice(0,name.length-3); // remove 3 trailing spaces, because we added "OSC"
+		}
+		
+		return name;
+	 }
+	 
+    /**
+     * Create base class if we're wanting to export OSCAudio objects
+     */
+     function getBaseClass() 
+	 {
+		var result = "";
+		if (RED.arduino.settings.ExportForOSC)
+		{
+			result = " : public OSCAudioGroup";
+		}
+		
+		return result;
+	 }
+	 
+	  /**
+     * Convert type name if we're wanting to export OSCAudio objects
+     */
+     function getConnectionName() 
+	 {
+		var name = "AudioConnection";
+		if (RED.arduino.settings.ExportForOSC && name.search("Audio") >= 0)
+		{
+			name = name.replace("Audio","OSCAudio");
+		}
+		
+		return name;
+	 }
+	 
+    /**
+     * Create required constructor, if any
+     * @param name object name
+     * @param typeName type name
+     * @param n index into nodes
+     */
+	 function makeCtor(name,typeName,n)
+	 {
+		var result = "";
+		var ctor = [];
+		
+		if (RED.arduino.settings.ExportForOSC)
+			ctor.push('"' + name + '"');
+		ctor.push("*this");
+		if (DynAudioMixers.includes(typeName))
+			ctor.push(getDynamicInputCount(n,true).toString());
+		if (ctor.length > 0)
+			result += "{" + ctor.join() + "}";
+		
+		return result;
+	 }
+	 
+	 function scanBusses(nodeArray)
+	 {
+		 var result = {};
+		 var dsts = {};
+		 
+		 for (i=0;i<nodeArray.length;i++)
+		 {
+			var na = nodeArray[i];
+						
+			if (na.isClass && /\[[0-9]+\]/.test(na.name))
+			{
+				var sz = /\[([0-9]+)\]/.exec(na.name);
+				sz = sz[1];
+				var nm = na.name.slice(0,-sz.length-2);
+				var wir = Array();
+				for (j=0;j<na.wires.length;j++)
+					for (k=0;k<na.wires[j].length;k++)
+					{
+						var s = na.wires[j][k];
+						if (!(j in wir))
+							wir[j] = Array();
+					
+						wir[j][k] = s.split(":");
+						if (!(wir[j][k][0] in dsts))
+							dsts[wir[j][k][0]] = {};
+						dsts[wir[j][k][0]][wir[j][k][1]] = na.id;
+					}
+				result[na.id] = {name: nm, size: parseInt(sz), outputs: wir};
+			}
+		 }
+		 
+		 for (mixID in dsts)
+		 {
+			 var port = 0; // how far we've got down the physical ports...
+			 var lprt = 0; // ...and the logical ports
+			 var portList = Object.keys(dsts[mixID]).sort();
+			 for (lp of portList)
+			 {
+				var logPort = parseInt(lp);
+				if (logPort != lprt) // some ports skipped, not bus ports
+					port += logPort - lprt;
+				lprt = logPort+1; // next expected
+				
+				var dst = result[dsts[mixID][logPort]];
+				for (wi of Object.keys(dst.outputs))
+					for (wir of Object.keys(dst.outputs[wi]))
+						if (dst.outputs[wi][wir][0] == mixID && dst.outputs[wi][wir][1] == lp)
+							dst.outputs[wi][wir][2] = port;
+				//["physPort"] = port; // say where first connection really is
+				port += result[dsts[mixID][logPort]].size;
+			 }
+			 
+		 }
+		 
+		 return result;
+	 }
+	 
+	 function addPortToInits(inits,ac)
+	 {
+		 var src = ac.srcName.split(".");
+		 src[0] = src[0].replace("[i]","["+ac.arrayLength+"]");
+		 
+		 for (i=0;i<inits.length;i++)
+			 if (inits[i].name == src[0])
+			 {
+				 inits[i].outputs[ac.outPort] = {src: src[1], srcPort: ac.srcPort, dst: ac.dstName, dstPort: ac.dstPort};
+				 break;
+			 }
+	 }
+	 
+	 function id2index(nodeArray)
+	 {
+		 var result = {};
+		 
+		 for (i=0;i<nodeArray.length;i++)
+			 result[nodeArray[i].id] = i;
+		 
+		 return result;
+	 }
+	 
+	 function getMaxConnName(init,bus)
+	 {
+		 var name = init.isArray.name;
+		 var width = init.isArray.arrayLength;
+		 var maxLen = 0;
+		 var maxInStart = 0;
+		 
+		 for (i=0;i<bus.outputs.length;i++)
+			 for (j=0;j<bus.outputs[i].length;j++)
+				 if (maxInStart < bus.outputs[i][j][2])
+					 maxInStart = bus.outputs[i][j][2];
+		 
+		 for (i=0;i<init.outputs.length;i++)
+		 {
+			var cName = `${name}_${width}_${init.outputs[i].src}_${init.outputs[i].srcPort}_${init.outputs[i].dst}_${init.outputs[i].dstPort+maxInStart}`;
+			if (cName.length > maxLen)
+				maxLen = cName.length;
+		 }
+		 
+		 return maxLen+1; // allow for zero terminator
+	 }
+	 
     /*$("#node-input-export2").val("second text").focus(function() { // this can be used for additional setup loop code in future
             // future is now and with direct communication to from arduino ide this is no longer needed.
             var textarea = $(this);
@@ -1098,11 +1334,10 @@ RED.arduino.export = (function () {
             }).focus();*/
 
     return {
-        pushJSON,
-        generate_OSC_function_decode,
-        showIOcheckWarning,
-        getNrOfSpaces,
-        getAudioConnectionTypeName,
-        //getNewAudioConnectionType
+        //isSpecialNode:isSpecialNode,
+        getDynamicInputCount:getDynamicInputCount,
+        pushJSON: pushJSON,
+        generate_OSC_function_decode:generate_OSC_function_decode,
+        showIOcheckWarning:showIOcheckWarning // to be removed and replaced by warning instead
     };
 })();

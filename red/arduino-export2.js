@@ -95,6 +95,10 @@ class WsExport
         newWsCpp.className = this.className;
         newWsCpp.depends = this.depends; // h4yn0nnym0u5e class depending sorter
         
+
+        // ######### MASTER TODO ###########
+        // seperate following into different functions for easier code
+
         if (this.classComments.length > 0) {
             newWsCpp.body += "\n/**\n" + this.classComments + " */"; // newline not needed because it allready in beginning of class definer (check down)
         }
@@ -112,8 +116,7 @@ class WsExport
         var mi_indent = TEXT.getNrOfSpaces(minorIncrement);
         var ma_indent = TEXT.getNrOfSpaces(majorIncrement);
 
-        // ######### MASTER TODO ###########
-        // seperate following into different functions for easier code
+        
 
         if (this.totalAudioConnectionCount != 0) {
             newWsCpp.body += mi_indent + RED.arduino.export2.getAudioConnectionTypeName() + " ";
@@ -294,7 +297,7 @@ class CompleteExport
     /** @type {Number[]} */
     mixerStereoVariants = undefined;
 
-    ac = new ACExport();
+    ac = new AudioConnectionExport();
 
     /** @readonly */
     jsonString = RED.storage.getData();
@@ -331,7 +334,7 @@ class CompleteExport
     }
 }
 
-class ACExport
+class AudioConnectionExport
 {
     minorIncrement = 0;
     majorIncrement = 0;
@@ -734,7 +737,7 @@ RED.arduino.export2 = (function () {
     /**
      * // TODO create class for NewAudioConnection
      * @param {WsExport} wse 
-     * @param {ACExport} ac 
+     * @param {AudioConnectionExport} ac 
      * @param {REDNode} src 
      * @param {REDNode} dst 
      * @param {*} pi 
