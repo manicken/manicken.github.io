@@ -383,7 +383,7 @@ RED.view = (function() {
 		
 		mousedown_link = null,
 		mousedown_node = null,
-
+        /** @type {Number} 0 output, 1 input */
 		mousedown_port_type = null,
 		mousedown_port_index = 0,
 		mouseup_node = null,
@@ -2030,6 +2030,14 @@ RED.view = (function() {
 		d3.event.preventDefault();
 	}
 
+    /**
+     * 
+     * @param {REDNode} d 
+     * @param {*} portType 
+     * @param {*} portIndex 
+     * @param {*} changedNodes 
+     * @returns 
+     */
 	function portMouseUp(d,portType,portIndex,changedNodes) { // changedNodes is used by dynInput objects
         if (d3.event.button != 0) return;
         //console.warn("portMouseUp",portType,portIndex);
@@ -2127,7 +2135,7 @@ RED.view = (function() {
 
         });
         if (!existingLink) {
-            var link = {source: src, sourcePort:src_port, target: dst, targetPort: dst_port};
+            var link = new REDLink(src, src_port, dst, dst_port);
             RED.nodes.addLink(link);
             RED.history.push({t:'add',links:[link],dirty:dirty,changedNodes});
             setDirty(true);
@@ -2148,6 +2156,12 @@ RED.view = (function() {
         redraw_links();
 		
 	}
+    /**
+     * 
+     * @param {REDNode} node 
+     * @param {Number} portIndex 
+     * @returns 
+     */
     function getInputPortType(node, portIndex) {
         if (node._def.inputTypes != undefined)
         {
@@ -2158,6 +2172,12 @@ RED.view = (function() {
         }
         return "i16";
     }
+    /**
+     * 
+     * @param {REDNode} node 
+     * @param {Number} portIndex 
+     * @returns 
+     */
     function getOutputPortType(node, portIndex) {
         if (node._def.outputTypes != undefined)
         {
@@ -2173,6 +2193,9 @@ RED.view = (function() {
 		drag_line.attr("class", "drag_line_hidden");
 		resetMouseVars();
 	}
+    /**
+     * @param {REDNode} d 
+     */
 	function nodeTouchStart(d)
 	{
 		var obj = d3.select(this);
@@ -2185,6 +2208,9 @@ RED.view = (function() {
 		},touchLongPressTimeout);
 		nodeMouseDown.call(this,d)
 	}
+    /**
+     * @param {REDNode} d 
+     */
 	function nodeTouchEnd(d)
 	{
 		clearTimeout(touchStartTime);
@@ -2195,7 +2221,9 @@ RED.view = (function() {
 		}
 		nodeMouseUp.call(this,d);
 	}
-
+    /**
+     * @param {REDNode} d 
+     */
 	function nodeMouseOver(d) {
 		//if (d != mousedown_node)
 			//console.error(" >>>>>>>>>>>>>> node mouseover:" + d.name);
@@ -2234,6 +2262,9 @@ RED.view = (function() {
 			}
 		}
 	}
+    /**
+     * @param {REDNode} d 
+     */
 	function nodeMouseOut(d)
 	{
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
@@ -2250,12 +2281,16 @@ RED.view = (function() {
 		//console.log("node mouseout:" + d.name);
 		$(current_popup_rect).popover("destroy");
 	}
-
+    /**
+     * @param {REDNode} d 
+     */
 	function nodeMouseMove(d) {
 		if (d._def.uiObject != undefined) RED.view.ui.nodeMouseMove(d,this);
 		else this.style.cursor = "move";
 	}
-	
+	/**
+     * @param {REDNode} d 
+     */
 	function nodeMouseDown(d,i) { // this only happens once
         if (d3.event.button != 0) return;
         d3.event.preventDefault(); // this fixes a annoying bug while draggin nodes, i.e. selecting other text-elements
@@ -2295,8 +2330,6 @@ RED.view = (function() {
 		dblClickPrimed = (lastClickNode == mousedown_node);
 		lastClickNode = mousedown_node;
 
-		var i;
-
 		if (d.selected && d3.event.ctrlKey) {
 			console.error("selection splice");
 			d.selected = false;
@@ -2304,7 +2337,7 @@ RED.view = (function() {
             d.svgRect.selectAll(".node").classed("node_selected", false);
             if (d.type == "group") RED.view.groupbox.redrawGroupOutline(d);
 
-			for (i=0;i<moving_set.length;i+=1) {
+			for (let i=0;i<moving_set.length;i+=1) {
 				if (moving_set[i].n === d) {
 					moving_set.splice(i,1);
 					break;
@@ -2366,7 +2399,7 @@ RED.view = (function() {
 					mouse[0] += d.x;
 					mouse[1] += d.y;
 				}
-				for (i=0;i<moving_set.length;i++) {
+				for (let i=0;i<moving_set.length;i++) {
 					moving_set[i].ox = moving_set[i].n.x;
 					moving_set[i].oy = moving_set[i].n.y;
 					moving_set[i].dx = moving_set[i].n.x-mouse[0];
@@ -2388,7 +2421,9 @@ RED.view = (function() {
 		//redraw_links();
 		d3.event.stopPropagation();
 	}
-
+    /**
+     * @param {REDNode} d 
+     */
 	function nodeMouseUp(d,i) {
         if (d3.event.button != 0) return;
 		//console.log("nodeMouseUp "+ d.name+" i:" + i);
@@ -2493,7 +2528,9 @@ RED.view = (function() {
 		RED.touch.radialMenu.show(obj,pos,options);
 		resetMouseVars();
 	}
-	
+	/**
+     * @param {REDNode} d 
+     */
 	function checkRequirements(d) {
 		//Add requirements
 		d.requirementError = false;
@@ -2535,7 +2572,9 @@ RED.view = (function() {
 			});
 		});		
 	}
-	
+	/**
+     * @param {REDNode} d 
+     */
 	function redraw_calcNewNodeSize(d)
 	{
 		//var l = d._def.label;
@@ -2567,7 +2606,10 @@ RED.view = (function() {
 		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
         
     }
-	
+	/**
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_nodeMainRect_init(nodeRect, d)
 	{
 		var mainRect = nodeRect.append("rect");
@@ -2591,7 +2633,10 @@ RED.view = (function() {
 		if (RED.view.ui.checkIf_UI_AndInit(d,mainRect,nodeRect) == false)
 			mainRect.attr("fill",function(d) { return d._def.color;});
 	}	
-	
+	/**
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_nodeIcon_init(nodeRect, d)
 	{
 		nodeRect.selectAll(".node_icon_group").remove();
@@ -2662,6 +2707,10 @@ RED.view = (function() {
 		icon.style("pointer-events","none");
 		icon_group.style("pointer-events","none");			
 	}
+    /**
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_init_nodeLabel(nodeRect, d)
 	{
 		var text = nodeRect.append('svg:text')
@@ -2678,7 +2727,10 @@ RED.view = (function() {
 			//    text.attr('text-anchor','start');
 		}
 	}
-	
+	/**
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_update_label(nodeRect, d)
 	{
 		var nodeText = "";
@@ -2766,7 +2818,10 @@ RED.view = (function() {
 			});
         }
 	}
-
+    /**
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_nodeInputs(nodeRect, d)
 	{
 		var numInputs = 0;
@@ -2838,7 +2893,10 @@ RED.view = (function() {
 			port.attr("y",y)
 		});
 	}
-		
+	/**
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_nodeOutputs(nodeRect, d)
 	{
 		var numOutputs = d.outputs;
@@ -3008,11 +3066,20 @@ RED.view = (function() {
         });
       }
 
+    /**
+     * 
+     * @param {REDLink[]} links 
+     */
     function redraw_links_notations(links) {
         for (var li=0;li<links.length;li++) {
             redraw_link_notation(links[li]);
         }
     }
+    /**
+     * 
+     * @param {REDLink[]} links 
+     * @returns 
+     */
 	function redraw_links(links)
 	{
         // this allows only a specific set of links to be redrawn
@@ -3030,14 +3097,18 @@ RED.view = (function() {
 		//const t0 = performance.now();
 		// only redraw links that is selected and where the node is moving
 		if (anyLinkEnter)
-			var links = visLinks.selectAll(".link_path");
+			var vlinks = visLinks.selectAll(".link_path");
 		else
-			var links = visLinks.selectAll(".link_selected").selectAll(".link_path");
+			var vlinks = visLinks.selectAll(".link_selected").selectAll(".link_path");
 		anyLinkEnter = false;
-		links.attr("d",redraw_link);
+		vlinks.attr("d",redraw_link);
 		//const t1 = performance.now();
 		//console.log("redraw_links :"+ (t1-t0) +  "ms");
 	}
+    /**
+     * 
+     * @param {REDLink} l 
+     */
     function redraw_link_notation(l) {
         if (l.info.isBus == true) {
             l.svgPath.outline.attr("class","link_path link_outline_bus"/* + ((l.info.valid==false)?" link_invalid":"")*/);
@@ -3052,6 +3123,11 @@ RED.view = (function() {
             l.svgPath.line.attr("class","link_path link_line" + ((l.info.valid==false)?" link_invalid":""));
         }
     }
+    /**
+     * 
+     * @param {REDLink} d 
+     * @returns 
+     */
 	function redraw_link(d)
 	{
         redraw_link_notation(d);
@@ -3189,6 +3265,18 @@ RED.view = (function() {
 	
 	
 	var linksPosMode = 2;
+    /**
+     * 
+     * @param {REDNode} orig 
+     * @param {REDNode} dest 
+     * @param {Number} origX 
+     * @param {Number} origY 
+     * @param {Number} destX 
+     * @param {Number} destY 
+     * @param {Number} sc1 
+     * @param {Number} sc2 
+     * @returns svg path
+     */
 	function generateLinkPath(orig, dest, origX, origY, destX, destY, sc1, sc2) {
 		var node_height = orig.h; //node_def.height;
 		var node_width = node_def.width;
@@ -3325,7 +3413,11 @@ RED.view = (function() {
                    destX+" "+destY
         }
 	}
-	
+	/**
+     * 
+     * @param {REDNode} d 
+     * @returns 
+     */
 	function redraw_paletteNodesReqError(d)
 	{
 		var cat = d._def.category;
@@ -3346,6 +3438,11 @@ RED.view = (function() {
 		else
 			e2.classList.add("hidden");
 	}
+    /**
+     * 
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_nodeReqError(nodeRect, d)
 	{
 		nodeRect.selectAll(".node_reqerror")
@@ -3359,7 +3456,11 @@ RED.view = (function() {
 				)});
 	}
     
-	
+	/**
+     * 
+     * @param {*} nodeRect 
+     * @param {REDNode} d 
+     */
 	function redraw_nodeRefresh(nodeRect, d) // this contains the rest until they get own functions
 	{
         //console.warn("node refreh");
@@ -3401,6 +3502,10 @@ RED.view = (function() {
 		port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 0 ));
 		//console.log("nodeOutput_mouseover: " + this.getAttribute("nodeZ") + "." + this.getAttribute("nodeName") +" , port:" + pi);
 	}
+    /**
+     * 
+     * @param {REDNode} d 
+     */
 	function nodeInput_mouseover(d) // here d is the node
 	{
 		var port = d3.select(this); 
@@ -3535,6 +3640,11 @@ RED.view = (function() {
 			redraw_node(d, superUpdate);			
 		});
 	}
+    /**
+     * 
+     * @param {REDNode} node 
+     * @returns 
+     */
     function getNodeRect(node) {
         var ws = RED.nodes.getWorkspace(node.z);
         var visNodesAll2 = visNodes.selectAll("#"+node.id).data(/*RED.nodes*/ws.nodes.filter(function(d2)
@@ -3548,6 +3658,12 @@ RED.view = (function() {
         });
         return nodeRect;
     }
+    /**
+     * 
+     * @param {REDNode} d 
+     * @param {*} superUpdate 
+     * @returns 
+     */
     function redraw_node(d,superUpdate) {
         var nodeRect = d.svgRect;
         //console.error("whello");
@@ -3882,7 +3998,7 @@ RED.view = (function() {
                     portName = portName + ": " + tabIOnode.name;
                 }
 			}
-            else if (node._def.dynInputs != undefined) {
+            else if (node._def.dynInputs != undefined && portDir == "In") {
                 var links = RED.nodes.cwsLinks.filter(function(l) { return (l.target == node) && (l.targetPort == index);});
                 if (links.length != 0) {
                     var link = links[0]; // should be only one
