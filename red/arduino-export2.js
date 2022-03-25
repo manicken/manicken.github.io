@@ -495,7 +495,7 @@ RED.arduino.export2 = (function () {
     $('#btn-export-class-dev2').click(function () { Export(CPP_EXPORT_MODE.CLASS_SINGLE); });
     $('#btn-export-class-zip2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP); });
     
-    
+
     
     /**
      * This is the main entry point for all exports

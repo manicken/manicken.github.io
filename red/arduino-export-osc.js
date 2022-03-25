@@ -637,7 +637,7 @@
                         n.name = isArray.newName;
                     }
 					
-					if (n.isClass) // keep track of class dependencies so we can export in valid order
+					if (/* n.isClass */ /\[[0-9]+\]/.test(n.name)) // keep track of class dependencies so we can export in valid order
 						newWsCpp.depends.push(n.type);
 					
 					var typeName = getTypeName(nns, n, useDynMixers);
@@ -1230,7 +1230,7 @@
         {
             var na = nodeArray[i];
                         
-            if (na.isClass && /\[[0-9]+\]/.test(na.name))
+            if (/*na.isClass && */ /\[[0-9]+\]/.test(na.name))
             {
                 var sz = /\[([0-9]+)\]/.exec(na.name);
                 sz = sz[1];
