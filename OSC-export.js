@@ -180,21 +180,29 @@ OSC.export = (function () {
                         packets.add(OSC.GetCreateGroupAddr(),"ss", name, "/");
                         for (var ai = 0; ai < count; ai++)
                         {
+							var grpName = "i"+ai; // this exact name is needed if the object provides its own OSC constructor
+							
                             if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
-                                packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, "i"+ai, fixLeadingSlash(name));
+								if (node._def.makeConstructor == undefined)
+									packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, grpName, fixLeadingSlash(name));
+								else
+									eval(node._def.makeConstructor.group);	
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
                                 var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(node, null);
                                 node.RealInputs = inputCount;
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(name), inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, grpName, fixLeadingSlash(name), inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
                     else {
                         //console.warn("is NOT array");
                         if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
-                            packets.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+							if (node._def.makeConstructor == undefined)
+								packets.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
+							else
+								eval(node._def.makeConstructor.root);
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
@@ -213,25 +221,32 @@ OSC.export = (function () {
                         packets.add(OSC.GetCreateGroupAddr(),"ss", name, path);
                         for (var ai = 0; ai < count; ai++)
                         {
+							var grpName = "i"+ai; // this exact name is needed if the object provides its own OSC constructor
+
                             if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
-                                packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, "i"+ai, fixLeadingSlash(path + "/" + name));
+                                packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, grpName, fixLeadingSlash(path + "/" + name));
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
-                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, "i"+ai, fixLeadingSlash(path + "/" + name), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
+                                packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, grpName, fixLeadingSlash(path + "/" + name), RED.export.links.getDynInputDynSizePortStartIndex(node, null));//RED.arduino.export.getDynamicInputCount(node, true));
                             }
                         }
                     }
                     else {
                         //console.warn("this happen: " + n.name);
+						var grpName = fixLeadingSlash(path); // this exact name is needed if the object provides its own OSC constructor
+						
                         if (node._def.dynInputs == undefined) { //if (node._def.defaults.inputs == undefined) {
-                            packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, fixLeadingSlash(path));
+							if (node._def.makeConstructor == undefined)
+								packets.add(OSC.GetCreateObjectAddr(),"sss", n.type, n.name, grpName);
+							else
+								eval(node._def.makeConstructor.group);
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs
                             var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(node, null);
                             node.RealInputs = inputCount;
-                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, fixLeadingSlash(path), inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
+                            packets.add(OSC.GetCreateObjectAddr(),"sssi", n.type, n.name, grpName, inputCount);//RED.arduino.export.getDynamicInputCount(node, true));
                         }
                     }
                 }
