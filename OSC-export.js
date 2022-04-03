@@ -112,13 +112,22 @@ OSC.export = (function () {
 
     }
 
-    
-
     function fixLeadingSlash(text) {
         if (text.startsWith("/"))
             return text;
         else
             return "/" + text
+    }
+
+    function get_makeConstructor_values(node)
+    {
+        var values = [];
+        var names = node._def.makeConstructor.valueNames.split(",");
+        for (var i=0;i<names.length;i++)
+        {
+            values.push(node[names[i].trim()]);
+        }
+        return values;
     }
 
     /**
@@ -186,7 +195,7 @@ OSC.export = (function () {
 								if (node._def.makeConstructor == undefined)
 									packets.add(OSC.GetCreateObjectAddr(),"sss",n.type, grpName, fixLeadingSlash(name));
 								else
-									eval(node._def.makeConstructor.group);	
+                                    packets.add(OSC.GetCreateObjectAddr(),"sss"+node._def.makeConstructor.valueTypes,n.type, grpName, fixLeadingSlash(name), ...get_makeConstructor_values(node));
                             }
                             else {
                                 // AudioMixer or any object supporting dynamic count of inputs
@@ -202,7 +211,7 @@ OSC.export = (function () {
 							if (node._def.makeConstructor == undefined)
 								packets.add(OSC.GetCreateObjectAddr(),"ss", n.type, n.name);
 							else
-								eval(node._def.makeConstructor.root);
+                                packets.add(OSC.GetCreateObjectAddr(),"ss"+node._def.makeConstructor.valueTypes , n.type, n.name, ...get_makeConstructor_values(node));
                         }
                         else {
                             // AudioMixer or any object supporting dynamic count of inputs

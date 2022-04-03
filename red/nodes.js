@@ -23,6 +23,8 @@
  */
 class REDNode
 {
+    _def = {};
+    
     type = "";
     /** the node UID, should never be changed, except when a new node is created */
     id = "";

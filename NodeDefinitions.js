@@ -1,4 +1,5 @@
-NodeCategories = {
+
+var NodeCategories = {
     "used":{      "expanded":false},
     "tabs":{      "expanded":false},
     "special":{   "expanded":false},
@@ -18,6 +19,14 @@ NodeCategories = {
     "config":{   "expanded":false}
 }
 
+var DEFAULTS_VALUE_TYPE = {
+    int:"int",
+    float:"float",
+    hexdec:"hexdec",
+    c_cpp_name:"c_cpp_name",
+    c_cpp_name_no_array:"c_cpp_name_no_array"
+}
+
 //InputOutputCompatibilityMetadata is at end of this file
 
 var dynInputMixers_Help="note. Hover the Inputs fields for more information";
@@ -28,67 +37,126 @@ var dynInputMixers_RealInputs_Help="this is to show the real input count of the 
 // instead of hardcoding it into the editor.js module
 var dynInputMixers_Inputs_ReadOnly="RED.main.settings.LinkDropOnNodeAppend == true && (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true)";
 
+class NodeDefBase
+{
+    defaults={
+        name:{},
+        id:{noEdit:""},
+        comment:{},
+        color:{editor:{type:"color"}},
+    };
+    shortName="";
+    editorhelp="";
+    category="";
+    color="#F6F8BC";
+    constructor() {}
+}
+class UiTypeBase_ extends NodeDefBase
+{
+    constructor() {
+        super();
+        this.defaults.tag = {value:""};
+        this.defaults.w = {value:100, minval:5, type:DEFAULTS_VALUE_TYPE.int};
+        this.defaults.h = {value:30, minval:5, type:DEFAULTS_VALUE_TYPE.int};
+        this.defaults.textSize = {value:14, minval:5, type:DEFAULTS_VALUE_TYPE.int};
+    }
+}
+
+function tester()
+{
+    var utb = new UiTypeBase_();
+    
+}
 
 
 var UiTypeBase = {
-    "defaults":{
-        "name":{},
-        "tag":{"value":""},
-        "id":{"noEdit":""},
-        "comment":{},
-        "color":{"editor":{"type":"color"}},
-        "w":{"value":100, "minval":5, "type":"int"},
-        "h":{"value":30, "minval":5, "type":"int"},
-        "textSize":{"value":14, "minval":5, "type":"int"},
+    defaults:{
+        name:{},
+        tag:{value:""},
+        id:{noEdit:""},
+        comment:{},
+        color:{editor:{type:"color"}},
+        w:{value:100, minval:5, type:DEFAULTS_VALUE_TYPE.int},
+        h:{value:30, minval:5, type:DEFAULTS_VALUE_TYPE.int},
+        textSize:{value:14, minval:5, type:DEFAULTS_VALUE_TYPE.int},
     },
-    "uiObject":true,
-    "nonObject":"",
+    uiObject:true,
+    nonObject:"",
     //"editor":"autogen", don't autogen for ui objects as they have advanced editors
-    "shortName":"newType",
-    "editorhelp":"",
-    "category":"ui",
-    "color":"#F6F8BC",
-    "textColor":"#000000"
+    shortName:"newType",
+    editorhelp:"",
+    category:"ui",
+    color:"#F6F8BC",
+    textColor:"#000000"
 };
 
 var AudioTypeBase = {
-    "defaults":{
-        "name":{"type":"c_cpp_name_no_array"},
-        "id":{"noEdit":""},
-        "comment":{},
-        "color":{"editor":{"type":"color"}},
+    defaults:{
+        name:{type:DEFAULTS_VALUE_TYPE.c_cpp_name_no_array},
+        id:{noEdit:""},
+        comment:{},
+        color:{editor:{type:"color"}},
     },
-    "editor":"autogen",
-    "shortName":"newType",
-    "editorhelp":"",
-    "inputs":0,
-    "outputs":0,
-    "category":"",
-    "color":"#E6E0F8",
-    "icon":"arrow-in.png"
+    editor:"autogen",
+    /** @type {String}  the "shortname" used in the palette panel*/
+    shortName:"newType",
+    editorhelp:"",
+    /** @type {Number}  the input count*/
+    inputs:0,
+    /** @type {Number}  the output count*/
+    outputs:0,
+    /** @type {String}  the category to which this belongs, used mostly by the palette*/
+    category:"",
+    color:"#E6E0F8",
+    /** @type {String}  the icon file used, found in icons folder*/
+    icon:"arrow-in.png"
 };
 var arraySize_Help = "(not in use yet, as there is a lot of dependencies on the old style)<br>selects the array size,<br>a value of 0 or 1 mean no array<br>the max value is 255";
 
 var AudioTypeArrayBase = {
     ...AudioTypeBase,
-    "defaults":{
+    defaults:{
         ...AudioTypeBase.defaults,
-        "name":{"type":"c_cpp_name"},
-        "arraySize":{"value":1,"maxval":255,"minval":1,"type":"int",
-            "editor":{
-                "label":"Array Size",
-                "help":arraySize_Help
+        name:{type:DEFAULTS_VALUE_TYPE.c_cpp_name},
+        arraySize:{value:1,maxval:255,minval:1,type:DEFAULTS_VALUE_TYPE.int,
+            editor:{
+                label:"Array Size",
+                help:arraySize_Help
             }
         }
     }
 };
 
+class TestClassExtends_Base
+{
+    constructor()
+    {
+        /** @type {String} name tjofräs */
+        this.name = "";
+        /** @type {String} id tjofräs */
+        this.id = "";
+    }
+}
+class TestClassExtends extends TestClassExtends_Base
+{
+    constructor()
+    {
+        super();
+        /** @type {String} comment tjofräs */
+        this.comment = "";
+    }
+}
+var TestClassExtendsObj = {
+    ...new TestClassExtends(),
+};
+
 function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
-    //console.error("getClassNodeDefinition",ws);
     return {
         ...AudioTypeArrayBase,
         shortName: shortName,
-        isClass:ws, inputs:inputCount, outputs:outputCount,
+        /** @type {REDWorkspace} */
+        isClass:ws, 
+        inputs:inputCount, outputs:outputCount,
         category:"tabs",color: "#ccffcc" ,icon:"arrow-in.png"
     };
 }
