@@ -422,7 +422,51 @@ var NodeDefinitions = {
             "AudioEffectMultiply":{...AudioTypeArrayBase,"shortName":"multiply","inputs":2,"outputs":1,"category":"effect"},
             "AudioEffectRectifier":{...AudioTypeArrayBase,"shortName":"rectify","inputs":1,"outputs":1,"category":"effect"},
             "AudioEffectDelay":{...AudioTypeArrayBase,"shortName":"delay","inputs":1,"outputs":8,"category":"effect","defaults":{...AudioTypeArrayBase.defaults,"outputs":{"value":"8"}}},
-            "AudioEffectDelayExternal":{...AudioTypeArrayBase,"shortName":"delayExt","inputs":1,"outputs":8,"category":"effect","defaults":{...AudioTypeArrayBase.defaults,"outputs":{"value":"8"}}},
+            "AudioEffectDelayExternal":{...AudioTypeArrayBase,"shortName":"delayExt","inputs":1,"outputs":8,"category":"effect",
+                "defaults":{
+                    ...AudioTypeArrayBase.defaults,"outputs":{"value":"8"},
+                    "useMakeConstructor": {
+                        "value": false,
+                        "editor": {
+                            "label":"Make Constructor",
+                            "type":"boolean",
+                            "rowClass":"form-row-long"
+                        }
+                        
+                    },
+                    "memtype": {
+                        "type": "int",
+                        "value": "3",
+                        "editor": {
+                            "label": "Mem Type",
+                            "help": "Currently only used by h4yn0nnym0u5e OSC library<br><br>"+
+                                    "AUDIO_MEMORY_23LC1024 = 0,	// 128k x 8 S-RAM<br>"+
+                                    "AUDIO_MEMORY_MEMORYBOARD = 1,<br>"+
+                                    "AUDIO_MEMORY_CY15B104 = 2,	// 512k x 8 F-RAM<br>"+
+                                    "<br>Following only at h4yn0nnym0u5e updated audio-lib.<br>"+
+                                    "AUDIO_MEMORY_PSRAM64 = 3, // 64Mb / 8MB PSRAM (95s @ 44kHz / 16 bit)<br>"+
+                                    "AUDIO_MEMORY_INTERNAL = 4,  // 8000 samples (181ms), for test only!<br>"+
+                                    "AUDIO_MEMORY_HEAP = 5,<br>"+
+                                    "AUDIO_MEMORY_EXTMEM = 6,<br>"+
+                                    "AUDIO_MEMORY_UNDEFINED > 6"+
+                                    "<br><br>all above would later be easier by using a combobox selector"
+                        }
+                    },
+                    "maxDelay": {
+                        "type": "float",
+                        "value": "2000.0",
+                        "editor": {
+                            "label": "Max Delay(ms)",
+                            "help": "Currently only used by h4yn0nnym0u5e OSC library<br><br>"+
+                                    "the max delay in milliseconds that is allowed for this instance"
+                        }
+                    }
+                },
+                "makeConstructor": {
+                    "valueTypes": "if", 
+                    "valueNames": "memtype, maxDelay"
+                }
+            },
             "AudioEffectBitcrusher":{...AudioTypeArrayBase,"shortName":"bitcrusher","inputs":1,"outputs":1,"category":"effect"},
             "AudioEffectMidSide":{...AudioTypeArrayBase,"shortName":"midside","inputs":2,"outputs":2,"category":"effect"},
             "AudioEffectWaveshaper":{...AudioTypeArrayBase,"shortName":"waveshape","inputs":1,"outputs":1,"category":"effect"},

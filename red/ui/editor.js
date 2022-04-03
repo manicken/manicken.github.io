@@ -691,7 +691,11 @@ RED.editor = (function() {
         else if (type == 'color')
             //html += '<a class="node-input-color-group-bg"><input id="node-input-'+propName+'" data-jscolor=""></a>\n';
             html += '<input id="node-input-'+propName+'" data-jscolor="" class="jscolor jscolor-active">\n';
-
+        else if (type == 'boolean') {
+            //html += '<label class="settings-item-label" for="node-input-'+propName+'">&nbsp;'+label+'</label>';
+            html +=	'<input style="margin-bottom: 0px; margin-top: 0px;" type="checkbox" id="node-input-'+propName+'" checked="checked" />';
+        }
+            
         
         html += '</div>\n'
         return html;
