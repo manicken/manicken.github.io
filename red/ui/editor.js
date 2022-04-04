@@ -671,11 +671,23 @@ RED.editor = (function() {
 
             RED.main.SetPopOver("#node-input-" + d, propEditor.help, "right");
 
+            // following don't work
+            /*if (propEditor.options != undefined && Array.isArray(propEditor.options))
+            {
+                for (var oi = 0; oi < propEditor.options.length; oi++)
+                {
+                    //if (propEditor.options[oi].description == undefined)
+                    //    continue;
+
+                    RED.main.SetPopOver("#node-input-" + d + '-option-' + oi, propEditor.options[oi].description, "right");
+                    //html += '<option id="node-input-'+d + '-option-' + oi + ' value="' + editor.options[oi].value + '">' + editor.options[oi].text + '</option>'
+                }
+            }*/
         }
     }
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
-      }
+    }
 
     function GetEditorLine_Input(editor, propName) {
         if (editor == undefined) editor = {}; // default everything
@@ -684,21 +696,48 @@ RED.editor = (function() {
         var label=(editor.label!=undefined)?editor.label:capitalizeFirstLetter(propName);
         var readonly=((editor.readonly!=undefined && eval(editor.readonly))?'readonly="true"':"");
 
-        var html = '<div class="'+rowClass+'">\n';
-        html += '<label for="node-input-'+propName+'"><i class="fa fa-tag"></i> '+label+'</label>\n';
-        if (type == 'text')
-            html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off" '+readonly+'>\n';
-        else if (type == 'color')
-            //html += '<a class="node-input-color-group-bg"><input id="node-input-'+propName+'" data-jscolor=""></a>\n';
-            html += '<input id="node-input-'+propName+'" data-jscolor="" class="jscolor jscolor-active">\n';
-        else if (type == 'boolean') {
-            //html += '<label class="settings-item-label" for="node-input-'+propName+'">&nbsp;'+label+'</label>';
-            html +=	'<input style="margin-bottom: 0px; margin-top: 0px;" type="checkbox" id="node-input-'+propName+'" checked="checked" />';
+        var html = "";
+        if (editor.dividerTop != undefined) {
+            html += createDivider(editor.dividerTop);
         }
-            
+        html += '<div class="'+rowClass+'">\n';
+        html += '<label for="node-input-'+propName+'"><i class="fa fa-tag"></i> '+label+'</label>\n';
+        if (type == 'text') {
+            html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off" '+readonly+'>\n';
+        }
+        else if (type == 'color') {
+            html += '<input id="node-input-'+propName+'" data-jscolor="" class="jscolor jscolor-active">\n';
+        }
+        else if (type == 'boolean') {
+            html +=	'<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-'+propName+'" checked="checked" />';
+        }
+        else if (type == 'combobox') {
+            var width = (editor.inputWidth!=undefined)?editor.inputWidth:"auto";
+            html += '<select class="settings-item-combobox" type="text" id="node-input-'+propName+'" name="node-input-'+propName+'" style="width: '+width+';">';
+            if (editor.options != undefined && Array.isArray(editor.options))
+            {
+                for (var oi = 0; oi < editor.options.length; oi++)
+                {
+                    //html += '<option id="node-input-'+propName + '-option-' + oi + ' value="' + editor.options[oi].value + '">' + editor.options[oi].text + '</option>';
+                    html += '<option value="' + editor.options[oi].value + '">' + editor.options[oi].text + '</option>'
+                }
+            }
+            html += '</select>';
+        }
         
         html += '</div>\n'
+
+        if (editor.dividerBottom != undefined) {
+            html += createDivider(editor.dividerBottom);
+        }
         return html;
+    }
+
+    function createDivider(dividerOptions)
+    {
+        var size = (dividerOptions.size!=undefined)?dividerOptions.size:1;
+        var style = (dividerOptions.style!=undefined)?dividerOptions.style:"solid";
+        return '<div class="form-row"><div style="margin: 0px; height:0px; border-top-style:'+style+'; border-width:'+size+'px;"></div></div>';
     }
 
 	return {

@@ -1162,6 +1162,10 @@
       display: inline-block;
       width: 200px;
   }
+  .form-row-auto label {
+    display: inline-block;
+    width: auto;
+}
   .form-row-long input {
       width: calc(100% - 250px);
       left:200px;
