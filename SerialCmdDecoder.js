@@ -20,6 +20,8 @@ var SerialCmdDecoder = (function() {
 
     var CB_decoded = undefined;
 
+    var foundUiObject = {};
+
     /**
      * 
      * @param {Uint8Array} data 
@@ -37,13 +39,20 @@ var SerialCmdDecoder = (function() {
                     if (rxCmdBuffer.endsWith(cmdTerminator) == false) continue;
                 //else
                 //{
-                    if (rxCmdBuffer == cmdTerminator) continue; // empty cmd
+                    //if (rxCmdBuffer == cmdTerminator) continue; // empty cmd
                     
                     lastRxCmdParams = rxCmdBuffer.split(cmdParamDeliminator);
                     rxCmdBuffer = "";
                     lastRxCmd = lastRxCmdParams[0];
+                    if (lastRxCmd == cmdTerminator) continue;
+                    
                     //console.log(lastRxCmdParams);
-                    if (rawDataCmds.includes(lastRxCmd)) {
+                    foundUiObject = RED.nodes.namedNode(lastRxCmd);
+                    if (foundUiObject == undefined) continue;
+                    if (foundUiObject._def.uiObject == undefined) continue;
+                    if (foundUiObject.type == "UI_Image") {
+
+                    //if (rawDataCmds.includes(lastRxCmd)) {
                         rawTotalLength = parseInt(lastRxCmdParams[1]);
                         //console.log("rawTotalLength:"+rawTotalLength);
                         rawCurrentCount = 0;
@@ -57,7 +66,7 @@ var SerialCmdDecoder = (function() {
                     else {
                         //console.log(lastRxCmdParams);
                         if (CB_decoded != undefined)
-                            CB_decoded(lastRxCmdParams);
+                            CB_decoded(lastRxCmdParams,undefined,foundUiObject);
                     }
                 //}
             }
@@ -69,7 +78,7 @@ var SerialCmdDecoder = (function() {
                     mode = RX_MODE.CMD;
                     //console.log("raw rx disabled");
                     if (CB_decoded != undefined)
-                        CB_decoded(lastRxCmdParams,rxRawBuffer);
+                        CB_decoded(lastRxCmdParams,rxRawBuffer,foundUiObject);
                 }
             }
         }

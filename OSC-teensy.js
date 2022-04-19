@@ -24,9 +24,23 @@ var OSC = (function() {
      * 
      * @param {String[]} params cmd+parameters
      * @param {number[]} data optional raw data
+     * @param {REDNode} foundUiObject
      */
-    function SerialCmdDecoded(params, data)
+    function SerialCmdDecoded(params, data, foundUiObject)
     {
+        if (foundUiObject.type == "UI_Image")
+        {
+            RED.view.ui.drawImageData(params[0], data, foundUiObject.imageWidth, foundUiObject.imageHeight);
+        }
+        else if (foundUiObject.type == "UI_TextBox")
+        {
+            RED.nodes.namedNode(params[0]).svgRect.select("textarea").text(params[1]);
+        }
+        else if (foundUiObject.type == "UI_Label")
+        {
+            RED.nodes.node(params[0]).svgRect.select("text").text(params[1]);
+        }
+        /*
         if (params[0] == "imgM") {
             RED.view.ui.drawImageData("imgM", data, 224, 168);
         }
@@ -36,18 +50,22 @@ var OSC = (function() {
             //console.log(data); // just output it here for the moment
         }
         else if (params[0] == "txtMinT") {
-            RED.nodes.node("20220419T201447_465Z_244").svgRect.select("text").text(params[1]);
+            console.log(params);
+            RED.nodes.namedNode("txtMinT").svgRect.select("textarea").text(params[1]);
+            //RED.nodes.node("20220419T211653_865Z_e1c8").svgRect.select("text").text(params[1]);
         }
         else if (params[0] == "txtMidT") {
-            RED.nodes.node("20220419T201503_812Z_3d03").svgRect.select("text").text(params[1]);
+            RED.nodes.namedNode("txtMidT").svgRect.select("textarea").text(params[1]);
+            //RED.nodes.node("20220419T211653_866Z_3726").svgRect.select("text").text(params[1]);
         }
         else if (params[0] == "txtMaxT") {
-            RED.nodes.node("20220419T201505_939Z_e388").svgRect.select("text").text(params[1]);
+            RED.nodes.namedNode("txtMaxT").svgRect.select("textarea").text(params[1]);
+            //RED.nodes.node("20220419T211653_866Z_fa17").svgRect.select("text").text(params[1]);
         }
         else
         {
             //console.log(params);
-        }
+        }*/
     }
 
     function Init() {

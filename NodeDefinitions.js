@@ -73,8 +73,8 @@ var UiTypeBase = {
         id: { noEdit: "" },
         comment: {},
         color: { editor: { type: "color" } },
-        w: { value: 100, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
-        h: { value: 30, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
+        w: { editor:{label:"Width"}, value: 100, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
+        h: { editor:{label:"Height"}, value: 30, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
         textSize: { value: 14, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
     },
     uiObject: true,
@@ -268,11 +268,22 @@ var NodeDefinitions = {
             "UI_Label": {
                 ...UiTypeBase,
                 "shortName": "Label",
+                editor: "autogen",
+                "defaults": {
+                    ...UiTypeBase.defaults,
+                    text: {value:""}
+                }
             },
 
             "UI_Image": {
                 ...UiTypeBase,
                 "shortName": "Image",
+                editor: "autogen",
+                "defaults": {
+                    ...UiTypeBase.defaults,
+                    imageWidth: { value: 100, type:"int", minval: 10 },
+                    imageHeight: { value: 100, type:"int", minval: 10 },
+                }
             },
 
             "UI_ListBox": {
