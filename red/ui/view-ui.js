@@ -392,6 +392,7 @@ RED.view.ui = (function() {
 		else
 			$('.ui_textbox_textarea').css("pointer-events", "none");
     }
+
     function redraw_update_UI_TextBox(nodeRect, n)
     {
         nodeRect.selectAll(".node").attr("fill", n.bgColor);
@@ -701,6 +702,72 @@ RED.view.ui = (function() {
 		});
 	}
 
+    function redraw_init_UI_Image(mainRect,nodeRect, n)
+    {
+        mainRect.attr("fill",function(d) { return n._def.color;});
+       var fo = nodeRect.append("foreignObject")
+            .attr("width", n.w-4).attr("height", n.h)
+            .attr("x", 5).attr("y", 5)
+
+       var ta = fo.append("xhtml:canvas")
+            //.attr("class","settings-item-multilinetextInput")
+            .attr("id", n.id + "_canvas")
+            //.attr("rows", 4).attr("cols", 100)
+            //.style("width", n.w-8 + "px").style("height", (n.h- 8) + "px")
+            .on("mouseover", function(d,i) {if (RED.view.settings.guiEditMode == true){ /*nodeMouseOver(d,i);*/ return; } RED.keyboard.disable(); allowUiItemTextInput=true;})
+            .on("mouseout", function(d,i) {if (RED.view.settings.guiEditMode == true){ /*nodeMouseOut(d,i);*/ return; }RED.keyboard.enable(); allowUiItemTextInput=false; })
+           // .on("resize", function () {})
+            .on("keyup", function(d,i) {
+                if (RED.view.settings.guiEditMode == true) return;
+                n.comment = this.value;
+                //console.warn("changed by keyup");
+            })
+            .on("paste", function(d,i) {
+                if (RED.view.settings.guiEditMode == true) return;
+                n.comment = this.value;
+                //console.warn("changed by paste");
+            })
+            //.text(n.comment);
+
+            /*$(ta).resizable({
+                resize: function() {
+                    console.error("textArea resize");
+                    //$("body").append("<pre>resized!</pre>");
+                }
+            });*/
+
+        var rect = nodeRect.append("rect")
+            .attr("class", "ui_image")
+            .attr("width", n.w).attr("height", n.h)
+            .attr("x", 0).attr("y", 0)
+            .attr("rx", 6).attr("ry", 6)
+            .attr("fill", "rgba(255,255,255,0)")
+			.on("mouseup", RED.view.nodeMouseUp)
+			.on("mousedown",RED.view.nodeMouseDown)
+			.on("mousemove", RED.view.nodeMouseMove)
+			.on("mouseover", RED.view.nodeMouseOver)
+            .on("mouseout", RED.view.nodeMouseOut)
+
+        if (RED.view.settings.guiEditMode == true)
+            $('.ui_image').css("pointer-events", "all");
+		else
+			$('.ui_image').css("pointer-events", "none");
+    }
+    
+    function redraw_update_UI_Image(nodeRect, n)
+    {
+        nodeRect.selectAll(".node").attr("fill", n.bgColor);
+        nodeRect.selectAll("foreignObject")
+            .attr("width", n.w-4).attr("height", n.h)
+        //nodeRect.selectAll("textarea")
+        //    .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px").text(n.comment);
+        nodeRect.selectAll(".ui-wrapper")
+            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
+        nodeRect.selectAll(".ui_image")
+            .attr("width", n.w).attr("height", n.h)
+    }
+
+
     function uiNodeResizeMouseDown(d,_this) {
         mousedown_node_resize.w = d.w;
         mousedown_node_resize.h = d.h;
@@ -766,6 +833,7 @@ RED.view.ui = (function() {
         else if (d.type == "UI_ListBox"){ redraw_init_UI_ListBox(nodeRect,d); }
         else if (d.type == "UI_Piano"){ redraw_init_UI_Piano(nodeRect,d); }
         else if (d.type == "UI_TextBox"){ redraw_init_UI_Textbox(mainRect,nodeRect,d); }
+        else if (d.type == "UI_Image") { redraw_init_UI_Image(mainRect,nodeRect,d);}
         else { return false; }
         return true; // default for ui objects
     }
@@ -774,8 +842,28 @@ RED.view.ui = (function() {
         else if (d.type == "UI_ListBox") { redraw_update_UI_ListBox(nodeRect,d); }
         else if (d.type == "UI_Piano") { redraw_update_UI_Piano(nodeRect,d); }
         else if (d.type == "UI_TextBox") { redraw_update_UI_TextBox(nodeRect,d); }
+        else if (d.type == "UI_Image") { redraw_update_UI_Image(nodeRect,d); } // only for resizing
         else { return false; }
         return true; // default for ui objects
+    }
+
+    function drawImageData(nodeName, data, width, height)
+    {
+        var n =  RED.nodes.namedNode(nodeName);
+        var canvas = n.svgRect.select("canvas").node();;
+        //n.svgRect.select("canvas").style("width", width + "px");
+        //n.svgRect.select("canvas").style("height", height + "px");
+
+        var ctx = canvas.getContext("2d");
+        var imageData = ctx.createImageData(width, height);
+        var pixels = data.length/3;
+        for (var i = 0; i < pixels; i++) {
+            imageData.data[4 * i] = data[3 * i];
+            imageData.data[4 * i + 1] = data[3 * i + 1];
+            imageData.data[4 * i + 2] = data[3 * i + 2];
+            imageData.data[4 * i + 3] = 255; // non transparent
+        }
+        ctx.putImageData(imageData,0,0);
     }
 
     return {
@@ -795,6 +883,8 @@ RED.view.ui = (function() {
         checkIf_UI_AndInit,
         checkIf_UI_AndUpdate,
         currentUiObject:function() {return currentUiObject;},
-        get_uiItemResizeBorderSize:function() { return uiItemResizeBorderSize;}
+        get_uiItemResizeBorderSize:function() { return uiItemResizeBorderSize;},
+
+        drawImageData
     };
 })();

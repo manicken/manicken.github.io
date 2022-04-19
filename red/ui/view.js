@@ -2791,10 +2791,11 @@ RED.view = (function() {
 		nodeRects.attr('y', function(d) 
 		{
             if (d.type == "UI_Slider") return parseInt(d.textDimensions.h) - 30;
-            if (d.type == "UI_TextBox") return parseInt(d.textDimensions.h) - 30;
+            else if (d.type == "UI_TextBox") return parseInt(d.textDimensions.h) - 30;
 			else if (d.type == "UI_ListBox") return parseInt(d.textDimensions.h);
 			else if (d.type == "UI_Piano") return parseInt(d.textDimensions.h);
 			else if (d.type == "group") return parseInt(d.textDimensions.h);
+            else if (d.type == "UI_Image") return parseInt(d.textDimensions.h) - 30;
 			else return (d.h/2)-1; // allways divide by 2
 		});
 

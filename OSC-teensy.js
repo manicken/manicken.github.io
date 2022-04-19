@@ -18,10 +18,40 @@ var OSC = (function() {
             return RED.OSC.settings.RootAddress + "/audio/" + connectionName + "/co";
     }
 
-    var available = navigator
+    var available = navigator;
+
+    /**
+     * 
+     * @param {String[]} params cmd+parameters
+     * @param {number[]} data optional raw data
+     */
+    function SerialCmdDecoded(params, data)
+    {
+        if (params[0] == "imgM") {
+            RED.view.ui.drawImageData("imgM", data, 224, 168);
+        }
+        else if (params[0] == "imgGP") {
+            RED.view.ui.drawImageData("imgGP", data, 320, 10);
+            //console.log(params);
+            //console.log(data); // just output it here for the moment
+        }
+        else if (params[0] == "txtMinT") {
+            RED.nodes.node("20220419T201447_465Z_244").svgRect.select("text").text(params[1]);
+        }
+        else if (params[0] == "txtMidT") {
+            RED.nodes.node("20220419T201503_812Z_3d03").svgRect.select("text").text(params[1]);
+        }
+        else if (params[0] == "txtMaxT") {
+            RED.nodes.node("20220419T201505_939Z_e388").svgRect.select("text").text(params[1]);
+        }
+        else
+        {
+            //console.log(params);
+        }
+    }
 
     function Init() {
-
+    
         if (navigator.serial == undefined) {
             console.warn("Web Serial API not availabe on this browser!")
             available = false;
@@ -42,6 +72,8 @@ var OSC = (function() {
 
             return false;
         }
+        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' '});
+
         navigator.serial.addEventListener("connect", async (event) => {
             RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
         });
@@ -133,7 +165,10 @@ var OSC = (function() {
                     }*/
 
                     //console.error("decoding:",getDataArrayAsAsciiAndHex(value));
-                    slipDecoder.decode(value);
+                    if (RED.OSC.settings.Encoding == 1)
+                        slipDecoder.decode(value);
+                    else if (RED.OSC.settings.Encoding == 0)
+                        SerialCmdDecoder.decode(value);
                     // value is a Uint8Array.
                     //
                    // console.warn("done decoding");

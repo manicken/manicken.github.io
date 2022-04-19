@@ -631,7 +631,7 @@ RED.nodes = (function() {
             //console.log("checking ", node)
             if (wsId != undefined && node.z != wsId) continue; // workspace filter
 			if (getArrayName(node.name) == name) {
-                console.warn("################# found " + node.name + "==" + name);
+                //console.warn("################# found " + node.name + "==" + name);
 				return node;
 			}
             //else

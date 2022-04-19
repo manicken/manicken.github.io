@@ -95,7 +95,10 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* bottom log now have clear button @ bottom left corner when open<br><br>"+
                 "* object/node edit fields can now have popup text help, the text is defined in the node def. check AudioMixer or AudioMixerStereo for examples.<br><br>"+
                 "* better(not perfect) when wires going backwards do less crossing the nodes<br><br>",
-            "7":"* ",
+            "7":"* @ autogen Node Editor: boolean checkbox<br>"+
+                "* @ autogen Node Editor: combobox selector<br>"+
+                "* @ autogen Node Editor: item custom top/bottom border lines<br>"+
+                "* ",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
