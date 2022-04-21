@@ -71,7 +71,7 @@ var OSC = (function() {
     
     function UI_object_not_found(params)
     {
-        if (params[0] == "imgM_frame") // hardcode this for now
+        if (params[0] == "frame") // hardcode this for now
         {
             var currentFrame = parseInt(params[1]);
 
