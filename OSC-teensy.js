@@ -67,6 +67,19 @@ var OSC = (function() {
             //console.log(params);
         }*/
     }
+    var lastFrame = 0;
+    
+    function UI_object_not_found(params)
+    {
+        if (params[0] == "imgM_frame") // hardcode this for now
+        {
+            var currentFrame = parseInt(params[1]);
+
+            if (lastFrame != (currentFrame - 1))
+                RED.bottombar.info.addContent("imgM frame drop " + currentFrame + "<br>");
+            lastFrame = currentFrame;
+        }
+    }
 
     function Init() {
     
@@ -90,7 +103,7 @@ var OSC = (function() {
 
             return false;
         }
-        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' '});
+        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' ', CB_UI_object_not_found:UI_object_not_found});
 
         navigator.serial.addEventListener("connect", async (event) => {
             RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);

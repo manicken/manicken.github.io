@@ -19,6 +19,7 @@ var SerialCmdDecoder = (function() {
     var rawCurrentCount = 0;
 
     var CB_decoded = undefined;
+    var CB_UI_object_not_found = undefined;
 
     var foundUiObject = {};
 
@@ -33,7 +34,7 @@ var SerialCmdDecoder = (function() {
         for (var i=0;i<data.length;i++)
         {
             var byte = data[i];
-            if (mode == RX_MODE.CMD) {
+            if (mode === RX_MODE.CMD) {
                 //if (byte != cmdTerminator)
                     rxCmdBuffer += String.fromCharCode(byte);
                     if (rxCmdBuffer.endsWith(cmdTerminator) == false) continue;
@@ -48,7 +49,11 @@ var SerialCmdDecoder = (function() {
                     
                     //console.log(lastRxCmdParams);
                     foundUiObject = RED.nodes.namedNode(lastRxCmd);
-                    if (foundUiObject == undefined) continue;
+                    if (foundUiObject == undefined){
+                        if (CB_UI_object_not_found != undefined)
+                            CB_UI_object_not_found(lastRxCmdParams);
+                        continue;
+                    }
                     if (foundUiObject._def.uiObject == undefined) continue;
                     if (foundUiObject.type == "UI_Image") {
 
@@ -70,7 +75,7 @@ var SerialCmdDecoder = (function() {
                     }
                 //}
             }
-            else if (mode == RX_MODE.RAW)
+            else if (mode === RX_MODE.RAW)
             {
                 rxRawBuffer.push(byte);
                 rawCurrentCount++;
@@ -87,6 +92,7 @@ var SerialCmdDecoder = (function() {
     function init(params)
     {
         CB_decoded = params.CB_decoded;
+        CB_UI_object_not_found = params.CB_UI_object_not_found;
         rawDataCmds = params.rawDataCmds;
         cmdTerminator = params.cmdTerminator;
         cmdParamDeliminator = params.cmdParamDeliminator;

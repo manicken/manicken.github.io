@@ -637,7 +637,7 @@ RED.nodes = (function() {
             //else
                 //console.warn(nodes[i].name + "!=" + name);
 		}
-        console.warn("################# did not found " + name + " @ " + wsId);
+        //console.warn("################# did not found " + name + " @ " + wsId);
 		return undefined;
 	}
 	
