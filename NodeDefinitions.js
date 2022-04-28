@@ -283,6 +283,9 @@ var NodeDefinitions = {
                     ...UiTypeBase.defaults,
                     imageWidth: { value: 100, type:"int", minval: 10 },
                     imageHeight: { value: 100, type:"int", minval: 10 },
+                    scale: { value: 1.00, type:"float",
+                        editor:{label:"Image Scale"}
+                    },
                 }
             },
 

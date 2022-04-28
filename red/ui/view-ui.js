@@ -885,8 +885,8 @@ RED.view.ui = (function() {
             imageData.data[4 * i + 2] = data[3 * i + 2];
             imageData.data[4 * i + 3] = 255; // non transparent
         }
-        var b64encoded = arrayBufferToBase64(imageData.data);
-        console.log(b64encoded);
+        //var b64encoded = arrayBufferToBase64(imageData.data);
+        //console.log(b64encoded);
         ctx.putImageData(imageData,0,0);
     }
 
