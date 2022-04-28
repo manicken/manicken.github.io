@@ -155,7 +155,8 @@ RED.view.ui = (function() {
 				UI_ListBoxDeselectOther(d);
 			}
 
-			redraw_update_UI_ListBox(rect, d);
+			redraw_update_UI_ListBox(d);
+
 		} else if (d.type == "UI_Piano") {
 			var newKeyIndex = rect.attr("keyIndex");
 			if (newKeyIndex == undefined) {
@@ -521,12 +522,14 @@ RED.view.ui = (function() {
 			n.itemsTextDimensions.push(RED.view.calculateTextSize(items[i], n.itemTextSize));
 		}
 	}
-	function redraw_update_UI_ListBox(nodeRect, d)
+	function redraw_update_UI_ListBox(d)
 	{
+        
+
 		if (d.itemCountChanged != undefined && d.itemCountChanged == true)
 		{
 			d.itemCountChanged = false;
-			redraw_init_UI_ListBox(nodeRect, d);
+			redraw_init_UI_ListBox(d.svgRect, d);
 		}
 		var updateTextDimensions = false;
 		if (d.anyItemChanged != undefined && d.anyItemChanged == true)
@@ -538,10 +541,11 @@ RED.view.ui = (function() {
 		var items = d.items.split("\n");
 		d.headerHeight = parseInt(d.headerHeight)
 		var itemHeight = (d.h-d.headerHeight-4) / (items.length);
-		nodeRect.selectAll(".node").attr("height", d.h+4)
+		d.svgRect.selectAll(".node").attr("height", d.h+4)
 								.attr("fill", d.bgColor);
 
-		nodeRect.selectAll('.ui_listBox_item').each(function(d,i) {
+		d.svgRect.selectAll('.ui_listBox_item').each(function(d,i) {
+
 			var li = d3.select(this);
 			li.attr('y', ((i)*itemHeight + d.headerHeight));
 			li.attr("width", d.w-8);
@@ -551,9 +555,10 @@ RED.view.ui = (function() {
 				li.attr("fill", RED.color.subtractColor(d.itemBGcolor, "#303030"));
 			else
 				li.attr("fill", d.itemBGcolor);
+                
 		});
 
-		nodeRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
+		d.svgRect.selectAll('text.node_label_uiListBoxItem').each(function(d,i) {
 			var ti = d3.select(this);
 			if (updateTextDimensions)
 			{
@@ -839,12 +844,23 @@ RED.view.ui = (function() {
     }
     function checkIf_UI_AndUpdate(nodeRect,d) {
         if (d.type == "UI_Slider") { redraw_update_UI_Slider(nodeRect,d); }
-        else if (d.type == "UI_ListBox") { redraw_update_UI_ListBox(nodeRect,d); }
+        else if (d.type == "UI_ListBox") { redraw_update_UI_ListBox(d); }
         else if (d.type == "UI_Piano") { redraw_update_UI_Piano(nodeRect,d); }
         else if (d.type == "UI_TextBox") { redraw_update_UI_TextBox(nodeRect,d); }
         else if (d.type == "UI_Image") { redraw_update_UI_Image(nodeRect,d); } // only for resizing
         else { return false; }
         return true; // default for ui objects
+    }
+
+    function arrayBufferToBase64( buffer ) {
+        var binary = '';
+        var bytes = new Uint8Array( buffer );
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode( bytes[ i ] );
+        }
+        return window.btoa( binary );
+
     }
 
     function drawImageData(node, data)
@@ -855,15 +871,22 @@ RED.view.ui = (function() {
         //n.svgRect.select("canvas").style("width", width + "px");
         //n.svgRect.select("canvas").style("height", height + "px");
 
+        
+
         var ctx = canvas.getContext("2d");
         var imageData = ctx.createImageData(node.imageWidth, node.imageHeight);
+        
         var pixels = data.length/3;
+
+        //console.log("Rx PixelCount:" + pixels + ", wanted:" + (node.imageWidth*node.imageHeight))
         for (var i = 0; i < pixels; i++) {
             imageData.data[4 * i] = data[3 * i];
             imageData.data[4 * i + 1] = data[3 * i + 1];
             imageData.data[4 * i + 2] = data[3 * i + 2];
             imageData.data[4 * i + 3] = 255; // non transparent
         }
+        var b64encoded = arrayBufferToBase64(imageData.data);
+        console.log(b64encoded);
         ctx.putImageData(imageData,0,0);
     }
 
