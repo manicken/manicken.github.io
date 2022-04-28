@@ -847,15 +847,16 @@ RED.view.ui = (function() {
         return true; // default for ui objects
     }
 
-    function drawImageData(nodeName, data, width, height)
+    function drawImageData(node, data)
     {
-        var n =  RED.nodes.namedNode(nodeName);
-        var canvas = n.svgRect.select("canvas").node();;
+        //var n =  RED.nodes.namedNode(nodeName);
+
+        var canvas = node.svgRect.select("canvas").node();;
         //n.svgRect.select("canvas").style("width", width + "px");
         //n.svgRect.select("canvas").style("height", height + "px");
 
         var ctx = canvas.getContext("2d");
-        var imageData = ctx.createImageData(width, height);
+        var imageData = ctx.createImageData(node.imageWidth, node.imageHeight);
         var pixels = data.length/3;
         for (var i = 0; i < pixels; i++) {
             imageData.data[4 * i] = data[3 * i];

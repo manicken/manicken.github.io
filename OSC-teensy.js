@@ -30,15 +30,17 @@ var OSC = (function() {
     {
         if (foundUiObject.type == "UI_Image")
         {
-            RED.view.ui.drawImageData(params[0], data, foundUiObject.imageWidth, foundUiObject.imageHeight);
+            RED.view.ui.drawImageData(foundUiObject, data);
         }
         else if (foundUiObject.type == "UI_TextBox")
         {
-            RED.nodes.namedNode(params[0]).svgRect.select("textarea").text(params[1]);
+            //RED.nodes.namedNode(params[0]).svgRect.select("textarea").text(params[1]);
+            foundUiObject.svgRect.select("textarea").text(params[1]);
         }
         else if (foundUiObject.type == "UI_Label")
         {
-            RED.nodes.node(params[0]).svgRect.select("text").text(params[1]);
+            //RED.nodes.node(params[0]).svgRect.select("text").text(params[1]);
+            foundUiObject.svgRect.select("text").text(params[1]);
         }
         /*
         if (params[0] == "imgM") {
