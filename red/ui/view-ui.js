@@ -725,13 +725,38 @@ RED.view.ui = (function() {
     function redraw_update_UI_Image(nodeRect, n)
     {
         nodeRect.selectAll(".node").attr("fill", n.bgColor);
+        var scale = 1;
+        var xscale = (n.w-10)/n.imageWidth;
+        var yscale = (n.h-10)/n.imageHeight;
+        if (xscale < yscale) scale = xscale;
+        else scale = yscale;
+
         nodeRect.select("foreignObject")
-            .attr("width", n.imageWidth).attr("height", n.imageHeight);
+            .attr("width", n.imageWidth).attr("height", n.imageHeight)
+            .attr("transform", "scale("+scale+")")
+            .attr("x", 5/scale).attr("y", 5/scale)
         nodeRect.select("canvas")
             .attr("width", n.imageWidth).attr("height", n.imageHeight)
-
+        if (n.imageRawData != undefined)
+            drawImageData(n, n.imageRawData);
+        else
+        {
+            drawImageData(n, generateEmptyImageData(n.imageWidth*n.imageHeight, {r:0,g:0,b:0}));
+        }
         //nodeRect.selectAll(".ui-wrapper")
         //    .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
+    }
+
+    function generateEmptyImageData(pixelCount, defaultColor)
+    { 
+        var data = [];
+        for (var i=0;i<pixelCount;i++)
+        {
+            data.push(defaultColor.r);
+            data.push(defaultColor.g);
+            data.push(defaultColor.b);
+        }
+        return data;
     }
 
 
@@ -827,16 +852,12 @@ RED.view.ui = (function() {
 
     function drawImageData(node, data)
     {
+        node.imageRawData = data;
         //var n =  RED.nodes.namedNode(nodeName);
 
         var canvas = node.svgRect.select("canvas").node();
         var width = parseInt(node.imageWidth);
         var height = parseInt(node.imageHeight)
-
-        canvas.width = width;
-        canvas.height = height;
-        node.svgRect.select("foreignObject").attr("width", width).attr("height", height)
-        
 
         var ctx = canvas.getContext("2d");
         
