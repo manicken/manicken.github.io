@@ -281,11 +281,9 @@ var NodeDefinitions = {
                 editor: "autogen",
                 "defaults": {
                     ...UiTypeBase.defaults,
-                    imageWidth: { value: 100, type:"int", minval: 10 },
-                    imageHeight: { value: 100, type:"int", minval: 10 },
-                    scale: { value: 1.00, type:"float",
-                        editor:{label:"Image Scale"}
-                    },
+                    imageWidth: {editor:{label:"Image Width"}, value: 100, type:"int", minval: 10 },
+                    imageHeight: {editor:{label:"Image Height"}, value: 100, type:"int", minval: 10 },
+                    
                 }
             },
 

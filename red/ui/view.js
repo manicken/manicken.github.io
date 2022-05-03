@@ -1057,9 +1057,9 @@ RED.view = (function() {
 	}
     function redraw_nodeMoved(d) {
         if (posMode === 2)
-			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")" + ((d.scale!=undefined)?(" scale("+d.scale+")"):""); });
+			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")" /*+ ((d.scale!=undefined)?(" scale("+d.scale+")"):"")*/; });
 		else
-			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")" + ((d.scale!=undefined)?(" scale("+d.scale+")"):""); });
+			d.svgRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")" /*+ ((d.scale!=undefined)?(" scale("+d.scale+")"):"")*/; });
     }
     function generateDragLinkPath(origX,origY, destX, destY, sc) {
         var dy = destY-origY;
