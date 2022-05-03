@@ -725,14 +725,13 @@ RED.view.ui = (function() {
     function redraw_update_UI_Image(nodeRect, n)
     {
         nodeRect.selectAll(".node").attr("fill", n.bgColor);
-        nodeRect.selectAll("foreignObject")
-            .attr("width", n.w-4).attr("height", n.h)
-        //nodeRect.selectAll("textarea")
-        //    .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px").text(n.comment);
-        nodeRect.selectAll(".ui-wrapper")
-            .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
-        //nodeRect.selectAll(".ui_image")
-        //    .attr("width", n.w).attr("height", n.h)
+        nodeRect.select("foreignObject")
+            .attr("width", n.imageWidth).attr("height", n.imageHeight);
+        nodeRect.select("canvas")
+            .attr("width", n.imageWidth).attr("height", n.imageHeight)
+
+        //nodeRect.selectAll(".ui-wrapper")
+        //    .style("width", n.w-8 + "px").style("height", (n.h- 8) + "px");
     }
 
 
