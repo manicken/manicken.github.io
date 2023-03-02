@@ -21,6 +21,7 @@
  */
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
+        faustLinkExtId:"",
         version:6,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+

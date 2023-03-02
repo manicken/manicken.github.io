@@ -61,6 +61,7 @@ RED.devTest = (function() {
 
     var settingsCategory = { label:"Development Tests", expanded:false, bgColor:"#DDD" };
     var settingsEditor = {
+        sendToExtension:      { label:"send to extension", type:"button", buttonClass:"btn-primary btn-sm", action: sendToExtension},
         DebugCanvasMousePos: { label:"Debug Canvas Mouse Pos", type:"boolean"},
         startupTabRightSidebar: { label:"Startup Right Sidebar", type:"combobox", actionOnChange:true, options:["info", "settings", "project"] },
 
@@ -87,6 +88,17 @@ RED.devTest = (function() {
         
         
     };
+    function sendToExtension() {
+        // The ID of the extension we want to talk to.
+        var editorExtensionId = "nfcchjladakckekdodiebadkjgagcngb";
+
+        // Make a simple request:
+        chrome.runtime.sendMessage(editorExtensionId, {openUrlInEditor: url},
+        function(response) {
+            if (!response.success)
+            handleError(url);
+        });
+    }
     function hideSelection() {
         for (var i=0; i < RED.view.moving_set.length;i++)
         {

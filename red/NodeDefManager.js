@@ -303,7 +303,7 @@ RED.NodeDefManager = (function() {
         newItemDialogOk_cb = function() {
             if (VerifyGroupUid(newItemUid)) {
                 RED.notify("new group added " + newItemUid, "info", null, 2000);
-                RED.nodes.node_defs[newItemUid] = newGroup;
+                RED.nodes.node_defs[newItemUid] = JSON.parse(JSON.stringify(newGroup));
                 RED.storage.update();
                 BuildTree();
                 return true; // this makes the form close

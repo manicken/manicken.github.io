@@ -342,6 +342,16 @@ var NodeDefinitions = {
             }
         }
     },
+    "FAUST":{
+        "isAddon":true,
+        "label": "faust",
+        "description": "FAUST objects",
+        "credits": "manicken",
+        "homepage": "",
+        "url": "",
+        "types": {
+        }
+    },
     "h4yn0nnym0u5e": {
         "label": "h4yn0nnym0u5e",
         "description": "h4yn0nnym0u5e AudioMixerStereo",

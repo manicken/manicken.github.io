@@ -63,7 +63,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </style>
 </head>
 <body spellcheck="false">
-
+<div id="faustLinkExtId" hidden="hidden" ></div>
 <div id="navbarId" class="navbar navbar-inverse navbar-fixed-top"> <!---->
 	<div class="navbar-inner">
 		<div class="container-fluid">
@@ -780,9 +780,19 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script type="text/x-red" data-help-name="WelcomeStandardText">
 <h3>Welcome</h3>
-<p>The Audio System Design Tool lets you easily draw a system to process 16 bit, 44.1 kHz streaming audio while your Arduino sketch also runs.</p>
+<p>The Audio System Design Tool++ lets you easily draw a system to process 16 bit, 44.1 kHz streaming audio while your Arduino sketch also runs.</p>
 <p>Export will generate code to copy into the Arduino editor, to implement your system.</p>
 <p>Most objects provide simple functions you can call from setup() or loop() to control your audio project!</p>
+<h3>Tool++ extra functionality</h3>
+<p>Class export that allows the design to be seperated into different objects which can be linked together in a "main" design</p>
+<p>Experimental live edit of the design using OSC<br>
+   <a href="https://forum.pjrc.com/threads/68798-Open-Sound-Control-(OSC)-Teensy-Audio-Library-Implementation" target=\"_blank\">Open Sound Control (OSC) Teensy Audio Library Implementation</a>
+</p>
+<p>UI objects that can control the project live</p>
+<p>More Info about the new functionality here:<br>
+    <a href="https://forum.pjrc.com/threads/65740-Audio-System-Design-Tool-update" target=\"_blank\">Audio System Design Tool++ update</a>
+    <a href="https://github.com/manicken/manicken.github.io" target=\"_blank\">Github</a>
+</p>
 <h3>Offline Use</h3>
 <p>This tool does not use a server.  A stand-alone copy is provided with the Teensy Audio Library, in the gui folder.</p>
 <p>But to make it much easier there is either<br>
