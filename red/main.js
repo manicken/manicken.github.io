@@ -98,8 +98,12 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* better(not perfect) when wires going backwards do less crossing the nodes<br><br>",
             "7":"* @ autogen Node Editor: boolean checkbox<br>"+
                 "* @ autogen Node Editor: combobox selector<br>"+
-                "* @ autogen Node Editor: item custom top/bottom border lines<br>"+
-                "* ",
+                "* @ autogen Node Editor: item custom top/bottom border lines<br>",
+            "8":"* @ Node Definition Manager: fix bug when creating multiple new groups<br>"+
+                "&nbsp;&nbsp;(additional groups would reference to the first group)<br>"+
+                "* fix select all bug<br>"+
+                "&nbsp;&nbsp;(by using ctrl-a one could add to the selection multiple times which then pasted multiple items as well)<br>"+
+                "* changed Welcome message",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

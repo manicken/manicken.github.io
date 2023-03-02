@@ -1454,6 +1454,7 @@ RED.view = (function() {
     }
 
 	function selectAll() {
+        moving_set = [];
         //hideEverything();
         var ws = RED.nodes.getWorkspace(activeWorkspace);
 		const t0 = performance.now();
