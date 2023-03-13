@@ -551,7 +551,7 @@ RED.arduino.export = (function () {
         {
             var ws = RED.nodes.workspaces[wsi];
             if (!ws.export) continue; // this skip export
-            if (RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false) continue; // don't export classes/tabs not in use
+            if (RED.arduino.settings.ExportInstancedTabsOnly == true && RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false) continue; // don't export classes/tabs not in use
             if (ws.isMain == true)
             {
                 var fileName = "";

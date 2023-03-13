@@ -22,7 +22,7 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         faustLinkExtId:"",
-        version:6,
+        version:9,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -103,7 +103,8 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "&nbsp;&nbsp;(additional groups would reference to the first group)<br>"+
                 "* fix select all bug<br>"+
                 "&nbsp;&nbsp;(by using ctrl-a one could add to the selection multiple times which then pasted multiple items as well)<br>"+
-                "* changed Welcome message",
+                "* changed Welcome message<br>",
+            "9":"* added setting 'Export Instanced Tabs Only' @ Teensy/C++ - Export, that will allow non instanced classes/tabs to be exported as well.<br>"
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

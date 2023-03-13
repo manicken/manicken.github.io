@@ -20,6 +20,7 @@ RED.arduino = (function() {
 	
     var defSettings = {
         ExportMode:0,
+        ExportInstancedTabsOnly: false,
         ZipExportUseSubFolder: false,
         ZipExportCompress: true,
         UseAudioMixerTemplate: false,
@@ -45,6 +46,7 @@ RED.arduino = (function() {
     // Object.assign({}, ) is used to ensure that the defSettings is not overwritten
 	var _settings = {
         ExportMode:defSettings.ExportMode,
+        ExportInstancedTabsOnly:defSettings.ExportInstancedTabsOnly,
         ZipExportUseSubFolder:defSettings.ZipExportUseSubFolder,
         ZipExportCompress:defSettings.ZipExportCompress,
         UseAudioMixerTemplate: defSettings.UseAudioMixerTemplate,
@@ -105,6 +107,9 @@ RED.arduino = (function() {
           get ExportForOSC() { return _settings.ExportForOSC; },                                      // h4yn0nnym0u5e
 		  set ExportForOSC(state) { _settings.ExportForOSC = state; RED.storage.update();},           // h4yn0nnym0u5e
 
+        get ExportInstancedTabsOnly() { return _settings.ExportInstancedTabsOnly; },
+		set ExportInstancedTabsOnly(state) { _settings.ExportInstancedTabsOnly = state; RED.storage.update();},
+
         get ZipExportUseSubFolder() { return _settings.ZipExportUseSubFolder; },
 		set ZipExportUseSubFolder(state) { _settings.ZipExportUseSubFolder = state; RED.storage.update();},
 
@@ -148,6 +153,7 @@ RED.arduino = (function() {
                 ProjectName:             { label:"Project Name", type:"string", popupText: "Project Name is used as the default file names for zip-file export and JSON-save to file.<br>"+
 																						"It's also used at the default savename for the autosave function,<br>when replacing the whole design with a template design.<br>"+
 																						"<br>When naming a tab with  [ProjectName].ino (not including the []),<br>that defines it's the main ino-file when it's exported to Arduino IDE."},
+                ExportInstancedTabsOnly: { label:"Export Instanced Tabs Only", type:"boolean", popupText:"unchecking this will export all tabs even those not 'instanced' in this Tool,<br>this can be useful when one want to instance and use objects dynamically in code.<br><br>having it checked mean that the export will not include tabs that are not 'active'(visible anywhere) in this tool."},
                 ZipExportUseSubFolder:         { label:"Zip file subfolder", type:"boolean", popupText:"When exporting as zip,<br> if this is checked then the files in the zip will be put into a sub folder,<br> this is intended for complete Arduino Sketch exports."},
                 ZipExportCompress:         { label:"compress Zip file", type:"boolean", popupText:"Whenever to compress the exported zip file, a uncompressed file should generate faster<br> but timing tests show that the times are almost the same."},
                 
