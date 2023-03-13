@@ -1003,6 +1003,7 @@ RED.arduino.export = (function () {
     function isCodeFile(fileName) {
         if (fileName.endsWith(".h")) return true;
         else if (fileName.endsWith(".cpp")) return true;
+        else if (fileName.endsWith(".ino")) return true;
         else if (fileName.endsWith(".tpp")) return true;
         else if (fileName.endsWith(".hpp")) return true;
         else if (fileName.endsWith(".c")) return true;
