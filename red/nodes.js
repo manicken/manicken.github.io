@@ -623,6 +623,7 @@ RED.nodes = (function() {
 	function getNodeByName(name,nodes,wsId) {
         if (wsId == undefined) wsId = RED.view.activeWorkspace;
         var ws = getWorkspace(wsId);
+        if (ws == undefined) return undefined;
         if (nodes == undefined) nodes = ws.nodes;
         //console.trace(nns);
         //console.log("getNodeByName " + name + " @ " + wsId);
