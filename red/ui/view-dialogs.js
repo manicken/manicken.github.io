@@ -139,7 +139,9 @@ RED.view.dialogs = (function() {
         //var otherAudioMain = getOtherAudioMain(ws);
         //if (otherAudioMain == undefined){
             $( "#node-input-export-isAudioMain" ).prop('disabled' , false);
-            RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", "when checked this defines the <b>Audio Main Entry</b>.<br>(currently only used by <b>OSC group export</b>)<br><br>note. if multiple audio main:s are set only the first one are used", "left");
+            RED.main.SetPopOver("#node-input-export-isAudioMain-checkbox", "1. @OSC group export<br>&nbsp;&nbsp;&nbsp;when checked this defines the <b>Audio Main Entry</b>.<br>&nbsp;&nbsp;&nbsp;<b>note. if multiple audio main:s are set only the first one are used.</b><br>"+
+                                                                           "<br>" + 
+                                                                           "2. @class export<br>&nbsp;&nbsp;&nbsp;when checked this will force export the class even thou it have TAB-IO", "left");
         //    $( "#node-input-export-isAudioMain" ).click(chk_exportIsMain_OnClick);
             
         /*}

@@ -879,7 +879,10 @@ RED.arduino.export = (function () {
             }
 
             if (newWsCpp.isMain == false) {// don't include end of class marker when doing main.cpp 
-                newWsCpp.contents += "};\n"; // end of class
+                if (generateZip == true)
+                    newWsCpp.contents += "};\n"; // end of class, there is no note as this would normally be end off file
+                else
+                    newWsCpp.contents += "}; // end of class " + ws.label  + "\n"; // end of class note to easier see ends of classes
                 newWsCpp.contents += class_eofCode; // after end of class
             }
 
