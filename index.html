@@ -573,6 +573,59 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		</div>
 	</form>
 </div>
+<div id="dialog-edit-link" class="hide">
+	<form class="form-horizontal">
+		<div class="form-row">
+			<label for="dialog-edit-link-name" ><i class="icon-tag"></i> Name:</label>
+			<input type="text" id="ndialog-edit-link-name" autocomplete="off">
+        </div>
+        <div class="form-row">
+            <label for="dialog-edit-link-comment"><i class="fa fa-tag"></i> Comment</label>
+            <input type="text" id="dialog-edit-link-comment" placeholder="Comment" autocomplete="off">
+            <!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
+        </div>
+       <!-- <div class="form-row">
+            <label for="dialog-edit-link-bgcolor"><i class="fa fa-tag"></i> BG Color</label>
+            <input id="dialog-edit-link-bgcolor" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
+        </div>-->
+        <div class="form-row">
+			<label for="dialog-edit-link-fgcolor1-width" ><i class="icon-tag"></i> Width:</label>
+			<input type="text" id="dialog-edit-link-fgcolor1-width" autocomplete="off">
+        </div>
+        <div class="form-row">
+            <label for="dialog-edit-link-fgcolor1"><i class="fa fa-tag"></i> FG Color 1</label>
+            <input id="dialog-edit-link-fgcolor1" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
+        </div>
+        <div class="form-row">
+            <label for="dialog-edit-link-use-fgcolor2"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Use color2:</span></label>
+            <label for="dialog-edit-link-use-fgcolor2" style="width:70%">
+            <input type="checkbox" id="dialog-edit-link-use-fgcolor2" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+            </label>
+        </div>
+        <div class="form-row">
+            <label for="dialog-edit-link-fgcolor2"><i class="fa fa-tag"></i> FG Color 2</label>
+            <input id="dialog-edit-link-fgcolor2" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
+        </div>
+        <div class="form-row">
+			<label for="dialog-edit-link-fgcolor2-dasharray" ><i class="icon-tag"></i> Dasharray:</label>
+			<input type="text" id="dialog-edit-link-fgcolor2-dasharray" autocomplete="off">
+        </div>
+        <div class="form-row">
+            <label for="dialog-edit-link-use-fgcolor3"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Use color3:</span></label>
+            <label for="dialog-edit-link-use-fgcolor3" style="width:70%">
+            <input type="checkbox" id="dialog-edit-link-use-fgcolor3" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+            </label>
+        </div>
+        <div class="form-row">
+            <label for="dialog-edit-link-fgcolor3"><i class="fa fa-tag"></i> FG Color 2</label>
+            <input id="dialog-edit-link-fgcolor3" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
+        </div>
+        <div class="form-row">
+			<label for="dialog-edit-link-fgcolor3-dasharray" ><i class="icon-tag"></i> Dasharray:</label>
+			<input type="text" id="dialog-edit-link-fgcolor3-dasharray" autocomplete="off">
+        </div>
+    </form>
+</div>   
 
 <script type="text/x-red" data-template-name="export-clipboard-dialog">
 	<div class="form-row">

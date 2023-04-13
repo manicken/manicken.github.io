@@ -153,6 +153,86 @@ RED.view.dialogs = (function() {
 
 		$( "#node-dialog-rename-workspace" ).dialog("open");
     }
+
+    function getLinkStyle(className)
+    {
+        var elem = document.querySelector('.'+className);
+        return getComputedStyle(elem);
+    }
+    var edit_link = undefined;
+    function showEditLinkDialog(link)
+    {
+        edit_link = link;
+        $( "#dialog-edit-link" ).dialog("open");
+    }
+    function editLinkDialog_Opened()
+    {
+        $("#dialog-edit-link-name").val((edit_link.name!=undefined)?edit_link.name:"");
+        $("#dialog-edit-link-comment").val((edit_link.comment!=undefined)?edit_link.comment:"");
+
+        document.querySelector('#dialog-edit-link-fgcolor1').jscolor.fromString(edit_link.style.line1.color!=undefined?edit_link.style.line1.color:edit_link.svgPath.line.style("stroke"));
+        document.querySelector('#dialog-edit-link-fgcolor2').jscolor.fromString(edit_link.style.line2.color!=undefined?edit_link.style.line2.color:edit_link.svgPath.line2.style("stroke"));
+        document.querySelector('#dialog-edit-link-fgcolor3').jscolor.fromString(edit_link.style.line3.color!=undefined?edit_link.style.line3.color:edit_link.svgPath.line3.style("stroke"));
+        
+        $("#dialog-edit-link-fgcolor2-dasharray").val(edit_link.style.line2.dasharray);//edit_link.svgPath.line2.style("stroke-dasharray"));
+        $("#dialog-edit-link-fgcolor3-dasharray").val(edit_link.style.line3.dasharray);//edit_link.svgPath.line3.style("stroke-dasharray"));
+
+        $("#dialog-edit-link-fgcolor1-width").val(edit_link.style.line1.width!=undefined?edit_link.style.line1.width:edit_link.svgPath.line.style("stroke-width"));
+        //$("#dialog-edit-link-fgcolor2-width").val(edit_link.svgPath.line2.style("stroke-width"));
+        //$("#dialog-edit-link-fgcolor3-width").val(edit_link.svgPath.line3.style("stroke-width"));
+
+        $("#dialog-edit-link-use-fgcolor2").prop('checked', edit_link.style.line2.enabled);//.style("stroke-width") == width);
+        $("#dialog-edit-link-use-fgcolor3").prop('checked', edit_link.style.line3.enabled);//.style("stroke-width") == width);
+        //console.log(edit_link.svgPath.line3.style("stroke-dasharray"));
+        //console.log(edit_link.svgPath.line2.style("stroke-width"));
+        //edit_link.svgPath.line3.style("stroke-dasharray", "15px, 25px");
+    }
+    function editLinkDialogOkPressed()
+    {
+        
+        edit_link.name = $("#dialog-edit-link-name").val();
+        edit_link.comment = $("#dialog-edit-link-comment").val();
+
+        if (edit_link.style == undefined) edit_link.style = {};
+        edit_link.style.line2.enabled = $("#dialog-edit-link-use-fgcolor2").prop('checked');
+        edit_link.style.line3.enabled = $("#dialog-edit-link-use-fgcolor3").prop('checked');
+        edit_link.style.line1.width = $("#dialog-edit-link-fgcolor1-width").val();
+        edit_link.style.line1.color = $("#dialog-edit-link-fgcolor1").val();
+        edit_link.style.line2.color = $("#dialog-edit-link-fgcolor2").val();
+        edit_link.style.line3.color = $("#dialog-edit-link-fgcolor3").val();
+        edit_link.style.line2.dasharray = $("#dialog-edit-link-fgcolor2-dasharray").val();
+        edit_link.style.line3.dasharray = $("#dialog-edit-link-fgcolor3-dasharray").val();
+        
+
+        // apply direct to elements
+        //edit_link.svgPath.outline.style("stroke", $("#dialog-edit-link-bgcolor").val());
+        edit_link.svgPath.line.style("stroke", edit_link.style.line1.color);
+        edit_link.svgPath.line2.style("stroke", edit_link.style.line2.color);
+        edit_link.svgPath.line3.style("stroke", edit_link.style.line3.color);
+        
+        edit_link.svgPath.line.style("stroke-width", edit_link.style.line1.width);
+        edit_link.svgPath.outline.style("stroke-width", edit_link.style.line1.width + 2);
+
+
+        if (edit_link.style.line2.enabled == true)
+            edit_link.svgPath.line2.style("stroke-width", edit_link.style.line1.width);
+        else
+            edit_link.svgPath.line2.style("stroke-width", "0px");
+
+        if (edit_link.style.line3.enabled == true)
+            edit_link.svgPath.line3.style("stroke-width", edit_link.style.line1.width);
+        else
+            edit_link.svgPath.line3.style("stroke-width", "0px");
+        
+        //edit_link.svgPath.line2.style("stroke-width", $("#dialog-edit-link-fgcolor2-width").val());
+        //edit_link.svgPath.line3.style("stroke-width", $("#dialog-edit-link-fgcolor3-width").val());
+        edit_link.svgPath.line2.style("stroke-dasharray", edit_link.style.line2.dasharray);
+        edit_link.svgPath.line3.style("stroke-dasharray", edit_link.style.line3.dasharray);
+
+        
+        RED.storage.update();
+		$( this ).dialog( "close" );
+    }
     
     function chk_exportIsMain_OnClick() {
         // Get the checkbox
@@ -191,6 +271,34 @@ RED.view.dialogs = (function() {
         }
         return undefined;
     }
+
+    $("#dialog-edit-link form" ).submit(function(e) { e.preventDefault();});
+    $( "#dialog-edit-link" ).dialog({
+		modal: true,
+		autoOpen: false,
+		width: 500,
+		title: "Edit Link",
+        buttons: [
+            {
+				text: "Ok",
+				click: editLinkDialogOkPressed
+            },
+			{
+				text: "Cancel",
+				click: function() {
+					$( this ).dialog( "close" );
+				}
+			}
+        ],
+		open: function(e) {
+			RED.keyboard.disable();
+            editLinkDialog_Opened();
+            
+		},
+		close: function(e) {
+			RED.keyboard.enable();
+		}
+    });
 
 	$("#node-dialog-rename-workspace form" ).submit(function(e) { e.preventDefault();});
 	$( "#node-dialog-rename-workspace" ).dialog({
@@ -421,8 +529,8 @@ RED.view.dialogs = (function() {
         showExportNodesDialog,
         showExportNodesLibraryDialog,
         showImportNodesDialog,
-        showRenameWorkspaceDialog
-        
+        showRenameWorkspaceDialog,
+        showEditLinkDialog
 
     };
 })();

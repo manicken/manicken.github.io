@@ -825,9 +825,9 @@ RED.nodes = (function() {
      * @param {REDWorkspace} ws
      * @returns {*} exportable node JSON, TODO create a type for this called JSONNode
 	 **/
-	function convertNode(n,ws) {
+	function convertNode(n,ws,newVer) {
         if (n.wires != undefined) return n; // if wires is defined, node is allready converted
-        
+        if (newVer == undefined) newVer = false;
 		var node = {};
 		node.id = n.id;
 		node.type = n.type;
@@ -861,7 +861,18 @@ RED.nodes = (function() {
         for (var j=0;j<wires.length;j++) {
             var w = wires[j];
             try{
-            node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
+            if (newVer == false)
+                node.wires[w.sourcePort].push(w.target.id + ":" + w.targetPort);
+            else
+            {
+                var newVerWire = {
+                    "def":w.target.id + ":" + w.targetPort,
+                    "name":w.name,
+                    "comment":w.comment,
+                    "style":w.style
+                };
+                node.wires[w.sourcePort].push(newVerWire);
+            }
             //node.wireNames[w.sourcePort].push(RED.export.links.GetName(w));
             }
             catch (e)
@@ -1039,7 +1050,7 @@ RED.nodes = (function() {
                 //if (node.z != _ws.id) continue; // workspace filter, still OLD internal structure
 
                 if (newVersion == true)
-                    ws.nodes.push(convertNode(node));
+                    ws.nodes.push(convertNode(node, undefined, true));
                 else
 				    nns.push(convertNode(node)); 
             }
@@ -1327,19 +1338,31 @@ RED.nodes = (function() {
                 var allreadyAdded = []; // to check for duplicates
                 for (var w2=0;w2<wires.length;w2++)
                 {
-                    if (wires[w2] == null) continue;
+                    var wire = wires[w2];
+                    var wireDef = "";
+                    if (wire == null) continue;
+                    //console.log(typeof(wire));
+                    if (typeof(wire) == "string") wireDef = wire;
+                    else if (typeof(wire) == "object") wireDef = wire.def;
+                    else continue;
 
                     // duplicate failsafe check
-                    if (allreadyAdded.includes(wires[w2])) continue;
-                    allreadyAdded.push(wires[w2]);
+                    if (allreadyAdded.includes(wireDef)) continue;
+                    allreadyAdded.push(wireDef);
 
-                    var parts = wires[w2].split(":");
+                    var parts = wireDef.split(":");
                     if (parts.length != 2) continue;
                     if ((parts[0] in node_map) == false) continue;
 
                     var dst = node_map[parts[0]];
                     
                     var link = new REDLink(nn, w1, dst, parts[1]);
+
+                    if (typeof(wire) == "object") {
+                        link.style = wire.style;
+                        link.name = wire.name;
+                        link.comment = wire.comment;
+                    }
                     //var link = {source:nn,sourcePort:w1,target:dst,targetPort:parts[1]};
                     //link.info = new REDLinkInfo();
                     /*

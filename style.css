@@ -902,6 +902,39 @@
      fill: #ddd;
      cursor: crosshair;
   }
+  .port_label {
+    background: #ff0000;
+     stroke-width: 0;
+     fill: black;
+     vertical-align: bottom;
+     text-align: center;
+     font-size: 10px;
+     pointer-events: none;
+     -webkit-touch-callout: none;
+     @include disable-selection;
+ }
+ .in_label {
+    background: #ff0000;
+     stroke-width: 0;
+     fill: black;
+     vertical-align: bottom;
+     text-align: center;
+     font-size: 10px;
+     pointer-events: none;
+     -webkit-touch-callout: none;
+     @include disable-selection;
+ }
+ .out_label {
+    background: #ff0000;
+     stroke-width: 0;
+     fill: black;
+     vertical-align: bottom;
+     text-align: left;
+     font-size: 10px;
+     pointer-events: none;
+     -webkit-touch-callout: none;
+     @include disable-selection;
+ }
   .node_error {
       stroke: #ff0000;
       stroke-width: 2;
@@ -995,6 +1028,20 @@
     stroke-width: 4;
     fill: none;
     pointer-events: none;
+  }
+  .link_line2 {
+    stroke: #7f7f7f;
+    stroke-width: 0;
+    fill: none;
+    pointer-events: none;
+    stroke-dasharray: 20, 10;
+  }
+  .link_line3 {
+    stroke: #7f7f7f;
+    stroke-width: 0;
+    fill: none;
+    pointer-events: none;
+    stroke-dasharray: 10, 20;
   }
 
   .link_outline {
