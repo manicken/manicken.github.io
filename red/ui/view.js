@@ -2614,6 +2614,7 @@ RED.view = (function() {
 		d.w = Math.max(node_def.width, d.textDimensions.w + 50 + d.outputLabelMaxSize + d.inputLabelMaxSize /*+ (inputs>0?7:0) */);
 		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
         
+        console.log("new size " + d.h + " " + d.name);
     }
 	/**
      * @param {*} nodeRect 
@@ -2904,7 +2905,7 @@ RED.view = (function() {
 			port.attr("y",y)
 		});
 
-        if (d.type != "JunctionRL" && d.type != "JunctionLR" && settings.showIOlabels) {
+        if (d.type != "JunctionRL" && d.type != "JunctionLR" && d._def.uiObject == undefined && settings.showIOlabels) {
             d._inPortLabels = nodeRect.selectAll(".in_label").data(d.inputlist);
             d._inPortLabels.enter().append("svg:text")
                     .attr("class", "in_label")
@@ -2933,9 +2934,10 @@ RED.view = (function() {
                     if (lblWidth > inputLabelMaxSize) inputLabelMaxSize = lblWidth;
                     port.text(label);
                 });
-                if (inputLabelMaxSize != 0)
+                if (inputLabelMaxSize != 0){
                     d.inputLabelMaxSize = inputLabelMaxSize+calculateTextSize(" ", 10).w;
-                redraw_calcNewNodeSize(d);
+                    redraw_calcNewNodeSize(d);
+                }
                 //var x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
                 //d._inPortLabels.each(function(d2,i) {
                 //    var port = d3.select(this);
@@ -2998,7 +3000,7 @@ RED.view = (function() {
 				port.attr("x",x);
 			});
 		}
-        if (d.type != "JunctionRL" && d.type != "JunctionLR") {
+        if (d.type != "JunctionRL" && d.type != "JunctionLR" && d._def.uiObject == undefined) {
             var data = [];
             if (settings.showIOlabels == true)
                 data = d.ports;
@@ -3028,7 +3030,8 @@ RED.view = (function() {
                     if (lblWidth > outputLabelMaxSize) outputLabelMaxSize = lblWidth;
                     port.text(label);
                 });
-                d.outputLabelMaxSize = outputLabelMaxSize+calculateTextSize(" ", 10).w;
+                if (outputLabelMaxSize != 0)
+                    d.outputLabelMaxSize = outputLabelMaxSize+calculateTextSize(" ", 10).w;
                 redraw_calcNewNodeSize(d);
                 var x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
                 d._portLabels.each(function(d2,i) {

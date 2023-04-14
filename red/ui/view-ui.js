@@ -539,6 +539,7 @@ RED.view.ui = (function() {
 		}
 
 		var items = d.items.split("\n");
+        
 		d.headerHeight = parseInt(d.headerHeight)
 		var itemHeight = (d.h-d.headerHeight-4) / (items.length);
 		d.svgRect.selectAll(".node").attr("height", d.h+4)
@@ -550,7 +551,13 @@ RED.view.ui = (function() {
 			li.attr('y', ((i)*itemHeight + d.headerHeight));
 			li.attr("width", d.w-8);
 			li.attr("x", 4);
+            if (itemHeight < 0){
+                console.log("what the motherfuck", d);
+            }
+
 			li.attr("height", itemHeight);
+            
+            
 			if (d.selectedIndex == i)
 				li.attr("fill", RED.color.subtractColor(d.itemBGcolor, "#303030"));
 			else

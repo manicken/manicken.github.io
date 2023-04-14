@@ -108,6 +108,7 @@ class REDNode
 
         if (def.uiObject != undefined) {
             this.w = nn.w;
+            console.log(nn.type + " " + nn.h);
             this.h = nn.h;
         }
     }
