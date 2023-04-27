@@ -97,14 +97,14 @@ OSC.LiveUpdate = (function() {
                 console.log("array name from:" + oldNameOnly + " to " + newNameOnly);
                 var exportableLinks = getExportableLinksFromLinks(links,"");
                 OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
-                bundle.add(OSC.RenameObjectAddr, "ss", oldName, node.newName);
+                bundle.add(OSC.RenameObjectAddr, "ss", oldName, node.name);
             }
         }
         else {
             console.log("node is still non array");
             var exportableLinks = getExportableLinksFromLinks(links,"");
             OSC.export.addLinksToRenameToPacketArray(bundle, exportableLinks, node.name, oldName); // actually bundle have the save add function that PacketArray has
-            bundle.add(OSC.RenameObjectAddr, "ss", oldName, node.newName);
+            bundle.add(OSC.RenameObjectAddr, "ss", oldName, node.name);
         }
         OSC.SendBundle(bundle);
 
