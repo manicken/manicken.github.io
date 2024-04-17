@@ -4124,8 +4124,17 @@ RED.view = (function() {
 		
 		
         var portName = portDir + " " + index;
-        //var data2 = "";
-        if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
+		if (portDir == "In" && node._def.inpDesc && node._def.inpDesc[index] != undefined)
+		{
+			portName = "In " + index + ": " + node._def.inpDesc[index] + "<br>"; 
+			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
+		}
+		else if (portDir == "Out" && node._def.outDesc && node._def.outDesc[index] != undefined)
+		{
+			portName = "Out " + index + ": " + node._def.outDesc[index] + "<br>"; 
+			data2 = $("<div/>").append("<p>" + portName + "</p></div>").html();
+		}
+        else if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
             var ws = RED.nodes.isClass(nodeType);

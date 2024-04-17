@@ -383,6 +383,20 @@ var NodeDefinitions = {
             "AudioRecordWav": { ...AudioTypeArrayBase, "shortName": "RecordWav", "inputs": 4, "category": "record" },
         }
     },
+    "MattKuebrich": {
+        "label": "Matt Kuebrich",
+        "description": "Matt Kuebrich - new audio objects",
+        "credits": "Matt Kuebrich",
+        "homepage": "https://github.com/MattKuebrich",
+        "url": "https://raw.githubusercontent.com/MattKuebrich/teensy-audio-objects/main", // this is the %root% used for each type
+        "types": {
+            "AudioEffectBernoulliGate": { ...AudioTypeArrayBase, "shortName": "bernoulligate", "category":"effect", "url":"%root%/bernoulligate", "outputs":2, "inputs":1, "outDesc":{"0":"Bernoulli Gate Ouput A","1":"Bernoulli Gate Ouput B"}, "inpDesc":{"0":"Signal Input"}},
+            "AudioSynthBytebeat": { ...AudioTypeArrayBase, "shortName":"bytebeat", "category":"synth", "url":"%root%/bytebeat/bytebeat_simple", "outputs":1, "outDesc":{"0":"Bytebeat Output"}},
+            "AudioSynthChaosMaps": { ...AudioTypeArrayBase, "shortName":"chaosmaps", "category":"synth", "url":"%root%/chaosmaps", "outputs":1, "inputs":2},
+            "AudioSynthChaosNoise": { ...AudioTypeArrayBase, "shortName":"chaosnoise", "category":"synth", "url":"%root%/chaosnoise", "outputs":1},
+            "AudioEffectComparator": { ...AudioTypeArrayBase, "shortName":"comparator", "category":"effect", "url":"%root%/comparator", "outputs":1, "inputs":2, "outDesc":{"0":"Compared Output"}, "inpDesc":{"0":"Signal Input A","1":"Signal Input B"}},
+        }
+    },
     "officialNodes": {
         "label": "Official Nodes",
         "description": "The official Audio node types embedded into this tool, that is used by the official Audio Library ",
