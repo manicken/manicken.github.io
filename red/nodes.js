@@ -341,10 +341,16 @@ RED.nodes = (function() {
             def.outputs = Object.getOwnPropertyNames(def.outputTypes).length;
         }
 
+        // TODO: too tightly coupled into palette UI (@NodeRED team)
+
         try{
-		// TODO: too tightly coupled into palette UI
-		if (def.dontShowInPalette == undefined)
-            RED.palette.add(nt,def,undefined,nodeDefGroupName);
+		
+        //console.log("nodeDefGroupName:"+nodeDefGroupName);
+            if (def.dontShowInPalette == undefined) {
+                if (node_defs[nodeDefGroupName].category != undefined)
+                    def.category = node_defs[nodeDefGroupName].category + ((def.category!=undefined && def.category.trim().length != 0)?("-" + def.category):"");
+                RED.palette.add(nt,def,undefined,nodeDefGroupName);
+            }
         }
         catch (ex) { console.error(ex);RED.notify("<strong>Warning</strong>: Fail to add this type to the palette<br>" + nt,"warning");} // failsafe
 	}

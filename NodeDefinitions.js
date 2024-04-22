@@ -1,22 +1,54 @@
-
-var NodeCategories = {
-    "used": { "expanded": false },
+// the main reason for this 'table' is to 
+// order categories
+var ioSubCats = { 
+    "i2s1": { headerStyle: "background: #FAFAFA;" }, 
+    "i2s2": { headerStyle: "background: #E3E3E3;" }, 
+    "spdif": { headerStyle: "background: #FAFAFA;" }, 
+    "adc": { headerStyle: "background: #E3E3E3;" }, 
+    "other": { headerStyle: "background: #FAFAFA;" }
+}
+var NodeBaseManicksanCategories = {
+    "used": { "expanded": false, headerStyle: "background: #EAEAEA;"},
     "tabs": { "expanded": false },
     "special": { "expanded": false },
     "ui": { "expanded": false },
-    "input": { "expanded": false, "subcats": { "i2s1": { "hdrBgColor": "#FAFAFA", "hdrTxtColor": "#000" }, "i2s2": { "hdrBgColor": "#E3E3E3", "hdrTxtColor": "#000" }, "spdif": { "hdrBgColor": "#FAFAFA", "hdrTxtColor": "#000" }, "adc": { "hdrBgColor": "#E3E3E3", "hdrTxtColor": "#000" }, "other": { "hdrBgColor": "#FAFAFA", "hdrTxtColor": "#000" } } },
-    "output": { "expanded": false, "subcats": { "i2s1": { "hdrBgColor": "#FAFAFA", "hdrTxtColor": "#000" }, "i2s2": { "hdrBgColor": "#E3E3E3", "hdrTxtColor": "#000" }, "spdif": { "hdrBgColor": "#FAFAFA", "hdrTxtColor": "#000" }, "adc": { "hdrBgColor": "#E3E3E3", "hdrTxtColor": "#000" }, "other": { "hdrBgColor": "#FAFAFA", "hdrTxtColor": "#000" } } },
+}
+
+var NodeBaseCategories = {
+    "input": { "expanded": false, "subcats": { ...ioSubCats} },
+    "output": { "expanded": false, "subcats": { ...ioSubCats}},
     "mixer": { "expanded": false },
     "play": { "expanded": false },
     "record": { "expanded": false },
     "synth": { "expanded": false },
     "effect": { "expanded": false },
     "filter": { "expanded": false },
-    "convert": { "expanded": false },
+    //"convert": { "expanded": false },
     "analyze": { "expanded": false },
     "control": { "expanded": false },
+    //"config": { "expanded": false },
     "unsorted": { "expanded": false },
-    "config": { "expanded": false }
+}
+var NodeCategories = {
+    ...NodeBaseManicksanCategories,
+    ...NodeBaseCategories,
+    /*"test": { 
+        subcats:{ 
+            sub1:{
+                subcats:{
+                    subA:{}, 
+                    subB:{}
+                }
+            }, sub2:{
+
+            }
+        }
+    },*/
+    // TODO. fix so that theese are defined at node def for easier maintainability
+    "FrankBoesing": { label:"Frank Boesing", subcats:{ ...NodeBaseCategories } },
+    "MattKuebrich": { label:"Matt Kuebrich", subcats: { ...NodeBaseCategories } },
+    "Newdigate": { label:"Nic Newdigate", subcats: { legacy: {...NodeBaseCategories}, /*new:{...NodeBaseCategories }*/ }},
+    "chipaudette": { label:"Chip Audette", subcats: { ...NodeBaseCategories, convert:{} ,radio:{}, config:{} } },
 }
 
 var DEFAULTS_VALUE_TYPE = {
@@ -176,6 +208,11 @@ var NodeDefinitions = {
         homepage: "https://github.com/manicken",
         url: "",
         types: {
+            /*
+            predef_subcatsub_test1: {...AudioTypeBase, shortName: "test1", category: "test-sub1-subA"},
+            predef_subcatsub_test2: {...AudioTypeBase, shortName: "test2", category: "test-sub1-subB"},
+            auto_subcat_test: { ...AudioTypeBase, shortName: "auto_subcat_test", outputs: 2, category: "special-newSubCat" },
+            */
             TabOutput: { defaults: { name: {}, id: { "noEdit": "" }, comment: {}, inputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "Out", nonObject: "", inputs: 1, outputs: 0, category: "special", color: "#cce6ff", icon: "arrow-in.png" },
             TabInput: { defaults: { name: {}, id: { "noEdit": "" }, comment: {}, outputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "In", nonObject: "", inputs: 0, outputs: 1, category: "special", color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
@@ -184,8 +221,7 @@ var NodeDefinitions = {
 
             PointerArray: { defaults: { name: {}, id: {}, objectType: {}, arrayItems: {} }, shortName: "pArray", nonObject: "", dontShowInPalette: "", category: "special", color: "#aaffdd", icon: "range.png" },
 
-            AudioMixer: { ...AudioTypeArrayBase,
-                shortName: "mixer", dynInputs: "", editor: "autogen", inputs: 1, outputs: 1, category: "mixer",
+            AudioMixer: { ...AudioTypeArrayBase, shortName: "mixer", dynInputs: "", editor: "autogen", inputs: 1, outputs: 1, category: "mixer",
                 editorhelp: dynInputMixers_Help,
                 defaults: {
                     ...AudioTypeArrayBase.defaults,
@@ -227,9 +263,7 @@ var NodeDefinitions = {
             JunctionLR: { defaults: { name: {}, id: {}, comment: {} }, shortName: "JunctionLR", nonObject: "", inputs: 1, outputs: 1, category: "special", color: "#4D54FF", textColor: "#FFFFFF", icon: "arrow-in.png" },
             JunctionRL: { defaults: { name: {}, id: {}, comment: {} }, shortName: "JunctionRL", nonObject: "", inputs: 1, outputs: 1, category: "special", color: "#4D54FF", textColor: "#FFFFFF", icon: "arrow-out.png" },
 
-            UI_Button: {
-                ...UiTypeBase,
-                shortName: "Button",
+            UI_Button: { ...UiTypeBase, shortName: "Button",
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 0,
                 defaults: {
                     ...UiTypeBase.defaults,
@@ -241,9 +275,7 @@ var NodeDefinitions = {
                 }
             },
 
-            UI_Slider: {
-                ...UiTypeBase,
-                shortName: "Slider", color: "#808080",
+            UI_Slider: { ...UiTypeBase, shortName: "Slider", color: "#808080",
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 200,
                 defaults: {
                     ...UiTypeBase.defaults,
@@ -259,14 +291,9 @@ var NodeDefinitions = {
                 }
             },
 
-            UI_TextBox: {
-                ...UiTypeBase,
-                shortName: "TextBox",
-            },
+            UI_TextBox: { ...UiTypeBase, shortName: "TextBox", },
 
-            UI_Label: {
-                ...UiTypeBase,
-                shortName: "Label",
+            UI_Label: { ...UiTypeBase, shortName: "Label",
                 editor: "autogen",
                 defaults: {
                     ...UiTypeBase.defaults,
@@ -274,9 +301,7 @@ var NodeDefinitions = {
                 }
             },
 
-            UI_Image: {
-                ...UiTypeBase,
-                shortName: "Image",
+            UI_Image: { ...UiTypeBase, shortName: "Image",
                 editor: "autogen",
                 defaults: {
                     ...UiTypeBase.defaults,
@@ -286,9 +311,7 @@ var NodeDefinitions = {
                 }
             },
 
-            UI_ListBox: {
-                ...UiTypeBase,
-                shortName: "ListBox",
+            UI_ListBox: { ...UiTypeBase, shortName: "ListBox",
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 300,
                 defaults: {
                     ...UiTypeBase.defaults,
@@ -301,9 +324,7 @@ var NodeDefinitions = {
                 }
             },
 
-            UI_Piano: {
-                ...UiTypeBase,
-                shortName: "Piano",
+            UI_Piano: { ...UiTypeBase, shortName: "Piano",
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 120,
                 defaults: {
                     ...UiTypeBase.defaults,
@@ -320,17 +341,13 @@ var NodeDefinitions = {
 
                 }
             },
-            UI_ScriptButton: {
-                ...UiTypeBase,
-                shortName: "scriptBtn", useAceEditor: "javascript", color: "#ddffbb",
+            UI_ScriptButton: { ...UiTypeBase, shortName: "scriptBtn", useAceEditor: "javascript", color: "#ddffbb",
                 defaults: {
                     ...UiTypeBase.defaults,
                     nodes: { value: [] }
                 }
             },
-            group: {
-                ...UiTypeBase,
-                shortName: "group", color: "#ddffbb",
+            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb",
                 defaults: {
                     ...UiTypeBase.defaults,
                     nodes: { value: [] },
@@ -341,7 +358,7 @@ var NodeDefinitions = {
             }
         }
     },
-    FAUST:{
+    /*FAUST:{
         isAddon:true,
         label: "faust",
         description: "FAUST objects",
@@ -350,7 +367,7 @@ var NodeDefinitions = {
         url: "",
         types: {
         }
-    },
+    },*/
     h4yn0nnym0u5e: {
         label: "h4yn0nnym0u5e",
         description: "h4yn0nnym0u5e AudioMixerStereo",
@@ -376,6 +393,7 @@ var NodeDefinitions = {
         credits: "Frank Boesing",
         homepage: "https://github.com/FrankBoesing",
         url: "https://github.com/FrankBoesing/Teensy-WavePlayer",
+        category: "FrankBoesing",
         types: {
             AudioPlayWav: { ...AudioTypeArrayBase, shortName: "playWav", outputs: 8, category: "play" },
             AudioRecordWav: { ...AudioTypeArrayBase, shortName: "RecordWav", inputs: 4, category: "record" },
@@ -387,6 +405,7 @@ var NodeDefinitions = {
         credits: "Matt Kuebrich",
         homepage: "https://github.com/MattKuebrich",
         url: "https://raw.githubusercontent.com/MattKuebrich/teensy-audio-objects/main", // this is the %root% used for each type
+        category: "MattKuebrich",
         types: {
             AudioEffectBernoulliGate: { ...AudioTypeArrayBase, shortName: "bernoulligate", category:"effect", url:"%root%/bernoulligate", outputs:2, inputs:1, outDesc:{0:"Bernoulli Gate Ouput A",1:"Bernoulli Gate Ouput B"}, inpDesc:{0:"Signal Input"} },
             AudioSynthBytebeat: { ...AudioTypeArrayBase, shortName:"bytebeat", category:"synth", url:"%root%/bytebeat/bytebeat_simple", outputs:1, outDesc:{0:"Bytebeat Output"} },
@@ -403,7 +422,7 @@ var NodeDefinitions = {
             AudioEffectQuantizer: { ...AudioTypeArrayBase, shortName:"quantizer", category:"effect", url:"%root&/quantizer", outputs:1, inputs:1, outDesc:{0:"Quantized Output"}, inDesc:{0:"Signal Input"} },
             AudioEffectSampleAndHold: { ...AudioTypeArrayBase, shortName:"samplehold", category:"effect", url:"%root&/samplehold", outputs:1, inputs:2, outDesc:{0:"Sample and Hold Output"}, inDesc:{0:"Signal Input",1:"Trigger Input"} },
             AudioEffectShiftRegister: { ...AudioTypeArrayBase, shortName:"shiftregister", category:"effect", url:"%root&/shiftregister", outputs:9, inputs:2, outDesc:{0:"Bit 0 Output",1:"Bit 1 Output",2:"Bit 2 Output",3:"Bit 3 Output",4:"Bit 4 Output",5:"Bit 5 Output",6:"Bit 6 Output",7:"Bit 7 Output",8:"3-bit DAC (Rungler) Output"}, inDesc:{0:"Data Input",1:"Clock Input"} },
-            AudioEffectShiftRegister: { ...AudioTypeArrayBase, shortName:"slewlimiter", category:"effect", url:"%root&/slewlimiter", outputs:1, inputs:1, outDesc:{0:"Slewed Output"}, inDesc:{0:"Signal Input"} },
+            AudioEffectSlewLimiter: { ...AudioTypeArrayBase, shortName:"slewlimiter", category:"effect", url:"%root&/slewlimiter", outputs:1, inputs:1, outDesc:{0:"Slewed Output"}, inDesc:{0:"Signal Input"} },
             AudioSynthStkInstrmnt: { ...AudioTypeArrayBase, shortName:"stkinstrmnt", category:"synth", url:"%root&/stkinstrmnteffect", outputs:1, inputs:1, outDesc:{0:"Output"}, inDesc:{0:"Trigger Input"} },
 
         }
@@ -414,108 +433,112 @@ var NodeDefinitions = {
         credits: "Nic Newdigate",
         homepage: "https://github.com/newdigate",
         url: "",
+        category: "Newdigate",
         types: {
-            AudioInputSharedAD7606: { ...AudioTypeArrayBase, shortName:"ad7606", category:"newdigate_legacy", url:"", outputs:8},
-            AudioOutputSharedAD5754Dual: { ...AudioTypeArrayBase, shortName:"ad5754", category:"newdigate_legacy", url:"", inputs:8},
-            AudioPlaySdRawResmp: { ...AudioTypeArrayBase, shortName:"rraw_sd", category:"newdigate_legacy", url:"", outputs:2},
-            AudioPlaySdWavResmp: { ...AudioTypeArrayBase, shortName:"rwav_sd", category:"newdigate_legacy", url:"", outputs:2},
-            AudioInputOutputSPI: { ...AudioTypeArrayBase, shortName:"ad7606_ad5754", category:"newdigate", url:"", outputs:8, inputs:8},
-            AudioPlayArrayResmp: { ...AudioTypeArrayBase, shortName:"playArrayPitch", category:"newdigate", url:"", outputs:2},
-            AudioPlaySdResmp: { ...AudioTypeArrayBase, shortName:"playSdPitch", category:"newdigate", url:"", outputs:2},
-            AudioEffectCompressor: { ...AudioTypeArrayBase, shortName:"compressor", category:"newdigate", url:"", outputs:1, inputs:1},
-            AudioEffectDynamics: { ...AudioTypeArrayBase, shortName:"dynamics", category:"newdigate", url:"", outputs:1, inputs:1},
-            AudioInputSoundIO: { ...AudioTypeArrayBase, shortName:"sio_in", category:"newdigate", url:"", outputs:2},
-            AudioOutputSoundIO: { ...AudioTypeArrayBase, shortName:"sio_out", category:"newdigate", url:"", inputs:2},
+            AudioInputSharedAD7606: { ...AudioTypeArrayBase, shortName:"ad7606", category:"legacy", url:"", outputs:8},
+            AudioOutputSharedAD5754Dual: { ...AudioTypeArrayBase, shortName:"ad5754", category:"legacy", url:"", inputs:8},
+            AudioPlaySdRawResmp: { ...AudioTypeArrayBase, shortName:"rraw_sd", category:"legacy", url:"", outputs:2},
+            AudioPlaySdWavResmp: { ...AudioTypeArrayBase, shortName:"rwav_sd", category:"legacy", url:"", outputs:2},
+            AudioInputOutputSPI: { ...AudioTypeArrayBase, shortName:"ad7606_ad5754", category:"", url:"", outputs:8, inputs:8},
+            AudioPlayArrayResmp: { ...AudioTypeArrayBase, shortName:"playArrayPitch", category:"", url:"", outputs:2},
+            AudioPlaySdResmp: { ...AudioTypeArrayBase, shortName:"playSdPitch", category:"", url:"", outputs:2},
+            AudioEffectCompressor: { ...AudioTypeArrayBase, shortName:"compressor", category:"", url:"", outputs:1, inputs:1},
+            AudioEffectDynamics: { ...AudioTypeArrayBase, shortName:"dynamics", category:"", url:"", outputs:1, inputs:1},
+            AudioInputSoundIO: { ...AudioTypeArrayBase, shortName:"sio_in", category:"", url:"", outputs:2},
+            AudioOutputSoundIO: { ...AudioTypeArrayBase, shortName:"sio_out", category:"", url:"", inputs:2},
         }
     },
     chipaudette: {
         label: "OpenAudio_F32_ArduinoLibrary",
         description: "chipaudette OpenAudio_F32_ArduinoLibrary node addons",
+        credits: "Chip Audette",
+        homepage: "https://github.com/chipaudette",
         url: "https://api.github.com/repos/chipaudette/OpenAudio_ArduinoLibrary/contents/",
+        category: "chipaudette",
         types: {
-            AudioAlignLR_F32: { ...AudioTypeArrayBase, shortName: "AlignLR", category: "analyze", sourceFile: "AudioAlignLR_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x3": "f32"}},
-            AudioAnalyzePhase_F32: { ...AudioTypeArrayBase, shortName: "AnalyzePhase", category: "analyze", sourceFile: "AudioAnalyzePhase_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"0": "f32"}},
-            AudioCalcEnvelope_F32: { ...AudioTypeArrayBase, shortName: "calc_envelope", category: "analyze", sourceFile: "AudioCalcEnvelope_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioCalcGainWDRC_F32: { ...AudioTypeArrayBase, shortName: "calc_WDRCGain", category: "analyze", sourceFile: "AudioCalcGainWDRC_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioConfigFIRFilterBank_F32: { ...AudioTypeBase, shortName: "config_FIRbank", category: "config", sourceFile: "AudioConfigFIRFilterBank_F32.h"},
-            AudioControlSGTL5000_Extended: { ...AudioTypeBase, shortName: "AudioControlSGTL5000_Extended", category: "control", sourceFile: "AudioControlSGTL5000_Extended.h"},
-            AudioControlSignalTesterInterface_F32: { ...AudioTypeBase, shortName: "AudioControlSignalTesterInterface_F32", category: "control", sourceFile: "AudioControlTester.h"},
-            AudioControlSignalTester_F32: { ...AudioTypeBase, shortName: "sigTest(Abstract)", category: "control", sourceFile: "AudioControlTester.h"},
-            AudioControlTestAmpSweep_F32: { ...AudioTypeBase, shortName: "ampSweepTester", category: "control", sourceFile: "AudioControlTester.h"},
-            AudioControlTestFreqSweep_F32: { ...AudioTypeBase, shortName: "freqSweepTester", category: "control", sourceFile: "AudioControlTester.h"},
-            AudioTestSignalGenerator_F32: { ...AudioTypeArrayBase, shortName: "testSignGen", category: "synth", sourceFile: "AudioControlTester.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioTestSignalMeasurement_F32: { ...AudioTypeArrayBase, shortName: "testSigMeas", category: "synth", sourceFile: "AudioControlTester.h", inputTypes: {"x2": "f32"}},
-            AudioTestSignalMeasurementMulti_F32: { ...AudioTypeArrayBase, shortName: "testSigMeas", category: "synth", sourceFile: "AudioControlTester.h", inputTypes: {"x10": "f32"}},
-            AudioConvert_I16toF32: { ...AudioTypeArrayBase, shortName: "AudioConvert_I16toF32", category: "convert", sourceFile: "AudioConvert_F32.h", inputTypes: {"0": "i16"}, outputTypes: {"0": "f32"}},
-            AudioConvert_F32toI16: { ...AudioTypeArrayBase, shortName: "AudioConvert_F32toI16", category: "convert", sourceFile: "AudioConvert_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "i16"}},
-            AudioEffectCompWDRC_F32: { ...AudioTypeArrayBase, shortName: "CompressWDRC", category: "effect", sourceFile: "AudioEffectCompWDRC_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioEffectCompressor2_F32: { ...AudioTypeArrayBase, shortName: "Compressor2", category: "effect", sourceFile: "AudioEffectCompressor2_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioEffectCompressor_F32: { ...AudioTypeArrayBase, shortName: "AudioEffectCompressor_F32", category: "effect", sourceFile: "AudioEffectCompressor_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioEffectDelay_OA_F32: { ...AudioTypeArrayBase, shortName: "delay", category: "effect", sourceFile: "AudioEffectDelay_OA_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            /*AudioEffectEmpty_F32: { ...AudioTypeArrayBase, shortName: "empty", category: "effect", sourceFile: "AudioEffectEmpty_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},*/
-            AudioEffectFreqShiftFD_OA_F32: { ...AudioTypeArrayBase, shortName: "freq_shift", category: "effect", sourceFile: "AudioEffectFreqShiftFD_OA_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioEffectGain_F32: { ...AudioTypeArrayBase, shortName: "AudioEffectGain_F32", category: "effect", sourceFile: "AudioEffectGain_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioEffectNoiseGate_F32: { ...AudioTypeArrayBase, shortName: "NoiseGate", category: "effect", sourceFile: "AudioEffectNoiseGate_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioEffectWDRC2_F32: { ...AudioTypeArrayBase, shortName: "CompressWDRC2", category: "effect", sourceFile: "AudioEffectWDRC2_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioFilter90Deg_F32: { ...AudioTypeArrayBase, shortName: "90DegPhase", category: "filter", sourceFile: "AudioFilter90Deg_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
-            AudioFilterBiquad_F32: { ...AudioTypeArrayBase, shortName: "IIR", category: "filter", sourceFile: "AudioFilterBiquad_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioFilterEqualizer_F32: { ...AudioTypeArrayBase, shortName: "filter_Equalizer", category: "filter", sourceFile: "AudioFilterEqualizer_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioFilterFIRGeneral_F32: { ...AudioTypeArrayBase, shortName: "filter_Equalizer", category: "filter", sourceFile: "AudioFilterFIRGeneral_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioFilterFIR_F32: { ...AudioTypeArrayBase, shortName: "AudioFilterFIR_F32", category: "filter", sourceFile: "AudioFilterFIR_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioFilterIIR_F32: { ...AudioTypeArrayBase, shortName: "IIR", category: "filter", sourceFile: "AudioFilterIIR_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioLMSDenoiseNotch_F32: { ...AudioTypeArrayBase, shortName: "AudioLMSDenoiseNotch_F32", category: "filter", sourceFile: "AudioLMSDenoiseNotch_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMathAdd_F32: { ...AudioTypeArrayBase, shortName: "AudioMathAdd_F32", category: "effect", sourceFile: "AudioMathAdd_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMathConstant_F32: { ...AudioTypeArrayBase, shortName: "AudioMathConstant_F32", category: "synth", sourceFile: "AudioMathConstant_F32.h", outputTypes: {"0": "f32"}},
-            AudioMathMultiply_F32: { ...AudioTypeArrayBase, shortName: "AudioMathMultiply_F32", category: "effect", sourceFile: "AudioMathMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMathOffset_F32: { ...AudioTypeArrayBase, shortName: "AudioMathOffset_F32", category: "effect", sourceFile: "AudioMathOffset_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMathScale_F32: { ...AudioTypeArrayBase, shortName: "AudioMathScale_F32", category: "effect", sourceFile: "AudioMathScale_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMixer4_F32: { ...AudioTypeArrayBase, shortName: "Mixer4", category: "mixer", sourceFile: "AudioMixer_F32.h", inputTypes: {"x4": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMixer8_F32: { ...AudioTypeArrayBase, shortName: "Mixer8", category: "mixer", sourceFile: "AudioMixer_F32.h", inputTypes: {"x8": "f32"}, outputTypes: {"0": "f32"}},
-            AudioMultiply_F32: { ...AudioTypeArrayBase, shortName: "AudioMultiply_F32", category: "effect", sourceFile: "AudioMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"0": "f32"}},
-            AudioSDPlayer_F32: { ...AudioTypeArrayBase, shortName: "AudioSDPlayer_F32", category: "play", sourceFile: "AudioSDPlayer_F32.h", outputTypes: {"x2": "f32"}},
-            AudioSpectralDenoise_F32: { ...AudioTypeArrayBase, shortName: "spectral", category: "filter", sourceFile: "AudioSpectralDenoise_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioSwitch4_OA_F32: { ...AudioTypeArrayBase, shortName: "Switch4", category: "mixer", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x4": "f32"}},
-            AudioSwitch8_OA_F32: { ...AudioTypeArrayBase, shortName: "Switch8", category: "mixer", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x8": "f32"}},
-            RadioFMDetector_F32: { ...AudioTypeArrayBase, shortName: "FMDetector", category: "radio", sourceFile: "RadioFMDetector_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x2": "f32"}},
-            RadioFMDiscriminator_F32: { ...AudioTypeArrayBase, shortName: "FMDiscriminator", category: "radio", sourceFile: "RadioFMDiscriminator_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x2": "f32"}},
-            RadioIQMixer_F32: { ...AudioTypeArrayBase, shortName: "IQMixer", category: "radio", sourceFile: "RadioIQMixer_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
-            UART_F32: { ...AudioTypeArrayBase, shortName: "uart", category: "analyze", sourceFile: "UART_F32.h", inputTypes: {"0": "f32"}},
-            AudioInputUSB_F32: { ...AudioTypeBase, shortName: "usbAudioIn", category: "input", sourceFile: "USB_Audio_F32.h", outputTypes: {"x2": "f32"}},
-            AudioOutputUSB_F32: { ...AudioTypeBase, shortName: "usbAudioOut", category: "output", sourceFile: "USB_Audio_F32.h", inputTypes: {"x2": "f32"}},
-            analyze_CTCSS_F32: { ...AudioTypeArrayBase, shortName: "DetCTCSS", category: "analyze", sourceFile: "analyze_CTCSS_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            AudioAnalyzeFFT1024_F32: { ...AudioTypeArrayBase, shortName: "FFT1024", category: "analyze", sourceFile: "analyze_fft1024_F32.h", inputTypes: {"0": "f32"}},
-            AudioAnalyzeFFT1024_IQ_F32: { ...AudioTypeArrayBase, shortName: "AnalyzeFFT1024IQ", category: "analyze", sourceFile: "analyze_fft1024_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
-            AudioAnalyzeFFT2048_IQ_F32: { ...AudioTypeArrayBase, shortName: "FFT2048IQ", category: "analyze", sourceFile: "analyze_fft2048_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
-            AudioAnalyzeFFT256_IQ_F32: { ...AudioTypeArrayBase, shortName: "AnalyzeFFT256IQ", category: "analyze", sourceFile: "analyze_fft256_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
-            AudioAnalyzeFFT4096_IQ_F32: { ...AudioTypeArrayBase, shortName: "FFT4096IQ", category: "analyze", sourceFile: "analyze_fft4096_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
-            AudioAnalyzeFFT4096_IQEM_F32: { ...AudioTypeArrayBase, shortName: "FFT4096IQem", category: "analyze", sourceFile: "analyze_fft4096_iqem_F32.h", inputTypes: {"x2": "f32"}},
-            AudioAnalyzePeak_F32: { ...AudioTypeArrayBase, shortName: "AnalyzePeak", category: "analyze", sourceFile: "analyze_peak_f32.h", inputTypes: {"0": "f32"}},
-            AudioAnalyzeRMS_F32: { ...AudioTypeArrayBase, shortName: "AnalyzeRMS", category: "analyze", sourceFile: "analyze_rms_f32.h", inputTypes: {"0": "f32"}},
-            AudioAnalyzeToneDetect_F32: { ...AudioTypeArrayBase, shortName: "ToneDet", category: "analyze", sourceFile: "analyze_tonedetect_F32.h", inputTypes: {"0": "f32"}},
-            AsyncAudioInputSPDIF3_F32: { ...AudioTypeBase, shortName: "AsyncAudioInputSPDIF3_F32", category: "input", sourceFile: "async_input_spdif3_F32.h", outputTypes: {"x2": "f32"}},
-            AudioInputI2S_F32: { ...AudioTypeBase, shortName: "AudioInputI2S_F32", category: "input", sourceFile: "input_i2s_f32.h", outputTypes: {"x2": "f32"}},
-            AudioInputI2Sslave_F32: { ...AudioTypeBase, shortName: "AudioInputI2Sslave_F32", category: "input", sourceFile: "input_i2s_f32.h", outputTypes: {"x2": "f32"}},
-            AudioInputSPDIF3_F32: { ...AudioTypeBase, shortName: "AudioInputSPDIF3_F32", category: "input", sourceFile: "input_spdif3_f32.h", outputTypes: {"x2": "f32"}},
-            AudioOutputI2S_F32: { ...AudioTypeBase, shortName: "AudioOutputI2S_F32", category: "output", sourceFile: "output_i2s_f32.h", inputTypes: {"x2": "f32"}},
-            AudioOutputI2Sslave_F32: { ...AudioTypeBase, shortName: "AudioOutputI2Sslave_F32", category: "output", sourceFile: "output_i2s_f32.h", inputTypes: {"x2": "f32"}},
-            AudioOutputSPDIF3_F32: { ...AudioTypeBase, shortName: "AudioOutputSPDIF3_F32", category: "output", sourceFile: "output_spdif3_f32.h", inputTypes: {"x2": "f32"}},
-            AudioPlayQueue_F32: { ...AudioTypeArrayBase, shortName: "AudioPlayQueue_F32", category: "play", sourceFile: "play_queue_f32.h", outputTypes: {"0": "f32"}},
-            RadioBFSKModulator_F32: { ...AudioTypeArrayBase, shortName: "BFSKmodulator", category: "radio", sourceFile: "radioBFSKmodulator_F32.h", outputTypes: {"0": "f32"}},
-            radioCESSB_Z_transmit_F32: { ...AudioTypeArrayBase, shortName: "CESSBTransmit", category: "radio", sourceFile: "radioCESSB_Z_transmit_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x2": "f32"}},
-            radioCESSBtransmit_F32: { ...AudioTypeArrayBase, shortName: "CESSBTransmit", category: "radio", sourceFile: "radioCESSBtransmit_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x2": "f32"}},
-            radioCWModulator_F32: { ...AudioTypeArrayBase, shortName: "DetCTCSS", category: "radio", sourceFile: "radioCWModulator_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"0": "f32"}},
-            RadioFT8Demodulator_F32: { ...AudioTypeArrayBase, shortName: "FFT2048IQ", category: "radio", sourceFile: "radioFT8Demodulator_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
-            RadioFT8Modulator_F32: { ...AudioTypeArrayBase, shortName: "FT8modulator", category: "radio", sourceFile: "radioFT8Modulator_F32.h", outputTypes: {"0": "f32"}},
-            radioModulatedGenerator_F32: { ...AudioTypeArrayBase, shortName: "Modulator", category: "radio", sourceFile: "radioModulatedGenerator_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
-            radioNoiseBlanker_F32: { ...AudioTypeArrayBase, shortName: "NoiseBlanker", category: "radio", sourceFile: "radioNoiseBlanker_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
-            radioVoiceClipper_F32: { ...AudioTypeArrayBase, shortName: "CESSBTransmit", category: "radio", sourceFile: "radioVoiceClipper_F32.h", inputTypes: {"0": "f32"}, outputTypes: {"x2": "f32"}},
-            AudioRecordQueue_F32: { ...AudioTypeArrayBase, shortName: "AudioRecordQueue_F32", category: "record", sourceFile: "record_queue_f32.h", inputTypes: {"0": "f32"}},
-            AudioSynthGaussian_F32: { ...AudioTypeArrayBase, shortName: "Gaussianwhitenoise", category: "synth", sourceFile: "synth_GaussianWhiteNoise_F32.h", outputTypes: {"0": "f32"}},
-            AudioSynthNoisePink_F32: { ...AudioTypeArrayBase, shortName: "pinknoise", category: "synth", sourceFile: "synth_pinknoise_f32.h", outputTypes: {"0": "f32"}},
-            AudioSynthSineCosine_F32: { ...AudioTypeArrayBase, shortName: "SineCosine", category: "synth", sourceFile: "synth_sin_cos_f32.h", outputTypes: {"x2": "f32"}},
-            AudioSynthWaveformSine_F32: { ...AudioTypeArrayBase, shortName: "sine", category: "synth", sourceFile: "synth_sine_f32.h", outputTypes: {"0": "f32"}},
-            AudioSynthWaveform_F32: { ...AudioTypeArrayBase, shortName: "AudioSynthWaveform_F32", category: "synth", sourceFile: "synth_waveform_F32.h", outputTypes: {"0": "f32"}},
-            AudioSynthNoiseWhite_F32: { ...AudioTypeArrayBase, shortName: "whitenoise", category: "synth", sourceFile: "synth_whitenoise_f32.h", outputTypes: {"0": "f32"}}
+            AudioAlignLR_F32: { ...AudioTypeArrayBase, shortName: "alignLR_f32", category: "analyze", sourceFile: "AudioAlignLR_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x3": "f32"}},
+            AudioAnalyzePhase_F32: { ...AudioTypeArrayBase, shortName: "analyzePhase_f32", category: "analyze", sourceFile: "AudioAnalyzePhase_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioCalcEnvelope_F32: { ...AudioTypeArrayBase, shortName: "calc_envelope_f32", category: "analyze", sourceFile: "AudioCalcEnvelope_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioCalcGainWDRC_F32: { ...AudioTypeArrayBase, shortName: "calc_WDRCGain_f32", category: "analyze", sourceFile: "AudioCalcGainWDRC_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioConfigFIRFilterBank_F32: { ...AudioTypeBase, shortName: "config_FIRbank_f32", category: "config", sourceFile: "AudioConfigFIRFilterBank_F32.h"},
+            AudioControlSGTL5000_Extended: { ...AudioTypeBase, shortName: "SGTL5000_Extended", category: "control", sourceFile: "AudioControlSGTL5000_Extended.h"},
+            AudioControlSignalTesterInterface_F32: { ...AudioTypeBase, shortName: "signalTesterInterface_f32", category: "control", sourceFile: "AudioControlTester.h"},
+            AudioControlSignalTester_F32: { ...AudioTypeBase, shortName: "sigTest_Abstract_f32", category: "control", sourceFile: "AudioControlTester.h"},
+            AudioControlTestAmpSweep_F32: { ...AudioTypeBase, shortName: "ampSweepTester_f32", category: "control", sourceFile: "AudioControlTester.h"},
+            AudioControlTestFreqSweep_F32: { ...AudioTypeBase, shortName: "freqSweepTester_f32", category: "control", sourceFile: "AudioControlTester.h"},
+            AudioTestSignalGenerator_F32: { ...AudioTypeArrayBase, shortName: "testSignGen_f32", category: "synth", sourceFile: "AudioControlTester.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioTestSignalMeasurement_F32: { ...AudioTypeArrayBase, shortName: "testSigMeas_f32", category: "synth", sourceFile: "AudioControlTester.h", inputTypes: {"x2": "f32"}},
+            AudioTestSignalMeasurementMulti_F32: { ...AudioTypeArrayBase, shortName: "testSigMeas_f32", category: "synth", sourceFile: "AudioControlTester.h", inputTypes: {"x10": "f32"}},
+            AudioConvert_I16toF32: { ...AudioTypeArrayBase, shortName: "I16toF32", category: "convert", sourceFile: "AudioConvert_F32.h", inputTypes: {"0": "i16"}, outputTypes: {"x1": "f32"}},
+            AudioConvert_F32toI16: { ...AudioTypeArrayBase, shortName: "F32toI16", category: "convert", sourceFile: "AudioConvert_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"0": "i16"}},
+            AudioEffectCompWDRC_F32: { ...AudioTypeArrayBase, shortName: "compressWDRC_f32", category: "effect", sourceFile: "AudioEffectCompWDRC_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectCompressor2_F32: { ...AudioTypeArrayBase, shortName: "compressor2_f32", category: "effect", sourceFile: "AudioEffectCompressor2_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectCompressor_F32: { ...AudioTypeArrayBase, shortName: "compressor_f32", category: "effect", sourceFile: "AudioEffectCompressor_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectDelay_OA_F32: { ...AudioTypeArrayBase, shortName: "delay_f32", category: "effect", sourceFile: "AudioEffectDelay_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            /*AudioEffectEmpty_F32: { ...AudioTypeArrayBase, shortName: "empty", category: "effect", sourceFile: "AudioEffectEmpty_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},*/
+            AudioEffectFreqShiftFD_OA_F32: { ...AudioTypeArrayBase, shortName: "freq_shift_f32", category: "effect", sourceFile: "AudioEffectFreqShiftFD_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectGain_F32: { ...AudioTypeArrayBase, shortName: "EffectGain_f32", category: "effect", sourceFile: "AudioEffectGain_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectNoiseGate_F32: { ...AudioTypeArrayBase, shortName: "NoiseGate_f32", category: "effect", sourceFile: "AudioEffectNoiseGate_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectWDRC2_F32: { ...AudioTypeArrayBase, shortName: "CompressWDRC2_f32", category: "effect", sourceFile: "AudioEffectWDRC2_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioFilter90Deg_F32: { ...AudioTypeArrayBase, shortName: "_90DegPhase_f32", category: "filter", sourceFile: "AudioFilter90Deg_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
+            AudioFilterBiquad_F32: { ...AudioTypeArrayBase, shortName: "IIR_f32", category: "filter", sourceFile: "AudioFilterBiquad_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioFilterEqualizer_F32: { ...AudioTypeArrayBase, shortName: "equalizer_f32", category: "filter", sourceFile: "AudioFilterEqualizer_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioFilterFIRGeneral_F32: { ...AudioTypeArrayBase, shortName: "firGeneral_f32", category: "filter", sourceFile: "AudioFilterFIRGeneral_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioFilterFIR_F32: { ...AudioTypeArrayBase, shortName: "fir_f32", category: "filter", sourceFile: "AudioFilterFIR_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioFilterIIR_F32: { ...AudioTypeArrayBase, shortName: "iir_f32", category: "filter", sourceFile: "AudioFilterIIR_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioLMSDenoiseNotch_F32: { ...AudioTypeArrayBase, shortName: "LMSDenoiseNotch_f32", category: "filter", sourceFile: "AudioLMSDenoiseNotch_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathAdd_F32: { ...AudioTypeArrayBase, shortName: "MathAdd_f32", category: "effect", sourceFile: "AudioMathAdd_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathConstant_F32: { ...AudioTypeArrayBase, shortName: "MathConstant_f32", category: "synth", sourceFile: "AudioMathConstant_F32.h", outputTypes: {"x1": "f32"}},
+            AudioMathMultiply_F32: { ...AudioTypeArrayBase, shortName: "MathMultiply_f32", category: "effect", sourceFile: "AudioMathMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathOffset_F32: { ...AudioTypeArrayBase, shortName: "MathOffset_f32", category: "effect", sourceFile: "AudioMathOffset_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathScale_F32: { ...AudioTypeArrayBase, shortName: "MathScale_f32", category: "effect", sourceFile: "AudioMathScale_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMixer4_F32: { ...AudioTypeArrayBase, shortName: "mixer4_f32", category: "mixer", sourceFile: "AudioMixer_F32.h", inputTypes: {"x4": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMixer8_F32: { ...AudioTypeArrayBase, shortName: "mixer8_f32", category: "mixer", sourceFile: "AudioMixer_F32.h", inputTypes: {"x8": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMultiply_F32: { ...AudioTypeArrayBase, shortName: "multiply_f32", category: "effect", sourceFile: "AudioMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioSDPlayer_F32: { ...AudioTypeArrayBase, shortName: "SDPlayer_f32", category: "play", sourceFile: "AudioSDPlayer_F32.h", outputTypes: {"x2": "f32"}},
+            AudioSpectralDenoise_F32: { ...AudioTypeArrayBase, shortName: "spectral_f32", category: "filter", sourceFile: "AudioSpectralDenoise_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioSwitch4_OA_F32: { ...AudioTypeArrayBase, shortName: "switch4_f32", category: "mixer", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x4": "f32"}},
+            AudioSwitch8_OA_F32: { ...AudioTypeArrayBase, shortName: "switch8_f32", category: "mixer", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x8": "f32"}},
+            RadioFMDetector_F32: { ...AudioTypeArrayBase, shortName: "FMDetector_f32", category: "radio", sourceFile: "RadioFMDetector_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x2": "f32"}},
+            RadioFMDiscriminator_F32: { ...AudioTypeArrayBase, shortName: "FMDiscriminator_f32", category: "radio", sourceFile: "RadioFMDiscriminator_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x2": "f32"}},
+            RadioIQMixer_F32: { ...AudioTypeArrayBase, shortName: "IQMixer_f32", category: "radio", sourceFile: "RadioIQMixer_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
+            UART_F32: { ...AudioTypeArrayBase, shortName: "uart_f32", category: "analyze", sourceFile: "UART_F32.h", inputTypes: {"x1": "f32"}},
+            AudioInputUSB_F32: { ...AudioTypeBase, shortName: "usbAudioIn_f32", category: "input-other", sourceFile: "USB_Audio_F32.h", outputTypes: {"x2": "f32"}},
+            AudioOutputUSB_F32: { ...AudioTypeBase, shortName: "usbAudioOut_f32", category: "output-other", sourceFile: "USB_Audio_F32.h", inputTypes: {"x2": "f32"}},
+            analyze_CTCSS_F32: { ...AudioTypeArrayBase, shortName: "DetCTCSS_f32", category: "analyze", sourceFile: "analyze_CTCSS_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioAnalyzeFFT1024_F32: { ...AudioTypeArrayBase, shortName: "FFT1024_f32", category: "analyze", sourceFile: "analyze_fft1024_F32.h", inputTypes: {"x1": "f32"}},
+            AudioAnalyzeFFT1024_IQ_F32: { ...AudioTypeArrayBase, shortName: "FFT1024IQ_f32", category: "analyze", sourceFile: "analyze_fft1024_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
+            AudioAnalyzeFFT2048_IQ_F32: { ...AudioTypeArrayBase, shortName: "FFT2048IQ_f32", category: "analyze", sourceFile: "analyze_fft2048_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
+            AudioAnalyzeFFT256_IQ_F32: { ...AudioTypeArrayBase, shortName: "FFT256IQ_f32", category: "analyze", sourceFile: "analyze_fft256_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
+            AudioAnalyzeFFT4096_IQ_F32: { ...AudioTypeArrayBase, shortName: "FFT4096IQ_f32", category: "analyze", sourceFile: "analyze_fft4096_iq_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
+            AudioAnalyzeFFT4096_IQEM_F32: { ...AudioTypeArrayBase, shortName: "FFT4096IQem_f32", category: "analyze", sourceFile: "analyze_fft4096_iqem_F32.h", inputTypes: {"x2": "f32"}},
+            AudioAnalyzePeak_F32: { ...AudioTypeArrayBase, shortName: "Peak_f32", category: "analyze", sourceFile: "analyze_peak_f32.h", inputTypes: {"x1": "f32"}},
+            AudioAnalyzeRMS_F32: { ...AudioTypeArrayBase, shortName: "RMS_f32", category: "analyze", sourceFile: "analyze_rms_f32.h", inputTypes: {"x1": "f32"}},
+            AudioAnalyzeToneDetect_F32: { ...AudioTypeArrayBase, shortName: "ToneDet_f32", category: "analyze", sourceFile: "analyze_tonedetect_F32.h", inputTypes: {"x1": "f32"}},
+            AsyncAudioInputSPDIF3_F32: { ...AudioTypeBase, shortName: "spdif3_async_f32", category: "input-spdif", sourceFile: "async_input_spdif3_F32.h", outputTypes: {"x2": "f32"}},
+            AudioInputI2S_F32: { ...AudioTypeBase, shortName: "i2s_f32", category: "input-i2s1", sourceFile: "input_i2s_f32.h", outputTypes: {"x2": "f32"}},
+            AudioInputI2Sslave_F32: { ...AudioTypeBase, shortName: "i2s_slave_f32", category: "input-i2s1", sourceFile: "input_i2s_f32.h", outputTypes: {"x2": "f32"}},
+            AudioInputSPDIF3_F32: { ...AudioTypeBase, shortName: "spdif3_f32", category: "input-spdif", sourceFile: "input_spdif3_f32.h", outputTypes: {"x2": "f32"}},
+            AudioOutputI2S_F32: { ...AudioTypeBase, shortName: "i2s_f32", category: "output-i2s1", sourceFile: "output_i2s_f32.h", inputTypes: {"x2": "f32"}},
+            AudioOutputI2Sslave_F32: { ...AudioTypeBase, shortName: "i2s_slave_f32", category: "output-i2s1", sourceFile: "output_i2s_f32.h", inputTypes: {"x2": "f32"}},
+            AudioOutputSPDIF3_F32: { ...AudioTypeBase, shortName: "spdif3_f32", category: "output-spdif", sourceFile: "output_spdif3_f32.h", inputTypes: {"x2": "f32"}},
+            AudioPlayQueue_F32: { ...AudioTypeArrayBase, shortName: "play_queue_f32", category: "play", sourceFile: "play_queue_f32.h", outputTypes: {"x1": "f32"}},
+            RadioBFSKModulator_F32: { ...AudioTypeArrayBase, shortName: "BFSKmodulator_f32", category: "radio", sourceFile: "radioBFSKmodulator_F32.h", outputTypes: {"x1": "f32"}},
+            radioCESSB_Z_transmit_F32: { ...AudioTypeArrayBase, shortName: "CESSBTransmit_f32", category: "radio", sourceFile: "radioCESSB_Z_transmit_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x2": "f32"}},
+            radioCESSBtransmit_F32: { ...AudioTypeArrayBase, shortName: "CESSBTransmit_f32", category: "radio", sourceFile: "radioCESSBtransmit_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x2": "f32"}},
+            radioCWModulator_F32: { ...AudioTypeArrayBase, shortName: "detCTCSS_f32", category: "radio", sourceFile: "radioCWModulator_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            RadioFT8Demodulator_F32: { ...AudioTypeArrayBase, shortName: "FFT2048IQ_f32", category: "radio", sourceFile: "radioFT8Demodulator_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x4": "f32"}},
+            RadioFT8Modulator_F32: { ...AudioTypeArrayBase, shortName: "FT8modulator_f32", category: "radio", sourceFile: "radioFT8Modulator_F32.h", outputTypes: {"x1": "f32"}},
+            radioModulatedGenerator_F32: { ...AudioTypeArrayBase, shortName: "modulator_f32", category: "radio", sourceFile: "radioModulatedGenerator_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
+            radioNoiseBlanker_F32: { ...AudioTypeArrayBase, shortName: "noiseBlanker_f32", category: "radio", sourceFile: "radioNoiseBlanker_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
+            radioVoiceClipper_F32: { ...AudioTypeArrayBase, shortName: "CESSBTransmit_f32", category: "radio", sourceFile: "radioVoiceClipper_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x2": "f32"}},
+            AudioRecordQueue_F32: { ...AudioTypeArrayBase, shortName: "rec_queue_f32", category: "record", sourceFile: "record_queue_f32.h", inputTypes: {"x1": "f32"}},
+            AudioSynthGaussian_F32: { ...AudioTypeArrayBase, shortName: "gaussianwhitenoise_f32", category: "synth", sourceFile: "synth_GaussianWhiteNoise_F32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthNoisePink_F32: { ...AudioTypeArrayBase, shortName: "pinknoise_f32", category: "synth", sourceFile: "synth_pinknoise_f32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthSineCosine_F32: { ...AudioTypeArrayBase, shortName: "SineCosine_f32", category: "synth", sourceFile: "synth_sin_cos_f32.h", outputTypes: {"x2": "f32"}},
+            AudioSynthWaveformSine_F32: { ...AudioTypeArrayBase, shortName: "sine_f32", category: "synth", sourceFile: "synth_sine_f32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthWaveform_F32: { ...AudioTypeArrayBase, shortName: "waveform_f32", category: "synth", sourceFile: "synth_waveform_F32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthNoiseWhite_F32: { ...AudioTypeArrayBase, shortName: "whitenoise_f32", category: "synth", sourceFile: "synth_whitenoise_f32.h", outputTypes: {"x1": "f32"}}
         }
     },
     officialNodes: {
@@ -525,8 +548,7 @@ var NodeDefinitions = {
         homepage: "https://www.pjrc.com/",
         url: "https://api.github.com/repos/PaulStoffregen/Audio/contents",
         types: {
-
-
+            
             AudioInputI2S: { ...AudioTypeBase, shortName: "i2s", outputs: 2, category: "input-i2s1" },
             AudioInputI2SQuad: { ...AudioTypeBase, shortName: "i2s_quad", outputs: 4, category: "input-i2s1" },
             AudioInputI2SHex: { ...AudioTypeBase, shortName: "i2s_hex", outputs: 6, category: "input-i2s1" },
@@ -536,7 +558,7 @@ var NodeDefinitions = {
             AudioInputSPDIF3: { ...AudioTypeBase, shortName: "spdif3", outputs: 2, category: "input-spdif", color: "#F7D8F0" },
             AsyncAudioInputSPDIF3: { ...AudioTypeBase, shortName: "spdif_async", outputs: 2, category: "input-spdif" },
             AudioInputAnalog: { ...AudioTypeBase, shortName: "adc", outputs: 1, category: "input-adc" },
-            AudioInputAnalogStereo: { ...AudioTypeBase, shortName: "adcs", outputs: 2, category: "input-adc" },
+            AudioInputAnalogStereo: { ...AudioTypeBase, shortName: "adc_st", outputs: 2, category: "input-adc" },
             AudioInputPDM: { ...AudioTypeBase, shortName: "pdm", outputs: 1, category: "input-i2s1" },
             AudioInputPDM2: { ...AudioTypeBase, shortName: "pdm2", outputs: 1, category: "input-i2s2" },
             AudioInputTDM: { ...AudioTypeBase, shortName: "tdm", outputs: 16, category: "input-i2s1", defaults: { ...AudioTypeBase.defaults, outputs: { value: "16" } } },
@@ -555,7 +577,7 @@ var NodeDefinitions = {
             AudioOutputPT8211: { ...AudioTypeBase, shortName: "pt8211", inputs: 2, category: "output-i2s1" },
             AudioOutputPT8211_2: { ...AudioTypeBase, shortName: "pt8211_2", inputs: 2, category: "output-i2s2" },
             AudioOutputAnalog: { ...AudioTypeBase, shortName: "dac", inputs: 1, category: "output-adc" },
-            AudioOutputAnalogStereo: { ...AudioTypeBase, shortName: "dacs", inputs: 2, category: "output-adc" },
+            AudioOutputAnalogStereo: { ...AudioTypeBase, shortName: "dac_st", inputs: 2, category: "output-adc" },
             AudioOutputPWM: { ...AudioTypeBase, shortName: "pwm", inputs: 1, category: "output-other" },
             AudioOutputMQS: { ...AudioTypeBase, shortName: "mqs", inputs: 2, category: "output-other" },
             AudioOutputTDM: { ...AudioTypeBase, shortName: "tdm", inputs: 16, category: "output-i2s1", defaults: { ...AudioTypeBase.defaults, inputs: { value: "16" } } },

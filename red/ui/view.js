@@ -2614,7 +2614,7 @@ RED.view = (function() {
 		d.w = Math.max(node_def.width, d.textDimensions.w + 50 + d.outputLabelMaxSize + d.inputLabelMaxSize /*+ (inputs>0?7:0) */);
 		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
         
-        console.log("new size " + d.h + " " + d.name);
+        //console.log("new size " + d.h + " " + d.name);
     }
 	/**
      * @param {*} nodeRect 

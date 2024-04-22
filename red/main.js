@@ -681,17 +681,17 @@ RED.main = (function() {
 
 		return true;
 	}
-	function SetPopOver(buttonId, htmlText, location)
+	function SetPopOver(elementId, htmlText, location)
 	{
-		//console.error("setting popover for:" + buttonId + "  " + htmlText);
+		//console.error("setting popover for:" + elementId + "  " + htmlText);
 		if (location == undefined) location = "bottom";
-        $(buttonId).unbind("mouseover mouseout");
+        $(elementId).unbind("mouseover mouseout");
 
-        $(buttonId).on("mouseover",function() {
-			RED.view.showPopOver(buttonId, true, htmlText, location); // true means html mode
+        $(elementId).on("mouseover",function() {
+			RED.view.showPopOver(elementId, true, htmlText, location); // true means html mode
 		});
-		$(buttonId).on("mouseout", function() {
-			$(buttonId).popover("destroy");
+		$(elementId).on("mouseout", function() {
+			$(elementId).popover("destroy");
 		});
     }
     $('#btn-reloadWindow').click(function() { window.location.reload(); });

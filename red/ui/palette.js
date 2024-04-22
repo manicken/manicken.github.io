@@ -16,10 +16,14 @@
  **/
  
 RED.palette = (function() {
+	const ROOT_CONTAINER_ID = "palette-container"; // note. first defined in index.html
+	const CATEGORY_BASE = "palette-category";
+	const CATEGORY_HEADER = "palette-header";
+	const CATEGORY_CONTENT_BASE_CLASS = "palette-content";
 
     var defSettings = {
-		categoryHeaderTextSize: 12,
-		categoryHeaderHeight: 14,
+		categoryHeaderTextSize: 14,
+		categoryHeaderHeight: 16,
         categoryHeaderBackgroundColor: "#f3f3f3",
         categoryHeaderShowAsRainBow: false,
         categoryHeaderShowAsRainBowAlt: false,
@@ -42,13 +46,13 @@ RED.palette = (function() {
 	var settings = {
 		
         get categoryHeaderTextSize() {return parseInt(_settings.categoryHeaderTextSize);},
-        set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderTextSize(size) { _settings.categoryHeaderTextSize = parseInt(size); if (_settings.categoryHeaderTextSize != defSettings.categoryHeaderTextSize) setCategoryHeaderStyle(); RED.storage.update();},
 		
         get categoryHeaderHeight() {return parseInt(_settings.categoryHeaderHeight);},
-        set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderHeight(size) { _settings.categoryHeaderHeight = parseInt(size); if (_settings.categoryHeaderHeight != defSettings.categoryHeaderHeight) setCategoryHeaderStyle(); RED.storage.update();},
 		
         get categoryHeaderBackgroundColor() {return _settings.categoryHeaderBackgroundColor;},
-        set categoryHeaderBackgroundColor(colorCode) { _settings.categoryHeaderBackgroundColor = colorCode; setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderBackgroundColor(colorCode) { _settings.categoryHeaderBackgroundColor = colorCode; if (_settings.categoryHeaderBackgroundColor != defSettings.categoryHeaderBackgroundColor) setCategoryHeaderStyle(); RED.storage.update();},
 		
         get onlyShowOne() { return _settings.onlyShowOne; },
         set onlyShowOne(state) { _settings.onlyShowOne = state; RED.storage.update();},
@@ -57,13 +61,13 @@ RED.palette = (function() {
         set hideHeadersWhenSearch(state) { _settings.hideHeadersWhenSearch = state; filterChange(); RED.storage.update();},
 
         get categoryHeaderShowAsRainBow() { return _settings.categoryHeaderShowAsRainBow; },
-        set categoryHeaderShowAsRainBow(state) { _settings.categoryHeaderShowAsRainBow = state; setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderShowAsRainBow(state) { _settings.categoryHeaderShowAsRainBow = state; if (_settings.categoryHeaderShowAsRainBow != defSettings.categoryHeaderShowAsRainBow) setCategoryHeaderStyle(); RED.storage.update();},
         
         get categoryHeaderShowAsRainBowAlt() { return _settings.categoryHeaderShowAsRainBowAlt; },
-        set categoryHeaderShowAsRainBowAlt(state) { _settings.categoryHeaderShowAsRainBowAlt = state; setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderShowAsRainBowAlt(state) { _settings.categoryHeaderShowAsRainBowAlt = state; if (_settings.categoryHeaderShowAsRainBowAlt != defSettings.categoryHeaderShowAsRainBowAlt) setCategoryHeaderStyle(); RED.storage.update();},
         
         get categoryHeaderShowAsRainBowMinVal() {return parseInt(_settings.categoryHeaderShowAsRainBowMinVal);},
-        set categoryHeaderShowAsRainBowMinVal(size) { _settings.categoryHeaderShowAsRainBowMinVal = parseInt(size); setCategoryHeaderStyle(); RED.storage.update();},
+        set categoryHeaderShowAsRainBowMinVal(size) { _settings.categoryHeaderShowAsRainBowMinVal = parseInt(size); if (_settings.categoryHeaderShowAsRainBowMinVal != defSettings.categoryHeaderShowAsRainBowMinVal) setCategoryHeaderStyle(); RED.storage.update();},
         
 	};
 
@@ -88,12 +92,14 @@ RED.palette = (function() {
         if (settings.categoryHeaderShowAsRainBow == true)
         {
             var colorMap = RED.color.generateColorMap();
-            var colorMapDeltaIndex = parseInt(colorMap.length/($(".palette-header").length));
+            var colorMapDeltaIndex = parseInt(colorMap.length/($("." + CATEGORY_HEADER).length));
             var minVal = settings.categoryHeaderShowAsRainBowMinVal;
         }
         var bgColor = settings.categoryHeaderBackgroundColor;
+		
+        $("." + CATEGORY_HEADER).each( function(i,e) {
+			if ($(e).hasClass("sub-cat")) return; // skip sub categories
 
-        $(".palette-header").each( function(i,e) {
             $(e).css('font-size', font_size)
                 .css('height', height)
             if (settings.categoryHeaderShowAsRainBow == true)
@@ -108,101 +114,93 @@ RED.palette = (function() {
             });
 	}
 
-	function createCategoryContainer(category, destContainer, expanded, isSubCat, hdrBgColor){ 
-        if (hdrBgColor != undefined) hdrBgColor = 'background-color:' + hdrBgColor + ';';
-        else hdrBgColor = "";
-        //console.error(hdrBgColor);
-		//console.warn("@createCategoryContainer category:" + category + ", destContainer:" + destContainer + ", isSubCat:" + isSubCat);
-		var chevron = "";
-		var displayStyle = "";
-		if (!destContainer)	destContainer = "palette-container"; // failsafe
-		var palette_category = "palette-category";
+	function createCategoryContainer(category, destContainer, expanded, headerStyle, headerText){
+		if (destContainer == undefined) destContainer = "";
+		destContainer = destContainer.trim();
+
+		console.log("%c try create new category: " + category + " in " + ((destContainer.length!=0)?destContainer:"ROOT ("+ROOT_CONTAINER_ID+")"), "font-weight: bold; font-size:14px; background: #ECFFDC; padding:5px; padding-right:30%; padding-left:10px;");
 		
-		var header = category;
-		var palette_header_class = "palette-header";
+		var palette_category_class = CATEGORY_BASE;
+		var palette_header_class = CATEGORY_HEADER;
+		if (headerText == undefined) headerText = category;
 		
-		if (isSubCat)
+		if (destContainer.length != 0)
 		{
-			displayStyle = "block";
-			palette_category += "-sub-cat";
-			header = header.substring(header.indexOf('-')+1);
-			palette_header_class += "-sub-cat";
+			palette_category_class += " sub-cat";
+			palette_header_class += " sub-cat";
 		}
-		//else
-		//{
-			if (expanded == true)
-			{
-				chevron = '<i class="icon-chevron-down expanded"></i>';
-				displayStyle = "block";
-			}
-			else
-			{
-				chevron = '<i class="icon-chevron-down"></i>';
-				displayStyle = "none";
-			}
-		//}
-		$("#" + destContainer).append('<div class="' + palette_category + '">'+
-			'<div class="'+palette_header_class+'" id="header-'+category+'" style="'+hdrBgColor+'"><div class="'+palette_header_class+'-contents">'+chevron+'<span>'+header+'</span></div></div>'+
-			'<div class="palette-content" id="palette-base-category-'+category+'" style="display: '+displayStyle+';">'+
-			 // '<div id="palette-'+category+'-input" class="palette-sub-category"><div class="palette-sub-category-label">in</div></div>'+ // theese are never used
-			 // '<div id="palette-'+category+'-output" class="palette-sub-category"><div class="palette-sub-category-label">out</div></div>'+ // theese are never used
-			  //'<div id="palette-'+category+'-function"></div>'+
-			 // '<div id="palette-'+category+'"></div>'+
-			'</div>'+
-			'</div>');
+
+		headerStyle = (headerStyle!=undefined?(`style="${headerStyle}"`):"");
+
+		var subPath = ((destContainer.length!=0)?(destContainer+"-"):"") + category;
+		var headerId = CATEGORY_HEADER+"-"+subPath;
+		var categoryPath = CATEGORY_BASE+"-"+subPath;
+
+		if (destContainer.length == 0) destContainer = ROOT_CONTAINER_ID;
+		else destContainer = ROOT_CONTAINER_ID+"-"+destContainer;
+
+		$("#" + destContainer).append(
+			`<div class="${palette_category_class} hidden no-border" id="${categoryPath}">`+
+			 `<div class="${palette_header_class} " id="${headerId}" ${headerStyle}>`+
+			 `<div class="${palette_header_class} contents" ${headerStyle}><i class="icon-chevron-down${(expanded?" expanded":"")}"></i><span>${headerText}</span></div>`+
+			 '</div>'+
+			 `<div class="${CATEGORY_CONTENT_BASE_CLASS}" id="${destContainer}-${category}" style="display: ${(expanded?"block":"none")};"></div>`+
+			'</div>'
+		);
 	}
 	function doInit(categories)
 	{
-        var names = Object.getOwnPropertyNames(categories);
-        
-
-		for (var i = 0; i < names.length; i++)
-		{
-            var name = names[i];
-			var cat = categories[name];
-			createCategoryContainer(name, "palette-container", cat.expanded, false); 
-			setCategoryClickFunction(name, "palette-container", "palette-header");
-			if (cat.subcats != undefined)
-				addSubCats("palette-base-category-" + name , name + "-", cat.subcats);
-		}
-		//setCategoryClickFunction('input');
-		//setCategoryClickFunction('output');
-
+		addCategories("", categories, false);
 	}
-	function addSubCats(destContainer, catPreName, categories)
+	function addCategories(destContainer, categories)
 	{
-        var names = Object.getOwnPropertyNames(categories);
+		var names = Object.getOwnPropertyNames(categories);
 		for (var i = 0; i < names.length; i++)
 		{
             var name = names[i];
             var cat = categories[name];
-			createCategoryContainer(catPreName + name,destContainer, false, true, cat.hdrBgColor);
-			setCategoryClickFunction(catPreName + name, destContainer, "palette-header-sub-cat");
+			var expanded = (cat.expanded!=undefined)?cat.expanded:false;
+			//expanded = true;
+			createCategoryContainer(name, destContainer, expanded, cat.headerStyle, cat.label);
+			setCategoryClickFunction(name, destContainer);
+			if (cat.subcats != undefined)
+				addCategories(((destContainer.length!=0)?(destContainer+"-"):"") + name, cat.subcats);
 		}
 	}
 
-	function setCategoryClickFunction(category,destContainer, headerClass)
+	function setCategoryClickFunction(category,destContainer)
 	{
-		//console.warn("@setCategoryClickFunction category:" +category + ", destContainer:" + destContainer + ", headerClass:" + headerClass);
-		$("#header-"+category).off('click').on('click', function(e) {
+		var headerClass = "";
+		if (destContainer == undefined) destContainer = "";
+		destContainer = destContainer.trim();
+		if (destContainer.length != 0) headerClass = CATEGORY_HEADER + ".sub-cat";
+		else headerClass = CATEGORY_HEADER;
+		console.warn("@setCategoryClickFunction category:" +category + ", destContainer:" + destContainer + ", headerClass:" + headerClass);
+		var id = CATEGORY_HEADER+((destContainer.length!=0)?("-"+destContainer):"")+"-"+category;
+		console.warn("id:" + id);
+		$("#"+id).off('click').on('click', function(e) {
 			
 			//console.log("onlyShowOne:" + _settings.onlyShowOne);
+			
 			var catContentElement = $(this).next();
 			var displayStyle = catContentElement.css('display');
 			if (displayStyle == "block")
 			{
+				//console.log("slide up", this);
 				catContentElement.slideUp();
-				$(this).children("i").removeClass("expanded"); // chevron
+				$(this).children("."+CATEGORY_HEADER+".contents").children("i").removeClass("expanded"); // chevron
+				//$(this).removeClass("expanded");
 			}
 			else
 			{
-
-				if (/*!isSubCat(catContentElement.attr('id')) && */(_settings.onlyShowOne == true)) // don't run when collapsing sub cat
+				//console.log("slide down", this);
+				if (_settings.onlyShowOne == true) // TODO maybe: don't run when collapsing sub cat
 				{
-					setShownStateForAll(false,destContainer, headerClass);
+					setShownStateForAll(false,ROOT_CONTAINER_ID+"-"+destContainer, headerClass);
 				}
 				catContentElement.slideDown();
-				$(this).children("i").addClass("expanded"); // chevron
+				$(this).children("."+CATEGORY_HEADER+".contents").children("i").addClass("expanded"); // chevron
+				//$(this).addClass("expanded");
 			}
 		});
 	}
@@ -220,27 +218,24 @@ RED.palette = (function() {
 			if (state)
 			{
 				$(otherCat[i]).next().slideDown();
-				$(otherCat[i]).children("i").addClass("expanded");
+				$(otherCat[i]).children("."+CATEGORY_HEADER+".contents").children("i").addClass("expanded");
 			}
 			else
 			{
 				$(otherCat[i]).next().slideUp();
-				$(otherCat[i]).children("i").removeClass("expanded");
+				$(otherCat[i]).children("."+CATEGORY_HEADER+".contents").children("i").removeClass("expanded");
 			}
 		}
 	}
-	function isSubCat(id)
+
+	function categoryNotExists(category)
 	{
-		if (id.startsWith("palette-base-category-input-")) { return true; }
-		if (id.startsWith("palette-base-category-output-")) { return true; }
-		//console.warn(id + " is not subcat");
-		return false;
+		return $(`#${ROOT_CONTAINER_ID}-${category}`).length === 0
 	}
-	//doInit(core);
 	
 	function clearCategory(category)
 	{
-		$("#palette-base-category-"+ category ).empty();
+		$(`#${ROOT_CONTAINER_ID}-${category}`).empty();
 	}
 
 	/**
@@ -248,117 +243,120 @@ RED.palette = (function() {
 	 * @param {*} nt  node type
 	 * @param {*} def node type def
 	 * 	 */
+	function activateWholeCategoryTree(category)
+	{
+		var treeItems = category.split("-");
+		//for (var i = treeItems.length; i > 0; i--) {
+		for (var i = 1; i <= treeItems.length; i++) {
+			var treePath = treeItems.slice(0, i).join("-");
+			//console.log("activating:" + CATEGORY_BASE + "-" + treePath);
+			$("#" + CATEGORY_BASE + "-" + treePath).removeClass("hidden");
+			$("#" + CATEGORY_BASE + "-" + treePath).removeClass("no-border");
+			//$("#" + ROOT_CONTAINER_ID + "-" + treePath).removeClass("hidden");
+			//$("#" + ROOT_CONTAINER_ID + "-" + treePath).removeClass("no-border");
+		}
+	}
 	function addNodeType(nt,def, category, nodeDefGroupName) { // externally RED.palettte.add
 
-		//if (exclusion.indexOf(def.category)!=-1) return;
-		var defCategory = "";
-		if (!category)
+		if (category == undefined)
 		{
 			category = def.category;
-			//console.warn("add to " + category);
-			defCategory = def.category + "";
 		}
-		else
-		{
-			//console.error("add to " + category);
-			defCategory = category;// + "-function";
-		}
+
 		//console.warn("add addNodeType:@" + category + ":" + def.shortName);
-		if ($("#palette_node_"+category +"_"+nt).length)	return;		// avoid duplicates
+		if ($("#palette-node-"+category +"-"+nt).length)
+			return;		// avoid duplicates
 
-			var d = document.createElement("div");
-			
-			d.id = "palette_node_"+category +"_"+nt;
-			d.type = nt;
+		var d = document.createElement("div");
+		
+		d.id = "palette-node-"+category +"-"+nt;
+		d.type = nt;
 
-			//var label = /^(.*?)([ -]in|[ -]out)?$/.exec(nt)[1];
-			var label = (def.shortName) ? def.shortName : nt;
+		//var label = /^(.*?)([ -]in|[ -]out)?$/.exec(nt)[1];
+		var label = (def.shortName) ? def.shortName : nt;
 
-			d.innerHTML = '<div class="palette_label">'+label+"</div>";
-			d.className="palette_node";// cat_" + category;
-			if (def.icon) {
-				d.style.backgroundImage = "url(icons/"+def.icon+")";
-				if (def.align == "right") {
-					d.style.backgroundPosition = "95% 50%";
-				} else if (def.inputs > 0) {
-					d.style.backgroundPosition = "10% 50%";
-				}
+		d.innerHTML = '<div class="palette_label">'+label+"</div>";
+		d.className="palette_node";// cat_" + category;
+		if (def.icon) {
+			d.style.backgroundImage = "url(icons/"+def.icon+")";
+			if (def.align == "right") {
+				d.style.backgroundPosition = "95% 50%";
+			} else if (def.inputs > 0) {
+				d.style.backgroundPosition = "10% 50%";
 			}
-			
-			d.style.backgroundColor = def.color;
-			if (def.textColor != undefined)
-			d.style.color = def.textColor;
-			
-            if (def.outputs > 1) {
-				var portOut = document.createElement("div");
-				portOut.className = "palette_port1 palette_port_output";
-				d.appendChild(portOut);
-                portOut = document.createElement("div");
-				portOut.className = "palette_port2 palette_port_output";
-				d.appendChild(portOut);
+		}
+		
+		d.style.backgroundColor = def.color;
+		if (def.textColor != undefined)
+		d.style.color = def.textColor;
+		
+		if (def.outputs > 1) {
+			var portOut = document.createElement("div");
+			portOut.className = "palette_port1 palette_port_output";
+			d.appendChild(portOut);
+			portOut = document.createElement("div");
+			portOut.className = "palette_port2 palette_port_output";
+			d.appendChild(portOut);
+		}
+		else if (def.outputs > 0) {
+			var portOut = document.createElement("div");
+			portOut.className = "palette_port palette_port_output";
+			d.appendChild(portOut);
+		}
+
+		var reqError = document.createElement("div");
+		reqError.className = "palette_req_error hidden";
+
+		d.appendChild(reqError);
+		
+		if (def.inputs > 1) {
+			var portIn = document.createElement("div");
+			portIn.className = "palette_port1 palette_port_input";
+			d.appendChild(portIn);
+			portIn = document.createElement("div");
+			portIn.className = "palette_port2 palette_port_input";
+			d.appendChild(portIn);
+		}
+		else if (def.inputs > 0) {
+			var portIn = document.createElement("div");
+			portIn.className = "palette_port palette_port_input";
+			d.appendChild(portIn);
+		}
+
+		if (categoryNotExists(category)){
+			console.warn("create missing palette category:" + category);
+			createCategoryContainer(category, "");
+			setCategoryClickFunction(category, "");
+		}
+		activateWholeCategoryTree(category);
+		
+		$(`#${ROOT_CONTAINER_ID}-${category}`).append(d);
+
+		d.onmousedown = function(e) { e.preventDefault(); };
+
+		if (def.help != undefined && def.help.trim().length != 0) setTooltipContent(nt, d, " @ " + nodeDefGroupName, def.help);
+		else setTooltipContent(nt, d, " @ " + nodeDefGroupName);
+		
+		$(d).click(function() {
+			console.warn("palette node click:" + d.type);
+			RED.nodes.selectNode(d.type);
+			//RED.sidebar.info.setHelpContent('', d.type);
+
+			if (def.help != undefined && def.help.trim().length != 0) RED.sidebar.info.setHelpContent("<h3>" + d.type + "</h3>",d.type, def.help);
+			else RED.sidebar.info.setHelpContent('', d.type);
+		});
+		$(d).draggable({
+			helper: 'clone',
+			appendTo: 'body',
+			revert: true,
+			revertDuration: 50,
+			start: function(e, ui)
+			{
+			$(ui.helper).addClass("palette_node_drag");
 			}
-			else if (def.outputs > 0) {
-				var portOut = document.createElement("div");
-				portOut.className = "palette_port palette_port_output";
-				d.appendChild(portOut);
-			}
-
-			var reqError = document.createElement("div");
-			reqError.className = "palette_req_error hidden";
-
-			d.appendChild(reqError);
-			
-            if (def.inputs > 1) {
-                var portIn = document.createElement("div");
-				portIn.className = "palette_port1 palette_port_input";
-				d.appendChild(portIn);
-                portIn = document.createElement("div");
-				portIn.className = "palette_port2 palette_port_input";
-				d.appendChild(portIn);
-            }
-			else if (def.inputs > 0) {
-				var portIn = document.createElement("div");
-				portIn.className = "palette_port palette_port_input";
-				d.appendChild(portIn);
-			}
-			
-			if ($("#palette-base-category-"+category).length === 0){
-                console.warn("create missing palette category:" + category);
-				createCategoryContainer(category, "palette-container");
-                setCategoryClickFunction(category, "palette-container", "palette-header");
-			}
-			
-			/*if ($("#palette-"+defCategory).length === 0) {          
-				$("#palette-base-category-"+category).append('<div id="palette-'+defCategory+'"></div>');            
-			}*/
-
-			$("#palette-base-category-"+defCategory).append(d);
-			//$("#palette-"+defCategory).append(d);
-			d.onmousedown = function(e) { e.preventDefault(); };
-
-            if (def.help != undefined && def.help.trim().length != 0) setTooltipContent(nt, d, " @ " + nodeDefGroupName, def.help);
-            else setTooltipContent(nt, d, " @ " + nodeDefGroupName);
-			
-		    $(d).click(function() {
-			  	console.warn("palette node click:" + d.type);
-				RED.nodes.selectNode(d.type);
-			  	//RED.sidebar.info.setHelpContent('', d.type);
-
-                if (def.help != undefined && def.help.trim().length != 0) RED.sidebar.info.setHelpContent("<h3>" + d.type + "</h3>",d.type, def.help);
-                else RED.sidebar.info.setHelpContent('', d.type);
-		    });
-		    $(d).draggable({
-			   helper: 'clone',
-			   appendTo: 'body',
-			   revert: true,
-			   revertDuration: 50,
-			   start: function(e, ui)
-			   {
-				$(ui.helper).addClass("palette_node_drag");
-			   }
-		    });
-		    
-			//setCategoryClickFunction(category);
+		});
+		
+		//setCategoryClickFunction(category);
 		
 	}
 	
@@ -408,14 +406,14 @@ RED.palette = (function() {
 		var val = $("#palette-search-input").val();
 		if (val === "") {
 			$("#palette-search-clear").hide();
-            setShownStateForAll(false, "palette-container", "palette-header");
-            setShownStateForAll(false, "palette-container", "palette-header-sub-cat");
+            setShownStateForAll(false, ROOT_CONTAINER_ID, CATEGORY_HEADER);
+            setShownStateForAll(false, ROOT_CONTAINER_ID, CATEGORY_HEADER + ".sub-cat");
             if (settings.hideHeadersWhenSearch == true)
                 showAllHeaders();
 		} else {
 			$("#palette-search-clear").show();
-            setShownStateForAll(true, "palette-container", "palette-header");
-            setShownStateForAll(true, "palette-container", "palette-header-sub-cat");
+            setShownStateForAll(true, ROOT_CONTAINER_ID, CATEGORY_HEADER);
+            setShownStateForAll(true, ROOT_CONTAINER_ID, CATEGORY_HEADER + ".sub-cat");
             if (settings.hideHeadersWhenSearch == true)
                 hideAllHeaders();
             else
@@ -434,36 +432,36 @@ RED.palette = (function() {
 
     function hideAllHeaders() {
         // hide headers
-        var otherCat = $("#palette-container").find(".palette-header");
-        otherCat.push($("#palette-container").find(".palette-header-sub-cat"));
+        var otherCat = $("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_HEADER);
+        otherCat.push($("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_HEADER + ".sub-cat"));
 		for (var i = 0; i < otherCat.length; i++)
 		{
             $(otherCat[i]).addClass("hidden");
         }
         // hide borders
-        otherCat = $("#palette-container").find(".palette-category");
-        otherCat.push($("#palette-container").find(".palette-category-sub-cat"));
-        otherCat.push($("#palette-container").find(".palette-content"));
+        otherCat = $("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_BASE);
+        otherCat.push($("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_BASE + ".sub-cat"));
+        otherCat.push($("#" + ROOT_CONTAINER_ID).find(".palette-content"));
         for (var i = 0; i < otherCat.length; i++)
 		{
-            $(otherCat[i]).addClass("palette-category-no-border");
+            $(otherCat[i]).addClass("no-border");
         }
     }
     function showAllHeaders() {
         // show headers
-        var otherCat = $("#palette-container").find(".palette-header");
-        otherCat.push($("#palette-container").find(".palette-header-sub-cat"));
+        var otherCat = $("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_HEADER);
+        otherCat.push($("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_HEADER + ".sub-cat"));
 		for (var i = 0; i < otherCat.length; i++)
 		{
             $(otherCat[i]).removeClass("hidden");
         }
         // show borders
-        otherCat = $("#palette-container").find(".palette-category");
-        otherCat.push($("#palette-container").find(".palette-category-sub-cat"));
-        otherCat.push($("#palette-container").find(".palette-content"));
+        otherCat = $("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_BASE);
+        otherCat.push($("#" + ROOT_CONTAINER_ID).find("." + CATEGORY_BASE + ".sub-cat"));
+        otherCat.push($("#" + ROOT_CONTAINER_ID).find(".palette-content"));
         for (var i = 0; i < otherCat.length; i++)
 		{
-            $(otherCat[i]).removeClass("palette-category-no-border");
+            $(otherCat[i]).removeClass("no-border");
         }
     }
 	
@@ -474,7 +472,7 @@ RED.palette = (function() {
 		RED.keyboard.enable();
 	});
     var filterFormVisible = false;
-    $("#palette-search-icon").click(function(e) {
+    /*$("#palette-search-icon").click(function(e) {
         console.warn("search icon clicked");
         if (filterFormVisible == true) {
             document.getElementById("palette-filters-form").style.display = "none";
@@ -486,13 +484,13 @@ RED.palette = (function() {
             for (var ndi = 0; ndi < nodeDefNames.length; ndi++) {
                 var ndn = nodeDefNames[ndi];
                 var nd = RED.nodes.node_defs[ndn];
-                $("#palette-filters").append('<tr><td><input type="checkbox" checked="true" id="palette-filter-'+ndn+'"></input></td><td><div id="palette-filter-div-'+ndn+'"><label for="palette-filter-'+ndn+'">'+nd.label+'</label></div></td></tr>');
-                RED.main.SetPopOver("palette-filter-div-"+ndn, nd.description, "right");
+                $("#palette-filters").append('<tr id="palette-filter-tr-'+ndn+'"><td><input type="checkbox" checked="true" id="palette-filter-'+ndn+'"></input></td><td><div id="palette-filter-div-'+ndn+'"><label for="palette-filter-'+ndn+'">'+nd.label+'</label></div></td></tr>');
+                RED.main.SetPopOver("#palette-filter-tr-"+ndn, nd.description + "<br><br>" + nd.homepage + "<br><br>" + nd.url, "right");
             }
             document.getElementById("palette-filters-form").style.display = "block";
             filterFormVisible = true;
         }
-    });
+    });*/
 	
 	$("#palette-search-clear").on("click",function(e) {
 		e.preventDefault();
