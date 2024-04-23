@@ -7,27 +7,34 @@ var ioSubCats = {
     "adc": { headerStyle: "background: #E3E3E3;" }, 
     "other": { headerStyle: "background: #FAFAFA;" }
 }
+
+// TODO. add tooltip popup functionality for categories
+// each category can have the following optional fields,
+// with examples:
+// headerStyle: "background-color:#AAA;"
+// expanded: false
+// label: "Hello World"
 var NodeBaseManicksanCategories = {
-    "used": { "expanded": false, headerStyle: "background: #EAEAEA;"},
-    "tabs": { "expanded": false },
-    "special": { "expanded": false },
-    "ui": { "expanded": false },
+    "used": {  },
+    "tabs": {  },
+    "special": {  },
+    "ui": {  },
 }
 
 var NodeBaseCategories = {
-    "input": { "expanded": false, "subcats": { ...ioSubCats} },
-    "output": { "expanded": false, "subcats": { ...ioSubCats}},
-    "mixer": { "expanded": false },
-    "play": { "expanded": false },
-    "record": { "expanded": false },
-    "synth": { "expanded": false },
-    "effect": { "expanded": false },
-    "filter": { "expanded": false },
-    //"convert": { "expanded": false },
-    "analyze": { "expanded": false },
-    "control": { "expanded": false },
-    //"config": { "expanded": false },
-    "unsorted": { "expanded": false },
+    "input": { "subcats": { ...ioSubCats} },
+    "output": { "subcats": { ...ioSubCats}},
+    "mixer": {  },
+    "play": {  },
+    "record": {  },
+    "synth": {  },
+    "effect": {  },
+    "filter": {  },
+    //"convert": {  },
+    "analyze": {  },
+    "control": {  },
+    //"config": {  },
+    "unsorted": {  },
 }
 var NodeCategories = {
     ...NodeBaseManicksanCategories,
@@ -48,7 +55,7 @@ var NodeCategories = {
     "FrankBoesing": { label:"Frank Boesing", subcats:{ ...NodeBaseCategories } },
     "MattKuebrich": { label:"Matt Kuebrich", subcats: { ...NodeBaseCategories } },
     "Newdigate": { label:"Nic Newdigate", subcats: { legacy: {...NodeBaseCategories}, /*new:{...NodeBaseCategories }*/ }},
-    "chipaudette": { label:"Chip Audette", subcats: { ...NodeBaseCategories, convert:{} ,radio:{}, config:{} } },
+    "chipaudette": { label:"Chip Audette (F32)", subcats: { ...NodeBaseCategories, convert:{} ,radio:{}, config:{} } },
 }
 
 var DEFAULTS_VALUE_TYPE = {

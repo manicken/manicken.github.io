@@ -211,7 +211,7 @@
   
   /* Add styles to the form container */
   .palette-filter-form-container {
-    max-width: 300px;
+    max-width: 320px;
     padding-top: 5px;
     margin: 0px;
     background-color: white;
@@ -639,7 +639,7 @@
   #workspace {
       position: absolute;
       margin: 0;
-      top:1px; left:180px; bottom: 45px; right: 330px;
+      top:1px; left:190px; bottom: 45px; right: 330px;
   }
   #chart-zoom-controls {
       position: absolute;
@@ -659,7 +659,7 @@
   }
   
   #sidebar-palette {
-      width: 170px;
+      width: 180px;
       position: absolute;
       left: 0px; top: 0px; bottom:0px;
   }
@@ -667,7 +667,7 @@
       width: 15px;
       background: url("img/grip.png") no-repeat 50% 50%;
       position: absolute;
-      left: 165px; top: 5px; bottom:10px;
+      left: 175px; top: 5px; bottom:10px;
       cursor: col-resize;
   }
   
