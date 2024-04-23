@@ -286,24 +286,24 @@ RED.nodes = (function() {
         //var str = $("script[data-container-name|='NodeDefinitions']").html();
         //var nodeDefinitions = $.parseJSON(str);
         //if (nodeDefinitions == undefined) return;
-        registerGroups(NodeDefinitions);
+        registerNodeDefinitionGroups(NodeDefinitions); // NodeDefinitions is in NodeDefinitions.js
     }
-    function registerGroups(nodeDefinitionsGroups) {
-        var nodeDefGroupNames = Object.getOwnPropertyNames(nodeDefinitionsGroups);
+    function registerNodeDefinitionGroups(nodeDefinitionGroups) {
+        var nodeDefGroupNames = Object.getOwnPropertyNames(nodeDefinitionGroups);
         for (var i = 0; i < nodeDefGroupNames.length; i++) {
-            var catName = nodeDefGroupNames[i];
-            var cat = nodeDefinitionsGroups[catName];
-            RED.nodes.registerTypes(cat, catName);
+            var groupName = nodeDefGroupNames[i];
+            var group = nodeDefinitionGroups[groupName];
+            registerNodeDefinitionGroup(group, groupName);
         }
     }
-    function registerTypes(nodeDefinitionsGroup, uid, dontReplaceExisting) {
-        if (nodeDefinitionsGroup.disabled != undefined && nodeDefinitionsGroup.disabled == true)
+    function registerNodeDefinitionGroup(nodeDefinitionGroup, uid, dontReplaceExisting) {
+        if (nodeDefinitionGroup.disabled != undefined && nodeDefinitionGroup.disabled == true)
             return;
-        initNodeDefinitions(nodeDefinitionsGroup, uid);
-        var types = nodeDefinitionsGroup["types"];
+        initNodeDefinitions(nodeDefinitionGroup, uid); // avoid overriding current groups
+        var types = nodeDefinitionGroup["types"];
         if (types == undefined) {
-            RED.notify("error @ RED.nodes.registerTypes " + uid + " don't contain a types object", "error", null, 6000);
-            console.warn(nodeDefinitionsGroup);
+            RED.notify("error @ RED.nodes.registerNodeDefinitionGroup " + uid + " don't contain a types object", "error", null, 6000);
+            console.warn(nodeDefinitionGroup);
         }
         var typesNames = Object.getOwnPropertyNames(types);
         for (var ti = 0; ti < typesNames.length; ti++) {
@@ -1217,7 +1217,7 @@ RED.nodes = (function() {
                     for (var i = 0; i < nodeDefinitionCategoryNames.length; i++) {
                         var catName = nodeDefinitionCategoryNames[i];
                         var cat = newNodes.nodeAddons[catName];
-                        registerTypes(cat, catName);
+                        registerNodeDefinitionGroup(cat, catName);
                     }
                 }
 
@@ -2787,8 +2787,8 @@ RED.nodes = (function() {
         createExportableWorkspace,
 		createNewDefaultWorkspace,
         Init_BuiltIn_NodeDefinitions,
-        registerGroups,
-        registerTypes,
+        registerNodeDefinitionGroups,
+        registerNodeDefinitionGroup,
 		registerType,
         initNodeDefinitions,
 		getType: getTypeDef,

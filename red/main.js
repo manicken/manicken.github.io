@@ -778,7 +778,7 @@ RED.main = (function() {
         RED.main.requirements = InputOutputCompatibilityMetadata["requirements"]; // RED.main. is used to clarify the location of requirements
 
         //var nodeCategories = $.parseJSON($("script[data-container-name|='NodeCategories']").html());
-        RED.palette.doInit(NodeCategories);//["categories"]);
+        RED.palette.doInit(NodeCategories); // NodeCategories is in NodeDefinitions.js
 
         // register built in node types
         //RED.nodes.Init_BuiltIn_NodeDefinitions(); // replaced with following that internally calls Init_BuiltIn_NodeDefinitions

@@ -470,7 +470,7 @@ RED.NodeDefManager = (function() {
                                 nodeAddonGroups[uid] = RED.NodeDefGenerator.nodeAddons();
                                 //RED.nodes.registerTypes(RED.NodeDefGenerator.nodeAddons(), $("#input-ndmgr-uid").val(), !importReplaceExisting); // old style
                             }
-                            RED.nodes.registerGroups(nodeAddonGroups);
+                            RED.nodes.registerNodeDefinitionGroups(nodeAddonGroups);
                             
                             RED.storage.update();
                             BuildTree();

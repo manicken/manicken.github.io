@@ -207,7 +207,54 @@ var useMakeConstructor = {
     }
 };
 
+// each node def. group can contain a 'category' field
+// that defines the sub category id to which the type categories are added, 
+// the 'category' field is optional if 'categoryItems' is present,
+// then the id is taken from the nodedefgroup type
+// also a optional field 'categoryLabel' can be used 
+// to change the label of the category in the palette
+// the field 'categoryItems' define the order of the categories
+// and if not present then the order is defined from the order of which the node types
+// are added
+
 var NodeDefinitions = {
+    /*
+    template:{ // node def. uid
+        label: "", // future usage for usage in category tooltip
+        description: "", // future usage for usage in category tooltip
+        credits: "", // future usage for usage in category tooltip
+        homepage: "", // future usage for usage in category tooltip
+        url: "", // root url to where to find include files
+        // optional if categoryItems is present,
+        category: "template",
+         // optional to define the ui label, if not present either category or the node def. group uid is used
+        categoryLabel: "template cat",
+        // defines the order of categories, here '...NodeBaseCategories' can be used to include standard categories,
+        // additional categories can be added as shown 
+        categoryItems: { ...NodeBaseCategories, additionalCategory1:{label:"additional category 1", headerStyle:"background:#FFF;"}, additionalCategory2:{}}, 
+
+        types: {
+            
+            AudioProcessObject: { 
+                ...AudioTypeArrayBase, // here ...AudioTypeArrayBase is used for objects that can be used in arrays
+                shortName: "process", category: "synth", sourceFile: "audioProcessObject.h", 
+                // inputTypes and/or outputTypes can be used to define the types used for the I/O:s
+                // this is used in the GUI tool to make sure that only compatible I/O:s can be connected together
+                // here x1 means that it's gonna have 2 inputs of i16-type
+                inputTypes: {"x2": "i16"}, 
+                outputTypes: {"x1": "i16"},
+                // input types can also be written like this to define different input types
+                //inputTypes: {0: "i16", 1: "i32"},
+            },
+            AudioInput_I2S: {
+                ...AudioTypeBase, // here ...AudioTypeBase is used to define objects that cannot be used in arrays
+                shortName: "i2s", category: "input-i2s1", sourceFile: "audioInput_I2S.h",
+                outputs:2 // stereo input
+            }, 
+            AudioOutput_I2S: { ...AudioTypeBase, shortName: "i2s", category: "output-i2s1", sourceFile: "audioOutput_I2S.h", inputs:2},
+        }
+    },
+    */
     manickenNodes: {
         label: "Manicken Nodes",
         description: "The node types embedded into this tool by manicken (Jannik LF Svensson)",
@@ -400,7 +447,10 @@ var NodeDefinitions = {
         credits: "Frank Boesing",
         homepage: "https://github.com/FrankBoesing",
         url: "https://github.com/FrankBoesing/Teensy-WavePlayer",
-        category: "FrankBoesing",
+        
+        category: "FrankBoesing", 
+        categoryLabel: "Frank Boesing",
+        categoryItems: { ...NodeBaseCategories },
         types: {
             AudioPlayWav: { ...AudioTypeArrayBase, shortName: "playWav", outputs: 8, category: "play" },
             AudioRecordWav: { ...AudioTypeArrayBase, shortName: "RecordWav", inputs: 4, category: "record" },
