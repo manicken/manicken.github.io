@@ -114,46 +114,15 @@ RED.palette = (function() {
             });
 	}
 
-	function createCategoryContainer(category, destContainer, expanded, headerStyle, headerText){
-		if (destContainer == undefined) destContainer = "";
-		destContainer = destContainer.trim();
-
-		console.log("%c try create new category: " + category + " in " + ((destContainer.length!=0)?destContainer:"ROOT ("+ROOT_CONTAINER_ID+")"), "font-weight: bold; font-size:14px; background: #ECFFDC; padding:5px; padding-right:30%; padding-left:10px;");
-		
-		var palette_category_class = CATEGORY_BASE;
-		var palette_header_class = CATEGORY_HEADER;
-		if (headerText == undefined) headerText = category;
-		
-		if (destContainer.length != 0)
-		{
-			palette_category_class += " sub-cat";
-			palette_header_class += " sub-cat";
-		}
-
-		headerStyle = (headerStyle!=undefined?(`style="${headerStyle}"`):"");
-
-		var subPath = ((destContainer.length!=0)?(destContainer+"-"):"") + category;
-		var headerId = CATEGORY_HEADER+"-"+subPath;
-		var categoryPath = CATEGORY_BASE+"-"+subPath;
-
-		if (destContainer.length == 0) destContainer = ROOT_CONTAINER_ID;
-		else destContainer = ROOT_CONTAINER_ID+"-"+destContainer;
-
-		$("#" + destContainer).append(
-			`<div class="${palette_category_class} hidden no-border" id="${categoryPath}">`+
-			 `<div class="${palette_header_class} " id="${headerId}" ${headerStyle}>`+
-			 `<div class="${palette_header_class} contents" ${headerStyle}><i class="icon-chevron-down${(expanded?" expanded":"")}"></i><span>${headerText}</span></div>`+
-			 '</div>'+
-			 `<div class="${CATEGORY_CONTENT_BASE_CLASS}" id="${destContainer}-${category}" style="display: ${(expanded?"block":"none")};"></div>`+
-			'</div>'
-		);
-	}
+	
 	function doInit(categories)
 	{
-		addCategories("", categories, false);
+		addCategories(categories);
 	}
-	function addCategories(destContainer, categories)
+	// TODO rename destContainer to categoryPath or something better
+	function addCategories(categories, categoryPath="")
 	{
+		console.log("addCategories into:" + categoryPath);
 		var names = Object.getOwnPropertyNames(categories);
 		for (var i = 0; i < names.length; i++)
 		{
@@ -161,23 +130,56 @@ RED.palette = (function() {
             var cat = categories[name];
 			var expanded = (cat.expanded!=undefined)?cat.expanded:false;
 			//expanded = true;
-			createCategoryContainer(name, destContainer, expanded, cat.headerStyle, cat.label);
-			setCategoryClickFunction(name, destContainer);
+			createCategoryContainer(name, categoryPath, expanded, cat.headerStyle, cat.label);
 			if (cat.subcats != undefined)
-				addCategories(((destContainer.length!=0)?(destContainer+"-"):"") + name, cat.subcats);
+				addCategories(cat.subcats, ((categoryPath.length!=0)?(categoryPath+"-"):"") + name);
 		}
 	}
+	function createCategoryContainer(category, categoryPath, expanded, headerStyle, headerText){
+		if (categoryPath == undefined) categoryPath = "";
+		categoryPath = categoryPath.trim();
 
-	function setCategoryClickFunction(category,destContainer)
+		console.log("%c creating new category: " + category + " in " + ((categoryPath.length!=0)?categoryPath:"ROOT ("+ROOT_CONTAINER_ID+")"), "font-weight: bold; font-size:14px; background: #ECFFDC; padding:5px; padding-right:30%; padding-left:10px;");
+		
+		var palette_category_class = CATEGORY_BASE;
+		var palette_header_class = CATEGORY_HEADER;
+		if (headerText == undefined) headerText = category;
+		
+		if (categoryPath.length != 0)
+		{
+			palette_category_class += " sub-cat";
+			palette_header_class += " sub-cat";
+		}
+
+		headerStyle = (headerStyle!=undefined?(`style="${headerStyle}"`):"");
+
+		var subPath = ((categoryPath.length!=0)?(categoryPath+"-"):"") + category;
+		var headerId = CATEGORY_HEADER+"-"+subPath;
+		var categoryId = CATEGORY_BASE+"-"+subPath;
+		var containerId = "";
+		if (categoryPath.length == 0) containerId = ROOT_CONTAINER_ID;
+		else containerId = ROOT_CONTAINER_ID+"-"+categoryPath;
+
+		$("#" + containerId).append(
+			`<div class="${palette_category_class} hidden no-border" id="${categoryId}">`+
+			 `<div class="${palette_header_class} " id="${headerId}" ${headerStyle}>`+
+			 `<div class="${palette_header_class} contents" ${headerStyle}><i class="icon-chevron-down${(expanded?" expanded":"")}"></i><span>${headerText}</span></div>`+
+			 '</div>'+
+			 `<div class="${CATEGORY_CONTENT_BASE_CLASS}" id="${containerId}-${category}" style="display: ${(expanded?"block":"none")};"></div>`+
+			'</div>'
+		);
+		setCategoryClickFunction(category, categoryPath);
+	}
+	function setCategoryClickFunction(category,categoryPath)
 	{
 		var headerClass = "";
-		if (destContainer == undefined) destContainer = "";
-		destContainer = destContainer.trim();
-		if (destContainer.length != 0) headerClass = CATEGORY_HEADER + ".sub-cat";
+		if (categoryPath == undefined) categoryPath = "";
+		categoryPath = categoryPath.trim();
+		if (categoryPath.length != 0) headerClass = CATEGORY_HEADER + ".sub-cat";
 		else headerClass = CATEGORY_HEADER;
-		console.warn("@setCategoryClickFunction category:" +category + ", destContainer:" + destContainer + ", headerClass:" + headerClass);
-		var id = CATEGORY_HEADER+((destContainer.length!=0)?("-"+destContainer):"")+"-"+category;
-		console.warn("id:" + id);
+		//console.warn("@setCategoryClick Function, category:" +category + ", categoryPath:" + categoryPath + ", headerClass:" + headerClass);
+		var id = CATEGORY_HEADER+((categoryPath.length!=0)?("-"+categoryPath):"")+"-"+category;
+		//console.warn("id:" + id);
 		$("#"+id).off('click').on('click', function(e) {
 			
 			//console.log("onlyShowOne:" + _settings.onlyShowOne);
@@ -196,7 +198,7 @@ RED.palette = (function() {
 				//console.log("slide down", this);
 				if (_settings.onlyShowOne == true) // TODO maybe: don't run when collapsing sub cat
 				{
-					setShownStateForAll(false,ROOT_CONTAINER_ID+"-"+destContainer, headerClass);
+					setShownStateForAll(false,ROOT_CONTAINER_ID+"-"+categoryPath, headerClass);
 				}
 				catContentElement.slideDown();
 				$(this).children("."+CATEGORY_HEADER+".contents").children("i").addClass("expanded"); // chevron
@@ -326,7 +328,6 @@ RED.palette = (function() {
 		if (categoryNotExists(category)){
 			console.warn("create missing palette category:" + category);
 			createCategoryContainer(category, "");
-			setCategoryClickFunction(category, "");
 		}
 		activateWholeCategoryTree(category);
 		
@@ -355,8 +356,6 @@ RED.palette = (function() {
 			$(ui.helper).addClass("palette_node_drag");
 			}
 		});
-		
-		//setCategoryClickFunction(category);
 		
 	}
 	
@@ -518,6 +517,8 @@ RED.palette = (function() {
         
 		doInit:doInit,
 		add:addNodeType,
+		createCategoryContainer,
+		addCategories,
 		clearCategory:clearCategory,
 		remove:removeNodeType,
 	};

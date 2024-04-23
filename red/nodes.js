@@ -300,6 +300,29 @@ RED.nodes = (function() {
         if (nodeDefinitionGroup.disabled != undefined && nodeDefinitionGroup.disabled == true)
             return;
         initNodeDefinitions(nodeDefinitionGroup, uid); // avoid overriding current groups
+        if (nodeDefinitionGroup.categoryItems != undefined){
+            
+            var categoryLabel = "";
+            if (nodeDefinitionGroup.categoryLabel!=undefined && nodeDefinitionGroup.categoryLabel.trim().length!=0)
+                categoryLabel = nodeDefinitionGroup.categoryLabel;
+            else if (nodeDefinitionGroup.category!=undefined && nodeDefinitionGroup.category.trim().length!=0)
+                categoryLabel = nodeDefinitionGroup.category;
+            else
+                categoryLabel = uid;
+
+            var categoryUid = "";
+            if (nodeDefinitionGroup.category!=undefined)// && nodeDefinitionGroup.category.trim().length!=0)
+                categoryUid = nodeDefinitionGroup.category.trim();
+            else
+                categoryUid = uid;
+
+            console.log("adding custom nodeDefinitionGroup.categoryItems, categoryUid:"+categoryUid+", categoryLabel:"+categoryLabel);
+            // first create the 'root' category 
+            if (categoryUid.length != 0)
+                RED.palette.createCategoryContainer(categoryUid, "", false, nodeDefinitionGroup.categoryHeaderStyle, categoryLabel);
+            // add the sub-categories
+            RED.palette.addCategories(nodeDefinitionGroup.categoryItems, categoryUid);
+        }
         var types = nodeDefinitionGroup["types"];
         if (types == undefined) {
             RED.notify("error @ RED.nodes.registerNodeDefinitionGroup " + uid + " don't contain a types object", "error", null, 6000);
@@ -347,8 +370,10 @@ RED.nodes = (function() {
 		
         //console.log("nodeDefGroupName:"+nodeDefGroupName);
             if (def.dontShowInPalette == undefined) {
-                if (node_defs[nodeDefGroupName].category != undefined)
+                if (node_defs[nodeDefGroupName].category != undefined && node_defs[nodeDefGroupName].category.trim().length != 0)
                     def.category = node_defs[nodeDefGroupName].category + ((def.category!=undefined && def.category.trim().length != 0)?("-" + def.category):"");
+                else if (node_defs[nodeDefGroupName].categoryItems != undefined && node_defs[nodeDefGroupName].category == undefined)
+                    def.category = nodeDefGroupName + ((def.category!=undefined && def.category.trim().length != 0)?("-" + def.category):"");
                 RED.palette.add(nt,def,undefined,nodeDefGroupName);
             }
         }

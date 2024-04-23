@@ -39,23 +39,6 @@ var NodeBaseCategories = {
 var NodeCategories = {
     ...NodeBaseManicksanCategories,
     ...NodeBaseCategories,
-    /*"test": { 
-        subcats:{ 
-            sub1:{
-                subcats:{
-                    subA:{}, 
-                    subB:{}
-                }
-            }, sub2:{
-
-            }
-        }
-    },*/
-    // TODO. fix so that theese are defined at node def for easier maintainability
-    "FrankBoesing": { label:"Frank Boesing", subcats:{ ...NodeBaseCategories } },
-    "MattKuebrich": { label:"Matt Kuebrich", subcats: { ...NodeBaseCategories } },
-    "Newdigate": { label:"Nic Newdigate", subcats: { legacy: {...NodeBaseCategories}, /*new:{...NodeBaseCategories }*/ }},
-    "chipaudette": { label:"Chip Audette (F32)", subcats: { ...NodeBaseCategories, convert:{} ,radio:{}, config:{} } },
 }
 
 var DEFAULTS_VALUE_TYPE = {
@@ -229,6 +212,8 @@ var NodeDefinitions = {
         category: "template",
          // optional to define the ui label, if not present either category or the node def. group uid is used
         categoryLabel: "template cat",
+        // optional to define the style of the category header
+        categoryHeaderStyle: "background:#FFF",
         // defines the order of categories, here '...NodeBaseCategories' can be used to include standard categories,
         // additional categories can be added as shown 
         categoryItems: { ...NodeBaseCategories, additionalCategory1:{label:"additional category 1", headerStyle:"background:#FFF;"}, additionalCategory2:{}}, 
@@ -261,12 +246,31 @@ var NodeDefinitions = {
         credits: "Jannik LF Svensson",
         homepage: "https://github.com/manicken",
         url: "",
+        category:"", //setting this to a empty string will make it possible to add custom additional categories at root without edit of the NodeCategories at beginning of file
+        categoryItems: {
+            "test": { 
+                subcats: { 
+                    sub1: {
+                        subcats: {
+                            subA:{}, 
+                            subB:{}
+                        }
+                    }, 
+                    sub2: {
+        
+                    }
+                }
+            }
+        },
         types: {
-            /*
+            
             predef_subcatsub_test1: {...AudioTypeBase, shortName: "test1", category: "test-sub1-subA"},
             predef_subcatsub_test2: {...AudioTypeBase, shortName: "test2", category: "test-sub1-subB"},
-            auto_subcat_test: { ...AudioTypeBase, shortName: "auto_subcat_test", outputs: 2, category: "special-newSubCat" },
-            */
+            predef_subcat_testA: {...AudioTypeBase, shortName: "testA", category: "test-sub2"},
+            predef_subcat_testB: {...AudioTypeBase, shortName: "testB", category: "test-sub2"},
+            predef_subcat_testC: {...AudioTypeBase, shortName: "testB", category: "test-sub2-subC"}, // TODO. fix so that category tree is automatically created
+            auto_subcat_test: { ...AudioTypeBase, shortName: "auto_subcat_test", outputs: 2, category: "special-newSubCat" }, // TODO. fix so that category tree is automatically created
+            
             TabOutput: { defaults: { name: {}, id: { "noEdit": "" }, comment: {}, inputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "Out", nonObject: "", inputs: 1, outputs: 0, category: "special", color: "#cce6ff", icon: "arrow-in.png" },
             TabInput: { defaults: { name: {}, id: { "noEdit": "" }, comment: {}, outputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "In", nonObject: "", inputs: 0, outputs: 1, category: "special", color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
@@ -447,8 +451,6 @@ var NodeDefinitions = {
         credits: "Frank Boesing",
         homepage: "https://github.com/FrankBoesing",
         url: "https://github.com/FrankBoesing/Teensy-WavePlayer",
-        
-        category: "FrankBoesing", 
         categoryLabel: "Frank Boesing",
         categoryItems: { ...NodeBaseCategories },
         types: {
@@ -462,7 +464,8 @@ var NodeDefinitions = {
         credits: "Matt Kuebrich",
         homepage: "https://github.com/MattKuebrich",
         url: "https://raw.githubusercontent.com/MattKuebrich/teensy-audio-objects/main", // this is the %root% used for each type
-        category: "MattKuebrich",
+        categoryLabel: "Matt Kuebrich",
+        categoryItems: { ...NodeBaseCategories },
         types: {
             AudioEffectBernoulliGate: { ...AudioTypeArrayBase, shortName: "bernoulligate", category:"effect", url:"%root%/bernoulligate", outputs:2, inputs:1, outDesc:{0:"Bernoulli Gate Ouput A",1:"Bernoulli Gate Ouput B"}, inpDesc:{0:"Signal Input"} },
             AudioSynthBytebeat: { ...AudioTypeArrayBase, shortName:"bytebeat", category:"synth", url:"%root%/bytebeat/bytebeat_simple", outputs:1, outDesc:{0:"Bytebeat Output"} },
@@ -490,7 +493,8 @@ var NodeDefinitions = {
         credits: "Nic Newdigate",
         homepage: "https://github.com/newdigate",
         url: "",
-        category: "Newdigate",
+        categoryLabel: "Nic Newdigate",
+        categoryItems: { legacy: {...NodeBaseCategories} },
         types: {
             AudioInputSharedAD7606: { ...AudioTypeArrayBase, shortName:"ad7606", category:"legacy", url:"", outputs:8},
             AudioOutputSharedAD5754Dual: { ...AudioTypeArrayBase, shortName:"ad5754", category:"legacy", url:"", inputs:8},
@@ -511,7 +515,8 @@ var NodeDefinitions = {
         credits: "Chip Audette",
         homepage: "https://github.com/chipaudette",
         url: "https://api.github.com/repos/chipaudette/OpenAudio_ArduinoLibrary/contents/",
-        category: "chipaudette",
+        categoryLabel: "Chip Audette",
+        categoryItems: { ...NodeBaseCategories, convert:{} ,radio:{}, config:{} },
         types: {
             AudioAlignLR_F32: { ...AudioTypeArrayBase, shortName: "alignLR_f32", category: "analyze", sourceFile: "AudioAlignLR_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x3": "f32"}},
             AudioAnalyzePhase_F32: { ...AudioTypeArrayBase, shortName: "analyzePhase_f32", category: "analyze", sourceFile: "AudioAnalyzePhase_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
