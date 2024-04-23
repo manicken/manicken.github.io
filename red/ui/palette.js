@@ -262,8 +262,13 @@ RED.palette = (function() {
 
 		if (category == undefined)
 		{
-			category = def.category;
+			if (def.category != undefined && def.category.trim().length != 0)
+				category = def.category;
+			else
+				category = "unsorted";
 		}
+
+			
 
 		//console.warn("add addNodeType:@" + category + ":" + def.shortName);
 		if ($("#palette-node-"+category +"-"+nt).length)
@@ -325,13 +330,27 @@ RED.palette = (function() {
 			d.appendChild(portIn);
 		}
 
-		if (categoryNotExists(category)){
-			console.warn("create missing palette category:" + category);
-			createCategoryContainer(category, "");
+		if (categoryNotExists(category) && category.length != 0){
+			
+			var treeItems = category.split("-");
+			for (var i = 1; i <= treeItems.length; i++) {
+				var treePath = treeItems.slice(0, i).join("-");
+				
+				if (categoryNotExists(treePath))
+				{
+					treePath = treeItems.slice(0, i-1).join("-");
+					var category = treeItems[i-1];
+					
+					console.warn("create missing palette category:" + category + " in " + (treePath.length!=0?treePath:"ROOT (" + ROOT_CONTAINER_ID + ")"));
+					createCategoryContainer(category, treePath);
+					
+				}
+			}
+			//createCategoryContainer(category, "");
 		}
 		activateWholeCategoryTree(category);
-		
-		$(`#${ROOT_CONTAINER_ID}-${category}`).append(d);
+		var categoryContainerId = ROOT_CONTAINER_ID + (category.length!=0?("-"+category):"")
+		$("#"+categoryContainerId).append(d);
 
 		d.onmousedown = function(e) { e.preventDefault(); };
 
