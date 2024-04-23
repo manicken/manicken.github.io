@@ -246,7 +246,7 @@ var NodeDefinitions = {
         credits: "Jannik LF Svensson",
         homepage: "https://github.com/manicken",
         url: "",
-        category:"", //setting this to a empty string will make it possible to add custom additional categories at root without edit of the NodeCategories at beginning of file
+        /*category:"", //setting this to a empty string will make it possible to add custom additional categories at root without edit of the NodeCategories at beginning of file
         categoryItems: {
             "test": { 
                 subcats: { 
@@ -261,17 +261,17 @@ var NodeDefinitions = {
                     }
                 }
             }
-        },
+        },*/
         types: {
             
-            predef_subcatsub_test1: {...AudioTypeBase, shortName: "test1", category: "test-sub1-subA"},
+            /*predef_subcatsub_test1: {...AudioTypeBase, shortName: "test1", category: "test-sub1-subA"},
             predef_subcatsub_test2: {...AudioTypeBase, shortName: "test2", category: "test-sub1-subB"},
             predef_subcat_testA: {...AudioTypeBase, shortName: "testA", category: "test-sub2"},
             predef_subcat_testB: {...AudioTypeBase, shortName: "testB", category: "test-sub2"},
             predef_subcat_testC: {...AudioTypeBase, shortName: "testB", category: "test-sub2-subC"}, // this category tree is automatically created
             auto_subcat_test1: { ...AudioTypeBase, shortName: "auto_subcat_test", outputs: 2, category: "special-newSubCat" }, // this category tree is automatically created
             auto_subcat_test2: { ...AudioTypeBase, shortName: "auto_subcat_test2", outputs: 2, category: "newSubCat" },
-            auto_subcat_test3: { ...AudioTypeBase, shortName: "auto_subcat_test3", outputs: 2, category: "" },
+            auto_subcat_test3: { ...AudioTypeBase, shortName: "auto_subcat_test3", outputs: 2, category: "" },*/
             
             TabOutput: { defaults: { name: {}, id: { "noEdit": "" }, comment: {}, inputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "Out", nonObject: "", inputs: 1, outputs: 0, category: "special", color: "#cce6ff", icon: "arrow-in.png" },
             TabInput: { defaults: { name: {}, id: { "noEdit": "" }, comment: {}, outputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "In", nonObject: "", inputs: 0, outputs: 1, category: "special", color: "#cce6ff", icon: "arrow-in.png", align: "right" },
