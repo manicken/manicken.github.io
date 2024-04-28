@@ -1097,7 +1097,11 @@ var osc = osc || {};
             var arg = args[i],
                 msgArg;
 
-            if (typeof (arg) === "object" && arg.type != undefined && arg.value != undefined) {
+            if (typeof (arg) === "object" && arg.type != undefined && 
+				(arg.value != undefined
+				|| (arg.type == 'T' || arg.type == 'F'))
+				) 
+			{
                 // We've got an explicitly typed argument.
                 console.trace("osc object:" + JSON.stringify(arg));
                 msgArg = arg;
