@@ -122,7 +122,7 @@ RED.palette = (function() {
 	// TODO rename destContainer to categoryPath or something better
 	function addCategories(categories, categoryPath="")
 	{
-		console.log("addCategories into:" + categoryPath);
+		//console.log("addCategories into:" + categoryPath);
 		var names = Object.getOwnPropertyNames(categories);
 		for (var i = 0; i < names.length; i++)
 		{
@@ -130,20 +130,22 @@ RED.palette = (function() {
             var cat = categories[name];
 			var expanded = (cat.expanded!=undefined)?cat.expanded:false;
 			//expanded = true;
-			createCategoryContainer(name, categoryPath, expanded, cat.headerStyle, cat.label);
+			createCategoryContainer(name, categoryPath, expanded, cat.headerStyle, cat.label, cat.description);
 			if (cat.subcats != undefined)
 				addCategories(cat.subcats, ((categoryPath.length!=0)?(categoryPath+"-"):"") + name);
 		}
 	}
-	function createCategoryContainer(category, categoryPath, expanded, headerStyle, headerText){
+	function createCategoryContainer(categoryUid, categoryPath, expanded, headerStyle, headerText, headerPopupText){
 		if (categoryPath == undefined) categoryPath = "";
 		categoryPath = categoryPath.trim();
 
-		console.log("%c creating new category: " + category + " in " + ((categoryPath.length!=0)?categoryPath:"ROOT ("+ROOT_CONTAINER_ID+")"), "font-weight: bold; font-size:14px; background: #ECFFDC; padding:5px; padding-right:30%; padding-left:10px;");
+		//console.log("%c creating new category: " + category + " in " + ((categoryPath.length!=0)?categoryPath:"ROOT ("+ROOT_CONTAINER_ID+")"), "font-weight: bold; font-size:14px; background: #ECFFDC; padding:5px; padding-right:30%; padding-left:10px;");
 		
 		var palette_category_class = CATEGORY_BASE;
 		var palette_header_class = CATEGORY_HEADER;
-		if (headerText == undefined) headerText = category;
+		 
+		if (headerText == undefined)
+			headerText = categoryUid;
 		
 		if (categoryPath.length != 0)
 		{
@@ -153,24 +155,27 @@ RED.palette = (function() {
 
 		headerStyle = (headerStyle!=undefined?(`style="${headerStyle}"`):"");
 
-		var subPath = ((categoryPath.length!=0)?(categoryPath+"-"):"") + category;
+		var subPath = ((categoryPath.length!=0)?(categoryPath+"-"):"") + categoryUid;
 		var headerId = CATEGORY_HEADER+"-"+subPath;
-		var categoryId = CATEGORY_BASE+"-"+subPath;
+		var categoryElementId = CATEGORY_BASE+"-"+subPath;
 		var containerId = "";
 		if (categoryPath.length == 0) containerId = ROOT_CONTAINER_ID;
 		else containerId = ROOT_CONTAINER_ID+"-"+categoryPath;
-
+		var hiddenByDefault = "hidden no-border";
+		if (hiddenByDefault == undefined) var hiddenByDefault = "";
 		$("#" + containerId).append(
-			`<div class="${palette_category_class} hidden no-border" id="${categoryId}">`+
+			`<div class="${palette_category_class} ${hiddenByDefault}" id="${categoryElementId}">`+
 			 `<div class="${palette_header_class} " id="${headerId}" ${headerStyle}>`+
 			 `<div class="${palette_header_class} contents" ${headerStyle}><i class="icon-chevron-down${(expanded?" expanded":"")}"></i><span>${headerText}</span></div>`+
 			 '</div>'+
-			 `<div class="${CATEGORY_CONTENT_BASE_CLASS}" id="${containerId}-${category}" style="display: ${(expanded?"block":"none")};"></div>`+
+			 `<div class="${CATEGORY_CONTENT_BASE_CLASS}" id="${containerId}-${categoryUid}" style="display: ${(expanded?"block":"none")};"></div>`+
 			'</div>'
 		);
-		setCategoryClickFunction(category, categoryPath);
+		if (headerPopupText != undefined)
+			RED.main.SetPopOver("#"+headerId, headerPopupText, "right");
+		setCategoryClickFunction(categoryUid, categoryPath);
 	}
-	function setCategoryClickFunction(category,categoryPath)
+	function setCategoryClickFunction(categoryUid,categoryPath)
 	{
 		var headerClass = "";
 		if (categoryPath == undefined) categoryPath = "";
@@ -178,7 +183,7 @@ RED.palette = (function() {
 		if (categoryPath.length != 0) headerClass = CATEGORY_HEADER + ".sub-cat";
 		else headerClass = CATEGORY_HEADER;
 		//console.warn("@setCategoryClick Function, category:" +category + ", categoryPath:" + categoryPath + ", headerClass:" + headerClass);
-		var id = CATEGORY_HEADER+((categoryPath.length!=0)?("-"+categoryPath):"")+"-"+category;
+		var id = CATEGORY_HEADER+((categoryPath.length!=0)?("-"+categoryPath):"")+"-"+categoryUid;
 		//console.warn("id:" + id);
 		$("#"+id).off('click').on('click', function(e) {
 			
@@ -258,21 +263,28 @@ RED.palette = (function() {
 			//$("#" + ROOT_CONTAINER_ID + "-" + treePath).removeClass("no-border");
 		}
 	}
-	function addNodeType(nt,def, category, nodeDefGroupName) { // externally RED.palettte.add
-
+	function addNodeType(nt,def, category, nodeDefGroupName, isInSubCat, allInOneCat) { // externally RED.palettte.add
 		if (category == undefined)
 		{
+			console.log("addNodeType == undefined @ " + nt);
 			if (def.category != undefined && def.category.trim().length != 0)
-				category = def.category;
+				category = (isInSubCat?(nodeDefGroupName + "-"):"") + def.category;
 			else
-				category = "unsorted";
+				category = (isInSubCat?nodeDefGroupName:"unsorted");
 		}
-
+		else if (allInOneCat == undefined)
+		{
+			console.log("addNodeType != undefined @ " + nt);
+			if (def.category != undefined && def.category.trim().length != 0)
+				category = ((category.trim().length != 0)?(category + "-"):"") + (isInSubCat?(nodeDefGroupName + "-"):"") + def.category;
+		}
 			
 
-		//console.warn("add addNodeType:@" + category + ":" + def.shortName);
-		if ($("#palette-node-"+category +"-"+nt).length)
+		//console.warn("add addNodeType:"+nt+" @ " + category + ", shortName:" + def.shortName);
+		if ($("#palette-node-"+category +"-"+nt.replace('/','')).length)
 			return;		// avoid duplicates
+
+		//console.warn("add addNodeType:"+nt+" @ " + category + ", shortName:" + def.shortName);
 
 		var d = document.createElement("div");
 		
@@ -331,7 +343,7 @@ RED.palette = (function() {
 		}
 
 		if (categoryNotExists(category) && category.length != 0){
-			
+			console.log("categoryNotExists:" + category);
 			var treeItems = category.split("-");
 			for (var i = 1; i <= treeItems.length; i++) {
 				var treePath = treeItems.slice(0, i).join("-");
@@ -339,10 +351,10 @@ RED.palette = (function() {
 				if (categoryNotExists(treePath))
 				{
 					treePath = treeItems.slice(0, i-1).join("-");
-					var category = treeItems[i-1];
+					var subCategory = treeItems[i-1];
 					
-					console.warn("create missing palette category:" + category + " in " + (treePath.length!=0?treePath:"ROOT (" + ROOT_CONTAINER_ID + ")"));
-					createCategoryContainer(category, treePath);
+					console.warn("create missing palette category:" + subCategory + " in " + (treePath.length!=0?treePath:"ROOT (" + ROOT_CONTAINER_ID + ")"));
+					createCategoryContainer(subCategory, treePath);
 					
 				}
 			}
@@ -350,6 +362,8 @@ RED.palette = (function() {
 		}
 		activateWholeCategoryTree(category);
 		var categoryContainerId = ROOT_CONTAINER_ID + (category.length!=0?("-"+category):"")
+
+		//console.log("add node type in:"+categoryContainerId);
 		$("#"+categoryContainerId).append(d);
 
 		d.onmousedown = function(e) { e.preventDefault(); };

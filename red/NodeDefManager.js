@@ -37,12 +37,15 @@ RED.NodeDefManager = (function() {
     var newItemDialogOk_cb;
 
     var newItemUid = "";
+    var NodeBaseCategoriesStr = JSON.stringify({...NodeBaseCategories});
+    console.log(NodeBaseCategoriesStr);
     var newGroup = {
         isAddon: true,
-        label:"",
         description:"",
         credits:"",
         homepage:"",
+        categoryLabel:"",
+        categoryItems:NodeBaseCategoriesStr,
         url:"",
         types:newTypes()
     }

@@ -22,7 +22,7 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         faustLinkExtId:"",
-        version:11,
+        version:12,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -106,7 +106,12 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                 "* changed Welcome message<br>",
             "9":"* added setting 'Export Instanced Tabs Only' @ Teensy/C++ - Export, that will allow non instanced classes/tabs to be exported as well.<br>",
             "10":"* fix a undefined bug @ function getNodeByName(name,nodes,wsId) where it would not check for undefined after trying to retreive workspace by id<br>",
-            "11":"* isCodeFile now includes .ino as well, which would include the 'main c++' as well when exporting class as non-zip"
+            "11":"* isCodeFile now includes .ino as well, which would include the 'main c++' as well when exporting class as non-zip",
+            "12":"* added functionality so that node def. categories order can be defined in the NodeDefinitions list (@NodeDefinitions.js)<br>"+
+                 "* undefined categories are created automatically using the following structure: root-sub1-sub2 and so on<br>"+
+                 "* added several unofficial audio object types using the above new structures<br>"+
+                 "* now show popup to show info about the unofficial audio objects<br>"+
+                 "* categories can now have a description field to describe what that specific category is for"
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

@@ -215,7 +215,8 @@ class REDLinkInfo
 
 RED.nodes = (function() {
 
-	var node_defs = {};
+	var node_defs = {}; // TODO remove this and direct use NodeDefinitions in NodeDefinitions.js
+
     /** @type {REDWorkspace[]} */
     var workspaces = [];
     //var iconSets = {};
@@ -305,21 +306,17 @@ RED.nodes = (function() {
             var categoryLabel = "";
             if (nodeDefinitionGroup.categoryLabel!=undefined && nodeDefinitionGroup.categoryLabel.trim().length!=0)
                 categoryLabel = nodeDefinitionGroup.categoryLabel;
-            else if (nodeDefinitionGroup.category!=undefined && nodeDefinitionGroup.category.trim().length!=0)
-                categoryLabel = nodeDefinitionGroup.category;
             else
                 categoryLabel = uid;
 
-            var categoryUid = "";
-            if (nodeDefinitionGroup.category!=undefined)// && nodeDefinitionGroup.category.trim().length!=0)
-                categoryUid = nodeDefinitionGroup.category.trim();
-            else
-                categoryUid = uid;
+            var categoryUid = uid;
+
+            var categoryPopupText = `<b>${nodeDefinitionGroup.credits}'s AudioObjects</b><br><br>${nodeDefinitionGroup.description}<br>${nodeDefinitionGroup.homepage}`;
 
             console.log("adding custom nodeDefinitionGroup.categoryItems, categoryUid:"+categoryUid+", categoryLabel:"+categoryLabel);
             // first create the 'root' category 
             if (categoryUid.length != 0)
-                RED.palette.createCategoryContainer(categoryUid, "", false, nodeDefinitionGroup.categoryHeaderStyle, categoryLabel);
+                RED.palette.createCategoryContainer(categoryUid, "", false, nodeDefinitionGroup.categoryHeaderStyle, categoryLabel, categoryPopupText);
             // add the sub-categories
             RED.palette.addCategories(nodeDefinitionGroup.categoryItems, categoryUid);
         }
@@ -348,7 +345,7 @@ RED.nodes = (function() {
         node_defs[nodeDefGroupName].types[nt] = def;
 
         // fix old type of category def.
-        if (def.category.endsWith("-function")) def.category = def.category.replace("-function", "");
+        if (def.category != undefined && def.category.endsWith("-function")) def.category = def.category.replace("-function", "");
 
         if (def.defaults == undefined) return; // discard this node def
 
@@ -369,12 +366,11 @@ RED.nodes = (function() {
         try{
 		
         //console.log("nodeDefGroupName:"+nodeDefGroupName);
+            
             if (def.dontShowInPalette == undefined) {
-                if (node_defs[nodeDefGroupName].category != undefined && node_defs[nodeDefGroupName].category.trim().length != 0)
-                    def.category = node_defs[nodeDefGroupName].category + ((def.category!=undefined && def.category.trim().length != 0)?("-" + def.category):"");
-                else if (node_defs[nodeDefGroupName].categoryItems != undefined && node_defs[nodeDefGroupName].category == undefined)
-                    def.category = nodeDefGroupName + ((def.category!=undefined && def.category.trim().length != 0)?("-" + def.category):"");
-                RED.palette.add(nt,def,undefined,nodeDefGroupName);
+
+                var isInSubCat = node_defs[nodeDefGroupName].categoryItems != undefined;
+                RED.palette.add(nt,def,node_defs[nodeDefGroupName].categoryRoot,nodeDefGroupName,isInSubCat);
             }
         }
         catch (ex) { console.error(ex);RED.notify("<strong>Warning</strong>: Fail to add this type to the palette<br>" + nt,"warning");} // failsafe
@@ -605,7 +601,7 @@ RED.nodes = (function() {
 	function checkForIO() {
 		var hasIO = false;
 		eachNode(function (node) {
-
+            if (node._def.category == undefined) return;
 			if (node._def.category.startsWith("input-") ||
 				node._def.category.startsWith("output-")) {
 				hasIO = true;
@@ -2365,7 +2361,7 @@ RED.nodes = (function() {
             if (n._def.category.startsWith("output")) return;
             if (n._def.category.startsWith("control")) return;
 
-            RED.palette.add(n.type, n._def, "used");
+            RED.palette.add(n.type, n._def, "used", undefined, undefined, true);
                 //console.error(nodes[i].type);
         });
 	}
