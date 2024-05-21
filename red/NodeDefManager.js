@@ -22,6 +22,8 @@ RED.NodeDefManager = (function() {
         description:"",
         credits:"",
         homepage:"",
+        categoryLabel:"",
+        categoryItems:{...NodeBaseCategories},
         url:"https://api.github.com/repos/[user]/[repository]/contents/[subpath if any]"
     }
     var groupPropertyTooltips = {
@@ -37,15 +39,15 @@ RED.NodeDefManager = (function() {
     var newItemDialogOk_cb;
 
     var newItemUid = "";
-    var NodeBaseCategoriesStr = JSON.stringify({...NodeBaseCategories});
-    console.log(NodeBaseCategoriesStr);
+    //var NodeBaseCategoriesStr = JSON.stringify({...NodeBaseCategories});
+    //console.log(NodeBaseCategoriesStr);
     var newGroup = {
         isAddon: true,
         description:"",
         credits:"",
         homepage:"",
         categoryLabel:"",
-        categoryItems:NodeBaseCategoriesStr,
+        categoryItems:{},
         url:"",
         types:newTypes()
     }
@@ -251,6 +253,7 @@ RED.NodeDefManager = (function() {
         if ( d3.select(this).classed("disabled") == true) return;
         if (verifyCurrentEdit() == false) return;
         var text = getTextAreaText();
+        text = preprocessAndParse(text);
         var obj = JSON.parse(text);
         if (currentSelectedItem.name != undefined) { // Node Type Selected
             RED.nodes.registerType(currentSelectedItem.name, obj, currentSelectedItem.groupName);
@@ -267,15 +270,65 @@ RED.NodeDefManager = (function() {
         }
         RED.storage.update();
     }
+    // Function to access nested properties using a dot-separated string
+    function getNestedProperty(obj, path) {
+        return path.split('.').reduce((o, p) => o && o[p], obj);
+    }
+
+    // Function to preprocess and parse the input string
+    function preprocessAndParse(inputString) {
+        // Use a regular expression to find all spread operators and their variable names
+        //var spreadRegex = /\.\.\.([a-zA-Z_$][0-9a-zA-Z_$]*)/g;
+
+        // Use a regular expression to find all spread operators and their variable names including nested properties
+        //var spreadRegex = /\.\.\.([a-zA-Z_$][0-9a-zA-Z_$\.\[\]]*)/g;
+
+        // also Allow for optional spaces around the spread operator and the variable name
+        var spreadRegex = /\.\.\.\s*([a-zA-Z_$][0-9a-zA-Z_$\.\[\]]*)\s*/g;
+
+        var match;
+        var globalVars = {};
+
+        // Iterate through all matches
+        while ((match = spreadRegex.exec(inputString)) !== null) {
+            var varName = match[1];
+            
+            // Access the global variable or nested property
+            var value = getNestedProperty(window, varName);
+            if (value !== undefined) {
+                globalVars[varName] = JSON.stringify(value).slice(1, -1); // Remove surrounding {}
+            } else {
+                throw new Error(`<br>Global variable or property:<br><br><b>${varName}</b><br><br>is not defined`);
+            }
+        }
+
+        // Replace the spread operators in the input string with the corresponding global variable values
+        var processedString = inputString.replace(spreadRegex, (match, varName) => {
+            console.log("match:" + varName);
+            return globalVars[varName];
+        });
+
+        // Ensure the processed string is valid JSON by replacing single quotes with double quotes
+        processedString = processedString.replace(/'/g, '"');
+
+        // Add surrounding braces to make it a valid JSON object
+        //processedString = '{' + processedString + '}';
+
+        // Parse the JSON string into an object
+        return processedString;
+    }
     function verifyCurrentEdit() {
         var id = textArea.attr('id');
         var text = getTextAreaText();
         try {
+            text = preprocessAndParse(text);
+            console.log("preprocessed text:" + text);
             JSON.parse(text);
             $("#"+id).removeClass("input-error");
             return true;
         } catch (ex) {
             RED.notify(ex, "warn", null, 4000);
+            console.log(ex);
             $("#"+id).addClass("input-error");
             return false;
         }
@@ -285,6 +338,7 @@ RED.NodeDefManager = (function() {
         var id = "aceEditor3";
         var text = ace.edit("aceEditor3").getValue();
         try {
+            text = preprocessAndParse(text);
             JSON.parse(text);
             $("#"+id).removeClass("input-error");
             return true;
@@ -624,7 +678,10 @@ RED.NodeDefManager = (function() {
             var n = names[i];
             if (n == "isAddon" || n == "types") continue;
             newGroup[n] = groupPropertyDefaults[n];
-            CreateInputBoxWithLabel(form, n, n, groupPropertyDefaults[n], "string", groupPropertyTooltips[n], function(value, propertyName) { newGroup[propertyName] = value; });
+            if (typeof groupPropertyDefaults[n] != "object")
+                CreateInputBoxWithLabel(form, n, n, groupPropertyDefaults[n], "string", groupPropertyTooltips[n], function(value, propertyName) { newGroup[propertyName] = value; });
+            //else
+            //    CreateInputBoxWithLabel(form, n, n, JSON.stringify(groupPropertyDefaults[n]), "string", groupPropertyTooltips[n], function(value, propertyName) { newGroup[propertyName] = value; });
         }
     }
     function VerifyGroupUid(uid) {
@@ -686,6 +743,7 @@ RED.NodeDefManager = (function() {
 
     function VerifyNodeTypeJSON(jsonString,id) {
         try {
+            jsonString = preprocessAndParse(jsonString);
             var parsedJSON = JSON.parse(jsonString);
             newNodeTypeParsed = parsedJSON;
             $("#" + id).removeClass("input-error");

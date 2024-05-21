@@ -22,7 +22,7 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         faustLinkExtId:"",
-        version:12,
+        version:13,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -111,7 +111,11 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                  "* undefined categories are created automatically using the following structure: root-sub1-sub2 and so on<br>"+
                  "* added several unofficial audio object types using the above new structures<br>"+
                  "* now show popup to show info about the unofficial audio objects<br>"+
-                 "* categories can now have a description field to describe what that specific category is for"
+                 "* categories can now have a description field to describe what that specific category is for",
+            "13":"* the spread operator <b>...</b> can now be used when creating new 'node types' and/or 'groups' in <b>Node Definitions Manager</b><br>"+
+                 "&nbsp;&nbsp;* note: nested properties are allowed: i.e. root.sub<br>"+
+                 "&nbsp;&nbsp;* note: using the spread operator is a one way operation and<br>"+
+                 "&nbsp;&nbsp;&nbsp;&nbsp;the <b>editor json string</b> is replaced with the spreaded(expanded) <b>json string</b> if 'reopened'"
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
