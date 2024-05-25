@@ -544,6 +544,7 @@ RED.arduino.export2 = (function () {
         var useExportDialog = ((RED.arduino.settings.useExportDialog == true) ||
                                (generateZip == false) || 
                                (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) || 
+                               (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE) ||
                                (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT));
         
         if (useExportDialog == true) 
@@ -584,11 +585,8 @@ RED.arduino.export2 = (function () {
     function export_workspace(coex, ws) {
         var wse = new WsExport(ws);
         coex.keywords.push({token:ws.label, type:"KEYWORD2"});
-        
-        coex.ac.workspaceId = ws.id;
-        coex.ac.count = 1;
-        coex.ac.totalCount = 0;
-        
+
+        // add nodes (Audio objects, special nodes, class nodes)
         for (var i = 0; i < ws.nodes.length; i++) {
             var n = ws.nodes[i];
 
@@ -614,8 +612,14 @@ RED.arduino.export2 = (function () {
                 console.warn("!!!!WARNING!!!! (unhandled nonObject)\n" + n.type); // in case we forgot something
                 continue; // skip
             }
+            else
+            {
+
+            }
 
             // Audio Control/class node without any IO
+            // TODO. to make objects that don't have any io have a special def identifier
+            // both to make this code clearer and to sort non Audio Control objects in a different list
             if ((n.outputs <= 0) && (n.inputs <= 0) && (n._def.inputs <= 0) && (n._def.outputs <= 0)) { 
                 var name = getName(n);
                 var typeName = getTypeName(n);
@@ -634,26 +638,33 @@ RED.arduino.export2 = (function () {
                 var comment = (n.comment!=undefined && n.comment.trim().length != 0)?n.comment:"";
                 wse.audioObjects.push({name, typeName, comment});
             }
-            // add audio object wires/connections
-            var src = n;//RED.nodes.node(n.id, n.z);
+        }
 
-            RED.nodes.nodeEachLink(n, function (srcPortIndex, dst, dstPortIndex)
+        coex.ac.workspaceId = ws.id;
+        coex.ac.count = 1;
+        coex.ac.totalCount = 0;
+        // add audio object wires/connections
+        for (var i = 0;i<ws.links.length; i++) {
+            var src = ws.links[i].source;
+            var dst = ws.links[i].target;
+            var srcPortIndex = ws.links[i].sourcePort;
+            var dstPortIndex = ws.links[i].targetPort;
+            
+            if (src.type == "TabInput" || dst.type == "TabOutput") continue; // ignore these 'virtual' wires they are created outside the class
+            if (src.type.startsWith("Junction")) continue; // wires coming out from junctions are ignored
+
+            if (dst.type.startsWith("Junction"))
             {
-                if (src.type == "TabInput" || dst.type == "TabOutput") return; // now with JSON string at top, place-holders not needed anymore
-
-                if (dst.type.startsWith("Junction"))
-                {
-                    var dstNodes = { nodes: [] };
-                    getJunctionFinalDestinations(dst, dstNodes);
-                    for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
-                        if (src === dstNodes.nodes[dni].node) continue; // failsafe, can't make connections back to itself
-                        appendAudioConnection_s(wse, coex.ac, src, dstNodes.nodes[dni].node, srcPortIndex, dstNodes.nodes[dni].dstPortIndex);
-                    }
+                var dstNodes = { nodes: [] };
+                getJunctionFinalDestinations(dst, dstNodes);
+                for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
+                    if (src === dstNodes.nodes[dni].node) continue; // failsafe, can't make connections back to itself
+                    appendAudioConnection_s(wse, coex.ac, src, dstNodes.nodes[dni].node, srcPortIndex, dstNodes.nodes[dni].dstPortIndex);
                 }
-                else {
-                    appendAudioConnection_s(wse, coex.ac, src, dst, srcPortIndex, dstPortIndex);
-                }
-            });
+            }
+            else {
+                appendAudioConnection_s(wse, coex.ac, src, dst, srcPortIndex, dstPortIndex);
+            }
         }
         wse.acArrayLength = coex.ac.arrayLength; // workaround for now TODO remove usage
         wse.totalAudioConnectionCount = coex.ac.totalCount;
@@ -729,6 +740,12 @@ RED.arduino.export2 = (function () {
         }
         else if (n.type == "BusJoin" || n.type == "BusSplit") {
             // don't do anything with BusJoin/BusSplit as they are only virtual objects
+        }
+        else if (n.type == "Comment") {
+            // don't do anything with comments for now, they are mostly visual objects to comment things
+        }
+        else if (n.type == "group") {
+            // don't do anything with groups, they are only virtual objects
         }
         else
             return false;
@@ -947,6 +964,15 @@ RED.arduino.export2 = (function () {
     }
     function getCppFooter() {
         return "// " + RED.arduino.settings.ProjectName + ": end automatically generated code\n";
+    }
+    function getJunctionFinalDestinations(junctionNode, dstNodes) {
+        RED.nodes.nodeEachLink(junctionNode, function (srcPortIndex, dst, dstPortIndex)
+        {
+            if (dst.type.startsWith("Junction"))
+                getJunctionFinalDestinations(dst, dstNodes);
+            else
+                dstNodes.nodes.push({ node: dst, dstPortIndex: dstPortIndex });
+        });
     }
 
     return {

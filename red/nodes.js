@@ -864,6 +864,8 @@ RED.nodes = (function() {
 			if (n._def.defaults.hasOwnProperty(d)) {
 				if (d === "nodes")
 					node[d] = getNodesIds(n[d]);
+                else if (n._def.defaults[d].type!=undefined && n._def.defaults[d].type == "dontsave")
+                    continue;
 				else if (d != "color")
 					node[d] = n[d];
 			}
@@ -925,21 +927,6 @@ RED.nodes = (function() {
 		for (var n=0;n<set.length;n++) {
 			var node = set[n].n;
 			var convertedNode = RED.nodes.convertNode(node);
-			/*for (var d in node._def.defaults) {
-				if (node._def.defaults[d].type && node[d] in configNodes) {
-					var confNode = configNodes[node[d]];
-					var exportable = getType(node._def.defaults[d].type).exportable;
-					if ((exportable == null || exportable)) {
-						if (!(node[d] in exportedConfigNodes)) {
-							exportedConfigNodes[node[d]] = true;
-							nns.unshift(RED.nodes.convertNode(confNode));
-						}
-					} else {
-						convertedNode[d] = "";
-					}
-				}
-			}*/
-
 			nns.push(convertedNode);
 		}
 		return nns;
@@ -1494,10 +1481,16 @@ RED.nodes = (function() {
             }
         }
         for (var d2 in node._def.defaults) {
+            
             if (node._def.defaults.hasOwnProperty(d2)) {
+                //console.log("node._def.defaults.hasOwnProperty(d2) d2=" + d2 + " " + nn[d2]);
                 if (d2 == "name" || d2 == "id") continue;
-                node[d2] = nn[d2];
-                
+                if (nn[d2] == undefined && node._def.defaults[d2].value != undefined) { 
+                    node[d2] = node._def.defaults[d2].value;
+                    console.warn("setting default value for new property: "+d2 + " @ " + node._def.defaults[d2].value);
+                }
+                else
+                    node[d2] = nn[d2];
             }
         }
         if (nn.bgColor == undefined)	node.bgColor = node._def.color; 
@@ -1940,6 +1933,7 @@ RED.nodes = (function() {
 		}
 		var port
 		console.log("ERROR! could not find the class, portType:" + portType + " with portIndex:" + portIndex);
+        return undefined;
 	}
 	
 	function classOutputPortToCpp(nns, tabOutNodes, ac, classNode)
@@ -1947,7 +1941,7 @@ RED.nodes = (function() {
 		var outputNode = getClassPortNode(tabOutNodes, classNode, ac.srcPort);
 		if (!outputNode)
 		{
-			 console.log("could not getClassPortNode:" + classNode.name + ", ac.srcPort:" + ac.srcPort);
+			 console.trace("could not getClassPortNode:" + classNode.name + ", ac.srcPort:" + ac.srcPort);
 			 return false;
 		} // abort
 

@@ -266,7 +266,7 @@ RED.palette = (function() {
 	function addNodeType(nt,def, category, nodeDefGroupName, isInSubCat, allInOneCat) { // externally RED.palettte.add
 		if (category == undefined)
 		{
-			console.log("addNodeType == undefined @ " + nt);
+			//console.log("addNodeType == undefined @ " + nt);
 			if (def.category != undefined && def.category.trim().length != 0)
 				category = (isInSubCat?(nodeDefGroupName + "-"):"") + def.category;
 			else
@@ -274,7 +274,7 @@ RED.palette = (function() {
 		}
 		else if (allInOneCat == undefined)
 		{
-			console.log("addNodeType != undefined @ " + nt);
+			//console.log("addNodeType != undefined @ " + nt);
 			if (def.category != undefined && def.category.trim().length != 0)
 				category = ((category.trim().length != 0)?(category + "-"):"") + (isInSubCat?(nodeDefGroupName + "-"):"") + def.category;
 		}

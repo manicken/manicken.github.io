@@ -406,6 +406,7 @@ var OSC = (function() {
         while (1) { // this is dangerous so special care must be taken
             if (vts[vti] == "T" || vts[vti] == "F") {
                 packet.args.push({type:vts[vti++]});
+                vi++; // absorb dummy parameter (h4yn0nnym0u5e)
             }
             else {
                 packet.args.push({type:vts[vti++], value:vs[vi++]});

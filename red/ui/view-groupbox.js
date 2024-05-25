@@ -506,6 +506,7 @@ RED.view.groupbox = (function() {
 	}
 	function redraw_groups(fullUpdate)
 	{
+		//console.log("whello");
 		var visGroupAll = redraw_groups_init();
 
 		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace

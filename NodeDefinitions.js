@@ -7,6 +7,13 @@ var ioSubCats = {
     "other": { headerStyle: "background: #E3E3E3;" }
 }
 
+const htmlContent = /*html*/`
+  <div>
+    <h1>Hello, World!</h1>
+    <p>This is a paragraph.</p>
+  </div>
+`;
+
 // TODO. add tooltip popup functionality for categories
 // each category can have the following optional fields,
 // with examples:
@@ -49,12 +56,16 @@ var DEFAULTS_VALUE_TYPE = {
 //InputOutputCompatibilityMetadata is at end of this file
 
 var dynInputMixers_Help = "note. Hover the Inputs fields for more information";
-var dynInputMixers_Inputs_Help = "Tool Visual Inputs<br>note. this is disabled when using LinkDropOnNodeAppend<br>together with<br>DyninputAutoExpandOnLinkDrop<br>or<br>DyninputAutoReduceOnLinkRemove<br><br>Don't know if there is any point of having<br>either the mentioned settings or this Inputs field,<br>as the dynamic resize could be normal behaviour.";
-var dynInputMixers_ExtraInputs_Help = "Extra Inputs is intended to replace the Visual Inputs in future exports,<br>Extra Inputs should then be used to create a mixer with extra inputs,<br>this would then make it possible to connect additional sources at runtime.<br>For the OSC live edit this would also then not requiring the mixer to be resized at runtime thus saving alot of required OSC messages.";
-var dynInputMixers_RealInputs_Help = "this is to show the real input count of the mixer<br>i.e. the size of the mixer when exported";
-// the following utilizes eval to determine the readonly state of the inputs field
-// instead of hardcoding it into the editor.js module
-var dynInputMixers_Inputs_ReadOnly = "RED.main.settings.LinkDropOnNodeAppend == true && (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true)";
+var dynInputMixers_Inputs_Help = /*html*/ `Tool Visual Inputs<br>note. this is disabled when using LinkDropOnNodeAppend<br>together with<br>DyninputAutoExpandOnLinkDrop<br>or<br>DyninputAutoReduceOnLinkRemove<br><br>Don't know if there is any point of having<br>either the mentioned settings or this Inputs field,<br>as the dynamic resize could be normal behaviour.`;
+var dynInputMixers_ExtraInputs_Help = /*html*/ `Extra Inputs is intended to replace the Visual Inputs in future exports,<br>Extra Inputs should then be used to create a mixer with extra inputs,<br>this would then make it possible to connect additional sources at runtime.<br>For the OSC live edit this would also then not requiring the mixer to be resized at runtime thus saving alot of required OSC messages.`;
+var dynInputMixers_RealInputs_Help = /*html*/ `this is to show the real input count of the mixer<br>i.e. the size of the mixer when exported`;
+
+// used as a shortcut when defining Audio objects that have dynamic input capability 
+function dynInputMixers_Inputs_ReadOnly() {
+    return (RED.main.settings.LinkDropOnNodeAppend == true && (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true));
+};
+
+
 
 class NodeDefBase {
     defaults = {
@@ -200,6 +211,26 @@ var useMakeConstructor = {
     }
 };
 
+var followingNotImplementedYet = {
+    notImplYet: {
+        type:"dontsave", 
+        editor:{
+            label:"following items not implemented yet", 
+            type:"label", // label only
+            dividerTop: {size:2,style:"solid"},
+            dividerBottom: {size:1,style:"dashed"},
+            rowClass:"form-row-auto"
+        }
+    }
+}
+var TabIoCommon_Defaults = {
+    isBus: {value: false, editor:{type:"boolean"}},
+    portNames: {value: "", editor:{type:"multiline"}}
+}
+var TabIO_PortCount_Default = {
+    value: 1, maxval: 255, minval: 1, type: "int"
+}
+
 // each node def. group can contain a 'category' field
 // that defines the sub category id to which the type categories are added, 
 // the 'category' field is optional if 'categoryItems' is present,
@@ -264,9 +295,9 @@ var NodeDefinitions = {
                 editorhelp: dynInputMixers_Help,
                 defaults: {
                     ...AudioTypeArrayBase.defaults,
-                    inputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Visual Inputs", rowClass: "form-row-mid", "readonly": dynInputMixers_Inputs_ReadOnly, help: dynInputMixers_Inputs_Help } },
+                    inputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Visual Inputs", rowClass: "form-row-mid", readonly: dynInputMixers_Inputs_ReadOnly, help: dynInputMixers_Inputs_Help } },
                     ExtraInputs: { value: 0, maxval: 255, minval: 0, type: "int", editor: { label: "Extra Inputs", rowClass: "form-row-mid", help: dynInputMixers_ExtraInputs_Help } },
-                    RealInputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Real Inputs", rowClass: "form-row-mid", "readonly": "true", help: dynInputMixers_RealInputs_Help } }
+                    RealInputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Real Inputs", rowClass: "form-row-mid", readonly: true, help: dynInputMixers_RealInputs_Help } }
                 }
             },
             "theMixer.h": { dontShowInPalette: "", shortName: "theMixer.h", nonObject: "", useAceEditor: "c_cpp", category: "mixer", color: "#ddffbb", icon: "function.png",defaults: { name: {}, id: {}, comment: { value: "/* Audio Library for Teensy 3.X\r\n * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com\r\n *\r\n * Development of this audio library was funded by PJRC.COM, LLC by sales of\r\n * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop\r\n * open source software by purchasing Teensy or other PJRC products.\r\n *\r\n * Permission is hereby granted, free of charge, to any person obtaining a copy\r\n * of this software and associated documentation files (the \"Software\"), to deal\r\n * in the Software without restriction, including without limitation the rights\r\n * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\r\n * copies of the Software, and to permit persons to whom the Software is\r\n * furnished to do so, subject to the following conditions:\r\n *\r\n * The above copyright notice, development funding notice, and this permission\r\n * notice shall be included in all copies or substantial portions of the Software.\r\n *\r\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\n * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\n * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\n * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\n * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\n * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\r\n  * THE SOFTWARE.\r\n */\r\n\r\n#ifndef themixer_h_\r\n#define themixer_h_\r\n\r\n#include <Arduino.h>\r\n#include <AudioStream.h>\r\n\r\n//#define AudioMixer4 AudioMixer<4>\r\n\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n#define MULTI_UNITYGAIN 65536\r\n#define MULTI_UNITYGAIN_F 65536.0f\r\n#define MAX_GAIN 32767.0f\r\n#define MIN_GAIN -32767.0f\r\n#define MULT_DATA_TYPE int32_t\r\n\r\n#elif defined(KINETISL)\r\n\r\n#define MULTI_UNITYGAIN 256\r\n#define MULTI_UNITYGAIN_F 256.0f\r\n#define MAX_GAIN 127.0f\r\n#define MIN_GAIN -127.0f\r\n#define MULT_DATA_TYPE int16_t\r\n\r\n#endif\r\n\r\ntemplate <int NN> class AudioMixer : public AudioStream\r\n{\r\npublic:\r\n  AudioMixer(void) : AudioStream(NN, inputQueueArray) {\r\n    for (int i=0; i<NN; i++) multiplier[i] = MULTI_UNITYGAIN;\r\n  } \r\n  virtual void update();\r\n  \r\n  /**\r\n   * this sets the individual gains\r\n   * @param channel\r\n   * @param gain\r\n   */\r\n  void gain(unsigned int channel, float gain);\r\n  /**\r\n   * set all channels to specified gain\r\n   * @param gain\r\n   */\r\n  void gain(float gain);\r\n\r\nprivate:\r\n  MULT_DATA_TYPE multiplier[NN];\r\n  audio_block_t *inputQueueArray[NN];\r\n};\r\n\r\n// the following Forward declarations \r\n// must be defined when we use template \r\n// the compiler throws some warnings that should be errors otherwise\r\n\r\nstatic int32_t signed_multiply_32x16b(int32_t a, uint32_t b); \r\nstatic int32_t signed_multiply_32x16t(int32_t a, uint32_t b);\r\nstatic int32_t signed_saturate_rshift(int32_t val, int bits, int rshift);\r\nstatic uint32_t pack_16b_16b(int32_t a, int32_t b);\r\nstatic uint32_t signed_add_16_and_16(uint32_t a, uint32_t b);\r\n\r\n// because of the template use applyGain and applyGainThenAdd functions\r\n// must be in this file and NOT in cpp file\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    uint32_t *p = (uint32_t *)data;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    do {\r\n      uint32_t tmp32 = *p; // read 2 samples from *data\r\n      int32_t val1 = signed_multiply_32x16b(mult, tmp32);\r\n      int32_t val2 = signed_multiply_32x16t(mult, tmp32);\r\n      val1 = signed_saturate_rshift(val1, 16, 0);\r\n      val2 = signed_saturate_rshift(val2, 16, 0);\r\n      *p++ = pack_16b_16b(val2, val1);\r\n    } while (p < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)\r\n  {\r\n    uint32_t *dst = (uint32_t *)data;\r\n    const uint32_t *src = (uint32_t *)in;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        uint32_t tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n        tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        uint32_t tmp32 = *src++; // read 2 samples from *data\r\n        int32_t val1 =  signed_multiply_32x16b(mult, tmp32);\r\n        int32_t val2 =  signed_multiply_32x16t(mult, tmp32);\r\n        val1 =  signed_saturate_rshift(val1, 16, 0);\r\n        val2 =  signed_saturate_rshift(val2, 16, 0);\r\n        tmp32 =  pack_16b_16b(val2, val1);\r\n        uint32_t tmp32b = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, tmp32b);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n\r\n#elif defined(KINETISL)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    const int16_t *end = data + AUDIO_BLOCK_SAMPLES;\r\n\r\n    do {\r\n      int32_t val = *data * mult;\r\n      *data++ = signed_saturate_rshift(val, 16, 0);\r\n    } while (data < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)\r\n  {\r\n    const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        int32_t val = *dst + *src++;\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n#endif\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(unsigned int channel, float gain) {\r\n  if (channel >= NN) return;\r\n  if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n  else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n  multiplier[channel] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(float gain) {\r\n  for (int i = 0; i < NN; i++) {\r\n    if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n    else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n    multiplier[i] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n  } \r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::update() {\r\n  audio_block_t *in, *out=NULL;\r\n  unsigned int channel;\r\n  for (channel=0; channel < NN; channel++) {\r\n    if (!out) {\r\n      out = receiveWritable(channel);\r\n      if (out) {\r\n        int32_t mult = multiplier[channel];\r\n        if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);\r\n      }\r\n    } else {\r\n      in = receiveReadOnly(channel);\r\n      if (in) {\r\n        applyGainThenAdd(out->data, in->data, multiplier[channel]);\r\n        release(in);\r\n      }\r\n    }\r\n  }\r\n  if (out) {\r\n    transmit(out);\r\n    release(out);\r\n  }\r\n}\r\n// this class and function forces include \r\n// of functions applyGainThenAdd and applyGain used by the template\r\nclass DummyClass\r\n{\r\n  public:\r\n    virtual void dummyFunction();\r\n};\r\nvoid DummyClass::dummyFunction() {\r\n  applyGainThenAdd(0, 0, 0);\r\n  applyGain(0,0);\r\n    \r\n}\r\n\r\n#endif" } } },
@@ -290,8 +321,8 @@ var NodeDefinitions = {
             auto_subcat_test1: { ...AudioTypeBase, shortName: "auto_subcat_test2", outputs: 2, category: "newSubCat" },
             auto_subcat_test2: { ...AudioTypeBase, shortName: "auto_subcat_test3", outputs: 2, category: "" }, // this don't define the category and this item will be placed into the unsorted category
             */
-            TabOutput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
-            TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 1, type: "int" } }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
+            TabOutput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
+            TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, outputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
             BusJoin: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", help: "not implemented yet" },
             BusSplit: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusSplit", inputs: 1, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
@@ -312,7 +343,7 @@ var NodeDefinitions = {
             PointerArray: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, objectType: {}, arrayItems: {} }, shortName: "pArray", dontShowInPalette: "", color: "#aaffdd", icon: "range.png" },
 
             ClassComment: { ...NonAudioObjectBase, shortName: "ClassComment", color: "#ccffcc", icon: "comment.png" },
-            comment: { ...CodeObjectBase, shortName: "Comment", icon: "comment.png" },
+            Comment: { ...CodeObjectBase, shortName: "Comment", icon: "comment.png" },
             Function: { ...CodeObjectBase, shortName: "code", useAceEditor: "c_cpp", icon: "function.png" },
             Variables: { ...CodeObjectBase, shortName: "vars", useAceEditor: "c_cpp", icon: "hash.png" },
             
@@ -338,10 +369,11 @@ var NodeDefinitions = {
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 0,
                 defaults: {
                     ...UiTypeBase.defaults,
-                    midiCh: { value: "0" }, midiId: { value: "0" },
-                    pressAction: {}, repeatPressAction: { value: false },
-                    releaseAction: {}, repeatReleaseAction: { value: false },
-                    local: { value: false },
+                    //midiCh: { value: "0" }, midiId: { value: "0" },
+                    //pressAction: {}, repeatPressAction: { value: false },
+                    //releaseAction: {}, repeatReleaseAction: { value: false },
+                    //local: { value: false },
+                    sendMode: {},
                     sendCommand: {}
                 }
             },
@@ -350,14 +382,14 @@ var NodeDefinitions = {
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 200,
                 defaults: {
                     ...UiTypeBase.defaults,
-                    midiCh: { value: "0" }, midiId: { value: "0" },
+                    //midiCh: { value: "0" }, midiId: { value: "0" },
                     orientation: { value: "v" }, label: { value: "d.val" },
-                    minval: { value: 0, type: "int" }, maxval: { value: 100, type: "int" }, val: { value: 50, type: "int" }, divVal: { value: 1, minval: 1, type: "int" },
-                    fval: { value: 0 },
-                    sendMode: { value: "r" },
-                    autoReturn: { value: false }, returnValue: { value: "mid" },
+                    minVal: { value: 0, type: "int" }, maxVal: { value: 100, type: "int" }, val: { value: 50, type: "int" }, divVal: { value: 1, minval: 1, type: "int" },
+                    //fval: { value: 0 },
+                    //sendMode: { value: "r" },
+                    //autoReturn: { value: false }, returnValue: { value: "mid" },
                     barFGcolor: { value: "#F6F8BC" },
-                    sendFormat: {},
+                    //sendFormat: {},
                     sendCommand: { value: "" }
                 }
             },
@@ -386,7 +418,7 @@ var NodeDefinitions = {
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 300,
                 defaults: {
                     ...UiTypeBase.defaults,
-                    midiCh: { value: "0" }, midiId: { value: "0" },
+                    //midiCh: { value: "0" }, midiId: { value: "0" },
                     temTextSize: { value: 14 },
                     items: { value: "item1\nitem2\nitem3" }, selectedIndex: { value: 0 }, selectedIndexOffset: { value: 0 }, headerHeight: { value: 30 },
                     itemBGcolor: { value: "#F6F8BC" },
@@ -399,12 +431,13 @@ var NodeDefinitions = {
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 120,
                 defaults: {
                     ...UiTypeBase.defaults,
-                    midiCh: { value: "0", minval: "0", maxval: "15", type: "int" },
-                    midiId: { value: "0", minval: "0", maxval: "127", type: "int" },
+                    //midiCh: { value: "0", minval: "0", maxval: "15", type: "int" },
+                    //midiId: { value: "0", minval: "0", maxval: "127", type: "int" },
                     octave: { value: 4, minval: "0", maxval: "10", type: "int" },
                     sendCommand: {},
                     headerHeight: { value: 30, minval: 0, type: "int" },
                     whiteKeysColor: { value: "#FFFFFF" }, blackKeysColor: { value: "#A0A0A0" },
+                    pressedKeyColor: { value: "#ff7f0e" },
                     blackKeysWidthDiff: { value: 6, minval: 0, type: "int" },
                     x: { value: 150, minval: 0, type: "int" },
                     y: { value: 150, minval: 0, type: "int" },
@@ -418,7 +451,7 @@ var NodeDefinitions = {
                     nodes: { value: [] }
                 }
             },
-            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb",
+            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb", inputs:20, outputs:20,
                 defaults: {
                     ...UiTypeBase.defaults,
                     nodes: { value: [] },
@@ -453,7 +486,7 @@ var NodeDefinitions = {
                     ...AudioTypeArrayBase.defaults,
                     inputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Visual Inputs", rowClass: "form-row-mid", readonly: dynInputMixers_Inputs_ReadOnly, help: dynInputMixers_Inputs_Help } },
                     ExtraInputs: { value: 0, maxval: 255, minval: 0, type: "int", editor: { label: "Extra Inputs", rowClass: "form-row-mid", help: dynInputMixers_ExtraInputs_Help } },
-                    RealInputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Real Inputs", rowClass: "form-row-mid", readonly: "true", help: dynInputMixers_RealInputs_Help } }
+                    RealInputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Real Inputs", rowClass: "form-row-mid", readonly: true, help: dynInputMixers_RealInputs_Help } }
                 }
             },
             AudioControlPCM3168: { ...AudioTypeBase, category: "control", shortName: "pcm3168" },
@@ -681,11 +714,11 @@ var NodeDefinitions = {
             AudioInputI2SOct:        { ...AudioTypeBase, category: "input-i2s1", shortName: "i2s_oct", outputs: 8},
             AudioInputI2Sslave:      { ...AudioTypeBase, category: "input-i2s1", shortName: "i2sslave", outputs: 2, color: "#F7D8F0" },
             AudioInputPDM:           { ...AudioTypeBase, category: "input-i2s1", shortName: "pdm", outputs: 1},
-            AudioInputTDM:           { ...AudioTypeBase, category: "input-i2s1", shortName: "tdm", outputs: 16, defaults: { ...AudioTypeBase.defaults, outputs: { value: "16" } } },
+            AudioInputTDM:           { ...AudioTypeBase, category: "input-i2s1", shortName: "tdm", outputs: 16, defaults: { ...AudioTypeBase.defaults, outputs: { value: 16, type:"int", maxval:16, minval:1, editor: { label: "Outputs (visual)"} } } },
             // i2s2
             AudioInputI2S2:          { ...AudioTypeBase, category: "input-i2s2", shortName: "i2s2", outputs: 2},
             AudioInputPDM2:          { ...AudioTypeBase, category: "input-i2s2", shortName: "pdm2", outputs: 1},
-            AudioInputTDM2:          { ...AudioTypeBase, category: "input-i2s2", shortName: "tdm2", outputs: 16, defaults: { ...AudioTypeArrayBase.defaults, outputs: { value: "16" } } },
+            AudioInputTDM2:          { ...AudioTypeBase, category: "input-i2s2", shortName: "tdm2", outputs: 16, defaults: { ...AudioTypeArrayBase.defaults, outputs: { value: 16, type:"int", maxval:16, minval:1, editor: { label: "Outputs (visual)"} } } },
             // spdif
             AudioInputSPDIF3:        { ...AudioTypeBase, category: "input-spdif", shortName: "spdif3", outputs: 2, color: "#F7D8F0"},
             AsyncAudioInputSPDIF3:   { ...AudioTypeBase, category: "input-spdif", shortName: "spdif_async", outputs: 2},
@@ -704,12 +737,12 @@ var NodeDefinitions = {
             AudioOutputI2Sslave:     { ...AudioTypeBase, category: "output-i2s1", shortName: "i2sslave", inputs: 2, color: "#F7D8F0" },
             AudioOutputSPDIF:        { ...AudioTypeBase, category: "output-i2s1", shortName: "spdif", inputs: 2},
             AudioOutputPT8211:       { ...AudioTypeBase, category: "output-i2s1", shortName: "pt8211", inputs: 2},
-            AudioOutputTDM:          { ...AudioTypeBase, category: "output-i2s1", shortName: "tdm", inputs: 16, defaults: { ...AudioTypeBase.defaults, inputs: { value: "16" } } },
+            AudioOutputTDM:          { ...AudioTypeBase, category: "output-i2s1", shortName: "tdm", inputs: 16, defaults: { ...AudioTypeBase.defaults, inputs: { value: 16, type:"int", maxval:16, minval:1, editor: { label: "Inputs (visual)"} } } },
             // i2s2
             AudioOutputI2S2:         { ...AudioTypeBase, category: "output-i2s2", shortName: "i2s2", inputs: 2},
             AudioOutputSPDIF2:       { ...AudioTypeBase, category: "output-i2s2", shortName: "spdif2", inputs: 2},
             AudioOutputPT8211_2:     { ...AudioTypeBase, category: "output-i2s2", shortName: "pt8211_2", inputs: 2},
-            AudioOutputTDM2:         { ...AudioTypeBase, category: "output-i2s2", shortName: "tdm2", inputs: 16, defaults: { ...AudioTypeBase.defaults, inputs: { value: "16" } } },
+            AudioOutputTDM2:         { ...AudioTypeBase, category: "output-i2s2", shortName: "tdm2", inputs: 16, defaults: { ...AudioTypeBase.defaults, inputs: { value: 16, type:"int", maxval:16, minval:1, editor: { label: "Inputs (visual)"} } } },
             // spdif
             AudioOutputSPDIF3:       { ...AudioTypeBase, category: "output-spdif", shortName: "spdif3", inputs: 2 },
             // dac

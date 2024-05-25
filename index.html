@@ -869,7 +869,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </p>
 </script>
 
-<script type="text/x-red" data-template-name="NodesGlobalEdit">
+<script type="text/html" data-template-name="NodesGlobalEdit">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -889,7 +889,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="UI_Button">
+<script type="text/html" data-help-name="UI_Button">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>UI Button that sends data on pressed and/or released</p>
@@ -961,6 +961,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	    </select>
 	</div>
 -->
+	<div class="form-row-long">
+		<label style="width:150px" for="node-input-sendMode"><i class="fa fa-tag"></i> Send Mode</label>
+		<select name="node-input-target" id="node-input-sendMode">
+			<option value="0">OnPress</option>
+			<option value="1">OnRelease</option>
+			<option value="2">OnBoth</option>
+		</select>
+	</div>
     <div class="form-row-long">
         <label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
         <pre id="aceEditor"></pre>
@@ -1300,6 +1308,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row-mid">
 		<label for="node-input-blackKeysColor"><i class="fa fa-tag"></i> Black Keys Color</label>
 		<input id="node-input-blackKeysColor" data-jscolor="">
+	</div>
+	<div class="form-row-mid">
+		<label for="node-input-pressedKeyColor"><i class="fa fa-tag"></i> Pressed Key Color</label>
+		<input id="node-input-pressedKeyColor" data-jscolor="">
 	</div>
 	<div class="form-row">
 		<label style="width:140px" for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>

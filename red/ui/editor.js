@@ -694,36 +694,43 @@ RED.editor = (function() {
         var type=(editor.type!=undefined)?editor.type:"text";
         var rowClass=(editor.rowClass!=undefined)?editor.rowClass:"form-row";
         var label=(editor.label!=undefined)?editor.label:capitalizeFirstLetter(propName);
-        var readonly=((editor.readonly!=undefined && eval(editor.readonly))?'readonly="true"':"");
+        var readonly=((editor.readonly!=undefined && ((typeof editor.readonly == "function" && editor.readonly()) || (editor.readonly == true) ))?'readonly="true"':"");
 
         var html = "";
         if (editor.dividerTop != undefined) {
             html += createDivider(editor.dividerTop);
         }
-        html += '<div class="'+rowClass+'">\n';
-        html += '<label for="node-input-'+propName+'"><i class="fa fa-tag"></i> '+label+'</label>\n';
+        html += `<div class="${rowClass}">\n`;
+        html += `<label for="node-input-${propName}"><i class="fa fa-tag"></i> ${label}</label>\n`;
         if (type == 'text') {
-            html += '<input type="text" id="node-input-'+propName+'" placeholder="'+label+'" autocomplete="off" '+readonly+'>\n';
+            html += `<input type="text" id="node-input-${propName}" placeholder="${label}" autocomplete="off" ${readonly}>\n`;
         }
         else if (type == 'color') {
-            html += '<input id="node-input-'+propName+'" data-jscolor="" class="jscolor jscolor-active">\n';
+            html += `<input id="node-input-${propName}" data-jscolor="" class="jscolor jscolor-active">\n`;
         }
         else if (type == 'boolean') {
-            html +=	'<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-'+propName+'" checked="checked" />';
+            html +=	`<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-${propName}" checked="checked" />`;
         }
         else if (type == 'combobox') {
             var width = (editor.inputWidth!=undefined)?editor.inputWidth:"auto";
-            html += '<select class="settings-item-combobox" type="text" id="node-input-'+propName+'" name="node-input-'+propName+'" style="width: '+width+';">';
+            html += `<select class="settings-item-combobox" type="text" id="node-input-${propName}" name="node-input-${propName}" style="width: ${width};">`;
             if (editor.options != undefined && Array.isArray(editor.options))
             {
                 for (var oi = 0; oi < editor.options.length; oi++)
                 {
-                    //html += '<option id="node-input-'+propName + '-option-' + oi + ' value="' + editor.options[oi].value + '">' + editor.options[oi].text + '</option>';
-                    html += '<option value="' + editor.options[oi].value + '">' + editor.options[oi].text + '</option>'
+                    html += `<option value="${editor.options[oi].value}">${editor.options[oi].text}</option>`;
                 }
             }
             html += '</select>';
         }
+		else if (type == "multiline") {
+
+			html += `<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-${propName}" rows="8"/></textarea>`;
+
+		}
+		else if (type == "label") {
+			console.log("editor label only:" + propName);
+		}
         
         html += '</div>\n'
 

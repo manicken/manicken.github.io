@@ -2,6 +2,12 @@
 
 RED.view.ui = (function() {
 
+	var UI_BUTTON_SEND_MODES = {
+		ON_PRESS:0,
+		ON_RELEASE:1,
+		ON_BOTH:2
+	};
+
     var allowUiItemTextInput = false;
     var uiItemResizeBorderSize= 6;
     var currentUiObject = null;
@@ -92,8 +98,9 @@ RED.view.ui = (function() {
 
 			if (d.val < d.minVal) d.val = d.minVal;
 			if (d.val > d.maxVal) d.val = d.maxVal;
-			d.dirty = true;
-			RED.view.redraw_nodes(true);
+			//d.dirty = true;
+			RED.view.redraw_node(d);
+			//RED.view.redraw_nodes(true);
 		}
 		else if (d.orientation == "h")
 		{
@@ -105,8 +112,9 @@ RED.view.ui = (function() {
 
 			if (d.val < d.minVal) d.val = d.minVal;
 			if (d.val > d.maxVal) d.val = d.maxVal;
-			d.dirty = true;
-			RED.view.redraw_nodes(true);
+			//d.dirty = true;
+			RED.view.redraw_node(d);
+			//RED.view.redraw_nodes(true);
 		}
         if (d.divVal == undefined || d.divVal == "" || d.divVal == 0) d.divVal = 1;
         d.divVal = parseInt(d.divVal);
@@ -132,8 +140,9 @@ RED.view.ui = (function() {
 		//console.warn("uiObjectMouseDown " + mouseX + ":" + mouseY);
 
 		if (d.type == "UI_Button") {
-			setRectFill(rect);
-			RED.ControlGUI.sendUiButton(true, d);
+			setRectFill(rect, undefined, d.bgColor);
+			if (d.sendMode == UI_BUTTON_SEND_MODES.ON_PRESS || d.sendMode == UI_BUTTON_SEND_MODES.ON_BOTH)
+				RED.ControlGUI.sendUiButton(true, d);
 		
 		} else if (d.type == "UI_Slider") {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
@@ -165,8 +174,8 @@ RED.view.ui = (function() {
 			}
 			d.keyIndex = parseInt(newKeyIndex);
 			d.pressed = true;
-			setRectFill(rect, "#ff7f0e");
-			setRectStroke(rect, "#ff7f0e");
+			setRectFill(rect, d.pressedKeyColor);
+			setRectStroke(rect, d.pressedKeyColor);
 			RED.ControlGUI.sendUiPiano(d);
 		}
 		else if (d.type == "UI_ScriptButton") {
@@ -194,8 +203,14 @@ RED.view.ui = (function() {
 		
 		//console.warn("uiObjectMouseUp " + mouseX + ":" + mouseY);
 		if (d.type == "UI_Button") {
-			resetRectFill(rect)
-			//RED.ControlGUI.sendUiButton(false, d);
+			if (d.bgColorChanged != undefined && d.bgColorChanged == true) {
+				d.bgColorChanged = false;
+				resetRectFill(rect, d.bgColor);
+			}
+			else
+				resetRectFill(rect);
+			if (d.sendMode == UI_BUTTON_SEND_MODES.ON_RELEASE || d.sendMode == UI_BUTTON_SEND_MODES.ON_BOTH)
+				RED.ControlGUI.sendUiButton(false, d);
 		} else if (d.type == "UI_Slider") {
 			//if (d.sendMode == "r") // don' work at the moment
                 RED.ControlGUI.sendUiSliderValue(d);
@@ -237,8 +252,9 @@ RED.view.ui = (function() {
                 d.divVal = parseInt(d.divVal);
                 d.fval = d.val/d.divVal;
                 RED.ControlGUI.sendUiSliderValue(d);
-				d.dirty = true;
-				RED.view.redraw_nodes(true);
+				RED.view.redraw_node(d);
+				//d.dirty = true;
+				//RED.view.redraw_nodes(true);
                 
 			}
 			else if (delta < 0)
@@ -250,13 +266,14 @@ RED.view.ui = (function() {
                 d.divVal = parseInt(d.divVal);
                 d.fval = d.val/d.divVal;
                 RED.ControlGUI.sendUiSliderValue(d);
-				d.dirty = true;
-				RED.view.redraw_nodes(true);
+				RED.view.redraw_node(d);
+				//d.dirty = true;
+				//RED.view.redraw_nodes(true);
                 
 			}
 		}
 	}
-	function setRectFill(rect, setColor)
+	function setRectFill(rect, setColor, initialColor)
 	{
 		//console.warn('rect.attr("fillOld")' + rect.attr("fillOld"));
 		//console.warn('rect.attr("fill")' + rect.attr("fill"));
@@ -264,14 +281,20 @@ RED.view.ui = (function() {
 		if (rect.attr("fillOld") != undefined)
 			rect.attr("fill", rect.attr("fillOld")); // failsafe
 		rect.attr("fillOld", rect.attr("fill"));
-		if (setColor == undefined)
-			rect.attr("fill", RED.color.subtractColor(rect.attr("fill"), "#202020"));
+		if (setColor == undefined) {
+			if (initialColor == undefined)
+				rect.attr("fill", RED.color.subtractColor(rect.attr("fill"), "#202020"));
+			else
+				rect.attr("fill", RED.color.subtractColor(initialColor, "#202020"));
+		}
 		else
 			rect.attr("fill", setColor);
 	}
-	function resetRectFill(rect)
+	function resetRectFill(rect, resetColor)
 	{
-		if (rect.attr("fillOld") != undefined)
+		if (resetColor != undefined)
+			rect.attr("fill", resetColor);
+		else if (rect.attr("fillOld") != undefined)
 			rect.attr("fill", rect.attr("fillOld"));
 	}
 	function setRectStroke(rect, setColor)
@@ -833,6 +856,7 @@ RED.view.ui = (function() {
         else if (d.type == "UI_Piano"){ redraw_init_UI_Piano(nodeRect,d); }
         else if (d.type == "UI_TextBox"){ redraw_init_UI_Textbox(mainRect,nodeRect,d); }
         else if (d.type == "UI_Image") { redraw_init_UI_Image(mainRect,nodeRect,d);}
+		
         else { return false; }
         return true; // default for ui objects
     }
@@ -842,6 +866,7 @@ RED.view.ui = (function() {
         else if (d.type == "UI_Piano") { redraw_update_UI_Piano(nodeRect,d); }
         else if (d.type == "UI_TextBox") { redraw_update_UI_TextBox(nodeRect,d); }
         else if (d.type == "UI_Image") { redraw_update_UI_Image(nodeRect,d); } // only for resizing
+		else if (d.type == "group") { RED.view.groupbox.redrawGroupOutline(d);}
         else { return false; }
         return true; // default for ui objects
     }

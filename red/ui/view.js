@@ -3836,8 +3836,9 @@ RED.view = (function() {
 
         if (d.bgColor == null)
             d.bgColor = d._def.color;
-            
+		
         if (RED.view.ui.checkIf_UI_AndUpdate(nodeRect,d) == false) {
+			
             nodeRect.selectAll(".node").attr("fill", d.bgColor);
         }
         if (d.resize == true) {
@@ -3848,7 +3849,8 @@ RED.view = (function() {
                 redraw_nodeInputs(nodeRect, d);
                 redraw_nodeOutputs(nodeRect, d);
             } else {// UI object
-
+				
+				
             }
         }
         
