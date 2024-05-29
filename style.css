@@ -1186,6 +1186,12 @@
       display: block;
       width: 100px;
   }
+
+  .form-row-divider {
+    clear: both;
+    border-top: 1px dotted #aaa;
+    margin-bottom: 7px;
+  }
   
   .form-row {
       clear: both;
@@ -1198,6 +1204,10 @@
   .form-row input {
     width:calc(100% - 120px);
     left:100px;
+  }
+  .form-row input.jscolor {
+    width: 80px;
+    /*left:50px;*/
   }
 
   .form-row select {
@@ -1217,6 +1227,10 @@
       width: calc(100% - 200px);
       left:150px;
   }
+  .form-row-mid input.jscolor {
+    width: 80px;
+    /*left:50px;*/
+  }
 
   .form-row-long {
       clear: both;
@@ -1234,12 +1248,16 @@
       width: calc(100% - 250px);
       left:200px;
   }
-  
+  .form-row-long input.jscolor {
+    width: 80px;
+    /*left:50px;*/
+  }
+  /*
   .form-row input[id="node-input-color"] {
     width:80px;
     left:200px;
   }
-
+*/
   .node-input-color-group-bg input {
     width:170px !important;
     left:200px !important;

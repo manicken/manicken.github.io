@@ -577,7 +577,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<form class="form-horizontal">
 		<div class="form-row">
 			<label for="dialog-edit-link-name" ><i class="icon-tag"></i> Name:</label>
-			<input type="text" id="ndialog-edit-link-name" autocomplete="off">
+			<input type="text" id="dialog-edit-link-name" autocomplete="off">
         </div>
         <div class="form-row">
             <label for="dialog-edit-link-comment"><i class="fa fa-tag"></i> Comment</label>
@@ -588,6 +588,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             <label for="dialog-edit-link-bgcolor"><i class="fa fa-tag"></i> BG Color</label>
             <input id="dialog-edit-link-bgcolor" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
         </div>-->
+		<div class="form-row-divider"></div>
         <div class="form-row">
 			<label for="dialog-edit-link-fgcolor1-width" ><i class="icon-tag"></i> Width:</label>
 			<input type="text" id="dialog-edit-link-fgcolor1-width" autocomplete="off">
@@ -596,6 +597,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             <label for="dialog-edit-link-fgcolor1"><i class="fa fa-tag"></i> FG Color 1</label>
             <input id="dialog-edit-link-fgcolor1" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
         </div>
+		<div class="form-row-divider"></div>
         <div class="form-row">
             <label for="dialog-edit-link-use-fgcolor2"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Use color2:</span></label>
             <label for="dialog-edit-link-use-fgcolor2" style="width:70%">
@@ -610,6 +612,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<label for="dialog-edit-link-fgcolor2-dasharray" ><i class="icon-tag"></i> Dasharray:</label>
 			<input type="text" id="dialog-edit-link-fgcolor2-dasharray" autocomplete="off">
         </div>
+		<div class="form-row-divider"></div>
         <div class="form-row">
             <label for="dialog-edit-link-use-fgcolor3"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Use color3:</span></label>
             <label for="dialog-edit-link-use-fgcolor3" style="width:70%">
@@ -617,7 +620,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
             </label>
         </div>
         <div class="form-row">
-            <label for="dialog-edit-link-fgcolor3"><i class="fa fa-tag"></i> FG Color 2</label>
+            <label for="dialog-edit-link-fgcolor3"><i class="fa fa-tag"></i> FG Color 3</label>
             <input id="dialog-edit-link-fgcolor3" data-jscolor="{format: 'rgba',closeButton: true,closeText: 'OK',value:'rgba(51,153,255,0.5)}">
         </div>
         <div class="form-row">
@@ -693,6 +696,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/arduino-export-structures.js"></script>
 <script src="red/arduino-export.js"></script>
 <script src="red/arduino-export-osc.js"></script>
+<script src="red/arduino-export2-structures.js"></script>
 <script src="red/arduino-export2.js"></script>
 <script src="red/arduino-board.js"></script>
 <script src="red/BiDirDataWebSocketBridge.js"></script>
@@ -896,7 +900,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p>UI Button that sends data on pressed and/or released</p>
 	<h3>Notes</h3>
 </script>
-<script type="text/x-red" data-template-name="UI_Button">
+<script type="text/html" data-template-name="UI_Button">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -976,7 +980,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="UI_Slider">
+<script type="text/html" data-help-name="UI_Slider">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>	Vertical or Horizontal slider that sends data on moved or release.</p>
@@ -984,7 +988,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p> example "Label" + (d.val*10-1)</p>
 	<h3>Notes</h3>
 </script>
-<script type="text/x-red" data-template-name="UI_Slider">
+<script type="text/html" data-template-name="UI_Slider">
     <div class="form-row">
 		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
 		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
@@ -1121,7 +1125,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="UI_TextBox">
+<script type="text/html" data-help-name="UI_TextBox">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
     <p> simple text input box (to either show a value(s) or used together with a button to send data) </p>
@@ -1129,7 +1133,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
     <p> accessible throught script with RED.nodes.namedNode(name).comment so use a unique name</p>
     <h3>Notes</h3>
 </script>
-<script type="text/x-red" data-template-name="UI_TextBox">
+<script type="text/html" data-template-name="UI_TextBox">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1149,13 +1153,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="UI_Label">
+<script type="text/html" data-help-name="UI_Label">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>UI Simple Label With selected background color.</p>
 	<h3>Notes</h3>
 </script>
-<script type="text/x-red" data-template-name="UI_Label">
+<script type="text/html" data-template-name="UI_Label">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1179,14 +1183,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
 	</div>
 </script>
-<script type="text/x-red" data-help-name="UI_Image">
+<script type="text/html" data-help-name="UI_Image">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>not implemented yet!</p>
 	<p>but should be implemented to just show a user selected image</p>
 	<h3>Notes</h3>
 </script>
-<script type="text/x-red" data-help-name="UI_ListBox">
+<script type="text/html" data-help-name="UI_ListBox">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>Text List Box</p>
@@ -1195,7 +1199,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p> command example: "Label" + (d.selectedIndex)</p>
 	<h3>Notes</h3>
 </script>
-<script type="text/x-red" data-template-name="UI_ListBox">
+<script type="text/html" data-template-name="UI_ListBox">
 	<div class="form-row-mid">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Title</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off"/>
@@ -1274,13 +1278,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 	
 </script>
-<script type="text/x-red" data-help-name="UI_Piano">
+<script type="text/html" data-help-name="UI_Piano">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>single octave of a piano, multiple objects can be stacked to implement a full size piano keyboard.</p>
 	<h3>Notes</h3>
 </script>
-<script type="text/x-red" data-template-name="UI_Piano">
+<script type="text/html" data-template-name="UI_Piano">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Title</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1298,7 +1302,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
 		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
 	</div>
-	<div class="form-row">
+	<div class="form-row-divider"></div>
+	<div class="form-row-mid">
 		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
 		<input id="node-input-color" data-jscolor="">
 	</div>
@@ -1314,19 +1319,21 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-pressedKeyColor"><i class="fa fa-tag"></i> Pressed Key Color</label>
 		<input id="node-input-pressedKeyColor" data-jscolor="">
 	</div>
+	<div class="form-row-divider"></div>
 	<div class="form-row">
 		<label style="width:140px" for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
 		<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"></a>
 		<label style="width:170px" for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
 		<a class="node-input-number"><input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off"></a>
 	</div>
-
+	<div class="form-row-divider"></div>
 	<div class="form-row">
         <label style="width:180px" for="node-input-whiteKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>WhiteKeyLabels Visible</label>
         <input type="checkbox" id="node-input-whiteKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
         <label style="width:180px" for="node-input-blackKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>BlackKeyLabels Visible</label>
         <input type="checkbox" id="node-input-blackKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px;  vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
 	</div>
+	<div class="form-row-divider"></div>
 	<!--<div class="form-row">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
 		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
@@ -1353,7 +1360,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-y"><i class="fa fa-tag"></i> yPos</label>
 		<a class="node-input-number"><input type="text" id="node-input-y" placeholder="y" autocomplete="off"/></a>
 	</div>
-	
+	<div class="form-row-divider"></div>
 	<!--<div class="form-row-long">
 		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
 		<select name="node-input-target" id="node-input-target">
@@ -1366,13 +1373,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-octave"><i class="fa fa-tag"></i> Octave</label>
 		<a class="node-input-number"><input type="text" id="node-input-octave" placeholder="octave" autocomplete="off"></a>
 	</div>
+	<div class="form-row-divider"></div>
     <div class="form-row-long">
 		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
 		<pre id="aceEditor"></pre>
 	</div>
 
 </script>
-<script type="text/x-red" data-help-name="UI_ScriptButton">
+<script type="text/html" data-help-name="UI_ScriptButton">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make script <br>
@@ -1389,7 +1397,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="UI_ScriptButton">
+<script type="text/html" data-template-name="UI_ScriptButton">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1408,7 +1416,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="group">
+<script type="text/html" data-help-name="group">
     <button type="button" class="btn btn-primary" onclick="RED.view.showExportNodesDialog();">Export as JSON string</button>
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
@@ -1431,7 +1439,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="group">
+<script type="text/html" data-template-name="group">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Title/Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1468,7 +1476,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </script>
 
 <div> <!-- special-category -->
-<script type="text/x-red" data-help-name="ClassComment">
+<script type="text/html" data-help-name="ClassComment">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make a description that is placed before the class declaration in the generated code.
@@ -1481,7 +1489,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 
-<script type="text/x-red" data-help-name="Comment">
+<script type="text/html" data-help-name="Comment">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This only used to make a description in this GUI.
@@ -1493,7 +1501,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 
-<script type="text/x-red" data-help-name="Function">
+<script type="text/html" data-help-name="Function">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make/include additonal <b>functions</b>, <br>
@@ -1518,7 +1526,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="Function">
+<script type="text/html" data-template-name="Function">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1532,7 +1540,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
-<script type="text/x-red" data-help-name="ConstructorCode">
+<script type="text/html" data-help-name="ConstructorCode">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to put code in the end of the class constructor.<br>
@@ -1541,7 +1549,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="ConstructorCode">
+<script type="text/html" data-template-name="ConstructorCode">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1555,7 +1563,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
-<script type="text/x-red" data-help-name="DestructorCode">
+<script type="text/html" data-help-name="DestructorCode">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to put code in the end of the class destructor.<br>
@@ -1564,7 +1572,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p>To use the destructor functionality you must enable it on rename tab/workspace/class dialog, i.e. dubble click on the tab.</p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="DestructorCode">
+<script type="text/html" data-template-name="DestructorCode">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1579,7 +1587,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="EndOfFileCode">
+<script type="text/html" data-help-name="EndOfFileCode">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to put code in the end of the file after any class declarations.<br>
@@ -1589,7 +1597,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 	<p>The code is only included for non <b>main</b> files,<br> as when having a main file you need to use the simple <b>code</b> node type (Function object) instead.</p>
 </script>
-<script type="text/x-red" data-template-name="EndOfFileCode">
+<script type="text/html" data-template-name="EndOfFileCode">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1604,7 +1612,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="CodeFile">
+<script type="text/html" data-help-name="CodeFile">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make a file, <br>
@@ -1621,7 +1629,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="CodeFile">
+<script type="text/html" data-template-name="CodeFile">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> File Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1635,7 +1643,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
-<script type="text/x-red" data-template-name="theMixer.h">
+<script type="text/html" data-template-name="theMixer.h">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> File Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1649,7 +1657,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
-<script type="text/x-red" data-help-name="DontRemoveCodeFiles">
+<script type="text/html" data-help-name="DontRemoveCodeFiles">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This is used to ignore existing files,<br>
@@ -1671,7 +1679,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="DontRemoveCodeFiles">
+<script type="text/html" data-template-name="DontRemoveCodeFiles">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> File Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1685,7 +1693,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<pre id="aceEditor" style="height: 400px;"></pre>
 	</div>
 </script>
-<script type="text/x-red" data-help-name="IncludeDef">
+<script type="text/html" data-help-name="IncludeDef">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to include additional files <br>
@@ -1700,7 +1708,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 
-<script type="text/x-red" data-help-name="ConstValue">
+<script type="text/html" data-help-name="ConstValue">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to define a constant   <br>
@@ -1711,7 +1719,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="ConstValue">
+<script type="text/html" data-template-name="ConstValue">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1734,7 +1742,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="JunctionLR">
+<script type="text/html" data-help-name="JunctionLR">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make junction <br>
@@ -1747,7 +1755,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 	<p></p>
 </script>
-<script type="text/x-red" data-help-name="JunctionRL">
+<script type="text/html" data-help-name="JunctionRL">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make junction <br>
@@ -1762,7 +1770,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 </script>
 
 
-<script type="text/x-red" data-help-name="AudioStreamObject">
+<script type="text/html" data-help-name="AudioStreamObject">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to make use of a custom AudioStream object <br>
@@ -1781,7 +1789,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p>The CodeFile type can be used together with this, for easy including/edit of the custom AudioStreamObject</p>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="AudioStreamObject">
+<script type="text/html" data-template-name="AudioStreamObject">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1817,7 +1825,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 -->
 </script>
 
-<script type="text/x-red" data-help-name="theMixer.h">
+<script type="text/html" data-help-name="theMixer.h">
     <h3>Summary</h3>
 	<div class=tooltipinfo>
     <p>(obsolete) in favor of the new autogenerated mixer code</p>
@@ -1825,7 +1833,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="AudioMixer">
+<script type="text/html" data-help-name="AudioMixer">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
     <p>The ultimate mixer.</p>
@@ -1883,7 +1891,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p>Signal clipping can occur when any channel has gain greater than 1.0,
 		or when multiple signals add together to greater than 1.0.</p>
 </script>
-<script type="text/x-red" data-template-name="AudioMixer">
+<script type="text/html" data-template-name="AudioMixer">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1912,7 +1920,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="AudioCrossPointSwitch">
+<script type="text/html" data-help-name="AudioCrossPointSwitch">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>this is a extrernal Type and are not supported by the official library.</p>
@@ -1934,7 +1942,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 	<p></p>
 </script>
-<script type="text/x-red" data-template-name="AudioCrossPointSwitch">
+<script type="text/html" data-template-name="AudioCrossPointSwitch">
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
 		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
@@ -1963,7 +1971,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="Variables">
+<script type="text/html" data-help-name="Variables">
 	<h3>Summary</h3>
 	<div class=tooltipinfo>
 	<p>This used to define class variables/properties, <br>

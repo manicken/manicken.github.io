@@ -456,6 +456,7 @@ var NodeDefinitions = {
                 defaults: {
                     ...UiTypeBase.defaults,
                     nodes: { value: [] },
+                    color: { value: "#ddffbb" },
                     border_color: { value: "#999" },
                     individualListBoxMode: { value: "false" },
                     exportAsClass: { value: "false" }

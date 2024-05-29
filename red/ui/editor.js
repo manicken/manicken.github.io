@@ -638,6 +638,9 @@ RED.editor = (function() {
 			$(form).html(data);
             prepareEditDialog(node, "node-input");
             setInputPopupTexts(node);
+
+			
+
             if (node._def.editorhelp != undefined)
                 $("#dialog-form").append(node._def.editorhelp);
             $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
@@ -660,6 +663,17 @@ RED.editor = (function() {
                 $( "#dialog" ).dialog("option","title","Edit "+node.type+" node").dialog( "open" );
             });
         }
+		var form = $("#dialog-form");
+		var resetColorButton = $(form).find('.jscolor').parent().append('<i class="fa fa-rotate-left"></i>');
+		resetColorButton.on('click', 
+				function() {
+					var id = $(this).find('.jscolor').attr('id').replace('node-input-', '');
+					console.log(id); 
+					//$(this).find('.jscolor').val(editing_node._def.defaults[id].value); 
+					$(this).find('.jscolor').get(0).jscolor.fromString(editing_node._def.defaults[id].value);
+
+				});
+		RED.main.SetPopOver(resetColorButton, "reset the color to default value", "right");
 	}
     function setInputPopupTexts(node) {
         for (var d in node._def.defaults) {

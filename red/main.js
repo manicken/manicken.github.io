@@ -697,10 +697,10 @@ RED.main = (function() {
         $(elementId).unbind("mouseover mouseout");
 
         $(elementId).on("mouseover",function() {
-			RED.view.showPopOver(elementId, true, htmlText, location); // true means html mode
+			RED.view.showPopOver(this, true, htmlText, location); // true means html mode
 		});
 		$(elementId).on("mouseout", function() {
-			$(elementId).popover("destroy");
+			$(this).popover("destroy");
 		});
     }
     $('#btn-reloadWindow').click(function() { window.location.reload(); });

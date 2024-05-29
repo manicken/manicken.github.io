@@ -159,10 +159,12 @@ RED.arduino.export2 = (function () {
 				wse.depends.push(n.type);
         }
 
-        coex.ac.workspaceId = ws.id;
-        coex.ac.count = 1;
-        coex.ac.totalCount = 0;
+        //coex.ac.workspaceId = ws.id;
+        //coex.ac.count = 1;
+        //coex.ac.totalCount = 0;
+
         // add audio object wires/connections
+        // TODO rewrite this to use internal structrure directly
         for (var i = 0;i<ws.links.length; i++) {
             var src = ws.links[i].source;
             var dst = ws.links[i].target;
@@ -185,9 +187,9 @@ RED.arduino.export2 = (function () {
                 appendAudioConnection_s(wse, coex.ac, src, dst, srcPortIndex, dstPortIndex);
             }
         }
-        wse.acArrayLength = coex.ac.arrayLength; // workaround for now TODO remove usage
-        wse.totalAudioConnectionCount = coex.ac.totalCount;
-        coex.wsCppFiles.push(wse.generateWsFile(coex));
+        //wse.acArrayLength = coex.ac.arrayLength; // workaround for now TODO remove usage
+        //wse.totalAudioConnectionCount = coex.ac.totalCount;
+        coex.wsCppFiles.push(wse.generateWsFile(coex.exportMode));
     }
     /**
      * 
