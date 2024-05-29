@@ -15,23 +15,22 @@ RED.export.links = (function () {
             
             //var isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
             //console.warn("isArray " + node.name,isArray);
-            //var classWs = node._def.isClass;//RED.export.isClass(node.type)
-
-            if (node._def.isClass) {
+            
+            if (node._def.classWs) {
 
                 if (node.isArray != undefined) {
                     for (var ai = 0; ai < node.isArray.arrayLength; ai++) {
                         
                         links.push({invalid:currPath + "/" + node.isArray.name + "/i" + ai}); // debug info
                         
-                        getClassConnections(node._def.isClass, links, currPath + "/" + node.isArray.name + "/i" + ai);
+                        getClassConnections(node._def.classWs, links, currPath + "/" + node.isArray.name + "/i" + ai);
                         
                         node.isArray.i = ai;
                         links.push(...getNodeLinks(node, currPath));
                     }
                 }
                 else {
-                    getClassConnections(node._def.isClass, links, currPath + "/" + node.name);
+                    getClassConnections(node._def.classWs, links, currPath + "/" + node.name);
                     links.push(...getNodeLinks(node, currPath));
                 }
             } else {
@@ -105,11 +104,11 @@ RED.export.links = (function () {
         var nl = copy(link, currPath);
         var targetIsArray = RED.export.isNameDeclarationArray(nl.target.name, nl.target.z, true);
         //console.warn(RED.export.links.getDebug(l));
-        if (nl.source._def.isClass != undefined)
+        if (nl.source._def.classWs != undefined)
         {
             var tabOutPortIndex = nl.tabOutPortIndex?nl.tabOutPortIndex:0;
             //console.error("############################################## " + l.tabOutPortIndex + " # " + tabOutPortIndex + " #" + port.node.name);
-            getFinalSource(nl,nl.source._def.isClass,tabOutPortIndex);
+            getFinalSource(nl,nl.source._def.classWs,tabOutPortIndex);
             if (link.source.isArray != undefined) {
                 nl.sourceIsArray = link.source.isArray;
                 nl.sourcePath = nl.sourcePath.replace(link.source.isArray.newName, link.source.isArray.name + "/i" + link.source.isArray.i);
@@ -123,8 +122,8 @@ RED.export.links = (function () {
             nl.sourceName = nl.source.name;
         }
 
-        if (nl.target._def.isClass != undefined) {
-            getFinalTarget_s(nl.target._def.isClass,nl, newLinks, currPath);
+        if (nl.target._def.classWs != undefined) {
+            getFinalTarget_s(nl.target._def.classWs,nl, newLinks, currPath);
         }
         else {
             if (targetIsArray != undefined && link.source.isArray != undefined) {
@@ -173,12 +172,13 @@ RED.export.links = (function () {
         else {
             toAdd = 1; // non array sources still have one output
         }
-        if (l.info.isBus == true) {
+        if (l.info.isBus == true && l.info.tabOut != undefined) {
             toAdd *= l.info.tabOut.inputs;
+            
         }
         // the following adds support for object array output from class/tab
         // still don't know if it's a really good idea to support this
-        var ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
+        var ws = l.source._def.classWs;//RED.export.isClass(l.source.type)
         if (ws){
             var lc = RED.export.links.copy(l, ""); // so that it don't mess up the original links
             getFinalSource(lc, ws);
@@ -327,7 +327,7 @@ RED.export.links = (function () {
             newPortLink.targetPort = pl.targetPort;
             newPortLink.targetName = pl.target.name;
             
-            ws = newPortLink.target._def.isClass;//RED.export.isClass(newPortLink.target.type);
+            ws = newPortLink.target._def.classWs;//RED.export.isClass(newPortLink.target.type);
             if (ws)
             {
                 getFinalTarget_s(ws,newPortLink,links,newTargetPath);
@@ -373,7 +373,7 @@ RED.export.links = (function () {
         l.source = newSrc.node;
         l.sourceName = l.source.name;
         l.sourcePort = newSrc.srcPortIndex;
-        var _ws = l.source._def.isClass;//RED.export.isClass(l.source.type);
+        var _ws = l.source._def.classWs;//RED.export.isClass(l.source.type);
         if (_ws)
         {
             getFinalSource(l,_ws);
@@ -635,7 +635,7 @@ RED.export.links = (function () {
             var l = RED.export.links.copy(nodeLinks[li], currPath);
             var targetIsArray = RED.export.isNameDeclarationArray(l.target.name, l.target.z, true);
             //console.warn(RED.export.links.getDebug(l));
-            ws = l.source._def.isClass;//RED.export.isClass(l.source.type)
+            ws = l.source._def.classWs;//RED.export.isClass(l.source.type)
             if (ws)
             {
                 var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
@@ -650,7 +650,7 @@ RED.export.links = (function () {
             }else {
                 l.sourceName = l.source.name;
             }
-            ws = l.target._def.isClass;//RED.export.isClass(l.target.type);
+            ws = l.target._def.classWs;//RED.export.isClass(l.target.type);
             if (ws)
             {
                 getFinalTarget_s(ws,l, newLinks, currPath);

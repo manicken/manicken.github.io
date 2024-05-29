@@ -80,17 +80,17 @@ RED.export.links2 = (function () {
         {
             if (link.export[li].invalid != undefined) continue; // skip invalid/unsupported links
             var l = link.export[li];
-            if (l.source._def.isClass != undefined)
+            if (l.source._def.classWs != undefined)
             {
                 var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
-                getFinalSource(l,l.source._def.isClass,tabOutPortIndex);
+                getFinalSource(l,l.source._def.classWs,tabOutPortIndex);
             }
             if (node.isArray != undefined) {
                 l.sourceIsArray = node.isArray;
             }else {
                 l.sourceName = l.source.name;
             }
-            if (l.target._def.isClass != undefined)
+            if (l.target._def.classWs != undefined)
             {
                 getFinalTarget_s(l, newLinks);
                 link.export = newLinks;
@@ -102,7 +102,7 @@ RED.export.links2 = (function () {
     }
 
     function getFinalTarget_s(link,links) {
-        var ws = link.target._def.isClass;
+        var ws = link.target._def.classWs;
         var newLink = copy(link);
         
         var portNode = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
@@ -124,7 +124,7 @@ RED.export.links2 = (function () {
             npl.targetPort = pl.targetPort;
             npl.targetName = pl.target.name;
 
-            if (npl.target._def.isClass != undefined)
+            if (npl.target._def.classWs != undefined)
             {
                 getFinalTarget_s(npl,links);
             }
@@ -154,7 +154,7 @@ RED.export.links2 = (function () {
         l.source = newSrc.node;
         l.sourceName = l.source.name;
         l.sourcePort = newSrc.srcPortIndex;
-        var _ws = l.source._def.isClass;//RED.export.isClass(l.source.type);
+        var _ws = l.source._def.classWs;//RED.export.isClass(l.source.type);
         if (_ws)
         {
             getFinalSource(l,_ws);

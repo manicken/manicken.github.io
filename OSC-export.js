@@ -148,7 +148,7 @@ OSC.export = (function () {
 
             //console.warn("node:" + n.name);
 
-            var _ws = n._def.isClass;//RED.export.isClass(n.type);
+            var _ws = n._def.classWs;
             if (_ws)
             {
                 if (_ws.export == false) continue; // skip inactive objects

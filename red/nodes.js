@@ -136,6 +136,11 @@ class REDWorkspace
     generateCppDestructor = false;
     extraClassDeclarations = "";
     settings = {};
+    /** @type {REDNode[]} */
+    tabOutputs = [];
+    /** @type {REDNode[]} */
+    tabInputs = [];
+
     constructor(id, label, _export, isMain, mainNameType, mainNameExt, isAudioMain, settings, generateCppDestructor, extraClassDeclarations)
     {
         
@@ -421,9 +426,7 @@ RED.nodes = (function() {
 		var nodes = getWorkspace(wsId).nodes;
         //var arrayName = getArrayName(name);
 		for (var i=0;i<nodes.length;i++) {
-			//console.log("checkID, nodes[i].id = " + nodes[i].id);
-			//if (wsId && (wsId != _nodes[i].z)) continue; // skip nodes that is not in current workspace
-            if (nodes[i]._def.nonObject != undefined) continue; // don't check against nonObjects
+			if (nodes[i]._def.nonObject != undefined) continue; // don't check against nonObjects
             if (nodes[i] == node) continue; // don't check against itself
             var nodeName = getArrayName(nodes[i].name);//.split('['); // get array name without array def,
             
@@ -443,7 +446,6 @@ RED.nodes = (function() {
         if (si == -1) return "";
         return name.substring(si);
     }
-    
 
 	function createUniqueCppName(n, wsId, nameShouldEndWithNumber) {
 		//console.log("getUniqueCppName, n.type=" + n.type + ", n.name=" + n.name + ", n._def.shortName=" + n._def.shortName);
@@ -514,8 +516,6 @@ RED.nodes = (function() {
 		//console.log("getUniqueCppId, unique id=" + name);
 		return name;
 	}
-
-    
 
 	function getUniqueName(n) {
 		var newName = n.name;
@@ -669,7 +669,6 @@ RED.nodes = (function() {
         //console.warn("################# did not found " + name + " @ " + wsId);
 		return undefined;
 	}
-	
 
 	function removeNode(id) {
         /** @type {REDLink[]} */
@@ -681,15 +680,11 @@ RED.nodes = (function() {
 
         if (node.type == "TabInput" || node.type == "TabOutput")
         {
-            //TODO: do the removal of external connected wires // now fixed
-            //console.warn("TODO: do the removal of external connected wires"); // now fixed
             var wsLabel = getWorkspaceLabel(RED.view.getWorkspace());
             RED.console_ok("workspace label:" + wsLabel);
             refreshClassNodes();
         }
-        //nodes.splice(nodes.indexOf(node),1);
 
-        //if (ws == undefined)
         var ws = getWorkspace(node.z);
         ws.nodes.splice(ws.nodes.indexOf(node),1);
     
@@ -709,10 +704,8 @@ RED.nodes = (function() {
         var ws = getWorkspace(l.source.z);
         RED.events.emit('links:remove',l); // OSC liveupdate need this to happen before actually removing the link
 		var index = ws.links.indexOf(l);
-		if (index != -1) {
-			ws.links.splice(index,1);
-		}
-        
+		if (index == -1) return;
+		ws.links.splice(index,1);
 	}
 
 	function refreshValidation() {
@@ -1120,10 +1113,8 @@ RED.nodes = (function() {
 
             if (n.type === "workspace") n.type = "tab"; // type conversion
 
-            //var cIOs = getClassIOportCounts(n.id, nns);
             var ws = new REDWorkspace(n.id, n.label, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.isAudioMain, n.settings, n.generateCppDestructor, n.extraClassDeclarations);
-            //var ws = createWorkspaceObject(n.id, n.label, n.export, n.isMain, n.mainNameType, n.mainNameExt, n.isAudioMain, n.settings, n.generateCppDestructor, n.extraClassDeclarations);
-            
+
             addWorkspace(ws);
             newWorkspaces.push(ws);
             
@@ -1487,7 +1478,8 @@ RED.nodes = (function() {
                 if (d2 == "name" || d2 == "id") continue;
                 if (nn[d2] == undefined && node._def.defaults[d2].value != undefined) { 
                     node[d2] = node._def.defaults[d2].value;
-                    console.warn("setting default value for new property: "+d2 + " @ " + node._def.defaults[d2].value);
+                    if (d2 != "color") // TODO replace all color with bgColor
+                        console.warn("setting default value: "+node._def.defaults[d2].value+", for new property: "+d2 + " @ " + node._def.shortName );
                 }
                 else
                     node[d2] = nn[d2];
@@ -1651,54 +1643,7 @@ RED.nodes = (function() {
 				 RED.view.redraw();
 				 RED.storage.update();
 	}
-	/**
-	 * Gets all TabInput and TabOutputs, and then sorting them vertically top->bottom (normal view)
-	 * @param {String} wsId workspace id, if this is not passed then all nodes is returned
-	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
-	 */
-	function getClassIOportsSorted(wsId, nns)
-	{
-		var inNodes = [];
-		var outNodes = [];
-		if (nns == undefined)
-			nns = getWorkspace(wsId).nodes;
-		for (var i = 0; i < nns.length; i++)
-		{
-			var node = nns[i];
-			//if (wsId && (node.z != wsId)) continue;
-            
-			if (node.type == "TabInput") inNodes.push(convertNode(node));
-			else if (node.type == "TabOutput") outNodes.push(convertNode(node));
-		}
-		inNodes.sort(function(a,b){ return (a.y - b.y); });
-		outNodes.sort(function(a,b){ return (a.y - b.y); });
-
-		return {outputs:outNodes, inputs:inNodes};
-	}
-	/**
-	 * Gets all TabInput and TabOutputs, and then sorting them vertically top->bottom (normal view)
-	 * @param {String} wsId workspace id, if this is not passed then all nodes is returned
-	 * @returns {outCount:outNodesCount, inCount:inNodesCount}
-	 */
-	function getClassIOportCounts(wsId, nns)
-	{
-		var inNodesCount = 0;
-		var outNodesCount = 0;
-		if (!nns)
-			nns = getWorkspace(wsId).nodes;
-		for (var i = 0; i < nns.length; i++)
-		{
-			var node = nns[i];
-			//if (wsId && (node.z != wsId)) continue;
-            if (node._def == undefined) {
-                console.error("node._def == undefined @ getClassIOportCounts",node);
-                continue;
-            }
-			if (node.type == "TabInput") inNodesCount++;
-			else if (node.type == "TabOutput") outNodesCount++;
-		}
-		return {outCount:outNodesCount, inCount:inNodesCount};
-	}
+	
     function getIndexes(name, ...params) {
         var indexes = [];
         for (var i=0;i<params.length;i++) {
@@ -1708,12 +1653,37 @@ RED.nodes = (function() {
         }
         return indexes;
     }
-    function getBusWireNames(name) {
-        var si = name.indexOf('[');
-        if (si == -1) return [];
-        var ei = name.indexOf(']');
-        if (ei == -1) return [];
-        return name.substring(si+1,ei).split(",");
+    /**
+     * this function sets the isBus to true if the portcount is > 1 
+     * and if it is a bus also takes care of the tabIO individual wire naming
+     * 
+     * this function would be soon obsolete as I added additional parameters to the 
+     * tabIO nodes so that both isBus and the names can easier be set by a multiline textbox
+     * when having isBus unchecked together with portcount > 1 would then mean that it's actually 
+     * representing the class IO:s instead, this to make cleaner class/tabs 
+     * so instead of having multiple tabOutputs and/or tabInputs there would only be one of each type
+     * 
+     * @param {REDNode[]} tabIO_Nodes 
+     * @param {String} ioCountType this is the port count property, 'inputs' for tabOutput and 'outputs' for tabInput
+     * @param {number} index 
+     * @returns 
+     */
+    function getClassIOport_BusCheck(tabIO_Nodes, ioCountType, index)
+    {
+        if (tabIO_Nodes == undefined) return undefined;
+        if (index >= tabIO_Nodes.length) index = (tabIO_Nodes.length - 1); // failsafe
+        if (tabIO_Nodes[index][ioCountType] > 1) {
+            var indexes = getIndexes(tabIO_Nodes[index].name, '[', ']');
+            if (indexes.length == 2) {
+                tabIO_Nodes[index].busWireNames = tabIO_Nodes[index].name.substring(indexes[0]+1, indexes[1]).split(",");
+                tabIO_Nodes[index].namename = tabIO_Nodes[index].name.substring(0, indexes[0]);
+            }
+            tabIO_Nodes[index].isBus = true;
+        }
+        else {
+            tabIO_Nodes[index].isBus = false;
+        }
+        return tabIO_Nodes[index];
     }
 	/**
 	 * Gets all TabInput or TabOutput belonging to a class, and then sorting them vertically top->bottom (normal view)
@@ -1722,74 +1692,19 @@ RED.nodes = (function() {
 	 * @param {String} type "TabInput" or "TabOutput"
 	 * @returns {tabOutNodes:outNodes, tabInNodes:inNodes}
 	 */
-	function getClassIOport(ws_id, type, index) // this 
+	function getClassIOport(ws_id, type, index)
 	{
-        if (!ws_id) return;
+        if (!ws_id) return undefined; // failsafe
         if (typeof ws_id == "string") var ws = getWorkspace(ws_id);
         else var ws = ws_id
         if (index < 0) index = 0; // failsafe
-        if (type == "Out" && ws.tabOutputs != undefined) {
-            if (index >= ws.tabOutputs.length) index = (ws.tabOutputs.length - 1); // failsafe
-            if (ws.tabOutputs[index].inputs > 1) {
-                var indexes = getIndexes(ws.tabOutputs[index].name, '[', ']');
-                if (indexes.length == 2) {
-                    ws.tabOutputs[index].busWireNames = ws.tabOutputs[index].name.substring(indexes[0]+1, indexes[1]).split(",");
-                    ws.tabOutputs[index].namename = ws.tabOutputs[index].name.substring(0, indexes[0]);
-                }
-                ws.tabOutputs[index].isBus = true;
-            }
-            else {
-                ws.tabOutputs[index].isBus = false;
-            }
-            return ws.tabOutputs[index];
-            //
-            //    return {name:ws.tabOutputs[index].name, busWireNames:getBusWireNames(ws.tabOutputs[index].name), node: ws.tabOutputs[index], isBus:true};
-            //else
-            //    return {name:ws.tabOutputs[index].name, node: ws.tabOutputs[index], isBus:false};
-        }
-        else if (type == "In" && ws.tabInputs != undefined) {
-            if (index >= ws.tabInputs.length) index = (ws.tabInputs.length - 1); // failsafe
-            if (ws.tabInputs[index].outputs > 1) {
-                var indexes = getIndexes(ws.tabInputs[index].name, '[', ']');
-                if (indexes.length == 2) {
-                    ws.tabInputs[index].busWireNames = ws.tabInputs[index].name.substring(indexes[0]+1, indexes[1]).split(",");
-                    ws.tabInputs[index].namename = ws.tabInputs[index].name.substring(0, indexes[0]);
-                }
-                ws.tabInputs[index].isBus = true;
-            }
-            else {
-                ws.tabInputs[index].isBus = false;
-            }
-            return ws.tabInputs[index];
-            //    return {name:ws.tabInputs[index].name, busWireNames:getBusWireNames(ws.tabInputs[index].name), node: ws.tabInputs[index], isBus:true};
-            //else
-            //    return {name:ws.tabInputs[index].name, node: ws.tabInputs[index], isBus:false};
-        }
+
+        if (type == "Out")
+            return getClassIOport_BusCheck(ws.tabOutputs, "inputs", index);
+        else if (type == "In")
+            return getClassIOport_BusCheck(ws.tabInputs, "outputs", index); 
         else  // failsafe
             return undefined;
-
-        var _nodes = ws.nodes;
-
-		var retNodes = [];
-		
-        var nodeType = "Tab"+type+"put";
-		for (var i = 0; i < _nodes.length; i++)
-		{
-			var node = _nodes[i];
-			//if (node.z != wsId) continue;
-			if (node.type == nodeType) retNodes.push(node);
-		}
-		//retNodes.sort(function(a,b){ return (a.y - b.y); }); // this could be avoided if the io nodes where automatically sorted by default
-        //console.warn(type + retNodes[index].inputs);
-        if (type == "In" && retNodes[index].outputs > 1) {
-            return {name:retNodes[index].name + "["+retNodes[index].outputs+"]", node:retNodes[index], isBus:true};
-        }
-        else if (type == "Out" && retNodes[index].inputs > 1) {
-            return {name:retNodes[index].name + "["+retNodes[index].inputs+"]", node:retNodes[index], isBus:true};
-        }
-		else {
-            return {name:retNodes[index].name, node:retNodes[index],isBus:false};
-        }
 	}
 	function getClassComments(wsId)
 	{
@@ -1821,7 +1736,7 @@ RED.nodes = (function() {
 				link.source.name + ":" + link.sourcePort + ", " + link.target.name + ":" + link.targetPort); 
 		}
 	}
-	function isClass(type)
+	function getWorkspaceFromClassName(type)
 	{
 		for (var wsi = 0; wsi < workspaces.length; wsi++)
 		{
@@ -1851,23 +1766,6 @@ RED.nodes = (function() {
      */
 	function getWireInputSourceNode(node, port)
 	{
-		//console.log("try get WireInputSourceNode:" + wsId + ":" + nId);
-		/*for (var ni = 0; ni < nns.length; ni++)
-		{
-			var n = nns[ni];
-			if (n.z != wsId) continue; // workspace check
-
-			var retVal = RED.nodes.eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
-			{
-				if (dstId == nId)
-				{
-					//console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
-					//console.log("");
-					return {node:n, srcPortIndex: srcPortIndex}; // this is returned inside RED.nodes.eachWire function
-				}
-			});
-			if (retVal) return retVal;
-		}*/
         if (port == undefined) port = 0; // default
         var ws = getWorkspace(node.z);
         var _links = ws.links.filter(function(l) { return ((l.target === node) && (l.targetPort == port)); });
@@ -1876,120 +1774,12 @@ RED.nodes = (function() {
         // there is only be one link found
         return {node:_links[0].source, srcPortIndex:_links[0].sourcePort};
 	}
-	/**
-	 * This is used to count the amount of inputs that a unknown type has
-	 * @param {Array} nns array of all nodes
-	 * @param {String} wsId workspace id
-	 * @param {String} nId node id
-	 * @returns {*} as {node:n, srcPortIndex: srcPortIndex}
-	 */
-	function getNodeInputCount(nns, wsId, nId)
-	{
-		var count = 0;
-		for (var ni = 0; ni < nns.length; ni++)
-		{
-			var n = nns[ni];
-			if (n.z != wsId) continue; // workspace check
 
-			var retVal = eachWire(n, function(srcPortIndex,dstId,dstPortIndex)
-			{
-				if (dstId == nId)
-				{
-					//console.log("we found the WireInputSourceNode! name:" + n.name + " ,id:"+ n.id + " ,portIndex:" + srcPortIndex);
-					//console.log("");
-					return true; // this is returned inside RED.nodes.eachWire function
-				}
-			});
-			if (retVal == true) count++;
-		}
-		return count;
-	}
-	
-	/**
-	 * the name say it all
-	 * @param {Array} tabIOnodes array of specific ClassPort nodes
-	 * @param {node} classNode as nodeType
-	 * @param {Number} portIndex
-	 * @returns {node} the TabInput or TabOutput node
-	 */
-	function getClassPortNode(tabIOnodes, classNode, portIndex)
-	{
-		var wsId = getWorkspaceIdFromClassName(classNode.type);
-		var portType;
-		if (tabIOnodes.length > 0)
-			portType = tabIOnodes[0].type;
-		var currIndex = 0;
-		//console.log("getClassPortNode classNode:" + classNode.name + ", portType: " + portType + ", portIndex:" + portIndex);
-		for (var i = 0; i < tabIOnodes.length; i++)
-		{
-			var n = tabIOnodes[i];
-			if (n.z != wsId) continue;
-			if (currIndex == portIndex) // we found the port
-			{
-				//console.log("getClassPortNode found port:" + n.name);
-				return n;
-			}
-			currIndex++;
-		}
-		var port
-		console.log("ERROR! could not find the class, portType:" + portType + " with portIndex:" + portIndex);
-        return undefined;
-	}
-	
-	function classOutputPortToCpp(nns, tabOutNodes, ac, classNode)
-	{
-		var outputNode = getClassPortNode(tabOutNodes, classNode, ac.srcPort);
-		if (!outputNode)
-		{
-			 console.trace("could not getClassPortNode:" + classNode.name + ", ac.srcPort:" + ac.srcPort);
-			 return false;
-		} // abort
-
-		// if the portNode is found, next we get what is connected to that port inside the class
-		var newSrc = getWireInputSourceNode(getNode(outputNode.id), 0); // this return type {node:n, srcPortIndex: srcPortIndex};
-        //console.error(newSrc);
-        if (newSrc == undefined) return false;
-        
-		ac.srcName += "." + make_name(newSrc.node);
-		ac.srcPort = newSrc.srcPortIndex;
-
-		if (newSrc.node._def.isClass != undefined)//isClass(newSrc.node.type))
-		{
-			//console.log("isClass(" + newSrc.node.name + ")");
-
-			// call this function recursive until non class is found
-			if (!classOutputPortToCpp(nns, tabOutNodes, ac, newSrc.node))
-				return false; // failsafe
-		}
-		return true;
-	}
-
-	function classInputPortToCpp(tabInNodes, currRootName, ac, classNode)
-	{
-		var inputNode = getClassPortNode(tabInNodes, classNode, ac.dstPort);
-		if (!inputNode) return false; // abort
-
-		// here we need to go througt all wires of that virtual port
-		var retVal = eachWire(inputNode, function(srcPortIndex,dstId,dstPortIndex)
-		{
-			var dst = getNode(dstId);
-			//console.log("found dest:" + dst.name);
-			ac.dstPort = dstPortIndex;
-			ac.dstName = currRootName + "." + make_name(dst);
-
-			if (dst._def.isClass != undefined) // isClass(dst.type))
-			{
-				// call this function recursive until non class is found
-				classInputPortToCpp(tabInNodes, ac.dstName, ac, dst);
-			}
-			else
-			{
-				ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
-			}					
-		});
-		return true;
-	}
-
+    /**
+     * used by ace autocomplete via getWorkspaceNodesAsCompletions
+     * @param {String} name 
+     * @returns 
+     */
 	function getArrayDeclarationWithoutSizeSyntax(name)
 	{
 		var value = 0;
@@ -2175,8 +1965,12 @@ RED.nodes = (function() {
 			//{
 				if (n.type == "TabOutput")
 				{
-					count++;
-					//console.log("TabOutput:" + n.name);
+					//count++;
+                    //if (n.isBus == undefined && n.isBus == true) // future use
+                        count++;
+                    //else
+                    //    count+=n.inputs; // future use
+					//console.log("TabOutput:" + n.name); // future use
 				}
 			//}
 		}
@@ -2328,27 +2122,13 @@ RED.nodes = (function() {
 		}
 	}
     
-	/*function checkIfTypeShouldBeAddedToUsedCat(nt)
-	{
-		if (nt == "TabInput") return false;
-		else if (nt == "TabOutput") return false;
-		else if (nt == "Comment") return false;
-		else if (nt == "ClassComment") return false;
-		else if (nt == "PointerArray") return false;
-		else if (nt == "Function") return false;
-		else if (nt == "AudioStreamObject") return false;
-		else if (nt == "CodeFile") return false;
-		else if (nt == "unknown") return false;
-		else if (isClass(nt)) return false;
-		return true;
-	}*/
 	function addUsedNodeTypesToPalette()
 	{
 		//console.trace("addUsedNodeTypesToPalette");
 		RED.palette.clearCategory("used");
         eachNode(function (n,ws) {
             if (n._def.nonObject != undefined) return; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
-            if (n._def.isClass != undefined) return;
+            if (n._def.classWs != undefined) return;
             if (n._def.unknownType != undefined) return;
             if (n._def.category == undefined) {console.error("error at addUsedNodeTypesToPalette(): nodes[i].type=" + n.type); return;}
             if (n._def.category.startsWith("input")) return;
@@ -2359,11 +2139,7 @@ RED.nodes = (function() {
                 //console.error(nodes[i].type);
         });
 	}
-	function make_name(n) {
-		var name = (n.name ? n.name : n.id);
-		name = name.replace(" ", "_").replace("+", "_").replace("-", "_");
-		return name
-	}
+	
     function init() {
         Init_BuiltIn_NodeDefinitions();
         RED.events.on("nodes:inputs", NodeInputsChanged);
@@ -2571,12 +2347,15 @@ RED.nodes = (function() {
     }
 
     function subflowContains(sfid,nodeid,path) {
-        eachNode(function(node,_ws) {
-            if (node.z !== sfid)
-                return;
+        console.error("subflow contains");
+        var wsRoot = getWorkspace(sfid);
+        for (var ni = 0; ni < wsRoot.nodes.length; ni++) {
+
+            var node = wsRoot.nodes[ni];
             
-            var ws = node._def.isClass;//isClass(node.type);
-            if (ws) {
+            var ws = node._def.classWs;//isClass(node.type);
+            if (ws == undefined) continue;
+            //if (ws) {
                 if (ws.id === nodeid) {
                     path.path.push(node.name+" (" +node.type + ")");
                     return true;
@@ -2588,9 +2367,9 @@ RED.nodes = (function() {
                         return true;
                     }
                 }
-            }
+            //}
             
-        });
+        }
         return false;
     }
 
@@ -2616,27 +2395,25 @@ RED.nodes = (function() {
             }
         }
     }
+
+    function refreshDynInputsObjects_connectedTo_link(link)
+    {
+        if (link.target._def.dynInputs != undefined){
+            var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(link.target, null);
+            link.target.RealInputs = inputCount;
+        }
+    }
     
     function refreshDynInputsObjects_connectedTo(links) {
         if (loadingWorkspaces == true) return;
         
         if (links == undefined) {
-            eachLink(function (l, ws) {
-
-                if (l.target._def.dynInputs != undefined){
-                    var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(l.target, null);
-                    l.target.RealInputs = inputCount;
-                }
-            });
+            eachLink(refreshDynInputsObjects_connectedTo_link);
         }
         else {
             console.warn("refreshDynInputsObjects_connectedTo links.length:" + links.length);
             for (var li = 0; li < links.length; li++) {
-                var l = links[li];
-                if (l.target._def.dynInputs != undefined){
-                    var inputCount = RED.export.links.getDynInputDynSizePortStartIndex(l.target, null);
-                    l.target.RealInputs = inputCount;
-                }
+                refreshDynInputsObjects_connectedTo_link(links[li]);
             }
         }
     }
@@ -2647,8 +2424,8 @@ RED.nodes = (function() {
      * @returns 
      */
     function setLinkInfo(l) {
-        l.info.tabOut = l.source._def.isClass?getClassIOport(l.source._def.isClass.id, "Out", l.sourcePort):undefined;
-        l.info.tabIn = l.target._def.isClass?getClassIOport(l.target._def.isClass.id, "In", l.targetPort):undefined;
+        l.info.tabOut = l.source._def.classWs?getClassIOport(l.source._def.classWs.id, "Out", l.sourcePort):undefined;
+        l.info.tabIn = l.target._def.classWs?getClassIOport(l.target._def.classWs.id, "In", l.targetPort):undefined;
         
         l.info.isBus = (l.info.tabOut != undefined && l.info.tabOut.isBus) ||
                     (l.info.tabIn != undefined && l.info.tabIn.isBus) ||
@@ -2662,11 +2439,11 @@ RED.nodes = (function() {
             l.info.valid = false;
             l.info.invalidText = "connecting bus wires to either TabInput or TabOutput not yet supported";
         }
-        else if (l.info.isBus && (l.source._def.isClass != undefined && l.target._def.isClass != undefined)) {
+        else if (l.info.isBus && (l.source._def.classWs != undefined && l.target._def.classWs != undefined)) {
             l.info.valid = false;
             l.info.invalidText = "connecting bus wires between classes not yet supported";
         }
-        else if (l.info.isBus && l.target._def.isClass != undefined) {
+        else if (l.info.isBus && l.target._def.classWs != undefined) {
             l.info.valid = false;
             l.info.invalidText = "connecting bus wires to classes not yet supported";
         }
@@ -2844,16 +2621,14 @@ RED.nodes = (function() {
 		hasIO: checkForIO,
         hasAudio:checkForAudio,
 		generateArrayNode:generateArrayNode,
-		isClass,
+		
 		getClassComments,
-		getWorkspaceIdFromClassName,
-		getWorkspace,
-		getClassPortNode,
+        getWorkspace,
+        getWorkspaceIdFromClassName,
+		getWorkspaceFromClassName,
+		
 		getWireInputSourceNode,
-		getClassIOportsSorted,
 		getClassIOport, // used by node port tooltip popup
-		classOutputPortToCpp,
-		classInputPortToCpp,
 		getWorkspaceNodesAsCompletions,
 		getAllFunctionNodeFunctions,
 		getArrayDeclarationWithoutSizeSyntax,
@@ -2861,7 +2636,7 @@ RED.nodes = (function() {
 		addUsedNodeTypesToPalette,
 		addClassTabsToPalette,
 		refreshClassNodes,
-		make_name,
+
         get currentWorkspace() {return getWorkspace(RED.view.activeWorkspace);},
         getWorkspaceIndex: function(id) {
             for (var i = 0; i < workspaces.length; i++)
@@ -2898,33 +2673,6 @@ RED.nodes = (function() {
         },
         get node_defs() {return node_defs;},
         set node_defs(nds) {node_defs = nds;},
-        /*setIconSets: function(sets) {
-            iconSets = sets;
-            iconSets["font-awesome"] = RED.nodes.fontAwesome.getIconList();
-        },
-        getIconSets: function() {
-            return iconSets;
-        },*/
         checkName:checkName
 	};
 })();
-
-
-/**
-	 * this creates a workspace object
-	 */
-    /* obsolete
- function createWorkspaceObject(id, label, _export, isMain, mainNameType, mainNameExt, isAudioMain, settings, generateCppDestructor, extraClassDeclarations) // export is a reserved word
- {
-     // first set all default values if inputs are undefined
-     if (_export == undefined) _export = true;
-     if (isMain == undefined) isMain = false;
-     if (mainNameType == undefined) mainNameType = "tabName";
-     if (mainNameExt == undefined) mainNameExt = ".ino";
-     if (isAudioMain == undefined) isAudioMain = false;
-     if (generateCppDestructor == undefined) generateCppDestructor = false;
-     if (extraClassDeclarations == undefined) extraClassDeclarations = "";
-     if (settings == undefined){ settings = RED.settings.getChangedSettings(RED.view); console.warn("Converting old global workspace settings to new individual:" + label + " " + id); }
-     // return new structure
-     return { type:"tab", id:id, label:label, nodes:[], links:[], export:_export, isMain:isMain, mainNameType:mainNameType, mainNameExt:mainNameExt, isAudioMain:isAudioMain, generateCppDestructor:generateCppDestructor, extraClassDeclarations:extraClassDeclarations, settings:settings}; // nodes is for future version
- }*/

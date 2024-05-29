@@ -1326,10 +1326,11 @@ RED.view = (function() {
                     RED.notify("You cannot have a object inside itself!!!", "info", null, 3000);
                     return;
                 }
-                var typeWs = RED.nodes.isClass(newNode.type)
+                var typeWs = RED.nodes.getWorkspaceFromClassName(newNode.type)
                 console.error(typeWs);
                 var path = {path:[]};
                 if (typeWs != undefined && RED.nodes.subflowContains(typeWs.id, ws.id, path) == true) {
+					
                     path.path.push(typeWs.label);
                     path.path.reverse();
 
@@ -2459,8 +2460,8 @@ RED.view = (function() {
 			if (!d3.event.ctrlKey)
                 RED.editor.edit(d);
             else {
-                var isClass = d._def.isClass;//RED.nodes.isClass(d.type);
-                if (isClass) { $(current_popup_rect).popover("destroy"); reveal(isClass.id)}
+                var classWs = d._def.classWs;
+                if (classWs != undefined) { $(current_popup_rect).popover("destroy"); reveal(classWs.id)}
             }
 			clickElapsed = 0;
 			d3.event.stopPropagation();
@@ -2554,14 +2555,16 @@ RED.view = (function() {
         
 		//check for conflicts with other nodes:
 		d.requirements.forEach(function(r) {
-			RED.nodes.eachNode(function (n2) {
+			RED.nodes.eachNode(
+				/** @param {REDNode} n2 */
+				function (n2) {
 				if (n2 != d && n2.requirements != null ) {
 					n2.requirements.forEach(function(r2) {
 						if (r["resource"] == r2["resource"]) {
 							if (r["shareable"] == false ) {
 								var msg = "Conflict: shareable '"+r["resource"]+"'  "+d.name+" and "+n2.name;
 								//console.log(msg);
-								msg = n2.name + " uses " + r["resource"] + ", too";
+								msg = RED.nodes.getWorkspace(n2.z).label + " " +  n2.name + " uses " + r["resource"] + ", too";
 								d.conflicts.push(msg);
 								d.requirementError = true;
 							}
@@ -3046,7 +3049,7 @@ RED.view = (function() {
     function getPortName(nodeType, portDir, index)
     {
         var portName = "";
-        var ws = RED.nodes.isClass(nodeType);
+        var ws = RED.nodes.getWorkspaceFromClassName(nodeType);
         if (ws)
         {
             var tabIOnode = RED.nodes.getClassIOport(ws.id, portDir, index);
@@ -3596,7 +3599,7 @@ RED.view = (function() {
 			.attr("x",function(d){return d.w-25-(d.changed?13:0)})
 			.classed("hidden",function(d){ return !d.requirementError; })
 			.on("click", function(){RED.notify(
-				'Conflicts:<ul><li>'+d.conflicts.join('</li><li>')+'</li></ul>',
+				'Conflicts:<br>'+d.conflicts.join('<br>'),
 				null,
 				false,
 				5000
@@ -4139,7 +4142,7 @@ RED.view = (function() {
         else if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
-            var ws = RED.nodes.isClass(nodeType);
+            var ws = RED.nodes.getWorkspaceFromClassName(nodeType);
 			if (ws)
 			{
                 var tabIOnode = RED.nodes.getClassIOport(ws.id, portDir, index);

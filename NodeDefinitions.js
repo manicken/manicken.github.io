@@ -192,7 +192,7 @@ function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
         ...AudioTypeArrayBase,
         shortName: shortName,
         /** @type {REDWorkspace} */
-        isClass: ws,
+        classWs: ws,
         inputs: inputCount, outputs: outputCount,
         category: "tabs", color: "#ccffcc", icon: "arrow-in.png"
     };
@@ -223,6 +223,7 @@ var followingNotImplementedYet = {
         }
     }
 }
+var TabOutput_help = "note. setting the inputs to anything other than 1 (i.e. Bus wire) is only supported on OSC exports";
 var TabIoCommon_Defaults = {
     isBus: {value: false, editor:{type:"boolean"}},
     portNames: {value: "", editor:{type:"multiline"}}
@@ -321,7 +322,7 @@ var NodeDefinitions = {
             auto_subcat_test1: { ...AudioTypeBase, shortName: "auto_subcat_test2", outputs: 2, category: "newSubCat" },
             auto_subcat_test2: { ...AudioTypeBase, shortName: "auto_subcat_test3", outputs: 2, category: "" }, // this don't define the category and this item will be placed into the unsorted category
             */
-            TabOutput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
+            TabOutput: { ...NonAudioObjectBase, editorhelp:TabOutput_help, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
             TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, outputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
             BusJoin: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", help: "not implemented yet" },

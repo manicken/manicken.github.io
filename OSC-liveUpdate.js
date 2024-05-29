@@ -23,7 +23,7 @@ OSC.LiveUpdate = (function() {
             return;
         }
 
-        if (node._def.isClass != undefined) {
+        if (node._def.classWs != undefined) {
             if (createAt.length == 0) { // create at root
                 OSC.SendMessage(OSC.CreateGroupAddr,"ss", node.name, "/");
                 // TODO: fetch all class items

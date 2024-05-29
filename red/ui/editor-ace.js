@@ -163,7 +163,7 @@ RED.editor.ace = (function() {
 				defaultCompleters = aceEditor.completers; // save default
 				
 				var byToken = [];
-				var ws = RED.nodes.isClass(tokenType);
+				var ws = RED.nodes.getWorkspaceFromClassName(tokenType);
 				if (ws)
 				{
 					//byToken = RED.nodes.getAllFunctionNodeFunctions(wsId);
