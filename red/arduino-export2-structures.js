@@ -47,26 +47,65 @@ class ExportObject
 
 class ExportAudioConnection
 {
+    /** @type {REDLinkInfo} */
+    info = {};
+    /** @type {number} */
+    tabOutPortIndex = 0;
+    /** @type {REDLink} */
+    groupFirstLink = {};
+
     /** @type {REDNode} */
     source = {};
     /** @type {number} */
     sourcePort = 0;
     /** @type {String[]} */
     sourcePath = [];
+    /** @type {boolean} */
+    sourceIsArray = false;
     /** @type {String} */
-    //sourceName = "";
+    sourceName = "";
+
     /** @type {REDNode} */
     target = {};
     /** @type {number} */
     targetPort = 0;
     /** @type {String[]} */
     targetPath = [];
+    /** @type {boolean} */
+    targetIsArray = false;
     /** @type {String} */
-    //targetName = "";
+    targetName = "";
+
+    /** this makes a copy of the current link 
+     * @param {REDLink} link
+    */
+    constructor(link) {
+        this.info = link.info;
+        this.tabOutPortIndex = undefined;
+        this.groupFirstLink = link.groupFirstLink;
+            
+        this.sourceIsArray = link.sourceIsArray;
+        this.sourcePath = (link.sourcePath!=undefined)?link.sourcePath:[]; // initialized the first time this function is used when copied from a original link
+        this.source = link.source;
+        this.sourcePort = parseInt(link.sourcePort);
+        this.sourceName = link.sourceName;
+        
+        this.targetIsArray = link.targetIsArray;
+        this.targetPath = (link.targetPath!=undefined)?link.targetPath:[]; // initialized the first time this function is used when copied from a original link
+        this.target = link.target;
+        this.targetPort = parseInt(link.targetPort);
+        this.targetName = link.targetName;
+    }
 
     GetCppCode(classExport)
     {
+        // in development, 
+        // don't care about classExport yet
+        var srcPath = ((this.sourcePath.length!=0)?(this.sourcePath.join('.')+"."):"") + this.source.name;
+        var tgtPath = ((this.targetPath.length!=0)?(this.targetPath.join('.')+"."):"") + this.target.name;
 
+        var ret = `(${srcPath}, ${this.sourcePort}, ${tgtPath}, ${this.targetPort});`;
+        return ret;
     }
 }
 
@@ -102,10 +141,12 @@ class ExportArrayAudioConnections
 
 class WsExport
 {
+    /** @type {REDWorkspace} */
+    ws = {};
     /** @type {String} */
     fileName = "";
     /** @type {String} */
-    className = ""; // the actual name of the workspace/class
+    get className() { return this.ws.label} // the actual name of the workspace/class
     /** @type {String[]} */
     classComments = []; //  user specified class comment node(s) contents
     /** @type {String[]} */
@@ -149,9 +190,10 @@ class WsExport
 
     isMain = false;
 
+    /** @param {REDWorkspace} ws  */
     constructor(ws)
     {
-        this.className = ws.label;
+        this.ws = ws;
         if (ws.isMain == true)
         {
             this.isMain = true;
@@ -213,7 +255,7 @@ class WsExport
             newWsCpp.body += "\n/**\n" + this.classComments + " */"; // newline not needed because it allready in beginning of class definer (check down)
         }
         if (this.isMain == false && classExport) {
-            newWsCpp.body += "\nclass " + this.className + " " + ws.extraClassDeclarations +"\n{\npublic:\n";
+            newWsCpp.body += "\nclass " + this.className + " " + this.ws.extraClassDeclarations +"\n{\npublic:\n";
         }
         else
             newWsCpp.body += "\n";
@@ -269,7 +311,11 @@ class WsExport
         newWsCpp.body += "\n\n";
 
         for (var i = 0; i < this.nonArrayAudioConnections.length; i++) {
-            newWsCpp.body += (classExport?ma_indent:"") + this.nonArrayAudioConnections[i].GetCppCode(classExport);
+            //console.log(this.nonArrayAudioConnections[i]);
+            if (this.nonArrayAudioConnections[i].invalid == undefined)
+                newWsCpp.body += (classExport?ma_indent:"") + this.nonArrayAudioConnections[i].GetCppCode(classExport) + "\n";
+            else
+                newWsCpp.body += (classExport?ma_indent:"") + this.nonArrayAudioConnections[i].invalid; // contains info as a comment
         }
 
         for (var i = 0; i < this.arrayAudioConnections.length; i++) {
@@ -284,7 +330,7 @@ class WsExport
         if (classExport) {
             
             // generate destructor code if enabled
-            if (ws.generateCppDestructor == true) {
+            if (this.ws.generateCppDestructor == true) {
                 newWsCpp.body += "\n" + mi_indent + "~" + this.className + "() { // destructor (this is called when the class-object is deleted)\n";
                 if (this.totalAudioConnectionCount != 0) {
                     newWsCpp.body += ma_indent + "for (int i = 0; i < " + this.totalAudioConnectionCount + "; i++) {\n";
@@ -311,8 +357,8 @@ class WsExport
             }
         }
 
-
-        newWsCpp.header = RED.arduino.export2.getCppHeader(ce.jsonString, this.workspaceIncludes.join("\n") + "\n ", ce.generateZip);
+        //newWsCpp.header = RED.arduino.export2.getCppHeader(ce.jsonString, this.workspaceIncludes.join("\n") + "\n ", ce.generateZip);
+        
         newWsCpp.footer = RED.arduino.export2.getCppFooter();
         
         return newWsCpp;

@@ -41,7 +41,7 @@ RED.arduino.export2 = (function () {
         var coex = new CompleteExport(generateZip, export_mode);
 
         if (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT) {
-            coex.ac.staticType = true; // allways true for SIMPLE FLAT
+            //coex.ac.staticType = true; // allways true for SIMPLE FLAT
             export_workspace(coex, RED.nodes.currentWorkspace); 
         }
         else if (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE || export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP) {
@@ -51,7 +51,7 @@ RED.arduino.export2 = (function () {
             export_classBased(coex);
         }
         else if (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) {
-            coex.ac.staticType = false; // allways false for CLASS SINGLE development export
+            //coex.ac.staticType = false; // allways false for CLASS SINGLE development export
             export_workspace(coex, RED.nodes.currentWorkspace);
         }
         else { // failsafe
@@ -97,7 +97,7 @@ RED.arduino.export2 = (function () {
                  continue; // this skip export
              if (RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false)
                  continue; // don't export classes/tabs not in use
-             coex.ac.staticType = ws.isMain || (ws.label.toLowerCase() == "main.cpp");
+             //coex.ac.staticType = ws.isMain || (ws.label.toLowerCase() == "main.cpp");
              export_workspace(coex, ws);
          }
      }
@@ -166,6 +166,19 @@ RED.arduino.export2 = (function () {
         // add audio object wires/connections
         // TODO rewrite this to use internal structrure directly
         for (var i = 0;i<ws.links.length; i++) {
+            var link = ws.links[i];
+            if (link.source.type == "TabInput" || link.target.type == "TabOutput") continue;
+
+            RED.export.links2.generateAndAddExportInfo(link);
+            if (link.export != undefined)
+                wse.nonArrayAudioConnections.push(...link.export)
+            else // failsafe
+                wse.nonArrayAudioConnections.push({invalid:"// invalid path: " + link.ToString()})
+
+            // TODO make sure that generateAndAddExportInfo also takes care of junctions
+            // TODO sort links by if they have array sources/targets
+
+            /*
             var src = ws.links[i].source;
             var dst = ws.links[i].target;
             var srcPortIndex = ws.links[i].sourcePort;
@@ -185,11 +198,13 @@ RED.arduino.export2 = (function () {
             }
             else {
                 appendAudioConnection_s(wse, coex.ac, src, dst, srcPortIndex, dstPortIndex);
-            }
+            }*/
         }
         //wse.acArrayLength = coex.ac.arrayLength; // workaround for now TODO remove usage
         //wse.totalAudioConnectionCount = coex.ac.totalCount;
-        coex.wsCppFiles.push(wse.generateWsFile(coex.exportMode));
+        var exportFile = wse.generateWsFile(coex.exportMode);
+        exportFile.header = RED.arduino.export2.getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.generateZip);
+        coex.wsCppFiles.push(exportFile);
     }
     /**
      * 
@@ -272,49 +287,6 @@ RED.arduino.export2 = (function () {
         else
             return false;
         return true;
-    }
-
-    /**
-     * // TODO create class for NewAudioConnection
-     * @param {WsExport} wse 
-     * @param {AudioConnectionExport} ac 
-     * @param {REDNode} src 
-     * @param {REDNode} dst 
-     * @param {*} pi 
-     * @param {*} dstPortIndex 
-     */
-    function appendAudioConnection_s(wse, ac, src, dst, pi, dstPortIndex) {
-        
-        ac.cppCode = "";
-        ac.srcName = RED.arduino.export.make_name(src);
-        ac.dstName = RED.arduino.export.make_name(dst);
-        ac.srcPort = pi;
-        ac.dstPort = dstPortIndex; // default
-
-        ac.checkIfSrcIsArray(); // we ignore the return value, there is no really use for it
-        if (src._def.classWs != undefined) { // if source is class
-            //console.log("root src is class:" + ac.srcName);
-            RED.arduino.export.classOutputPortToCpp(nns, tabNodes.outputs, ac, n);
-        }
-
-        ac.checkIfDstIsArray(); // we ignore the return value, there is no really use for it
-        if (dst._def.classWs != undefined) {
-            //console.log("dst is class:" + dst.name + " from:" + n.name);
-            RED.arduino.export.classInputPortToCpp(tabNodes.inputs, ac.dstName, ac, dst);
-        }
-        else
-        {
-            if (dst._def.dynInputs != undefined) {
-                //console.error(dstPortIndex);
-                ac.dstPort = RED.export.links.getDynInputDynSizePortStartIndex(dst, src, pi);
-                //console.error(ac.dstPort);
-            }
-            ac.appendToCppCode(); // this don't return anything, the result is in ac.cppCode
-        }
-        if (ac.ifAnyIsArray())
-            wse.arrayAudioConnections.push(...ac.cppCode.split('\n')); // TODO fix so that different size arrays are allowed
-        else
-            wse.nonArrayAudioConnections.push(...ac.cppCode.split('\n'));  // TODO fix so that cppCode can be returned as array, have split as workaround for now
     }
 
     /**
@@ -462,12 +434,12 @@ RED.arduino.export2 = (function () {
                    // ce.wsCppFiles[i].isExported = true;
                 //}
                 
-               // if (ce.wsCppFiles[i].className)
-                //    exported.push(ce.wsCppFiles[i].className);
+                if (ce.wsCppFiles[i].className)
+                    exported.push(ce.wsCppFiles[i].className);
             }
         }
         cpp += getCppFooter();
-        
+        console.log(exported.join(', '));
         return cpp.split('\n\n').join('\n').split('\t').join("    "); // removes some double newlines for now
     }
 

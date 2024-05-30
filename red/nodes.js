@@ -186,6 +186,11 @@ class REDLink
         this.target = target;
         this.targetPort = parseInt(targetPort);
     }
+    /** used for debug */
+    ToString()
+    {
+        return `sourceName:${this.source.name}, sourcePort:${this.sourcePort}, targetName:${this.target.name}, targetPort:${this.targetPort}`;
+    }
 };
 
 class REDLinkSvgPaths
@@ -970,7 +975,7 @@ RED.nodes = (function() {
 				}
 				// sort "new" nodes by ypos
 				nnsCol.sort(function(a,b){return(a.y-b.y);});
-                otherNodes.pushArray(nnsCol);
+                otherNodes.push(...nnsCol);
             }
             var classIOnodes = [];
             var uiNodes = [];
@@ -988,18 +993,23 @@ RED.nodes = (function() {
                 uiNodes.push(node);
 			}
             classIOnodes.sort(function(a,b){return(a.y-b.y);});
+
             ws.nodes.length = 0;
             ws.nodes.push(...uiNodes);
             ws.nodes.push(...classIOnodes);
             ws.nodes.push(...otherNodes);
 
+            var nodeIndex = 0;
+            for (var i = 0; i < ws.nodes.length; i++)
+                ws.nodes[i].sortIndex = nodeIndex++;
+
             var linksSorted = [];
-            /*var linksListBeforeSort = [];
+            var linksListBeforeSort = [];
             for (let i = 0;i< ws.links.length; i++) {
                 var link = ws.links[i];
                 linksListBeforeSort.push({srcName:link.source.name, srcPort:link.sourcePort, dstName:link.target.name, dstPort:link.targetPort});
             }
-            console.log("linksBeforeSort:",linksListBeforeSort);*/
+            console.log("linksBeforeSort:",linksListBeforeSort);
             for (var ni = 0; ni < ws.nodes.length; ni++) {
                 var node = ws.nodes[ni];
                 var nodeLinks = [];
@@ -1008,17 +1018,19 @@ RED.nodes = (function() {
                     if (node === link.source)
                         nodeLinks.push(link);
                 }
-                nodeLinks.sort(function (a,b) { return (a.sourcePort-b.sourcePort); });
+                nodeLinks.sort(function (a,b) { return ( (a.sourcePort-b.sourcePort)+(a.target.sortIndex-b.target.sortIndex) ); });
+                // TODO sort by target order as well
+                //nodeLinks.sort(function (a,b) { return (a.target.sortIndex-b.target.sortIndex); })
                 linksSorted.push(...nodeLinks);
             }
             ws.links.length = 0;
             ws.links.push(...linksSorted);
-            /*var linksListAfterSort = [];
+            var linksListAfterSort = [];
             for (let i = 0;i< linksSorted.length; i++) {
                 var link = linksSorted[i];
                 linksListAfterSort.push({srcName:link.source.name, srcPort:link.sourcePort, dstName:link.target.name, dstPort:link.targetPort});
             }
-            console.log("linksListAfterSort:",linksListAfterSort);*/
+            console.log("linksListAfterSort:",linksListAfterSort);
 		}
         
         //console.error("nodecount after sort: "+nodes.length);

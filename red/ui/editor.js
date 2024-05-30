@@ -213,7 +213,7 @@ RED.editor = (function() {
         str = splitStarting[0];
         
         if (isValidC_Cpp_name(str) == false) {
-            RED.notify(">>>"+str+"<<< is not a valid c/cpp name", "warning", null, 4000);
+            RED.notify(">>>"+str+"<<< is not a valid c/cpp name<br>@" + node.name, "warning", null, 4000);
             return false;
         }
         

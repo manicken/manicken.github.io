@@ -14,10 +14,8 @@ RED.export.links2 = (function () {
     var exampleLink = {
         source:{/*node*/}, sourcePort:0, target:{/*node*/}, targetPort:0, // original propeties
 
-        export:[ // should be added by this module, and contains the 'real' wires
-            {linkPath:"",
-             source:{/*node*/}, sourcePort:0, sourcePath:[], sourceName:"", 
-             target:{/*node*/}, targetPort:0, targetPath:[], targetName:""}
+        export:[ // should be added by this module, and contains the 'real'(final) wires
+            /** type ExportAudioConnection */
         ],
         
         /*info:{ // added by setLinkInfo @ RED.nodes
@@ -28,48 +26,24 @@ RED.export.links2 = (function () {
             tabIn
         }*/
     }
-    function copy(l) {
-        //console.warn("link copy from: " + RED.export.links.getDebug(l));
-        var newL = {
 
-            info:l.info,
-            tabOutPortIndex:undefined,
-            groupFirstLink:l.groupFirstLink,
-            
-            sourceIsArray:l.sourceIsArray,
-            sourcePath:(l.sourcePath!=undefined)?l.sourcePath:[], // initialized the first time this function is used when copied from a original link
-            source:l.source,
-            sourcePort:parseInt(l.sourcePort),
-            
-            sourceName:l.sourceName,
-            
-            targetPath:(l.targetPath!=undefined)?l.targetPath:[], // initialized the first time this function is used when copied from a original link
-            target:l.target,
-            targetPort:parseInt(l.targetPort),
-            targetName:l.targetName,
-
-        };
-        //console.warn("link copy to: " + RED.export.links.getDebug(newL));
-        return newL;
-    }
-    
-    function expandBusWire(l) {
+    function expandBusWire(link) {
         
-        if ((l.info.tabOut != undefined) && (l.info.tabIn == undefined)) // only support this combination for now
+        if ((link.info.tabOut != undefined) && (link.info.tabIn == undefined)) // only support this combination for now
         {
             var groupFirstLink;
-            for (var topi = 0; topi < l.info.tabOut.inputs; topi++)
+            for (var topi = 0; topi < link.info.tabOut.inputs; topi++)
             {
-                var nl = copy(l);
+                var nl = new ExportAudioConnection(link);// copy(l);
                 if (topi == 0) groupFirstLink = nl;
                 else nl.groupFirstLink = groupFirstLink;
 
                 nl.tabOutPortIndex = topi;
-                l.export.push(nl);
+                link.export.push(nl);
             }
         }
         else {
-            l.export.push({invalid:"//(not supported yet)" + RED.export.links2.getDebug(l)});
+            link.export.push({invalid:"//(not supported yet)" + RED.export.links2.getDebug(link)});
         }
     }
     function fixFinal_Sources_Targets(link) {
@@ -79,31 +53,31 @@ RED.export.links2 = (function () {
         for (var li = 0; li < link.export.length; li++)
         {
             if (link.export[li].invalid != undefined) continue; // skip invalid/unsupported links
-            var l = link.export[li];
-            if (l.source._def.classWs != undefined)
+            var expLink = link.export[li];
+            if (expLink.source._def.classWs != undefined)
             {
-                var tabOutPortIndex = l.tabOutPortIndex?l.tabOutPortIndex:0;
-                getFinalSource(l,l.source._def.classWs,tabOutPortIndex);
+                var tabOutPortIndex = expLink.tabOutPortIndex?expLink.tabOutPortIndex:0;
+                getFinalSource(expLink,expLink.source._def.classWs,tabOutPortIndex);
             }
             if (node.isArray != undefined) {
-                l.sourceIsArray = node.isArray;
+                expLink.sourceIsArray = node.isArray;
             }else {
-                l.sourceName = l.source.name;
+                expLink.sourceName = expLink.source.name;
             }
-            if (l.target._def.classWs != undefined)
+            if (expLink.target._def.classWs != undefined)
             {
-                getFinalTarget_s(l, newLinks);
+                getFinalTarget_s(expLink, newLinks);
                 link.export = newLinks;
             }
             else {
-                l.targetName = l.target.name;
+                expLink.targetName = expLink.target.name;
             }           
         }
     }
 
     function getFinalTarget_s(link,links) {
         var ws = link.target._def.classWs;
-        var newLink = copy(link);
+        var newLink = new ExportAudioConnection(link);//copy(link);
         
         var portNode = RED.nodes.getClassIOport(ws.id, "In", link.targetPort);
         if (portNode.isBus == true) {
@@ -116,7 +90,7 @@ RED.export.links2 = (function () {
         for (var pli = 0; pli < portLinks.length; pli++)
         {
             var pl = portLinks[pli];
-            var npl = copy(newLink); // npl = new port link
+            var npl = new ExportAudioConnection(newLink);//copy(newLink); // npl = new port link
             npl.targetPath = []; // this makes sure that every targetPath array is unique
             npl.targetPath.push(...newLink.targetPath);
             npl.targetPath.push(link.target.name);
@@ -165,14 +139,14 @@ RED.export.links2 = (function () {
 
     function generateAndAddExportInfo(link) {
         //return;
-        //console.log("generateAndAddExportInfo", link);
+        console.log("generateAndAddExportInfo", link);
         if (link.source.type == "TabInput" || link.target.type == "TabOutput") return; // don't generate export info for tabIO links as they are virtual only
 
         link.export = [];
         if (link.info.isBus == true)
             expandBusWire(link);
         else
-            link.export.push(copy(link));
+            link.export.push(new ExportAudioConnection(link));//copy(link));
 
         fixFinal_Sources_Targets(link);
     }

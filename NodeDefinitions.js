@@ -334,7 +334,7 @@ var NodeDefinitions = {
                 defaults: {
                     name: { type: "c_cpp_name", editor: { help: "the name given to the instance" } },
                     id: {},
-                    subType: { type: "c_cpp_name", editor: { help: "is the class name given in the code,<br>this is the type that will be used when exporting the design." } },
+                    subType: { value:"AudioStreamObjectName", type: "c_cpp_name", editor: { help: "is the class name given in the code,<br>this is the type that will be used when exporting the design." } },
                     includeFile: { editor: { help: "the name of the .h file to be included to use the Sub Type" } },
                     inputs: { value: "1", maxval: 255, minval: 1, type: "int", editor: { help: "how many audio inputs the custom AudioStream object have." } },
                     outputs: { value: "1", maxval: 255, minval: 1, type: "int", editor: { help: "how many audio outputs the custom AudioStream object have." } },
