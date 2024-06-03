@@ -3,6 +3,27 @@
  * and it's structure(s) may change drastically
  */
 
+
+const warningClassUse = " // warning this is referring to a class, which is not direct supported in simple export";
+/**
+     * @readonly
+     * @enum {number}
+     */
+ var CPP_EXPORT_MODE = {
+    /** SIMPLE flat export*/
+    SIMPLE_FLAT:0,
+    /** CLASS complete export */
+    CLASS_COMPLETE:1,
+    /** CLASS complete export to zip */
+    CLASS_COMPLETE_ZIP:2,
+    /** CLASS single export, used for development testing/debugging */
+    CLASS_SINGLE:-1,
+}
+// used to print the names above
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+} 
+
 class ExportObjectPaddingSizes
 {
     /** @type {number} */
@@ -492,20 +513,4 @@ class CompleteExport
     getPostJSON() {
         return JSON.stringify(this.getPostObject(), null, 4)
     }
-}
-
-const warningClassUse = " // warning this is referring to a class, which is not direct supported in simple export";
-/**
-     * @readonly
-     * @enum {number}
-     */
- var CPP_EXPORT_MODE = {
-    /** SIMPLE flat export*/
-    SIMPLE_FLAT:0,
-    /** CLASS complete export */
-    CLASS_COMPLETE:1,
-    /** CLASS complete export to zip */
-    CLASS_COMPLETE_ZIP:2,
-    /** CLASS single export, used for development testing/debugging */
-    CLASS_SINGLE:-1,
 }

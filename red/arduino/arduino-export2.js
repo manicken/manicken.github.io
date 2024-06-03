@@ -5,15 +5,13 @@
 
 RED.arduino.export2 = (function () {
     'use strict';
-    var nns = {}; // workaround for now, used by appendAudioConnection_s
-    var tabNodes = []; // workaround for now, used by appendAudioConnection_s
-    
+
     function init() // called from main.js @ init()
     {
         RED.main.SetPopOver("#menu-export2", "(under development)", "right");
         RED.main.SetPopOver("#btn-export-simple2", "(under development)", "right");
         RED.main.SetPopOver("#btn-export-class2", "(under development)", "right");
-        RED.main.SetPopOver("#btn-export-class-dev2", "(under development)", "right");
+        RED.main.SetPopOver("#btn-export-class-dev2", "(development test only)", "right");
         RED.main.SetPopOver("#btn-export-class-zip2", "(under development)", "right");
     }
     $('#btn-export-simple2').click(function () { Export(CPP_EXPORT_MODE.SIMPLE_FLAT); });
@@ -34,10 +32,6 @@ RED.arduino.export2 = (function () {
         
         RED.storage.update(); // sort is made inside update
 
-        
-        nns = RED.nodes.createCompleteNodeSet({newVer:false}); // workaround for now, used by appendAudioConnection_s
-        tabNodes = RED.arduino.export.getClassIOportsSorted(undefined, nns); // workaround for now, used by appendAudioConnection_s
-
         var coex = new CompleteExport(generateZip, export_mode);
 
         if (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT) {
@@ -51,7 +45,6 @@ RED.arduino.export2 = (function () {
             export_classBased(coex);
         }
         else if (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) {
-            //coex.ac.staticType = false; // allways false for CLASS SINGLE development export
             export_workspace(coex, RED.nodes.currentWorkspace);
         }
         else { // failsafe
@@ -60,7 +53,10 @@ RED.arduino.export2 = (function () {
         }
 
         if (coex.mixervariants != undefined && coex.mixervariants.length > 0) {
-            coex.globalCppFiles.push(...Mixers.GetFiles(coex.mixervariants));
+            coex.globalCppFiles.push(...Mixers.Export.GetFiles("Mono", coex.mixervariants,(export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT)));
+        }
+        if (coex.mixerStereoVariants != undefined && coex.mixerStereoVariants.length > 0) {
+            coex.globalCppFiles.push(...Mixers.Export.GetFiles("Stereo", coex.mixerStereoVariants,(export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT)));
         }
         console.error("@export as class RED.arduino.serverIsActive=" + RED.arduino.serverIsActive());
 
@@ -88,19 +84,19 @@ RED.arduino.export2 = (function () {
      * 
      * @param {CompleteExport} coex 
      */
-     function export_classBased(coex)
-     {
-         for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++)
-         {
-             var ws = RED.nodes.workspaces[wsi];
-             if (ws.export == false)
-                 continue; // this skip export
-             if (RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false)
-                 continue; // don't export classes/tabs not in use
-             //coex.ac.staticType = ws.isMain || (ws.label.toLowerCase() == "main.cpp");
-             export_workspace(coex, ws);
-         }
-     }
+    function export_classBased(coex)
+    {
+        for (var wsi = 0; wsi < RED.nodes.workspaces.length; wsi++)
+        {
+            var ws = RED.nodes.workspaces[wsi];
+            if (ws.export == false)
+                continue; // this skip export
+            if (RED.nodes.getNodeInstancesOfType(ws.label).length == 0 && ws.isMain == false && ws.isAudioMain == false)
+                continue; // don't export classes/tabs not in use
+            
+            export_workspace(coex, ws);
+        }
+    }
 
     /**
      * 
@@ -155,16 +151,12 @@ RED.arduino.export2 = (function () {
                 wse.audioObjects.push(new ExportObject(typeName, name, comment));
             }
 
-            if (n._def.classWs != undefined) // (h4yn0nnym0u5e) keep track of class dependencies so we can export in valid order
+            if (n._def.classWs != undefined && (wse.depends.includes(n.type) == false)) // (h4yn0nnym0u5e) keep track of class dependencies so we can export in valid order
 				wse.depends.push(n.type);
         }
 
-        //coex.ac.workspaceId = ws.id;
-        //coex.ac.count = 1;
-        //coex.ac.totalCount = 0;
-
         // add audio object wires/connections
-        // TODO rewrite this to use internal structrure directly
+
         for (var i = 0;i<ws.links.length; i++) {
             var link = ws.links[i];
             if (link.source.type == "TabInput" || link.target.type == "TabOutput") continue;
@@ -177,30 +169,7 @@ RED.arduino.export2 = (function () {
 
             // TODO make sure that generateAndAddExportInfo also takes care of junctions
             // TODO sort links by if they have array sources/targets
-
-            /*
-            var src = ws.links[i].source;
-            var dst = ws.links[i].target;
-            var srcPortIndex = ws.links[i].sourcePort;
-            var dstPortIndex = ws.links[i].targetPort;
-            
-            if (src.type == "TabInput" || dst.type == "TabOutput") continue; // ignore these 'virtual' wires they are created outside the class
-            if (src.type.startsWith("Junction")) continue; // wires coming out from junctions are ignored
-
-            if (dst.type.startsWith("Junction"))
-            {
-                var dstNodes = { nodes: [] };
-                getJunctionFinalDestinations(dst, dstNodes);
-                for (var dni = 0; dni < dstNodes.nodes.length; dni++) {
-                    if (src === dstNodes.nodes[dni].node) continue; // failsafe, can't make connections back to itself
-                    appendAudioConnection_s(wse, coex.ac, src, dstNodes.nodes[dni].node, srcPortIndex, dstNodes.nodes[dni].dstPortIndex);
-                }
-            }
-            else {
-                appendAudioConnection_s(wse, coex.ac, src, dst, srcPortIndex, dstPortIndex);
-            }*/
         }
-        //wse.acArrayLength = coex.ac.arrayLength; // workaround for now TODO remove usage
         //wse.totalAudioConnectionCount = coex.ac.totalCount;
         var exportFile = wse.generateWsFile(coex.exportMode);
         exportFile.header = RED.arduino.export2.getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.generateZip);
@@ -381,7 +350,8 @@ RED.arduino.export2 = (function () {
     function ShowExportDialog(ce)
     {
         var cpp = convertCompleteExportToString(ce);
-        RED.view.dialogs.showExportDialog("Class Export to Arduino", cpp, " Source Code:");
+        console.log(ce.exportMode);
+        RED.view.dialogs.showExportDialog(getKeyByValue(CPP_EXPORT_MODE, ce.exportMode), cpp, " Source Code:");
     }
 
     /** @param {CompleteExport} ce */
@@ -409,33 +379,37 @@ RED.arduino.export2 = (function () {
         // credits to h4yn0nnym0u5e for the dependency order sorting
         var exportComplete = false;
         var exported = [];
-        while (!exportComplete)
+        var skipDependencyCheck = ((ce.exportMode == CPP_EXPORT_MODE.SIMPLE_FLAT) || (ce.exportMode == CPP_EXPORT_MODE.CLASS_SINGLE));
+        while (exportComplete==false)
         {
             exportComplete = true;
             
-            for (var i = 0; i < ce.wsCppFiles.length; i++) {
+            for (var fi = 0; fi < ce.wsCppFiles.length; fi++) {
+                var exportFile = ce.wsCppFiles[fi];
 
-                /*if (!ce.wsCppFiles[i].isExported) {
-                    // check that anything we depend on has already been output
+                if (exportFile.isExported == false) {
+                    // check that anything we depend on has already been added
                     var skip = false;
-                    //console.log(ce.wsCppFiles[i]);
-                    for (var depend in ce.wsCppFiles[i].depends) {
-                        if (!exported.includes(depend))
-                        {
-                            exportComplete = false;
-                            skip = true;
-                            break;
+                    if (skipDependencyCheck == false) {
+                        for (var di =0;di<exportFile.depends.length ;di++) {
+                            var depend = exportFile.depends[di];
+                            if (exported.includes(depend) == false)
+                            {
+                                exportComplete = false;
+                                skip = true;
+                                break;
+                            }
                         }
+                        if (skip==true)
+                            continue;
                     }
-                    if (skip)
-                        continue;
-*/
-                    cpp += ce.wsCppFiles[i].body;
-                   // ce.wsCppFiles[i].isExported = true;
-                //}
-                
-                if (ce.wsCppFiles[i].className)
-                    exported.push(ce.wsCppFiles[i].className);
+                    cpp += exportFile.body;
+                    exportFile.isExported = true;
+                }
+                if (exportFile.className != undefined)
+                    exported.push(exportFile.className);
+                else
+                    console.error("exportFile.className == undefined");
             }
         }
         cpp += getCppFooter();

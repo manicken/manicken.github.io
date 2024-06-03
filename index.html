@@ -278,13 +278,16 @@ span.mainfunction {color: #993300; font-weight: bolder}
             </div>
 
 			<div class="btn-group">
-                <a class="btn btn-small" id="btn-debugPrintClassUsage" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintClassUsage</a>
-                <a class="btn btn-small" id="btn-debugPrintLinks" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintLinks</a>
-                <a class="btn btn-small" id="btn-debugPrintLinks2" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintLinks2</a>
-                <a class="btn btn-small" id="btn-debugPrintLinks3" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintLinks3</a>
-				<a class="btn btn-small hidden" id="btn-debugShowSelection" href="#"><i class="fa fa-cogs fa-lg"></i> debug show moving set</a>
-				<a class="btn btn-small hidden" id="btn-debugShowGroupElements" href="#"><i class="fa fa-cogs fa-lg"></i> debug ShowGroupElements</a>
-				<a class="btn btn-small hidden" id="btn-debugGetMidiDevices" href="#"><i class="fa fa-cogs fa-lg"></i> debug get midi devices</a>
+				<a id="menu-debug" class="btn dropdown-toggle pull-right" data-toggle="dropdown" href="#"><i class="fa fa-cogs"></i> development tests <span class="caret"></span></a>
+				<ul class="dropdown-menu" style="left:163px; min-width:200px; width:200px !important; padding:0px;">
+                <li><a class="btn btn-small" id="btn-debugPrintClassUsage" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintClassUsage</a></li>
+                <li><a class="btn btn-small" id="btn-debugPrintLinks" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintLinks</a></li>
+                <li><a class="btn btn-small" id="btn-debugPrintLinks2" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintLinks2</a></li>
+                <li><a class="btn btn-small" id="btn-debugPrintLinks3" href="#"><i class="fa fa-cogs fa-lg"></i> DebugPrintLinks3</a></li>
+				<li><a class="btn btn-small" id="btn-debugShowSelection" href="#"><i class="fa fa-cogs fa-lg"></i> debug show moving set</a></li>
+				<li><a class="btn btn-small" id="btn-debugShowGroupElements" href="#"><i class="fa fa-cogs fa-lg"></i> debug ShowGroupElements</a></li>
+				<li><a class="btn btn-small" id="btn-debugGetMidiDevices" href="#"><i class="fa fa-cogs fa-lg"></i> debug get midi devices</a></li>
+				</ul>
 			</div>
 			<!--<div class="btn-group">
 				<a class="btn btn-small" id="btn-getMidiDevices" href="#"><i class="fa fa-cogs fa-lg"></i> getMidiDevices</a>
@@ -630,22 +633,39 @@ span.mainfunction {color: #993300; font-weight: bolder}
     </form>
 </div>   
 
-<script type="text/x-red" data-template-name="export-clipboard-dialog">
-	<div class="form-row">
-		<label id="export-clipboard-dialog-textarea-label" for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
-		<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll; cursor: text;" class="input-block-level" id="node-input-export" rows="12"></textarea>
+<script type="text/html" data-template-name="export-clipboard-dialog">
+	
+	<div class="form-columns">
+		<div class="form-col" >
+			<label for="export-dialog-filelist" style="display: block; width:100%;"><i class="fa fa-list"></i> Files:</label>
+			<div id="export-dialog-filelist" class="form-file-items">
+
+			</div>
+			<div class="form-row"><button id="showFile1" onclick="">File1</button></div>
+			<div class="form-row"><button id="showFile2" onclick="">File2</button></div>
+			<div class="form-row"><button id="showFile3" onclick="">File3</button></div>
+			<div class="form-row"><button id="showFile4" onclick="">File4</button></div>
+		</div>
+		<div class="form-col">
+			<div class="form-row">
+				<label id="export-clipboard-dialog-textarea-label" for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
+				<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll; cursor: text;" class="input-block-level" id="node-input-export" rows="30"></textarea>
+			</div>
+			<div class="form-tips" id="export-clipboard-dialog-tips">
+				Select the text above and copy to the clipboard with Ctrl-A Ctrl-C.
+			</div>
+		</div>
 	</div>
-	<div class="form-tips" id="export-clipboard-dialog-tips">
-		Select the text above and copy to the clipboard with Ctrl-A Ctrl-C.
-	</div>
+	
+
 </script>
-<script type="text/x-red" data-template-name="export-library-dialog">
+<script type="text/html" data-template-name="export-library-dialog">
 	<div class="form-row">
 		<label for="node-input-filename" ><i class="icon-tag"></i> Filename:</label>
 		<input type="text" id="node-input-filename" placeholder="Filename">
 	</div>
 </script>
-<script type="text/x-red" data-template-name="import-dialog">
+<script type="text/html" data-template-name="import-dialog">
 	<div class="form-row">
 		<label id="import-dialog-textarea-label" for="node-input-import"><i class="icon-share"></i>Nodes:</label>
 		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-import" rows="12" placeholder=""></textarea>
@@ -686,25 +706,25 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <script src="red/nodes.js"></script>
 <script src="red/red.js"></script>
-<script src="red/export.js"></script>
-<script src="red/export-links.js"></script>
+<script src="red/arduino/export.js"></script>
+<script src="red/arduino/export-links.js"></script>
 
-<script src="red/export-links-test.js"></script>
-<script src="red/export-links-getDebug.js"></script>
+<script src="red/arduino/export-links-test.js"></script>
+<script src="red/arduino/export-links-getDebug.js"></script>
 
-<script src="red/arduino.js"></script>
+<script src="red/arduino/arduino.js"></script>
 
-<script src="red/arduino-import.js"></script>
-<script src="red/arduino-export-structures.js"></script>
-<script src="red/arduino-export.js"></script>
-<script src="red/arduino-export-osc.js"></script>
+<script src="red/arduino/arduino-import.js"></script>
+<script src="red/arduino/arduino-export-structures.js"></script>
+<script src="red/arduino/arduino-export.js"></script>
+<script src="red/arduino/arduino-export-osc.js"></script>
 
-<script src="red/arduino-export2-structures.js"></script>
-<script src="red/export-links2.js"></script>
-<script src="red/export-links2-getDebug.js"></script>
-<script src="red/arduino-export2.js"></script>
+<script src="red/arduino/arduino-export2-structures.js"></script>
+<script src="red/arduino/export-links2.js"></script>
+<script src="red/arduino/export-links2-getDebug.js"></script>
+<script src="red/arduino/arduino-export2.js"></script>
 
-<script src="red/arduino-board.js"></script>
+<script src="red/arduino/arduino-board.js"></script>
 <script src="red/BiDirDataWebSocketBridge.js"></script>
 <script src="red/ui/state.js"></script>
 
@@ -754,11 +774,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ControlGUI.js"></script>
 
 <script src="SerialCmdDecoder.js"></script>
-<script src="OSC-settings.js"></script>
-<script src="OSC-teensy.js"></script>
-<script src="OSC-liveUpdate.js"></script>
-<script src="OSC-export.js"></script>
-<script src="mixersCode.js"></script>
+<script src="red/arduino/OSC-settings.js"></script>
+<script src="red/arduino/OSC-teensy.js"></script>
+<script src="red/arduino/OSC-liveUpdate.js"></script>
+<script src="red/arduino/OSC-export.js"></script>
+<script src="red/arduino/DynMixerHppCode.js"></script>
+<script src="red/arduino/DynMixerCppCode.js"></script>
+<script src="red/arduino/Mixers-export.js"></script>
+<script src="red/arduino/Mixers-export-MonoCode.js"></script>
+<script src="red/arduino/Mixers-export-StereoCode.js"></script>
 <script src="red/ui/FileSelectDialog.js"></script>
 
 

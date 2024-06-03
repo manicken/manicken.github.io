@@ -469,7 +469,9 @@ RED.view.dialogs = (function() {
         }
         RED.view.state = RED.state.EXPORT;
         var t2 = performance.now();
-        RED.view.dialogs.getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
+
+        getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
+            
             if (textareaLabel != undefined)
                 $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
                 if (overrides.tips != undefined)
@@ -487,7 +489,7 @@ RED.view.dialogs = (function() {
                     return false;
                 });
             }).focus();
-
+            
 
 
             //console.warn(".ui-droppable.box.clientHeight:"+ box.clientHeight);
@@ -496,6 +498,22 @@ RED.view.dialogs = (function() {
                 title: title,
                 width: box.clientWidth * 0.60, // setting the size of dialog takes ~170mS
                 height: box.clientHeight,
+                show: {
+                    effect:"fade",
+                    duration:400,
+                    complete: function() {
+                        console.log("shown");
+                        var dialogHeight = $("#dialog").height();
+                        $("#node-input-export").height(dialogHeight - 210);
+                    }
+                    // This function is called whenever the dialog is opened
+                    //console.log("Dialog opened");
+                    
+                },
+                resize: function(event, ui) {
+                   // console.log("Dialog resized to: " + ui.size.width + "x" + ui.size.height);
+                    $("#node-input-export").height(ui.size.height - 210);
+                },
                 buttons: [
                     {
                         text: overrides.okText,

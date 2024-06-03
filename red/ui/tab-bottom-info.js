@@ -26,9 +26,9 @@ RED.bottombar.info = (function() {
 	content.style.paddingRight = "0px";
 
 	RED.bottombar.addTab("output", content,false);
-	//var hmtl = '<textarea readonly class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(255, 255, 255); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
-	var hmtl = '<div id="messages" class="input-block-level"'+ mText+'</textarea>';
-	$("#tab-output").html(hmtl);
+	//var html = '<textarea readonly class="input-block-level" style="font-family: monospace; font-size: 12px; background:rgb(255, 255, 255); padding-left: 0.5em; cursor: text;" rows="50" id="messages">'+ mText+'</textarea>';
+	var html = '<div id="messages" class="input-block-level"'+ mText+'</textarea>';
+	$("#tab-output").html(html);
 	//setContent("Welcome\n");
 
 	function refresh() {

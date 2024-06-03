@@ -290,6 +290,7 @@ RED.palette = (function() {
 		
 		d.id = "palette-node-"+category +"-"+nt;
 		d.type = nt;
+		d._def = def;
 
 		//var label = /^(.*?)([ -]in|[ -]out)?$/.exec(nt)[1];
 		var label = (def.shortName) ? def.shortName : nt;
@@ -379,6 +380,8 @@ RED.palette = (function() {
 			if (def.help != undefined && def.help.trim().length != 0) RED.sidebar.info.setHelpContent("<h3>" + d.type + "</h3>",d.type, def.help);
 			else RED.sidebar.info.setHelpContent('', d.type);
 		});
+		var offsetX = null;
+		var offsetY = null;
 		$(d).draggable({
 			helper: 'clone',
 			appendTo: 'body',
@@ -386,8 +389,27 @@ RED.palette = (function() {
 			revertDuration: 50,
 			start: function(e, ui)
 			{
-			$(ui.helper).addClass("palette_node_drag");
-			}
+				ui.helper.addClass("palette_node_drag");
+				
+				if (d.type.startsWith("Junction")) {
+					ui.helper.css({
+						width: d._def.width,
+					});
+					ui.helper.find(".palette_label").remove();
+				}
+
+				offsetX=null;
+    			offsetY=null;
+			},
+			drag : function( e, ui ) { // Fires after start event, and continuously during drag
+				if(offsetX===null){
+					offsetX = e.clientX-ui.offset.left;
+					offsetY = e.clientY-ui.offset.top;
+				  }
+				  ui.position.left += offsetX - Math.floor( ui.helper.outerWidth()/ 2 );
+				  ui.position.top += offsetY - Math.floor( ui.helper.outerHeight()/ 2 );
+			},
+			
 		});
 		
 	}

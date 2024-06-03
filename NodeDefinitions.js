@@ -248,6 +248,8 @@ var ManickenNodesBase = {
     url: "",
 };
 
+var LinkIOHelp = "this is just a showcase for a maybe future function that can replace junctions (it's available at NODE-RED so you can see what to expect from it there) note. links would never cross the class boundary as that maybe would cause designs that are hard to follow but we will see how it's gonna be used.";
+
 var NodeDefinitions = {
     /*
     template:{ // node def. group uid
@@ -356,8 +358,10 @@ var NodeDefinitions = {
             EndOfFileCode: { ...CodeObjectBase, shortName: "eof code", useAceEditor: "c_cpp", icon: "function.png" },
 
             ConstValue: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, name: { type: "c_cpp_name_no_array" }, value: { value: "0" }, valueType: { value: "int" } }, shortName: "constValue", color: "#eb9834", icon: "hash.png" },
-            JunctionLR: { ...NonAudioObjectBase, shortName: "JunctionLR", inputs: 1, outputs: 1, color: "#4D54FF", textColor: "#FFFFFF", icon: "arrow-in.png" },
-            JunctionRL: { ...NonAudioObjectBase, shortName: "JunctionRL", inputs: 1, outputs: 1, color: "#4D54FF", textColor: "#FFFFFF", icon: "arrow-out.png" },
+            JunctionLR: { ...NonAudioObjectBase, shortName: "JunctionLR", inputs: 1, outputs: 1, color: "#4D54FF", width:32, textColor: "#FFFFFF", icon: "arrow-in.png" },
+            JunctionRL: { ...NonAudioObjectBase, shortName: "JunctionRL", inputs: 1, outputs: 1, color: "#4D54FF", width:32, textColor: "#FFFFFF", icon: "arrow-out.png" },
+            LinkOut: { ...NonAudioObjectBase, help: LinkIOHelp, shortName: "LinkOut", inputs: 1, color: "#cce6ff", width:32, icon: "arrow-in.png" },
+            LinkIn: { ...NonAudioObjectBase, help: LinkIOHelp, shortName: "LinkIn", outputs: 1, color: "#cce6ff", width:32, icon: "arrow-in.png" },
 
             
         }
@@ -481,6 +485,15 @@ var NodeDefinitions = {
         categoryLabel: "h4yn0nnym0u5e",
         categoryItems: { ...NodeBaseCategories },
         types: {
+            AudioControlPCM3168: { ...AudioTypeBase, category: "control", shortName: "pcm3168" },
+        }
+    },
+    h4yn0nnym0u5e_stereoMixer: { // have seperate group so that this object can be in global 
+        description: "",
+        credits: "Jonathan Oakley",
+        homepage: "https://github.com/h4yn0nnym0u5e",
+        url: "https://github.com/h4yn0nnym0u5e/Audio/tree/features/dynamic-updates",
+        types: {
             AudioMixerStereo: { ...AudioTypeArrayBase, category: "mixer",
                 shortName: "mixerStereo", dynInputs: {}, inputs: 1, outputs: 2,
                 editorhelp: dynInputMixers_Help,
@@ -490,8 +503,7 @@ var NodeDefinitions = {
                     ExtraInputs: { value: 0, maxval: 255, minval: 0, type: "int", editor: { label: "Extra Inputs", rowClass: "form-row-mid", help: dynInputMixers_ExtraInputs_Help } },
                     RealInputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Real Inputs", rowClass: "form-row-mid", readonly: true, help: dynInputMixers_RealInputs_Help } }
                 }
-            },
-            AudioControlPCM3168: { ...AudioTypeBase, category: "control", shortName: "pcm3168" },
+            }
         }
     },
     FrankB: {

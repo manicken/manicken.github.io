@@ -1186,7 +1186,10 @@
       display: block;
       width: 100px;
   }
-
+  .form-columns {
+    display: grid;
+    grid-template-columns: 150px auto;
+  }
   .form-row-divider {
     clear: both;
     border-top: 1px dotted #aaa;
