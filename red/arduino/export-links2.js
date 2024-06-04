@@ -59,11 +59,16 @@ RED.export.links2 = (function () {
                 var tabOutPortIndex = expLink.tabOutPortIndex?expLink.tabOutPortIndex:0;
                 getFinalSource(expLink,expLink.source._def.classWs,tabOutPortIndex);
             }
+            else if (expLink.source.type.startsWith("Junction") == true) {
+                expLink.source = RED.nodes.getJunctionSrcNode(expLink.source);
+            }
+
             if (node.isArray != undefined) {
                 expLink.sourceIsArray = node.isArray;
             }else {
                 expLink.sourceName = expLink.source.name;
             }
+
             if (expLink.target._def.classWs != undefined)
             {
                 getFinalTarget_s(expLink, newLinks);
@@ -108,7 +113,7 @@ RED.export.links2 = (function () {
             }
         }       
     }
-
+    /** this is only to get the final source of a class connected link */
     function getFinalSource(l,ws,tabOutPortIndex) {
         
         var portNode = RED.nodes.getClassIOport(ws, "Out", l.sourcePort);
@@ -121,6 +126,9 @@ RED.export.links2 = (function () {
         if (newSrc == undefined) {
             l.invalid = " the class output is unconnected";
             return;
+        }
+        if (l.source.type.startsWith("Junction") == true) {
+            l.source = RED.nodes.getJunctionSrcNode(l.source);
         }
         //console.log(l.source.name + JSON.stringify(l.sourcePath,null,2));
         //l.sourcePath.push(...l.sourcePath);
@@ -151,7 +159,16 @@ RED.export.links2 = (function () {
         fixFinal_Sources_Targets(link);
     }
     
-
+    // TODO fix this function to work with new structure
+    function getJunctionFinalDestinations(junctionNode, dstNodes) {
+        RED.nodes.nodeEachLink(junctionNode, function (srcPortIndex, dst, dstPortIndex)
+        {
+            if (dst.type.startsWith("Junction"))
+                getJunctionFinalDestinations(dst, dstNodes);
+            else
+                dstNodes.nodes.push({ node: dst, dstPortIndex: dstPortIndex });
+        });
+    }
     
 
     $("#btn-debugPrintLinks2").click(function() {console.warn(RED.export.links2.getDebug(RED.nodes.cwsLinks));});

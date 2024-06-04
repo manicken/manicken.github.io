@@ -1177,6 +1177,9 @@
       box-shadow: 0 0 1px 1px;
       margin-bottom: 5px;
   }
+  .form-horizontal {
+    margin-bottom: 0;
+  }
   
   .setting-row {
       clear: both;
@@ -1186,15 +1189,14 @@
       display: block;
       width: 100px;
   }
-  .form-columns {
-    display: grid;
-    grid-template-columns: 150px auto;
-  }
+  
   .form-row-divider {
     clear: both;
     border-top: 1px dotted #aaa;
     margin-bottom: 7px;
   }
+
+  
   
   .form-row {
       clear: both;
@@ -1254,6 +1256,52 @@
   .form-row-long input.jscolor {
     width: 80px;
     /*left:50px;*/
+  }
+  .form-columns {
+    display: grid;
+    grid-template-columns: 150px auto;
+    height: 100%;
+  }
+  .form-columns-only-one {
+    display: block;
+    grid-template-columns:none;
+  }
+  .form-col {
+    height: 100%;
+  }
+  .form-file-items-right-divider {
+    background-color: #f0f0f0;
+    margin-top: 27px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-left: 1px solid #CCC;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    height: 100%;
+  }
+  .form-file-items {
+    /*border-right: 1px solid #ccc;*/
+    margin-top: 20px;
+    height: 100%;
+  }
+  .file-list-tab {
+    margin-bottom: 3px;
+  }
+  .file-list-tab {
+    background-color: #f0f0f0;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-right: none;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    
+  }
+  .file-list-tab.active {
+    text-decoration: underline;
+    background-color: rgb(226, 229, 255);
+    position:relative;
+	right: -1px;
+	border-right: 1px solid rgb(226, 229, 255); /* Added border-right */
   }
   /*
   .form-row input[id="node-input-color"] {

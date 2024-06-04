@@ -5,6 +5,8 @@
 
 RED.arduino.export2 = (function () {
     'use strict';
+    /** @type {CompleteExport} */
+    var currentExport = {};
 
     function init() // called from main.js @ init()
     {
@@ -32,14 +34,15 @@ RED.arduino.export2 = (function () {
         
         RED.storage.update(); // sort is made inside update
 
-        var coex = new CompleteExport(generateZip, export_mode);
-
+        currentExport = new CompleteExport(generateZip, export_mode);
+        var coex = currentExport; // short 'alias'
+        coex.allFiles.push(new ExportFile("GUI_TOOL.json", JSON.stringify(JSON.parse(coex.jsonString), null, 4))); // JSON beautifier
         if (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT) {
             //coex.ac.staticType = true; // allways true for SIMPLE FLAT
             export_workspace(coex, RED.nodes.currentWorkspace); 
         }
         else if (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE || export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP) {
-            coex.allFiles.push(new ExportFile("GUI_TOOL.json", JSON.stringify(JSON.parse(coex.jsonString), null, 4))); // JSON beautifier
+            
             //coex.allFiles.push(new ExportFile("preferences.txt", RED.arduino.board.export_arduinoIDE())); // skip for now as it don't properly work for the moment
             //coex.allFiles.push(new ExportFile("platformio.ini", RED.arduino.board.export_platformIO())); // skip for now as it don't properly work for the moment
             export_classBased(coex);
@@ -67,7 +70,7 @@ RED.arduino.export2 = (function () {
                                (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) || 
                                (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE) ||
                                (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT));
-        
+        coex.finalize();
         if (useExportDialog == true) 
             ShowExportDialog(coex);
 
@@ -129,10 +132,6 @@ RED.arduino.export2 = (function () {
             else if (n.type == "AudioMixerStereo" && coex.mixerStereoVariants != undefined && RED.arduino.settings.ExportMode < 3) {
                 // for future implementation
             }
-            else if (n._def.nonObject != undefined) {
-                console.warn("!!!!WARNING!!!! (unhandled nonObject)\n" + n.type); // in case we forgot something
-                //continue; // skip
-            }
             // Audio Control/class node without any IO
             // TODO. to make objects that don't have any io have a special def identifier
             // both to make this code clearer and to sort non Audio Control objects in a different list
@@ -155,11 +154,16 @@ RED.arduino.export2 = (function () {
 				wse.depends.push(n.type);
         }
 
-        // add audio object wires/connections
+        // add audio connections
 
         for (var i = 0;i<ws.links.length; i++) {
             var link = ws.links[i];
+
             if (link.source.type == "TabInput" || link.target.type == "TabOutput") continue;
+            if (link.source.type == "LinkIn" || link.target.type == "LinkOut") continue;
+
+            //if (link.target.type.startsWith("Junction") == true) continue; // skip wires going to Junctions, as only wires going out from junctions should be handled
+
 
             RED.export.links2.generateAndAddExportInfo(link);
             if (link.export != undefined)
@@ -238,20 +242,17 @@ RED.arduino.export2 = (function () {
                 completeExport.allFiles.push(wsFile); // push special files to the beginning 
             }
         }
-        else if (n.type.startsWith("Junction")) {
-            // don't do anything with junctions as they are only virtual objects
-        }
-        else if (n.type == "TabInput" || n.type == "TabOutput") {
-            // don't do anything with Tab IO as they are only virtual objects
-        }
-        else if (n.type == "BusJoin" || n.type == "BusSplit") {
-            // don't do anything with BusJoin/BusSplit as they are only virtual objects
-        }
         else if (n.type == "Comment") {
             // don't do anything with comments for now, they are mostly visual objects to comment things
+            // maybe TODO bind a comment to a object, then the comment could be added to that object 
         }
         else if (n.type == "group") {
             // don't do anything with groups, they are only virtual objects
+            // future TODO have group to represent class for simple projects, or to show the contents of class objects directly
+        }
+        else if (n._def.nonObject != undefined) {
+            // this represents other virtual objects:
+            // Junctions, TabInput, TabOutput, BusJoin, BusSplit, LinkIn, LinkOut
         }
         else
             return false;
@@ -316,7 +317,7 @@ RED.arduino.export2 = (function () {
     /** @param {CompleteExport} ce */
     function GenerateZip(ce)
     {
-        ce.finalize(); // makes this export ready for Zip export
+        
         const t1 = performance.now();
         var zip = new JSZip();
         let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
@@ -342,50 +343,76 @@ RED.arduino.export2 = (function () {
     /** @param {CompleteExport} ce */
     function SendToHttpBridge(ce)
     {
-        ce.finalize(); // makes this export ready for Http Post export
+        //ce.finalize(); // makes this export ready for Http Post export
         RED.arduino.httpPostAsync(ce.getPostJSON());
     }
 
-    /** @param {CompleteExport} ce */
-    function ShowExportDialog(ce)
+    const ONE_FILE_MERGE = "COMPOSITE";
+    function ExportDialogFileSelected(fileName) 
     {
-        var cpp = convertCompleteExportToString(ce);
-        console.log(ce.exportMode);
-        RED.view.dialogs.showExportDialog(getKeyByValue(CPP_EXPORT_MODE, ce.exportMode), cpp, " Source Code:");
+        if (fileName == ONE_FILE_MERGE) { // special case
+            $("#node-input-export").val(currentExport.compositeContents);
+        }
+        else
+        {
+            var files = currentExport.allFiles;
+            for (var i=0;i<files.length;i++) {
+                var file = files[i];
+                if (file.name == fileName)
+                {
+                    $("#node-input-export").val(file.contents);
+                    break;
+                }
+            }
+            
+        }
+        console.log("file selected:" + fileName);
     }
 
-    /** @param {CompleteExport} ce */
-    function convertCompleteExportToString(ce) {
+    /** @param {CompleteExport} coex */
+    function ShowExportDialog(coex)
+    {
+        generateCompleteExportCompositeContents(coex);
+        console.log(coex);
+        
+        var filesNames = [ONE_FILE_MERGE];
+        for (var i = 0;i<coex.allFiles.length; i++)
+            filesNames.push(coex.allFiles[i].name);
+        RED.view.dialogs.showExportDialog(getKeyByValue(CPP_EXPORT_MODE, coex.exportMode), coex.compositeContents, " Source Code:", undefined, undefined, {cb:ExportDialogFileSelected, files:filesNames});
+    }
+
+    /** @param {CompleteExport} coex */
+    function generateCompleteExportCompositeContents(coex) {
         // time to generate the final result
         var cpp = "";
-        cpp = getCppHeader(ce.jsonString, undefined, false); // false mean zip mode, which in this case appends the design JSON to the export 
+        cpp = getCppHeader(coex.jsonString, undefined, false); // false mean zip mode, which in this case appends the design JSON to the export 
         // first add global files
-        for (var i = 0; i < ce.globalCppFiles.length; i++)
+        for (var i = 0; i < coex.globalCppFiles.length; i++)
         {
-            if (ce.globalCppFiles[i].name == "mixers.cpp")
+            if (coex.globalCppFiles[i].name == "mixers.cpp")
             { // special case
-                cpp += ce.globalCppFiles[i].body.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
+                cpp += coex.globalCppFiles[i].body.replace('#include "mixers.h"', '') + "\n"; // don't use that here as it generates compiler error
             }
-            else if (ce.globalCppFiles[i].name == "mixers.h") 
+            else if (coex.globalCppFiles[i].name == "mixers.h") 
             { // special case
-                cpp += ce.globalCppFiles[i].header + "\n" + ce.globalCppFiles[i].body + "\n"; // to include the copyright note
+                cpp += coex.globalCppFiles[i].header + "\n" + coex.globalCppFiles[i].body + "\n"; // to include the copyright note
             }
             else
             {
-                cpp += ce.globalCppFiles[i].body;
+                cpp += coex.globalCppFiles[i].body;
             }
         }
         // second add cpp files in dependency order
         // credits to h4yn0nnym0u5e for the dependency order sorting
         var exportComplete = false;
         var exported = [];
-        var skipDependencyCheck = ((ce.exportMode == CPP_EXPORT_MODE.SIMPLE_FLAT) || (ce.exportMode == CPP_EXPORT_MODE.CLASS_SINGLE));
+        var skipDependencyCheck = ((coex.exportMode == CPP_EXPORT_MODE.SIMPLE_FLAT) || (coex.exportMode == CPP_EXPORT_MODE.CLASS_SINGLE));
         while (exportComplete==false)
         {
             exportComplete = true;
             
-            for (var fi = 0; fi < ce.wsCppFiles.length; fi++) {
-                var exportFile = ce.wsCppFiles[fi];
+            for (var fi = 0; fi < coex.wsCppFiles.length; fi++) {
+                var exportFile = coex.wsCppFiles[fi];
 
                 if (exportFile.isExported == false) {
                     // check that anything we depend on has already been added
@@ -414,7 +441,10 @@ RED.arduino.export2 = (function () {
         }
         cpp += getCppFooter();
         console.log(exported.join(', '));
-        return cpp.split('\n\n').join('\n').split('\t').join("    "); // removes some double newlines for now
+
+        coex.compositeContents = cpp.split('\n\n').join('\n').split('\t').join("    "); // removes some double newlines for now
+        //return 
+
     }
 
     function getCppHeader(jsonString, includes, generateZip) {
@@ -434,22 +464,15 @@ RED.arduino.export2 = (function () {
     function getCppFooter() {
         return "// " + RED.arduino.settings.ProjectName + ": end automatically generated code\n";
     }
-    function getJunctionFinalDestinations(junctionNode, dstNodes) {
-        RED.nodes.nodeEachLink(junctionNode, function (srcPortIndex, dst, dstPortIndex)
-        {
-            if (dst.type.startsWith("Junction"))
-                getJunctionFinalDestinations(dst, dstNodes);
-            else
-                dstNodes.nodes.push({ node: dst, dstPortIndex: dstPortIndex });
-        });
-    }
+    
 
     return {
         init,
         Export,
         getCppFooter,
         getCppHeader,
-        getAudioConnectionTypeName
+        getAudioConnectionTypeName,
+        get currentExport() {return currentExport;} 
     };
 })();
 

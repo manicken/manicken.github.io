@@ -440,11 +440,11 @@ class ExportFile
     /** makes this file ready for either Zip or Http Post export */
     finalize() {
         this.contents = this.header + this.body + this.footer;
-        delete this.header;
-        delete this.footer;
-        delete this.body;
-        delete this.depends;
-        delete this.isExported;
+        //delete this.header;
+        //delete this.footer;
+        //delete this.body;
+        //delete this.depends;
+        //delete this.isExported;
     }
 }
 
@@ -478,6 +478,10 @@ class CompleteExport
 
     /** @readonly */
     jsonString = RED.storage.getData();
+
+    /** this is used when exporting using the export-dialog
+     * @type {String} */
+    compositeContents = "";
 
     /**
      * @type {CPP_EXPORT_MODE} 

@@ -636,19 +636,25 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script type="text/html" data-template-name="export-clipboard-dialog">
 	
 	<div class="form-columns">
-		<div class="form-col" >
-			<label for="export-dialog-filelist" style="display: block; width:100%;"><i class="fa fa-list"></i> Files:</label>
-			<div id="export-dialog-filelist" class="form-file-items">
-
-			</div>
-			<div class="form-row"><button id="showFile1" onclick="">File1</button></div>
-			<div class="form-row"><button id="showFile2" onclick="">File2</button></div>
-			<div class="form-row"><button id="showFile3" onclick="">File3</button></div>
-			<div class="form-row"><button id="showFile4" onclick="">File4</button></div>
+		<div class="form-col filelist-col" >
+				<label for="export-dialog-filelist" style="display: block; width:100%;"><i class="fa fa-list"></i> Files:</label>
+				<div id="export-dialog-filelist" class="form-file-items">
+					<!--<button class="form-row file-list-tab active" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, 'file1')">File1</button>
+					<button class="form-row file-list-tab" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, 'file2')">File2</button>
+					<button class="form-row file-list-tab" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, 'file3')">File3</button>
+					<button class="form-row file-list-tab" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, 'file4')">File4</button>-->
+				</div>
 		</div>
+		<!--<div class="form-col" >
+			<div class="filelist-col">
+				<div class="form-row"> </div>
+				<div id="form-file-items-right-divider" class="form-file-items-right-divider"></div>
+				<div class="form-row"> </div>
+			</div>
+		</div>-->
 		<div class="form-col">
 			<div class="form-row">
-				<label id="export-clipboard-dialog-textarea-label" for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i> Source Code:</label>
+				<label id="export-clipboard-dialog-textarea-label" for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i>  Source Code:</label>
 				<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll; cursor: text;" class="input-block-level" id="node-input-export" rows="30"></textarea>
 			</div>
 			<div class="form-tips" id="export-clipboard-dialog-tips">

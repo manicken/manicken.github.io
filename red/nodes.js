@@ -930,7 +930,7 @@ RED.nodes = (function() {
 		return nns;
 	}
 
-    // TODO sort links after the same scheme as this
+    /** this sorts both the nodes and the links, so that they are exported in the right order */
     function sortNodes() {
         //console.error("nodecount before sort: "+nodes.length);
         //var sortedNodes = [];
@@ -1012,15 +1012,8 @@ RED.nodes = (function() {
             console.log("linksBeforeSort:",linksListBeforeSort);*/
             for (var ni = 0; ni < ws.nodes.length; ni++) {
                 var node = ws.nodes[ni];
-                var nodeLinks = [];
-                for (var li = 0; li < ws.links.length; li++) {
-                    var link = ws.links[li];
-                    if (node === link.source)
-                        nodeLinks.push(link);
-                }
+                var nodeLinks = ws.links.filter(function(d){return d.source === node;});
                 nodeLinks.sort(function (a,b) { return ( (a.sourcePort-b.sourcePort)+(a.target.sortIndex-b.target.sortIndex) ); });
-                // TODO sort by target order as well
-                //nodeLinks.sort(function (a,b) { return (a.target.sortIndex-b.target.sortIndex); })
                 linksSorted.push(...nodeLinks);
             }
             ws.links.length = 0;
@@ -2073,6 +2066,22 @@ RED.nodes = (function() {
             });
 		}
 	}
+    function getJunctionSrcLink(junctionNode)
+    {
+        var ws = getWorkspace(junctionNode.z);
+		for (var i = 0; i < ws.links.length; i++)
+		{
+			var lnk = ws.links[i];
+			if (lnk.target === junctionNode)
+			{
+				if (lnk.source.type.startsWith("Junction"))
+					return getJunctionSrcLink(lnk.source);
+				else
+					return lnk;
+			}
+		}
+		return null;
+    }
     /**
      * 
      * @param {REDNode} junctionNode 

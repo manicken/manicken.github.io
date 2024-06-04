@@ -459,7 +459,21 @@ RED.view.dialogs = (function() {
 
 	});
 
-    function showExportDialog(title, text, textareaLabel,overrides,okPressedCb) {
+    var exportDialogFileTabClicked_cb = function(fileName) {};
+
+    function exportDialogFileTabClicked(event, fileName) {
+        var tabLinks = document.getElementsByClassName("file-list-tab");
+        for (i = 0; i < tabLinks.length; i++) {
+            tabLinks[i].className = tabLinks[i].className.replace(" active", "");
+        }
+        event.currentTarget.className += " active";
+        if ((exportDialogFileTabClicked_cb != undefined) && (typeof exportDialogFileTabClicked_cb == "function"))
+            exportDialogFileTabClicked_cb(fileName);
+    }
+
+    function showExportDialog(title, text, textareaLabel,overrides,okPressedCb, fileListOptions) {
+        
+        
         if (overrides == undefined) var overrides = {};
         if (overrides.okText == undefined) overrides.okText = "Ok";
 
@@ -471,7 +485,23 @@ RED.view.dialogs = (function() {
         var t2 = performance.now();
 
         getForm('dialog-form', 'export-clipboard-dialog', function (d, f) {
-            
+            if (fileListOptions != undefined) {
+
+                exportDialogFileTabClicked_cb = fileListOptions.cb;
+                var files = fileListOptions.files;
+                if (files != undefined && files.length != 0) {
+                    var fileListElement = $("#dialog").find("#export-dialog-filelist");
+                    fileListElement.append(`<button class="form-row file-list-tab active" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${files[0]}')">${files[0]}</button>`);
+                    for (var i=1;i<files.length;i++) {
+                        fileListElement.append(`<button class="form-row file-list-tab" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${files[i]}')">${files[i]}</button>`);
+                    }
+                }
+            }
+            else
+            {
+                $("#dialog").find(".filelist-col").addClass("hidden");
+                $("#dialog").find(".form-columns").addClass("form-columns-only-one");
+            }
             if (textareaLabel != undefined)
                 $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
                 if (overrides.tips != undefined)
@@ -481,8 +511,12 @@ RED.view.dialogs = (function() {
 
                 //textarea.select();
                 //console.error(textarea.height());
-                var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
-                textarea.height(textareaNewHeight);
+                //var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
+                //textarea.height(textareaNewHeight);
+
+                var dialogHeight = $("#dialog").height();
+                    $("#node-input-export").height(dialogHeight-80);
+                    //$("#form-file-items-right-divider").height(dialogHeight-75);
 
                 textarea.mouseup(function () {
                     textarea.unbind("mouseup");
@@ -498,21 +532,21 @@ RED.view.dialogs = (function() {
                 title: title,
                 width: box.clientWidth * 0.60, // setting the size of dialog takes ~170mS
                 height: box.clientHeight,
-                show: {
-                    effect:"fade",
-                    duration:400,
-                    complete: function() {
-                        console.log("shown");
-                        var dialogHeight = $("#dialog").height();
-                        $("#node-input-export").height(dialogHeight - 210);
-                    }
+                focus: function() {
+                    console.log("shown");
+                    //var dialogHeight = $("#dialog").height();
+                    //$("#node-input-export").height(dialogHeight - 190);
+                
                     // This function is called whenever the dialog is opened
                     //console.log("Dialog opened");
                     
                 },
                 resize: function(event, ui) {
                    // console.log("Dialog resized to: " + ui.size.width + "x" + ui.size.height);
-                    $("#node-input-export").height(ui.size.height - 210);
+                   var dialogHeight = $("#dialog").height();
+                    $("#node-input-export").height(dialogHeight-80);
+                    //$("#form-file-items-right-divider").css("height",(dialogHeight-260));
+                    //$("#form-file-items-right-divider").height(dialogHeight-75);
                 },
                 buttons: [
                     {
@@ -548,7 +582,8 @@ RED.view.dialogs = (function() {
         showExportNodesLibraryDialog,
         showImportNodesDialog,
         showRenameWorkspaceDialog,
-        showEditLinkDialog
+        showEditLinkDialog,
+        exportDialogFileTabClicked
 
     };
 })();
