@@ -162,7 +162,7 @@ RED.arduino.export2 = (function () {
             if (link.source.type == "TabInput" || link.target.type == "TabOutput") continue;
             if (link.source.type == "LinkIn" || link.target.type == "LinkOut") continue;
 
-            //if (link.target.type.startsWith("Junction") == true) continue; // skip wires going to Junctions, as only wires going out from junctions should be handled
+            if (link.source.type.startsWith("Junction") == true) continue; // skip wires going from Junctions as then we can preserve the wire/link order
 
 
             RED.export.links2.generateAndAddExportInfo(link);

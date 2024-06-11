@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-
+ :root {
+    --red-ui-port-selected-color: #ff7f0e;
+    --red-ui-node-border: #999;
+    --red-ui-node-port-background: #d9d9d9;
+    --red-ui-node-port-background-hover: #eee;
+ }
 
  body {
     font: 13px "Helvetica" !important;
@@ -390,6 +395,32 @@
   .palette_port_output {
       right:-5px;
   }
+
+  .red-ui-flow-junction-port {
+    opacity: 0;
+    transition: transform .1s;
+  }
+
+  .red-ui-flow-junction:hover .red-ui-flow-junction-port {
+    opacity: 1;
+    pointer-events: auto
+}
+
+[nodeType="JunctionLR"].red-ui-flow-junction:hover .port_input {
+    transform: translate(-10px, 0)
+}
+
+[nodeType="JunctionLR"].red-ui-flow-junction:hover .port_output {
+    transform: translate(10px, 0)
+}
+
+[nodeType="JunctionRL"].red-ui-flow-junction:hover .port_input {
+    transform: translate(10px, 0)
+}
+
+[nodeType="JunctionRL"].red-ui-flow-junction:hover .port_output {
+    transform: translate(-10px, 0)
+}
 
   .palette_port1 {
     position: absolute;
@@ -1025,6 +1056,7 @@
     stroke: #ff7f0e;
     fill:  #ff7f0e;
   }
+
   
   .drag_line {
     stroke: #ff7f0e;

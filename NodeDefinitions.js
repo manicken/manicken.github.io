@@ -358,8 +358,8 @@ var NodeDefinitions = {
             EndOfFileCode: { ...CodeObjectBase, shortName: "eof code", useAceEditor: "c_cpp", icon: "function.png" },
 
             ConstValue: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, name: { type: "c_cpp_name_no_array" }, value: { value: "0" }, valueType: { value: "int" } }, shortName: "constValue", color: "#eb9834", icon: "hash.png" },
-            JunctionLR: { ...NonAudioObjectBase, shortName: "JunctionLR", inputs: 1, outputs: 1, color: "#4D54FF", width:32, textColor: "#FFFFFF", icon: "arrow-in.png" },
-            JunctionRL: { ...NonAudioObjectBase, shortName: "JunctionRL", inputs: 1, outputs: 1, color: "#4D54FF", width:32, textColor: "#FFFFFF", icon: "arrow-out.png" },
+            JunctionLR: { ...NonAudioObjectBase, editor: "autogen",defaults: { ...NonAudioObjectBase.defaults, color:{editor:{type:"color"},value:"#dddddd"}, size:{value:10}}, shortName: "JunctionLR", mainRectRx:3, inputs: 1, outputs: 1, /*color: "#4D54FF"*/ color:"#ddd"},// icon: "arrow-in.png" },
+            JunctionRL: { ...NonAudioObjectBase, editor: "autogen",defaults: { ...NonAudioObjectBase.defaults, color:{editor:{type:"color"},value:"#dddddd"}, size:{value:10}}, shortName: "JunctionRL", mainRectRx:3, inputs: 1, outputs: 1, /*color: "#4D54FF"*/ color:"#ddd"},// icon: "arrow-out.png" },
             LinkOut: { ...NonAudioObjectBase, help: LinkIOHelp, shortName: "LinkOut", inputs: 1, color: "#cce6ff", width:32, icon: "arrow-in.png" },
             LinkIn: { ...NonAudioObjectBase, help: LinkIOHelp, shortName: "LinkIn", outputs: 1, color: "#cce6ff", width:32, icon: "arrow-in.png" },
 
@@ -456,14 +456,16 @@ var NodeDefinitions = {
                     nodes: { value: [] }
                 }
             },
-            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb", inputs:20, outputs:20,
+            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb", //inputs:0, outputs:0,
                 defaults: {
                     ...UiTypeBase.defaults,
                     nodes: { value: [] },
                     color: { value: "#ddffbb" },
                     border_color: { value: "#999" },
                     individualListBoxMode: { value: "false" },
-                    exportAsClass: { value: "false" }
+                    exportAsClass: { value: "false" },
+                    //inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
+                    //outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
                 }
             }
         }

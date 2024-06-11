@@ -501,6 +501,9 @@ RED.view.groupbox = (function() {
 				text.attr('text-anchor','end');
 			}
 
+			//RED.view.redraw_nodeInputs(groupRect, d);
+			//RED.view.redraw_nodeOutputs(groupRect, d);
+
 		});
 		return visGroupAll;
 	}
@@ -527,6 +530,8 @@ RED.view.groupbox = (function() {
 			var groupLabel = groupRect.selectAll('text.node_label').text(d.name);
 
 			RED.view.redraw_update_label(groupRect, d);
+			//RED.view.redraw_nodeInputs(groupRect, d);
+			//RED.view.redraw_nodeOutputs(groupRect, d);
 			
 			redrawGroupOutline(d);
 		});

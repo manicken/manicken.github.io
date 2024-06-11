@@ -200,8 +200,10 @@ void AudioMixerNNN::update(void)
 })();
 
 
+/*
 console.log("copyrightNote:"+ Mixers.MonoCode.copyrightNote);
-    console.log("mixers_cpp_base:"+ Mixers.MonoCode.mixers_cpp_base);
-    console.log("mixers_cpp_template:"+ Mixers.MonoCode.mixers_cpp_template);
-    console.log("mixers_h_base:"+ Mixers.MonoCode.mixers_h_base);
-    console.log("mixers_h_template:"+ Mixers.MonoCode.mixers_h_template);
+console.log("mixers_cpp_base:"+ Mixers.MonoCode.mixers_cpp_base);
+console.log("mixers_cpp_template:"+ Mixers.MonoCode.mixers_cpp_template);
+console.log("mixers_h_base:"+ Mixers.MonoCode.mixers_h_base);
+console.log("mixers_h_template:"+ Mixers.MonoCode.mixers_h_template);
+*/

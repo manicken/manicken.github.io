@@ -361,6 +361,8 @@ RED.view = (function() {
 		scaleFactor = 1,*/
 	var maxZoomFactor = 3.0;
 	var node_def = {
+		mainRectRx: 6,
+		//mainRectRy: 6,
 		width: 30, // minimum default
 		height: 34, // minimum default
 		pin_rx: 2, // The horizontal corner radius of the rect.
@@ -474,9 +476,9 @@ RED.view = (function() {
 
 	var visLinks = vis.append('g').attr("class", "workspace-chart-links");
 
-	var drag_line = vis.append("svg:path").attr("class", "drag_line");
-
 	var visNodes = vis.append('g').attr("class", "workspace-chart-nodes");
+
+	var drag_line = vis.append("svg:path").attr("class", "drag_line");
     
     function resizeMainContainerBasedOnNavBar()
     {
@@ -1777,7 +1779,7 @@ RED.view = (function() {
 					.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
 					.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
 					.on("mouseenter", nodeInput_mouseover)
-					.on("mouseout", nodePort_mouseout)
+					.on("mouseout", nodePort_mouseout)//function () {nodePort_mouseout(link.target, d3.select(this))})
 					//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
 					//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
 			}
@@ -1890,7 +1892,7 @@ RED.view = (function() {
             .on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
             .on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
             .on("mouseenter", nodeInput_mouseover)
-            .on("mouseout", nodePort_mouseout)
+            .on("mouseout", nodePort_mouseout)//function () {nodePort_mouseout(link.target, d3.select(this))})
             //.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
             //.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);});
 
@@ -2075,7 +2077,7 @@ RED.view = (function() {
 
         if (mouseup_node === mousedown_node ) { 
             stopDragLine();
-            RED.notify("<strong>A connection cannot be made directly to itself!!!</strong>" + portType + mousedown_port_type, "warning", false, 2000);
+            RED.notify("<strong>A connection cannot be made directly to itself!!!</strong>@<br><br>if (mouseup_node === mousedown_node )" + portType + mousedown_port_type, "warning", false, 2000);
             return;
         }
         if (portType == mousedown_port_type)
@@ -2112,7 +2114,7 @@ RED.view = (function() {
                     if (RED.nodes.getJunctionDstNodeEquals(dst, newSrc))
                     {
                         stopDragLine();
-                        RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
+                        RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong><br><br>@if (RED.nodes.getJunctionDstNodeEquals(dst, newSrc))", "warning", false, 2000);
                         return;
                     }
                 }
@@ -2122,7 +2124,7 @@ RED.view = (function() {
                 if (newSrc === newDst)
                 {
                     stopDragLine();
-                    RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong>", "warning", false, 2000);
+                    RED.notify("<strong>A connection cannot be made indirectly to itself!!!</strong><br><br>@if (newSrc === newDst)", "warning", false, 2000);
                     return;
                 }
                 RED.notify("<strong>" + src.name  + "->" + newSrc.name +  ":" + dst.name  + "</strong>", "warning", false, 5000);
@@ -2156,7 +2158,7 @@ RED.view = (function() {
                 .on("mouseup", null)
                 .on("touchend", null)
                 .on("mouseenter", nodeInput_mouseover)
-                .on("mouseout", nodePort_mouseout);
+                .on("mouseout", nodePort_mouseout) //function () {nodePort_mouseout(d, d3.select(this))});
         }
         clearLinkSelection();
         redraw(true);
@@ -2236,6 +2238,12 @@ RED.view = (function() {
 		//if (d != mousedown_node)
 			//console.error(" >>>>>>>>>>>>>> node mouseover:" + d.name);
 
+		if (d.type.startsWith("Junction"))
+		{
+			d3.select(this).classed("red-ui-flow-junction-hovered", true);
+			//d3.select(d3.select(this).node().parentNode).selectAll(".port").classed("red-ui-flow-junction-hovered", true);
+		}
+
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
@@ -2275,6 +2283,12 @@ RED.view = (function() {
      */
 	function nodeMouseOut(d)
 	{
+		if (d.type.startsWith("Junction"))
+		{
+			d3.select(this).classed("red-ui-flow-junction-hovered", false);
+			//d3.select(d3.select(this).node().parentNode).selectAll(".port").classed("red-ui-flow-junction-hovered", false);
+			console.log("out");
+		}
 		if (d._def.uiObject != undefined && settings.guiEditMode == false)
 		{
 			var mousePos = d3.mouse(this)
@@ -2475,22 +2489,30 @@ RED.view = (function() {
         if (mouse_mode != RED.state.JOINING) return;
 
         if (RED.main.settings.LinkDropOnNodeAppend == false) return;
-        let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
-        //console.warn("next free index "+ nextFreeInputIndex);
-        if (nextFreeInputIndex == -1) {
-            if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
-                return;
 
-            nextFreeInputIndex = d.inputs;
-            var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
-            d.inputs++;
-            redraw_node(d, true);
-            RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs, true);
-            //redraw_nodes(true,true); // workaround for now
-        }
-        
-		if (d.inputs) portMouseUp(d, d.inputs > 0 ? 1 : 0, nextFreeInputIndex,changedNodes); // Jannik add so that input count can be changed on the fly
-		else portMouseUp(d, d._def.inputs > 0 ? 1 : 0, nextFreeInputIndex,changedNodes);
+		if (mousedown_port_type == 0)
+		{
+			let nextFreeInputIndex = RED.nodes.FindNextFreeInputPort(d);
+			//console.warn("next free index "+ nextFreeInputIndex);
+			if (nextFreeInputIndex == -1) {
+				if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
+					return;
+
+				nextFreeInputIndex = d.inputs;
+				var changedNodes = [{node:d, changes:{inputs:d.inputs}, changed:true}];
+				d.inputs++;
+				redraw_node(d, true);
+				RED.events.emit("nodes:inputs", d, (d.inputs - 1), d.inputs, true);
+				//redraw_nodes(true,true); // workaround for now
+			}
+			
+			portMouseUp(d, 1, nextFreeInputIndex, changedNodes);
+		}
+		else if (d.outputs > 0 || d._def.outputs > 0)
+		{
+			var changedNodes = [{node:d, changes:{}, changed:true}];
+			portMouseUp(d, 0, 0, changedNodes); // allways connect to the first output
+		}
 	}
 
 	function clearLinkSelection()
@@ -2593,8 +2615,8 @@ RED.view = (function() {
 		if (d.unknownType != undefined) l = d.type;
 		if (d.type == "JunctionLR" || d.type == "JunctionRL")
 		{
-			d.w = 25;//node_def.height;
-			d.h = 25;//node_def.height;
+			d.w = (d.size!=undefined)?d.size:node_def.pin_xsize;// 15;//node_def.height;
+			d.h = (d.size!=undefined)?d.size:node_def.pin_xsize;//node_def.pin_ysize;// 15;//node_def.height;
 			return;
 		}
 		if (d.type == "ConstValue")
@@ -2626,6 +2648,7 @@ RED.view = (function() {
 	function redraw_nodeMainRect_init(nodeRect, d)
 	{
 		var mainRect = nodeRect.append("rect");
+		
 
 			if (d.type == "UI_Label")
 				mainRect.attr("class", "node uiLabel");
@@ -2633,8 +2656,12 @@ RED.view = (function() {
 				mainRect.attr("class", "node");
 
 		mainRect.classed("node_unknown",function(d) { if (d.unknownType != undefined) return true; return (d.type == "unknown"); });
-		mainRect.attr("rx", 6)
-			.attr("ry", 6)
+		 
+		var rx = ((d._def.mainRectRx != undefined)?d._def.mainRectRx:node_def.mainRectRx);
+		var ry = ((d._def.mainRectRy != undefined)?d._def.mainRectRy:((node_def.mainRectRy != undefined)?node_def.mainRectRy:rx));
+
+		mainRect.attr("rx", rx)
+			.attr("ry", ry)
 			.on("mouseup",nodeMouseUp)
 			.on("mousedown",nodeMouseDown)
 			.on("mousemove", nodeMouseMove)
@@ -2705,7 +2732,7 @@ RED.view = (function() {
 		img.src = "icons/"+d._def.icon;
 		img.onload = function() {
             if (d.type == "JunctionLR" || d.type == "JunctionRL") {
-                icon.attr("width",Math.min(img.width,15));
+                icon.attr("width",Math.min(img.width,5));
 			    icon.attr("height",Math.min(img.height,25));
                 icon.attr("x",15-Math.min(img.width,30)/2);
             }
@@ -2853,10 +2880,13 @@ RED.view = (function() {
 			$(inputPorts[i]).popover("destroy");
 		}
 		inputPorts.remove();
+		var junctionPortClass = "";
+		if (d.type.startsWith("Junction"))
+			junctionPortClass = " red-ui-flow-junction-port";
 		
 		var inputlist = [];
 		for (var n=0; n < numInputs; n++) {
-			var link = RED.nodes.cwsLinks.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
+			
 			
 			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance; // allways divide by 2
 			//console.error("in node y:" + y);
@@ -2864,15 +2894,17 @@ RED.view = (function() {
 
 			var rect = nodeRect.append("rect");
 			inputlist[n] = rect;
-			rect.attr("class","port port_input").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry)
+			rect.attr("class","port port_input "+junctionPortClass).attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry)
 				.attr("y",y).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize).attr("index",n);
 
 			if (d.type == "JunctionRL")
-				rect.attr("x",d.w - node_def.pin_ysize/2);// allways divide by 2
+				rect.attr("x",d.w - node_def.pin_ysize/2 - 5);// allways divide by 2
+			else if (d.type == "JunctionLR")
+				rect.attr("x",node_def.pin_xpos + 5);
 			else
 				rect.attr("x",node_def.pin_xpos);
 			
-
+			var link = RED.nodes.cwsLinks.filter(function(l){return (l.target == d && l.targetPort == n);}); // used to see if any link is connected to the input
 			if (link && link.length > 0) {
 				// this input already has a link connected, so disallow new links
 				rect.on("mousedown",null)
@@ -2880,7 +2912,7 @@ RED.view = (function() {
 					//.on("touchstart", null)
 					//.on("touchend", null)
 					.on("mouseenter", nodeInput_mouseover) // used by popOver
-					.on("mouseout", nodePort_mouseout) // used by popOver
+					.on("mouseout", nodePort_mouseout) //function () {nodePort_mouseout(d, d3.select(this))}) // used by popOver
 					.classed("port_hovered",false);
 			} else {
 				// allow new link on inputs without any link connected
@@ -2889,7 +2921,7 @@ RED.view = (function() {
 					//.on("touchstart", (function(nn){return function(d){portMouseDown(d,1,nn);}})(n))
 					//.on("touchend", (function(nn){return function(d){portMouseUp(d,1,nn);}})(n))
 					.on("mouseenter", nodeInput_mouseover)
-					.on("mouseout", nodePort_mouseout)
+					.on("mouseout", nodePort_mouseout) //function () {nodePort_mouseout(d, d3.select(this))})
 					//.on("mouseover", function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
 					//.on("mouseout", function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
 					
@@ -2925,6 +2957,7 @@ RED.view = (function() {
 			    if (d.inputs) numInputs = d.inputs;
 			    else numInputs = d._def.inputs;
                 var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance; // allways divide by 2 (local space)
+				
                 var x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
                 var inputLabelMaxSize = 0;
                 d._inPortLabels.each(function(d2,i) {
@@ -2958,6 +2991,10 @@ RED.view = (function() {
      */
 	function redraw_nodeOutputs(nodeRect, d)
 	{
+		var junctionPortClass = "";
+		if (d.type.startsWith("Junction"))
+			junctionPortClass = " red-ui-flow-junction-port";
+
 		var numOutputs = d.outputs;
 
 		var y = (d.h/2)-((numOutputs-1)/2)*node_def.pin_ydistance;
@@ -2976,7 +3013,7 @@ RED.view = (function() {
 		
 		d._ports = nodeRect.selectAll(".port_output").data(d.ports);
 		d._ports.enter().append("rect")
-		    .attr("class","port port_output").attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
+		    .attr("class","port port_output"+junctionPortClass).attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
 			.attr("nodeType",d.type)
             .attr("nodeId",d.id)
 			.on("mousedown",(function(){var node = d; return function(d,i){/*console.error(d +":"+ i);*/ portMouseDown(node,0,i);}})() )
@@ -2984,18 +3021,22 @@ RED.view = (function() {
 			//.on("touchstart",(function(){var node = d; return function(d,i){portMouseDown(node,0,i);}})() )
 			//.on("touchend",(function(){var node = d; return function(d,i){portMouseUp(node,0,i);}})() )
 			.on("mouseover", nodeOutput_mouseover)
-			.on("mouseout", nodePort_mouseout)
+			.on("mouseout", nodePort_mouseout) //function () {nodePort_mouseout(d, d3.select(this))})
 			//.on("mouseover",function(d,i) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type !== 0 ));})
 			//.on("mouseout",function(d,i) { var port = d3.select(this); port.classed("port_hovered",false);});
 		d._ports.exit().remove();
 		if (d._ports) {
 			numOutputs = d.outputs || 1;
 			y = (d.h/2)-((numOutputs-1)/2)*node_def.pin_ydistance; // allways divide by 2 (local space)
+			
 			var x = 0;
 			if (d.type == "JunctionRL")
-				x = node_def.pin_xpos
+				x = node_def.pin_xpos + 5;
+			else if (d.type == "JunctionLR")
+				x = d.w - node_def.pin_ysize/2 - 5;
 			else
 				x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
+
 			d._ports.each(function(d,i) {
 				var port = d3.select(this);
 				port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2);// allways divide by 2 (local space)
@@ -3022,6 +3063,7 @@ RED.view = (function() {
                 numOutputs = d.outputs || 1;
                 y = (d.h/2)-((numOutputs-1)/2)*node_def.pin_ydistance; // allways divide by 2 (local space)
                 var x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
+
                 var outputLabelMaxSize = 0;
                 d._portLabels.each(function(d2,i) {
                     var port = d3.select(this);
@@ -3653,6 +3695,7 @@ RED.view = (function() {
 	function nodeOutput_mouseover(pi) // here d is the portindex
 	{
 		var port = d3.select(this); 
+		
 		port_mouse_move_node = RED.nodes.node(this.getAttribute("nodeId"));
 
 		$(this).popover("destroy"); // destroy prev
@@ -3677,11 +3720,16 @@ RED.view = (function() {
 		port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));
 		//console.log("nodeInput_mouseover: " + d.name +" , port:" + this.getAttribute("index"));
 	}
-	function nodePort_mouseout(d)
+	function nodePort_mouseout()
 	{
+		var portRect = d3.select(this); 
+		
+		//if (d.type.startsWith("Junction"))
+		//	portRect.classed("red-ui-flow-junction-port", true);
         port_mouse_move_node = undefined;
-		var port = d3.select(this); 
-		port.classed("port_hovered",false);
+		
+		portRect.classed("port_hovered",false);
+		
 		$(this).popover("destroy"); // destroy prev
 	}
 
@@ -3730,9 +3778,17 @@ RED.view = (function() {
 			}
 		});
 		anyNodeEnter = false;
+		
+
 		var nodeEnter = visNodesAll.enter().insert("svg:g").attr("class", "node nodegroup");
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
+			
+			if (d.type.startsWith("Junction")){
+				d3.select(this).classed("red-ui-flow-junction", true);
+				
+			}
+
 			anyNodeEnter = true;
             
 			d.oldNodeText = undefined;
@@ -3762,6 +3818,7 @@ RED.view = (function() {
 				redraw_nodeReqError(nodeRect, d);
 				//redraw_paletteNodesReqError(d);
 			}
+			nodeRect.attr("nodeType", d.type);
 
 			redraw_nodeMainRect_init(nodeRect, d);
 			
@@ -4115,17 +4172,16 @@ RED.view = (function() {
 
 	function getIOpinInfo(pinRect, node, index)
 	{
+		
         //console.warn(node);
-		var classAttr = pinRect.getAttribute("class");
-		//console.log("classAttr:"+classAttr); // development debug
 		var portDir;
 		var nodeType;
-		if (classAttr == "port port_input")
+		if (d3.select(pinRect).classed("port_input"))
 		{
 			nodeType = node.type;
 			portDir = "In";
 		}
-		else if (classAttr == "port port_output")
+		else if (d3.select(pinRect).classed("port_output"))
 		{
 			nodeType = pinRect.getAttribute("nodeType");
 			portDir = "Out";
@@ -4480,6 +4536,8 @@ RED.view = (function() {
         redraw_links_notations,
         redraw_node:function (node) { redraw_node(node, true)},
         redraw_nodes,
+		redraw_nodeInputs,
+		redraw_nodeOutputs,
 
         get preventRedraw() { return preventRedraw; },
 		set preventRedraw(state) { preventRedraw = state; },
