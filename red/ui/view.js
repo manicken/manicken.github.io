@@ -2463,8 +2463,10 @@ RED.view = (function() {
         else if (d._def.uiObject != undefined)
         {
             console.log("ui nodeMouseUp");
-            if (RED.view.ui.uiNodeResize_changedCheck() == true)
+            if (RED.view.ui.uiNodeResize_changedCheck() == true) {
+				
                 RED.storage.update();
+			}
         }
 
 		showHideGrid(false);
@@ -2739,7 +2741,7 @@ RED.view = (function() {
             else {
 			    icon.attr("width",Math.min(img.width,30));
 			    icon.attr("height",Math.min(img.height,30));
-                icon.attr("x",15-Math.min(img.width,30)/2 + d.inputLabelMaxSize!=0?d.inputLabelMaxSize+10:0);
+                icon.attr("x",18-Math.min(img.width,30)/2 + ((d.inputLabelMaxSize!=0)?(d.inputLabelMaxSize):0) + ((d._def.iconXadj!=undefined)?d._def.iconXadj:0));
             }
 			
             icon.attr("y",function(d){return (d.h-d3.select(this).attr("height"))/2;});

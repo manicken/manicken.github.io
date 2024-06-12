@@ -35,5 +35,21 @@ RED.state = {
 	RESIZE_BOTTOM_RIGHT:108,
 
 	UI_OBJECT_MOUSE_UP:120,
-	UI_OBJECT_MOUSE_DOWN:121
+	UI_OBJECT_MOUSE_DOWN:121,
+
+	IsResizing(mode) { return (mode >= this.RESIZE_LEFT) && (mode <= this.RESIZE_BOTTOM_RIGHT); },
+	IsResizingLeft(mode) { return (mode == this.RESIZE_LEFT) || (mode == this.RESIZE_BOTTOM_LEFT) || (mode == this.RESIZE_TOP_LEFT);},
+	IsResizingRight(mode) { return (mode == this.RESIZE_RIGHT) || (mode == this.RESIZE_BOTTOM_RIGHT) || (mode == this.RESIZE_TOP_RIGHT);},
+	IsResizingTop(mode) { return (mode == this.RESIZE_TOP) || (mode == this.RESIZE_TOP_LEFT) || (mode == this.RESIZE_TOP_RIGHT);},
+	IsResizingBottom(mode) { return (mode == this.RESIZE_BOTTOM) || (mode == this.RESIZE_BOTTOM_LEFT) || (mode == this.RESIZE_BOTTOM_RIGHT);},
+	ToName(mode) {
+		var names = Object.getOwnPropertyNames(this);
+		for (var i=0;names.length;i++) {
+			var name = names[i];
+			//console.log(name);
+			if (this[name] == mode)
+				return name;
+		}
+		return "NONE";
+	}
 }

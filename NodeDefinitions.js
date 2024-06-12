@@ -65,35 +65,29 @@ function dynInputMixers_Inputs_ReadOnly() {
     return (RED.main.settings.LinkDropOnNodeAppend == true && (RED.main.settings.DynInputAutoExpandOnLinkDrop == true || RED.main.settings.DynInputAutoReduceOnLinkRemove == true));
 };
 
-
-
-class NodeDefBase {
-    defaults = {
-        name: {},
-        id: { noEdit: "" },
-        comment: {},
-        color: { editor: { type: "color" } },
-    };
-    shortName = "";
-    editorhelp = "";
-    category = "";
-    color = "#F6F8BC";
-    constructor() { }
+var AnchorTypes = {
+    None: 0,
+    Left: 1,
+    Right: 2,
+    Top: 4,
+    Bottom:8,
 }
-class UiTypeBase_ extends NodeDefBase {
-    constructor() {
-        super();
-        this.defaults.tag = { value: "" };
-        this.defaults.w = { value: 100, minval: 5, type: DEFAULTS_VALUE_TYPE.int };
-        this.defaults.h = { value: 30, minval: 5, type: DEFAULTS_VALUE_TYPE.int };
-        this.defaults.textSize = { value: 14, minval: 5, type: DEFAULTS_VALUE_TYPE.int };
+
+var NodeAnchorDefaults = {
+    anchor: {
+        editor: {
+            type: "combobox",
+            options: [
+                {value:AnchorTypes.None, text:"None"},
+                {value:AnchorTypes.Left, text:"Left"},
+                {value:AnchorTypes.Right, text:"Right"},
+                {value:AnchorTypes.Top, text:"Top"},
+                {value:AnchorTypes.Bottom, text:"Bottom"},
+            ],
+            help: "this is used when a node is placed into a group box"
+        }
     }
-}
-
-function tester() {
-    var utb = new UiTypeBase_();
-
-}
+};
 
 
 var UiTypeBase = {
@@ -106,6 +100,7 @@ var UiTypeBase = {
         w: { editor:{label:"Width"}, value: 100, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
         h: { editor:{label:"Height"}, value: 30, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
         textSize: { value: 14, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
+        ...NodeAnchorDefaults,
     },
     uiObject: true,
     nonObject: "",
@@ -123,6 +118,7 @@ var AudioTypeBase = {
         id: { noEdit: "" },
         comment: {},
         color: { editor: { type: "color" } },
+        ...NodeAnchorDefaults
     },
     editor: "autogen",
     /** @type {String}  the shortName used in the palette panel*/
@@ -158,7 +154,8 @@ var NonAudioObjectBase = {
     defaults: {
         name: {},
         id: { "noEdit": "" },
-        comment: {}
+        comment: {},
+        ...NodeAnchorDefaults
     },
     nonObject: "",
 };
@@ -166,25 +163,6 @@ var CodeObjectBase = {
     ...NonAudioObjectBase,
     defaults: {...NonAudioObjectBase.defaults},
     color: "#ddffbb",
-};
-
-class TestClassExtends_Base {
-    constructor() {
-        /** @type {String} name tjofräs */
-        this.name = "";
-        /** @type {String} id tjofräs */
-        this.id = "";
-    }
-}
-class TestClassExtends extends TestClassExtends_Base {
-    constructor() {
-        super();
-        /** @type {String} comment tjofräs */
-        this.comment = "";
-    }
-}
-var TestClassExtendsObj = {
-    ...new TestClassExtends(),
 };
 
 function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
@@ -250,6 +228,10 @@ var ManickenNodesBase = {
 
 var LinkIOHelp = "this is just a showcase for a maybe future function that can replace junctions (it's available at NODE-RED so you can see what to expect from it there) note. links would never cross the class boundary as that maybe would cause designs that are hard to follow but we will see how it's gonna be used.";
 
+var SynthCategory = {category: "synth", icon:"sin.png"};
+var EffectCategory = {category: "effect", icon:"effect.png"};
+var MixerCategory = {category: "mixer", icon:"mixer.png"};
+
 var NodeDefinitions = {
     /*
     template:{ // node def. group uid
@@ -294,7 +276,7 @@ var NodeDefinitions = {
         description: "The special audio node types embedded into this tool++ by manicken",
         ...ManickenNodesBase,
         types: {
-            AudioMixer: { ...AudioTypeArrayBase, shortName: "mixer", dynInputs: {}, editor: "autogen", inputs: 1, outputs: 1, category: "mixer",
+            AudioMixer: { ...AudioTypeArrayBase, ...MixerCategory, shortName: "mixer", dynInputs: {}, editor: "autogen", inputs: 1, outputs: 1,
                 editorhelp: dynInputMixers_Help,
                 defaults: {
                     ...AudioTypeArrayBase.defaults,
@@ -303,7 +285,7 @@ var NodeDefinitions = {
                     RealInputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { label: "Real Inputs", rowClass: "form-row-mid", readonly: true, help: dynInputMixers_RealInputs_Help } }
                 }
             },
-            "theMixer.h": { dontShowInPalette: "", shortName: "theMixer.h", nonObject: "", useAceEditor: "c_cpp", category: "mixer", color: "#ddffbb", icon: "function.png",defaults: { name: {}, id: {}, comment: { value: "/* Audio Library for Teensy 3.X\r\n * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com\r\n *\r\n * Development of this audio library was funded by PJRC.COM, LLC by sales of\r\n * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop\r\n * open source software by purchasing Teensy or other PJRC products.\r\n *\r\n * Permission is hereby granted, free of charge, to any person obtaining a copy\r\n * of this software and associated documentation files (the \"Software\"), to deal\r\n * in the Software without restriction, including without limitation the rights\r\n * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\r\n * copies of the Software, and to permit persons to whom the Software is\r\n * furnished to do so, subject to the following conditions:\r\n *\r\n * The above copyright notice, development funding notice, and this permission\r\n * notice shall be included in all copies or substantial portions of the Software.\r\n *\r\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\n * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\n * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\n * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\n * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\n * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\r\n  * THE SOFTWARE.\r\n */\r\n\r\n#ifndef themixer_h_\r\n#define themixer_h_\r\n\r\n#include <Arduino.h>\r\n#include <AudioStream.h>\r\n\r\n//#define AudioMixer4 AudioMixer<4>\r\n\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n#define MULTI_UNITYGAIN 65536\r\n#define MULTI_UNITYGAIN_F 65536.0f\r\n#define MAX_GAIN 32767.0f\r\n#define MIN_GAIN -32767.0f\r\n#define MULT_DATA_TYPE int32_t\r\n\r\n#elif defined(KINETISL)\r\n\r\n#define MULTI_UNITYGAIN 256\r\n#define MULTI_UNITYGAIN_F 256.0f\r\n#define MAX_GAIN 127.0f\r\n#define MIN_GAIN -127.0f\r\n#define MULT_DATA_TYPE int16_t\r\n\r\n#endif\r\n\r\ntemplate <int NN> class AudioMixer : public AudioStream\r\n{\r\npublic:\r\n  AudioMixer(void) : AudioStream(NN, inputQueueArray) {\r\n    for (int i=0; i<NN; i++) multiplier[i] = MULTI_UNITYGAIN;\r\n  } \r\n  virtual void update();\r\n  \r\n  /**\r\n   * this sets the individual gains\r\n   * @param channel\r\n   * @param gain\r\n   */\r\n  void gain(unsigned int channel, float gain);\r\n  /**\r\n   * set all channels to specified gain\r\n   * @param gain\r\n   */\r\n  void gain(float gain);\r\n\r\nprivate:\r\n  MULT_DATA_TYPE multiplier[NN];\r\n  audio_block_t *inputQueueArray[NN];\r\n};\r\n\r\n// the following Forward declarations \r\n// must be defined when we use template \r\n// the compiler throws some warnings that should be errors otherwise\r\n\r\nstatic int32_t signed_multiply_32x16b(int32_t a, uint32_t b); \r\nstatic int32_t signed_multiply_32x16t(int32_t a, uint32_t b);\r\nstatic int32_t signed_saturate_rshift(int32_t val, int bits, int rshift);\r\nstatic uint32_t pack_16b_16b(int32_t a, int32_t b);\r\nstatic uint32_t signed_add_16_and_16(uint32_t a, uint32_t b);\r\n\r\n// because of the template use applyGain and applyGainThenAdd functions\r\n// must be in this file and NOT in cpp file\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    uint32_t *p = (uint32_t *)data;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    do {\r\n      uint32_t tmp32 = *p; // read 2 samples from *data\r\n      int32_t val1 = signed_multiply_32x16b(mult, tmp32);\r\n      int32_t val2 = signed_multiply_32x16t(mult, tmp32);\r\n      val1 = signed_saturate_rshift(val1, 16, 0);\r\n      val2 = signed_saturate_rshift(val2, 16, 0);\r\n      *p++ = pack_16b_16b(val2, val1);\r\n    } while (p < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)\r\n  {\r\n    uint32_t *dst = (uint32_t *)data;\r\n    const uint32_t *src = (uint32_t *)in;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        uint32_t tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n        tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        uint32_t tmp32 = *src++; // read 2 samples from *data\r\n        int32_t val1 =  signed_multiply_32x16b(mult, tmp32);\r\n        int32_t val2 =  signed_multiply_32x16t(mult, tmp32);\r\n        val1 =  signed_saturate_rshift(val1, 16, 0);\r\n        val2 =  signed_saturate_rshift(val2, 16, 0);\r\n        tmp32 =  pack_16b_16b(val2, val1);\r\n        uint32_t tmp32b = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, tmp32b);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n\r\n#elif defined(KINETISL)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    const int16_t *end = data + AUDIO_BLOCK_SAMPLES;\r\n\r\n    do {\r\n      int32_t val = *data * mult;\r\n      *data++ = signed_saturate_rshift(val, 16, 0);\r\n    } while (data < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)\r\n  {\r\n    const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        int32_t val = *dst + *src++;\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n#endif\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(unsigned int channel, float gain) {\r\n  if (channel >= NN) return;\r\n  if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n  else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n  multiplier[channel] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(float gain) {\r\n  for (int i = 0; i < NN; i++) {\r\n    if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n    else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n    multiplier[i] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n  } \r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::update() {\r\n  audio_block_t *in, *out=NULL;\r\n  unsigned int channel;\r\n  for (channel=0; channel < NN; channel++) {\r\n    if (!out) {\r\n      out = receiveWritable(channel);\r\n      if (out) {\r\n        int32_t mult = multiplier[channel];\r\n        if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);\r\n      }\r\n    } else {\r\n      in = receiveReadOnly(channel);\r\n      if (in) {\r\n        applyGainThenAdd(out->data, in->data, multiplier[channel]);\r\n        release(in);\r\n      }\r\n    }\r\n  }\r\n  if (out) {\r\n    transmit(out);\r\n    release(out);\r\n  }\r\n}\r\n// this class and function forces include \r\n// of functions applyGainThenAdd and applyGain used by the template\r\nclass DummyClass\r\n{\r\n  public:\r\n    virtual void dummyFunction();\r\n};\r\nvoid DummyClass::dummyFunction() {\r\n  applyGainThenAdd(0, 0, 0);\r\n  applyGain(0,0);\r\n    \r\n}\r\n\r\n#endif" } } },
+            "theMixer.h": { dontShowInPalette: "", ...MixerCategory, shortName: "theMixer.h", nonObject: "", useAceEditor: "c_cpp", color: "#ddffbb", icon: "function.png",defaults: { name: {}, id: {}, comment: { value: "/* Audio Library for Teensy 3.X\r\n * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com\r\n *\r\n * Development of this audio library was funded by PJRC.COM, LLC by sales of\r\n * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop\r\n * open source software by purchasing Teensy or other PJRC products.\r\n *\r\n * Permission is hereby granted, free of charge, to any person obtaining a copy\r\n * of this software and associated documentation files (the \"Software\"), to deal\r\n * in the Software without restriction, including without limitation the rights\r\n * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\r\n * copies of the Software, and to permit persons to whom the Software is\r\n * furnished to do so, subject to the following conditions:\r\n *\r\n * The above copyright notice, development funding notice, and this permission\r\n * notice shall be included in all copies or substantial portions of the Software.\r\n *\r\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\n * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\n * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\n * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\n * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\n * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\r\n  * THE SOFTWARE.\r\n */\r\n\r\n#ifndef themixer_h_\r\n#define themixer_h_\r\n\r\n#include <Arduino.h>\r\n#include <AudioStream.h>\r\n\r\n//#define AudioMixer4 AudioMixer<4>\r\n\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n#define MULTI_UNITYGAIN 65536\r\n#define MULTI_UNITYGAIN_F 65536.0f\r\n#define MAX_GAIN 32767.0f\r\n#define MIN_GAIN -32767.0f\r\n#define MULT_DATA_TYPE int32_t\r\n\r\n#elif defined(KINETISL)\r\n\r\n#define MULTI_UNITYGAIN 256\r\n#define MULTI_UNITYGAIN_F 256.0f\r\n#define MAX_GAIN 127.0f\r\n#define MIN_GAIN -127.0f\r\n#define MULT_DATA_TYPE int16_t\r\n\r\n#endif\r\n\r\ntemplate <int NN> class AudioMixer : public AudioStream\r\n{\r\npublic:\r\n  AudioMixer(void) : AudioStream(NN, inputQueueArray) {\r\n    for (int i=0; i<NN; i++) multiplier[i] = MULTI_UNITYGAIN;\r\n  } \r\n  virtual void update();\r\n  \r\n  /**\r\n   * this sets the individual gains\r\n   * @param channel\r\n   * @param gain\r\n   */\r\n  void gain(unsigned int channel, float gain);\r\n  /**\r\n   * set all channels to specified gain\r\n   * @param gain\r\n   */\r\n  void gain(float gain);\r\n\r\nprivate:\r\n  MULT_DATA_TYPE multiplier[NN];\r\n  audio_block_t *inputQueueArray[NN];\r\n};\r\n\r\n// the following Forward declarations \r\n// must be defined when we use template \r\n// the compiler throws some warnings that should be errors otherwise\r\n\r\nstatic int32_t signed_multiply_32x16b(int32_t a, uint32_t b); \r\nstatic int32_t signed_multiply_32x16t(int32_t a, uint32_t b);\r\nstatic int32_t signed_saturate_rshift(int32_t val, int bits, int rshift);\r\nstatic uint32_t pack_16b_16b(int32_t a, int32_t b);\r\nstatic uint32_t signed_add_16_and_16(uint32_t a, uint32_t b);\r\n\r\n// because of the template use applyGain and applyGainThenAdd functions\r\n// must be in this file and NOT in cpp file\r\n#if defined(__ARM_ARCH_7EM__)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    uint32_t *p = (uint32_t *)data;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    do {\r\n      uint32_t tmp32 = *p; // read 2 samples from *data\r\n      int32_t val1 = signed_multiply_32x16b(mult, tmp32);\r\n      int32_t val2 = signed_multiply_32x16t(mult, tmp32);\r\n      val1 = signed_saturate_rshift(val1, 16, 0);\r\n      val2 = signed_saturate_rshift(val2, 16, 0);\r\n      *p++ = pack_16b_16b(val2, val1);\r\n    } while (p < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)\r\n  {\r\n    uint32_t *dst = (uint32_t *)data;\r\n    const uint32_t *src = (uint32_t *)in;\r\n    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        uint32_t tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n        tmp32 = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, *src++);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        uint32_t tmp32 = *src++; // read 2 samples from *data\r\n        int32_t val1 =  signed_multiply_32x16b(mult, tmp32);\r\n        int32_t val2 =  signed_multiply_32x16t(mult, tmp32);\r\n        val1 =  signed_saturate_rshift(val1, 16, 0);\r\n        val2 =  signed_saturate_rshift(val2, 16, 0);\r\n        tmp32 =  pack_16b_16b(val2, val1);\r\n        uint32_t tmp32b = *dst;\r\n        *dst++ =  signed_add_16_and_16(tmp32, tmp32b);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n\r\n#elif defined(KINETISL)\r\n\r\n  static void applyGain(int16_t *data, int32_t mult)\r\n  {\r\n    const int16_t *end = data + AUDIO_BLOCK_SAMPLES;\r\n\r\n    do {\r\n      int32_t val = *data * mult;\r\n      *data++ = signed_saturate_rshift(val, 16, 0);\r\n    } while (data < end);\r\n  }\r\n\r\n  static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)\r\n  {\r\n    const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;\r\n\r\n    if (mult == MULTI_UNITYGAIN) {\r\n      do {\r\n        int32_t val = *dst + *src++;\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    } else {\r\n      do {\r\n        int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??\r\n        *dst++ = signed_saturate_rshift(val, 16, 0);\r\n      } while (dst < end);\r\n    }\r\n  }\r\n#endif\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(unsigned int channel, float gain) {\r\n  if (channel >= NN) return;\r\n  if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n  else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n  multiplier[channel] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::gain(float gain) {\r\n  for (int i = 0; i < NN; i++) {\r\n    if (gain > MAX_GAIN) gain = MAX_GAIN;\r\n    else if (gain < MIN_GAIN) gain = MIN_GAIN;\r\n    multiplier[i] = gain * MULTI_UNITYGAIN_F; // TODO: proper roundoff?\r\n  } \r\n}\r\n\r\ntemplate <int NN> void AudioMixer<NN>::update() {\r\n  audio_block_t *in, *out=NULL;\r\n  unsigned int channel;\r\n  for (channel=0; channel < NN; channel++) {\r\n    if (!out) {\r\n      out = receiveWritable(channel);\r\n      if (out) {\r\n        int32_t mult = multiplier[channel];\r\n        if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);\r\n      }\r\n    } else {\r\n      in = receiveReadOnly(channel);\r\n      if (in) {\r\n        applyGainThenAdd(out->data, in->data, multiplier[channel]);\r\n        release(in);\r\n      }\r\n    }\r\n  }\r\n  if (out) {\r\n    transmit(out);\r\n    release(out);\r\n  }\r\n}\r\n// this class and function forces include \r\n// of functions applyGainThenAdd and applyGain used by the template\r\nclass DummyClass\r\n{\r\n  public:\r\n    virtual void dummyFunction();\r\n};\r\nvoid DummyClass::dummyFunction() {\r\n  applyGainThenAdd(0, 0, 0);\r\n  applyGain(0,0);\r\n    \r\n}\r\n\r\n#endif" } } },
             
             //"AudioCrossPointSwitch":{defaults:{name:{type:"c_cpp_name"},id:{},inputs:{value:"1",maxval:255,minval:1,type:"int"},outputs:{value:"1",maxval:255,minval:1,type:"int"},comment:{}},shortName:"crossSwitch",inputs:1,outputs:1,category:"mixer",color:"#E6E0F8",icon:"arrow-in.png"},
             
@@ -327,8 +309,8 @@ var NodeDefinitions = {
             TabOutput: { ...NonAudioObjectBase, editorhelp:TabOutput_help, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
             TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, outputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
-            BusJoin: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", help: "not implemented yet" },
-            BusSplit: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusSplit", inputs: 1, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
+            BusJoin: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch_back.png", help: "not implemented yet" },
+            BusSplit: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusSplit", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch.png", align: "right", iconXadj:-6 },
             
             AudioStreamObject: {
                 shortName: "userStreamObject", dynInputs: {}, inputs: 0, outputs: 0, color: "#ddffbb", icon: "debug.png",
@@ -370,6 +352,18 @@ var NodeDefinitions = {
         description: "The UI node types embedded into this tool++ by manicken",
         ...ManickenNodesBase,
         types: {
+            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb", //inputs:0, outputs:0,
+                defaults: {
+                    ...UiTypeBase.defaults,
+                    nodes: { value: [] },
+                    color: { value: "#ddffbb" },
+                    border_color: { value: "#999" },
+                    individualListBoxMode: { value: "false" },
+                    exportAsClass: { value: "false" },
+                    //inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
+                    //outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
+                }
+            },
             UI_Button: { ...UiTypeBase, shortName: "Button",
                 useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 0,
                 defaults: {
@@ -456,18 +450,7 @@ var NodeDefinitions = {
                     nodes: { value: [] }
                 }
             },
-            group: { ...UiTypeBase, shortName: "group", color: "#ddffbb", //inputs:0, outputs:0,
-                defaults: {
-                    ...UiTypeBase.defaults,
-                    nodes: { value: [] },
-                    color: { value: "#ddffbb" },
-                    border_color: { value: "#999" },
-                    individualListBoxMode: { value: "false" },
-                    exportAsClass: { value: "false" },
-                    //inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
-                    //outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
-                }
-            }
+            
         }
     },
     /*FAUST:{
@@ -488,6 +471,7 @@ var NodeDefinitions = {
         categoryItems: { ...NodeBaseCategories },
         types: {
             AudioControlPCM3168: { ...AudioTypeBase, category: "control", shortName: "pcm3168" },
+            AudioEffectExpEnvelope: { ...AudioTypeArrayBase, ...EffectCategory, shortName: "expEnv", inputs:1, outputs:1, icon:"envelope.png"},
         }
     },
     h4yn0nnym0u5e_stereoMixer: { // have seperate group so that this object can be in global 
@@ -496,7 +480,7 @@ var NodeDefinitions = {
         homepage: "https://github.com/h4yn0nnym0u5e",
         url: "https://github.com/h4yn0nnym0u5e/Audio/tree/features/dynamic-updates",
         types: {
-            AudioMixerStereo: { ...AudioTypeArrayBase, category: "mixer",
+            AudioMixerStereo: { ...AudioTypeArrayBase, ...MixerCategory,
                 shortName: "mixerStereo", dynInputs: {}, inputs: 1, outputs: 2,
                 editorhelp: dynInputMixers_Help,
                 defaults: {
@@ -609,10 +593,10 @@ var NodeDefinitions = {
             AudioOutputSPDIF3_F32:   { ...AudioTypeBase, category: "output-spdif", shortName: "spdif3_f32", sourceFile: "output_spdif3_f32.h", inputTypes: {"x2": "f32"}},
             
             // Mixer category
-            AudioMixer4_F32:     { ...AudioTypeArrayBase, category: "mixer", shortName: "mixer4_f32", sourceFile: "AudioMixer_F32.h", inputTypes: {"x4": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioMixer8_F32:     { ...AudioTypeArrayBase, category: "mixer", shortName: "mixer8_f32", sourceFile: "AudioMixer_F32.h", inputTypes: {"x8": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioSwitch4_OA_F32: { ...AudioTypeArrayBase, category: "mixer", shortName: "switch4_f32", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x4": "f32"}},
-            AudioSwitch8_OA_F32: { ...AudioTypeArrayBase, category: "mixer", shortName: "switch8_f32", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x8": "f32"}},
+            AudioMixer4_F32:     { ...AudioTypeArrayBase, ...MixerCategory, shortName: "mixer4_f32", sourceFile: "AudioMixer_F32.h", inputTypes: {"x4": "f32"}, outputTypes: {"x1": "f32"}}, 
+            AudioMixer8_F32:     { ...AudioTypeArrayBase, ...MixerCategory, shortName: "mixer8_f32", sourceFile: "AudioMixer_F32.h", inputTypes: {"x8": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioSwitch4_OA_F32: { ...AudioTypeArrayBase, ...MixerCategory, shortName: "switch4_f32", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x4": "f32"}, icon:"switch.png"},
+            AudioSwitch8_OA_F32: { ...AudioTypeArrayBase, ...MixerCategory, shortName: "switch8_f32", sourceFile: "AudioSwitch_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x8": "f32"}, icon:"switch.png"},
             
             // Play category
             AudioSDPlayer_F32:  { ...AudioTypeArrayBase, category: "play", shortName: "SDPlayer_f32", sourceFile: "AudioSDPlayer_F32.h", outputTypes: {"x2": "f32"}},
@@ -622,32 +606,32 @@ var NodeDefinitions = {
             AudioRecordQueue_F32: { ...AudioTypeArrayBase, category: "record", shortName: "rec_queue_f32", sourceFile: "record_queue_f32.h", inputTypes: {"x1": "f32"}},
 
             // Synth category
-            AudioTestSignalGenerator_F32:        { ...AudioTypeArrayBase, category: "synth", shortName: "testSignGen_f32", sourceFile: "AudioControlTester.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioTestSignalMeasurement_F32:      { ...AudioTypeArrayBase, category: "synth", shortName: "testSigMeas_f32", sourceFile: "AudioControlTester.h", inputTypes: {"x2": "f32"}},
-            AudioTestSignalMeasurementMulti_F32: { ...AudioTypeArrayBase, category: "synth", shortName: "testSigMeas_f32", sourceFile: "AudioControlTester.h", inputTypes: {"x10": "f32"}},
-            AudioMathConstant_F32:               { ...AudioTypeArrayBase, category: "synth", shortName: "MathConstant_f32", sourceFile: "AudioMathConstant_F32.h", outputTypes: {"x1": "f32"}},
-            AudioSynthGaussian_F32:              { ...AudioTypeArrayBase, category: "synth", shortName: "gaussianwhitenoise_f32", sourceFile: "synth_GaussianWhiteNoise_F32.h", outputTypes: {"x1": "f32"}},
-            AudioSynthNoisePink_F32:             { ...AudioTypeArrayBase, category: "synth", shortName: "pinknoise_f32", sourceFile: "synth_pinknoise_f32.h", outputTypes: {"x1": "f32"}},
-            AudioSynthSineCosine_F32:            { ...AudioTypeArrayBase, category: "synth", shortName: "SineCosine_f32", sourceFile: "synth_sin_cos_f32.h", outputTypes: {"x2": "f32"}},
-            AudioSynthWaveformSine_F32:          { ...AudioTypeArrayBase, category: "synth", shortName: "sine_f32", sourceFile: "synth_sine_f32.h", outputTypes: {"x1": "f32"}},
-            AudioSynthWaveform_F32:              { ...AudioTypeArrayBase, category: "synth", shortName: "waveform_f32", sourceFile: "synth_waveform_F32.h", outputTypes: {"x1": "f32"}},
-            AudioSynthNoiseWhite_F32:            { ...AudioTypeArrayBase, category: "synth", shortName: "whitenoise_f32", sourceFile: "synth_whitenoise_f32.h", outputTypes: {"x1": "f32"}},
+            AudioTestSignalGenerator_F32:        { ...AudioTypeArrayBase, ...SynthCategory, shortName: "testSignGen_f32", sourceFile: "AudioControlTester.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioTestSignalMeasurement_F32:      { ...AudioTypeArrayBase, ...SynthCategory, shortName: "testSigMeas_f32", sourceFile: "AudioControlTester.h", inputTypes: {"x2": "f32"}},
+            AudioTestSignalMeasurementMulti_F32: { ...AudioTypeArrayBase, ...SynthCategory, shortName: "testSigMeas_f32", sourceFile: "AudioControlTester.h", inputTypes: {"x10": "f32"}},
+            AudioMathConstant_F32:               { ...AudioTypeArrayBase, ...SynthCategory, shortName: "MathConstant_f32", sourceFile: "AudioMathConstant_F32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthGaussian_F32:              { ...AudioTypeArrayBase, ...SynthCategory, shortName: "gaussianwhitenoise_f32", sourceFile: "synth_GaussianWhiteNoise_F32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthNoisePink_F32:             { ...AudioTypeArrayBase, ...SynthCategory, shortName: "pinknoise_f32", sourceFile: "synth_pinknoise_f32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthSineCosine_F32:            { ...AudioTypeArrayBase, ...SynthCategory, shortName: "SineCosine_f32", sourceFile: "synth_sin_cos_f32.h", outputTypes: {"x2": "f32"}},
+            AudioSynthWaveformSine_F32:          { ...AudioTypeArrayBase, ...SynthCategory, shortName: "sine_f32", sourceFile: "synth_sine_f32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthWaveform_F32:              { ...AudioTypeArrayBase, ...SynthCategory, shortName: "waveform_f32", sourceFile: "synth_waveform_F32.h", outputTypes: {"x1": "f32"}},
+            AudioSynthNoiseWhite_F32:            { ...AudioTypeArrayBase, ...SynthCategory, shortName: "whitenoise_f32", sourceFile: "synth_whitenoise_f32.h", outputTypes: {"x1": "f32"}},
 
             // Effect category
-            /*AudioEffectEmpty_F32:        { ...AudioTypeArrayBase, category: "effect", shortName: "empty", sourceFile: "AudioEffectEmpty_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},*/
-            AudioEffectCompWDRC_F32:       { ...AudioTypeArrayBase, category: "effect", shortName: "compressWDRC_f32", sourceFile: "AudioEffectCompWDRC_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectCompressor2_F32:    { ...AudioTypeArrayBase, category: "effect", shortName: "compressor2_f32", sourceFile: "AudioEffectCompressor2_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectCompressor_F32:     { ...AudioTypeArrayBase, category: "effect", shortName: "compressor_f32", sourceFile: "AudioEffectCompressor_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectDelay_OA_F32:       { ...AudioTypeArrayBase, category: "effect", shortName: "delay_f32", sourceFile: "AudioEffectDelay_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectFreqShiftFD_OA_F32: { ...AudioTypeArrayBase, category: "effect", shortName: "freq_shift_f32", sourceFile: "AudioEffectFreqShiftFD_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectGain_F32:           { ...AudioTypeArrayBase, category: "effect", shortName: "EffectGain_f32", sourceFile: "AudioEffectGain_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectNoiseGate_F32:      { ...AudioTypeArrayBase, category: "effect", shortName: "NoiseGate_f32", sourceFile: "AudioEffectNoiseGate_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioEffectWDRC2_F32:          { ...AudioTypeArrayBase, category: "effect", shortName: "CompressWDRC2_f32", sourceFile: "AudioEffectWDRC2_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioMathAdd_F32:              { ...AudioTypeArrayBase, category: "effect", shortName: "MathAdd_f32", sourceFile: "AudioMathAdd_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioMathMultiply_F32:         { ...AudioTypeArrayBase, category: "effect", shortName: "MathMultiply_f32", sourceFile: "AudioMathMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioMathOffset_F32:           { ...AudioTypeArrayBase, category: "effect", shortName: "MathOffset_f32", sourceFile: "AudioMathOffset_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioMathScale_F32:            { ...AudioTypeArrayBase, category: "effect", shortName: "MathScale_f32", sourceFile: "AudioMathScale_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
-            AudioMultiply_F32:             { ...AudioTypeArrayBase, category: "effect", shortName: "multiply_f32", sourceFile: "AudioMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            /*AudioEffectEmpty_F32:        { ...AudioTypeArrayBase, ...EffectCategory, shortName: "empty", sourceFile: "AudioEffectEmpty_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},*/
+            AudioEffectCompWDRC_F32:       { ...AudioTypeArrayBase, ...EffectCategory, shortName: "compressWDRC_f32", sourceFile: "AudioEffectCompWDRC_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectCompressor2_F32:    { ...AudioTypeArrayBase, ...EffectCategory, shortName: "compressor2_f32", sourceFile: "AudioEffectCompressor2_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectCompressor_F32:     { ...AudioTypeArrayBase, ...EffectCategory, shortName: "compressor_f32", sourceFile: "AudioEffectCompressor_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectDelay_OA_F32:       { ...AudioTypeArrayBase, ...EffectCategory, shortName: "delay_f32", sourceFile: "AudioEffectDelay_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectFreqShiftFD_OA_F32: { ...AudioTypeArrayBase, ...EffectCategory, shortName: "freq_shift_f32", sourceFile: "AudioEffectFreqShiftFD_OA_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectGain_F32:           { ...AudioTypeArrayBase, ...EffectCategory, shortName: "EffectGain_f32", sourceFile: "AudioEffectGain_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectNoiseGate_F32:      { ...AudioTypeArrayBase, ...EffectCategory, shortName: "NoiseGate_f32", sourceFile: "AudioEffectNoiseGate_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioEffectWDRC2_F32:          { ...AudioTypeArrayBase, ...EffectCategory, shortName: "CompressWDRC2_f32", sourceFile: "AudioEffectWDRC2_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathAdd_F32:              { ...AudioTypeArrayBase, ...EffectCategory, shortName: "MathAdd_f32", sourceFile: "AudioMathAdd_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathMultiply_F32:         { ...AudioTypeArrayBase, ...EffectCategory, shortName: "MathMultiply_f32", sourceFile: "AudioMathMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathOffset_F32:           { ...AudioTypeArrayBase, ...EffectCategory, shortName: "MathOffset_f32", sourceFile: "AudioMathOffset_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMathScale_F32:            { ...AudioTypeArrayBase, ...EffectCategory, shortName: "MathScale_f32", sourceFile: "AudioMathScale_F32.h", inputTypes: {"x1": "f32"}, outputTypes: {"x1": "f32"}},
+            AudioMultiply_F32:             { ...AudioTypeArrayBase, ...EffectCategory, shortName: "multiply_f32", sourceFile: "AudioMultiply_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x1": "f32"}},
             
             // Filter category
             AudioFilter90Deg_F32:      { ...AudioTypeArrayBase, category: "filter", shortName: "_90DegPhase_f32", sourceFile: "AudioFilter90Deg_F32.h", inputTypes: {"x2": "f32"}, outputTypes: {"x2": "f32"}},
@@ -771,8 +755,8 @@ var NodeDefinitions = {
             AudioOutputUSB:          { ...AudioTypeBase, category: "output-other", shortName: "usb", inputs: 2},
 
             // Mixer category
-            AudioAmplifier: { ...AudioTypeArrayBase, category: "mixer", shortName: "amp", inputs: 1, outputs: 1},
-            AudioMixer4:    { ...AudioTypeArrayBase, category: "mixer", shortName: "mixer4", inputs: 4, outputs: 1},
+            AudioAmplifier: { ...AudioTypeArrayBase, ...MixerCategory, shortName: "amp", inputs: 1, outputs: 1, icon:"amp.png"},
+            AudioMixer4:    { ...AudioTypeArrayBase, ...MixerCategory, shortName: "mixer4", inputs: 4, outputs: 1},
 
             // Play category
             AudioPlayMemory:         { ...AudioTypeArrayBase, category: "play", shortName: "playMem", outputs: 1},
@@ -785,32 +769,32 @@ var NodeDefinitions = {
             AudioRecordQueue: { ...AudioTypeArrayBase, category: "record", shortName: "queue", inputs: 1},
 
             // Synth category
-            AudioSynthWavetable:             { ...AudioTypeArrayBase, category: "synth", shortName: "wavetable", outputs: 1},
-            AudioSynthSimpleDrum:            { ...AudioTypeArrayBase, category: "synth", shortName: "drum", outputs: 1},
-            AudioSynthKarplusStrong:         { ...AudioTypeArrayBase, category: "synth", shortName: "string", outputs: 1},
-            AudioSynthWaveformSine:          { ...AudioTypeArrayBase, category: "synth", shortName: "sine", outputs: 1},
-            AudioSynthWaveformSineHires:     { ...AudioTypeArrayBase, category: "synth", shortName: "sine_hires", outputs: 2},
-            AudioSynthWaveformSineModulated: { ...AudioTypeArrayBase, category: "synth", shortName: "sine_fm", inputs: 1, outputs: 1},
-            AudioSynthWaveform:              { ...AudioTypeArrayBase, category: "synth", shortName: "waveform", outputs: 1},
-            AudioSynthWaveformModulated:     { ...AudioTypeArrayBase, category: "synth", shortName: "waveformMod", inputs: 2, outputs: 1},
-            AudioSynthWaveformPWM:           { ...AudioTypeArrayBase, category: "synth", shortName: "pwm", inputs: 1, outputs: 1},
-            AudioSynthToneSweep:             { ...AudioTypeArrayBase, category: "synth", shortName: "tonesweep", outputs: 1},
-            AudioSynthWaveformDc:            { ...AudioTypeArrayBase, category: "synth", shortName: "dc", outputs: 1},
-            AudioSynthNoiseWhite:            { ...AudioTypeArrayBase, category: "synth", shortName: "noise", outputs: 1},
-            AudioSynthNoisePink:             { ...AudioTypeArrayBase, category: "synth", shortName: "pink", outputs: 1},
+            AudioSynthWavetable:             { ...AudioTypeArrayBase, ...SynthCategory, shortName: "wavetable",   outputs: 1},
+            AudioSynthSimpleDrum:            { ...AudioTypeArrayBase, ...SynthCategory, shortName: "drum",        outputs: 1},
+            AudioSynthKarplusStrong:         { ...AudioTypeArrayBase, ...SynthCategory, shortName: "string",      outputs: 1},
+            AudioSynthWaveformSine:          { ...AudioTypeArrayBase, ...SynthCategory, shortName: "sine",        outputs: 1},
+            AudioSynthWaveformSineHires:     { ...AudioTypeArrayBase, ...SynthCategory, shortName: "sine_hires",  outputs: 2},
+            AudioSynthWaveformSineModulated: { ...AudioTypeArrayBase, ...SynthCategory, shortName: "sine_fm",     outputs: 1, inputs: 1},
+            AudioSynthWaveform:              { ...AudioTypeArrayBase, ...SynthCategory, shortName: "waveform",    outputs: 1},
+            AudioSynthWaveformModulated:     { ...AudioTypeArrayBase, ...SynthCategory, shortName: "waveformMod", outputs: 1, inputs: 2},
+            AudioSynthWaveformPWM:           { ...AudioTypeArrayBase, ...SynthCategory, shortName: "pwm",         outputs: 1, inputs: 1},
+            AudioSynthToneSweep:             { ...AudioTypeArrayBase, ...SynthCategory, shortName: "tonesweep",   outputs: 1},
+            AudioSynthWaveformDc:            { ...AudioTypeArrayBase, ...SynthCategory, shortName: "dc",          outputs: 1},
+            AudioSynthNoiseWhite:            { ...AudioTypeArrayBase, ...SynthCategory, shortName: "noise",       outputs: 1},
+            AudioSynthNoisePink:             { ...AudioTypeArrayBase, ...SynthCategory, shortName: "pink",        outputs: 1},
 
             // Effect category
-            AudioEffectFade:           { ...AudioTypeArrayBase, category: "effect", shortName: "fade", inputs: 1, outputs: 1},
-            AudioEffectChorus:         { ...AudioTypeArrayBase, category: "effect", shortName: "chorus", inputs: 1, outputs: 1},
-            AudioEffectFlange:         { ...AudioTypeArrayBase, category: "effect", shortName: "flange", inputs: 1, outputs: 1},
-            AudioEffectReverb:         { ...AudioTypeArrayBase, category: "effect", shortName: "reverb", inputs: 1, outputs: 1},
-            AudioEffectFreeverb:       { ...AudioTypeArrayBase, category: "effect", shortName: "freeverb", inputs: 1, outputs: 1},
-            AudioEffectFreeverbStereo: { ...AudioTypeArrayBase, category: "effect", shortName: "freeverbs", inputs: 1, outputs: 2},
-            AudioEffectEnvelope:       { ...AudioTypeArrayBase, category: "effect", shortName: "envelope", inputs: 1, outputs: 1},
-            AudioEffectMultiply:       { ...AudioTypeArrayBase, category: "effect", shortName: "multiply", inputs: 2, outputs: 1},
-            AudioEffectRectifier:      { ...AudioTypeArrayBase, category: "effect", shortName: "rectify", inputs: 1, outputs: 1},
-            AudioEffectDelay:          { ...AudioTypeArrayBase, category: "effect", shortName: "delay", inputs: 1, outputs: 8, defaults: { ...AudioTypeArrayBase.defaults, outputs: { value: "8" } } },
-            AudioEffectDelayExternal:  { ...AudioTypeArrayBase, category: "effect", shortName: "delayExt", inputs: 1, outputs: 8,
+            AudioEffectFade:           { ...AudioTypeArrayBase, ...EffectCategory, shortName: "fade", inputs: 1, outputs: 1},
+            AudioEffectChorus:         { ...AudioTypeArrayBase, ...EffectCategory, shortName: "chorus", inputs: 1, outputs: 1},
+            AudioEffectFlange:         { ...AudioTypeArrayBase, ...EffectCategory, shortName: "flange", inputs: 1, outputs: 1},
+            AudioEffectReverb:         { ...AudioTypeArrayBase, ...EffectCategory, shortName: "reverb", inputs: 1, outputs: 1},
+            AudioEffectFreeverb:       { ...AudioTypeArrayBase, ...EffectCategory, shortName: "freeverb", inputs: 1, outputs: 1},
+            AudioEffectFreeverbStereo: { ...AudioTypeArrayBase, ...EffectCategory, shortName: "freeverbs", inputs: 1, outputs: 2},
+            AudioEffectEnvelope:       { ...AudioTypeArrayBase, ...EffectCategory, shortName: "envelope", inputs: 1, outputs: 1, icon:"envelope.png"},
+            AudioEffectMultiply:       { ...AudioTypeArrayBase, ...EffectCategory, shortName: "multiply", inputs: 2, outputs: 1},
+            AudioEffectRectifier:      { ...AudioTypeArrayBase, ...EffectCategory, shortName: "rectify", inputs: 1, outputs: 1},
+            AudioEffectDelay:          { ...AudioTypeArrayBase, ...EffectCategory, shortName: "delay", inputs: 1, outputs: 8, defaults: { ...AudioTypeArrayBase.defaults, outputs: { value: "8" } } },
+            AudioEffectDelayExternal:  { ...AudioTypeArrayBase, ...EffectCategory, shortName: "delayExt", inputs: 1, outputs: 8,
                 defaults: {
                     ...AudioTypeArrayBase.defaults, outputs: { value: "8" },
                     useMakeConstructor,
@@ -856,12 +840,12 @@ var NodeDefinitions = {
                     valueNames: "memtype, maxDelay"
                 }
             },
-            AudioEffectBitcrusher:     { ...AudioTypeArrayBase, category: "effect", shortName: "bitcrusher", inputs: 1, outputs: 1},
-            AudioEffectMidSide:        { ...AudioTypeArrayBase, category: "effect", shortName: "midside", inputs: 2, outputs: 2},
-            AudioEffectWaveshaper:     { ...AudioTypeArrayBase, category: "effect", shortName: "waveshape", inputs: 1, outputs: 1},
-            AudioEffectGranular:       { ...AudioTypeArrayBase, category: "effect", shortName: "granular", inputs: 1, outputs: 1},
-            AudioEffectDigitalCombine: { ...AudioTypeArrayBase, category: "effect", shortName: "combine", inputs: 2, outputs: 1},
-            AudioEffectWaveFolder:     { ...AudioTypeArrayBase, category: "effect", shortName: "wavefolder", inputs: 2, outputs: 1},
+            AudioEffectBitcrusher:     { ...AudioTypeArrayBase, ...EffectCategory, shortName: "bitcrusher", inputs: 1, outputs: 1},
+            AudioEffectMidSide:        { ...AudioTypeArrayBase, ...EffectCategory, shortName: "midside", inputs: 2, outputs: 2},
+            AudioEffectWaveshaper:     { ...AudioTypeArrayBase, ...EffectCategory, shortName: "waveshape", inputs: 1, outputs: 1},
+            AudioEffectGranular:       { ...AudioTypeArrayBase, ...EffectCategory, shortName: "granular", inputs: 1, outputs: 1},
+            AudioEffectDigitalCombine: { ...AudioTypeArrayBase, ...EffectCategory, shortName: "combine", inputs: 2, outputs: 1},
+            AudioEffectWaveFolder:     { ...AudioTypeArrayBase, ...EffectCategory, shortName: "wavefolder", inputs: 2, outputs: 1},
 
             // Filter category
             AudioFilterBiquad:        { ...AudioTypeArrayBase, category: "filter", shortName: "biquad", inputs: 1, outputs: 1},

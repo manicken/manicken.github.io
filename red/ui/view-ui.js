@@ -211,14 +211,16 @@ RED.view.ui = (function() {
 				resetRectFill(rect);
 			if (d.sendMode == UI_BUTTON_SEND_MODES.ON_RELEASE || d.sendMode == UI_BUTTON_SEND_MODES.ON_BOTH)
 				RED.ControlGUI.sendUiButton(false, d);
-		} else if (d.type == "UI_Slider") {
+		}
+		else if (d.type == "UI_Slider") {
 			//if (d.sendMode == "r") // don' work at the moment
                 RED.ControlGUI.sendUiSliderValue(d);
-		} else if (d.type == "UI_ListBox") {
+		}
+		else if (d.type == "UI_ListBox") {
 			//ui_listBoxMouseUp(d, rect);
 			//resetRectFill(rect);
 		}
-		 else if (d.type == "UI_Piano") {
+		else if (d.type == "UI_Piano") {
 			var newKeyIndex = rect.attr("keyIndex");
 			if (newKeyIndex == undefined) {
 				console.warn("piano title clicked");
@@ -315,17 +317,85 @@ RED.view.ui = (function() {
 		if (rect.attr("strokeOld") != undefined)
 			rect.attr("stroke", rect.attr("strokeOld"));
 	}
+	function handleGroupAnchorNodes(init) {
+		var mousedown_node = RED.view.mousedown_node;
+		if (mousedown_node.type == "group" && RED.state.IsResizing(RED.view.state)) {
+			if (init)
+				console.log("last resize was:" + RED.state.ToName(RED.view.state));
+
+			var centerBasedLocations = RED.view.settings.useCenterBasedPositions;
+			var ResizeLeft = RED.state.IsResizingLeft(RED.view.state);
+			var ResizeRight = RED.state.IsResizingRight(RED.view.state);
+			var ResizeTop = RED.state.IsResizingTop(RED.view.state);
+			var ResizeBottom = RED.state.IsResizingBottom(RED.view.state);
+
+			// update all anchored items
+			var grpNode = mousedown_node;
+			for (var ni=0;ni<grpNode.nodes.length;ni++) {
+				var node = grpNode.nodes[ni];
+				if (node.anchor == undefined) continue;
+				if (node.anchor == AnchorTypes.None) continue;
+				
+				if (ResizeTop && (node.anchor == AnchorTypes.Top)) {
+					if (init == true) {
+						node.oy = node.y;
+					}
+					else {
+						node.y = node.oy + (mousedown_node_resize.h - mousedown_node.h);
+						
+						RED.view.redraw_node(node);
+						RED.view.redraw_links();
+					}
+				}
+				else if (ResizeBottom && (node.anchor == AnchorTypes.Bottom)) {
+					if (init == true) {
+						node.oy = node.y;
+					}
+					else {
+						node.y = node.oy - (mousedown_node_resize.h - mousedown_node.h);
+						
+						RED.view.redraw_node(node);
+						RED.view.redraw_links();
+					}
+				}
+				else if (ResizeLeft && (node.anchor == AnchorTypes.Left)) {
+					if (init == true) {
+						node.ox = node.x;
+					}
+					else {
+						node.x = node.ox + (mousedown_node_resize.w - mousedown_node.w);
+						
+						RED.view.redraw_node(node);
+						RED.view.redraw_links();
+					}
+				}
+				else if (ResizeRight && (node.anchor == AnchorTypes.Right)) {
+					if (init == true) {
+						node.ox = node.x;
+					}
+					else {
+						node.x = node.ox - (mousedown_node_resize.w - mousedown_node.w);
+						RED.view.redraw_node(node);
+						RED.view.redraw_links();
+					}
+				}
+			}
+		}
+	}
     function uiNodeResize_changedCheck() {
         var mousedown_node = RED.view.mousedown_node;
-        return ((mousedown_node_resize.w != mousedown_node.w) ||
-                (mousedown_node_resize.h != mousedown_node.h) ||
-                (mousedown_node_resize.x != mousedown_node.x) ||
-                (mousedown_node_resize.y != mousedown_node.y))
+		var widthChanged = (mousedown_node_resize.w != mousedown_node.w);
+		var heightChanged = (mousedown_node_resize.h != mousedown_node.h);
+		var xPosChanged = (mousedown_node_resize.x != mousedown_node.x);
+		var yPosChanged = (mousedown_node_resize.y != mousedown_node.y);
+		
+		
+        return (widthChanged || heightChanged || xPosChanged || yPosChanged)
     }
 
     function uiNodeResize()
 	{
-        //console.warn("whatthefucjiswrongwithjavascript:",RED.view.node_def);
+        //console.warn("uiNodeResize");
 
         var mousedown_node = RED.view.mousedown_node;
         var mouse_mode = RED.view.state;
@@ -364,6 +434,7 @@ RED.view.ui = (function() {
 			else if (posMode === 2) mousedown_node.y = parseInt(mousedown_node_resize.y - dy/2);
 			mousedown_node.dirty = true;
 		}
+		handleGroupAnchorNodes();
     }
     function redraw_init_UI_Textbox(mainRect,nodeRect, n)
     {
@@ -789,8 +860,9 @@ RED.view.ui = (function() {
         return data;
     }
 
-
     function uiNodeResizeMouseDown(d,_this) {
+		console.log("uiNodeResizeMouseDown");
+
         mousedown_node_resize.w = d.w;
         mousedown_node_resize.h = d.h;
         mousedown_node_resize.x = d.x;
@@ -802,7 +874,7 @@ RED.view.ui = (function() {
         //", mousedown_node_old.h:" + mousedown_node_old.h +
         //", mousedown_node_resize.ox:" + mousedown_node_resize.ox +
         //", mousedown_node_resize.oy:" + mousedown_node_resize.oy);
-
+		
         //var nodeRect = d3.select(this);
         var mousePos = d3.mouse(_this)
         var x = mousePos[0];
@@ -847,6 +919,7 @@ RED.view.ui = (function() {
         //    RED.view.set_mouse_mode(RED.state.MOVING);
         RED.view.state = mouse_mode;
         //console.log("resize mouse_mode:" + mouse_mode);
+		handleGroupAnchorNodes(true);
     }
 
     function checkIf_UI_AndInit(d,mainRect,nodeRect)
@@ -917,6 +990,7 @@ RED.view.ui = (function() {
         uiNodeResizeMouseDown,
         uiNodeResize,
         uiNodeResize_changedCheck,
+
 
         uiObjectMouseScroll,
         uiObjectMouseOver,

@@ -22,7 +22,7 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         faustLinkExtId:"",
-        version:13,
+        version:14,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -115,7 +115,12 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
             "13":"* the spread operator <b>...</b> can now be used when creating new 'node types' and/or 'groups' in <b>Node Definitions Manager</b><br>"+
                  "&nbsp;&nbsp;* note: nested properties are allowed: i.e. root.sub<br>"+
                  "&nbsp;&nbsp;* note: using the spread operator is a one way operation and<br>"+
-                 "&nbsp;&nbsp;&nbsp;&nbsp;the <b>editor json string</b> is replaced with the spreaded(expanded) <b>json string</b> if 'reopened'"
+                 "&nbsp;&nbsp;&nbsp;&nbsp;the <b>editor json string</b> is replaced with the spreaded(expanded) <b>json string</b> if 'reopened'",
+            "14":"* junctions now behave and look more like official NODE RED junctions, these however can be resized/colored if needed.<br>"+
+                 "* when drawing links and if a link is drawn from a input to a output, the link auto drop at the first output when link is dropped onto the node<br>"+
+                 "* changed icons for some node types to better show what the function is.<br>"+
+                 "* audio objects and some nodes (TODO fix editors for the rest) do now have a anchor property that can be used when nodes is inside a group box<br>"+
+                 "* colors now have a reset button (actually this was allready in version 12)<br>",
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
