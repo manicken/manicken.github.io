@@ -128,7 +128,11 @@ RED.view.groupbox = (function() {
         return {g:foundGroup, el};
 	}
 
-	
+	/**
+	 * 
+	 * @param {REDNode} group 
+	 * @param {REDNode} node 
+	 */
 	function removeNodeFromGroup(group, node)
 	{
 		//console.warn(" try remove " + node.name + " from the group " + group.name)
@@ -136,7 +140,8 @@ RED.view.groupbox = (function() {
 		{
             if (group.nodes[i] == node)
 			{
-                
+                if (node.locked != undefined && node.locked == true) {console.log("node locked @ removeNodeFromGroup"); continue;}
+
                 node.parentGroup = undefined;
                 //RED.events.emit("nodes:remove",node);
                 group.nodes.splice(i,1);

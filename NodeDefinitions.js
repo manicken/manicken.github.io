@@ -73,38 +73,44 @@ var AnchorTypes = {
     Bottom:8,
 }
 
-var NodeAnchorDefaults = {
-    anchor: {
-        editor: {
-            type: "combobox",
-            options: [
-                {value:AnchorTypes.None, text:"None"},
-                {value:AnchorTypes.Left, text:"Left"},
-                {value:AnchorTypes.Right, text:"Right"},
-                {value:AnchorTypes.Top, text:"Top"},
-                {value:AnchorTypes.Bottom, text:"Bottom"},
-            ],
-            help: "this is used when a node is placed into a group box"
-        }
-    }
-};
-
-
-var UiTypeBase = {
+var NodeTypeBase = {
     defaults: {
         name: {},
-        tag: { value: "" },
         id: { noEdit: "" },
         comment: {},
         color: { editor: { type: "color" } },
+        anchor: {
+            editor: {
+                type: "combobox",
+                options: [
+                    {value:AnchorTypes.None, text:"None"},
+                    {value:AnchorTypes.Left, text:"Left"},
+                    {value:AnchorTypes.Right, text:"Right"},
+                    {value:AnchorTypes.Top, text:"Top"},
+                    {value:AnchorTypes.Bottom, text:"Bottom"},
+                ],
+                help: "this is used when a node is placed into a group box"
+            }
+        },
+        locked: {
+            value: false,
+            editor: { type:"boolean", help:"The Locked property determines if we can move or resize the node."},
+        }
+    }
+}
+
+var UiTypeBase = {
+    ...NodeTypeBase,
+    defaults: {
+        ...NodeTypeBase.defaults,
+        tag: { value: "" },
         w: { editor:{label:"Width"}, value: 100, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
         h: { editor:{label:"Height"}, value: 30, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
         textSize: { value: 14, minval: 5, type: DEFAULTS_VALUE_TYPE.int },
-        ...NodeAnchorDefaults,
     },
     uiObject: true,
     nonObject: "",
-    //editor:"autogen", don't autogen for ui objects as they have advanced editors
+    //editor:"autogen",// don't autogen for ui objects as they have advanced editors
     shortName: "newType",
     editorhelp: "",
     category: "ui",
@@ -113,12 +119,10 @@ var UiTypeBase = {
 };
 
 var AudioTypeBase = {
+    ...NodeTypeBase,
     defaults: {
+        ...NodeTypeBase.defaults,
         name: { type: DEFAULTS_VALUE_TYPE.c_cpp_name_no_array },
-        id: { noEdit: "" },
-        comment: {},
-        color: { editor: { type: "color" } },
-        ...NodeAnchorDefaults
     },
     editor: "autogen",
     /** @type {String}  the shortName used in the palette panel*/
@@ -151,11 +155,9 @@ var AudioTypeArrayBase = {
     }
 };
 var NonAudioObjectBase = {
+    ...NodeTypeBase,
     defaults: {
-        name: {},
-        id: { "noEdit": "" },
-        comment: {},
-        ...NodeAnchorDefaults
+        ...NodeTypeBase.defaults,
     },
     nonObject: "",
 };

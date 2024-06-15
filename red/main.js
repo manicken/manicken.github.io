@@ -22,7 +22,7 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         faustLinkExtId:"",
-        version:14,
+        version:15,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -121,6 +121,11 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                  "* changed icons for some node types to better show what the function is.<br>"+
                  "* audio objects and some nodes (TODO fix editors for the rest) do now have a anchor property that can be used when nodes is inside a group box<br>"+
                  "* colors now have a reset button (actually this was allready in version 12)<br>",
+            "15":"* project tree bugs have now been fixed and project tree is now available again<br>"+
+                 "* all node types now have the anchor property<br>"+
+                 "* added locked property for all node types (except groups), so when set the node cannot be moved<br>"+
+                 "&nbsp;&nbsp;this should primarly be used to put and lock junctions at the sides of groups, <br>"+
+                 "&nbsp;&nbsp;so that in the future, groups can be used to represent classes, it can also be used to make clearer designs<br>"
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};

@@ -318,9 +318,10 @@ RED.view.ui = (function() {
 			rect.attr("stroke", rect.attr("strokeOld"));
 	}
 	function handleGroupAnchorNodes(init) {
+		if (init == undefined) init = false;
 		var mousedown_node = RED.view.mousedown_node;
 		if (mousedown_node.type == "group" && RED.state.IsResizing(RED.view.state)) {
-			if (init)
+			if (init == true)
 				console.log("last resize was:" + RED.state.ToName(RED.view.state));
 
 			var centerBasedLocations = RED.view.settings.useCenterBasedPositions;

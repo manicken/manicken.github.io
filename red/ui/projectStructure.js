@@ -48,8 +48,8 @@ RED.projectStructure = (function() {
 
         treeList.appendTo(outlinerPanel);
 
-        console.error("TODO. need to fix project tree - it's broken somehow - and I don't know why")
-        /*
+        //console.error("TODO. need to fix project tree - it's broken somehow - and I don't know why") FIXED NOW
+        
         RED.sidebar.addTab("project", content);
 
         RED.events.on("projects:load", onProjectLoad);
@@ -67,7 +67,7 @@ RED.projectStructure = (function() {
         RED.events.on("groups:remove",onObjectRemove);
         RED.events.on("groups:change",onNodeChange);
 
-        RED.events.on("workspace:clear", onWorkspaceClear)*/
+        RED.events.on("workspace:clear", onWorkspaceClear);
     }
 
     function getFlowData() {
@@ -153,6 +153,7 @@ RED.projectStructure = (function() {
 
     }
     function onFlowChange(n) {
+        //console.log("onFlowChange:",n);
         var existingObject = objects[n.id];
 
         var label = n.label || n.id;
@@ -178,6 +179,7 @@ RED.projectStructure = (function() {
         })
     }
     function onNodeAdd(n) {
+        console.log("onNodeAdd",n);
         objects[n.id] = {
             id: n.id,
             element: getNodeLabel(n),
@@ -192,10 +194,17 @@ RED.projectStructure = (function() {
                 delete missingParents[n.id]
             }
         }
-        var parent = n.parentGroup||n.z||"__global__";
-        //console.warn("onNodeAdd parent:", parent, "child:" + n.name);
+        
+        var parent = undefined;
+        //console.log(typeof n.parentGroup);
+        if (typeof n.parentGroup == "string") parent = n.parentGroup;
+        else if (n.parentGroup != undefined && n.parentGroup.id != undefined) parent = n.parentGroup.id;
+        else if (n.z != undefined) parent = n.z;
+        else parent = "__global__";
 
-        if (n.type === 'group' || n.type === "UI_ScriptButton") {
+        //console.warn("onNodeAdd parent:", parent, "child:", n);
+
+        //if (n.type === 'group' || n.type === "UI_ScriptButton") {
             if (objects[parent]) {
                 if (empties[parent]) {
                     empties[parent].treeList.remove();
@@ -207,13 +216,16 @@ RED.projectStructure = (function() {
                     objects[parent].children.push(objects[n.id])
                 }
             } else {
+                //console.log("missing parent"+ parent);
                 missingParents[parent] = missingParents[parent]||[];
                 missingParents[parent].push(objects[n.id])
             }
-        } else {
+        //} else {
             //createFlowConfigNode(parent,n.type);
             //configNodeTypes[parent].types[n.type].treeList.addChild(objects[n.id]);
-        }
+        //}
+        //console.log("tjofräs",objects[n.id].element);
+        //flowList.treeList.addChild(objects[n.id])
         objects[n.id].element.toggleClass("red-ui-info-outline-item-disabled", !!n.disabled)
         //updateSearch();
     }
@@ -222,7 +234,8 @@ RED.projectStructure = (function() {
 
         var existingObject = objects[n.id];
         var parent = n.parentGroup||n.z||"__global__";
-        //console.warn("onNodeChange n.parentGroup: " , n.parentGroup , " " + n.name);
+        if (typeof n.parentGroup == "object") parent = n.parentGroup.id;
+        console.warn("onNodeChange n.parentGroup: " , parent , " " + n.name);
 
         var nodeLabelText = getNodeLabelText(n);
         if (nodeLabelText != undefined) {
@@ -254,7 +267,7 @@ RED.projectStructure = (function() {
             if (existingObject.treeList != undefined)
                 existingObject.treeList.remove(true);
             if (parentItem.children.length === 0) {
-                if (parentItem.config) {
+                /*if (parentItem.config) {
                     // this is a config
                     parentItem.treeList.remove();
                     // console.log("Removing",n.type,"from",parentItem.parent.id||parentItem.parent.parent.id)
@@ -274,14 +287,14 @@ RED.projectStructure = (function() {
 
                         }
                     }
-                } else {
+                } else {*/
                     if (parentItem.treeList != undefined)
                         parentItem.treeList.addChild(getEmptyItem(parentItem.id));
                     else
                         parentItem.children.addChild(getEmptyItem(parentItem.id));
-                }
+                //}
             }
-            if (n.type === 'group' || n.type === "UI_ScriptButton") {
+            //if (n.type === 'group' || n.type === "UI_ScriptButton") {
                 // This is a node that has moved groups
                 if (empties[parent]) {
                     empties[parent].treeList.remove();
@@ -290,9 +303,9 @@ RED.projectStructure = (function() {
                 //console.warn("parent: ", parent)
                 if (objects[parent] != undefined)
                 objects[parent].treeList.addChild(existingObject)
-            }
+            //}
         }
-        existingObject.element.toggleClass("red-ui-info-outline-item-disabled", !!n.d)
+        existingObject.element.toggleClass("red-ui-info-outline-item-disabled", !!n.disabled)
         
         //updateSearch();
     }
@@ -309,7 +322,7 @@ RED.projectStructure = (function() {
         }
         var parent = existingObject.parent;
         if (parent.children.length === 0) {
-            if (parent.config) {
+            /*if (parent.config) {
                 // this is a config
                 parent.treeList.remove();
                 //delete configNodeTypes[parent.parent.id||n.z].types[n.type];
@@ -325,8 +338,8 @@ RED.projectStructure = (function() {
                     }
                 }
             } else {
-                parent.treeList.addChild(getEmptyItem(parent.id));
-            }
+               */ parent.treeList.addChild(getEmptyItem(parent.id));
+            //}
         }
     }
     function getFlowLabel(n) {
@@ -439,11 +452,12 @@ RED.projectStructure = (function() {
     }
     function getGutter(n) {
         var span = $("<span>",{class:"red-ui-info-outline-gutter"});
-        var revealButton = $('<button type="button" class="red-ui-info-outline-item-control-reveal red-ui-button red-ui-button-small"><i class="fa fa-search"></i></button>').appendTo(span).on("click",function(evt) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            RED.view.reveal(n.id);
-        })
+        var revealButton = $('<button type="button" class="red-ui-info-outline-item-control-reveal red-ui-button red-ui-button-small"><i class="fa fa-search"></i></button>')
+            .appendTo(span).on("click",function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+                RED.view.reveal(n.id);
+        });
         RED.popover.tooltip(revealButton,"find");
         return span;
     }

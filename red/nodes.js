@@ -56,6 +56,10 @@ class REDNode
      * @type {REDNode[]} 
      */
     nodes = [];
+    /** the parent group to which this node belongs to, set to undefined when a node is at root
+     * @type {REDNode}
+     */
+    parentGroup = {};
 
     /** used in RED.view */
     changed = false;

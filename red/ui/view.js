@@ -1695,12 +1695,28 @@ RED.view = (function() {
 	{
 		mousePos = mouse_position;
 		var snapToGrid = XOR(d3.event.shiftKey, settings.snapToGrid);
+		/** @type {REDNode} */
 		var node;
 		var i;
 		var minX = 0;
 		var minY = 0;
-		for (var n = 0; n<moving_set.length; n++) {
-			node = moving_set[n];
+		for (var ni = 0; ni<moving_set.length; ni++) {
+			node = moving_set[ni];
+			//console.log(node.n);
+			if (node.n.locked != undefined && node.n.locked == true) {
+				if (node.n.parentGroup == undefined) continue;
+				//console.log("node is in parentGroup");
+				var isNodeGroupSelected = false;
+				for (var ni2 = 0; ni2<moving_set.length; ni2++) {
+					if (node.n.parentGroup === moving_set[ni2].n) {
+						isNodeGroupSelected = true;
+						break;
+					}
+				}
+				if (isNodeGroupSelected == false)
+					continue;
+			}
+
 			if (snapToGrid) {
 				node.n.ox = node.n.x;
 				node.n.oy = node.n.y;
