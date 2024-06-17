@@ -583,7 +583,7 @@ RED.view.groupbox = (function() {
 			newIOnode.name = typeText + (c + 1);
 			newIOnode.locked = true;
 			newIOnode.size = group.ioNodeSize;
-			newIOnode.anchor = ((type == 0)?AnchorTypes.Right:AnchorTypes.Left);
+			//newIOnode.anchor = ((type == 0)?AnchorTypes.Right:AnchorTypes.Left); //not really needed as RearrangeIONodes takes care of that
 			newIOnode.ClassIOtype = type;
 			newIOnode.parentGroup = group;
 			group.nodes.push(newIOnode);

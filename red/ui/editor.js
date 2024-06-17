@@ -633,6 +633,7 @@ RED.editor = (function() {
                 var propEditor = node._def.defaults[d].editor;
                 
                 if (node._def.defaults[d].noEdit != undefined) { console.warn("edit disabled for " + node.type + " " + d); continue; }// edit disabled
+
 				if (node.ClassIOtype != undefined && (d == "anchor" || d == "locked" || d == "size" )) { console.warn("edit disabled for " + node.type + " " + d + " because it's a ClassIO type"); continue;}
                 data += GetEditorLine_Input(propEditor, d);
             }

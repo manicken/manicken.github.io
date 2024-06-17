@@ -1706,14 +1706,7 @@ RED.view = (function() {
 			if (node.n.locked != undefined && node.n.locked == true) {
 				if (node.n.parentGroup == undefined) continue;
 				//console.log("node is in parentGroup");
-				var isNodeGroupSelected = false;
-				for (var ni2 = 0; ni2<moving_set.length; ni2++) {
-					if (node.n.parentGroup === moving_set[ni2].n) {
-						isNodeGroupSelected = true;
-						break;
-					}
-				}
-				if (isNodeGroupSelected == false)
+				if (currentSelectionContains(node.n.parentGroup) == false)
 					continue;
 			}
 

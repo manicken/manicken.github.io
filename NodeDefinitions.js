@@ -374,6 +374,7 @@ var NodeDefinitions = {
                     border_color: { value: "#999" },
                     individualListBoxMode: { value: "false" },
                     exportAsClass: { value: "false" },
+                    className: {value: "ClassTypeName", type: "c_cpp_name"},
                     ioNodeSize: { value: 10 },
                     ioNodeSpacing: { value: 5 },
                     inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
