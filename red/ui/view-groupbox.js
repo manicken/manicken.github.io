@@ -590,6 +590,7 @@ RED.view.groupbox = (function() {
 			count--;
 			c++;
 		}
+		RED.view.redraw();
 		RearrangeIONodes(group, type);
 		RED.view.redraw_links();
 	}
