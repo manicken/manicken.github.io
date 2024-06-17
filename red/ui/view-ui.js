@@ -399,6 +399,7 @@ RED.view.ui = (function() {
         //console.warn("uiNodeResize");
 
         var mousedown_node = RED.view.mousedown_node;
+		if (mousedown_node.locked != undefined && mousedown_node.locked == true) return; 
         var mouse_mode = RED.view.state;
         var posMode = RED.view.posMode;
 
@@ -436,6 +437,11 @@ RED.view.ui = (function() {
 			mousedown_node.dirty = true;
 		}
 		handleGroupAnchorNodes();
+		if (mousedown_node.type == "group") {
+			RED.view.groupbox.RearrangeIONodes(mousedown_node, 0);
+			RED.view.groupbox.RearrangeIONodes(mousedown_node, 1);
+			RED.view.redraw_links();
+		}
     }
     function redraw_init_UI_Textbox(mainRect,nodeRect, n)
     {

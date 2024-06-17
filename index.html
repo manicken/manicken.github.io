@@ -936,83 +936,93 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 </script>
 <script type="text/html" data-template-name="UI_Button">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
-		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	<div style=" display: grid; grid-template-columns: 300px 10px auto; height: 100%;">
+		<div>
+			<div class="form-row">
+				<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
+				<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+			</div>
+			<div class="form-row">
+				<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
+				<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
+			</div>
+			<div class="form-row">
+				<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+				<input id="node-input-color" data-jscolor="">
+			</div>
+			<div class="form-row">
+				<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+				<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off"></a>
+			</div>
+			<div class="form-row hidden">
+				<label for="node-input-local"><i class="fa fa-tag"></i> Action Type</label>
+				<select name="node-input-local" id="node-input-local">
+					<option value="true">local</option>
+					<option value="false">remote</option>
+				</select>
+			</div>
+			<div class="form-row">
+				<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
+				<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
+			</div>
+			<div class="form-row">
+				<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
+				<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
+			</div>
+			<div class="form-row hidden">
+				<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+				<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"></a>
+				<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+				<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
+			</div>
+			<div class="form-row-full hidden">
+				<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
+				<input type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
+			</div>
+			<div class="form-row hidden">
+				<label for="node-input-repeatPressAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
+				<label for="node-input-repeatPressAction" style="width:70%">
+				<input type="checkbox" id="node-input-repeatPressAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Press Action</span>
+				</label>
+			</div>
+			<div class="form-row-full hidden">
+				<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
+				<input type="text" id="node-input-releaseAction" placeholder="releaseAction" autocomplete="off">
+			</div>
+			<div class="form-row hidden">
+				<label for="node-input-repeatReleaseAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
+				<label for="node-input-repeatReleaseAction" style="width:70%">
+				<input type="checkbox" id="node-input-repeatReleaseAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Release Action</span>
+				</label>
+			</div>
+			<!--
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+				<select name="node-input-target" id="node-input-target">
+					<option value="0">Web Socket</option>
+					<option value="1">Web Serial API</option>
+					<option value="1">Web MIDI API</option>
+				</select>
+			</div>
+		    -->
+			<div class="form-row">
+				<label style="width:100px" for="node-input-sendMode"><i class="fa fa-tag"></i> Send Mode</label>
+				<select style="width:150px" name="node-input-target" id="node-input-sendMode">
+					<option value="0">OnPress</option>
+					<option value="1">OnRelease</option>
+					<option value="2">OnBoth</option>
+				</select>
+			</div>
+			
+		</div>
+		<div></div>
+		<div>
+			<div class="form-row-long">
+				<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
+				<pre id="aceEditor"></pre>
+			</div>
+		</div>
 	</div>
-    <div class="form-row">
-		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
-		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
-	</div>
-	<div class="form-row">
-		<label for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
-		<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off"></a>
-	</div>
-	<div class="form-row hidden">
-		<label for="node-input-local"><i class="fa fa-tag"></i> Action Type</label>
-		<select name="node-input-local" id="node-input-local">
-			<option value="true">local</option>
-			<option value="false">remote</option>
-	    </select>
-	</div>
-	<div class="form-row">
-		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
-		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
-	</div>
-	<div class="form-row hidden">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"></a>
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
-	</div>
-	<div class="form-row-full hidden">
-		<label for="node-input-pressAction"><i class="fa fa-tag"></i> Press Action</label>
-		<input type="text" id="node-input-pressAction" placeholder="pressAction" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-        <label for="node-input-repeatPressAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
-        <label for="node-input-repeatPressAction" style="width:70%">
-        <input type="checkbox" id="node-input-repeatPressAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Press Action</span>
-        </label>
-    </div>
-	<div class="form-row-full hidden">
-		<label for="node-input-releaseAction"><i class="fa fa-tag"></i> Release Action</label>
-		<input type="text" id="node-input-releaseAction" placeholder="releaseAction" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-        <label for="node-input-repeatReleaseAction"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Repeat</span></label>
-        <label for="node-input-repeatReleaseAction" style="width:70%">
-        <input type="checkbox" id="node-input-repeatReleaseAction" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Release Action</span>
-        </label>
-    </div>
-    <!--
-    <div class="form-row-long">
-		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
-		<select name="node-input-target" id="node-input-target">
-			<option value="0">Web Socket</option>
-			<option value="1">Web Serial API</option>
-            <option value="1">Web MIDI API</option>
-	    </select>
-	</div>
--->
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-sendMode"><i class="fa fa-tag"></i> Send Mode</label>
-		<select name="node-input-target" id="node-input-sendMode">
-			<option value="0">OnPress</option>
-			<option value="1">OnRelease</option>
-			<option value="2">OnBoth</option>
-		</select>
-	</div>
-    <div class="form-row-long">
-        <label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
-        <pre id="aceEditor"></pre>
-    </div>
 </script>
 
 <script type="text/html" data-help-name="UI_Slider">
@@ -1024,153 +1034,173 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 </script>
 <script type="text/html" data-template-name="UI_Slider">
-    <div class="form-row">
-		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
-		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
-	</div>
-	<div class="form-row-mid">
-		<label style="width:150px" for="node-input-name"><i class="fa fa-tag"></i> Top Label/Name</label>
-		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
-	</div>
-	<div class="form-row-mid">
-		<label style="width:150px" for="node-input-label"><i class="fa fa-tag"></i> Bottom Label</label>
-		<input type="text" id="node-input-label" placeholder="Label" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
-		<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
-			<option value="0">None</option>
-			<option value="1">Left</option>
-			<option value="2">Right</option>
-			<option value="4">Top</option>
-			<option value="8">Bottom</option>
-		</select>
-	</div>
-	<div class="form-row">
-		<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
-		<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
-	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
-		<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize"></a>
-	</div>
-	
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Bar BG Color</label>
-		<input id="node-input-color" data-jscolor="">
-	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-barFGcolor"><i class="fa fa-tag"></i> Bar FG Color</label>
-		<input id="node-input-barFGcolor" data-jscolor="">
-	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-orientation"><i class="fa fa-tag"></i> Orientation</label>
-		<select name="node-input-orientation" id="node-input-orientation">
-			<option value="v">vertical</option>
-			<option value="h">horizontal</option>
-	    </select>
-	</div>
-	<div class="form-row-mid">
-		<label style="width:150px" for="node-input-minVal"><i class="fa fa-tag"></i> Min Value</label>
-		<a class="node-input-number"><input type="text" id="node-input-minVal" placeholder="minVal" autocomplete="off"></a>
-		<label style="width:150px" for="node-input-maxVal"><i class="fa fa-tag"></i> Max Value</label>
-		<a class="node-input-number"><input type="text" id="node-input-maxVal" placeholder="maxVal" autocomplete="off"></a>
-	</div>
-	<div class="form-row-long">
-		<label style="width:150px" for="node-input-val"><i class="fa fa-tag"></i> Value</label>
-		<a class="node-input-number"><input type="text" id="node-input-val" placeholder="val" autocomplete="off"></a>
-        <label style="width:150px" for="node-input-divVal"><i class="fa fa-tag"></i> Div. Val.</label>
-		<a class="node-input-number"><input type="text" id="node-input-divVal" placeholder="divVal" autocomplete="off"></a>
-	</div>
-
-	<div class="form-row-long hidden">
-        <label style="width:150px" for="node-input-outputFloat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Output</span></label>
-        <label for="node-input-outputFloat">
-        <input type="checkbox" id="node-input-outputFloat" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Float</span>
-        </label>
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-minValF"><i class="fa fa-tag"></i> Min Value (float)</label>
-		<input type="text" id="node-input-minValF" placeholder="minValF" autocomplete="off">
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-maxValF"><i class="fa fa-tag"></i> Max Value(float)</label>
-		<input type="text" id="node-input-maxValF" placeholder="maxValF" autocomplete="off">
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-floatVal"><i class="fa fa-tag"></i> Value(float)</label>
-		<input type="text" id="node-input-floatVal" placeholder="floatVal" autocomplete="off">
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-steps"><i class="fa fa-tag"></i> Value Steps (float)</label>
-		<input type="text" id="node-input-steps" placeholder="steps" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-        <label style="width:150px" for="node-input-sendSpace"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Send Space</label>
-        <label for="node-input-sendSpace">
-        <input type="checkbox" id="node-input-sendSpace" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        </label>
-	</div>
-	<div class="form-row-long hidden">
-        <label style="width:150px" for="node-input-autoReturn"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Auto Return</label>
-        <label for="node-input-autoReturn">
-        <input type="checkbox" id="node-input-autoReturn" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        </label>
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-returnValue"><i class="fa fa-tag"></i> Auto Return To</label>
-		<select name="node-input-returnValue" id="node-input-returnValue">
-			<option value="mid">mid</option>
-			<option value="max">max</option>
-			<option value="min">min</option>
-	    </select>
-	</div>
-	<div class="form-row hidden">
-        <label style="width:150px" for="node-input-repeat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Repeat</label>
-        <label for="node-input-repeat">
-        <input type="checkbox" id="node-input-repeat" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        </label>
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-repeatPeriod"><i class="fa fa-tag"></i> Repeat Period</label>
-		<input type="text" id="node-input-repeatPeriod" placeholder="repeatPeriod" autocomplete="off">
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-sendMode"><i class="fa fa-tag"></i> Send Mode</label>
-		<select name="node-input-sendMode" id="node-input-sendMode">
-			<option value="r">release</option>
-			<option value="m">moving</option>
-	    </select>
-	</div>
-	<div class="form-row-long hidden">
-		<label style="width:150px" for="node-input-sendFormat"><i class="fa fa-tag"></i> Send Format</label>
-		<input style="width:100%" type="text" id="node-input-sendFormat" placeholder="sendFormat" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"></a>
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
-	</div>
-	<div class="form-row">
-		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
-		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
-	</div>
-<!--
-    <div class="form-row-long">
-		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
-		<select name="node-input-target" id="node-input-target">
-			<option value="0">Web Socket</option>
-			<option value="1">Web Serial API</option>
-            <option value="1">Web MIDI API</option>
-	    </select>
-	</div>
--->
-    <div class="form-row-long">
-		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
-		<pre id="aceEditor"></pre>
+	<div style=" display: grid; grid-template-columns: 300px 10px auto; height: 100%;">
+		<div>
+			<div class="form-row-mid">
+				<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
+				<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
+			</div>
+			<div class="form-row-mid">
+				<label style="width:150px" for="node-input-name"><i class="fa fa-tag"></i> Top Label/Name</label>
+				<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+			</div>
+			<div class="form-row-mid">
+				<label style="width:150px" for="node-input-label"><i class="fa fa-tag"></i> Bottom Label</label>
+				<input style="width:120px" type="text" id="node-input-label" placeholder="Label" autocomplete="off">
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
+				<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
+					<option value="0">None</option>
+					<option value="1">Left</option>
+					<option value="2">Right</option>
+					<option value="4">Top</option>
+					<option value="8">Bottom</option>
+				</select>
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
+				<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-textSize"><i class="fa fa-tag"></i> Text Size</label>
+				<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize"></a>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-color"><i class="fa fa-tag"></i> Bar BG Color</label>
+				<input id="node-input-color" data-jscolor="">
+			</div>
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-barFGcolor"><i class="fa fa-tag"></i> Bar FG Color</label>
+				<input id="node-input-barFGcolor" data-jscolor="">
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-orientation"><i class="fa fa-tag"></i> Orientation</label>
+				<select style="width:110px" name="node-input-orientation" id="node-input-orientation">
+					<option value="v">vertical</option>
+					<option value="h">horizontal</option>
+				</select>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row">
+				<label style="width:150px" for="node-input-minVal"><i class="fa fa-tag"></i> Min Value</label>
+				<a class="node-input-number"><input type="text" id="node-input-minVal" placeholder="minVal" autocomplete="off"></a>
+			</div>
+			<div class="form-row">
+				<label style="width:150px" for="node-input-maxVal"><i class="fa fa-tag"></i> Max Value</label>
+				<a class="node-input-number"><input type="text" id="node-input-maxVal" placeholder="maxVal" autocomplete="off"></a>
+			</div>
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-val"><i class="fa fa-tag"></i> Value</label>
+				<a class="node-input-number"><input type="text" id="node-input-val" placeholder="val" autocomplete="off"></a>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label style="width:150px" for="node-input-divVal"><i class="fa fa-tag"></i> Div. Val.</label>
+				<a class="node-input-number"><input type="text" id="node-input-divVal" placeholder="divVal" autocomplete="off"></a>
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-outputFloat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to">Output</span></label>
+				<label for="node-input-outputFloat">
+				<input type="checkbox" id="node-input-outputFloat" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar">Float</span>
+				</label>
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-minValF"><i class="fa fa-tag"></i> Min Value (float)</label>
+				<input type="text" id="node-input-minValF" placeholder="minValF" autocomplete="off">
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-maxValF"><i class="fa fa-tag"></i> Max Value(float)</label>
+				<input type="text" id="node-input-maxValF" placeholder="maxValF" autocomplete="off">
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-floatVal"><i class="fa fa-tag"></i> Value(float)</label>
+				<input type="text" id="node-input-floatVal" placeholder="floatVal" autocomplete="off">
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-steps"><i class="fa fa-tag"></i> Value Steps (float)</label>
+				<input type="text" id="node-input-steps" placeholder="steps" autocomplete="off">
+			</div>
+			<div class="form-row hidden">
+				<label style="width:150px" for="node-input-sendSpace"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Send Space</label>
+				<label for="node-input-sendSpace">
+				<input type="checkbox" id="node-input-sendSpace" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+				</label>
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-autoReturn"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Auto Return</label>
+				<label for="node-input-autoReturn">
+				<input type="checkbox" id="node-input-autoReturn" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+				</label>
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-returnValue"><i class="fa fa-tag"></i> Auto Return To</label>
+				<select name="node-input-returnValue" id="node-input-returnValue">
+					<option value="mid">mid</option>
+					<option value="max">max</option>
+					<option value="min">min</option>
+				</select>
+			</div>
+			<div class="form-row hidden">
+				<label style="width:150px" for="node-input-repeat"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Repeat</label>
+				<label for="node-input-repeat">
+				<input type="checkbox" id="node-input-repeat" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+				</label>
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-repeatPeriod"><i class="fa fa-tag"></i> Repeat Period</label>
+				<input type="text" id="node-input-repeatPeriod" placeholder="repeatPeriod" autocomplete="off">
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-sendMode"><i class="fa fa-tag"></i> Send Mode</label>
+				<select name="node-input-sendMode" id="node-input-sendMode">
+					<option value="r">release</option>
+					<option value="m">moving</option>
+				</select>
+			</div>
+			<div class="form-row-long hidden">
+				<label style="width:150px" for="node-input-sendFormat"><i class="fa fa-tag"></i> Send Format</label>
+				<input style="width:100%" type="text" id="node-input-sendFormat" placeholder="sendFormat" autocomplete="off">
+			</div>
+			<div class="form-row hidden">
+				<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+				<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"></a>
+				<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+				<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"></a>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
+				<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"></a>
+				
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
+				<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"></a>
+			</div>
+		    <!--
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+				<select name="node-input-target" id="node-input-target">
+					<option value="0">Web Socket</option>
+					<option value="1">Web Serial API</option>
+					<option value="1">Web MIDI API</option>
+				</select>
+			</div>
+		   -->
+			
+		</div>
+		<div></div>
+		<div>
+			<div class="form-row-long">
+				<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
+				<pre id="aceEditor"></pre>
+			</div>
+		</div>
 	</div>
 </script>
 
@@ -1277,95 +1307,113 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 </script>
 <script type="text/html" data-template-name="UI_ListBox">
-	<div class="form-row-mid">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Title</label>
-		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off"/>
-	</div>
-    <div class="form-row">
-		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
-		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
-	</div>
-	<div class="form-row hidden">
-		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
-		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off"/>
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
-		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off"/>
-		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
-	</div>
-	<div class="form-row">
-		<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
-		<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
-			<option value="0">None</option>
-			<option value="1">Left</option>
-			<option value="2">Right</option>
-			<option value="4">Top</option>
-			<option value="8">Bottom</option>
-		</select>
-	</div>
-	<div class="form-row">
-		<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
-		<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
-		<input id="node-input-color" data-jscolor="">
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-itemBGcolor"><i class="fa fa-tag"></i> Item BG Color</label>
-		<input id="node-input-itemBGcolor" data-jscolor="">
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-textSize"><i class="fa fa-tag"></i> Header Text Size</label>
-		<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off"/></a>
-		<label style="width: 80px;" for="node-input-headerHeight"><i class="fa fa-tag"></i> Height</label>
-		<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"/></a>
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-itemTextSize"><i class="fa fa-tag"></i> Item Text Size</label>
-		<a class="node-input-number"><input type="text" id="node-input-itemTextSize" placeholder="itemTextSize" autocomplete="off"/></a>
-	<!--</div>
-	<div class="form-row-long">-->
-		<label style="width: 150px;" for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Sel. Index Offset</label>
-		<a class="node-input-number"><input type="text" id="node-input-selectedIndexOffset" placeholder="selectedIndexOffset" autocomplete="off"/></a>
-	</div>
-	<!--
-        <div class="form-row-mid">
-		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
-		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
-	</div>
-    <div class="form-row-long">
-		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
-		<select name="node-input-target" id="node-input-target">
-			<option value="0">Web Socket</option>
-			<option value="1">Web Serial API</option>
-            <option value="2">Web MIDI API</option>
-	    </select>
-	</div>
-	<div class="form-row" id="node-input-midiOptions">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"/></a>
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"/></a>
-	</div>
--->
-	
-	<div class="form-row">
-		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"/></a>
-		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
-	</div>
-    
-	<div class="form-row-mid">
-		<label for="node-input-items"><i class="fa fa-tag"></i> Items</label>
-		<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-items" rows="8"/></textarea>
-	</div>
+	<div style=" display: grid; grid-template-columns: 300px 10px auto; height: 100%;">
+		<div>
+			<div class="form-row-mid">
+				<label for="node-input-name"><i class="fa fa-tag"></i> Title</label>
+				<input type="text" id="node-input-name" placeholder="Name" autocomplete="off"/>
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
+				<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
+			</div>
+			<div class="form-row hidden">
+				<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
+				<input type="text" id="node-input-id" placeholder="Id" autocomplete="off"/>
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
+				<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off"/>
+				<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
+				<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
+					<option value="0">None</option>
+					<option value="1">Left</option>
+					<option value="2">Right</option>
+					<option value="4">Top</option>
+					<option value="8">Bottom</option>
+				</select>
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
+				<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
+				<input id="node-input-color" data-jscolor="">
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-itemBGcolor"><i class="fa fa-tag"></i> Item BG Color</label>
+				<input id="node-input-itemBGcolor" data-jscolor="">
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-textSize"><i class="fa fa-tag"></i> Header Text Size</label>
+				<a class="node-input-number"><input type="text" id="node-input-textSize" placeholder="textSize" autocomplete="off"/></a>
+				
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
+				<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"/></a>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-itemTextSize"><i class="fa fa-tag"></i> Item Text Size</label>
+				<a class="node-input-number"><input type="text" id="node-input-itemTextSize" placeholder="itemTextSize" autocomplete="off"/></a>
+			</div>
+			<div class="form-row-long">
+				<label style="width: 150px;" for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Sel. Index Offset</label>
+				<a class="node-input-number"><input type="text" id="node-input-selectedIndexOffset" placeholder="selectedIndexOffset" autocomplete="off"/></a>
+			</div>
+			<!--
+				<div class="form-row-mid">
+				<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
+				<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
+			</div>
+			<div class="form-row-long">
+				<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+				<select name="node-input-target" id="node-input-target">
+					<option value="0">Web Socket</option>
+					<option value="1">Web Serial API</option>
+					<option value="2">Web MIDI API</option>
+				</select>
+			</div>
+			<div class="form-row" id="node-input-midiOptions">
+				<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+				<a class="node-input-number"><input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off"/></a>
+				<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+				<a class="node-input-number"><input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off"/></a>
+			</div>
+		-->
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
+				<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"/></a>
+				
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
+				<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-items"><i class="fa fa-tag"></i> Items</label>
+				<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-items" rows="8"/></textarea>
+			</div>
 
-    <div class="form-row-long">
-		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
-		<pre id="aceEditor"></pre>
+			
+		</div>
+		<div></div>
+		<div>
+			<div class="form-row-long">
+				<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
+				<pre id="aceEditor"></pre>
+			</div>
+		</div>
 	</div>
 	
 </script>
@@ -1376,114 +1424,123 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<h3>Notes</h3>
 </script>
 <script type="text/html" data-template-name="UI_Piano">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Title</label>
-		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+	<div style=" display: grid; grid-template-columns: 300px 10px auto; height: 100%;">
+	<div>
+		<div class="form-row">
+			<label for="node-input-name"><i class="fa fa-tag"></i> Title</label>
+			<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+		</div>
+		<div class="form-row">
+			<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
+			<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
+		</div>
+		<div class="form-row hidden">
+			<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
+			<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
+		</div>
+		<div class="form-row">
+			<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
+			<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
+			<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
+		</div>
+		<div class="form-row">
+			<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
+			<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
+				<option value="0">None</option>
+				<option value="1">Left</option>
+				<option value="2">Right</option>
+				<option value="4">Top</option>
+				<option value="8">Bottom</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
+			<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
+		</div>
+		<div class="form-row-divider"></div>
+		<div class="form-row-mid">
+			<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
+			<input id="node-input-color" data-jscolor="">
+		</div>
+		<div class="form-row-mid">
+			<label for="node-input-whiteKeysColor"><i class="fa fa-tag"></i> White Keys Color</label>
+			<input id="node-input-whiteKeysColor" data-jscolor="">
+		</div>
+		<div class="form-row-mid">
+			<label for="node-input-blackKeysColor"><i class="fa fa-tag"></i> Black Keys Color</label>
+			<input id="node-input-blackKeysColor" data-jscolor="">
+		</div>
+		<div class="form-row-mid">
+			<label for="node-input-pressedKeyColor"><i class="fa fa-tag"></i> Pressed Key Color</label>
+			<input id="node-input-pressedKeyColor" data-jscolor="">
+		</div>
+		<div class="form-row-divider"></div>
+		<div class="form-row">
+			<label style="width:170px" for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
+			<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"></a>
+			
+		</div>
+		<div class="form-row">
+			<label style="width:170px" for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
+			<a class="node-input-number"><input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off"></a>
+		</div>
+		<div class="form-row-divider"></div>
+		<div class="form-row">
+			<label style="width:180px" for="node-input-whiteKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>WhiteKeyLabels Visible</label>
+			<input type="checkbox" id="node-input-whiteKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+			<label style="width:180px" for="node-input-blackKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>BlackKeyLabels Visible</label>
+			<input type="checkbox" id="node-input-blackKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px;  vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
+		</div>
+		<div class="form-row-divider"></div>
+		<!--<div class="form-row">
+			<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
+			<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
+		</div>-->
+		
+		<!--<div class="form-row">
+			<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
+			<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
+		</div>
+		<div class="form-row">
+			<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
+			<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
+		</div>-->
+		
+		<div class="form-row">
+			<label style="width:70px" for="node-input-w"><i class="fa fa-tag"></i> Width</label>
+			<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"/></a>
+			<label style="width:70px" for="node-input-h"><i class="fa fa-tag"></i> Height</label>
+			<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
+		</div>
+		<div class="form-row">
+			<label style="width:70px" for="node-input-x"><i class="fa fa-tag"></i> xPos</label>
+			<a class="node-input-number"><input type="text" id="node-input-x" placeholder="x" autocomplete="off"/></a>
+			<label style="width:70px" for="node-input-y"><i class="fa fa-tag"></i> yPos</label>
+			<a class="node-input-number"><input type="text" id="node-input-y" placeholder="y" autocomplete="off"/></a>
+		</div>
+		<div class="form-row-divider"></div>
+		<!--<div class="form-row-long">
+			<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
+			<select name="node-input-target" id="node-input-target">
+				<option value="0">Web Socket</option>
+				<option value="1">Web Serial API</option>
+				<option value="1">Web MIDI API</option>
+			</select>
+		</div>-->
+		<div class="form-row">
+			<label style="width:70px" for="node-input-octave"><i class="fa fa-tag"></i> Octave</label>
+			<a class="node-input-number"><input type="text" id="node-input-octave" placeholder="octave" autocomplete="off"></a>
+		</div>
+		
 	</div>
-    <div class="form-row">
-		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
-		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
+	<div></div>
+	<div>
+		<div class="form-row-long">
+			<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
+			<pre id="aceEditor"></pre>
+		</div>
 	</div>
-	<div class="form-row hidden">
-		<label for="node-input-id"><i class="fa fa-tag"></i> Id</label>
-		<input type="text" id="node-input-id" placeholder="Id" autocomplete="off">
 	</div>
-	<div class="form-row">
-		<label for="node-input-comment"><i class="fa fa-tag"></i> Comment</label>
-		<input type="text" id="node-input-comment" placeholder="Comment" autocomplete="off">
-		<!--<textarea style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em;" class="input-block-level" id="node-input-comment" rows="12"></textarea> -->
-	</div>
-	<div class="form-row">
-		<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
-		<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
-			<option value="0">None</option>
-			<option value="1">Left</option>
-			<option value="2">Right</option>
-			<option value="4">Top</option>
-			<option value="8">Bottom</option>
-		</select>
-	</div>
-	<div class="form-row">
-		<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
-		<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
-	</div>
-	<div class="form-row-divider"></div>
-	<div class="form-row-mid">
-		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
-		<input id="node-input-color" data-jscolor="">
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-whiteKeysColor"><i class="fa fa-tag"></i> White Keys Color</label>
-		<input id="node-input-whiteKeysColor" data-jscolor="">
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-blackKeysColor"><i class="fa fa-tag"></i> Black Keys Color</label>
-		<input id="node-input-blackKeysColor" data-jscolor="">
-	</div>
-	<div class="form-row-mid">
-		<label for="node-input-pressedKeyColor"><i class="fa fa-tag"></i> Pressed Key Color</label>
-		<input id="node-input-pressedKeyColor" data-jscolor="">
-	</div>
-	<div class="form-row-divider"></div>
-	<div class="form-row">
-		<label style="width:140px" for="node-input-headerHeight"><i class="fa fa-tag"></i> Header Height</label>
-		<a class="node-input-number"><input type="text" id="node-input-headerHeight" placeholder="headerHeight" autocomplete="off"></a>
-		<label style="width:170px" for="node-input-blackKeysWidthDiff"><i class="fa fa-tag"></i> Black Keys Width Diff</label>
-		<a class="node-input-number"><input type="text" id="node-input-blackKeysWidthDiff" placeholder="blackKeysWidthDiff" autocomplete="off"></a>
-	</div>
-	<div class="form-row-divider"></div>
-	<div class="form-row">
-        <label style="width:180px" for="node-input-whiteKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>WhiteKeyLabels Visible</label>
-        <input type="checkbox" id="node-input-whiteKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        <label style="width:180px" for="node-input-blackKeyLabelsVisible"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>BlackKeyLabels Visible</label>
-        <input type="checkbox" id="node-input-blackKeyLabelsVisible" style="display:inline-block; width:22px; margin-right:22px;  vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-	</div>
-	<div class="form-row-divider"></div>
-	<!--<div class="form-row">
-		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> send Command</label>
-		<input type="text" id="node-input-sendCommand" placeholder="sendCommand" autocomplete="off">
-	</div>-->
-	
-	<!--<div class="form-row">
-		<label for="node-input-midiCh"><i class="fa fa-tag"></i> Midi Ch</label>
-		<input type="text" id="node-input-midiCh" placeholder="midiCh" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-midiId"><i class="fa fa-tag"></i> Midi Id</label>
-		<input type="text" id="node-input-midiId" placeholder="midiId" autocomplete="off">
-	</div>-->
-	
-	<div class="form-row">
-		<label for="node-input-w"><i class="fa fa-tag"></i> Width</label>
-		<a class="node-input-number"><input type="text" id="node-input-w" placeholder="w" autocomplete="off"/></a>
-		<label for="node-input-h"><i class="fa fa-tag"></i> Height</label>
-		<a class="node-input-number"><input type="text" id="node-input-h" placeholder="h" autocomplete="off"/></a>
-	</div>
-    <div class="form-row">
-		<label for="node-input-x"><i class="fa fa-tag"></i> xPos</label>
-		<a class="node-input-number"><input type="text" id="node-input-x" placeholder="x" autocomplete="off"/></a>
-		<label for="node-input-y"><i class="fa fa-tag"></i> yPos</label>
-		<a class="node-input-number"><input type="text" id="node-input-y" placeholder="y" autocomplete="off"/></a>
-	</div>
-	<div class="form-row-divider"></div>
-	<!--<div class="form-row-long">
-		<label style="width:150px" for="node-input-target"><i class="fa fa-tag"></i> Send Target</label>
-		<select name="node-input-target" id="node-input-target">
-			<option value="0">Web Socket</option>
-			<option value="1">Web Serial API</option>
-            <option value="1">Web MIDI API</option>
-	    </select>
-	</div>-->
-    <div class="form-row">
-		<label for="node-input-octave"><i class="fa fa-tag"></i> Octave</label>
-		<a class="node-input-number"><input type="text" id="node-input-octave" placeholder="octave" autocomplete="off"></a>
-	</div>
-	<div class="form-row-divider"></div>
-    <div class="form-row-long">
-		<label for="node-input-sendCommand"><i class="fa fa-tag"></i> Send command code:</label>
-		<pre id="aceEditor"></pre>
-	</div>
-
 </script>
 <script type="text/html" data-help-name="UI_ScriptButton">
 	<h3>Summary</h3>
@@ -1503,35 +1560,44 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<p></p>
 </script>
 <script type="text/html" data-template-name="UI_ScriptButton">
-	<div class="form-row">
-		<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
-		<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
-	</div>
-    <div class="form-row">
-		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
-		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
-	</div>
-	<div class="form-row">
-		<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
-		<input id="node-input-color" data-jscolor="">
-	</div>
-	<div class="form-row">
-		<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
-		<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
-			<option value="0">None</option>
-			<option value="1">Left</option>
-			<option value="2">Right</option>
-			<option value="4">Top</option>
-			<option value="8">Bottom</option>
-		</select>
-	</div>
-	<div class="form-row">
-		<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
-		<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
-	</div>
-	<div class="form-row-long">
-		<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
-		<pre id="aceEditor" style="height: 400px;"></pre>
+	<div style=" display: grid; grid-template-columns: 300px 10px auto; height: 100%;">
+		<div>
+			<div class="form-row">
+				<label for="node-input-name"><i class="fa fa-tag"></i> Text</label>
+				<input type="text" id="node-input-name" placeholder="Name" autocomplete="off">
+			</div>
+			<div class="form-row">
+				<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
+				<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
+			</div>
+			<div class="form-row">
+				<label for="node-input-color"><i class="fa fa-tag"></i> Color</label>
+				<input id="node-input-color" data-jscolor="">
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row">
+				<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
+				<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
+					<option value="0">None</option>
+					<option value="1">Left</option>
+					<option value="2">Right</option>
+					<option value="4">Top</option>
+					<option value="8">Bottom</option>
+				</select>
+			</div>
+			<div class="form-row">
+				<label for="node-input-locked"><i class="fa fa-tag"></i> Locked</label>
+				<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
+			</div>
+			<div class="form-row-divider"></div>
+		</div>
+		<div></div>
+		<div>
+			<div class="form-row-long">
+				<label for="node-input-comment"><i class="fa fa-tag"></i> Code contents:</label>
+				<pre id="aceEditor"></pre>
+			</div>
+		</div>
 	</div>
 </script>
 
@@ -1567,6 +1633,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-tag"><i class="fa fa-tag"></i> Tag</label>
 		<input type="text" id="node-input-tag" placeholder="Tag" autocomplete="off">
 	</div>
+	<div class="form-row-divider"></div>
 	<div class="form-row">
 		<label for="node-input-anchor"><i class="fa fa-tag"></i> Anchor</label>
 		<select class="settings-item-combobox" type="text" id="node-input-anchor" name="node-input-anchor" style="width: auto;" data-original-title="" title="">
@@ -1582,6 +1649,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<input style="margin: 5px; width:auto; " type="checkbox" id="node-input-locked" checked="checked" data-original-title="" title="">
 		(groups cannot currently be locked)
 	</div>
+	<div class="form-row-divider"></div>
 	<div class="form-row">
 		<label for="node-input-color"><i class="fa fa-tag"></i> BG Color</label>
 		<a class="node-input-color-group-bg"><input id="node-input-color" data-jscolor=""></a>
@@ -1590,12 +1658,14 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-border_color"><i class="fa fa-tag"></i> Border Color</label>
 		<a class="node-input-color-group-bg"><input id="node-input-border_color" data-jscolor=""></a>
 	</div>
+	<div class="form-row-divider"></div>
 	<div class="form-row">
-        <label style="width:150px" for="node-input-individualListBoxMode"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Individual ListBox Mode</label>
+        <label style="width:200px" for="node-input-individualListBoxMode"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Individual ListBox Mode</label>
         <label for="node-input-individualListBoxMode">
         <input type="checkbox" id="node-input-individualListBoxMode" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
         </label>
 	</div>
+	<div class="form-row-divider"></div>
 	<div class="form-row">
         <label style="width:150px" for="node-input-exportAsClass"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Export as class (not implemented yet)</label>
         <label for="node-input-exportAsClass">
@@ -1606,14 +1676,22 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		<label for="node-input-className"><i class="fa fa-tag"></i> Class Type Name</label>
 		<input type="text" id="node-input-className" placeholder="ClassTypeName (not implemented yet)" autocomplete="off">
 	</div>
-	<!--<div class="form-row">
+	<div class="form-row">
+		<label for="node-input-ioNodeSize"><i class="fa fa-tag"></i> IO Node Size</label>
+		<input type="text" id="node-input-ioNodeSize" placeholder="ioNodeSize" autocomplete="off">
+	</div>
+	<div class="form-row">
+		<label for="node-input-ioNodeSpacing"><i class="fa fa-tag"></i> IO Node Spacing</label>
+		<input type="text" id="node-input-ioNodeSpacing" placeholder="ioNodeSpacing" autocomplete="off">
+	</div>
+	<div class="form-row">
 		<label for="node-input-inputs"><i class="fa fa-tag"></i> Inputs</label>
 		<input type="text" id="node-input-inputs" placeholder="Inputs" autocomplete="off">
 	</div>
 	<div class="form-row"> 
 		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
 		<input type="text" id="node-input-outputs" placeholder="outputs" autocomplete="off">
-	</div>-->
+	</div>
 </script>
 
 <div> <!-- special-category -->

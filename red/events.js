@@ -14,6 +14,7 @@
  * limitations under the License.
  **/
 
+
  RED.events = (function() {
      var handlers = {};
 

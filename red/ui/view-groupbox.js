@@ -559,13 +559,110 @@ RED.view.groupbox = (function() {
                                         else if (d.hovered) return "nodeGroupSelOutline nodeGroupSelOutline-hovered"; 
                                         else return "nodeGroupSelOutline"});
     }
+	function AddIOnodes(group ,count, type) {
+		var typeText = ((type==0)?"Out":"In");
+		//console.log(typeText + " to add: "+count);
+		if (type == 0) var totalCount = group.outputs;
+		else var totalCount = group.inputs;
+		var currentCount = totalCount-count;
+		
+		var spacing = group.ioNodeSize+group.ioNodeSpacing;
+		var CenterBasedPositions = RED.view.settings.useCenterBasedPositions;
+		var PosModeCorrection_Xpos = (CenterBasedPositions == true)?0:(group.ioNodeSize/2);
+		var yOffset = group.y + group.h/2 - (spacing*(totalCount-1))/2;
+		var c = currentCount;
+		var xPos = ((type == 0)?(group.x+group.w):(group.x)) - PosModeCorrection_Xpos;
+		if (CenterBasedPositions) xPos -= group.w/2;
+		while (count > 0) {
+			
+			var yPos = yOffset + c*spacing;
+			if (CenterBasedPositions == true) {
+				yPos -= group.h/2;
+			}
+			var newIOnode = RED.view.AddNewNode(xPos,yPos, "JunctionLR");
+			newIOnode.name = typeText + (c + 1);
+			newIOnode.locked = true;
+			newIOnode.size = group.ioNodeSize;
+			newIOnode.anchor = ((type == 0)?AnchorTypes.Right:AnchorTypes.Left);
+			newIOnode.ClassIOtype = type;
+			newIOnode.parentGroup = group;
+			group.nodes.push(newIOnode);
+			count--;
+			c++;
+		}
+		RearrangeIONodes(group, type);
+		RED.view.redraw_links();
+	}
+	function RearrangeIONodes(group, type) {
+		var spacing = group.ioNodeSize+group.ioNodeSpacing;
+		var CenterBasedPositions = RED.view.settings.useCenterBasedPositions;
+		if (type == 0) var totalCount = group.outputs;
+		else var totalCount = group.inputs;
+		var c = 0;
+		var yOffset = group.y + group.h/2 - (spacing*(totalCount-1))/2;
+		var PosModeCorrection_Xpos = (CenterBasedPositions == true)?0:(group.ioNodeSize/2);
+		var xPos = ((type == 0)?(group.x+group.w):(group.x)) - PosModeCorrection_Xpos;
+		for (var ni=0;ni<group.nodes.length;ni++) {
+			var node = group.nodes[ni];
+			if (node.ClassIOtype != type) continue;
+			var yPos = yOffset + c*spacing;
+			if (CenterBasedPositions == true) {
+				yPos -= group.h/2;
+			}
+			node.y = yPos;
+			node.x = xPos;
+			node.size = group.ioNodeSize;
+			c++;
+			RED.view.redraw_node(node);
+		}
+	}
+	function RemoveIOnodes(group, count, type) {
+		//console.log((type==0?"Out":"In") + " to remove: "+count);
+		for (var ni=group.nodes.length-1; (ni>=0) && (count>0);ni--) {
+			var node = group.nodes[ni];
+			if (node.ClassIOtype != type) continue;
+			group.nodes.splice(ni, 1);
+			RED.nodes.remove(node.id);
+			count--;
+		}
+		RearrangeIONodes(group, type);
+		RED.view.redraw_links();
+	}
+	function NodeChanged(node, changes) {
+		if (node.type != "group") return;
+		var group = node; // make the code easier to read
+		if (changes.inputs != undefined) {
+			//console.log("group box inputs changed from:"+changes.inputs+" to "+group.inputs);
+			if (changes.inputs > group.inputs)
+				RemoveIOnodes(group, changes.inputs - group.inputs, 1);
+			else
+				AddIOnodes(group, group.inputs - changes.inputs, 1)
+		}
+		if (changes.outputs != undefined) {
+			//console.log("group box ouputs changed from:"+changes.outputs+" to "+group.outputs);
+			if (changes.outputs > group.outputs)
+				RemoveIOnodes(group, changes.outputs - group.outputs, 0);
+			else
+				AddIOnodes(group, group.outputs - changes.outputs, 0)
+		}
+		if (changes.ioNodeSize != undefined || changes.ioNodeSpacing != undefined) {
+			RearrangeIONodes(group, 0);
+			RearrangeIONodes(group, 1);
+			RED.view.redraw_links();
+		}
+	}
+	function Init() {
+		RED.events.on("nodes:change", NodeChanged);
+	}
     return {
+		Init,
         redraw_groups,
         redraw_groups_init,
         redrawGroupOutline,
         moveToFromGroup_update,
         moveSelectionToFromGroupMouseUp,
         removeNodeFromGroup,
-        SelectAllInGroup
+        SelectAllInGroup,
+		RearrangeIONodes
     };
 })();

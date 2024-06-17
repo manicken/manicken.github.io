@@ -22,7 +22,7 @@
 var RED = (function() { // this is used so that RED can be used as root "namespace"
 	return {
         faustLinkExtId:"",
-        version:15,
+        version:16,
         vernotes:{
             "1":"* Dynamic Input Objects now uses a node def. called dynInputs<br><br>"+
                 "* OSC live update now works while connecting to dyn. input objects<br><br>"+
@@ -125,7 +125,9 @@ var RED = (function() { // this is used so that RED can be used as root "namespa
                  "* all node types now have the anchor property<br>"+
                  "* added locked property for all node types (except groups), so when set the node cannot be moved<br>"+
                  "&nbsp;&nbsp;this should primarly be used to put and lock junctions at the sides of groups, <br>"+
-                 "&nbsp;&nbsp;so that in the future, groups can be used to represent classes, it can also be used to make clearer designs<br>"
+                 "&nbsp;&nbsp;so that in the future, groups can be used to represent classes, it can also be used to make clearer designs<br>",
+            "16":"* placed code editor in seperate column for UI node editors<br>"+
+                 "* groupboxes can now have inputs/outputs (JunctionLR:s is used)<br>"
         },
 		console_ok:function console_ok(text) { console.trace(); console.log('%c' + text, 'background: #ccffcc; color: #000'); }
 	};
@@ -802,6 +804,7 @@ RED.main = (function() {
         // register built in node types
         //RED.nodes.Init_BuiltIn_NodeDefinitions(); // replaced with following that internally calls Init_BuiltIn_NodeDefinitions
         RED.nodes.init();
+        RED.view.groupbox.Init();
         if (OSC.Init())
             OSC.export.InitButtonPopups();
         else

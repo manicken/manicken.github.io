@@ -211,6 +211,18 @@ var TabIoCommon_Defaults = {
 var TabIO_PortCount_Default = {
     value: 1, maxval: 255, minval: 1, type: "int"
 }
+var JunctionTypeBase = {
+    ...NonAudioObjectBase,
+    editor: "autogen",
+    defaults: { 
+        ...NonAudioObjectBase.defaults, 
+        color:{editor:{type:"color"},value:"#dddddd"},
+        size:{value:10},
+        ClassIOtype: {value:undefined, noEdit: "" }
+    },
+    mainRectRx:3, inputs: 1, outputs: 1, 
+    /*color: "#4D54FF"*/ color:"#ddd"// icon: "arrow-in.png" },
+}
 
 // each node def. group can contain a 'category' field
 // that defines the sub category id to which the type categories are added, 
@@ -340,10 +352,10 @@ var NodeDefinitions = {
             ConstructorCode: { ...CodeObjectBase, shortName: "constructor code", useAceEditor: "c_cpp", icon: "function.png" },
             DestructorCode: { ...CodeObjectBase, shortName: "destructor code", useAceEditor: "c_cpp", icon: "function.png" },
             EndOfFileCode: { ...CodeObjectBase, shortName: "eof code", useAceEditor: "c_cpp", icon: "function.png" },
-
             ConstValue: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, name: { type: "c_cpp_name_no_array" }, value: { value: "0" }, valueType: { value: "int" } }, shortName: "constValue", color: "#eb9834", icon: "hash.png" },
-            JunctionLR: { ...NonAudioObjectBase, editor: "autogen",defaults: { ...NonAudioObjectBase.defaults, color:{editor:{type:"color"},value:"#dddddd"}, size:{value:10}}, shortName: "JunctionLR", mainRectRx:3, inputs: 1, outputs: 1, /*color: "#4D54FF"*/ color:"#ddd"},// icon: "arrow-in.png" },
-            JunctionRL: { ...NonAudioObjectBase, editor: "autogen",defaults: { ...NonAudioObjectBase.defaults, color:{editor:{type:"color"},value:"#dddddd"}, size:{value:10}}, shortName: "JunctionRL", mainRectRx:3, inputs: 1, outputs: 1, /*color: "#4D54FF"*/ color:"#ddd"},// icon: "arrow-out.png" },
+            
+            JunctionLR: { ...JunctionTypeBase, shortName: "JunctionLR"},
+            JunctionRL: { ...JunctionTypeBase, shortName: "JunctionRL"},
             LinkOut: { ...NonAudioObjectBase, help: LinkIOHelp, shortName: "LinkOut", inputs: 1, color: "#cce6ff", width:32, icon: "arrow-in.png" },
             LinkIn: { ...NonAudioObjectBase, help: LinkIOHelp, shortName: "LinkIn", outputs: 1, color: "#cce6ff", width:32, icon: "arrow-in.png" },
 
@@ -362,12 +374,15 @@ var NodeDefinitions = {
                     border_color: { value: "#999" },
                     individualListBoxMode: { value: "false" },
                     exportAsClass: { value: "false" },
-                    //inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
-                    //outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
+                    ioNodeSize: { value: 10 },
+                    ioNodeSpacing: { value: 5 },
+                    inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
+                    outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
                 }
             },
             UI_Button: { ...UiTypeBase, shortName: "Button",
-                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 0,
+                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 40,
+                editorHeight: 750, editorWidth:750,
                 defaults: {
                     ...UiTypeBase.defaults,
                     //midiCh: { value: "0" }, midiId: { value: "0" },
@@ -380,7 +395,7 @@ var NodeDefinitions = {
             },
 
             UI_Slider: { ...UiTypeBase, shortName: "Slider", color: "#808080",
-                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 200,
+                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", editorWidth: 750, aceEditorOffsetHeight: 40,
                 defaults: {
                     ...UiTypeBase.defaults,
                     //midiCh: { value: "0" }, midiId: { value: "0" },
@@ -416,7 +431,7 @@ var NodeDefinitions = {
             },
 
             UI_ListBox: { ...UiTypeBase, shortName: "ListBox",
-                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 300,
+                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", editorWidth: 750, aceEditorOffsetHeight:40,
                 defaults: {
                     ...UiTypeBase.defaults,
                     //midiCh: { value: "0" }, midiId: { value: "0" },
@@ -429,7 +444,7 @@ var NodeDefinitions = {
             },
 
             UI_Piano: { ...UiTypeBase, shortName: "Piano",
-                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", aceEditorOffsetHeight: 120,
+                useAceEditor: "javascript", useAceEditorCodeFieldName: "sendCommand", editorWidth: 750,
                 defaults: {
                     ...UiTypeBase.defaults,
                     //midiCh: { value: "0", minval: "0", maxval: "15", type: "int" },
@@ -446,7 +461,9 @@ var NodeDefinitions = {
 
                 }
             },
-            UI_ScriptButton: { ...UiTypeBase, shortName: "scriptBtn", useAceEditor: "javascript", color: "#ddffbb",
+            UI_ScriptButton: { ...UiTypeBase, shortName: "scriptBtn", useAceEditor: "javascript", color: "#ddffbb", 
+                aceEditorOffsetHeight: 40,
+                editorHeight: 750, editorWidth:750,
                 defaults: {
                     ...UiTypeBase.defaults,
                     nodes: { value: [] }
