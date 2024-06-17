@@ -603,6 +603,8 @@ RED.view.groupbox = (function() {
 		var yOffset = group.y + group.h/2 - (spacing*(totalCount-1))/2;
 		var PosModeCorrection_Xpos = (CenterBasedPositions == true)?0:(group.ioNodeSize/2);
 		var xPos = ((type == 0)?(group.x+group.w):(group.x)) - PosModeCorrection_Xpos;
+		if (CenterBasedPositions == true)
+			xPos -= group.w/2;
 		for (var ni=0;ni<group.nodes.length;ni++) {
 			var node = group.nodes[ni];
 			if (node.ClassIOtype != type) continue;
