@@ -1801,6 +1801,12 @@ RED.view = (function() {
 			}
 		}
 	}
+	function currentSelectionContains(node) {
+		for (var i=0;i<moving_set.length;i++) {
+			if (moving_set[i].n === node) return true;
+		}
+		return false;
+	}
 	function deleteSelection() {
 		var removedNodes = [];
 		var removedLinks = [];
@@ -1810,10 +1816,13 @@ RED.view = (function() {
 			$(current_popup_rect).popover("destroy");
 		if (moving_set.length > 0) {
 			for (var i=0;i<moving_set.length;i++) {
+				/** @type {REDNode} */
 				var node = moving_set[i].n; // moving_set[i] is a rect?
 				
 				node.selected = false;
-				if (node.ClassIOtype != undefined) continue; // cannot delete class IO junctions
+
+				// cannot delete class IO junctions unless they are loose or if the whole group is deleted
+				if (node.ClassIOtype != undefined && node.parentGroup != undefined && currentSelectionContains(node.parentGroup) == false) continue; 
 				
 				if (node.x < 0) {
 					node.x = 25
