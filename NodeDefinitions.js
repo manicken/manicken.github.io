@@ -217,9 +217,12 @@ var JunctionTypeBase = {
     defaults: { 
         ...NonAudioObjectBase.defaults, 
         color:{editor:{type:"color"},value:"#dddddd"},
-        size:{value:10},
-        ClassIOtype: {value:undefined, noEdit: "" }
+        size:{value:10, editor:{help:"sets the base size of the junction (note this is currently overridden if the junction is a class IO port of a group and if either spacing,size or if the group is resized)"}},
+        ClassIOtype: {value:undefined, noEdit: "" },
+        inputs: { value: 1, maxval: 255, minval: 2, type: "int" },
+        outputs: { value: 1, maxval: 255, minval: 2, type: "int" }
     },
+    dynInputs: {},
     mainRectRx:3, inputs: 1, outputs: 1, 
     /*color: "#4D54FF"*/ color:"#ddd"// icon: "arrow-in.png" },
 }
