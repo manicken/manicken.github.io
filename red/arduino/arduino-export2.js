@@ -10,7 +10,7 @@ RED.arduino.export2 = (function () {
 
     function init() // called from main.js @ init()
     {
-        RED.main.SetPopOver("#menu-export2", "(under development)", "right");
+        RED.main.SetPopOver("#menu-export2", "(under development<br>this is gonna be the new export when completed)", "right");
         RED.main.SetPopOver("#btn-export-simple2", "(under development)", "right");
         RED.main.SetPopOver("#btn-export-class2", "(under development)", "right");
         RED.main.SetPopOver("#btn-export-class-dev2", "(development test only)", "right");
