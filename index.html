@@ -67,7 +67,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <div id="navbarId" class="navbar navbar-inverse navbar-fixed-top"> <!---->
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="brand">Audio System Design Tool++ for <a href="http://www.pjrc.com/teensy/td_libs_Audio.html" target="_blank">Teensy Audio Library</a></span>
+			<span class="brand">ASDT++ for <a href="http://www.pjrc.com/teensy/td_libs_Audio.html" target="_blank">Teensy Audio Lib</a></span>
 			
 			<div class="btn-group pull-left">
 				<a id="menu-import" class="btn dropdown-toggle btn-success" data-toggle="dropdown" href="#"><i class="icon-download"></i> Import <span class="caret"></span></a>
@@ -129,6 +129,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     <li><a id="btn-load-json-sd" class="btn" href="#"><i class="fa fa-upload"></i> Get Design .json from SD-card</a></li>
                     <li class="divider"></li>
                     <li><a id="btn-osc-clearAll" class="btn" href="#"><i class="fa fa-trash"></i> Clear current design on the teensy</a></li>
+					<li><a id="btn-testFileSelect" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Test File Select Dialog</a></li>
 				</ul>
 			</div>
 			<div class="btn-group pull-left">
@@ -139,12 +140,22 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				</ul>
 			</div>
             <div class="btn-group pull-left">
-				<a id="btn-connectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Connect to serial</a>
-                <a id="btn-disConnectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a>
+				<a id="menu-ide" class="btn dropdown-toggle btn-info" data-toggle="dropdown" href="#"><i class="icon-download"></i> Serial <span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a id="btn-connectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Connect to serial</a></li>
+					<li><a id="btn-disConnectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a></li>
+				</ul>
 			</div>
 
             <div class="btn-group pull-left">
-				<a id="btn-testFileSelect" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Test File Select Dialog</a>
+				<label style="color:white;" id="lbl-export-mode">Export Mode:
+					<select name="option-export-mode" id="option-export-mode">
+						<option value="0">Simple Flat C++</option>
+						<option value="1">Class based C++</option>
+						<option value="2">Class based zip</option>
+						<option value="3">Open Sound Control</option>
+					</select>
+				</label>
                 <!--<a id="btn-disConnectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a>-->
 			</div>
 
@@ -267,14 +278,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			</div>
 
             <div class="btn-group">
-                <label id="lbl-export-mode">Export Mode:
-                <select name="option-export-mode" id="option-export-mode">
-                    <option value="0">Simple Flat C++</option>
-                    <option value="1">Class based C++</option>
-                    <option value="2">Class based zip</option>
-                    <option value="3">Open Sound Control</option>
-                </select>
-            </label>
+                
             </div>
 
 			<div class="btn-group">

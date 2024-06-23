@@ -601,21 +601,24 @@ RED.view.groupbox = (function() {
 		else var totalCount = group.inputs;
 		var c = 0;
 		var yOffset = group.y + group.h/2 - (spacing*(totalCount-1))/2;
+		if (CenterBasedPositions == true) {
+			yOffset -= group.h/2;
+		}
 		var PosModeCorrection_Xpos = (CenterBasedPositions == true)?0:(group.ioNodeSize/2);
 		var xPos = ((type == 0)?(group.x+group.w):(group.x)) - PosModeCorrection_Xpos;
 		if (CenterBasedPositions == true)
 			xPos -= group.w/2;
+		var nextYpos = yOffset;
 		for (var ni=0;ni<group.nodes.length;ni++) {
 			var node = group.nodes[ni];
 			if (node.ClassIOtype != type) continue;
-			var yPos = yOffset + c*spacing;
-			if (CenterBasedPositions == true) {
-				yPos -= group.h/2;
-			}
+			var yPos = nextYpos;//yOffset + c*spacing;
+			
 			node.y = yPos;
 			node.x = xPos;
 			node.size = group.ioNodeSize;
 			c++;
+			nextYpos = yPos + node.h + group.ioNodeSpacing;
 			RED.view.redraw_node(node);
 		}
 	}

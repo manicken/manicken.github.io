@@ -372,7 +372,7 @@ RED.view = (function() {
 		pin_xpos: -5,
 		pin_ypadding: 3,
 		pin_yspaceToEdge: 4,
-
+		/** returns pin_ysize + pin_ypadding */
 		get pin_ydistance() { return this.pin_ysize + this.pin_ypadding; }
 	};
 	
@@ -2636,12 +2636,12 @@ RED.view = (function() {
 		//l = (typeof l === "function" ? l.call(d) : l)||"";
 		var l = d.name ? d.name : "";//d.id;
 		if (d.unknownType != undefined) l = d.type;
-		if (d.type == "JunctionLR" || d.type == "JunctionRL")
+		/*if (d.type == "JunctionLR" || d.type == "JunctionRL")
 		{
 			d.w = (d.size!=undefined)?d.size:node_def.pin_xsize;// 15;//node_def.height;
 			d.h = (d.size!=undefined)?d.size:node_def.pin_xsize;//node_def.pin_ysize;// 15;//node_def.height;
 			return;
-		}
+		}*/
 		if (d.type == "ConstValue")
 		{
 			l = d.name + " (" + d.valueType + ")=" + d.value;
@@ -2649,19 +2649,27 @@ RED.view = (function() {
         if (d.arraySize != undefined && d.arraySize > 1 && d.name.includes('[') == false)
             l = d.name ? (d.name + '['+d.arraySize+']'): "";
 
-		if (d.inputs != undefined) // Jannik
-			var inputs = d.inputs;
-		else
-			var inputs = d._def.inputs;
 
+		var inputCount = d.inputs||d._def.inputs||0;
+		var outputCount = d.outputs||d._def.outputs||0;
+		var maxIOcount = Math.max(inputCount, outputCount);
+		//console.log("inputCount:"+inputCount+"outputCount:"+outputCount+"maxIOcount:"+maxIOcount);
+		
 		d.textDimensions = calculateTextSize(l, d.textSize);
 		//console.error("@redraw_calcNewNodeSize: "+ d.textSize + " -> " + d.name );
 		//console.error(d.textDimensions);
         if (d.outputLabelMaxSize == undefined) d.outputLabelMaxSize = 0;
         if (d.inputLabelMaxSize == undefined) d.inputLabelMaxSize = 0;
-		d.w = Math.max(node_def.width, d.textDimensions.w + 50 + d.outputLabelMaxSize + d.inputLabelMaxSize /*+ (inputs>0?7:0) */);
-		d.h = Math.max(node_def.height, d.textDimensions.h + 14, (Math.max(d.outputs,inputs)||0) * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
-        
+		if (d.type.startsWith("Junction")==true) {
+			var size = (d.size!=undefined)?d.size:node_def.pin_xsize;
+			d.w = size;
+			if (maxIOcount == 1) maxIOcount = 0;
+			d.h = Math.max(size, maxIOcount * (node_def.pin_ydistance));
+		}
+		else {
+			d.w = Math.max(node_def.width, d.textDimensions.w + 50 + d.outputLabelMaxSize + d.inputLabelMaxSize /*+ (inputs>0?7:0) */);
+			d.h = Math.max(node_def.height, d.textDimensions.h + 14, maxIOcount * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
+		}
         //console.log("new size " + d.h + " " + d.name);
     }
 	/**
