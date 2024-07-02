@@ -382,6 +382,7 @@ var NodeDefinitions = {
                     ioNodeSpacing: { value: 5 },
                     inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
                     outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
+                    test: { value: [{name:"1"},{name:"2"},{name:"3"}]}
                 }
             },
             UI_Button: { ...UiTypeBase, shortName: "Button",

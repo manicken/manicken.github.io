@@ -425,7 +425,7 @@ RED.projectStructure = (function() {
                         changes: {
                             d: n.d
                         },
-                        dirty:RED.nodes.dirty()
+                        //dirty:RED.nodes.dirty()
                     }
                     if (n.d) {
                         delete n.d;
@@ -435,7 +435,7 @@ RED.projectStructure = (function() {
                     n.dirty = true;
                     n.changed = true;
                     RED.events.emit("nodes:change",n);
-                    RED.nodes.dirty(true)
+                    //RED.nodes.dirty(true)
                     RED.view.redraw();
                 }
             });

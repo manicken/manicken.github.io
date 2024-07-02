@@ -4527,7 +4527,8 @@ RED.view = (function() {
                             node.highlighted = false;
                             delete node._flashing;
                         }
-                        RED.view.redraw();
+						RED.view.redraw_node(node);
+                        //RED.view.redraw();
                     }
                     flashFunc();
                 }

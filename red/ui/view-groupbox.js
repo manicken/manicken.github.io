@@ -6,29 +6,31 @@ RED.view.groupbox = (function() {
 	var currentHoveredGroup = undefined; // used to select the current hovered group
 	var lastHoveredGroup = undefined; // this contains the last hovered group so that a node can be moved outside a group
 
-	
-    
-
-    $('#btn-debugShowGroupElements').click(function() { moveGroupToFront(null); });
-	function moveGroupToFront(group)
-	{
+	function moveGroupBefore(group1, group2) {
 		let wrapper=document.querySelector(".workspace-chart-groups");
 		let children=wrapper.children;
-
+		let group1Element = getNodeElementWithId(children, group1.id);
+		let group2Element = getNodeElementWithId(children, group2.id);
+		if (group1Element == undefined || group2Element == undefined) { console.log("group1Element == undefined || group2Element == undefined"); return; }// failsafe
+		
+		if (group1Element.index < group2Element.index) { 
+			console.log(group1.name + " is allready before " + group2.name);
+			return;
+		}
+		
+		console.trace(`moveGroupBefore: ${(group1!=undefined?group1.name:"undefined")} (@${group1Element.index}) before ${(group2!=undefined?group2.name:"undefined")} (@${group2Element.index})`);
+		//console.log(group2Element.element, group1Element.element);
+		
+		wrapper.insertBefore(group1Element.element, group2Element.element);
+		RED.nodes.moveNodeBefore(group1, group2);
+	}
+	function getNodeElementWithId(children, id) {
 		for ( var i = 0; i < children.length; i++)
 		{
-			if (children[i].id == group.id)
-			{
-				if (i == children.length - 1) return; // allready at the end
-
-				// first move the child to the second last position
-				wrapper.insertBefore(children[i], children[children.length-1]);
-				// swap the last items (now the selected child is at the end)
-				wrapper.insertBefore(children[children.length-1], children[children.length-2]);
-				RED.nodes.moveNodeToEnd(group);
-				return;
-			}
+			var child = children[i];
+			if (child.id == id) return {element:child, index:i};
 		}
+		return undefined;
 	}
 
 
@@ -173,6 +175,7 @@ RED.view.groupbox = (function() {
 				removeNodeFromGroup(lastHoveredGroup, node);
 			}
 			lastHoveredGroup.hovered = false;
+			RED.view.redraw_node(lastHoveredGroup);
 			lastHoveredGroup = undefined;
 		}
 		if (currentHoveredGroupDef == true)
@@ -206,12 +209,12 @@ RED.view.groupbox = (function() {
 
                 
                 RED.events.emit("nodes:change",node);
+				currentHoveredGroup.hovered = false;
+				RED.view.redraw_node(currentHoveredGroup);
+				currentHoveredGroup = undefined;
                 
             }
             //RED.events.emit("groups:change",currentHoveredGroup);
-
-            currentHoveredGroup.hovered = false;
-			currentHoveredGroup = undefined;
 		}
 		 
 	}
@@ -357,7 +360,7 @@ RED.view.groupbox = (function() {
 			{
 				// prevents parent group to be before child
 				if (currentHoveredGroup.parentGroup !== mousedown_node)
-					moveGroupToFront(mousedown_node);
+					moveGroupBefore(groupAt.g, mousedown_node); // make the moving group render after the current hovered group
 			}
 			// currentHoveredGroup.parentGroup !== mousedown_node  ???prevents child group to be resized outside parent???
 			if (currentHoveredGroup.parentGroup !== mousedown_node && (RED.main.settings.addToGroupAutosize == true || d3.event.shiftKey))
@@ -368,7 +371,7 @@ RED.view.groupbox = (function() {
 				var chgExtents = getNodeExtents(currentHoveredGroup);
 				saveOldSizeAndPos(currentHoveredGroup);
 
-                // TODO. make us of tl, tr, bl, br scheme instead that will work much better I think
+                // TODO. make use of tl, tr, bl, br scheme instead that will work much better I think
                 /*if (groupAt.el == "tl") {
                     setUInode_Ymin(currentHoveredGroup, chgExtents.ymin - (selExtents.ymax - selExtents.ymin) - 30);
                     setUInode_Xmin(currentHoveredGroup, chgExtents.xmin - (selExtents.xmax - selExtents.xmin) - 30);
@@ -637,6 +640,7 @@ RED.view.groupbox = (function() {
 	function NodeChanged(node, changes) {
 		if (node.type != "group") return;
 		var group = node; // make the code easier to read
+		if (changes == undefined) return;
 		if (changes.inputs != undefined) {
 			//console.log("group box inputs changed from:"+changes.inputs+" to "+group.inputs);
 			if (changes.inputs > group.inputs)

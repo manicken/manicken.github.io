@@ -244,6 +244,21 @@ RED.nodes = (function() {
         // old structure TODO remove
 		//nodes.push(nodes.splice(nodes.indexOf(node), 1)[0]);
 	}
+    function moveNodeBefore(node1, node2) {
+        var ws = getWorkspace(node1.z);
+        var node1Index = ws.nodes.indexOf(node1);
+        if (node1Index == -1 ) return;
+        var node2Index = ws.nodes.indexOf(node2);
+        if (node2Index == -1 ) return;
+        if (node1Index == (node2Index - 1)) {
+            console.log(node1.name + " is allready before " + node2.name);
+            return;
+        }
+
+        ws.nodes.splice(node1Index, 1); // we allready have node1 so just remove it from the array
+        ws.nodes.splice(node2Index, 0, node1); // insert node1 before node2
+        console.log("moveNodeBefore:" + node1.name + " before " + node2.name);
+    }
 	$('#btn-moveWorkSpaceLeft').click(function() { moveWorkSpaceLeft(); });
 	$('#btn-moveWorkSpaceRight').click(function() { moveWorkSpaceRight();  });
 	function moveWorkSpaceLeft()
@@ -2628,6 +2643,7 @@ RED.nodes = (function() {
         moveWorkspace,
         FindNextFreeInputPort,
 		moveNodeToEnd,
+        moveNodeBefore,
 		//createWorkspaceObject, // obsolete replaced by Workspace class
         createExportableWorkspace,
 		createNewDefaultWorkspace,
