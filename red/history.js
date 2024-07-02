@@ -108,7 +108,7 @@ RED.history = (function() {
                 node.changed = changed;
             }
         }
-        RED.view.dirty(ev.dirty);
+        RED.nodes.dirty(ev.dirty);
         RED.view.redraw();
     }
 

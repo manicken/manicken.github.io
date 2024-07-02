@@ -545,6 +545,32 @@ RED.palette = (function() {
             filterFormVisible = true;
         }
     });*/
+
+	/**
+     * 
+     * @param {REDNode} d 
+     * @returns 
+     */
+	function redraw_paletteNodesReqError(d)
+	{
+		var cat = d._def.category;
+		if (cat == undefined) return;
+		if (!cat.startsWith("input") && !cat.startsWith("output")) return;
+		//console.error(cat);
+		//cat = cat.substring(0, cat.lastIndexOf("-"));
+		//console.warn("catname @ redraw_paletteNodesReqError:" + cat);
+		var e1 = document.getElementById("palette-node-"+cat + "-"+d.type);
+
+		//console.error("palette_node_"+cat + "_"+d.type);
+		var e2 = e1.getElementsByClassName("palette_req_error")[0]; // palette_req_error is using a style, where the position of the icon is defined
+		e2.addEventListener("click", 
+							function(){RED.notify('Conflicts:<ul><li>'+d.conflicts.join('</li><li>')+'</li></ul>',null,false, 5000);},
+							{once: true});
+		if (d.requirementError)
+			e2.classList.remove("hidden");
+		else
+			e2.classList.add("hidden");
+	}
 	
 	$("#palette-search-clear").on("click",function(e) {
 		e.preventDefault();
@@ -576,5 +602,7 @@ RED.palette = (function() {
 		addCategories,
 		clearCategory:clearCategory,
 		remove:removeNodeType,
+
+		redraw_paletteNodesReqError,
 	};
 })();

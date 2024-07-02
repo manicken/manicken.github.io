@@ -137,7 +137,7 @@ RED.view.groupbox = (function() {
 	 */
 	function removeNodeFromGroup(group, node)
 	{
-		//console.warn(" try remove " + node.name + " from the group " + group.name)
+		//console.warn(" try remove " + node.name + " from the group ", group)
 		for (var i = 0; i < group.nodes.length; i++)
 		{
             if (group.nodes[i] == node)

@@ -422,7 +422,7 @@ RED.tabs = (function() {
                     for (var i = 0; i < labLabels.length; i++)
                     {
                         //console.warn($(labLabels[i]).attr("title"));//.find(".red-ui-tab-label"));//.attr("title"));
-                        var textWidth = RED.view.calculateTextSize($(labLabels[i]).attr("title")).w+24;
+                        var textWidth = RED.view.textsize.calculate($(labLabels[i]).attr("title")).w+24;
                         //if ($(tabs[i]).hasClass("active")) $(labLabels[i]).css('padding-left', '10px');
                         //else $(labLabels[i]).css('padding-left', '12px');
                         totalWidth += textWidth;

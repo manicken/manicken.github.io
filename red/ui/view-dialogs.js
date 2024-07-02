@@ -382,7 +382,7 @@ RED.view.dialogs = (function() {
                         }
                         
 						
-						RED.view.dirty(true);
+						RED.nodes.dirty(true);
 						var oldLabel = workspace.label;
 						workspace.label = label;
 						//RED.nodes.workspaceNameChanged(oldLabel, label); // no need anymore RED.events take care of it now
@@ -436,10 +436,10 @@ RED.view.dialogs = (function() {
 					RED.view.removeWorkspace(workspace);
 					var historyEvent = RED.nodes.removeWorkspace(workspace.id);
 					historyEvent.t = 'delete';
-					historyEvent.dirty = RED.view.dirty();
+					historyEvent.dirty = RED.nodes.dirty();
 					historyEvent.workspace = workspace;
 					RED.history.push(historyEvent);
-					RED.view.dirty(true);
+					RED.nodes.dirty(true);
 					$( this ).dialog( "close" );
 				}
 			},
@@ -569,7 +569,7 @@ RED.view.dialogs = (function() {
             }).dialog("open");
 
         });
-        //RED.view.dirty(false);
+        //RED.nodes.dirty(false);
         const t3 = performance.now();
         console.log('arduino-export-save-show-dialog took: ' + (t3 - t2) + ' milliseconds.');
     }

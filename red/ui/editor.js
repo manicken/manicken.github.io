@@ -268,7 +268,7 @@ RED.editor = (function() {
 	{
 		var changes = {};
 		var changed = false;
-		var wasDirty = RED.view.dirty();
+		var wasDirty = RED.nodes.dirty();
 		var d;
 
 		if (editing_node._def.defaults) {
@@ -314,30 +314,32 @@ RED.editor = (function() {
 			}
 		}
 
-		var removedLinks = updateNodeProperties(editing_node);
-		if (changed != undefined && changed == true) {
-			var wasChanged = editing_node.changed;
-            editing_node.changed = true;
-            RED.events.emit("nodes:change",editing_node,changes);
-            if (changes.name != undefined) {
-                RED.events.emit("nodes:renamed",editing_node,changes.name);
-            }
-            if (changes.inputs != undefined)
-                RED.events.emit("nodes:inputs",editing_node,changes.inputs,editing_node.inputs)
-			RED.view.dirty(true);
-			RED.history.push({t:'edit',node:editing_node,changes:changes,links:removedLinks,dirty:wasDirty,changed:wasChanged});
-		}
+		
 		editing_node.dirty = true;
 		editing_node.resize = true;
 		validateNode(editing_node);
 		if (editing_node._def.useAceEditor != undefined)
 		{ 
 			var editor = ace.edit("aceEditor");
-            if (editing_node._def.useAceEditorCodeFieldName != undefined)
-                editing_node[editing_node._def.useAceEditorCodeFieldName] = editor.getValue();
-            else // default
-			    editing_node.comment = editor.getValue();
+			var value = editor.getValue();
+            if (editing_node._def.useAceEditorCodeFieldName != undefined) {
+				
+				if (value != editing_node[editing_node._def.useAceEditorCodeFieldName]) {
+					changed = true;
+					changes[editing_node._def.useAceEditorCodeFieldName] = value;
+					editing_node[editing_node._def.useAceEditorCodeFieldName] = value;
+				}
+                
+			}
+            else {// default
+				if (value != editing_node.comment) {
+					changed = true;
+					changes["comment"] = value;
+					editing_node.comment = value;
+				}
 
+			    
+			}
                 
 		}
 
@@ -349,6 +351,20 @@ RED.editor = (function() {
 			editing_node.whiteKeysColor = $("#node-input-whiteKeysColor").val();
 			editing_node.blackKeysColor = $("#node-input-blackKeysColor").val();
 		}*/
+
+		var removedLinks = updateNodeProperties(editing_node);
+		if (changed != undefined && changed == true) {
+			var wasChanged = editing_node.changed;
+            editing_node.changed = true;
+            RED.events.emit("nodes:change",editing_node,changes);
+            if (changes.name != undefined) {
+                RED.events.emit("nodes:renamed",editing_node,changes.name);
+            }
+            if (changes.inputs != undefined)
+                RED.events.emit("nodes:inputs",editing_node,changes.inputs,editing_node.inputs)
+			RED.nodes.dirty(true);
+			RED.history.push({t:'edit',node:editing_node,changes:changes,links:removedLinks,dirty:wasDirty,changed:wasChanged});
+		}
 		RED.view.redraw();
 		console.log("edit node saved!");
 		RED.storage.update();

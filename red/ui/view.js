@@ -25,9 +25,6 @@ RED.view = (function() {
 
 	var anyLinkEnter = false;
     var anyNodeEnter = false;
-    
-
-    
 
     var defSettings = {
 		/*showNodeToolTip:true,*/
@@ -401,7 +398,7 @@ RED.view = (function() {
 		mouse_mode = 0,
 		moving_set = [], // the data type of this is a rect
 		current_popup_rect = null,
-		dirty = false,
+		//dirty = false,
 		lasso = null,
 		showStatus = false,
 		lastClickNode = null,
@@ -489,7 +486,7 @@ RED.view = (function() {
     
 	function initView() // called from main.js - document ready function
 	{
-        generateTextSizeCache();
+        RED.view.textsize.init();
 
         window.addEventListener('resize', resizeMainContainerBasedOnNavBar);
         resizeMainContainerBasedOnNavBar(); // run it once
@@ -824,8 +821,8 @@ RED.view = (function() {
         }
         
 		workspace_tabs.activateTab(tabId);
-		RED.history.push({t:'add',workspaces:[ws],dirty:dirty});
-        RED.view.dirty(true);
+		RED.history.push({t:'add',workspaces:[ws],dirty:true});
+        RED.nodes.dirty(true);
         if (RED.workspaces.settings.addNewAutoEdit == true)
             RED.view.dialogs.showRenameWorkspaceDialog(ws.id,workspace_tabs.count());
 		//RED.arduino.httpGetAsync("addFile:" + ws.label + ".h");
@@ -1233,7 +1230,7 @@ RED.view = (function() {
 				for (var j=0;j<moving_set.length;j++) {
 					ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy});
 				}
-				RED.history.push({t:'move',nodes:ns,dirty:dirty});
+				RED.history.push({t:'move',nodes:ns,dirty:true});
 				RED.storage.update(); // this also do node re-sort
                 RED.events.emit("nodes:moved",ns);
 			}
@@ -1246,7 +1243,7 @@ RED.view = (function() {
 		}
 		if (mouse_mode == RED.state.IMPORT_DRAGGING) {
 			RED.keyboard.remove(/* ESCAPE */ 27);
-			setDirty(true);
+			RED.nodes.dirty(true);
 		}
 		//redraw(true);
 		//redraw_links_init();
@@ -1452,15 +1449,6 @@ RED.view = (function() {
 	function zoomZero() {
 		settings.scaleFactor = 1;
 	}
-
-    function showEverything() {
-        visLinks.attr("class", "workspace-chart-links");
-        visNodes.attr("class", "workspace-chart-nodes");
-    }
-    function hideEverything() {
-        visLinks.attr("class", "workspace-chart-links hidden");
-        visNodes.attr("class", "workspace-chart-nodes hidden");
-    }
 
 	function selectAll() {
         moving_set = [];
@@ -1767,33 +1755,7 @@ RED.view = (function() {
 			//}
 		}
 	}
-	function removeNode(node)
-	{
-		node.selected = false;
-		if (node.x < 0) {
-			node.x = 25
-		}
-						
-		var rmlinks = RED.nodes.remove(node.id);
-		for (var j=0; j < rmlinks.length; j++) {
-			var link = rmlinks[j];
-			//console.log("delete link: " + link.source.id + ":" + link.sourcePort
-			//	+ " -> " + link.target.id + ":" + link.targetPort);
-			if (link.source == node) {
-				// reenable input port
-				var n = link.targetPort;
-				var rect = link.target.inputlist[n];
-				rect.on("mousedown", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
-					.on("touchstart", (function(d,n){return function(d){portMouseDown(d,1,n);}})(rect, n))
-					.on("mouseup", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-					.on("touchend", (function(d,n){return function(d){portMouseUp(d,1,n);}})(rect, n))
-					.on("mouseenter", nodeInput_mouseover)
-					.on("mouseout", nodePort_mouseout)//function () {nodePort_mouseout(link.target, d3.select(this))})
-					//.on("mouseover",function(d) { var port = d3.select(this); port.classed("port_hovered",(mouse_mode!=RED.state.JOINING || mousedown_port_type != 1 ));})
-					//.on("mouseout",function(d) { var port = d3.select(this); port.classed("port_hovered",false);})
-			}
-		}
-	}
+	
 	function currentSelectionContains(node) {
 		for (var i=0;i<moving_set.length;i++) {
 			if (moving_set[i].n === node) return true;
@@ -1931,111 +1893,7 @@ RED.view = (function() {
 			RED.notify(moving_set.length+" node"+(moving_set.length>1?"s":"")+" copied");
 		}
 	}
-    var textSizeCache = {};
-    var tsc_numbers = "0123456789";
-    var tsc_specialChars = "!\"#¤%&/()=?½§@£$€{[]}\\+,;.:-_¨^~'*<>| ";
-    var tsc_lowerCase = "abcdefghijklmnopqrstuvwxyz";
-    var tsc_upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    var tsc_all = tsc_numbers+tsc_lowerCase+tsc_upperCase+tsc_specialChars;
-
-    function generateTextSizeCache() {
-        const t0 = performance.now();
-        
-        textSizeCache = {};
-        for (var ts=10; ts < 24;ts++) { // generate standard sizes
-            textSizeCache[ts] = generateCharSizesCache(ts);
-        }
-        const t1 = performance.now();
-        console.log("generateTextSizeCache took:" + (t1-t0) + " ms");
-        console.log(textSizeCache);
-    }
-    function generateCharSizesCache(size) {
-        var sizes = {};
-            
-        for (var chi=0;chi<tsc_all.length;chi++) {
-            var char = tsc_all[chi];
-            if (char != " ")
-                sizes[char] = _calculateTextSize(char,size);
-            else
-                sizes[char] = _calculateTextSize("]",size); // calculate space after similar sized char ]
-        }
-        return sizes;
-    }
-    function calculateTextSize(str,size) {
-        //if (textSizeCache.length == 0) generateTextSizeCache();
-        var width = 0;
-        if (size == undefined)
-            size = 14;
-        var tsc = textSizeCache[size];
-        if (tsc == undefined) {
-            //console.warn("size not found:" + size);
-            console.warn("generating charCache for size: " + size);
-            tsc = generateCharSizesCache(size);
-            textSizeCache[size] = tsc;
-        }
-        var height = 0;
-        for (var i=0;i<str.length;i++) {
-            var ccs = tsc[str[i]]; // ccs = current char size
-            width += ccs.w;
-            if (height < ccs.h) height = ccs.h;
-        }
-        return {w:width, h:height};
-    }
-
-	var calculateTextSizeElement = undefined;
-    var calculateTextSizeCache = {};
-	function _calculateTextSize(str,textSize) {
-        //const t0 = performance.now();
-		var name = str + "_" + textSize;
-
-        /*if (calculateTextSizeCache[name] != undefined) {
-            //const t1 = performance.now();
-		    //console.error("@calculateTextSize time @ " + name + " : " + (t1-t0));
-            return calculateTextSizeCache[name];
-        }*/
-
-		//if (str == undefined)
-		//	return {w:0, h:0};
-		//console.error("@calculateTextSize str type:" + typeof str);
-		if (calculateTextSizeElement == undefined)
-		{
-			//console.error("@calculateTextSize created new");
-			var sp = document.createElement("span");
-			sp.className = "node_label";
-			sp.style.position = "absolute";
-			sp.style.top = "-300px";
-            sp.style.left = "-300px";
-			document.body.appendChild(sp);
-			calculateTextSizeElement = sp;
-		}
-		
-		var sp = calculateTextSizeElement;
-		textSize = new String(textSize);
-		if (textSize.endsWith("px") == false) textSize += "px";
-		//console.error(textSize);
-		sp.style.fontSize = textSize;
-		
-		/*var sp = document.createElement("span");
-		sp.className = "node_label";
-		sp.style.position = "absolute";
-		sp.style.top = "-1000px";*/
-		sp.innerHTML = (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-		
-		var w = sp.offsetWidth;
-		var h = sp.offsetHeight;
-		//document.body.removeChild(sp);
-		var rect = sp.getBoundingClientRect();
-        //var w = rect.width;
-        //var h = rect.height;
-        //var sizes = {w:parseFloat(w), h:parseFloat(h)};
-        var sizes = {w, h};
-        calculateTextSizeCache[name] = sizes; // cache it for performance boost
-
-        //const t1 = performance.now();
-		//console.error("@calculateTextSize time @ " + name + " : " + (t1-t0));
-
-		return sizes;
-	}
+    
 
 	function resetMouseVars() {
 		mousedown_node = null;
@@ -2168,7 +2026,7 @@ RED.view = (function() {
         if (!existingLink) {
             var link = new REDLink(src, src_port, dst, dst_port);
             RED.nodes.addLink(link);
-            RED.history.push({t:'add',links:[link],dirty:dirty,changedNodes});
+            RED.history.push({t:'add',links:[link],dirty:RED.nodes.dirty(),changedNodes});
             setDirty(true);
             // disallow new links to this destination - each input can have only a single link
             // a alternative would be to replace the existing one
@@ -2655,7 +2513,7 @@ RED.view = (function() {
 		var maxIOcount = Math.max(inputCount, outputCount);
 		//console.log("inputCount:"+inputCount+"outputCount:"+outputCount+"maxIOcount:"+maxIOcount);
 		
-		d.textDimensions = calculateTextSize(l, d.textSize);
+		d.textDimensions = RED.view.textsize.calculate(l, d.textSize);
 		//console.error("@redraw_calcNewNodeSize: "+ d.textSize + " -> " + d.name );
 		//console.error(d.textDimensions);
         if (d.outputLabelMaxSize == undefined) d.outputLabelMaxSize = 0;
@@ -2847,17 +2705,17 @@ RED.view = (function() {
 		{
 			if ((nodeText.localeCompare(d.oldNodeText) != 0) ||
 				((d.textSize != undefined) && (d.textSize != d.oldTextSize)))
-				d.textDimensions = calculateTextSize(nodeText, d.textSize);
+				d.textDimensions = RED.view.textsize.calculate(nodeText, d.textSize);
 		}
 		else*/
-			d.textDimensions = calculateTextSize(nodeText, d.textSize);
+			d.textDimensions = RED.view.textsize.calculate(nodeText, d.textSize);
 
 		//d.oldNodeText = nodeText;
 
 		//if (d.textSize != undefined)
 		//	d.oldTextSize = parseFloat(d.textSize);
 
-		//var textSize = calculateTextSize(nodeText, d.textSize);
+		//var textSize = RED.view.textsize.calculate(nodeText, d.textSize);
 		
 		//console.warn("textSize:" + textSize.h + ":" + textSize.w);
 		nodeRects.attr('y', function(d) 
@@ -2874,7 +2732,7 @@ RED.view = (function() {
 		if (d._def.uiObject != undefined) {
 			nodeRects.attr('x', function(d)
 			{
-				//console.log("text width:" + calculateTextSize(d.name).w);
+				//console.log("text width:" + RED.view.textsize.calculate(d.name).w);
 				//console.log("node width:" + d.w);
                 //console.warn(this);
 				return (d.w-(d.textDimensions.w))/2; // allways divide by 2
@@ -2884,7 +2742,7 @@ RED.view = (function() {
 
             nodeRects.attr('x', function(d)
 			{
-				//console.log("text width:" + calculateTextSize(d.name).w);
+				//console.log("text width:" + RED.view.textsize.calculate(d.name).w);
 				//console.log("node width:" + d.w);
                 //console.warn(this);
 				return 10; // allways divide by 2
@@ -2997,12 +2855,12 @@ RED.view = (function() {
                     
                     port.attr("x",10);
                     var label = getPortName(d.type, "In", i );
-                    var lblWidth = calculateTextSize(label, 10).w;
+                    var lblWidth = RED.view.textsize.calculate(label, 10).w;
                     if (lblWidth > inputLabelMaxSize) inputLabelMaxSize = lblWidth;
                     port.text(label);
                 });
                 if (inputLabelMaxSize != 0){
-                    d.inputLabelMaxSize = inputLabelMaxSize+calculateTextSize(" ", 10).w;
+                    d.inputLabelMaxSize = inputLabelMaxSize+RED.view.textsize.calculate(" ", 10).w;
                     redraw_calcNewNodeSize(d);
                 }
                 //var x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
@@ -3102,12 +2960,12 @@ RED.view = (function() {
                     
                     port.attr("x",x-6);
                     var label = getPortName(d.type, "Out", i );
-                    var lblWidth = calculateTextSize(label, 10).w;
+                    var lblWidth = RED.view.textsize.calculate(label, 10).w;
                     if (lblWidth > outputLabelMaxSize) outputLabelMaxSize = lblWidth;
                     port.text(label);
                 });
                 if (outputLabelMaxSize != 0)
-                    d.outputLabelMaxSize = outputLabelMaxSize+calculateTextSize(" ", 10).w;
+                    d.outputLabelMaxSize = outputLabelMaxSize+RED.view.textsize.calculate(" ", 10).w;
                 redraw_calcNewNodeSize(d);
                 var x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
                 d._portLabels.each(function(d2,i) {
@@ -3645,31 +3503,7 @@ RED.view = (function() {
                    destX+" "+destY
         }
 	}
-	/**
-     * 
-     * @param {REDNode} d 
-     * @returns 
-     */
-	function redraw_paletteNodesReqError(d)
-	{
-		var cat = d._def.category;
-		if (cat == undefined) return;
-		if (!cat.startsWith("input") && !cat.startsWith("output")) return;
-		//console.error(cat);
-		//cat = cat.substring(0, cat.lastIndexOf("-"));
-		//console.warn("catname @ redraw_paletteNodesReqError:" + cat);
-		var e1 = document.getElementById("palette_node_"+cat + "_"+d.type);
-
-		//console.error("palette_node_"+cat + "_"+d.type);
-		var e2 = e1.getElementsByClassName("palette_req_error")[0]; // palette_req_error is using a style, where the position of the icon is defined
-		e2.addEventListener("click", 
-							function(){RED.notify('Conflicts:<ul><li>'+d.conflicts.join('</li><li>')+'</li></ul>',null,false, 5000);},
-							{once: true});
-		if (d.requirementError)
-			e2.classList.remove("hidden");
-		else
-			e2.classList.add("hidden");
-	}
+	
     /**
      * 
      * @param {*} nodeRect 
@@ -3764,15 +3598,6 @@ RED.view = (function() {
 		$(this).popover("destroy"); // destroy prev
 	}
 
-	//#region Group redraw init/update
-
-	
-	//#endregion Group redraw init/update
-
-	//#region UI items redraw init/update
-	
-	//#endregion UI items redraw init/update
-
 	function redraw_nodes_init()
 	{
         //const t0 = performance.now();
@@ -3847,7 +3672,7 @@ RED.view = (function() {
 				checkRequirements(d); // this update nodes that allready exist
 				if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
 				redraw_nodeReqError(nodeRect, d);
-				//redraw_paletteNodesReqError(d);
+				RED.palette.redraw_paletteNodesReqError(d);
 			}
 			nodeRect.attr("nodeType", d.type);
 
@@ -3889,24 +3714,7 @@ RED.view = (function() {
 			redraw_node(d, superUpdate);			
 		});
 	}
-    /**
-     * 
-     * @param {REDNode} node 
-     * @returns 
-     */
-    function getNodeRect(node) {
-        var ws = RED.nodes.getWorkspace(node.z);
-        var visNodesAll2 = visNodes.selectAll("#"+node.id).data(/*RED.nodes*/ws.nodes.filter(function(d2)
-        { 
-            return (node===d2);
-
-        }),function(d3){return d3.id});
-        var nodeRect; 
-        visNodesAll2.each( function(d,i) { 
-            nodeRect = d3.select(this); // there should be only one
-        });
-        return nodeRect;
-    }
+    
     /**
      * 
      * @param {REDNode} d 
@@ -3922,7 +3730,7 @@ RED.view = (function() {
             checkRequirements(d); // this update nodes that allready exist
             //if (d.requirementError) console.warn("@node.each reqError on:" + d.name);
             redraw_nodeReqError(nodeRect, d);
-            //redraw_paletteNodesReqError(d);
+            RED.palette.redraw_paletteNodesReqError(d);
         }
         if (superUpdate != undefined && superUpdate == true)
         {
@@ -3992,80 +3800,6 @@ RED.view = (function() {
 		redrawTotalTime += currentTotalTime;
 
 		//console.log('redraw average time: ' + (redrawTotalTime/redrawCount) + ' ms, curr. tot. time:' + currentTotalTime + " ms");
-	}
-
-	function doSort (arr) {
-		arr.sort(function (a, b) {
-			var nameA = a.name ? a.name : a.id;
-			var nameB = b.name ? b.name : b.id;
-			return nameA.localeCompare(nameB, 'en', {numeric: 'true'});
-		});
-	}
-
-	function setNewCoords (lastX, lastY, arr) {
-		var x = lastX;
-		var y = lastY;
-		for (var i = 0; i < arr.length; i++) {
-			var node = arr[i];
-			var name = node.name ? node.name : node.id;
-			var def = node._def;
-			var dH = Math.max(RED.view.defaults.height, (Math.max(def.outputs, def.inputs) || 0) * 15);
-			x = lastX + Math.max(RED.view.defaults.width, RED.view.calculateTextWidth(name) + 50 + (def.inputs > 0 ? 7 : 0));
-			node.x = x;
-			node.y = y + dH/posMode;
-			y = y + dH + 15;
-			node.dirty = true;
-		}
-		return { x: x, y: y };
-	}
-
-	function arrangeAll() {
-		var ioNoIn = [];
-		var ioInOut = [];
-		var ioMultiple = [];
-		var ioNoOut = [];
-		var ioCtrl = [];
-        var ws = RED.nodes.getWorkspace(activeWorkspace);
-		RED.nodes.wsEachNode(ws, function (node) {
-			//if (node.z != activeWorkspace) return;
-			var inputs = 0;
-			if (node.inputs == undefined)
-				inputs = node._def.inputs;
-			else
-				inputs = node.inputs;
-
-			if (inputs == 0 && node._def.outputs == 0) {
-				ioCtrl.push(node);
-			} else if (inputs == 0) {
-				ioNoIn.push(node);
-			} else if (node._def.outputs == 0) {
-				ioNoOut.push(node);
-			} else if (inputs == 1 && node._def.outputs == 1) {
-				ioInOut.push(node);
-			} else if (inputs > 1 || node._def.outputs > 1) {
-				ioMultiple.push(node);
-			}
-		});
-
-		var cols = new Array(ioNoIn, ioInOut, ioMultiple, ioNoOut, ioCtrl);
-		var lowestY = 0;
-
-		for (var i = 0; i < cols.length; i++) {
-			var dX = ((i < cols.length - 1) ?  i : 0) * (RED.view.defaults.width * 2) + (RED.view.defaults.width / 2) + 15;
-			var dY = ((i < cols.length - 1) ?  (RED.view.defaults.height / 4) : lowestY) + 15;
-			var startX = 0;
-			var startY = 0;
-
-			doSort(cols[i]);
-			var last = setNewCoords(startX + dX, startY + dY, cols[i]);
-			lowestY = Math.max(lowestY, last.y);
-			startX = ((i < cols.length - 1) ? last.x : 0) + (RED.view.defaults.width) * 4;
-			startY = lowestY + (RED.view.defaults.height * 1.5);
-		}
-		RED.storage.update();
-		redraw(true);
-		redraw_links_init();
-		redraw_links();
 	}
 
 	RED.keyboard.add(/* z */ 90,{ctrl:true},function(){RED.history.pop();});
@@ -4186,7 +3920,7 @@ RED.view = (function() {
 					mouse_mode = 0;
 			});
 
-			RED.history.push({t:'add',nodes:new_node_ids,links:new_links,dirty:RED.view.dirty()});
+			RED.history.push({t:'add',nodes:new_node_ids,links:new_links,dirty:RED.nodes.dirty()});
 
 			clearSelection();
 			moving_set = new_ms;
@@ -4437,6 +4171,7 @@ RED.view = (function() {
 			}
 		}
 	}
+
 	function completeRedraw()
 	{
         if (preventRedraw == true) return;
@@ -4448,6 +4183,7 @@ RED.view = (function() {
 		anyLinkEnter = true;
 		redraw_links();
 	}
+
     function selectnode(selection) {
         if (typeof selection !== "undefined") {
             clearSelection();
@@ -4563,7 +4299,6 @@ RED.view = (function() {
 
         get workspace_tabs() {return workspace_tabs;},
         get moving_set() {return moving_set;},
-        calculateTextSize,
         redraw_links,
         redraw_links_notations,
         redraw_node:function (node) { redraw_node(node, true)},
@@ -4584,7 +4319,7 @@ RED.view = (function() {
 		getWorkspace: function() { return activeWorkspace; },
 		showWorkspace: function(id) { workspace_tabs.activateTab(id); },
 		redraw: function() { completeRedraw(); },
-		dirty: function(d) { if (d == null) { return dirty; } else { setDirty(d); } },
+		//dirty: function(d) { if (d == null) { return dirty; } else { setDirty(d); } },
 		importNodes: importNodes,
 		resize: function() { workspace_tabs.resize(); },
 		/*status: function(s) {
@@ -4593,8 +4328,6 @@ RED.view = (function() {
 			//TODO: subscribe/unsubscribe here
 			redraw(false);
 		},*/
-		calculateTextSize,
-        _calculateTextSize, // old function
 		showPopOver:showPopOver,
 		defaults: {
 			width: node_def.width,

@@ -179,7 +179,7 @@ RED.projectStructure = (function() {
         })
     }
     function onNodeAdd(n) {
-        console.log("onNodeAdd",n);
+        //console.log("onNodeAdd",n);
         objects[n.id] = {
             id: n.id,
             element: getNodeLabel(n),

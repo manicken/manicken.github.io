@@ -583,7 +583,7 @@ RED.view.ui = (function() {
 				ti.text(nodeText);
 			
 
-				var textSize = RED.view.calculateTextSize(nodeText,d.textSize)
+				var textSize = RED.view.textsize.calculate(nodeText,d.textSize)
 				ti.attr('x', (d.w-textSize.w)/2);
 				ti.attr('y', (d.h+textSize.h));
 
@@ -620,7 +620,7 @@ RED.view.ui = (function() {
 				.attr("dy", "0.35em")
 				.text(items[i]);
 			if (n.itemTextSize == undefined) n.itemTextSize = 14;
-			n.itemsTextDimensions.push(RED.view.calculateTextSize(items[i], n.itemTextSize));
+			n.itemsTextDimensions.push(RED.view.textsize.calculate(items[i], n.itemTextSize));
 		}
 	}
 	function redraw_update_UI_ListBox(d)
@@ -670,7 +670,7 @@ RED.view.ui = (function() {
 			var ti = d3.select(this);
 			if (updateTextDimensions)
 			{
-				d.itemsTextDimensions[i] = RED.view.calculateTextSize(items[i], d.itemTextSize);
+				d.itemsTextDimensions[i] = RED.view.textsize.calculate(items[i], d.itemTextSize);
 				if (d.itemTextSize != undefined)
 					ti.style({'font-size':d.itemTextSize+'px'});
 			}
@@ -716,7 +716,7 @@ RED.view.ui = (function() {
 			else
 				itemText.attr("class", "node_label_uiPianoKey node_label_uiPianoKeyBlack");
 			if (n.textSize == undefined) n.textSize = 14;
-			n.keysTextDimensions.push(RED.view.calculateTextSize(keyTexts[i],n.textSize));
+			n.keysTextDimensions.push(RED.view.textsize.calculate(keyTexts[i],n.textSize));
 		}
 	}
 	function redraw_update_UI_Piano(nodeRect, d)
