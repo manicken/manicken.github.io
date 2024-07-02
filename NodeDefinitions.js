@@ -222,6 +222,8 @@ var JunctionTypeBase = {
         inputs: { value: 1, maxval: 255, minval: 2, type: "int" },
         outputs: { value: 1, maxval: 255, minval: 2, type: "int" }
     },
+    inputTypes: {"n":"any"},
+    outputTypes: {"n":"any"},
     dynInputs: {},
     mainRectRx:3, inputs: 1, outputs: 1, 
     /*color: "#4D54FF"*/ color:"#ddd"// icon: "arrow-in.png" },

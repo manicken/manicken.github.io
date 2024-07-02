@@ -1423,7 +1423,7 @@ RED.view = (function() {
 		}*/
         
 		//nn.h = Math.max(node_def.height,(nn.outputs||0) * 15);
-		RED.history.push({t:'add',nodes:[nn.id],dirty:dirty});
+		RED.history.push({t:'add',nodes:[nn.id],dirty:RED.nodes.dirty()});
 		RED.nodes.add(nn);
 		RED.nodes.addUsedNodeTypesToPalette();
 		RED.editor.validateNode(nn);
@@ -1594,7 +1594,7 @@ RED.view = (function() {
 			delete moving_set[i].ox;
 			delete moving_set[i].oy;
 		}
-		RED.history.push({t:'move',nodes:ns,dirty:dirty});// TODO: is this nessesary
+		RED.history.push({t:'move',nodes:ns,dirty:RED.nodes.dirty()});// TODO: is this nessesary
 	}
 
 	function XOR(bool1, bool2)
@@ -2012,7 +2012,7 @@ RED.view = (function() {
         var srcPortType = getOutputPortType(src, src_port);
         var dstPortType = getInputPortType(dst, dst_port);
         
-        if (srcPortType != dstPortType) {
+        if (srcPortType != dstPortType && srcPortType != "any" && dstPortType != "any") {
             stopDragLine();
             RED.notify("<strong> srcPortType: " + srcPortType + " != dstPortType:" + dstPortType + "</strong>", "warning", false, 4000);
             return;
@@ -4030,9 +4030,11 @@ RED.view = (function() {
 		//console.log(data2); // development debug
         
         if (portDir == "Out") {
-            return data2 + getOutputPortType(node, index);
+			var type = getOutputPortType(node, index);
+            return data2 + (type != "any"?type:"any type");
         }else if (portDir == "In") {
-            return data2 + getInputPortType(node, index);
+			var type = getInputPortType(node, index)
+            return data2 + (type != "any"?type:"any type");
         }
 		return data2;
 	}
