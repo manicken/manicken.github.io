@@ -222,8 +222,8 @@ var JunctionTypeBase = {
         inputs: { value: 1, maxval: 255, minval: 2, type: "int" },
         outputs: { value: 1, maxval: 255, minval: 2, type: "int" }
     },
-    inputTypes: {"n":"any"},
-    outputTypes: {"n":"any"},
+    inputTypes: {"n":"any"}, // TODO have Junction mirror the input type from the output if the output is connected first
+    outputTypes: {"n":"any"}, // TODO have Junction mirror the input type to the output if the input is connected first
     dynInputs: {},
     mainRectRx:3, inputs: 1, outputs: 1, 
     /*color: "#4D54FF"*/ color:"#ddd"// icon: "arrow-in.png" },

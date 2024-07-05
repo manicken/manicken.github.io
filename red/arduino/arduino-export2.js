@@ -29,13 +29,15 @@ RED.arduino.export2 = (function () {
     function Export(export_mode) {
         const t0 = performance.now();
 
-        if (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP) var generateZip = true;
-        else var generateZip = false;
-        
         RED.storage.update(); // sort is made inside update
 
-        currentExport = new CompleteExport(generateZip, export_mode);
-        var coex = currentExport; // short 'alias'
+        let options = new ExportOptions();
+        options.classExport = (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE || export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP || export_mode == CPP_EXPORT_MODE.CLASS_SINGLE);
+        options.generateZip = (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP);
+        options.compositeExport = (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT || export_mode == CPP_EXPORT_MODE.CLASS_SINGLE);
+
+        currentExport = new CompleteExport(options);
+        let coex = currentExport; // short 'alias'
         coex.allFiles.push(new ExportFile("GUI_TOOL.json", JSON.stringify(JSON.parse(coex.jsonString), null, 4))); // JSON beautifier
         if (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT) {
             //coex.ac.staticType = true; // allways true for SIMPLE FLAT
@@ -65,8 +67,8 @@ RED.arduino.export2 = (function () {
 
         // only show dialog when server is not active and not generating zip
         // or when export modes: SIMPLE_FLAT or CLASS_SINGLE
-        var useExportDialog = ((RED.arduino.settings.useExportDialog == true) ||
-                               (generateZip == false) || 
+        let useExportDialog = ((RED.arduino.settings.useExportDialog == true) ||
+                               (options.generateZip == false) || 
                                (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) || 
                                (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE) ||
                                (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT));
@@ -77,9 +79,9 @@ RED.arduino.export2 = (function () {
         const t1 = performance.now();
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
-        if (generateZip == false && export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE)
+        if (options.generateZip == false && export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE)
             SendToHttpBridge(coex); // allways try to POST but not when exporting to zip
-        else if (generateZip == true)
+        else if (options.generateZip == true)
             GenerateZip(coex);
     }
 
@@ -117,7 +119,7 @@ RED.arduino.export2 = (function () {
             if (checkAndAddNonAudioObject(n, wse, coex.globalCppFiles)) {
                 //continue;
             }
-            else if (n.type == "AudioMixer" && coex.mixervariants != undefined && RED.arduino.settings.ExportMode < 3) {
+            else if (n.type == "AudioMixer" && coex.mixervariants != undefined && coex.options.oscExport == false) {
                 var inputCount = RED.export.links.getDynInputDynSize(n);
                 if (inputCount != 4) { // 4 input variant is allready in the audio lib
 
@@ -129,23 +131,23 @@ RED.arduino.export2 = (function () {
                     if (!wse.userIncludes.includes(includeName)) wse.userIncludes.push(includeName);
                 }
             }
-            else if (n.type == "AudioMixerStereo" && coex.mixerStereoVariants != undefined && RED.arduino.settings.ExportMode < 3) {
+            else if (n.type == "AudioMixerStereo" && coex.mixerStereoVariants != undefined && coex.options.oscExport == false) {
                 // for future implementation
             }
             // Audio Control/class node without any IO
             // TODO. to make objects that don't have any io have a special def identifier
             // both to make this code clearer and to sort non Audio Control objects in a different list
             else if (/*(n.outputs <= 0) && (n.inputs <= 0) && */(n._def.inputs <= 0) && (n._def.outputs <= 0)) { 
-                var name = getName(n);
-                var typeName = getTypeName(n);
+                var name = getName(n, coex.options);
+                var typeName = getTypeName(n, coex.options);
                 var comment = (n.comment!=undefined && n.comment.trim().length != 0)?n.comment:"";
                 wse.audioControlObjects.push(new ExportObject(typeName, name, comment));
             }
             else // Audio Processing Node and Class node that have IO
             { 
                 console.log(n);
-                var name = getName(n);
-                var typeName = getTypeName(n);
+                var name = getName(n, coex.options);
+                var typeName = getTypeName(n, coex.options);
                 var comment = (n.comment!=undefined && n.comment.trim().length != 0)?n.comment:"";
                 wse.audioObjects.push(new ExportObject(typeName, name, comment));
             }
@@ -175,8 +177,8 @@ RED.arduino.export2 = (function () {
             // TODO sort links by if they have array sources/targets
         }
         //wse.totalAudioConnectionCount = coex.ac.totalCount;
-        var exportFile = wse.generateWsFile(coex.exportMode);
-        exportFile.header = RED.arduino.export2.getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.generateZip);
+        var exportFile = wse.generateWsFile(coex.options);
+        exportFile.header = getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.options.generateZip);
         coex.wsCppFiles.push(exportFile);
     }
     /**
@@ -261,26 +263,27 @@ RED.arduino.export2 = (function () {
 
     /**
      * This is only for the moment to get special type AudioMixer<n>, AudioMixerNNN or AudioStreamObject
-     * @param {Node} node node(internal)
+     * @param {REDNode} node
+     * @param {ExportOptions} options
      */
-     function getTypeName(node)
+     function getTypeName(node, options)
      {
         if (node.type == "AudioStreamObject") // special case
             var cpp = node.subType?node.subType:"// warning AudioStreamObject subType not set";
         else
             var cpp = node.type;
 
-        if (node._def.dynInputs != undefined && RED.arduino.settings.ExportMode < 3)
+        if (node._def.dynInputs != undefined && options.oscExport == false)
         {
             var dynInputSize = RED.export.links.getDynInputDynSize(node).toString();
 
-            if (RED.arduino.settings.UseAudioMixerTemplate == true)
+            if (options.UseAudioMixerTemplate == true)
                 dynInputSize = '<' + dynInputSize + '>'; // include the template def.
 
             cpp += dynInputSize;
         }
 
-        if (RED.arduino.settings.ExportMode == 3)
+        if ( options.oscExport == true)
             cpp = cpp.replace("Audio", "OSCAudio");
 
         //cpp += " "; // add at least one space
@@ -288,8 +291,12 @@ RED.arduino.export2 = (function () {
         return cpp;
     }
 
-    function getName(node) {
-        if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
+    /**
+     * @param {REDNode} node
+     * @param {ExportOptions} options
+     */
+    function getName(node, options) {
+        if (options.oscExport == true) {
             if (node.isArray != undefined)
                 var name = node.isArray.name;
 
@@ -307,8 +314,9 @@ RED.arduino.export2 = (function () {
         }
     }
 
-    function getAudioConnectionTypeName() {
-        if (RED.arduino.settings.ExportMode < 3)
+    /** @param {ExportOptions} options */
+    function getAudioConnectionTypeName(options) {
+        if (options.oscExport == false)
             return "AudioConnection";
         else
             return "OSCAudioConnection";
@@ -406,7 +414,7 @@ RED.arduino.export2 = (function () {
         // credits to h4yn0nnym0u5e for the dependency order sorting
         var exportComplete = false;
         var exported = [];
-        var skipDependencyCheck = ((coex.exportMode == CPP_EXPORT_MODE.SIMPLE_FLAT) || (coex.exportMode == CPP_EXPORT_MODE.CLASS_SINGLE));
+        var skipDependencyCheck = coex.options.compositeExport;
         while (exportComplete==false)
         {
             exportComplete = true;
@@ -482,11 +490,16 @@ if (TEXT == undefined)
 * this take a multiline text, 
 * break it up into linearray, 
 * then if increment is a string then that is added before every line, if increment is a number then it specifies the number of spaces added before every line
-* @param {*} text 
+* @param {string|string[]} text this can either be a text seperated by newlines or just a array with all lines allready seperated
 * @param {*} increment if this is a string then that is added before every line, if it's a number then it specifies the number of spaces added before every line
 */
 TEXT.incrementLines = function(text, increment) {
-    var lines = text.split("\n");
+    //console.trace(Array.isArray(text));
+    //console.log(typeof text);
+    if (typeof text == "string")
+        var lines = text.split("\n");
+    else
+        var lines = text; // is allready a array
     var newText = "";
     if (typeof increment == "number")
         increment = TEXT.getNrOfSpaces(increment);
