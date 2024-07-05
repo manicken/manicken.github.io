@@ -138,16 +138,16 @@ RED.arduino.export2 = (function () {
             // TODO. to make objects that don't have any io have a special def identifier
             // both to make this code clearer and to sort non Audio Control objects in a different list
             else if (/*(n.outputs <= 0) && (n.inputs <= 0) && */(n._def.inputs <= 0) && (n._def.outputs <= 0)) { 
-                var name = getName(n, coex.options);
                 var typeName = getTypeName(n, coex.options);
+                var name = getName(n, coex.options);
                 var comment = (n.comment!=undefined && n.comment.trim().length != 0)?n.comment:"";
                 wse.audioControlObjects.push(new ExportObject(typeName, name, comment));
             }
             else // Audio Processing Node and Class node that have IO
             { 
-                console.log(n);
-                var name = getName(n, coex.options);
+                //console.log(n);
                 var typeName = getTypeName(n, coex.options);
+                var name = getName(n, coex.options);
                 var comment = (n.comment!=undefined && n.comment.trim().length != 0)?n.comment:"";
                 wse.audioObjects.push(new ExportObject(typeName, name, comment));
             }
@@ -296,9 +296,12 @@ RED.arduino.export2 = (function () {
      * @param {ExportOptions} options
      */
     function getName(node, options) {
+        console.log(node);
         if (options.oscExport == true) {
             if (node.isArray != undefined)
                 var name = node.isArray.name;
+            else
+                var name = node.name;
 
             if (node._def.dynInputs != undefined)
                 name += '{"' +name+ '", ' + RED.export.links.getDynInputDynSize(node) + "}";
@@ -309,7 +312,7 @@ RED.arduino.export2 = (function () {
         else
         {
             if (node.isArray != undefined)
-                return node.isArray.name;
+                return node.isArray.newName;
             return node.name;
         }
     }
