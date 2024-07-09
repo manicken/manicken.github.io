@@ -15,43 +15,37 @@ RED.arduino.export2 = (function () {
         RED.main.SetPopOver("#btn-export-class2", "(under development)", "right");
         RED.main.SetPopOver("#btn-export-class-dev2", "(development test only)", "right");
         RED.main.SetPopOver("#btn-export-class-zip2", "(under development)", "right");
+        RED.main.SetPopOver("#btn-export-osc-simple2", "(under development)", "right")
+        RED.main.SetPopOver("#btn-export-osc-class2", "(under development)", "right")
     }
-    $('#btn-export-simple2').click(function () { Export(CPP_EXPORT_MODE.SIMPLE_FLAT); });
-    $('#btn-export-class2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE); });
-    $('#btn-export-class-dev2').click(function () { Export(CPP_EXPORT_MODE.CLASS_SINGLE); });
-    $('#btn-export-class-zip2').click(function () { Export(CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP); });
+    $('#btn-export-simple2').click(function () { Export({compositeExport:true}); });
+    $('#btn-export-class2').click(function () { Export({classExport:true}); });
+    $('#btn-export-class-dev2').click(function () { Export({compositeExport:true, classExport:true}); });
+    $('#btn-export-class-zip2').click(function () { Export({classExport:true, generateZip:true}); });
+    $('#btn-export-osc-simple2').click(function () { Export({compositeExport:true, oscExport:true}); });
+    $('#btn-export-osc-class2').click(function () { Export({classExport:true, oscExport:true}); });
     
     
     /**
      * This is the main entry point for all exports
-     * @param {CPP_EXPORT_MODE} export_mode 
+     * @param {ExportOptions} options 
      */
-    function Export(export_mode) {
+    function Export(options) {
         const t0 = performance.now();
-
         RED.storage.update(); // sort is made inside update
-
-        let options = new ExportOptions();
-        options.classExport = (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE || export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP || export_mode == CPP_EXPORT_MODE.CLASS_SINGLE);
-        options.generateZip = (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP);
-        options.compositeExport = (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT || export_mode == CPP_EXPORT_MODE.CLASS_SINGLE);
-        options.minor_increments = 
-
+        options = new ExportOptions(options); // sets other defaults
         currentExport = new CompleteExport(options);
         let coex = currentExport; // short 'alias'
         coex.allFiles.push(new ExportFile("GUI_TOOL.json", JSON.stringify(JSON.parse(coex.jsonString), null, 4))); // JSON beautifier
-        if (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT) {
+        if (options.compositeExport == true) {
             //coex.ac.staticType = true; // allways true for SIMPLE FLAT
             export_workspace(coex, RED.nodes.currentWorkspace); 
         }
-        else if (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE || export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP) {
+        else if (options.classExport == true) {
             
             //coex.allFiles.push(new ExportFile("preferences.txt", RED.arduino.board.export_arduinoIDE())); // skip for now as it don't properly work for the moment
             //coex.allFiles.push(new ExportFile("platformio.ini", RED.arduino.board.export_platformIO())); // skip for now as it don't properly work for the moment
             export_classBased(coex);
-        }
-        else if (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) {
-            export_workspace(coex, RED.nodes.currentWorkspace);
         }
         else { // failsafe
             RED.notify("Error export mode not selected", "warning", null, 3000);
@@ -59,20 +53,17 @@ RED.arduino.export2 = (function () {
         }
 
         if (coex.mixervariants != undefined && coex.mixervariants.length > 0) {
-            coex.globalCppFiles.push(...Mixers.Export.GetFiles("Mono", coex.mixervariants,(export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT)));
+            coex.globalCppFiles.push(...Mixers.Export.GetFiles("Mono", coex.mixervariants, options.compositeExport));
         }
         if (coex.mixerStereoVariants != undefined && coex.mixerStereoVariants.length > 0) {
-            coex.globalCppFiles.push(...Mixers.Export.GetFiles("Stereo", coex.mixerStereoVariants,(export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT)));
+            coex.globalCppFiles.push(...Mixers.Export.GetFiles("Stereo", coex.mixerStereoVariants, options.compositeExport));
         }
         console.error("@export as class RED.arduino.serverIsActive=" + RED.arduino.serverIsActive());
 
         // only show dialog when server is not active and not generating zip
         // or when export modes: SIMPLE_FLAT or CLASS_SINGLE
-        let useExportDialog = ((RED.arduino.settings.useExportDialog == true) ||
-                               (options.generateZip == false) || 
-                               (export_mode == CPP_EXPORT_MODE.CLASS_SINGLE) || 
-                               (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE) ||
-                               (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT));
+        let useExportDialog = true;/*((RED.arduino.settings.useExportDialog == true) ||
+                               (options.generateZip == false));*/
         coex.finalize();
         if (useExportDialog == true) 
             ShowExportDialog(coex);
@@ -80,7 +71,7 @@ RED.arduino.export2 = (function () {
         const t1 = performance.now();
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
-        if (options.generateZip == false && export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE)
+        if (options.generateZip == false)
             SendToHttpBridge(coex); // allways try to POST but not when exporting to zip
         else if (options.generateZip == true)
             GenerateZip(coex);
@@ -176,12 +167,14 @@ RED.arduino.export2 = (function () {
 
             // TODO make sure that generateAndAddExportInfo also takes care of junctions
             // TODO sort links by if they have array sources/targets
+            // i.e. use: wse.arrayAudioConnections
         }
 
         var exportFile = WorkspaceExportToExportFile(wse, coex.options);
         exportFile.header = getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.options.generateZip);
         coex.wsCppFiles.push(exportFile);
     }
+    
     /**
      * 
      * @param {WorkspaceExport} wse 
@@ -189,69 +182,35 @@ RED.arduino.export2 = (function () {
      */
     function WorkspaceExportToExportFile(wse, options)
     {
-        var AUDIO_AND_CLASS_INSTANCES_COMMENT = "// AudioStream and AudioClass instances\n";
-        var AUDIO_CONTROL_INSTANCES_COMMENT = "// AudioControl instances\n";
-        var VARIABLE_INSTANCES_COMMENT = "// Variables\n";
-
-        /** @type {string[]} */
-        var instanceLines = [];
-        /** @type {string[]} init/constructor code */
-        var initCode = [];
-        /** @type {string[]} end/destructor code */
-        var endCode = [];
-        
         console.log(wse);
-        var minorIncrement = options.classExportIdents;
-        var majorIncrement = minorIncrement * 2;
-
-        var mi_indent = TEXT.getNrOfSpaces(minorIncrement);
-        var ma_indent = TEXT.getNrOfSpaces(majorIncrement);
+        var mi_indent = TEXT.getNrOfSpaces(options.classExportIdents);
         
         var newWsCpp = new ExportFile(wse.fileName, "");
         newWsCpp.className = wse.className;
         newWsCpp.depends = wse.depends; // h4yn0nnym0u5e class depending sorter
 
         newWsCpp.body += GetClassCommentsCppCode(wse);
-        var audioObjectInstancesCppCode = GetExportObjectsCppCode(wse.audioObjects, options);
-        var audioControlObjectInstancesCppCode = GetExportObjectsCppCode(wse.audioControlObjects, options);
-        
+        var instancesCppCode = [];
+        instancesCppCode.push(...GetExportObjectsCppCode(wse.audioObjects, options, "// AudioStream and AudioClass instances\n"));
+        instancesCppCode.push(...GetExportObjectsCppCode(wse.audioControlObjects, options, "// AudioControl instances\n"));
+        instancesCppCode.push(...GetVariablesCppCode(wse, options, "// Variables\n"));
+
         if (wse.isMain == false && options.classExport==true)
         {
             newWsCpp.body += "class " + wse.className + " " + wse.ws.extraClassDeclarations +"\n{\npublic:\n";
-            if (audioObjectInstancesCppCode.length != 0) {
-                newWsCpp.body += mi_indent + AUDIO_AND_CLASS_INSTANCES_COMMENT;
-                newWsCpp.body += TEXT.incrementLines(audioObjectInstancesCppCode, mi_indent).join('\n') + "\n";
-            }
-            if (audioControlObjectInstancesCppCode.length != 0) {
-                newWsCpp.body += mi_indent + AUDIO_CONTROL_INSTANCES_COMMENT;
-                newWsCpp.body += TEXT.incrementLines(audioControlObjectInstancesCppCode, mi_indent).join('\n') + "\n";
-            }
-            if (wse.variables.length != 0) {
-                newWsCpp.body += mi_indent + VARIABLE_INSTANCES_COMMENT;
-                newWsCpp.body += TEXT.incrementLines(wse.variables, mi_indent).join('\n') + "\n";
-            }
+            newWsCpp.body += TEXT.incrementLines(instancesCppCode, mi_indent).join('\n') + "\n";
             newWsCpp.body += mi_indent + GetAudioConnectionsArrayInstanceCppCode(wse, options) + "\n";
+            newWsCpp.body += "\n";
             newWsCpp.body += TEXT.incrementLines(GetConstructorCppCode(wse, options), mi_indent).join('\n') + "\n";
-            if (wse.ws.generateCppDestructor == true)
-                newWsCpp.body += TEXT.incrementLines(GetDestructorCppCode(wse, options), mi_indent).join('\n') + "\n";
+            newWsCpp.body += TEXT.incrementLines(GetDestructorCppCode(wse, options), mi_indent).join('\n') + "\n";
             newWsCpp.body += GetClassFunctions(wse, options) + "\n";
             newWsCpp.body += "};\n"; // end of class
             newWsCpp.body += wse.eofCode.join("\n") + "\n"; // after end of class code
         }
         else
         {
-            if (audioObjectInstancesCppCode.length != 0) {
-                newWsCpp.body += AUDIO_AND_CLASS_INSTANCES_COMMENT;
-                newWsCpp.body += audioObjectInstancesCppCode.join('\n') + "\n";
-            }
-            if (audioControlObjectInstancesCppCode.length != 0) {
-                newWsCpp.body += AUDIO_CONTROL_INSTANCES_COMMENT;
-                newWsCpp.body += audioControlObjectInstancesCppCode.join('\n') + "\n";
-            }
-            if (wse.variables.length != 0) {
-                newWsCpp.body += VARIABLE_INSTANCES_COMMENT;
-                newWsCpp.body += wse.variables.join('\n')  + "\n";
-            }
+            newWsCpp.body += instancesCppCode.join('\n') + "\n";
+            newWsCpp.body += "\n";
             newWsCpp.body += GetNonArrayAudioConnectionsCppCode(wse, options).join('\n') + "\n"; // this would contain all audio connections when exporting to simple plain export
             newWsCpp.body += GetClassFunctions(wse, options);
         }
@@ -262,6 +221,20 @@ RED.arduino.export2 = (function () {
         
         return newWsCpp;
     }
+
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetVariablesCppCode(wse, options, comment)
+    {
+        if (wse.variables.length == 0) return [];
+        var cpp = [];
+        cpp.push(comment);
+        cpp.push(...wse.variables);
+        return cpp;
+    }
+
     /**
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
@@ -277,6 +250,7 @@ RED.arduino.export2 = (function () {
         }
         return "";
     }
+
     /**
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
@@ -289,6 +263,7 @@ RED.arduino.export2 = (function () {
         }
         return cpp;
     }
+
     /**
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
@@ -299,12 +274,13 @@ RED.arduino.export2 = (function () {
         for (var i = 0; i < wse.nonArrayAudioConnections.length; i++) {
             //console.log(wse.nonArrayAudioConnections[i]);
             if (wse.nonArrayAudioConnections[i].invalid == undefined)
-                cpp.push(wse.nonArrayAudioConnections[i].GetCppCode(options));
+                cpp.push(wse.nonArrayAudioConnections[i].GetCppCode(options, i));
             else
                 cpp.push(wse.nonArrayAudioConnections[i].invalid); // contains info as a comment
         }
         return cpp;
     }
+
     /**
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
@@ -334,12 +310,14 @@ RED.arduino.export2 = (function () {
         cpp.push("}\n");
         return cpp;
     }
+
     /**
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
      */
     function GetDestructorCppCode(wse, options)
     {
+        if (wse.ws.generateCppDestructor == false) return [];
         var cpp = [];
         var mi_indent = TEXT.getNrOfSpaces(options.classExportIdents);
         cpp.push("~" + wse.className + "() { // destructor (this is called when the class-object is deleted)");
@@ -353,6 +331,7 @@ RED.arduino.export2 = (function () {
         cpp.push("}");
         return cpp;
     }
+
     /**
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
@@ -366,6 +345,7 @@ RED.arduino.export2 = (function () {
         var comment = "// total patchCordCount:" + wse.totalAudioConnectionCount + " including array typed ones.";
         return `${typeName} ${padding} ${name} ${comment}`;
     }
+
     /**
      * @param {WorkspaceExport} wse 
      */
@@ -376,20 +356,24 @@ RED.arduino.export2 = (function () {
         else
             return "";
     }
+
     /**
      * @param {ExportObject[]} exportObjects 
      * @param {ExportOptions} options 
      * @returns 
      */
-    function GetExportObjectsCppCode(exportObjects, options)
+    function GetExportObjectsCppCode(exportObjects, options, comment)
     {
         var padding =  new ExportObjectPaddingSizes(options.instanceDeclarationsMinPadding, 0, exportObjects);
         var cpp = [];
+        if (exportObjects.length == 0) return cpp;
+        cpp.push(comment);
         for (var i = 0; i < exportObjects.length; i++) {
             cpp.push(exportObjects[i].Finalize(padding));
         }
         return cpp;
     }
+
     /**
      * @param {REDNode} n 
      * @param {WorkspaceExport} wse 
@@ -661,9 +645,7 @@ RED.arduino.export2 = (function () {
         cpp += getCppFooter();
         console.log(exported.join(', '));
 
-        coex.compositeContents = cpp.split('\n\n').join('\n').split('\t').join("    "); // removes some double newlines for now
-        //return 
-
+        coex.compositeContents = cpp;
     }
 
     function getCppHeader(jsonString, includes, generateZip) {
@@ -680,10 +662,10 @@ RED.arduino.export2 = (function () {
                 + "// JSON string:" + jsonString + "\n\n";
         return returnStr;
     }
+
     function getCppFooter() {
         return "// " + RED.arduino.settings.ProjectName + ": end automatically generated code\n";
     }
-    
 
     return {
         init,
@@ -694,46 +676,3 @@ RED.arduino.export2 = (function () {
         get currentExport() {return currentExport;} 
     };
 })();
-
-if (TEXT == undefined)
-    var TEXT = {};
-/**
-* this take a multiline text, 
-* break it up into linearray, 
-* @param {string} text text seperated by newlines
-* @param {string|number} increment if this is a string then that is added before every line, if it's a number then it specifies the number of spaces added before every line
-* @returns {string} string
-*/
-TEXT.incrementTextLines = function(text, increment) {
-    var lines = text.split("\n");
-    var newText = "";
-    if (typeof increment == "number")
-        increment = TEXT.getNrOfSpaces(increment);
-    for (var i = 0; i < lines.length; i++) {
-        newText += increment + lines[i] + "\n";
-    }
-    return newText;
-};
-/**
- * 
- * @param {string[]} lines 
- * @param {string|number} increment if this is a string then that is added before every line, if it's a number then it specifies the number of spaces added before every line
- * @returns 
- */
-TEXT.incrementLines = function(lines, increment)
-{
-    var newLines = [];
-    if (typeof increment == "number")
-        increment = TEXT.getNrOfSpaces(increment);
-    for (var i = 0; i < lines.length; i++) {
-        newLines.push(increment + lines[i]);
-    }
-    return newLines;
-}
-
-TEXT.getNrOfSpaces = function(count) {
-    var str = "";
-    for (var i = 0; i < count; i++)
-        str += " ";
-    return str;
-}

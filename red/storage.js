@@ -9,7 +9,7 @@ RED.storage = (function() {
     const STORAGE_ITEM_NAME = "audio_library_guitool";
 
 	function update() {
-		console.trace();
+		//console.trace();
 		if (dontSave == true) return; // this prevents saves while applying settings
 		 
 		//RED.nodes.addClassTabsToPalette(); //Jannik

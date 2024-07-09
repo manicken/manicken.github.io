@@ -43,6 +43,21 @@ class ExportOptions
 
     /** @type {boolean} obsolete, soon to be removed from here */
     UseAudioMixerTemplate = RED.arduino.settings.UseAudioMixerTemplate;
+
+    /** 
+     * @param {ExportOptions} o
+    */
+    constructor(o)
+    {
+        if (o == undefined) return;
+        this.generateZip = o.generateZip!=undefined?o.generateZip:false;
+        this.classExport = o.classExport!=undefined?o.classExport:false;
+        this.compositeExport = o.compositeExport!=undefined?o.compositeExport:false;
+        this.oscExport = o.oscExport!=undefined?o.oscExport:false;
+        this.classExportIdents = o.classExportIdents!=undefined?o.classExportIdents:4;
+        this.dynamicConnections = o.dynamicConnections!=undefined?o.dynamicConnections:true;
+
+    }
 }
 
 class ExportObjectPaddingSizes
@@ -154,13 +169,13 @@ class ExportAudioConnection
     
     MakeOSCName()
     {
-        var result = this.srcName + '_' + this.srcPort + '_' + this.dstName + '_' + this.dstPort;
+        var result = this.source.name + '_' + this.sourcePort + '_' + this.target.name + '_' + this.targetPort;
 		result.replace("[","${").replace("]","}").replace(".","_");
         return result;
     }
 
     /** @param {ExportOptions} options */
-    GetCppCode(options)
+    GetCppCode(options, index)
     {
         // in development, 
         // don't care about classExport or osc export in options yet
@@ -169,12 +184,20 @@ class ExportAudioConnection
 
         var ret = `${srcPath}, ${this.sourcePort}, ${tgtPath}, ${this.targetPort}`;
         if (options.oscExport == true)
-            ret = MakeOSCName() + ", " + ret;
-        if (options.dynamicConnections == true)
-            ret = "patchCord[pci++].connect(" + ret + ");";
-        else {
+            ret = '"' + this.MakeOSCName() + '", ' + ret;
+        if (options.classExport == true)
+        {
+            if (options.dynamicConnections == true)
+                ret = "patchCord[pci++].connect(" + ret + ");";
+            else {
+                var typeName = RED.arduino.export2.getAudioConnectionTypeName(options);
+                ret = `patchCord[pci++] = new ${typeName}(${ret});`;
+            }
+        }
+        else
+        {
             var typeName = RED.arduino.export2.getAudioConnectionTypeName(options);
-            ret = `patchCord[pci++] = new ${typeName}(${ret});`;
+            ret = typeName.padEnd(32,' ') + "  patchCord" + (index+1) + "(" + ret + ");";
         }
         return ret;
     }
