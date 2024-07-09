@@ -68,7 +68,7 @@ class ExportObjectPaddingSizes
         this.name = nameMinSize;
     }
 }
-
+// TODO: maybe rename this to something more logical
 class ExportObject
 {
     /** @type {String} */
@@ -99,6 +99,8 @@ class ExportObject
 
 class ExportAudioConnection
 {
+    /** @type {REDLink} */
+    link = {};
     /** @type {REDLinkInfo} */
     info = {};
     /** @type {number} */
@@ -132,6 +134,7 @@ class ExportAudioConnection
      * @param {REDLink} link
     */
     constructor(link) {
+        this.link = link;
         this.info = link.info;
         this.tabOutPortIndex = undefined;
         this.groupFirstLink = link.groupFirstLink;
@@ -148,6 +151,13 @@ class ExportAudioConnection
         this.targetPort = parseInt(link.targetPort);
         this.targetName = link.targetName;
     }
+    
+    MakeOSCName()
+    {
+        var result = this.srcName + '_' + this.srcPort + '_' + this.dstName + '_' + this.dstPort;
+		result.replace("[","${").replace("]","}").replace(".","_");
+        return result;
+    }
 
     /** @param {ExportOptions} options */
     GetCppCode(options)
@@ -157,7 +167,15 @@ class ExportAudioConnection
         var srcPath = ((this.sourcePath.length!=0)?(this.sourcePath.join('.')+"."):"") + this.source.name;
         var tgtPath = ((this.targetPath.length!=0)?(this.targetPath.join('.')+"."):"") + this.target.name;
 
-        var ret = `(${srcPath}, ${this.sourcePort}, ${tgtPath}, ${this.targetPort});`;
+        var ret = `${srcPath}, ${this.sourcePort}, ${tgtPath}, ${this.targetPort}`;
+        if (options.oscExport == true)
+            ret = MakeOSCName() + ", " + ret;
+        if (options.dynamicConnections == true)
+            ret = "patchCord[pci++].connect(" + ret + ");";
+        else {
+            var typeName = RED.arduino.export2.getAudioConnectionTypeName(options);
+            ret = `patchCord[pci++] = new ${typeName}(${ret});`;
+        }
         return ret;
     }
 }
@@ -173,22 +191,23 @@ class ExportArrayAudioConnections
     /** @param {ExportOptions} options */
     GetCppCode(options)
     {
-        var cpp = "";
+        // TODO maybe allow multilevel arrays
+        var cpp = [];
         if (options.classExport==true) {
-            cpp += options.classExportIdents + "for (int i = 0; i < " + this.arraySize + "; i++) {\n";
+            cpp.push("for (int i = 0; i < " + this.arraySize + "; i++) {");
         }
+        var mi_indent = TEXT.getNrOfSpaces(options.classExportIdents);
         for (var i = 0; i < this.items.length; i++) {
-            cpp += ((options.classExport==true)?classExportIdents.classExportIdents:"") +  this.items[i].GetCppCode(options)
+            cpp.push(mi_indent + this.items[i].GetCppCode(options));
         }
-        //cpp += this.arrayAudioConnections.join('\n');
         if (options.classExport==true) {
-            cpp += classExportIdents.classExportIdents + "}\n";
+            cpp.push("}");
         }
         return cpp;
     }
 }
 
-class WsExport
+class WorkspaceExport
 {
     /** @type {REDWorkspace} */
     ws = {};
@@ -230,7 +249,12 @@ class WsExport
      */
     arrayAudioConnections = [];
 
-    totalAudioConnectionCount = 0;
+    get totalAudioConnectionCount() { 
+        var c = this.nonArrayAudioConnections.length;
+        for (var i = 0; i< this.arrayAudioConnections.length; i++)
+            c += this.arrayAudioConnections[i].items.length;
+        return c;
+    }
 
     /** 
      * used by (h4yn0nnym0u5e) depend order
@@ -263,138 +287,6 @@ class WsExport
         else {
             this.fileName = ws.label + ".h";
         }
-    }
-
-    
-    
-    /**
-     * used to generate a 'wsfile' object
-     * from all collected data
-     * @param {ExportOptions} options
-     */
-    generateWsFile(options)
-    {
-        console.log(this);
-        var minorIncrement = options.classExportIdents;
-        var majorIncrement = minorIncrement * 2;
-
-        var mi_indent = TEXT.getNrOfSpaces(minorIncrement);
-        var ma_indent = TEXT.getNrOfSpaces(majorIncrement);
-        
-        var newWsCpp = new ExportFile(this.fileName, "");
-        newWsCpp.className = this.className;
-        newWsCpp.depends = this.depends; // h4yn0nnym0u5e class depending sorter
-        
-
-        // ######### MASTER TODO ###########
-        // seperate following into different functions for easier to follow code
-
-        if (this.classComments.length > 0)
-            newWsCpp.body += "/**\n" + this.classComments + " */\n"; 
-        
-        if (this.isMain == false && options.classExport==true)
-            newWsCpp.body += "class " + this.className + " " + this.ws.extraClassDeclarations +"\n{\npublic:\n";
-
-
-        // first get the padding so that we can make the generated code pretty and structured
-        var padding =  new ExportObjectPaddingSizes(options.instanceDeclarationsMinPadding, 0, this.audioObjects);
-        // add all audio object instances
-        for (var i = 0; i < this.audioObjects.length; i++) {
-            newWsCpp.body += ((options.classExport==true)?mi_indent:"") + this.audioObjects[i].Finalize(padding) + "\n";
-        }
-
-        // get the padding so that we can make the generated code pretty and structured
-        padding = new ExportObjectPaddingSizes(options.instanceDeclarationsMinPadding, 0, this.audioControlObjects);
-        // add all audio control object instances and non IO classes
-        for (var i = 0; i < this.audioControlObjects.length; i++) {
-            newWsCpp.body += ((options.classExport==true)?mi_indent:"") + this.audioControlObjects[i].Finalize(padding) + "\n";
-        }
-
-        if (this.variables.join("\n").trim().length > 0) {
-            if (newWsCpp.isMain == false && options.classExport==true)
-                newWsCpp.body += TEXT.incrementLines(this.variables, minorIncrement);
-            else
-                newWsCpp.body += this.variables.join("\n");
-        }
-
-        if (this.totalAudioConnectionCount != 0 && options.classExport == true) {
-            newWsCpp.body += mi_indent + RED.arduino.export2.getAudioConnectionTypeName(options) + " ";
-            newWsCpp.body += TEXT.getNrOfSpaces(32 - RED.arduino.export2.getAudioConnectionTypeName(options).length);
-            newWsCpp.body += "*patchCord[" + this.totalAudioConnectionCount + "]; // total patchCordCount:" + this.totalAudioConnectionCount + " including array typed ones.\n";
-        }
-
-        if (options.classExport == true) {
-            // generate constructor code
-            newWsCpp.body += "\n// constructor (this is called when class-object is created)\n";
-            if (options.oscExport == false)
-                newWsCpp.body += mi_indent + this.className + "() { \n";
-            else {
-                newWsCpp.body += mi_indent + this.className + "(const char* _name,OSCAudioGroup* parent) : \n";
-                newWsCpp.body += mi_indent + "  OSCAudioGroup(_name,parent), // construct our base class instance\n";
-            }
-
-            if (this.totalAudioConnectionCount != 0)
-                newWsCpp.body += mi_indent + "int pci = 0; // used only for adding new patchcords\n"
-            if (options.oscExport == true)
-                newWsCpp.body += mi_indent + "OSCAudioGroup& grp = *this;\n"
-            
-            newWsCpp.body += "\n";
-        }
-        
-        newWsCpp.body += "\n\n";
-
-        for (var i = 0; i < this.nonArrayAudioConnections.length; i++) {
-            //console.log(this.nonArrayAudioConnections[i]);
-            if (this.nonArrayAudioConnections[i].invalid == undefined)
-                newWsCpp.body += (options.classExport==true?ma_indent:"") + this.nonArrayAudioConnections[i].GetCppCode(options) + "\n";
-            else
-                newWsCpp.body += (options.classExport==true?ma_indent:"") + this.nonArrayAudioConnections[i].invalid; // contains info as a comment
-        }
-
-        for (var i = 0; i < this.arrayAudioConnections.length; i++) {
-            newWsCpp.body += this.arrayAudioConnections[i].GetCppCode(options);
-        }
-
-        if (options.classExport==true) {
-            newWsCpp.body += TEXT.incrementLines(this.constructorCode, majorIncrement);
-            newWsCpp.body += mi_indent + "}\n";
-        }
-        
-        if (options.classExport==true) {
-            
-            // generate destructor code if enabled
-            if (this.ws.generateCppDestructor == true) {
-                newWsCpp.body += "\n" + mi_indent + "~" + this.className + "() { // destructor (this is called when the class-object is deleted)\n";
-                if (this.totalAudioConnectionCount != 0) {
-                    newWsCpp.body += ma_indent + "for (int i = 0; i < " + this.totalAudioConnectionCount + "; i++) {\n";
-                    newWsCpp.body += ma_indent + mi_indent + "patchCord[i]->disconnect();\n"
-                    newWsCpp.body += ma_indent + mi_indent + "delete patchCord[i];\n"
-                    newWsCpp.body += ma_indent + "}\n";
-                }
-                newWsCpp.body += TEXT.incrementLines(this.destructorCode, majorIncrement);
-                newWsCpp.body += mi_indent + "}\n";
-            }
-        }
-
-        var classFunctions = this.functions.join('\n');
-        if (classFunctions.trim().length > 0) {
-            if (newWsCpp.isMain == false && options.classExport==true)
-                newWsCpp.body += "\n" + TEXT.incrementLines(classFunctions, minorIncrement);
-            else
-                newWsCpp.body += "\n" + classFunctions;
-        }
-        if (options.classExport==true) {
-            if (newWsCpp.isMain == false) {// don't include end of class marker when doing main.cpp 
-                newWsCpp.body += "};\n"; // end of class
-                newWsCpp.body += this.eofCode.join("\n"); // after end of class
-            }
-        }
-
-        //newWsCpp.header = RED.arduino.export2.getCppHeader(ce.jsonString, this.workspaceIncludes.join("\n") + "\n ", ce.generateZip);
-        
-        newWsCpp.footer = RED.arduino.export2.getCppFooter();
-        
-        return newWsCpp;
     }
 }
 

@@ -35,6 +35,7 @@ RED.arduino.export2 = (function () {
         options.classExport = (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE || export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP || export_mode == CPP_EXPORT_MODE.CLASS_SINGLE);
         options.generateZip = (export_mode == CPP_EXPORT_MODE.CLASS_COMPLETE_ZIP);
         options.compositeExport = (export_mode == CPP_EXPORT_MODE.SIMPLE_FLAT || export_mode == CPP_EXPORT_MODE.CLASS_SINGLE);
+        options.minor_increments = 
 
         currentExport = new CompleteExport(options);
         let coex = currentExport; // short 'alias'
@@ -109,7 +110,7 @@ RED.arduino.export2 = (function () {
      * @param {REDWorkspace} ws
      */
     function export_workspace(coex, ws) {
-        var wse = new WsExport(ws);
+        var wse = new WorkspaceExport(ws);
         coex.keywords.push({token:ws.label, type:"KEYWORD2"});
 
         // add nodes (Audio objects, special nodes, class nodes)
@@ -176,15 +177,222 @@ RED.arduino.export2 = (function () {
             // TODO make sure that generateAndAddExportInfo also takes care of junctions
             // TODO sort links by if they have array sources/targets
         }
-        //wse.totalAudioConnectionCount = coex.ac.totalCount;
-        var exportFile = wse.generateWsFile(coex.options);
+
+        var exportFile = WorkspaceExportToExportFile(wse, coex.options);
         exportFile.header = getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.options.generateZip);
         coex.wsCppFiles.push(exportFile);
     }
     /**
      * 
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options
+     */
+    function WorkspaceExportToExportFile(wse, options)
+    {
+        var AUDIO_AND_CLASS_INSTANCES_COMMENT = "// AudioStream and AudioClass instances\n";
+        var AUDIO_CONTROL_INSTANCES_COMMENT = "// AudioControl instances\n";
+        var VARIABLE_INSTANCES_COMMENT = "// Variables\n";
+
+        /** @type {string[]} */
+        var instanceLines = [];
+        /** @type {string[]} init/constructor code */
+        var initCode = [];
+        /** @type {string[]} end/destructor code */
+        var endCode = [];
+        
+        console.log(wse);
+        var minorIncrement = options.classExportIdents;
+        var majorIncrement = minorIncrement * 2;
+
+        var mi_indent = TEXT.getNrOfSpaces(minorIncrement);
+        var ma_indent = TEXT.getNrOfSpaces(majorIncrement);
+        
+        var newWsCpp = new ExportFile(wse.fileName, "");
+        newWsCpp.className = wse.className;
+        newWsCpp.depends = wse.depends; // h4yn0nnym0u5e class depending sorter
+
+        newWsCpp.body += GetClassCommentsCppCode(wse);
+        var audioObjectInstancesCppCode = GetExportObjectsCppCode(wse.audioObjects, options);
+        var audioControlObjectInstancesCppCode = GetExportObjectsCppCode(wse.audioControlObjects, options);
+        
+        if (wse.isMain == false && options.classExport==true)
+        {
+            newWsCpp.body += "class " + wse.className + " " + wse.ws.extraClassDeclarations +"\n{\npublic:\n";
+            if (audioObjectInstancesCppCode.length != 0) {
+                newWsCpp.body += mi_indent + AUDIO_AND_CLASS_INSTANCES_COMMENT;
+                newWsCpp.body += TEXT.incrementLines(audioObjectInstancesCppCode, mi_indent).join('\n') + "\n";
+            }
+            if (audioControlObjectInstancesCppCode.length != 0) {
+                newWsCpp.body += mi_indent + AUDIO_CONTROL_INSTANCES_COMMENT;
+                newWsCpp.body += TEXT.incrementLines(audioControlObjectInstancesCppCode, mi_indent).join('\n') + "\n";
+            }
+            if (wse.variables.length != 0) {
+                newWsCpp.body += mi_indent + VARIABLE_INSTANCES_COMMENT;
+                newWsCpp.body += TEXT.incrementLines(wse.variables, mi_indent).join('\n') + "\n";
+            }
+            newWsCpp.body += mi_indent + GetAudioConnectionsArrayInstanceCppCode(wse, options) + "\n";
+            newWsCpp.body += TEXT.incrementLines(GetConstructorCppCode(wse, options), mi_indent).join('\n') + "\n";
+            if (wse.ws.generateCppDestructor == true)
+                newWsCpp.body += TEXT.incrementLines(GetDestructorCppCode(wse, options), mi_indent).join('\n') + "\n";
+            newWsCpp.body += GetClassFunctions(wse, options) + "\n";
+            newWsCpp.body += "};\n"; // end of class
+            newWsCpp.body += wse.eofCode.join("\n") + "\n"; // after end of class code
+        }
+        else
+        {
+            if (audioObjectInstancesCppCode.length != 0) {
+                newWsCpp.body += AUDIO_AND_CLASS_INSTANCES_COMMENT;
+                newWsCpp.body += audioObjectInstancesCppCode.join('\n') + "\n";
+            }
+            if (audioControlObjectInstancesCppCode.length != 0) {
+                newWsCpp.body += AUDIO_CONTROL_INSTANCES_COMMENT;
+                newWsCpp.body += audioControlObjectInstancesCppCode.join('\n') + "\n";
+            }
+            if (wse.variables.length != 0) {
+                newWsCpp.body += VARIABLE_INSTANCES_COMMENT;
+                newWsCpp.body += wse.variables.join('\n')  + "\n";
+            }
+            newWsCpp.body += GetNonArrayAudioConnectionsCppCode(wse, options).join('\n') + "\n"; // this would contain all audio connections when exporting to simple plain export
+            newWsCpp.body += GetClassFunctions(wse, options);
+        }
+
+        //newWsCpp.header = RED.arduino.export2.getCppHeader(ce.jsonString, wse.workspaceIncludes.join("\n") + "\n ", ce.generateZip);
+        
+        newWsCpp.footer = RED.arduino.export2.getCppFooter();
+        
+        return newWsCpp;
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetClassFunctions(wse, options)
+    {
+        var classFunctions = wse.functions.join('\n');
+        if (classFunctions.trim().length > 0) {
+            if (newWsCpp.isMain == false && options.classExport==true)
+                return "\n" + TEXT.incrementTextLines(classFunctions, options.classExportIdents);
+            else
+                return "\n" + classFunctions;
+        }
+        return "";
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetArrayAudioConnectionsCppCode(wse, options)
+    {
+        var cpp = [];
+        for (var i = 0; i < wse.arrayAudioConnections.length; i++) {
+            cpp.push(wse.arrayAudioConnections[i].GetCppCode(options));
+        }
+        return cpp;
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetNonArrayAudioConnectionsCppCode(wse, options)
+    {
+        var cpp = [];
+        for (var i = 0; i < wse.nonArrayAudioConnections.length; i++) {
+            //console.log(wse.nonArrayAudioConnections[i]);
+            if (wse.nonArrayAudioConnections[i].invalid == undefined)
+                cpp.push(wse.nonArrayAudioConnections[i].GetCppCode(options));
+            else
+                cpp.push(wse.nonArrayAudioConnections[i].invalid); // contains info as a comment
+        }
+        return cpp;
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetConstructorCppCode(wse, options)
+    {
+        var cpp = [];
+        var constructorBody = [];
+        var mi_indent = TEXT.getNrOfSpaces(options.classExportIdents);
+
+        constructorBody.push(...TEXT.incrementLines(GetNonArrayAudioConnectionsCppCode(wse, options), mi_indent));
+        constructorBody.push(...TEXT.incrementLines(GetArrayAudioConnectionsCppCode(wse, options), mi_indent));
+        constructorBody.push(...TEXT.incrementLines(wse.constructorCode, mi_indent));
+        if (constructorBody.length == 0 && options.oscExport == false) return []; // skip generating empty constructors for non OSC exports
+
+        if (options.oscExport == false)
+            cpp.push(wse.className + "() {");
+        else {
+            cpp.push(wse.className + "(const char* _name,OSCAudioGroup* parent) : ");
+            cpp.push("  OSCAudioGroup(_name,parent), // construct our base class instance");
+            cpp.push(mi_indent + "OSCAudioGroup& grp = *this;");
+        }
+
+        if (wse.totalAudioConnectionCount != 0)
+            cpp.push(mi_indent + "int pci = 0; // used only for adding new patchcords");
+        cpp.push(...constructorBody);
+        cpp.push("}\n");
+        return cpp;
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetDestructorCppCode(wse, options)
+    {
+        var cpp = [];
+        var mi_indent = TEXT.getNrOfSpaces(options.classExportIdents);
+        cpp.push("~" + wse.className + "() { // destructor (this is called when the class-object is deleted)");
+        if (wse.totalAudioConnectionCount != 0) {
+            cpp.push(mi_indent + "for (int i = 0; i < " + wse.totalAudioConnectionCount + "; i++) {");
+            cpp.push(mi_indent + mi_indent + "patchCord[i]->disconnect();");
+            cpp.push(mi_indent + mi_indent + "delete patchCord[i];");
+            cpp.push(mi_indent + "}");
+        }
+        cpp.push(...TEXT.incrementLines(wse.destructorCode, mi_indent));
+        cpp.push("}");
+        return cpp;
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     * @param {ExportOptions} options 
+     */
+    function GetAudioConnectionsArrayInstanceCppCode(wse, options) 
+    {
+        if (wse.totalAudioConnectionCount == 0) return "";
+        var typeName = getAudioConnectionTypeName(options);
+        var padding = TEXT.getNrOfSpaces(32 - typeName.length);
+        var name = (options.dynamicConnections==false?"*":"") + "patchCord[" + wse.totalAudioConnectionCount + "];";
+        var comment = "// total patchCordCount:" + wse.totalAudioConnectionCount + " including array typed ones.";
+        return `${typeName} ${padding} ${name} ${comment}`;
+    }
+    /**
+     * @param {WorkspaceExport} wse 
+     */
+    function GetClassCommentsCppCode(wse)
+    {
+        if (wse.classComments.length > 0)
+            return "/**\n" + wse.classComments.join('\n  *') + " */\n";
+        else
+            return "";
+    }
+    /**
+     * @param {ExportObject[]} exportObjects 
+     * @param {ExportOptions} options 
+     * @returns 
+     */
+    function GetExportObjectsCppCode(exportObjects, options)
+    {
+        var padding =  new ExportObjectPaddingSizes(options.instanceDeclarationsMinPadding, 0, exportObjects);
+        var cpp = [];
+        for (var i = 0; i < exportObjects.length; i++) {
+            cpp.push(exportObjects[i].Finalize(padding));
+        }
+        return cpp;
+    }
+    /**
      * @param {REDNode} n 
-     * @param {WsExport} wse 
+     * @param {WorkspaceExport} wse 
      * @param {CompleteExport} completeExport 
      * @returns 
      */
@@ -492,17 +700,12 @@ if (TEXT == undefined)
 /**
 * this take a multiline text, 
 * break it up into linearray, 
-* then if increment is a string then that is added before every line, if increment is a number then it specifies the number of spaces added before every line
-* @param {string|string[]} text this can either be a text seperated by newlines or just a array with all lines allready seperated
-* @param {*} increment if this is a string then that is added before every line, if it's a number then it specifies the number of spaces added before every line
+* @param {string} text text seperated by newlines
+* @param {string|number} increment if this is a string then that is added before every line, if it's a number then it specifies the number of spaces added before every line
+* @returns {string} string
 */
-TEXT.incrementLines = function(text, increment) {
-    //console.trace(Array.isArray(text));
-    //console.log(typeof text);
-    if (typeof text == "string")
-        var lines = text.split("\n");
-    else
-        var lines = text; // is allready a array
+TEXT.incrementTextLines = function(text, increment) {
+    var lines = text.split("\n");
     var newText = "";
     if (typeof increment == "number")
         increment = TEXT.getNrOfSpaces(increment);
@@ -511,6 +714,22 @@ TEXT.incrementLines = function(text, increment) {
     }
     return newText;
 };
+/**
+ * 
+ * @param {string[]} lines 
+ * @param {string|number} increment if this is a string then that is added before every line, if it's a number then it specifies the number of spaces added before every line
+ * @returns 
+ */
+TEXT.incrementLines = function(lines, increment)
+{
+    var newLines = [];
+    if (typeof increment == "number")
+        increment = TEXT.getNrOfSpaces(increment);
+    for (var i = 0; i < lines.length; i++) {
+        newLines.push(increment + lines[i]);
+    }
+    return newLines;
+}
 
 TEXT.getNrOfSpaces = function(count) {
     var str = "";
