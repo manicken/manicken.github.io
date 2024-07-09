@@ -127,8 +127,9 @@ RED.arduino.export2 = (function () {
                 // for future implementation
             }
             // Audio Control/class node without any IO
-            // TODO. to make objects that don't have any io have a special def identifier
+            // TODO. add special identifier to AudioControl objects
             // both to make this code clearer and to sort non Audio Control objects in a different list
+
             else if (/*(n.outputs <= 0) && (n.inputs <= 0) && */(n._def.inputs <= 0) && (n._def.outputs <= 0)) { 
                 var typeName = getTypeName(n, coex.options);
                 var name = getName(n, coex.options);
@@ -174,7 +175,7 @@ RED.arduino.export2 = (function () {
         exportFile.header = getCppHeader(coex.jsonString, wse.workspaceIncludes.join("\n") + "\n ", coex.options.generateZip);
         coex.wsCppFiles.push(exportFile);
     }
-    
+
     /**
      * 
      * @param {WorkspaceExport} wse 
@@ -375,76 +376,76 @@ RED.arduino.export2 = (function () {
     }
 
     /**
-     * @param {REDNode} n 
+     * @param {REDNode} node 
      * @param {WorkspaceExport} wse 
      * @param {CompleteExport} completeExport 
      * @returns 
      */
-    function checkAndAddNonAudioObject(n,wse,completeExport) {
-        if (n.type == "ClassComment") {
-            wse.classComments.push(" * " + n.name);
+    function checkAndAddNonAudioObject(node,wse,completeExport) {
+        if (node.type == "ClassComment") {
+            wse.classComments.push(" * " + node.name);
         }
-        else if (n.type == "Function") {
-            wse.functions.push(n.comment); // we use comment field for function-data
+        else if (node.type == "Function") {
+            wse.functions.push(node.comment); // we use comment field for function-data
         }
-        else if (n.type == "Variables") {
-            wse.variables.push(n.comment); // we use comment field for vars-data
+        else if (node.type == "Variables") {
+            wse.variables.push(node.comment); // we use comment field for vars-data
         }
-        else if (n.type == "PointerArray") {// this is special thingy that was before real-node, now it's obsolete, it only generates more code
-            wse.arrayNodes.push({ type: n.objectType, name: n.name, cppCode: n.arrayItems, objectCount: n.arrayItems.split(",").length });
+        else if (node.type == "PointerArray") {// this is special thingy that was before real-node, now it's obsolete, it only generates more code
+            wse.arrayNodes.push({ type: node.objectType, name: node.name, cppCode: node.arrayItems, objectCount: node.arrayItems.split(",").length });
         }
-        else if (n._def.classWs != undefined) {
-            var includeName = '#include "' + n.type + '.h"';
+        else if (node._def.classWs != undefined) {
+            var includeName = '#include "' + node.type + '.h"';
             if (!wse.workspaceIncludes.includes(includeName)) wse.workspaceIncludes.push(includeName);
             return false;
         }
-        else if (n.type == "IncludeDef") {
-            var includeName = '#include ' + n.name;
+        else if (node.type == "IncludeDef") {
+            var includeName = '#include ' + node.name;
             if (!wse.userIncludes.includes(includeName)) wse.userIncludes.push(includeName);
         }
-        else if (n.type == "ConstValue") {
-            wse.variables.push("const static " + n.valueType + " " + n.name + " = " + n.value + ";");
+        else if (node.type == "ConstValue") {
+            wse.variables.push("const static " + node.valueType + " " + node.name + " = " + node.value + ";");
         }
-        else if (n.type == "ConstructorCode") {
-            wse.constructorCode.push(n.comment);
+        else if (node.type == "ConstructorCode") {
+            wse.constructorCode.push(node.comment);
         }
-        else if (n.type == "DestructorCode") {
-            wse.destructorCode.push(n.comment);
+        else if (node.type == "DestructorCode") {
+            wse.destructorCode.push(node.comment);
         }
-        else if (n.type == "EndOfFileCode") {
-            wse.eofCode.push(n.comment);
+        else if (node.type == "EndOfFileCode") {
+            wse.eofCode.push(node.comment);
         }
-        else if (n.type == "CodeFile") // very special case
+        else if (node.type == "CodeFile") // very special case
         {
-            if (n.comment.length != 0) {
-                var wsFile = new ExportFile(n.name, n.comment);
-                wsFile.header = "\n// ****** Start Of Included File:" + n.name + " ****** \n";
-                wsFile.footer = "\n// ****** End Of Included file:" + n.name + " ******\n";
+            if (node.comment.length != 0) {
+                var wsFile = new ExportFile(node.name, node.comment);
+                wsFile.header = "\n// ****** Start Of Included File:" + node.name + " ****** \n";
+                wsFile.footer = "\n// ****** End Of Included file:" + node.name + " ******\n";
                 completeExport.globalCppFiles.push(wsFile);
             }
 
-            var includeName = '#include "' + n.name + '"';
+            var includeName = '#include "' + node.name + '"';
             if (includeName.toLowerCase().endsWith(".c") || includeName.toLowerCase().endsWith(".cpp")) return true; // return true because type taken care of
 
             if (!wse.userIncludes.includes(includeName)) wse.userIncludes.push(includeName);
         }
-        else if (n.type == "DontRemoveCodeFiles") {
-            var files = n.comment.split("\n");
+        else if (node.type == "DontRemoveCodeFiles") {
+            var files = node.comment.split("\n");
             for (var fi = 0; fi < files.length; fi++) {
                 var wsFile = new ExportFile(files[fi].trim(), "");
                 wsFile.overwrite_file = false;
                 completeExport.allFiles.push(wsFile); // push special files to the beginning 
             }
         }
-        else if (n.type == "Comment") {
+        else if (node.type == "Comment") {
             // don't do anything with comments for now, they are mostly visual objects to comment things
             // maybe TODO bind a comment to a object, then the comment could be added to that object 
         }
-        else if (n.type == "group") {
+        else if (node.type == "group") {
             // don't do anything with groups, they are only virtual objects
             // future TODO have group to represent class for simple projects, or to show the contents of class objects directly
         }
-        else if (n._def.nonObject != undefined) {
+        else if (node._def.nonObject != undefined) {
             // this represents other virtual objects:
             // Junctions, TabInput, TabOutput, BusJoin, BusSplit, LinkIn, LinkOut
         }
