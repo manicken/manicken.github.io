@@ -177,6 +177,8 @@ class ExportAudioConnection
     /** @param {ExportOptions} options */
     GetCppCode(options, index)
     {
+        // TODO take care of array thingy situations
+        
         // in development, 
         // don't care about classExport or osc export in options yet
         var srcPath = ((this.sourcePath.length!=0)?(this.sourcePath.join('.')+"."):"") + this.source.name;
@@ -201,18 +203,9 @@ class ExportAudioConnection
         }
         return ret;
     }
-}
-
-/** using this class allows different size arrays to be defined in one class */
-class ExportArrayAudioConnections
-{
-    /** @type {ExportAudioConnection[]} */
-    items = [];
-    /** @type {number} */
-    arraySize = 0;
 
     /** @param {ExportOptions} options */
-    GetCppCode(options)
+    GetCppCodeWhenArray(options)
     {
         // TODO maybe allow multilevel arrays
         var cpp = [];
@@ -256,26 +249,24 @@ class WorkspaceExport
     userIncludes = []; // user specified includes
 
 
-    /** contain all AudioStream Objects
+    /** contain all AudioStream Objects and class instances that have IO
      * @type {ExportObject[]} */
     audioObjects = [];
     /** contain all Audio Control Objects
      * @type {ExportObject[]} */
     audioControlObjects = [];
-    /** contain all non array AudioConnections
+    /** contains other objects that do not belong to either audioObjects or audioControlObjects
+     * @type {ExportObject[]} */
+    otherObjects = [];
+
+    /** contain all AudioConnections that should be created inside this class
      * @type {ExportAudioConnection[]}
     */
-    nonArrayAudioConnections = [];
-
-    /** contain all array AudioConnections 
-     * @type {ExportArrayAudioConnections[]}
-     */
-    arrayAudioConnections = [];
+    AudioConnections = [];
 
     get totalAudioConnectionCount() { 
-        var c = this.nonArrayAudioConnections.length;
-        for (var i = 0; i< this.arrayAudioConnections.length; i++)
-            c += this.arrayAudioConnections[i].items.length;
+        var c = this.AudioConnections.length;
+        // TODO take care of array def. situations
         return c;
     }
 

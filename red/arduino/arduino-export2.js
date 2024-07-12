@@ -162,13 +162,12 @@ RED.arduino.export2 = (function () {
 
             RED.export.links2.generateAndAddExportInfo(link);
             if (link.export != undefined)
-                wse.nonArrayAudioConnections.push(...link.export)
+                wse.AudioConnections.push(...link.export)
             else // failsafe
-                wse.nonArrayAudioConnections.push({invalid:"// invalid path: " + link.ToString()})
+                wse.AudioConnections.push({invalid:"// invalid path: " + link.ToString()})
 
             // TODO make sure that generateAndAddExportInfo also takes care of junctions
-            // TODO sort links by if they have array sources/targets
-            // i.e. use: wse.arrayAudioConnections
+
         }
 
         var exportFile = WorkspaceExportToExportFile(wse, coex.options);
@@ -212,7 +211,7 @@ RED.arduino.export2 = (function () {
         {
             newWsCpp.body += instancesCppCode.join('\n') + "\n";
             newWsCpp.body += "\n";
-            newWsCpp.body += GetNonArrayAudioConnectionsCppCode(wse, options).join('\n') + "\n"; // this would contain all audio connections when exporting to simple plain export
+            newWsCpp.body += GetAudioConnectionsCppCode(wse, options).join('\n') + "\n"; // this would contain all audio connections when exporting to simple plain export
             newWsCpp.body += GetClassFunctions(wse, options);
         }
 
@@ -256,28 +255,15 @@ RED.arduino.export2 = (function () {
      * @param {WorkspaceExport} wse 
      * @param {ExportOptions} options 
      */
-    function GetArrayAudioConnectionsCppCode(wse, options)
+    function GetAudioConnectionsCppCode(wse, options)
     {
         var cpp = [];
-        for (var i = 0; i < wse.arrayAudioConnections.length; i++) {
-            cpp.push(wse.arrayAudioConnections[i].GetCppCode(options));
-        }
-        return cpp;
-    }
-
-    /**
-     * @param {WorkspaceExport} wse 
-     * @param {ExportOptions} options 
-     */
-    function GetNonArrayAudioConnectionsCppCode(wse, options)
-    {
-        var cpp = [];
-        for (var i = 0; i < wse.nonArrayAudioConnections.length; i++) {
-            //console.log(wse.nonArrayAudioConnections[i]);
-            if (wse.nonArrayAudioConnections[i].invalid == undefined)
-                cpp.push(wse.nonArrayAudioConnections[i].GetCppCode(options, i));
+        for (var i = 0; i < wse.AudioConnections.length; i++) {
+            //console.log(wse.AudioConnections[i]);
+            if (wse.AudioConnections[i].invalid == undefined)
+                cpp.push(wse.AudioConnections[i].GetCppCode(options, i));
             else
-                cpp.push(wse.nonArrayAudioConnections[i].invalid); // contains info as a comment
+                cpp.push(wse.AudioConnections[i].invalid); // contains info as a comment
         }
         return cpp;
     }
@@ -292,8 +278,7 @@ RED.arduino.export2 = (function () {
         var constructorBody = [];
         var mi_indent = TEXT.getNrOfSpaces(options.classExportIdents);
 
-        constructorBody.push(...TEXT.incrementLines(GetNonArrayAudioConnectionsCppCode(wse, options), mi_indent));
-        constructorBody.push(...TEXT.incrementLines(GetArrayAudioConnectionsCppCode(wse, options), mi_indent));
+        constructorBody.push(...TEXT.incrementLines(GetAudioConnectionsCppCode(wse, options), mi_indent));
         constructorBody.push(...TEXT.incrementLines(wse.constructorCode, mi_indent));
         if (constructorBody.length == 0 && options.oscExport == false) return []; // skip generating empty constructors for non OSC exports
 

@@ -471,6 +471,13 @@ RED.view.dialogs = (function() {
             exportDialogFileTabClicked_cb(fileName);
     }
 
+    function getExportDialogFileTabButtonHtml(text, value)
+    {
+        if (text == undefined) text = "(file)";
+        if (value == undefined) value = text;
+        return `<button type="button" class="form-row file-list-tab active" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${value}')">${text}</button>`;
+    }
+
     function showExportDialog(title, text, textareaLabel,overrides,okPressedCb, fileListOptions) {
         
         
@@ -491,9 +498,9 @@ RED.view.dialogs = (function() {
                 var files = fileListOptions.files;
                 if (files != undefined && files.length != 0) {
                     var fileListElement = $("#dialog").find("#export-dialog-filelist");
-                    fileListElement.append(`<button class="form-row file-list-tab active" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${files[0]}')">${files[0]}</button>`);
+                    fileListElement.append(getExportDialogFileTabButtonHtml(files[0]));
                     for (var i=1;i<files.length;i++) {
-                        fileListElement.append(`<button class="form-row file-list-tab" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${files[i]}')">${files[i]}</button>`);
+                        fileListElement.append(getExportDialogFileTabButtonHtml(files[i]));
                     }
                 }
             }
