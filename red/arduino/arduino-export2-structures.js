@@ -166,6 +166,20 @@ class ExportAudioConnection
         this.targetPort = parseInt(link.targetPort);
         this.targetName = link.targetName;
     }
+    /**
+     * checks if any item in path is a array
+     * @param {string[]} path can be either sourcePath or targetPath
+     * @returns 
+     */
+    IsAnyInPathArray(path)
+    {
+        for (var i=0;i<path.length;i++)
+        {
+            if (RED.export.isNameDeclarationArray(path[i], this.source.z, false)!=undefined)
+                return true;
+        }
+        return false;
+    }
     
     MakeOSCName()
     {
@@ -178,9 +192,8 @@ class ExportAudioConnection
     GetCppCode(options, index)
     {
         // TODO take care of array thingy situations
-        
         // in development, 
-        // don't care about classExport or osc export in options yet
+
         var srcPath = ((this.sourcePath.length!=0)?(this.sourcePath.join('.')+"."):"") + this.source.name;
         var tgtPath = ((this.targetPath.length!=0)?(this.targetPath.join('.')+"."):"") + this.target.name;
 
@@ -209,6 +222,7 @@ class ExportAudioConnection
     {
         // TODO maybe allow multilevel arrays
         var cpp = [];
+        
         if (options.classExport==true) {
             cpp.push("for (int i = 0; i < " + this.arraySize + "; i++) {");
         }

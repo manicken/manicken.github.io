@@ -1766,7 +1766,7 @@ RED.view = (function() {
 		var removedNodes = [];
 		var removedLinks = [];
         var _changedNodes = {}; // only for dynamic input objects
-		var startDirty = dirty;
+		var startDirty = RED.nodes.dirty();
 		if (current_popup_rect)
 			$(current_popup_rect).popover("destroy");
 		if (moving_set.length > 0) {
