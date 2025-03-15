@@ -26,7 +26,7 @@ RED.arduino = (function() {
         UseAudioMixerTemplate: false,
           UseVariableMixers: true, // h4yn0nnym0u5e
 		  ExportForOSC: false,     // h4yn0nnym0u5e
-        useExportDialog: false,
+        useExportDialog: true,
 		IOcheckAtExport: true,
 		WriteJSONtoExportedFile: true,
 		WebServerPort: 8080,
