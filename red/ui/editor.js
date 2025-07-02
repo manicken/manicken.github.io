@@ -413,12 +413,13 @@ RED.editor = (function() {
 	}
 	function init_edit_dialog()
 	{
+		
 		$( "#dialog" ).dialog({
 				modal: true,
 				autoOpen: false,
 				closeOnEscape: false,
-				width: (editing_node._def.editorWidth!=undefined)?editing_node._def.editorWidth:500,
-				height: (editing_node._def.editorHeight!=undefined)?editing_node._def.editorHeight:"auto",
+				width: (editing_node!=undefined && editing_node._def.editorWidth!=undefined)?editing_node._def.editorWidth:500,
+				height: (editing_node!=undefined && editing_node._def.editorHeight!=undefined)?editing_node._def.editorHeight:"auto",
                 position: {at:"top"},
 				buttons: [
 					{
