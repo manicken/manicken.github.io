@@ -278,7 +278,8 @@ RED.arduino.export = (function () {
         ac.minorIncrement = minorIncrement;
         ac.majorIncrement = majorIncrement;
         ac.count = 1;
-        ac.activeWorkspace = activeWorkspace;
+        //ac.activeWorkspace = activeWorkspace;
+        ac.workspaceId = activeWorkspace;
         ac.staticType = true;
 
         for (var i = 0; i < nns.length; i++) {
@@ -726,6 +727,8 @@ RED.arduino.export = (function () {
                 ac.totalCount = 0;
                 ac.minorIncrement = minorIncrement;
                 ac.majorIncrement = majorIncrement;
+               // ac.activeWorkspace = ws.id;
+                ac.workspaceId = ws.id;
                 ac.count = 1;
                 var cppPcs = "";
                 var cppArray = "";
@@ -849,11 +852,13 @@ RED.arduino.export = (function () {
                 }
                 newWsCpp.contents += "\n";
                 newWsCpp.contents += cppPcs;
+                
                 if (ac.arrayLength != 0) {
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "for (int i = 0; i < " + ac.arrayLength + "; i++) {\n";
                     newWsCpp.contents += cppArray;
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "}\n";
                 }else {
+                    newWsCpp.contents += "/*devtestcomment*/";
                     newWsCpp.contents += cppArray;
                 }
                 newWsCpp.contents += incrementTextLines(classConstructorCode, majorIncrement);

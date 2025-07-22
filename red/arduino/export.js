@@ -96,7 +96,7 @@ RED.export = (function () {
         console.warn("getConstantNodeValue: " + name + " @ " + wsId);
         var node = RED.nodes.namedNode(name, undefined, wsId)
         if (node == undefined) {
-            console.error("did not found ConstantNodeValue:" + name + " @ wsId:" + wsId);
+            console.error("did not found ConstantNodeValue:" + name + " @ wsId:>" + wsId + "<");
             return 0;
         }
         if (node.type != "ConstValue") {
