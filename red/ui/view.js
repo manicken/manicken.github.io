@@ -1208,6 +1208,7 @@ RED.view = (function() {
 						moving_set.push({n:n});
 					}
                     else {
+						
                         n.svgRect.classed("node_selected", false);
                         n.svgRect.selectAll(".node").classed("node_selected", false);
                     }
@@ -3804,13 +3805,13 @@ RED.view = (function() {
 
 	RED.keyboard.add(/* z */ 90,{ctrl:true},function(){RED.history.pop();});
     RED.keyboard.add(/* y */ 89,{ctrl:true},function(){RED.history.redo();});
-	//RED.keyboard.add(/* o */ 79,{ctrl:true},function(){arrangeAll();d3.event.preventDefault();}); // have at other place, to close to print
+	RED.keyboard.add(/* o */ 81,{ctrl:true},function(){arrangeAll();d3.event.preventDefault();}); // have at other place, to close to print
 	RED.keyboard.add(/* a */ 65,{ctrl:true},function(){selectAll();d3.event.preventDefault();});
 	RED.keyboard.add(/* = */ 187,{ctrl:true},function(){zoomIn();d3.event.preventDefault();});
 	RED.keyboard.add(/* - */ 189,{ctrl:true},function(){zoomOut();d3.event.preventDefault();});
 	RED.keyboard.add(/* 0 */ 48,{ctrl:true},function(){zoomZero();d3.event.preventDefault();});
 	RED.keyboard.add(/* v */ 86,{ctrl:true},function(){importNodes(clipboard, null, true);d3.event.preventDefault();});
-    RED.keyboard.add(/* o */ 79,{ctrl:true},function(){RED.view.dialogs.showExportNodesDialog(); d3.event.preventDefault();});
+    //RED.keyboard.add(/* o */ 79,{ctrl:true},function(){RED.view.dialogs.showExportNodesDialog(); d3.event.preventDefault();});
     RED.keyboard.add(/* i */ 73,{ctrl:true},function(){RED.view.dialogs.showImportNodesDialog(true);d3.event.preventDefault();});
     RED.keyboard.add(/* s */ 83,{ctrl:true},function(){RED.storage.update(); RED.main.updateProjectsMenu(); d3.event.preventDefault();});
 	RED.keyboard.add(/* e */ 69,{ctrl:true},function(){/*showExportNodesDialog();*/settings.guiEditMode = !settings.guiEditMode; d3.event.preventDefault();});
@@ -3827,6 +3828,79 @@ RED.view = (function() {
 			//$("#btn-deploy").addClass("disabled").removeClass("btn-danger");
 		}
 	}
+	
+	function arrangeAll() {
+    var ioNoIn = [];
+    var ioInOut = [];
+    var ioMultiple = [];
+    var ioNoOut = [];
+    var ioCtrl = [];
+    var ws = RED.nodes.getWorkspace(activeWorkspace);
+    RED.nodes.wsEachNode(ws, function (node) {
+        //if (node.z != activeWorkspace) return;
+        var inputs = 0;
+        if (node.inputs == undefined)
+            inputs = node._def.inputs;
+        else
+            inputs = node.inputs;
+
+        if (inputs == 0 && node._def.outputs == 0) {
+            ioCtrl.push(node);
+        } else if (inputs == 0) {
+            ioNoIn.push(node);
+        } else if (node._def.outputs == 0) {
+            ioNoOut.push(node);
+        } else if (inputs == 1 && node._def.outputs == 1) {
+            ioInOut.push(node);
+        } else if (inputs > 1 || node._def.outputs > 1) {
+            ioMultiple.push(node);
+        }
+    });
+
+    var cols = new Array(ioNoIn, ioInOut, ioMultiple, ioNoOut, ioCtrl);
+    var lowestY = 0;
+
+    for (var i = 0; i < cols.length; i++) {
+        var dX = ((i < cols.length - 1) ?  i : 0) * (RED.view.defaults.width * 2) + (RED.view.defaults.width / 2) + 15;
+        var dY = ((i < cols.length - 1) ?  (RED.view.defaults.height / 4) : lowestY) + 15;
+        var startX = 0;
+        var startY = 0;
+
+        doSort(cols[i]);
+        var last = setNewCoords(startX + dX, startY + dY, cols[i]);
+        lowestY = Math.max(lowestY, last.y);
+        startX = ((i < cols.length - 1) ? last.x : 0) + (RED.view.defaults.width) * 4;
+        startY = lowestY + (RED.view.defaults.height * 1.5);
+    }
+    RED.storage.update();
+    redraw(true);
+    redraw_links_init();
+    redraw_links();
+}
+function doSort (arr) {
+    arr.sort(function (a, b) {
+        var nameA = a.name ? a.name : a.id;
+        var nameB = b.name ? b.name : b.id;
+        return nameA.localeCompare(nameB, 'en', {numeric: 'true'});
+    });
+}
+
+function setNewCoords (lastX, lastY, arr) {
+    var x = lastX;
+    var y = lastY;
+    for (var i = 0; i < arr.length; i++) {
+        var node = arr[i];
+        var name = node.name ? node.name : node.id;
+        var def = node._def;
+        var dH = Math.max(RED.view.defaults.height, (Math.max(def.outputs, def.inputs) || 0) * 15);
+        //x = lastX + Math.max(RED.view.defaults.width, RED.view.calculateTextWidth(name) + 50 + (def.inputs > 0 ? 7 : 0));
+        node.x = x;
+        node.y = y + dH/posMode;
+        y = y + dH + 15;
+        node.dirty = true;
+    }
+    return { x: x, y: y };
+}
 
 	/**
 	 * Imports a new collection of nodes from a JSON String.
