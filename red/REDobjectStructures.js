@@ -61,7 +61,7 @@ class REDNode
     /** used in RED.view, contains a list of the actual svgRect:s used to visualize the output ports */
     _ports = [];
     /** used in RED.view, the root svg rect used to visualize this node object, this is used to improve the performance when updating a node */
-    svgRect = {};
+    svgRect = undefined;
     /** used in RED.view, to buffer the label text dimensions, may be obsolete because of the new text dimensions cache system*/
     textDimensions = {};
     /** used in RED.view */

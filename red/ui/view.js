@@ -1209,8 +1209,13 @@ RED.view = (function() {
 					}
                     else {
 						
+						try {
                         n.svgRect.classed("node_selected", false);
                         n.svgRect.selectAll(".node").classed("node_selected", false);
+						} catch (ex) {
+							console.trace(n);
+							//console.log(typeof n.svgRect, ex);
+						}
                     }
                     if (n.type == "group") RED.view.groupbox.redrawGroupOutline(n);
 				}
@@ -3636,11 +3641,12 @@ RED.view = (function() {
 		});
 		anyNodeEnter = false;
 		
-
+		
 		var nodeEnter = visNodesAll.enter().insert("svg:g").attr("class", "node nodegroup");
+		
 		nodeEnter.each(function(d,i) // this happens only when a node enter(is added) to the current workspace.
 		{
-			
+			//console.log("enter:" + d.name);
 			if (d.type.startsWith("Junction")){
 				d3.select(this).classed("red-ui-flow-junction", true);
 				
@@ -3659,7 +3665,9 @@ RED.view = (function() {
 			}
 			
 			var nodeRect = d3.select(this);
+			
             d.svgRect = nodeRect;
+			//console.log("SET svgRect: " + d.name, nodeRect.classed != undefined);
 			nodeRect.attr("id",d.id);
 			if (d._def.uiObject == undefined)
 			{
@@ -3688,7 +3696,9 @@ RED.view = (function() {
             nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
 		
 		});
+		
 		visNodesAll.classed("node_selected",function(d) { return d.selected; })
+
 		return visNodesAll;
 	}
 	function redraw_nodes(fullUpdate,superUpdate) // fullUpdate means that it checks for removed/added nodes as well

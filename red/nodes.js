@@ -1978,7 +1978,7 @@ RED.nodes = (function() {
             if (n._def.nonObject != undefined) return; // _def.nonObject is defined in index.html @ NodeDefinitions only for special nodes
             if (n._def.classWs != undefined) return;
             if (n._def.unknownType != undefined) return;
-            if (n._def.category == undefined) {console.error("error at addUsedNodeTypesToPalette(): nodes[i].type=" + n.type); return;}
+            if (n._def.category == undefined) {console.error("error at addUsedNodeTypesToPalette() - (n._def.category == undefined): nodes[i].type=" + n.type); return;}
             if (n._def.category.startsWith("input")) return;
             if (n._def.category.startsWith("output")) return;
             if (n._def.category.startsWith("control")) return;

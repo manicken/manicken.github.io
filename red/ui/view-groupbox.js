@@ -477,6 +477,9 @@ RED.view.groupbox = (function() {
 			anyGroupEnter = true; // could probally just check if (groupEnter.length > 0)
 
 			var groupRect = d3.select(this);
+			if (Object.keys(groupRect).length === 0) {
+				console.trace(this, d);
+			}
             d.svgRect = groupRect;
 			groupRect.attr("id",d.id);
 
