@@ -158,10 +158,16 @@ RED.view.groupbox = (function() {
         //RED.events.emit("groups:change",group);
         RED.events.emit("nodes:change",node);
 	}
+	/** @returns {Boolean} true if the node is part of the current selection that is moved */
+	function isMoving(node) {
+		return RED.view.moving_set.some(function (m) { return m.n === node; });
+	}
+
 	function moveSelectionToFromGroupMouseUp()
 	{
 		var currentHoveredGroupDef = (currentHoveredGroup != undefined);
-		var lastHoveredGroupDef = (lastHoveredGroup != undefined);
+		// when the group itself is moved (with its contents) nothing is moved out of it
+		var lastHoveredGroupDef = (lastHoveredGroup != undefined) && (isMoving(lastHoveredGroup) == false);
 		//console.error(currentHoveredGroupDef + ":" + lastHoveredGroupDef);
 
 		if (lastHoveredGroupDef == true)
@@ -174,9 +180,6 @@ RED.view.groupbox = (function() {
 
 				removeNodeFromGroup(lastHoveredGroup, node);
 			}
-			lastHoveredGroup.hovered = false;
-			RED.view.redraw_node(lastHoveredGroup);
-			lastHoveredGroup = undefined;
 		}
 		if (currentHoveredGroupDef == true)
 		{
@@ -207,16 +210,27 @@ RED.view.groupbox = (function() {
 				console.warn(node.name + " was added to the group " + currentHoveredGroup.name);
                 RED.notify(node.name + " was added to the group " + currentHoveredGroup.name,false,false, 2000);
 
-                
+
                 RED.events.emit("nodes:change",node);
-				currentHoveredGroup.hovered = false;
-				RED.view.redraw_node(currentHoveredGroup);
-				currentHoveredGroup = undefined;
-                
             }
             //RED.events.emit("groups:change",currentHoveredGroup);
 		}
-		 
+		resetHoveredGroups();
+	}
+
+	/**
+	 * The hovered groups are only valid during one move, so they are always cleared when the move ends,
+	 * (if a hovered group would remain, the next move of that group would 'leave' it,
+	 * and that would move all its contents out of it)
+	 */
+	function resetHoveredGroups() {
+		for (var group of [currentHoveredGroup, lastHoveredGroup]) {
+			if (group == undefined) continue;
+			group.hovered = false;
+			RED.view.redraw_node(group);
+		}
+		currentHoveredGroup = undefined;
+		lastHoveredGroup = undefined;
 	}
 	function ifAnyRootParent(childGroup,parentGroup)
 	{
@@ -565,43 +579,102 @@ RED.view.groupbox = (function() {
                                         else if (d.hovered) return "nodeGroupSelOutline nodeGroupSelOutline-hovered"; 
                                         else return "nodeGroupSelOutline"});
     }
-	function AddIOnodes(group ,count, type) {
-		var typeText = ((type==0)?"Out":"In");
-		//console.log(typeText + " to add: "+count);
-		if (type == 0) var totalCount = group.outputs;
-		else var totalCount = group.inputs;
-		var currentCount = totalCount-count;
-		
-		var spacing = group.ioNodeSize+group.ioNodeSpacing;
+	/**
+	 * The IO junctions of a group (ClassIOtype 1 = inputs on the left side, 0 = outputs on the right side)
+	 * stay on their side of the group, but can be moved up/down by the user (see clampIOnodeY, used by RED.view when moving),
+	 * new ones are added below the existing ones, and they are only spread evenly when they don't fit
+	 * or when the size/spacing is changed (RearrangeIONodes).
+	 */
+
+	/**
+	 * @param {REDNode} node
+	 * @returns {Boolean} true for an IO junction of a group (ClassIOtype is the number 0 or 1),
+	 *                    a normal junction have ClassIOtype "" (so it can't be checked with != undefined, and "" == 0 is true)
+	 */
+	function isIOnode(node) {
+		return node.ClassIOtype === 0 || node.ClassIOtype === 1;
+	}
+
+	/** @returns {Boolean} true for an IO junction of the type (0 = output, 1 = input) */
+	function isIOnodeOfType(node, type) {
+		return isIOnode(node) && node.ClassIOtype === type;
+	}
+
+	/** the gap between the IO junctions of a group, at least the junction size, so their hitboxes (twice the junction size) don't overlap */
+	function getIOnodeGap(group) {
+		return Math.max(Number(group.ioNodeSpacing), Number(group.ioNodeSize));
+	}
+
+	/** @returns {Number} the x position of the IO junctions of a group side (type 0 = outputs, 1 = inputs) */
+	function getIOnodeX(group, type) {
 		var CenterBasedPositions = RED.view.settings.useCenterBasedPositions;
 		var PosModeCorrection_Xpos = (CenterBasedPositions == true)?0:(group.ioNodeSize/2);
-		var yOffset = group.y + group.h/2 - (spacing*(totalCount-1))/2;
-		var c = currentCount;
 		var xPos = ((type == 0)?(group.x+group.w):(group.x)) - PosModeCorrection_Xpos;
-		if (CenterBasedPositions) xPos -= group.w/2;
+		if (CenterBasedPositions == true) xPos -= group.w/2;
+		return xPos;
+	}
+
+	/** @returns {Number} the y position kept inside of the group (an IO junction can't be moved outside of its group) */
+	function clampIOnodeY(group, node, y) {
+		var h = (node.h != undefined && node.h > 0) ? node.h : group.ioNodeSize;
+		var top = group.y;
+		var bottom = group.y + group.h - h;
+		if (RED.view.settings.useCenterBasedPositions == true) {
+			top = group.y - group.h/2 + h/2;
+			bottom = group.y + group.h/2 - h/2;
+		}
+		return Math.min(Math.max(y, top), Math.max(top, bottom));
+	}
+
+	/**
+	 * moves an IO junction up/down to y (kept inside of the group), and always puts it on the edge of its group,
+	 * used by RED.view when the junction is moved by the mouse or the keyboard
+	 */
+	function moveIOnodeVertically(group, node, y) {
+		node.x = getIOnodeX(group, node.ClassIOtype);
+		node.y = clampIOnodeY(group, node, y);
+		node.dirty = true;
+	}
+
+	/** keeps the IO junctions on the edges of the group, used when the group is resized */
+	function keepIOnodesOnEdges(group) {
+		for (var ni=0;ni<group.nodes.length;ni++) {
+			var node = group.nodes[ni];
+			if (isIOnode(node) == false) continue;
+			node.x = getIOnodeX(group, node.ClassIOtype);
+			node.y = clampIOnodeY(group, node, node.y);
+			RED.view.redraw_node(node);
+		}
+	}
+
+	function AddIOnodes(group ,count, type) {
+		var typeText = ((type==0)?"Out":"In");
+		var existing = group.nodes.filter(function (n) { return isIOnodeOfType(n, type); });
+		var step = Number(group.ioNodeSize) + getIOnodeGap(group);
+		var xPos = getIOnodeX(group, type);
+		// below the lowest existing junction of that side
+		var yPos = (existing.length != 0) ? (Math.max.apply(null, existing.map(function (n) { return n.y; })) + step) : group.y;
+		var c = existing.length;
+		var fits = true;
 		while (count > 0) {
-			
-			var yPos = yOffset + c*spacing;
-			if (CenterBasedPositions == true) {
-				yPos -= group.h/2;
-			}
+			if (yPos != clampIOnodeY(group, { h: group.ioNodeSize }, yPos)) fits = false;
 			var newIOnode = RED.view.AddNewNode(xPos,yPos, "JunctionLR");
 			newIOnode.name = typeText + (c + 1);
 			newIOnode.locked = true;
 			newIOnode.size = group.ioNodeSize;
-			//newIOnode.anchor = ((type == 0)?AnchorTypes.Right:AnchorTypes.Left); //not really needed as RearrangeIONodes takes care of that
 			newIOnode.ClassIOtype = type;
 			newIOnode.parentGroup = group;
 			group.nodes.push(newIOnode);
+			yPos += step;
 			count--;
 			c++;
 		}
 		RED.view.redraw();
-		RearrangeIONodes(group, type);
+		if (existing.length == 0 || fits == false) RearrangeIONodes(group, type); // the first ones, or no space left: spread evenly
 		RED.view.redraw_links();
 	}
 	function RearrangeIONodes(group, type) {
-		var spacing = group.ioNodeSize+group.ioNodeSpacing;
+		var spacing = Number(group.ioNodeSize)+getIOnodeGap(group);
 		var CenterBasedPositions = RED.view.settings.useCenterBasedPositions;
 		if (type == 0) var totalCount = group.outputs;
 		else var totalCount = group.inputs;
@@ -617,14 +690,14 @@ RED.view.groupbox = (function() {
 		var nextYpos = yOffset;
 		for (var ni=0;ni<group.nodes.length;ni++) {
 			var node = group.nodes[ni];
-			if (node.ClassIOtype != type) continue;
+			if (isIOnodeOfType(node, type) == false) continue;
 			var yPos = nextYpos;//yOffset + c*spacing;
 			
 			node.y = yPos;
 			node.x = xPos;
 			node.size = group.ioNodeSize;
 			c++;
-			nextYpos = yPos + node.h + group.ioNodeSpacing;
+			nextYpos = yPos + Number(group.ioNodeSize) + getIOnodeGap(group);
 			RED.view.redraw_node(node);
 		}
 	}
@@ -632,12 +705,13 @@ RED.view.groupbox = (function() {
 		//console.log((type==0?"Out":"In") + " to remove: "+count);
 		for (var ni=group.nodes.length-1; (ni>=0) && (count>0);ni--) {
 			var node = group.nodes[ni];
-			if (node.ClassIOtype != type) continue;
+			if (isIOnodeOfType(node, type) == false) continue; // only the IO junctions, never a normal junction inside the group
 			group.nodes.splice(ni, 1);
 			RED.nodes.remove(node.id);
 			count--;
 		}
-		RearrangeIONodes(group, type);
+		// the other junctions stay where the user have put them
+		RED.view.redraw();
 		RED.view.redraw_links();
 	}
 	function NodeChanged(node, changes) {
@@ -676,6 +750,10 @@ RED.view.groupbox = (function() {
         moveSelectionToFromGroupMouseUp,
         removeNodeFromGroup,
         SelectAllInGroup,
-		RearrangeIONodes
+		RearrangeIONodes,
+		keepIOnodesOnEdges,
+		clampIOnodeY,
+		moveIOnodeVertically,
+		isIOnode
     };
 })();

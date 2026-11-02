@@ -1,0 +1,570 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "FlatTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_FlatMain",
+            "label": "FlatMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_FlatMain",
+                    "wires": [
+                        [
+                            "fm_i2s:0"
+                        ]
+                    ],
+                    "id": "fm_poly",
+                    "type": "Poly",
+                    "name": "poly"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_FlatMain",
+                    "wires": [
+                        [
+                            "fm_i2s:1"
+                        ]
+                    ],
+                    "id": "fm_amp",
+                    "type": "AudioAmplifier",
+                    "name": "amp"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_FlatMain",
+                    "wires": [],
+                    "id": "fm_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_FlatCodeMain",
+            "label": "FlatCodeMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_FlatCodeMain",
+                    "wires": [
+                        [
+                            "fc_i2s:0"
+                        ]
+                    ],
+                    "id": "fc_cv",
+                    "type": "CodeVoice",
+                    "name": "cv"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_FlatCodeMain",
+                    "wires": [],
+                    "id": "fc_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_FlatCollision",
+            "label": "FlatCollision",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_FlatCollision",
+                    "wires": [
+                        [
+                            "fx_i2s:0"
+                        ]
+                    ],
+                    "id": "fx_poly",
+                    "type": "Poly",
+                    "name": "poly"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_FlatCollision",
+                    "wires": [
+                        [
+                            "fx_i2s:1"
+                        ]
+                    ],
+                    "id": "fx_lfo",
+                    "type": "AudioAmplifier",
+                    "name": "poly_lfo"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_FlatCollision",
+                    "wires": [],
+                    "id": "fx_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_FlatCodeUse",
+            "label": "FlatCodeUse",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_FlatCodeUse",
+                    "wires": [
+                        [
+                            "fu_i2s:0"
+                        ]
+                    ],
+                    "id": "fu_poly",
+                    "type": "Poly",
+                    "name": "poly"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_FlatCodeUse",
+                    "wires": [],
+                    "id": "fu_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_FlatCodeUse",
+                    "wires": [
+                        [
+                            "fu_i2s:1"
+                        ]
+                    ],
+                    "id": "fu_amp",
+                    "type": "AudioAmplifier",
+                    "name": "amp"
+                },
+                {
+                    "comment": "void setGain() { poly.mix.gain(0, 0.5); }",
+                    "x": 100,
+                    "y": 160,
+                    "z": "ws_FlatCodeUse",
+                    "wires": [],
+                    "id": "fu_func",
+                    "type": "Function",
+                    "name": "setGain"
+                },
+                {
+                    "comment": "void setAmp() { amp.gain(0.5); }",
+                    "x": 100,
+                    "y": 210,
+                    "z": "ws_FlatCodeUse",
+                    "wires": [],
+                    "id": "fu_func2",
+                    "type": "Function",
+                    "name": "setAmp"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_FlatHelperCode",
+            "label": "FlatHelperCode",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 210,
+                    "z": "ws_FlatHelperCode",
+                    "wires": [],
+                    "id": "fh_num",
+                    "type": "ConstValue",
+                    "name": "COUNT",
+                    "value": "2",
+                    "valueType": "int"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_FlatHelperCode",
+                    "wires": [
+                        [
+                            "fh_mix:0"
+                        ]
+                    ],
+                    "id": "fh_poly",
+                    "type": "Poly",
+                    "name": "poly"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_FlatHelperCode",
+                    "wires": [
+                        [
+                            "fh_mix:1"
+                        ]
+                    ],
+                    "id": "fh_dc",
+                    "type": "AudioSynthWaveformDc",
+                    "name": "dc[COUNT]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_FlatHelperCode",
+                    "wires": [
+                        [
+                            "fh_i2s:0"
+                        ]
+                    ],
+                    "id": "fh_mix",
+                    "type": "AudioMixer",
+                    "name": "outMix"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_FlatHelperCode",
+                    "wires": [],
+                    "id": "fh_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                },
+                {
+                    "comment": "void setGain() {\n    design.outMix.gain(0, 0.5);\n    design.poly_mix.gain(0, 0.5);\n    for (int i = 0; i < COUNT; i++) design.dc[i].amplitude(0.1);\n}",
+                    "x": 100,
+                    "y": 260,
+                    "z": "ws_FlatHelperCode",
+                    "wires": [],
+                    "id": "fh_func",
+                    "type": "Function",
+                    "name": "setGain"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Voice",
+            "label": "Voice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 210,
+                    "z": "ws_Voice",
+                    "wires": [],
+                    "id": "v_num",
+                    "type": "ConstValue",
+                    "name": "NUM",
+                    "value": "2",
+                    "valueType": "int"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Voice",
+                    "wires": [
+                        [
+                            "v_osc:0"
+                        ]
+                    ],
+                    "id": "v_mod",
+                    "type": "TabInput",
+                    "name": "Mod",
+                    "outputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_Voice",
+                    "wires": [
+                        [
+                            "v_mixer:0"
+                        ]
+                    ],
+                    "id": "v_osc",
+                    "type": "AudioSynthWaveformModulated",
+                    "name": "osc[NUM]"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Voice",
+                    "wires": [
+                        [
+                            "v_env:0"
+                        ]
+                    ],
+                    "id": "v_mixer",
+                    "type": "AudioMixer",
+                    "name": "mixer"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 60,
+                    "z": "ws_Voice",
+                    "wires": [
+                        [
+                            "v_out:0"
+                        ]
+                    ],
+                    "id": "v_env",
+                    "type": "AudioEffectEnvelope",
+                    "name": "env"
+                },
+                {
+                    "comment": "",
+                    "x": 700,
+                    "y": 60,
+                    "z": "ws_Voice",
+                    "wires": [],
+                    "id": "v_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Poly",
+            "label": "Poly",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Poly",
+                    "wires": [
+                        [
+                            "p_voices:0"
+                        ]
+                    ],
+                    "id": "p_lfo",
+                    "type": "AudioSynthWaveform",
+                    "name": "lfo"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_Poly",
+                    "wires": [
+                        [
+                            "p_mix:0"
+                        ]
+                    ],
+                    "id": "p_voices",
+                    "type": "Voice",
+                    "name": "voices[2]"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Poly",
+                    "wires": [
+                        [
+                            "p_out:0"
+                        ]
+                    ],
+                    "id": "p_mix",
+                    "type": "AudioMixer",
+                    "name": "mix"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 60,
+                    "z": "ws_Poly",
+                    "wires": [],
+                    "id": "p_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_CodeVoice",
+            "label": "CodeVoice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_CodeVoice",
+                    "wires": [
+                        [
+                            "cv_out:0"
+                        ]
+                    ],
+                    "id": "cv_osc",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_CodeVoice",
+                    "wires": [],
+                    "id": "cv_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                },
+                {
+                    "comment": "void noteOn() { osc.amplitude(1.0); }",
+                    "x": 100,
+                    "y": 160,
+                    "z": "ws_CodeVoice",
+                    "wires": [],
+                    "id": "cv_func",
+                    "type": "Function",
+                    "name": "noteOn"
+                }
+            ]
+        }
+    ]
+}

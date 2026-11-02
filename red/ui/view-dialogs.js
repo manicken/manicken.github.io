@@ -471,11 +471,24 @@ RED.view.dialogs = (function() {
             exportDialogFileTabClicked_cb(fileName);
     }
 
-    function getExportDialogFileTabButtonHtml(text, value)
+    /**
+     * makes the export textarea fill the dialog height, without making the dialog scroll,
+     * by subtracting the height of everything else in the dialog (label, tips, margins)
+     */
+    function fitExportTextareaToDialog() {
+        var dialog = $("#dialog");
+        var textarea = $("#node-input-export");
+        var row = textarea.closest(".form-row");
+        var otherHeight = (row.outerHeight(true) - textarea.height()) // label, margins and the textarea border/padding
+                        + $("#export-clipboard-dialog-tips").outerHeight(true);
+        textarea.height(Math.max(100, Math.floor(dialog.height() - otherHeight - 2))); // -2 for rounding
+    }
+
+    function getExportDialogFileTabButtonHtml(text, value, active)
     {
         if (text == undefined) text = "(file)";
         if (value == undefined) value = text;
-        return `<button type="button" class="form-row file-list-tab active" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${value}')">${text}</button>`;
+        return `<button type="button" class="file-list-tab${active ? " active" : ""}" title="${text}" onclick="RED.view.dialogs.exportDialogFileTabClicked(event, '${value}')">${text}</button>`;
     }
 
     function showExportDialog(title, text, textareaLabel,overrides,okPressedCb, fileListOptions) {
@@ -498,7 +511,7 @@ RED.view.dialogs = (function() {
                 var files = fileListOptions.files;
                 if (files != undefined && files.length != 0) {
                     var fileListElement = $("#dialog").find("#export-dialog-filelist");
-                    fileListElement.append(getExportDialogFileTabButtonHtml(files[0]));
+                    fileListElement.append(getExportDialogFileTabButtonHtml(files[0], undefined, true)); // the first file is the one shown
                     for (var i=1;i<files.length;i++) {
                         fileListElement.append(getExportDialogFileTabButtonHtml(files[i]));
                     }
@@ -521,10 +534,6 @@ RED.view.dialogs = (function() {
                 //var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
                 //textarea.height(textareaNewHeight);
 
-                var dialogHeight = $("#dialog").height();
-                    $("#node-input-export").height(dialogHeight-80);
-                    //$("#form-file-items-right-divider").height(dialogHeight-75);
-
                 textarea.mouseup(function () {
                     textarea.unbind("mouseup");
                     return false;
@@ -539,22 +548,8 @@ RED.view.dialogs = (function() {
                 title: title,
                 width: box.clientWidth * 0.60, // setting the size of dialog takes ~170mS
                 height: box.clientHeight,
-                focus: function() {
-                    console.log("shown");
-                    //var dialogHeight = $("#dialog").height();
-                    //$("#node-input-export").height(dialogHeight - 190);
-                
-                    // This function is called whenever the dialog is opened
-                    //console.log("Dialog opened");
-                    
-                },
-                resize: function(event, ui) {
-                   // console.log("Dialog resized to: " + ui.size.width + "x" + ui.size.height);
-                   var dialogHeight = $("#dialog").height();
-                    $("#node-input-export").height(dialogHeight-80);
-                    //$("#form-file-items-right-divider").css("height",(dialogHeight-260));
-                    //$("#form-file-items-right-divider").height(dialogHeight-75);
-                },
+                open: fitExportTextareaToDialog, // the dialog have its final size first here
+                resize: fitExportTextareaToDialog,
                 buttons: [
                     {
                         text: overrides.okText,

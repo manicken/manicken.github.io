@@ -43,7 +43,7 @@ class AudioConnectionExport
     }
     makeOSCnameQC(n)
     {
-        if (RED.arduino.settings.ExportMode < 3)
+        if (RED.arduino.isOscExportMode() == false)
             return "";
         else
             return '"' + this.makeOSCname(n) + '", ';

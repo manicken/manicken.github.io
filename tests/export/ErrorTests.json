@@ -1,0 +1,527 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "ErrorTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_ErrorTests",
+            "label": "ErrorTests",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_ErrorTests",
+                    "wires": [
+                        [
+                            "e_fx:0",
+                            "e_join3:0",
+                            "e_amp:0"
+                        ]
+                    ],
+                    "id": "e_osc1",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc1"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_ErrorTests",
+                    "wires": [
+                        [
+                            "e_join3:1",
+                            "e_join3:2",
+                            "e_amp:0"
+                        ]
+                    ],
+                    "id": "e_osc2",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc2"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 160,
+                    "z": "ws_ErrorTests",
+                    "wires": [
+                        [
+                            "e_b:0"
+                        ]
+                    ],
+                    "id": "e_a",
+                    "type": "AudioAmplifier",
+                    "name": "a[4]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 160,
+                    "z": "ws_ErrorTests",
+                    "wires": [],
+                    "id": "e_b",
+                    "type": "AudioAmplifier",
+                    "name": "b[2]"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 210,
+                    "z": "ws_ErrorTests",
+                    "wires": [
+                        [
+                            "e_i2s:0"
+                        ]
+                    ],
+                    "id": "e_three",
+                    "type": "AudioSynthWaveform",
+                    "name": "three[3]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 210,
+                    "z": "ws_ErrorTests",
+                    "wires": [],
+                    "id": "e_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 260,
+                    "z": "ws_ErrorTests",
+                    "wires": [],
+                    "id": "e_fx",
+                    "type": "StereoFx",
+                    "name": "fx"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 310,
+                    "z": "ws_ErrorTests",
+                    "wires": [
+                        [
+                            "e_split2:0",
+                            "e_c:0"
+                        ]
+                    ],
+                    "id": "e_join3",
+                    "type": "BusJoin",
+                    "name": "join3",
+                    "inputs": 3
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 310,
+                    "z": "ws_ErrorTests",
+                    "wires": [],
+                    "id": "e_split2",
+                    "type": "BusSplit",
+                    "name": "split2",
+                    "outputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 360,
+                    "z": "ws_ErrorTests",
+                    "wires": [
+                        [
+                            "e_linkout:0"
+                        ]
+                    ],
+                    "id": "e_amp",
+                    "type": "AudioAmplifier",
+                    "name": "amp"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 360,
+                    "z": "ws_ErrorTests",
+                    "wires": [],
+                    "id": "e_linkout",
+                    "type": "LinkOut",
+                    "name": "LinkOut"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 310,
+                    "z": "ws_ErrorTests",
+                    "wires": [],
+                    "id": "e_c",
+                    "type": "AudioAmplifier",
+                    "name": "c[2]"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_StereoFx",
+            "label": "StereoFx",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_StereoFx",
+                    "wires": [
+                        [
+                            "sfx_ampL:0"
+                        ],
+                        [
+                            "sfx_ampR:0"
+                        ]
+                    ],
+                    "id": "sfx_in",
+                    "type": "TabInput",
+                    "name": "In",
+                    "outputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_StereoFx",
+                    "wires": [
+                        [
+                            "sfx_outL:0"
+                        ]
+                    ],
+                    "id": "sfx_ampL",
+                    "type": "AudioAmplifier",
+                    "name": "ampL"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 110,
+                    "z": "ws_StereoFx",
+                    "wires": [
+                        [
+                            "sfx_outR:0"
+                        ]
+                    ],
+                    "id": "sfx_ampR",
+                    "type": "AudioAmplifier",
+                    "name": "ampR"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_StereoFx",
+                    "wires": [],
+                    "id": "sfx_outL",
+                    "type": "TabOutput",
+                    "name": "OutL",
+                    "inputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 110,
+                    "z": "ws_StereoFx",
+                    "wires": [],
+                    "id": "sfx_outR",
+                    "type": "TabOutput",
+                    "name": "OutR",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Thru",
+            "label": "Thru",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Thru",
+                    "wires": [
+                        [
+                            "thru_out:0"
+                        ]
+                    ],
+                    "id": "thru_in",
+                    "type": "TabInput",
+                    "name": "In",
+                    "outputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Thru",
+                    "wires": [],
+                    "id": "thru_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_ThruChain",
+            "label": "ThruChain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_ThruChain",
+                    "wires": [
+                        [
+                            "tc_junction:0"
+                        ]
+                    ],
+                    "id": "tc_in",
+                    "type": "TabInput",
+                    "name": "In",
+                    "outputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_ThruChain",
+                    "wires": [
+                        [
+                            "tc_thru:0"
+                        ]
+                    ],
+                    "id": "tc_junction",
+                    "type": "JunctionLR",
+                    "name": "JunctionLR"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_ThruChain",
+                    "wires": [
+                        [
+                            "tc_out:0"
+                        ]
+                    ],
+                    "id": "tc_thru",
+                    "type": "Thru",
+                    "name": "inner"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 60,
+                    "z": "ws_ThruChain",
+                    "wires": [],
+                    "id": "tc_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Packer",
+            "label": "Packer",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Packer",
+                    "wires": [
+                        [
+                            "pk_join:0"
+                        ]
+                    ],
+                    "id": "pk_a",
+                    "type": "TabInput",
+                    "name": "A",
+                    "outputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_Packer",
+                    "wires": [
+                        [
+                            "pk_join:1"
+                        ]
+                    ],
+                    "id": "pk_b",
+                    "type": "TabInput",
+                    "name": "B",
+                    "outputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_Packer",
+                    "wires": [
+                        [
+                            "pk_out:0"
+                        ]
+                    ],
+                    "id": "pk_join",
+                    "type": "BusJoin",
+                    "name": "join",
+                    "inputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Packer",
+                    "wires": [],
+                    "id": "pk_out",
+                    "type": "TabOutput",
+                    "name": "Bus",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Unpacker",
+            "label": "Unpacker",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Unpacker",
+                    "wires": [
+                        [
+                            "up_a:0"
+                        ],
+                        [
+                            "up_b:0"
+                        ]
+                    ],
+                    "id": "up_in",
+                    "type": "TabInput",
+                    "name": "Bus",
+                    "outputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Unpacker",
+                    "wires": [],
+                    "id": "up_a",
+                    "type": "TabOutput",
+                    "name": "A",
+                    "inputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 110,
+                    "z": "ws_Unpacker",
+                    "wires": [],
+                    "id": "up_b",
+                    "type": "TabOutput",
+                    "name": "B",
+                    "inputs": 1
+                }
+            ]
+        }
+    ]
+}

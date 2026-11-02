@@ -97,7 +97,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     <li><a id="btn-pushJSON" class="btn" href="#"><i class="fa fa-cloud-upload"></i> Push JSON to the IDE</a></li>
 				</ul>
 			</div>
-
+<!--
             <div class="btn-group pull-left">
 				<a id="menu-export2" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> Export2 <span class="caret"></span></a>
 				<ul class="dropdown-menu">
@@ -112,9 +112,17 @@ span.mainfunction {color: #993300; font-weight: bolder}
                     <li><a id="btn-export-osc-class2" class="btn" href="#"><i class="fa fa-database"></i> OSC Class</a></li>
 				</ul>
 			</div>
+-->
+            <div class="btn-group pull-left">
+				<a id="btn-exporter" class="btn btn-danger" href="#"><i class="icon-download"></i> Export (new)</a>
+				<a id="btn-exporter-options" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a id="btn-exporter-zip" class="btn" href="#"><i class="fa fa-file-zip-o"></i> Export to zip</a></li>
+				</ul>
+			</div>
 
             <div class="btn-group pull-left">
-				<a id="menu-export-osc" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
+				<a id="menu-export-osc"class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="icon-download"></i> OSC <span class="caret"></span></a>
 				<ul class="dropdown-menu">
                     <li><a id="btn-export-osc-group" class="btn" href="#"><i class="fa fa-ellipsis-v"></i> Export </a></li>
                     <li class="divider"></li>
@@ -153,10 +161,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
             <div class="btn-group pull-left">
 				<label style="color:white;" id="lbl-export-mode">Export Mode:
 					<select name="option-export-mode" id="option-export-mode">
-						<option value="0">Simple Flat C++</option>
-						<option value="1">Class based C++</option>
-						<option value="2">Class based zip</option>
-						<option value="3">Open Sound Control</option>
+						<option value="classic">Classic (no classes)</option>
+						<option value="flatclassic">Flat classic (classes flattened)</option>
+						<option value="flathelper">Flat helper (one helper class)</option>
+						<option value="classes">Classes</option>
+						<option value="osc">Open Sound Control</option>
 					</select>
 				</label>
                 <!--<a id="btn-disConnectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a>-->
@@ -734,10 +743,30 @@ span.mainfunction {color: #993300; font-weight: bolder}
 
 <!-- this will replace old export code when completed -->
 <script src="red/arduino/cpp-text-helpers.js"></script>
+<!--
 <script src="red/arduino/arduino-export2-structures.js"></script>
 <script src="red/arduino/export-links2.js"></script>
 <script src="red/arduino/export-links2-getDebug.js"></script>
 <script src="red/arduino/arduino-export2.js"></script>
+-->
+
+<!-- the new export system, see red/export/README.md -->
+<script src="red/export/ExportFile.js"></script>
+<script src="red/export/model/ResolvedPathStep.js"></script>
+<script src="red/export/model/ResolvedEndpoint.js"></script>
+<script src="red/export/model/ResolvedConnection.js"></script>
+<script src="red/export/model/ResolvedProblem.js"></script>
+<script src="red/export/model/ResolvedObject.js"></script>
+<script src="red/export/model/ResolvedUserCode.js"></script>
+<script src="red/export/model/ResolvedWorkspace.js"></script>
+<script src="red/export/model/ResolvedDesign.js"></script>
+<script src="red/export/export-graph.js"></script>
+<script src="red/export/export-resolve.js"></script>
+<script src="red/export/export-flatten.js"></script>
+<script src="red/export/export-modes.js"></script>
+<script src="red/export/export-codewriter.js"></script>
+<script src="red/export/export-cpp.js"></script>
+<script src="red/export/exporter.js"></script>
 
 <script src="red/arduino/arduino-board.js"></script>
 <script src="red/BiDirDataWebSocketBridge.js"></script>

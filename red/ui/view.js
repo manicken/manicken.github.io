@@ -1608,6 +1608,45 @@ RED.view = (function() {
 		return (bool1 && !bool2) || (!bool1 && bool2);
 	}
 
+	/**
+	 * How a selected node can be moved, when it's moved together with the rest of the selection:
+	 *   "free"     - normally
+	 *   "vertical" - a group IO junction: only up/down along the edge of its group
+	 *   "none"     - a locked node
+	 * (when the group of a group IO junction or locked node is moved too, the node is moved with it: "free")
+	 * @param {REDNode} node
+	 * @returns {"free"|"vertical"|"none"}
+	 */
+	function getMoveMode(node) {
+		var movedWithItsGroup = (node.parentGroup != undefined) && currentSelectionContains(node.parentGroup);
+		if (movedWithItsGroup) return "free";
+		if (RED.view.groupbox.isIOnode(node) && node.parentGroup != undefined) return "vertical";
+		if (node.locked == true) return "none";
+		return "free";
+	}
+
+	/**
+	 * Snaps the freely moved nodes of the selection to the grid (keeps their relative positions),
+	 * the offset is taken from the first freely moved node, the other nodes (group IO junctions, locked nodes)
+	 * are not snapped, as that would move them away from where they belong (i.e. off the edge of the group).
+	 */
+	function snapSelectionToGrid() {
+		var free = moving_set.filter(function (m) { return getMoveMode(m.n) == "free"; });
+		if (free.length == 0) return;
+		var first = free[0].n;
+		var gridOffsetX = first.x-(settings.snapToGridHsize*Math.floor(first.x/settings.snapToGridHsize));
+		var gridOffsetY = first.y-(settings.snapToGridVsize*Math.floor(first.y/settings.snapToGridVsize));
+		if (gridOffsetX === 0 && gridOffsetY === 0) return;
+		for (var i = 0; i<free.length; i++) {
+			var node = free[i];
+			node.n.x -= gridOffsetX;
+			node.n.y -= gridOffsetY;
+			if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
+				node.dirty = false;
+			}
+		}
+	}
+
 	function moveSelection_keyboard(dx,dy) { // used when moving by keyboard keys
 		var snapToGrid = XOR(d3.event.shiftKey, settings.snapToGrid);
 		if(snapToGrid)
@@ -1625,6 +1664,12 @@ RED.view = (function() {
 			if (node.ox == null && node.oy == null) {
 				node.ox = node.n.x;
 				node.oy = node.n.y;
+			}
+			var moveMode = getMoveMode(node.n);
+			if (moveMode == "none") continue;
+			if (moveMode == "vertical") {
+				RED.view.groupbox.moveIOnodeVertically(node.n.parentGroup, node.n, node.n.y + dy);
+				continue;
 			}
 			node.n.x += dx;
 			node.n.y += dy;
@@ -1648,38 +1693,13 @@ RED.view = (function() {
 			console.warn("nodes tried to move outside workspace " + minX + " " +  minY);
 			for (var n = 0; n<moving_set.length; n++) {
 				node = moving_set[n];
+				if (getMoveMode(node.n) != "free") continue;
 				node.n.x -= minX;
 				node.n.y -= minY;
 			}
 		}
 
-		// snap to grid
-		if (snapToGrid && moving_set.length > 0) {
-			var gridOffsetX = 0;
-			var gridOffsetY = 0;
-
-			node = moving_set[0];
-			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/posMode)/_settings.snapToGridXsize)+node.n.w/posMode);
-			gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-			gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
-
-			//if (gridOffsetX !== 0 || gridOffsetY !== 0) {
-				for (i = 0; i<moving_set.length; i++) {
-					node = moving_set[i];
-					
-					// having this here makes all selected nodes realign automatically
-					//gridOffsetX = /*node.n.x-*/(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-					//gridOffsetY = /*node.n.y-*/(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
-					if (gridOffsetX === 0 && gridOffsetY === 0) continue
-					console.error("gridOffsetX:" + gridOffsetX + ", gridOffsetY:" + gridOffsetY);
-					node.n.x -= gridOffsetX; // +1 for correction to zero location based grid
-					node.n.y -= gridOffsetY;
-					if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
-						node.dirty = false;
-					}
-				}
-			//}
-		}
+		if (snapToGrid) snapSelectionToGrid();
 		redraw(false);
 		//redraw_links_init();
 		redraw_links();
@@ -1697,11 +1717,11 @@ RED.view = (function() {
 		for (var ni = 0; ni<moving_set.length; ni++) {
 			node = moving_set[ni];
 			//console.log(node.n);
-			if (node.n.locked != undefined && node.n.locked == true) {
-				if (node.n.parentGroup == undefined) continue;
-				//console.log("node is in parentGroup");
-				if (currentSelectionContains(node.n.parentGroup) == false)
-					continue;
+			var moveMode = getMoveMode(node.n);
+			if (moveMode == "none") continue;
+			if (moveMode == "vertical") {
+				RED.view.groupbox.moveIOnodeVertically(node.n.parentGroup, node.n, mousePos[1]+node.dy);
+				continue;
 			}
 
 			if (snapToGrid) {
@@ -1728,38 +1748,12 @@ RED.view = (function() {
 		if (minX !== 0 || minY !== 0) { // limit so that the node(s) cannot be moved outside of workspace
 			for (i = 0; i<moving_set.length; i++) {
 				node = moving_set[i];
+				if (getMoveMode(node.n) != "free") continue;
 				node.n.x -= minX;
 				node.n.y -= minY;
 			}
 		}
-		// snap to grid
-		if (snapToGrid && moving_set.length > 0) {
-			var gridOffsetX = 0;
-			var gridOffsetY = 0;
-			node = moving_set[0];
-
-			//gridOffset[0] = node.n.x-(_settings.snapToGridXsize*Math.floor((node.n.x-node.n.w/posMode)/_settings.snapToGridXsize)+node.n.w/posMode);
-
-			gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-			gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
-			
-			//if (gridOffsetX !== 0 || gridOffsetY !== 0) {
-				for (i = 0; i<moving_set.length; i++) {
-					node = moving_set[i];
-
-					// having this here makes all selected nodes realign automatically
-					//gridOffsetX = node.n.x-(settings.snapToGridHsize*Math.floor(node.n.x/settings.snapToGridHsize)); // this works much better than above
-					//gridOffsetY = node.n.y-(settings.snapToGridVsize*Math.floor(node.n.y/settings.snapToGridVsize));
-					if (gridOffsetX === 0 && gridOffsetY === 0) continue
-
-					node.n.x -= gridOffsetX; // +1 for correction to zero location based grid
-					node.n.y -= gridOffsetY;
-					if (node.n.x == node.n.ox && node.n.y == node.n.oy) {
-						node.dirty = false;
-					}
-				}
-			//}
-		}
+		if (snapToGrid) snapSelectionToGrid();
 	}
 	
 	function currentSelectionContains(node) {
@@ -1783,7 +1777,7 @@ RED.view = (function() {
 				node.selected = false;
 
 				// cannot delete class IO junctions unless they are loose or if the whole group is deleted
-				if (node.ClassIOtype != undefined && node.parentGroup != undefined && currentSelectionContains(node.parentGroup) == false) continue; 
+				if (RED.view.groupbox.isIOnode(node) && node.parentGroup != undefined && currentSelectionContains(node.parentGroup) == false) continue;
 				
 				if (node.x < 0) {
 					node.x = 25
@@ -2119,13 +2113,22 @@ RED.view = (function() {
     /**
      * @param {REDNode} d 
      */
+	/**
+	 * the visible rect of a node, also when the mouse event comes from the (invisible, bigger) hitbox of a junction
+	 * @param {Element} element the element that got the mouse event
+	 */
+	function getMainRectOf(element) {
+		if (d3.select(element).classed("junction_hitbox")) return d3.select(element.parentNode).select(".node");
+		return d3.select(element);
+	}
+
 	function nodeMouseOver(d) {
 		//if (d != mousedown_node)
 			//console.error(" >>>>>>>>>>>>>> node mouseover:" + d.name);
 
 		if (d.type.startsWith("Junction"))
 		{
-			d3.select(this).classed("red-ui-flow-junction-hovered", true);
+			getMainRectOf(this).classed("red-ui-flow-junction-hovered", true);
 			//d3.select(d3.select(this).node().parentNode).selectAll(".port").classed("red-ui-flow-junction-hovered", true);
 		}
 
@@ -2139,14 +2142,19 @@ RED.view = (function() {
 			return;
 		}
 		if (mouse_mode === 0) {
-			var nodeRect = d3.select(this);
+			var nodeRect = getMainRectOf(this);
 			nodeRect.classed("node_hovered",true);
 
 			//
 			//console.log(d3.mouse(this));
 
 			$(current_popup_rect).popover("destroy"); // destroy prev
-			
+
+			var exportModeErrors = getExportModeErrors(d);
+			if (exportModeErrors.length != 0) { // always explain why a node is shown as invalid
+				showPopOver(this, true, "<b>can't be exported in the Export Mode '" + RED.arduino.settings.ExportMode + "'</b><br>" + exportModeErrors.join("<br>"), "top");
+				return;
+			}
 
 			if (RED.main.settings.ShowNodeToolTip && (d._def.uiObject == undefined)) // dont show popup on gui objects
 			{
@@ -2170,7 +2178,7 @@ RED.view = (function() {
 	{
 		if (d.type.startsWith("Junction"))
 		{
-			d3.select(this).classed("red-ui-flow-junction-hovered", false);
+			getMainRectOf(this).classed("red-ui-flow-junction-hovered", false);
 			//d3.select(d3.select(this).node().parentNode).selectAll(".port").classed("red-ui-flow-junction-hovered", false);
 			console.log("out");
 		}
@@ -2183,7 +2191,7 @@ RED.view = (function() {
 			RED.view.ui.uiObjectMouseOut(d,x,y,rect); // here the event is passed down to the ui object
 			return;
 		}
-		var nodeRect = d3.select(this);
+		var nodeRect = getMainRectOf(this);
 		nodeRect.classed("node_hovered",false);
 		//console.log("node mouseout:" + d.name);
 		$(current_popup_rect).popover("destroy");
@@ -2542,6 +2550,19 @@ RED.view = (function() {
      */
 	function redraw_nodeMainRect_init(nodeRect, d)
 	{
+		if (d.type.startsWith("Junction")) {
+			// an invisible area, twice the size of the junction, that reacts on the mouse, makes the small junction
+			// easier to hover (to show its ports) and to grab, it's behind the junction (the size is set in redraw_nodeRefresh)
+			nodeRect.append("rect")
+				.attr("class", "junction_hitbox")
+				.on("mouseup",nodeMouseUp)
+				.on("mousedown",nodeMouseDown)
+				.on("mousemove", nodeMouseMove)
+				.on("mouseover", nodeMouseOver)
+				.on("mouseout", nodeMouseOut)
+				.on("touchstart",nodeTouchStart)
+				.on("touchend", nodeTouchEnd);
+		}
 		var mainRect = nodeRect.append("rect");
 		
 
@@ -3553,6 +3574,9 @@ RED.view = (function() {
 			nodenodeRect.attr("width",function(d){return d.w});
 			nodenodeRect.attr("height",function(d){return d.h;});
 		}
+		nodeRect.selectAll(".junction_hitbox") // twice the size of the junction, centered on it
+			.attr("x", -d.w/2).attr("y", -d.h/2)
+			.attr("width", d.w*2).attr("height", d.h*2);
 		nodeRect.selectAll(".node-gradient-top").attr("width",function(d){return d.w});
 		nodeRect.selectAll(".node_icon_group_right").attr('transform', function(d){return "translate("+(d.w-30)+",0)"});
         nodeRect.selectAll(".node_label_right").attr('x', function(d){return d.w-38});
@@ -3732,8 +3756,18 @@ RED.view = (function() {
      * @param {*} superUpdate 
      * @returns 
      */
+    /**
+     * @param {REDNode} d
+     * @returns {String[]} why the node can't be exported in the selected Export Mode (empty when it can)
+     */
+    function getExportModeErrors(d) {
+        if (RED.exporter == undefined || RED.exporter.modes == undefined || RED.arduino.isOscExportMode()) return [];
+        return RED.exporter.modes.getNodeProblems(d).map(function (p) { return p.text; });
+    }
+
     function redraw_node(d,superUpdate) {
         var nodeRect = d.svgRect;
+        if (nodeRect != undefined) nodeRect.selectAll(".node").classed("node_invalid", getExportModeErrors(d).length != 0);
         //console.error("whello");
         // the following (requirementError check) don't belong here
         if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O

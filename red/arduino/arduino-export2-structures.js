@@ -318,67 +318,7 @@ class WorkspaceExport
     }
 }
 
-class ExportFile
-{
-    /** filename + extension
-     * @type {String}
-     */
-    name = "";
-
-    /** file body without header and footer, will be deleted in FinalizeFiles after export dialog is shown 
-     * @type {String}
-     */
-    body = "";
-
-    /** contains the whole file contents, after using FinalizeFiles*/
-    contents = "";
-
-    /** used to seperate header from contents when using export dialog, will be deleted in FinalizeFiles after export dialog is shown 
-     * @type {String}
-    */
-    header = ""; 
-
-    /** used to seperate footer from contents when using export dialog, will be deleted in FinalizeFiles after export dialog is shown 
-     * @type {String}
-    */
-    footer = "";
-
-    /** used by Http Post Bridge, 
-     * this is normally set to true, 
-     * but can be set to false if some target files need to preserved, 
-     * otherwise all excess files will be removed*/
-    overwrite_file = true;
-
-    isMain = false;
-
-    /**
-     * used by h4yn0nnym0u5e depend sorting 
-     * @type {String} */
-    className = "";
-    /**
-     * used by h4yn0nnym0u5e depend sorting 
-     * @type {String[]} */
-    depends = [];
-    /**
-     * used by h4yn0nnym0u5e depend sorting 
-     * @type {Boolean} */
-    isExported = false;
-
-    constructor(name, contents) {
-        this.name = name;
-        this.body = contents;
-    }
-
-    /** makes this file ready for either Zip or Http Post export */
-    finalize() {
-        this.contents = this.header + this.body + this.footer;
-        //delete this.header;
-        //delete this.footer;
-        //delete this.body;
-        //delete this.depends;
-        //delete this.isExported;
-    }
-}
+// class ExportFile is moved to red/export/ExportFile.js
 
 /**
  * @typedef {Object} Keyword 

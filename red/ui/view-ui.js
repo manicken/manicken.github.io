@@ -438,8 +438,7 @@ RED.view.ui = (function() {
 		}
 		handleGroupAnchorNodes();
 		if (mousedown_node.type == "group") {
-			RED.view.groupbox.RearrangeIONodes(mousedown_node, 0);
-			RED.view.groupbox.RearrangeIONodes(mousedown_node, 1);
+			RED.view.groupbox.keepIOnodesOnEdges(mousedown_node); // the IO junctions keeps their (user set) positions, only kept on the edges
 			RED.view.redraw_links();
 		}
     }

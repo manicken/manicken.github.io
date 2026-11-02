@@ -1997,6 +1997,9 @@ RED.nodes = (function() {
         RED.events.on("nodes:change", NodeChanged);
         RED.events.on("nodes:remove", NodeRemoved);
         RED.events.on("nodes:moved", NodesMoved);
+        // the wire checks of the C++ export modes depends on the whole design, see scheduleExportCheck
+        for (const eventName of ["nodes:add", "nodes:remove", "nodes:change", "nodes:renamed", "nodes:inputsUpdated", "links:add", "links:remove", "flows:renamed"])
+            RED.events.on(eventName, scheduleExportCheck);
     }
     /**
      * 
@@ -2265,11 +2268,32 @@ RED.nodes = (function() {
             }
         }
     }
+    /** @returns {Boolean} true when the selected 'Export Mode' is one of the C++ modes (handled by RED.exporter) */
+    function isCppExportMode() {
+        return (RED.exporter != undefined) && (RED.arduino.isOscExportMode() == false);
+    }
+
+    var exportCheckTimer = undefined;
+    /**
+     * In the C++ export modes a wire can be valid or not because of things far away from it
+     * (i.e. the outputs of a BusSplit, the lanes of a class input, a mixer or a class in another tab),
+     * so after any change of the design all wires are checked again, and the view is redrawn to show the result.
+     * The check is delayed a bit, so many changes after each other only gives one check.
+     */
+    function scheduleExportCheck() {
+        if (loadingWorkspaces == true || isCppExportMode() == false) return;
+        clearTimeout(exportCheckTimer);
+        exportCheckTimer = setTimeout(function () {
+            refreshLinksInfo();
+            RED.view.redraw();
+        }, 50);
+    }
+
     /**
      * this function gets the linktype
-     * and TODO is to check for validity
-     * @param {REDLink} l 
-     * @returns 
+     * and checks if the link can be exported in the selected 'Export Mode'
+     * @param {REDLink} l
+     * @returns
      */
     function setLinkInfo(l) {
         l.info.tabOut = l.source._def.classWs?getClassIOport(l.source._def.classWs.id, "Out", l.sourcePort):undefined;
@@ -2278,6 +2302,14 @@ RED.nodes = (function() {
         l.info.isBus = (l.info.tabOut != undefined && l.info.tabOut.isBus) ||
                     (l.info.tabIn != undefined && l.info.tabIn.isBus) ||
                     (l.source.type == "BusJoin" || l.target.type == "BusSplit");
+
+        if (isCppExportMode()) { // the C++ export checks the wires itself (for the selected Export Mode), so show exactly what it would report
+            var errors = RED.exporter.modes.getLinkErrors(l);
+            l.info.valid = (errors.length == 0);
+            l.info.invalidText = errors.map(function (p) { return p.text; }).join("<br>");
+            return;
+        }
+        // the following checks is what the OSC export supports
 
         if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.target._def.dynInputs!=undefined)) {
             l.info.valid = false;
@@ -2437,6 +2469,7 @@ RED.nodes = (function() {
 		convertNode,
 		selectNode,
 		getJunctionSrcNode,
+        refreshLinksInfo,
 		getJunctionDstNodeEquals,
 		add: addNode,
 		addLink: addLink,

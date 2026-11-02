@@ -381,7 +381,7 @@ var NodeDefinitions = {
                     exportAsClass: { value: "false" },
                     className: {value: "ClassTypeName", type: "c_cpp_name"},
                     ioNodeSize: { value: 10 },
-                    ioNodeSpacing: { value: 5 },
+                    ioNodeSpacing: { value: 15 }, // the gap between the IO junctions, at least ioNodeSize is used (so the junction hitboxes don't overlap)
                     inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
                     outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
                     test: { value: [{name:"1"},{name:"2"},{name:"3"}]}

@@ -42,7 +42,7 @@ RED.arduino.export = (function () {
         return str;
     }
     function getAudioConnectionTypeName() {
-        if (RED.arduino.settings.ExportMode < 3)
+        if (RED.arduino.isOscExportMode() == false)
             return "AudioConnection";
         else
             return "OSCAudioConnection";
@@ -116,7 +116,7 @@ RED.arduino.export = (function () {
 				return result;
 			},
 			makeOSCnameQC: function (n) {
-                if (RED.arduino.settings.ExportMode < 3)
+                if (RED.arduino.isOscExportMode() == false)
                     return "";
                 else
 				    return '"' + this.makeOSCname(n) + '", ';
@@ -305,11 +305,11 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
-            else if (node.type == "AudioMixer" && mixervariants != undefined && (RED.arduino.settings.ExportMode < 3)) { // mode 3 == OSC ) {
+            else if (node.type == "AudioMixer" && mixervariants != undefined && (RED.arduino.isOscExportMode() == false)) {
                 var inputCount = RED.export.links.getDynInputDynSize(node); // variants 0 and 4 are taken care of in Mixers.Export.GetCode
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
-            else if (node.type == "AudioMixerStereo" && mixerStereoVariants != undefined && (RED.arduino.settings.ExportMode < 3)) { // mode 3 == OSC ) {
+            else if (node.type == "AudioMixerStereo" && mixerStereoVariants != undefined && (RED.arduino.isOscExportMode() == false)) {
                 //don't export AudioMixerStereo for the moment, as no code is currently availabe at Mixers.Export.GetCodeStereo
 
                 var inputCount = RED.export.links.getDynInputDynSize(node);
@@ -327,7 +327,7 @@ RED.arduino.export = (function () {
                     cppAPN += warningClassUse + "\n";
                 cppAPN += getTypeName(node);
                 var name = make_name(n);
-                if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
+                if (RED.arduino.isOscExportMode()) {
                     if (node._def.dynInputs != undefined)
                         name += '{"' +name+ '"' + RED.export.links.getDynInputDynSize(node) + "}";
                     else
@@ -532,13 +532,13 @@ RED.arduino.export = (function () {
                     wsCppFiles.push(wsFile);
                 }
             }
-            else if (n.type == "AudioMixer" && mixervariants != undefined && RED.arduino.settings.ExportMode < 3) {
+            else if (n.type == "AudioMixer" && mixervariants != undefined && RED.arduino.isOscExportMode() == false) {
                 var inputCount = RED.export.links.getDynInputDynSize(RED.nodes.node(n.id,n.z));
                 if (inputCount == 4) continue; // this variant is allready in the audio lib
 
                 if (!mixervariants.includes(inputCount)) mixervariants.push(inputCount);
             }
-            else if (n.type == "AudioMixerStereo" && mixerStereoVariants != undefined && RED.arduino.settings.ExportMode < 3) {
+            else if (n.type == "AudioMixerStereo" && mixerStereoVariants != undefined && RED.arduino.isOscExportMode() == false) {
 
             }
         }
@@ -676,7 +676,7 @@ RED.arduino.export = (function () {
                     //console.log(">>>" + n.type +"<<<"); // debug test
                     var name = make_name(n);
 
-                    if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
+                    if (RED.arduino.isOscExportMode()) {
                         if (node._def.dynInputs != undefined)
                             name += '{"' +name+ '", ' + RED.export.links.getDynInputDynSize(node) + "}";
                         else
@@ -709,7 +709,7 @@ RED.arduino.export = (function () {
                 for (var j = node.type.length; j < 32; j++) cpp += " ";
                 var name = make_name(node)
 
-                if (RED.arduino.settings.ExportMode == 3) { // mode 3 == OSC
+                if (RED.arduino.isOscExportMode()) {
                     if (node._def.dynInputs != undefined)
                         name += '{"' +name+ '", ' + RED.export.links.getDynInputDynSize(node) + "}";
                     else
@@ -827,7 +827,7 @@ RED.arduino.export = (function () {
 
                 // generate constructor code
                 newWsCpp.contents += "\n// constructor (this is called when class-object is created)\n";
-                if (RED.arduino.settings.ExportMode < 3)
+                if (RED.arduino.isOscExportMode() == false)
                     newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "() { \n";
                 else {
                     newWsCpp.contents += getNrOfSpaces(minorIncrement) + ws.label + "(const char* _name,OSCAudioGroup* parent) : \n";
@@ -836,7 +836,7 @@ RED.arduino.export = (function () {
 
                 if (ac.totalCount != 0)
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "int pci = 0; // used only for adding new patchcords\n"
-                if (RED.arduino.settings.ExportMode == 3)
+                if (RED.arduino.isOscExportMode())
                     newWsCpp.contents += getNrOfSpaces(majorIncrement) + "OSCAudioGroup& grp = *this;\n"
                 
                 newWsCpp.contents += "\n";
@@ -1043,7 +1043,7 @@ RED.arduino.export = (function () {
         else
             var cpp = node.type;
 
-        if (node._def.dynInputs != undefined && RED.arduino.settings.ExportMode < 3)
+        if (node._def.dynInputs != undefined && RED.arduino.isOscExportMode() == false)
         {
             var dynInputSize = RED.export.links.getDynInputDynSize(node).toString();
 
@@ -1053,7 +1053,7 @@ RED.arduino.export = (function () {
             cpp += dynInputSize;
         }
 
-        if (RED.arduino.settings.ExportMode == 3)
+        if (RED.arduino.isOscExportMode())
             cpp = cpp.replace("Audio", "OSCAudio");
 
         cpp += " "; // add at least one space

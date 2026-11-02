@@ -17,10 +17,51 @@
  **/
 RED.arduino = (function() {
 	var serverIsActive = false;
-	
+
+    /**
+     * The export modes, selected by the 'Export Mode' selector (#option-export-mode in index.html),
+     * the selected mode decides both what the Export button does and which wires the editor shows as invalid.
+     * The names are compared case-insensitive and are saved in lowercase.
+     */
+    var EXPORT_MODE = Object.freeze({
+        /** original-style design, no classes */
+        CLASSIC: "classic",
+        /** converts modular/class-based designs into classic flat code */
+        FLAT_CLASSIC: "flatclassic",
+        /** single-file export using helper classes, to support constructor-based array initialization */
+        FLAT_HELPER: "flathelper",
+        /** exports all tabs as classes, zip possible */
+        CLASSES: "classes",
+        /** Open Sound Control */
+        OSC: "osc",
+    });
+    /** before the names, the export mode was saved as a number (2 was 'Class based zip', zip is now an export option) */
+    var OLD_EXPORT_MODE_NUMBERS = [EXPORT_MODE.CLASSIC, EXPORT_MODE.CLASSES, EXPORT_MODE.CLASSES, EXPORT_MODE.OSC];
+
+    /**
+     * @param {String|Number} mode a mode name (any case) or an old mode number
+     * @returns {String} one of EXPORT_MODE, CLASSIC if the mode is unknown
+     */
+    function normalizeExportMode(mode) {
+        if (mode == undefined) return EXPORT_MODE.CLASSIC;
+        var name = String(mode).trim().toLowerCase();
+        if (/^\d+$/.test(name)) return OLD_EXPORT_MODE_NUMBERS[parseInt(name)] || EXPORT_MODE.CLASSIC;
+        for (var key in EXPORT_MODE) {
+            if (EXPORT_MODE[key] == name) return name;
+        }
+        console.warn("unknown export mode '" + mode + "', using " + EXPORT_MODE.CLASSIC);
+        return EXPORT_MODE.CLASSIC;
+    }
+
+    /** @returns {Boolean} true when the selected export mode is OSC (all other modes are handled by RED.exporter) */
+    function isOscExportMode() {
+        return settings.ExportMode == EXPORT_MODE.OSC;
+    }
+
     var defSettings = {
-        ExportMode:0,
+        ExportMode:EXPORT_MODE.CLASSIC,
         ExportInstancedTabsOnly: false,
+        SplitClassFiles: true,
         ZipExportUseSubFolder: false,
         ZipExportCompress: true,
         UseAudioMixerTemplate: false,
@@ -47,6 +88,7 @@ RED.arduino = (function() {
 	var _settings = {
         ExportMode:defSettings.ExportMode,
         ExportInstancedTabsOnly:defSettings.ExportInstancedTabsOnly,
+        SplitClassFiles:defSettings.SplitClassFiles,
         ZipExportUseSubFolder:defSettings.ZipExportUseSubFolder,
         ZipExportCompress:defSettings.ZipExportCompress,
         UseAudioMixerTemplate: defSettings.UseAudioMixerTemplate,
@@ -89,12 +131,13 @@ RED.arduino = (function() {
         */
     }
 	var settings = {
+        /** @returns {String} one of EXPORT_MODE */
         get ExportMode() {
-            return parseInt(_settings.ExportMode);
+            return normalizeExportMode(_settings.ExportMode);
         },
 		set ExportMode(mode) {
-            _settings.ExportMode = mode;
-            $('#option-export-mode').val(mode);
+            _settings.ExportMode = normalizeExportMode(mode);
+            $('#option-export-mode').val(_settings.ExportMode);
             RED.storage.update();
         },
 
@@ -109,6 +152,9 @@ RED.arduino = (function() {
 
         get ExportInstancedTabsOnly() { return _settings.ExportInstancedTabsOnly; },
 		set ExportInstancedTabsOnly(state) { _settings.ExportInstancedTabsOnly = state; RED.storage.update();},
+
+        get SplitClassFiles() { return _settings.SplitClassFiles; },
+		set SplitClassFiles(state) { _settings.SplitClassFiles = state; RED.storage.update();},
 
         get ZipExportUseSubFolder() { return _settings.ZipExportUseSubFolder; },
 		set ZipExportUseSubFolder(state) { _settings.ZipExportUseSubFolder = state; RED.storage.update();},
@@ -154,6 +200,7 @@ RED.arduino = (function() {
 																						"It's also used at the default savename for the autosave function,<br>when replacing the whole design with a template design.<br>"+
 																						"<br>When naming a tab with  [ProjectName].ino (not including the []),<br>that defines it's the main ino-file when it's exported to Arduino IDE."},
                 ExportInstancedTabsOnly: { label:"Export Instanced Tabs Only", type:"boolean", popupText:"unchecking this will export all tabs even those not 'instanced' in this Tool,<br>this can be useful when one want to instance and use objects dynamically in code.<br><br>having it checked mean that the export will not include tabs that are not 'active'(visible anywhere) in this tool."},
+                SplitClassFiles:         { label:"Separate class .h and .cpp files", type:"boolean", popupText:"Used by the Export Modes 'classes' and 'flathelper' (new export).<br><br>checked: every class is exported as a .h file (the class declaration)<br>and a .cpp file (the constructor/destructor and global instances),<br>that is needed when the project also have other .cpp files that include the class headers.<br><br>unchecked: everything in the .h files (header only)."},
                 ZipExportUseSubFolder:         { label:"Zip file subfolder", type:"boolean", popupText:"When exporting as zip,<br> if this is checked then the files in the zip will be put into a sub folder,<br> this is intended for complete Arduino Sketch exports."},
                 ZipExportCompress:         { label:"compress Zip file", type:"boolean", popupText:"Whenever to compress the exported zip file, a uncompressed file should generate faster<br> but timing tests show that the times are almost the same."},
                 
@@ -315,6 +362,9 @@ RED.arduino = (function() {
 	function NOtresponse(text) {console.log("GetGUI_TOOL_JSON_ not response"); }
     
     return {
+        EXPORT_MODE:EXPORT_MODE,
+        normalizeExportMode:normalizeExportMode,
+        isOscExportMode:isOscExportMode,
         defSettings:defSettings,
 		settings:settings,
 		settingsCategory:settingsCategory,

@@ -721,7 +721,11 @@ RED.main = (function() {
 	//$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
 	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = !$('#btn-guiRunEditMode').prop('checked'); });
     $('#btn-oscLiveUpdateMode').click(function() { RED.OSC.settings.LiveUpdate = $('#btn-oscLiveUpdateMode').prop('checked'); });
-    $('#option-export-mode').change(function() { RED.arduino.settings.ExportMode = $('#option-export-mode').val(); });
+    $('#option-export-mode').change(function() {
+        RED.arduino.settings.ExportMode = $('#option-export-mode').val();
+        RED.nodes.refreshLinksInfo(); // what is a valid wire depends on the export mode
+        RED.view.redraw();
+    });
 
     $('#btn-save').click(function() { RED.storage.update(); updateProjectsMenu(); });
     
@@ -763,7 +767,8 @@ RED.main = (function() {
 
         RED.export.init();
         RED.arduino.export.init();
-        RED.arduino.export2.init();
+        //RED.arduino.export2.init();
+        RED.exporter.main.init();
         RED.arduino.export.osc.init();
 
         //SetButtonPopOver("#btn-
@@ -782,7 +787,13 @@ RED.main = (function() {
         SetPopOver("#btn-zoom-zero", "Shows the current zoom scale<br>when pressed the zoom is reset to 1.0", "top");
 
         SetPopOver("#lbl-file-import", "Uses the browser upload function<br>to upload a design to the Tool<br>the valid file types are:<br><br>1. JSON<br><br>2. exported ZIP file containing <br>&nbsp;&nbsp;&nbsp;&nbsp;JSON file named<br>&nbsp;&nbsp;&nbsp;&nbsp;GUI_TOOL.json","left");
-        SetPopOver("#lbl-export-mode","This is just a 'maybe' future option,<br>think it could be used to check the design<br> and show errors if for example <br>a design can not be exported for the current mode<br>it can both highlight links and nodes that are not supported for the selected mode.<br><br>Can also be used together with one button to 'rule them all', <br>i.e. you select the mode and there is only one export button.");
+        SetPopOver("#lbl-export-mode","Selects what the Export button exports:<br><br>"+
+            "<b>Classic</b> - the current tab as one file, original-style design, no classes<br>"+
+            "<b>Flat classic</b> - the current tab as one file, the classes are converted into flat objects (voices_2_env), classes with code can not be flattened<br>"+
+            "<b>Flat helper</b> - flattened like Flat classic, but all objects and connections are in one helper class with the instance <i>design</i> (code uses design.amp), mixers in their own file<br>"+
+            "<b>Classes</b> - all tabs as classes, each in its own file (zip possible)<br>"+
+            "<b>Open Sound Control</b> - not yet moved to the new export, use the OSC menu<br><br>"+
+            "the wires that can't be exported in the selected mode<br>are shown as invalid (hover a wire to see why).");
 
         jscolor.presets.default = {
             closeButton:true

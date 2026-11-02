@@ -1,0 +1,219 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "GroupErrorTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_GroupErrors",
+            "label": "GroupErrors",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 40,
+                    "y": 80,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_a_in:0"
+                        ]
+                    ],
+                    "id": "ge_osc",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc[3]"
+                },
+                {
+                    "comment": "",
+                    "x": 150,
+                    "y": 40,
+                    "z": "ws_GroupErrors",
+                    "wires": [],
+                    "id": "ge_a",
+                    "type": "group",
+                    "name": "a[2]",
+                    "className": "GSame",
+                    "exportAsClass": true,
+                    "nodes": [
+                        "ge_a_in",
+                        "ge_a_out",
+                        "ge_a_amp"
+                    ],
+                    "inputs": 1,
+                    "outputs": 1,
+                    "ioNodeSize": 10,
+                    "ioNodeSpacing": 15,
+                    "individualListBoxMode": false,
+                    "border_color": "#999",
+                    "color": "#ddffbb",
+                    "tag": "",
+                    "textSize": 14,
+                    "w": 170,
+                    "h": 80
+                },
+                {
+                    "comment": "",
+                    "x": 145,
+                    "y": 75,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_a_amp:0"
+                        ]
+                    ],
+                    "id": "ge_a_in",
+                    "type": "JunctionLR",
+                    "name": "In1",
+                    "ClassIOtype": 1,
+                    "parentGroup": "ge_a",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 315,
+                    "y": 75,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_i2s:0"
+                        ]
+                    ],
+                    "id": "ge_a_out",
+                    "type": "JunctionLR",
+                    "name": "Out1",
+                    "ClassIOtype": 0,
+                    "parentGroup": "ge_a",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 190,
+                    "y": 60,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_a_out:0"
+                        ]
+                    ],
+                    "id": "ge_a_amp",
+                    "type": "AudioAmplifier",
+                    "name": "amp",
+                    "parentGroup": "ge_a"
+                },
+                {
+                    "comment": "",
+                    "x": 150,
+                    "y": 160,
+                    "z": "ws_GroupErrors",
+                    "wires": [],
+                    "id": "ge_b",
+                    "type": "group",
+                    "name": "b",
+                    "className": "GSame",
+                    "exportAsClass": true,
+                    "nodes": [
+                        "ge_b_in",
+                        "ge_b_out",
+                        "ge_b_env"
+                    ],
+                    "inputs": 1,
+                    "outputs": 1,
+                    "ioNodeSize": 10,
+                    "ioNodeSpacing": 15,
+                    "individualListBoxMode": false,
+                    "border_color": "#999",
+                    "color": "#ddffbb",
+                    "tag": "",
+                    "textSize": 14,
+                    "w": 170,
+                    "h": 80
+                },
+                {
+                    "comment": "",
+                    "x": 145,
+                    "y": 195,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_b_env:0"
+                        ]
+                    ],
+                    "id": "ge_b_in",
+                    "type": "JunctionLR",
+                    "name": "In1",
+                    "ClassIOtype": 1,
+                    "parentGroup": "ge_b",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 315,
+                    "y": 195,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_i2s:1"
+                        ]
+                    ],
+                    "id": "ge_b_out",
+                    "type": "JunctionLR",
+                    "name": "Out1",
+                    "ClassIOtype": 0,
+                    "parentGroup": "ge_b",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 190,
+                    "y": 180,
+                    "z": "ws_GroupErrors",
+                    "wires": [
+                        [
+                            "ge_b_out:0"
+                        ]
+                    ],
+                    "id": "ge_b_env",
+                    "type": "AudioEffectEnvelope",
+                    "name": "env",
+                    "parentGroup": "ge_b"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 100,
+                    "z": "ws_GroupErrors",
+                    "wires": [],
+                    "id": "ge_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        }
+    ]
+}

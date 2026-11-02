@@ -401,6 +401,13 @@
     transition: transform .1s;
   }
 
+  /* the invisible area around a junction that reacts on the mouse (see RED.view redraw_nodeMainRect_init) */
+  .junction_hitbox {
+    fill: transparent;
+    stroke: none;
+    pointer-events: all;
+  }
+
   .red-ui-flow-junction:hover .red-ui-flow-junction-port {
     opacity: 1;
     pointer-events: auto
@@ -1009,6 +1016,8 @@
   }
   .node_invalid {
      stroke: #ff0000;
+     stroke-width: 3;
+     stroke-dasharray: 6, 3;
   }
   .node_selected {
      stroke: #ff7f0e;
@@ -1311,29 +1320,45 @@
     border-bottom: 1px solid #ccc;
     height: 100%;
   }
+  .filelist-col {
+    position: relative; /* the file list is placed absolute inside this column */
+  }
   .form-file-items {
-    /*border-right: 1px solid #ccc;*/
-    margin-top: 20px;
-    height: 100%;
+    /* absolute so that a long file list scrolls instead of making the dialog taller,
+       top is the height of the "Files:" label so the list starts at the same height as the textarea */
+    position: absolute;
+    top: 25px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .file-list-tab {
-    margin-bottom: 3px;
-  }
-  .file-list-tab {
-    background-color: #f0f0f0;
+    display: block;
     width: 100%;
+    margin: 0 0 2px 0;
+    padding: 2px 6px;
+    line-height: 16px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* the full name is shown in the tooltip */
+    background-color: #f0f0f0;
     border: 1px solid #ccc;
     border-right: none;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
-    
+  }
+  #export-dialog-filelist .file-list-tab {
+    font-size: 12px; /* the id is needed to override the jquery-ui '.ui-widget button' font size */
+  }
+  .file-list-tab:hover {
+    background-color: #e4e4e4;
   }
   .file-list-tab.active {
-    text-decoration: underline;
-    background-color: rgb(226, 229, 255);
-    position:relative;
-	right: -1px;
-	border-right: 1px solid rgb(226, 229, 255); /* Added border-right */
+    font-weight: bold;
+    background-color: rgb(226, 229, 255); /* same as the textarea, so it looks connected */
   }
   /*
   .form-row input[id="node-input-color"] {
