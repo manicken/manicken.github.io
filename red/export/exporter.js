@@ -142,9 +142,9 @@ RED.exporter.main = (function () {
     }
 
     /**
-     * The class groups (groups with 'export as class') in the exported workspaces, also the ones inside other class groups,
+     * The class groups (groups with a class name) in the exported workspaces, also the ones inside other class groups,
      * each class once. All groups with the same class name must be the same (a class can only have one content),
-     * and a class group can't have the same class name as a tab.
+     * the other class name checks are done for every class group (see graph.getClassGroupNameProblems).
      * @param {REDWorkspace[]} workspaces
      * @returns {{scopes: GroupScope[], problems: ResolvedProblem[]}}
      */
@@ -153,10 +153,13 @@ RED.exporter.main = (function () {
         const byClassName = new Map(); // class name -> the scopes of all groups with that class name
         const visit = function (scope) {
             for (const node of graph.getScopeNodes(scope)) {
-                if (graph.isClassGroup(node) == false) continue;
-                const groupScope = graph.getGroupScope(node);
+                const group = graph.isClassGroup(node) ? node : node._def.classGroup; // a group instance uses its source group
+                if (group == undefined) continue;
+                const groupScope = graph.getGroupScope(group);
                 if (byClassName.has(groupScope.label) == false) byClassName.set(groupScope.label, []);
-                byClassName.get(groupScope.label).push(groupScope);
+                const sameClass = byClassName.get(groupScope.label);
+                if (sameClass.some(function (s) { return s.group === group; })) continue; // already visited
+                sameClass.push(groupScope);
                 visit(groupScope);
             }
         };
@@ -167,8 +170,6 @@ RED.exporter.main = (function () {
         for (const [className, groupScopes] of byClassName) {
             const first = groupScopes[0];
             scopes.push(first);
-            if (RED.nodes.workspaces.some(function (ws) { return ws.label == className; }))
-                problems.push(new ResolvedProblem("error", "the group " + graph.getBaseName(first.group) + " have the class name " + className + ", that is also the name of a tab", undefined, first.group));
             const signature = graph.getScopeSignature(first);
             const describe = function (group) { return graph.getBaseName(group) + " (tab \"" + RED.nodes.getWorkspace(group.z).label + "\")"; };
             for (const other of groupScopes.slice(1)) {
@@ -533,11 +534,11 @@ RED.exporter.main = (function () {
 
     function showFileInDialog(fileName) {
         if (fileName == COMPOSITE_FILE) {
-            $("#node-input-export").val(lastCompositeText);
+            RED.view.dialogs.setExportDialogText(lastCompositeText, fileName);
             return;
         }
         const file = lastFiles.find(function (f) { return f.name == fileName; });
-        if (file != undefined) $("#node-input-export").val(file.contents);
+        if (file != undefined) RED.view.dialogs.setExportDialogText(file.contents, file.name);
     }
 
     function shouldShowDialog(generateZip) {

@@ -669,11 +669,13 @@ span.mainfunction {color: #993300; font-weight: bolder}
 		</div>-->
 		<div class="form-col">
 			<div class="form-row">
-				<label id="export-clipboard-dialog-textarea-label" for="node-input-export" style="display: block; width:100%;"><i class="icon-share"></i>  Source Code:</label>
-				<textarea readonly style="font-family: monospace; font-size: 12px; background:rgb(226, 229, 255); padding-left: 0.5em; white-space: pre;overflow-wrap: normal;overflow-x: scroll; cursor: text;" class="input-block-level" id="node-input-export" rows="30"></textarea>
+				<label id="export-clipboard-dialog-textarea-label" for="export-dialog-ace" style="display: block; width:100%;"><i class="icon-share"></i>  Source Code:</label>
+				<!-- an ace editor (read-only) that shows the text, see RED.view.dialogs.setExportDialogText -->
+				<div id="export-dialog-ace" class="export-dialog-ace"></div>
+				<textarea readonly style="display:none;" id="node-input-export"></textarea>
 			</div>
 			<div class="form-tips" id="export-clipboard-dialog-tips">
-				Select the text above and copy to the clipboard with Ctrl-A Ctrl-C.
+				Click in the text above and copy it to the clipboard with Ctrl-A Ctrl-C, selecting a word marks it everywhere.
 			</div>
 		</div>
 	</div>
@@ -726,6 +728,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="slip.js"></script>
 <script src="red/REDobjectStructures.js"></script>
 <script src="red/nodes.js"></script>
+<script src="red/group-classes.js"></script>
 <script src="red/red.js"></script>
 <script src="red/arduino/export.js"></script>
 <script src="red/arduino/export-links.js"></script>
@@ -793,6 +796,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/view-ui.js"></script>
 <script src="red/ui/view-dialogs.js"></script>
 <script src="red/ui/view-groupbox.js"></script>
+<script src="red/ui/view-groupinstance.js"></script>
 <!--<script src="red/ui/OCPview.js"></script>-->
 <script src="red/ui/workspaces.js"></script>
 <script src="red/ui/searchBox.js"></script>
@@ -1705,16 +1709,11 @@ span.mainfunction {color: #993300; font-weight: bolder}
         </label>
 	</div>
 	<div class="form-row-divider"></div>
-	<div class="form-row">
-        <label style="width:150px" for="node-input-exportAsClass"><i class="fa fa-tag"></i> <span data-i18n="node-red:debug.to"></span>Export as class (not implemented yet)</label>
-        <label for="node-input-exportAsClass">
-        <input type="checkbox" id="node-input-exportAsClass" style="display:inline-block; width:22px; vertical-align:baseline;" autocomplete="off"><span data-i18n="node-red:debug.toSidebar"></span>
-        </label>
-	</div>
     <div class="form-row">
-		<label for="node-input-className"><i class="fa fa-tag"></i> Class Type Name (not implemented yet)</label>
-		<input type="text" id="node-input-className" placeholder="ClassTypeName (not implemented yet)" autocomplete="off">
+		<label for="node-input-className"><i class="fa fa-tag"></i> Class Name</label>
+		<input type="text" id="node-input-className" placeholder="empty = not a class" autocomplete="off">
 	</div>
+	<div class="form-tips">With a class name the group is exported as a class: the class name is the type and the group name is the instance (i.e. voices or voices[8]).</div>
 	<div class="form-row">
 		<label for="node-input-ioNodeSize"><i class="fa fa-tag"></i> IO Node Size</label>
 		<input type="text" id="node-input-ioNodeSize" placeholder="ioNodeSize" autocomplete="off">

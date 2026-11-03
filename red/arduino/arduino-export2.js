@@ -540,7 +540,7 @@ RED.arduino.export2 = (function () {
     function ExportDialogFileSelected(fileName) 
     {
         if (fileName == ONE_FILE_MERGE) { // special case
-            $("#node-input-export").val(currentExport.compositeContents);
+            RED.view.dialogs.setExportDialogText(currentExport.compositeContents, fileName);
         }
         else
         {
@@ -549,7 +549,7 @@ RED.arduino.export2 = (function () {
                 var file = files[i];
                 if (file.name == fileName)
                 {
-                    $("#node-input-export").val(file.contents);
+                    RED.view.dialogs.setExportDialogText(file.contents, file.name);
                     break;
                 }
             }

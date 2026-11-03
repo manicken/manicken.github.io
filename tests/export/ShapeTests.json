@@ -1,0 +1,684 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "ShapeTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_ShapeMain",
+            "label": "ShapeMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_split4:0",
+                            "sm_split8:0",
+                            "sm_amps8:0",
+                            "sm_fx4:0",
+                            "sm_bad:0"
+                        ]
+                    ],
+                    "id": "sm_voices",
+                    "type": "StereoOsc",
+                    "name": "voices[4]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_split2:0"
+                        ],
+                        [
+                            "sm_join:0"
+                        ],
+                        [
+                            "sm_join:1"
+                        ]
+                    ],
+                    "id": "sm_split4",
+                    "type": "JunctionLR",
+                    "name": "split4",
+                    "inputs": 1,
+                    "outputs": 4,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_ampL:0"
+                        ],
+                        [
+                            "sm_ampR:0"
+                        ]
+                    ],
+                    "id": "sm_split2",
+                    "type": "JunctionLR",
+                    "name": "split2",
+                    "inputs": 1,
+                    "outputs": 2,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 60,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_i2s:0"
+                        ]
+                    ],
+                    "id": "sm_ampL",
+                    "type": "AudioAmplifier",
+                    "name": "ampL"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 110,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_i2s:1"
+                        ]
+                    ],
+                    "id": "sm_ampR",
+                    "type": "AudioAmplifier",
+                    "name": "ampR"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 210,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [],
+                        [],
+                        [],
+                        [
+                            "sm_mix8:0"
+                        ],
+                        [],
+                        [],
+                        [
+                            "sm_mix8:1"
+                        ]
+                    ],
+                    "id": "sm_split8",
+                    "type": "JunctionLR",
+                    "name": "split8",
+                    "inputs": 1,
+                    "outputs": 8,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 210,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_mix8",
+                    "type": "AudioMixer",
+                    "name": "mix8"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 310,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_amps8",
+                    "type": "AudioAmplifier",
+                    "name": "amps8[8]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 360,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_fx4",
+                    "type": "StereoFx",
+                    "name": "fx4[4]"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 260,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_unjoin:0"
+                        ]
+                    ],
+                    "id": "sm_join",
+                    "type": "JunctionLR",
+                    "name": "join",
+                    "inputs": 2,
+                    "outputs": 1,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 700,
+                    "y": 260,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_mixA:0"
+                        ],
+                        [
+                            "sm_mixB:0"
+                        ]
+                    ],
+                    "id": "sm_unjoin",
+                    "type": "JunctionLR",
+                    "name": "unjoin",
+                    "inputs": 1,
+                    "outputs": 2,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 850,
+                    "y": 260,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_mixA",
+                    "type": "AudioMixer",
+                    "name": "mixA"
+                },
+                {
+                    "comment": "",
+                    "x": 850,
+                    "y": 310,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_mixB",
+                    "type": "AudioMixer",
+                    "name": "mixB"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 460,
+                    "z": "ws_ShapeMain",
+                    "wires": [
+                        [
+                            "sm_badAmp:0"
+                        ]
+                    ],
+                    "id": "sm_bad",
+                    "type": "JunctionLR",
+                    "name": "bad3",
+                    "inputs": 1,
+                    "outputs": 3,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 460,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_badAmp",
+                    "type": "AudioAmplifier",
+                    "name": "badAmp"
+                },
+                {
+                    "comment": "",
+                    "x": 1000,
+                    "y": 60,
+                    "z": "ws_ShapeMain",
+                    "wires": [],
+                    "id": "sm_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_StereoOsc",
+            "label": "StereoOsc",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_StereoOsc",
+                    "wires": [
+                        [
+                            "so_out:0"
+                        ]
+                    ],
+                    "id": "so_l",
+                    "type": "AudioSynthWaveform",
+                    "name": "oscL"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_StereoOsc",
+                    "wires": [
+                        [
+                            "so_out:1"
+                        ]
+                    ],
+                    "id": "so_r",
+                    "type": "AudioSynthWaveform",
+                    "name": "oscR"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_StereoOsc",
+                    "wires": [],
+                    "id": "so_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 2
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_StereoFx",
+            "label": "StereoFx",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_StereoFx",
+                    "wires": [
+                        [
+                            "sfx_ampL:0"
+                        ],
+                        [
+                            "sfx_ampR:0"
+                        ]
+                    ],
+                    "id": "sfx_in",
+                    "type": "TabInput",
+                    "name": "In",
+                    "outputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_StereoFx",
+                    "wires": [
+                        [
+                            "sfx_outL:0"
+                        ]
+                    ],
+                    "id": "sfx_ampL",
+                    "type": "AudioAmplifier",
+                    "name": "ampL"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 110,
+                    "z": "ws_StereoFx",
+                    "wires": [
+                        [
+                            "sfx_outR:0"
+                        ]
+                    ],
+                    "id": "sfx_ampR",
+                    "type": "AudioAmplifier",
+                    "name": "ampR"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_StereoFx",
+                    "wires": [],
+                    "id": "sfx_outL",
+                    "type": "TabOutput",
+                    "name": "OutL",
+                    "inputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 110,
+                    "z": "ws_StereoFx",
+                    "wires": [],
+                    "id": "sfx_outR",
+                    "type": "TabOutput",
+                    "name": "OutR",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_ArraySizeMain",
+            "label": "ArraySizeMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [
+                        [
+                            "as_c3:0"
+                        ]
+                    ],
+                    "id": "as_c2",
+                    "type": "Class2Bus",
+                    "name": "class_2",
+                    "arraySize": 1
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [
+                        [
+                            "as_split:0",
+                            "as_mix:0"
+                        ]
+                    ],
+                    "id": "as_c3",
+                    "type": "Class3Bus",
+                    "name": "class_3",
+                    "arraySize": 2
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [
+                        [
+                            "as_splitA:0"
+                        ],
+                        [
+                            "as_splitB:0"
+                        ]
+                    ],
+                    "id": "as_split",
+                    "type": "JunctionLR",
+                    "name": "split",
+                    "inputs": 1,
+                    "outputs": 2,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 60,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [
+                        [
+                            "as_i2s:0"
+                        ],
+                        [
+                            "as_i2s:1"
+                        ]
+                    ],
+                    "id": "as_splitA",
+                    "type": "JunctionLR",
+                    "name": "splitA",
+                    "inputs": 1,
+                    "outputs": 2,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 110,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [
+                        [
+                            "as_i2s:2"
+                        ],
+                        [
+                            "as_i2s:3"
+                        ]
+                    ],
+                    "id": "as_splitB",
+                    "type": "JunctionLR",
+                    "name": "splitB",
+                    "inputs": 1,
+                    "outputs": 2,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 700,
+                    "y": 60,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [],
+                    "id": "as_i2s",
+                    "type": "AudioOutputI2SQuad",
+                    "name": "i2s_quad"
+                },
+                {
+                    "comment": "",
+                    "x": 700,
+                    "y": 160,
+                    "z": "ws_ArraySizeMain",
+                    "wires": [],
+                    "id": "as_mix",
+                    "type": "AudioMixer",
+                    "name": "mixer"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Class2Bus",
+            "label": "Class2Bus",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Class2Bus",
+                    "wires": [
+                        [
+                            "c2_out:0"
+                        ]
+                    ],
+                    "id": "c2_wt1",
+                    "type": "AudioSynthWavetable",
+                    "name": "wavetable"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_Class2Bus",
+                    "wires": [
+                        [
+                            "c2_out:1"
+                        ]
+                    ],
+                    "id": "c2_wt2",
+                    "type": "AudioSynthWavetable",
+                    "name": "wavetable1"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Class2Bus",
+                    "wires": [],
+                    "id": "c2_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 2
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_Class3Bus",
+            "label": "Class3Bus",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_Class3Bus",
+                    "wires": [
+                        [
+                            "c3_wm1:0"
+                        ],
+                        [
+                            "c3_wm2:0"
+                        ]
+                    ],
+                    "id": "c3_in",
+                    "type": "TabInput",
+                    "name": "In",
+                    "outputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_Class3Bus",
+                    "wires": [
+                        [
+                            "c3_out:0"
+                        ]
+                    ],
+                    "id": "c3_wm1",
+                    "type": "AudioSynthWaveformModulated",
+                    "name": "waveformMod"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 110,
+                    "z": "ws_Class3Bus",
+                    "wires": [
+                        [
+                            "c3_out:1"
+                        ]
+                    ],
+                    "id": "c3_wm2",
+                    "type": "AudioSynthWaveformModulated",
+                    "name": "waveformMod1"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_Class3Bus",
+                    "wires": [],
+                    "id": "c3_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 2
+                }
+            ]
+        }
+    ]
+}

@@ -7,8 +7,10 @@
  *
  * Terms used:
  *   class node   - a node whose type is another workspace (tab), node._def.classWs is that workspace
- *   class group  - a group with 'export as class' set: a class defined inline, its className is the type
+ *   class group  - a group with a class name: a class defined inline, its className is the type
  *                  and its name is the instance (voices[8]), see getClassWorkspace/getGroupScope
+ *   group instance - a class node of a class group type (from the palette), node._def.classGroup is the class group
+ *                  (the source), it's another instance of the same class, the ports are the IO junctions of the source
  *   class scope  - what a class is made of: a workspace (tab), or the contents of a class group,
  *                  getScopeNodes/getScopeLinks gives the nodes/wires of a scope (not the ones inside class groups in it)
  *   class port   - the TabInput/TabOutput node inside a class workspace that a class node port maps to,
@@ -17,9 +19,12 @@
  *   loose wire   - a wire straight from an object inside a class group to an object outside of it (or the other way),
  *                  without IO junctions, it belongs to the outside, see getLinkOwner
  *   bus port     - a class port with more than one lane (TabOutput.inputs > 1 or TabInput.outputs > 1)
- *   array node   - a node with a name like "osc[4]" or "osc[NUM]" (NUM being a ConstValue node)
- *   junction     - a virtual node that only forwards wires (JunctionLR, JunctionRL)
- *   bus node     - BusJoin (combines its inputs into one bus wire) and BusSplit (splits a bus wire into its signals)
+ *   array node   - a node with a name like "osc[4]" or "osc[NUM]" (NUM being a ConstValue node),
+ *                  or a name without an array part and the 'Array Size' setting (node.arraySize) above 1
+ *   junction     - a virtual node with one input and one output that only forwards wires (JunctionLR, JunctionRL)
+ *   bus node     - a junction with more inputs joins them into one bus wire, with more outputs it splits a wire,
+ *                  see getJoinInputCount/getSplitOutputCount (older designs used BusJoin and BusSplit, they are
+ *                  converted into junctions when loaded, but they are still handled here)
  *   dyn input    - an object whose input count is decided by what is connected to it (AudioMixer, AudioMixerStereo)
  */
 RED.exporter = RED.exporter || {};
@@ -27,33 +32,66 @@ RED.exporter = RED.exporter || {};
 RED.exporter.graph = (function () {
     'use strict';
 
-    /** @param {REDNode} node @returns {boolean} true for a junction that only forwards wires (not a class group IO junction) */
+    /**
+     * @param {REDNode} node
+     * @returns {boolean} true for a junction that only forwards wires: one input and one output (and not a class group IO junction)
+     */
     function isJunction(node) {
-        return node.type.startsWith("Junction") && isGroupPort(node) == false;
+        return node.type.startsWith("Junction") && isGroupPort(node) == false && getPortCount(node.inputs) == 1 && getPortCount(node.outputs) == 1;
     }
 
-    /** @param {REDNode} node @returns {boolean} true for BusJoin and BusSplit, virtual nodes that combines/splits wires */
+    /** @param {String|Number} value an inputs/outputs setting @returns {Number} at least 1 */
+    function getPortCount(value) {
+        const count = Number(value);
+        return (count > 1) ? count : 1;
+    }
+
+    /** @param {REDNode} node @returns {boolean} true for a junction with more than one input or output (it joins and/or splits) */
+    function isBusJunction(node) {
+        return node.type.startsWith("Junction") && isGroupPort(node) == false && isJunction(node) == false;
+    }
+
+    /** @param {REDNode} node @returns {boolean} true for the virtual nodes that joins/splits wires (see getJoinInputCount/getSplitOutputCount) */
     function isBusNode(node) {
-        return node.type == "BusJoin" || node.type == "BusSplit";
-    }
-
-    /** @param {REDNode} node @returns {boolean} true if the node is an instance of a class (another workspace, or a class group) */
-    function isClass(node) {
-        return node._def.classWs != undefined || isClassGroup(node);
+        return node.type == "BusJoin" || node.type == "BusSplit" || isBusJunction(node);
     }
 
     /**
-     * @param {REDNode} node a class node or a class group
+     * @param {REDNode} node
+     * @returns {Number} how many inputs a joining node joins into one bus (a junction with more than one input, BusJoin), 0 if it don't join
+     */
+    function getJoinInputCount(node) {
+        if (node.type == "BusJoin" || (isBusJunction(node) && getPortCount(node.inputs) > 1)) return getPortCount(node.inputs);
+        return 0;
+    }
+
+    /**
+     * @param {REDNode} node
+     * @returns {Number} how many outputs a splitting node splits its wire into (a junction with more than one output, BusSplit), 0 if it don't split
+     */
+    function getSplitOutputCount(node) {
+        if (node.type == "BusSplit" || (isBusJunction(node) && getPortCount(node.outputs) > 1)) return getPortCount(node.outputs);
+        return 0;
+    }
+
+    /** @param {REDNode} node @returns {boolean} true if the node is an instance of a class (another workspace, a class group, or a group instance) */
+    function isClass(node) {
+        return node._def.classWs != undefined || node._def.classGroup != undefined || isClassGroup(node);
+    }
+
+    /**
+     * @param {REDNode} node a class node, a class group or a group instance
      * @returns {REDWorkspace|GroupScope} what the class is made of: the workspace, or the scope of the class group
      */
     function getClassWorkspace(node) {
         if (isClassGroup(node)) return getGroupScope(node);
+        if (node._def.classGroup != undefined) return getGroupScope(node._def.classGroup);
         return node._def.classWs;
     }
 
     /** @param {REDNode} node a class node or a class group @returns {String} the class (type) name */
     function getClassName(node) {
-        if (isClassGroup(node)) return node.className;
+        if (isClassGroup(node)) return node.className.trim();
         return node.type;
     }
 
@@ -79,9 +117,51 @@ RED.exporter.graph = (function () {
      * @property {REDLink[]} links the wires in the class (see getScopeLinks)
      */
 
-    /** @param {REDNode} node @returns {boolean} true for a group with 'export as class' set */
+    /** @param {REDNode} node @returns {boolean} true for a group with a class name, a group without one is only visual */
     function isClassGroup(node) {
-        return node.type == "group" && (node.exportAsClass === true || node.exportAsClass === "true");
+        return node.type == "group" && typeof node.className == "string" && node.className.trim().length != 0;
+    }
+
+    /**
+     * The class name of a class group must be a C++ name that is not taken by a tab or an object type,
+     * and the group name is the instance name (voices or voices[8]).
+     * note. groups with the same class name must have the same contents, that is checked by the export (it's slower)
+     * @param {REDNode} group a class group
+     * @returns {String[]} what is wrong, empty if nothing
+     */
+    function getClassGroupNameProblems(group) {
+        const problems = [];
+        const classNameProblem = getClassNameProblem(group);
+        if (classNameProblem != undefined) problems.push(classNameProblem);
+        if (/^[A-Za-z_]\w*(\[\s*\w+\s*\])?$/.test(group.name) == false)
+            problems.push("the group name '" + group.name + "' is not a valid C++ instance name (the group name is the instance, i.e. voices or voices[8], the class name is the type)");
+        return problems;
+    }
+
+    /**
+     * @param {REDNode} group a class group
+     * @returns {String|undefined} what is wrong with the class name, undefined if nothing
+     */
+    function getClassNameProblem(group) {
+        const className = getClassName(group);
+        if (/^[A-Za-z_]\w*$/.test(className) == false)
+            return "the class name '" + className + "' of the group " + group.name + " is not a valid C++ name";
+        if (RED.nodes.workspaces.some(function (ws) { return ws.label == className; }))
+            return "the class name '" + className + "' of the group " + group.name + " is taken, it's the name of a tab";
+        if (RED.nodes.hasType(className) && RED.nodes.getType(className).isGroupClass != true) // (a class group type is its own, see RED.groupClasses)
+            return "the class name '" + className + "' of the group " + group.name + " is taken, it's an object type";
+        return undefined;
+    }
+
+    /**
+     * @param {REDNode} node a group instance (node._def.isGroupClass)
+     * @returns {String|undefined} what is wrong, undefined if nothing: the class group (source) must still exist and have the class name
+     */
+    function getGroupInstanceProblem(node) {
+        const group = node._def.classGroup;
+        if (group == undefined || RED.nodes.node(group.id) !== group || isClassGroup(group) == false || getClassName(group) != node.type)
+            return '"' + getBaseName(node) + '" is an instance of the class ' + node.type + ", but there is no group with that class name (the class group is removed or have another class name)";
+        return undefined;
     }
 
     /** @param {REDNode} node @returns {REDNode|undefined} the class group the node is inside of (the closest one), undefined if none */
@@ -114,18 +194,31 @@ RED.exporter.graph = (function () {
         return node.type == "TabOutput" || (isGroupPort(node) && node.ClassIOtype == 0);
     }
 
+    /**
+     * The IO junctions of a class group in port order: top to bottom (the same as TabInput/TabOutput),
+     * a group instance gets its ports in this order.
+     * @param {REDNode} group a class group
+     * @param {String} direction "In" or "Out"
+     * @returns {REDNode[]}
+     */
+    function getGroupPorts(group, direction) {
+        const ioType = (direction == "In") ? 1 : 0;
+        return group.nodes.filter(function (n) { return n.type.startsWith("Junction") && n.ClassIOtype === ioType; })
+            .sort(function (a, b) { return (a.y - b.y) || (a.x - b.x) || (a.id < b.id ? -1 : 1); });
+    }
+
     /** @param {REDNode} group a class group @returns {GroupScope} */
     function getGroupScope(group) {
         return {
             id: group.id,
-            label: group.className,
+            label: getClassName(group),
             group,
             isGroupScope: true,
             get nodes() { return getScopeNodes(this); },
             get links() { return getScopeLinks(this); },
             z: group.z,
-            tabInputs: [], // the ports of a class group are its IO junctions, see isGroupPort
-            tabOutputs: [],
+            get tabInputs() { return getGroupPorts(group, "In"); }, // the ports of a class group are its IO junctions, see isGroupPort
+            get tabOutputs() { return getGroupPorts(group, "Out"); },
             export: true,
             isMain: false,
             isAudioMain: false,
@@ -204,7 +297,7 @@ RED.exporter.graph = (function () {
      */
     function getScopeSignature(scope) {
         const describeNode = function (n) {
-            if (isClassGroup(n)) return "class " + n.className + " " + n.name + " {" + getScopeSignature(getGroupScope(n)) + "}";
+            if (isClassGroup(n)) return "class " + getClassName(n) + " " + n.name + " {" + getScopeSignature(getGroupScope(n)) + "}";
             return n.type + " " + n.name + " " + (n.comment || "") + " " + ((n.ClassIOtype === 0 || n.ClassIOtype === 1) ? ("io" + n.ClassIOtype) : "");
         };
         const nodes = getScopeNodes(scope).filter(function (n) { return n.type != "group" || isClassGroup(n); }).map(describeNode).sort();
@@ -241,8 +334,11 @@ RED.exporter.graph = (function () {
         if (isVirtual(node)) return undefined;
         if (node.name == undefined) return undefined;
         const arrayDef = RED.export.isNameDeclarationArray(node.name, node.z, true);
-        if (arrayDef == undefined) return undefined;
-        return { name: arrayDef.name, length: arrayDef.arrayLength };
+        if (arrayDef != undefined) return { name: arrayDef.name, length: arrayDef.arrayLength };
+        // the 'Array Size' setting, when the name don't have an array part (the view shows it as name[arraySize])
+        const arraySize = Number(node.arraySize);
+        if (arraySize > 1 && node.name.includes("[") == false) return { name: node.name, length: arraySize };
+        return undefined;
     }
 
     /** @param {REDNode} node @returns {String} the name without any array part */
@@ -321,14 +417,24 @@ RED.exporter.graph = (function () {
      * @returns {Boolean}
      */
     function takesOneSignal(link) {
+        return getTargetInputWidth(link) == 1;
+    }
+
+    /**
+     * How many signals the input a wire goes to takes (one element of it, if the target is an array):
+     *   a class input with N lanes - N, a normal object input - 1, a dyn input object (mixer), virtual nodes - undefined (any)
+     * @param {REDLink} link
+     * @returns {Number|undefined}
+     */
+    function getTargetInputWidth(link) {
         const target = link.target;
-        if (isGroupPort(target)) return getClassPortWidth(target) == 1;
+        if (isGroupPort(target)) return getClassPortWidth(target);
         if (isClass(target)) {
             const portNode = getClassPort(getClassWorkspace(target), "In", Number(link.targetPort));
-            return portNode != undefined && getClassPortWidth(portNode) == 1;
+            return (portNode != undefined) ? getClassPortWidth(portNode) : undefined;
         }
-        if (isVirtual(target) || hasDynInputs(target)) return false;
-        return true;
+        if (isVirtual(target) || hasDynInputs(target)) return undefined;
+        return 1;
     }
 
     /**
@@ -418,17 +524,25 @@ RED.exporter.graph = (function () {
 
     return {
         isJunction,
+        isBusJunction,
         isBusNode,
+        getJoinInputCount,
+        getSplitOutputCount,
+        getTargetInputWidth,
         isClass,
         getClassWorkspace,
         getClassName,
         isVirtual,
         isClassGroup,
+        getClassGroupNameProblems,
+        getClassNameProblem,
+        getGroupInstanceProblem,
         getClassGroupOf,
         isGroupPort,
         isClassInputPort,
         isClassOutputPort,
         getGroupScope,
+        getGroupPorts,
         getScopeNodes,
         getScopeLinks,
         getClassGroupChain,

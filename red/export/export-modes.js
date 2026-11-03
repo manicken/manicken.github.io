@@ -41,8 +41,18 @@ RED.exporter.modes = (function () {
     function getNodeProblems(node, mode) {
         if (mode == undefined) mode = getMode();
         const M = RED.arduino.EXPORT_MODE;
+        if (node._def.isGroupClass == true) { // in every mode
+            const instanceProblem = graph.getGroupInstanceProblem(node);
+            if (instanceProblem != undefined) return [new ResolvedProblem("error", instanceProblem, undefined, node)];
+        }
         if (graph.isClass(node) == false) return [];
 
+        if (graph.isClassGroup(node)) { // in every mode
+            const nameProblems = graph.getClassGroupNameProblems(node);
+            const conflict = RED.groupClasses.getClassNameConflict(node); // another group with the class name and other contents
+            if (conflict != undefined) nameProblems.push(conflict);
+            if (nameProblems.length != 0) return nameProblems.map(function (text) { return new ResolvedProblem("error", text, undefined, node); });
+        }
         const name = '"' + graph.getBaseName(node) + '"';
         if (mode == M.CLASSIC) {
             return [new ResolvedProblem("error", name + " is an instance of the class " + graph.getClassName(node) +

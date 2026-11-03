@@ -500,37 +500,46 @@ RED.view.groupbox = (function() {
 			d.oldNodeText = undefined;
 			d.oldWidth = undefined;
 			d.oldHeight = undefined;
-
-			var selRectBG = groupRect.append("rect").attr("class", "nodeGroupSelOutlineBG");
-			var selRect = groupRect.append("rect").attr("class", "nodeGroupSelOutline");
-			//groupRect.classed("nodeGroupSelOutline-hovered", function(d) { return d.hovered; })
-
-			//redraw_nodeMainRect_init(groupRect, d);
-			var mainRect = groupRect.append("rect")
-									.attr("class", "node")
-									.attr("fill",function(d) { return d._def.color;})
-									.attr("rx", 6)
-									.attr("ry", 6)
-									.on("mouseup", RED.view.nodeMouseUp)
-									.on("mousedown",RED.view.nodeMouseDown)
-									.on("mousemove", RED.view.nodeMouseMove)
-									.on("mouseover", RED.view.nodeMouseOver)
-									.on("mouseout", RED.view.nodeMouseOut)
-									.on("touchstart",RED.view.nodeTouchStart)
-									.on("touchend", RED.view.nodeTouchEnd);
-
-			var text = groupRect.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '0.35em').attr('text-anchor','start');
-
-			if (d._def.align) { // replace with custom thingy
-				text.attr('class','node_label node_label_'+d._def.align);
-				text.attr('text-anchor','end');
-			}
-
-			//RED.view.redraw_nodeInputs(groupRect, d);
-			//RED.view.redraw_nodeOutputs(groupRect, d);
-
+			initGroupSvg(groupRect, d);
 		});
 		return visGroupAll;
+	}
+	/**
+	 * Creates the svg contents of a group (used when a group enters the workspace, and for the copies in an expanded group instance)
+	 * @param {*} groupRect the d3 selection of the svg group of the group
+	 * @param {REDNode} d
+	 */
+	function initGroupSvg(groupRect, d)
+	{
+		var selRectBG = groupRect.append("rect").attr("class", "nodeGroupSelOutlineBG");
+		var selRect = groupRect.append("rect").attr("class", "nodeGroupSelOutline");
+		//groupRect.classed("nodeGroupSelOutline-hovered", function(d) { return d.hovered; })
+
+		//redraw_nodeMainRect_init(groupRect, d);
+		var mainRect = groupRect.append("rect")
+								.attr("class", "node")
+								.attr("fill",function(d) { return d._def.color;})
+								.attr("rx", 6)
+								.attr("ry", 6)
+								.on("mouseup", RED.view.nodeMouseUp)
+								.on("mousedown",RED.view.nodeMouseDown)
+								.on("mousemove", RED.view.nodeMouseMove)
+								.on("mouseover", RED.view.nodeMouseOver)
+								.on("mouseout", RED.view.nodeMouseOut)
+								.on("touchstart",RED.view.nodeTouchStart)
+								.on("touchend", RED.view.nodeTouchEnd);
+
+		var text = groupRect.append('svg:text').attr('class','node_label').attr('x', 38).attr('dy', '0.35em').attr('text-anchor','start');
+
+		if (d._def.align) { // replace with custom thingy
+			text.attr('class','node_label node_label_'+d._def.align);
+			text.attr('text-anchor','end');
+		}
+
+		//RED.view.redraw_nodeInputs(groupRect, d);
+		//RED.view.redraw_nodeOutputs(groupRect, d);
+
+		groupRect.append('svg:text').attr('class','group_class_note').attr('dy', '0.35em').attr('text-anchor','end');
 	}
 	function redraw_groups(fullUpdate)
 	{
@@ -538,28 +547,59 @@ RED.view.groupbox = (function() {
 		var visGroupAll = redraw_groups_init();
 
 		visGroupAll.each( function(d,i) { // redraw all nodes in active workspace
-			var groupRect = d3.select(this);
-
-			if (RED.view.posMode === 2)
-				groupRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
-			else
-				groupRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
-				
-			groupRect.selectAll(".node")
-				.attr("width",function(d){return d.w})
-				.attr("height",function(d){return d.h})
-				.attr("fill", d.bgColor)
-				.attr("style", "stroke:" + d.border_color + ";");
-				//.attr("stroke", d.border_color);
-
-			var groupLabel = groupRect.selectAll('text.node_label').text(d.name);
-
-			RED.view.redraw_update_label(groupRect, d);
-			//RED.view.redraw_nodeInputs(groupRect, d);
-			//RED.view.redraw_nodeOutputs(groupRect, d);
-			
-			redrawGroupOutline(d);
+			updateGroupSvg(d3.select(this), d);
 		});
+	}
+	/**
+	 * @param {*} groupRect the d3 selection of the svg group of the group
+	 * @param {REDNode} d
+	 */
+	function updateGroupSvg(groupRect, d)
+	{
+		if (RED.view.posMode === 2)
+			groupRect.attr("transform", function(d) { return "translate(" + (d.x-d.w/2) + "," + (d.y-d.h/2) + ")"; });
+		else
+			groupRect.attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; });
+			
+		groupRect.selectAll(".node")
+			.attr("width",function(d){return d.w})
+			.attr("height",function(d){return d.h})
+			.attr("fill", d.bgColor)
+			.attr("style", "stroke:" + d.border_color + ";");
+			//.attr("stroke", d.border_color);
+
+		var groupLabel = groupRect.selectAll('text.node_label').text(d.name);
+
+		RED.view.redraw_update_label(groupRect, d);
+		//RED.view.redraw_nodeInputs(groupRect, d);
+		//RED.view.redraw_nodeOutputs(groupRect, d);
+
+		// a class group tells that it's a class (and how many instances it have), see RED.groupClasses
+		groupRect.selectAll("text.group_class_note")
+			.text(RED.groupClasses.getGroupNote(d))
+			.attr("x", d.w - 6).attr("y", d.h - 9); // the bottom right corner, the label is at the top
+
+		redrawGroupOutline(d);
+	}
+	/**
+	 * Draws a read-only copy of a group that looks exactly the same, used by an expanded group instance (RED.view.groupInstance),
+	 * the copy is drawn from a proxy object that reads everything from the group but have its own position and svg.
+	 * @param {*} container d3 selection of the svg group to draw in
+	 * @param {REDNode} group
+	 * @param {Number} x the position of the copy in the container (the same kind of position as group.x, see posMode)
+	 * @param {Number} y
+	 */
+	function drawGroupCopy(container, group, x, y)
+	{
+		var proxy = Object.create(group);
+		proxy.x = x;
+		proxy.y = y;
+		proxy.selected = false;
+		proxy.hovered = false;
+		var groupRect = container.append("svg:g").attr("class", "node node_copy").datum(proxy); // not .nodegroup, that is how the view finds the real nodes/groups
+		proxy.svgRect = groupRect;
+		initGroupSvg(groupRect, proxy);
+		updateGroupSvg(groupRect, proxy);
 	}
     function redrawGroupOutline(d) {
         d.svgRect.selectAll(".nodeGroupSelOutlineBG")
@@ -750,6 +790,7 @@ RED.view.groupbox = (function() {
         moveSelectionToFromGroupMouseUp,
         removeNodeFromGroup,
         SelectAllInGroup,
+        drawGroupCopy,
 		RearrangeIONodes,
 		keepIOnodesOnEdges,
 		clampIOnodeY,

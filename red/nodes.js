@@ -349,6 +349,45 @@ RED.nodes = (function() {
         console.error("did not found type: " + type);
 		return undefined;
 	}
+    /**
+     * same as getTypeDef but without the error when it's not found
+     * @param {String} type
+     * @returns {Boolean}
+     */
+    function hasTypeDef(type) {
+        return Object.getOwnPropertyNames(node_defs).some(function (defCatName) { return node_defs[defCatName].types[type] != undefined; });
+    }
+    /**
+     * A group is a class when it have a class name (the 'export as class' checkbox and the
+     * default class name "ClassTypeName" are removed), this converts the groups of older designs:
+     *   not exported as class       - no class name, it stays a visual group
+     *   exported as class, no name  - an old group name "Voice voices[8]" is split into the class name and the instance name
+     * @param {Object} nn the group as it was saved
+     * @returns {{className:String, name:String}} the class name and the group (instance) name to use
+     */
+    function convertOldGroupClassName(nn) {
+        var className = (typeof nn.className == "string") ? nn.className.trim() : "";
+        if (className == "ClassTypeName") className = "";
+        var name = nn.name;
+        var exportAsClass = (nn.exportAsClass === true || nn.exportAsClass === "true");
+
+        if (nn.exportAsClass != undefined && exportAsClass == false) className = ""; // (a new design don't have exportAsClass, the class name decides)
+        else if (exportAsClass && className.length == 0 && typeof nn.name == "string") {
+            var oldName = nn.name.trim().match(/^([A-Za-z_]\w*)\s+(\S+)$/);
+            if (oldName != null) {
+                className = oldName[1];
+                name = oldName[2];
+            }
+        }
+        return { className: className, name: name };
+    }
+    /**
+     * @returns {Object} the types of the class nodes (type name -> node definition), the class tabs and the class groups
+     */
+    function getClassNodeTypes() {
+        initClassNodeDefCategory();
+        return node_defs["classNodes"].types;
+    }
 	function selectNode(name) {
         var info = "";
         if (name.trim() != "") info = '?info=' + name;
@@ -1055,7 +1094,9 @@ RED.nodes = (function() {
                 if (newNodes.workspaces != undefined)
                 {
                     importWorkspaces(newNodes.workspaces, createNewIds);
-                    // import the workspace nodes can only be done 
+                    // the types of the class groups must exist before their instances are loaded
+                    RED.groupClasses.registerFromJson(newNodes.workspaces);
+                    // import the workspace nodes can only be done
                     // after all workspaces have been loaded in importWorkspaces function above
                     importWorkspacesNodes(newNodes.workspaces, createNewIds);
                 }
@@ -1094,6 +1135,14 @@ RED.nodes = (function() {
 		}
         loadingWorkspaces = false;
         //console.warn(workspaces);
+        RED.groupClasses.refresh(); // connects the loaded instances to their class groups
+        if (createNewIds == false) { // a loaded design (not a paste/import), older designs used copies of class groups
+            var converted = RED.groupClasses.convertCopiesToInstances();
+            if (converted.length != 0) {
+                RED.groupClasses.refresh();
+                RED.notify("<strong>Copies of class groups are now instances</strong> of the first group with that class name:<br>" + converted.join("<br>"), "info", null, 8000);
+            }
+        }
         checkForAndSetNodeIsArray();
         refreshLinksInfo();
         refreshDynInputsObjects_connectedTo();
@@ -1120,6 +1169,7 @@ RED.nodes = (function() {
             nn = nns[i];
             //if (n.type == "AudioMixerX") n.type = "AudioMixer"; // type conversion
             if (nn.type == "Array") nn.type = "PointerArray"; // type conversion
+            convertOldBusNode(nn);
             // TODO: remove workspace in next release+1(Node-Red team comment)
             if (nn.type != "workspace" && nn.type != "tab" && nn.type != "settings" && !getTypeDef(nn.type)) {
                 console.warn("whello");
@@ -1238,6 +1288,17 @@ RED.nodes = (function() {
         return [new_nodes,new_links];
     }
 
+    /**
+     * BusJoin and BusSplit are replaced by junctions: a junction with more inputs joins them, with more outputs it splits
+     * its wire (see RED.exporter.graph and the WIRE SHAPES in red/export/export-resolve.js), this converts them in older designs
+     * (the id, the ports and the wires stays the same)
+     * @param {Object} nn the node as it was saved
+     */
+    function convertOldBusNode(nn) {
+        if (nn.type == "BusJoin") { nn.type = "JunctionLR"; nn.outputs = 1; }
+        else if (nn.type == "BusSplit") { nn.type = "JunctionLR"; nn.inputs = 1; }
+    }
+
     function createUnknownNodeTypeDef(nn) {
         return {
             unknownType:true,
@@ -1317,8 +1378,14 @@ RED.nodes = (function() {
                     node[d2] = nn[d2];
             }
         }
-        if (nn.bgColor == undefined)	node.bgColor = node._def.color; 
+        if (nn.bgColor == undefined)	node.bgColor = node._def.color;
         else node.bgColor = nn.bgColor;
+
+        if (node.type == "group") {
+            var converted = convertOldGroupClassName(nn);
+            node.className = converted.className;
+            if (converted.name != nn.name) node.name = converted.name; // an old "Type instance" name was split
+        }
 
         node.outputs = nn.outputs?nn.outputs:node._def.outputs?node._def.outputs:0;
 
@@ -1968,6 +2035,7 @@ RED.nodes = (function() {
             initClassNodeDefCategory();
 			registerType(ws.label, getClassNodeDefinition(ws.label, inputCount, outputCount, ws), "classNodes");
 		}
+        RED.groupClasses.addToPalette(); // the class groups are in the same category
 	}
     
 	function addUsedNodeTypesToPalette()
@@ -2301,15 +2369,22 @@ RED.nodes = (function() {
         
         l.info.isBus = (l.info.tabOut != undefined && l.info.tabOut.isBus) ||
                     (l.info.tabIn != undefined && l.info.tabIn.isBus) ||
-                    (l.source.type == "BusJoin" || l.target.type == "BusSplit");
+                    (RED.exporter.graph.getJoinInputCount(l.source) > 0 || RED.exporter.graph.getSplitOutputCount(l.target) > 0);
 
         if (isCppExportMode()) { // the C++ export checks the wires itself (for the selected Export Mode), so show exactly what it would report
+            var shape = RED.exporter.resolve.getWireShape(l); // the wire color is the outer level (see RED.view redraw_link_notation)
+            l.info.shapeKind = (shape.length != 0) ? shape[0].kind : "";
+            l.info.shapeText = (shape.length != 0) ? RED.exporter.resolve.getShapeText(shape) : "";
+            l.info.shapeMixed = shape.some(function (s) { return s.kind == "array"; }) && shape.some(function (s) { return s.kind == "bus"; }); // i.e. array[8] of bus[2]
             var errors = RED.exporter.modes.getLinkErrors(l);
             l.info.valid = (errors.length == 0);
             l.info.invalidText = errors.map(function (p) { return p.text; }).join("<br>");
             return;
         }
         // the following checks is what the OSC export supports
+        l.info.shapeKind = undefined; // (the old way: see RED.view redraw_link_notation)
+        l.info.shapeText = "";
+        l.info.shapeMixed = false;
 
         if ((l.source.isArray!=undefined) && (l.target.isArray!=undefined) && (l.target._def.dynInputs!=undefined)) {
             l.info.valid = false;
@@ -2327,9 +2402,9 @@ RED.nodes = (function() {
             l.info.valid = false;
             l.info.invalidText = "connecting bus wires to classes not yet supported";
         }
-        else if ((l.source.type == "BusJoin" || l.target.type == "BusSplit" || l.source.type == "BusSplit" || l.target.type == "BusJoin")) {
+        else if (RED.exporter.graph.isBusNode(l.source) || RED.exporter.graph.isBusNode(l.target)) {
             l.info.valid = false;
-            l.info.invalidText = "BusJoin and BusSplit not yet supported";
+            l.info.invalidText = "junctions with more than one input/output (joining/splitting buses) are not yet supported";
         }
         else if ((l.source.type != "TabInput") && (l.source.isArray!=undefined) && (l.target._def.dynInputs==undefined) && (l.target.isArray==undefined)) {
             l.info.valid = false;
@@ -2466,6 +2541,9 @@ RED.nodes = (function() {
 		registerType,
         initNodeDefinitions,
 		getType: getTypeDef,
+		hasType: hasTypeDef,
+		getClassNodeTypes,
+		convertOldGroupClassName,
 		convertNode,
 		selectNode,
 		getJunctionSrcNode,

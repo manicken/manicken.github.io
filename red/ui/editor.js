@@ -651,13 +651,14 @@ RED.editor = (function() {
                 
                 if (node._def.defaults[d].noEdit != undefined) { console.warn("edit disabled for " + node.type + " " + d); continue; }// edit disabled
 				//console.log(typeof node.ClassIOtype);
-				if (node.ClassIOtype != undefined && (typeof node.ClassIOtype == "number") && (d == "anchor" || d == "locked" )) { console.warn("edit disabled for " + node.type + " " + d + " because it's a ClassIO type"); continue;}
+				if (node.ClassIOtype != undefined && (typeof node.ClassIOtype == "number") && (d == "anchor" || d == "locked" || d == "inputs" || d == "outputs")) { console.warn("edit disabled for " + node.type + " " + d + " because it's a ClassIO type"); continue;}
                 data += GetEditorLine_Input(propEditor, d);
             }
             var form = $("#dialog-form");
 			$(form).html(data);
             prepareEditDialog(node, "node-input");
             setInputPopupTexts(node);
+            lockJunctionPortCounts(node);
 
 			
 
@@ -695,6 +696,27 @@ RED.editor = (function() {
 				});
 		RED.main.SetPopOver(resetColorButton, "reset the color to default value", "right");
 	}
+    /**
+     * A junction either joins (more inputs) or splits (more outputs), not both (see RED.exporter.graph getJoinInputCount/getSplitOutputCount),
+     * so when one of the counts is more than 1 the other is locked to 1.
+     * @param {REDNode} node
+     */
+    function lockJunctionPortCounts(node) {
+        if (node.type.startsWith("Junction") == false) return;
+        var inputs = $("#node-input-inputs"), outputs = $("#node-input-outputs");
+        if (inputs.length == 0 || outputs.length == 0) return; // (a class group IO junction don't show them)
+        var update = function () {
+            var lockOutputs = Number(inputs.val()) > 1;
+            var lockInputs = lockOutputs == false && Number(outputs.val()) > 1;
+            if (lockOutputs) outputs.val(1);
+            if (lockInputs) inputs.val(1);
+            outputs.prop("disabled", lockOutputs);
+            inputs.prop("disabled", lockInputs);
+        };
+        inputs.on("input change", update);
+        outputs.on("input change", update);
+        update();
+    }
     function setInputPopupTexts(node) {
         for (var d in node._def.defaults) {
             if (!node._def.defaults.hasOwnProperty(d)) continue;

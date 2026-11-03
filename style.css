@@ -408,6 +408,15 @@
     pointer-events: all;
   }
 
+  /* the note in the corner of a class group and of an expanded group instance (see red/group-classes.js) */
+  .group_class_note {
+    stroke-width: 0;
+    font-size: 11px;
+    font-style: italic;
+    fill: #555;
+    pointer-events: none;
+  }
+
   .red-ui-flow-junction:hover .red-ui-flow-junction-port {
     opacity: 1;
     pointer-events: auto
@@ -1137,6 +1146,21 @@
     /*stroke-dasharray: 10, 5;*/
   }
 
+  /* the text of the export dialog (an ace editor, see RED.view.dialogs.setExportDialogText) */
+  .export-dialog-ace {
+    width: 100%;
+    height: 500px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  /* an array of buses, the bus color dashed over the array color (see RED.view redraw_link_notation) */
+  .link_line_mixed {
+    stroke: #22B2F8;
+    stroke-width: 6;
+    stroke-dasharray: 12, 12;
+    fill: none;
+    pointer-events: none;
+  }
   .link_outline_array {
     stroke:#ffebb0;
     /*stroke: blue;*/

@@ -484,6 +484,31 @@ RED.view = (function() {
         $("#main-container").css("top", nbh);
     }
     
+	/**
+	 * Moves the canvas (scrolls the chart) while the middle mouse button is held down, anywhere on the canvas (also over nodes),
+	 * the node and canvas mouse handlers only use the left button so they don't react on it.
+	 */
+	function initMiddleMousePan()
+	{
+		var chart = document.getElementById("chart");
+		var pan = undefined; // the start of the current pan: mouse position and scroll position
+		chart.addEventListener("mousedown", function (e) {
+			if (e.button != 1) return;
+			e.preventDefault(); // no browser auto scroll
+			pan = { x: e.clientX, y: e.clientY, scrollLeft: chart.scrollLeft, scrollTop: chart.scrollTop };
+			chart.style.cursor = "grabbing";
+		});
+		window.addEventListener("mousemove", function (e) {
+			if (pan == undefined) return;
+			chart.scrollLeft = pan.scrollLeft - (e.clientX - pan.x);
+			chart.scrollTop = pan.scrollTop - (e.clientY - pan.y);
+		});
+		window.addEventListener("mouseup", function (e) {
+			if (pan == undefined || e.button != 1) return;
+			pan = undefined;
+			chart.style.cursor = "";
+		});
+	}
 	function initView() // called from main.js - document ready function
 	{
         RED.view.textsize.init();
@@ -494,6 +519,7 @@ RED.view = (function() {
 		initWorkspace();
 		initGrid();
         RED.view.navigator.init();
+        initMiddleMousePan();
 
         RED.actions.add("core:list-flows",function() {
             RED.actions.invoke("core:search","type:tab ");
@@ -954,10 +980,7 @@ RED.view = (function() {
 			else numOutputs = (mousedown_port_type === 0)?(mousedown_node.outputs || 1):(mousedown_node._def.inputs || 1);
 
 			var sourcePort = mousedown_port_index;
-			if (posMode === 2)
-				var portY = -((numOutputs-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*sourcePort;
-			else
-				var portY = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort + mousedown_node.h/2;
+			var portY = getPortCenterY(mousedown_node, (mousedown_port_type === 0) ? "Out" : "In", sourcePort, numOutputs) - ((posMode === 2) ? mousedown_node.h/2 : 0);
 
 			
 
@@ -1770,11 +1793,14 @@ RED.view = (function() {
 		if (current_popup_rect)
 			$(current_popup_rect).popover("destroy");
 		if (moving_set.length > 0) {
+			// a class group can't be removed while it have instances (they would have no class), see RED.groupClasses
+			var keepNodes = RED.groupClasses.getNodesToKeep(moving_set.map(function (m) { return m.n; }));
 			for (var i=0;i<moving_set.length;i++) {
 				/** @type {REDNode} */
 				var node = moving_set[i].n; // moving_set[i] is a rect?
-				
+
 				node.selected = false;
+				if (keepNodes.has(node)) continue;
 
 				// cannot delete class IO junctions unless they are loose or if the whole group is deleted
 				if (RED.view.groupbox.isIOnode(node) && node.parentGroup != undefined && currentSelectionContains(node.parentGroup) == false) continue;
@@ -2371,6 +2397,7 @@ RED.view = (function() {
             else {
                 var classWs = d._def.classWs;
                 if (classWs != undefined) { $(current_popup_rect).popover("destroy"); reveal(classWs.id)}
+                else if (d._def.classGroup != undefined) { $(current_popup_rect).popover("destroy"); reveal(d._def.classGroup.id)} // a group instance shows its class group
             }
 			clickElapsed = 0;
 			d3.event.stopPropagation();
@@ -2391,6 +2418,9 @@ RED.view = (function() {
 			//console.warn("next free index "+ nextFreeInputIndex);
 			if (nextFreeInputIndex == -1) {
 				if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
+					return;
+				// a junction that splits can't join too, and the inputs of a class group IO junction are its lanes (see RED.editor lockJunctionPortCounts)
+				if (d.type.startsWith("Junction") && (Number(d.outputs) > 1 || d.ClassIOtype === 0 || d.ClassIOtype === 1))
 					return;
 
 				nextFreeInputIndex = d.inputs;
@@ -2502,6 +2532,22 @@ RED.view = (function() {
 	/**
      * @param {REDNode} d 
      */
+	/**
+	 * The y position of the center of a port, in the local space of the node (0 = the top of the node).
+	 * The ports are spread evenly around the middle of the node, except on an expanded group instance
+	 * that have its ports where the IO junctions of its class group are (see RED.view.groupInstance).
+	 * @param {REDNode} d
+	 * @param {String} portDir "In" or "Out"
+	 * @param {Number} index
+	 * @param {Number} count the number of ports in that direction
+	 * @returns {Number}
+	 */
+	function getPortCenterY(d, portDir, index, count)
+	{
+		var y = RED.view.groupInstance.getPortY(d, portDir, index);
+		if (y != undefined) return y;
+		return (d.h/2) - ((count-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*index;
+	}
 	function redraw_calcNewNodeSize(d)
 	{
 		//var l = d._def.label;
@@ -2542,6 +2588,7 @@ RED.view = (function() {
 			d.w = Math.max(node_def.width, d.textDimensions.w + 50 + d.outputLabelMaxSize + d.inputLabelMaxSize /*+ (inputs>0?7:0) */);
 			d.h = Math.max(node_def.height, d.textDimensions.h + 14, maxIOcount * node_def.pin_ydistance + node_def.pin_yspaceToEdge*2);
 		}
+        RED.view.groupInstance.adjustSize(d); // an expanded group instance is as big as its class group
         //console.log("new size " + d.h + " " + d.name);
     }
 	/**
@@ -2788,7 +2835,7 @@ RED.view = (function() {
 		else
 			numInputs = d._def.inputs;
 		
-		var inputPorts = nodeRect.selectAll(".port_input");
+		var inputPorts = nodeRect.selectAll(":scope > .port_input"); // only its own (an expanded class instance contains copies of other nodes, see RED.view.groupInstance)
 
 		for (var i = 0; i < inputPorts.length; i++)
 		{
@@ -2804,9 +2851,7 @@ RED.view = (function() {
 		for (var n=0; n < numInputs; n++) {
 			
 			
-			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance; // allways divide by 2
-			//console.error("in node y:" + y);
-			y = (y+node_def.pin_ydistance*n)-node_def.pin_ysize/2;// allways divide by 2
+			var y = getPortCenterY(d, "In", n, numInputs)-node_def.pin_ysize/2;// allways divide by 2
 
 			var rect = nodeRect.append("rect");
 			inputlist[n] = rect;
@@ -2845,19 +2890,17 @@ RED.view = (function() {
 		}
 		d.inputlist = inputlist;
 
-		nodeRect.selectAll(".port_input").each(function(d,i) {
+		nodeRect.selectAll(":scope > .port_input").each(function(d,i) {
 			var port = d3.select(this);
 			var numInputs = 0;
 			if (d.inputs) numInputs = d.inputs;
 			else numInputs = d._def.inputs;
 				
-			var y = (d.h/2)-((numInputs-1)/2)*node_def.pin_ydistance;// allways divide by 2
-			y = (y+node_def.pin_ydistance*i)-node_def.pin_ysize/2;// allways divide by 2
-			port.attr("y",y)
+			port.attr("y",getPortCenterY(d, "In", i, numInputs)-node_def.pin_ysize/2);// allways divide by 2
 		});
 
         if (d.type != "JunctionRL" && d.type != "JunctionLR" && d._def.uiObject == undefined && settings.showIOlabels) {
-            d._inPortLabels = nodeRect.selectAll(".in_label").data(d.inputlist);
+            d._inPortLabels = nodeRect.selectAll(":scope > .in_label").data(d.inputlist);
             d._inPortLabels.enter().append("svg:text")
                     .attr("class", "in_label")
                     .attr("x", 0)
@@ -2878,10 +2921,10 @@ RED.view = (function() {
                 var inputLabelMaxSize = 0;
                 d._inPortLabels.each(function(d2,i) {
                     var port = d3.select(this);
-                    port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2 + 9);// allways divide by 2 (local space)
+                    port.attr("y",getPortCenterY(d, "In", i, numInputs)-node_def.pin_ysize/2 + 9);// allways divide by 2 (local space)
                     
                     port.attr("x",10);
-                    var label = getPortName(d.type, "In", i );
+                    var label = getPortName(d, "In", i );
                     var lblWidth = RED.view.textsize.calculate(label, 10).w;
                     if (lblWidth > inputLabelMaxSize) inputLabelMaxSize = lblWidth;
                     port.text(label);
@@ -2927,7 +2970,7 @@ RED.view = (function() {
 		//if (d.type == "Mod") // debug test only
 		//	console.error("after:" + d.ports);
 		
-		d._ports = nodeRect.selectAll(".port_output").data(d.ports);
+		d._ports = nodeRect.selectAll(":scope > .port_output").data(d.ports); // only its own (an expanded class instance contains copies of other nodes)
 		d._ports.enter().append("rect")
 		    .attr("class","port port_output"+junctionPortClass).attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize)
 			.attr("nodeType",d.type)
@@ -2953,9 +2996,10 @@ RED.view = (function() {
 			else
 				x = d.w - node_def.pin_ysize/2;// allways divide by 2 (local space)
 
+			var node = d; // (d is the port index inside each)
 			d._ports.each(function(d,i) {
 				var port = d3.select(this);
-				port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2);// allways divide by 2 (local space)
+				port.attr("y",getPortCenterY(node, "Out", i, numOutputs)-node_def.pin_ysize/2);// allways divide by 2 (local space)
 				
 				port.attr("x",x);
 			});
@@ -2964,7 +3008,7 @@ RED.view = (function() {
             var data = [];
             if (settings.showIOlabels == true)
                 data = d.ports;
-            d._portLabels = nodeRect.selectAll(".port_label").data(data);
+            d._portLabels = nodeRect.selectAll(":scope > .port_label").data(data);
             d._portLabels.enter().append("svg:text")
                     .attr("class", "port_label")
                     .attr("x", x - 6)
@@ -2983,10 +3027,10 @@ RED.view = (function() {
                 var outputLabelMaxSize = 0;
                 d._portLabels.each(function(d2,i) {
                     var port = d3.select(this);
-                    port.attr("y",(y+node_def.pin_ydistance*i)-node_def.pin_ysize/2 + 9);// allways divide by 2 (local space)
+                    port.attr("y",getPortCenterY(d, "Out", i, numOutputs)-node_def.pin_ysize/2 + 9);// allways divide by 2 (local space)
                     
                     port.attr("x",x-6);
-                    var label = getPortName(d.type, "Out", i );
+                    var label = getPortName(d, "Out", i );
                     var lblWidth = RED.view.textsize.calculate(label, 10).w;
                     if (lblWidth > outputLabelMaxSize) outputLabelMaxSize = lblWidth;
                     port.text(label);
@@ -3004,31 +3048,24 @@ RED.view = (function() {
         }
 	}
 
-    function getPortName(nodeType, portDir, index)
+    /**
+     * @param {REDNode} node a class node (a tab) or a group instance
+     * @param {String} portDir "In" or "Out"
+     * @param {Number} index
+     * @returns {REDNode|undefined} the TabInput/TabOutput, or the IO junction of the class group, that is the port
+     */
+    function getClassPortNode(node, portDir, index)
     {
-        var portName = "";
-        var ws = RED.nodes.getWorkspaceFromClassName(nodeType);
-        if (ws)
-        {
-            var tabIOnode = RED.nodes.getClassIOport(ws.id, portDir, index);
-            /*if (tabIOnode.isBus == true) {
-                if (tabIOnode.inputs > 1) {
-                    portName = "BusOutput(" + tabIOnode.inputs + ")";
-                } else if (tabIOnode.outputs > 1) {
-                    portName = "BusInput(" + tabIOnode.outputs + ")";
-                    
-                }
-                if (tabIOnode.busWireNames != undefined && tabIOnode.busWireNames.length > 0) {
-                    tabIOnode.busWireNames.addToBeginningOfEach(tabIOnode.namename);
-                    portName = tabIOnode.busWireNames.join("<br>");
-                }
-            }
-            else {
-                */portName = tabIOnode.name;
-            //}
-            return portName;
-        }
-        return "";
+        if (node._def.classGroup != undefined) return RED.exporter.graph.getGroupPorts(node._def.classGroup, portDir)[index];
+        var ws = RED.nodes.getWorkspaceFromClassName(node.type);
+        if (ws) return RED.nodes.getClassIOport(ws.id, portDir, index);
+        return undefined;
+    }
+
+    function getPortName(node, portDir, index)
+    {
+        var portNode = getClassPortNode(node, portDir, index);
+        return (portNode != undefined) ? portNode.name : "";
     }
 	function redraw_links_init()
 	{
@@ -3107,7 +3144,8 @@ RED.view = (function() {
 						var name = d.name;
 						if (name == undefined) name = RED.export.links.GetName(d) + "<br>(autogenerated name)";
 						var comment = (d.comment!=undefined)?("<br>"+d.comment):"";
-						showPopOver(this, true, `<h5>${name}</h5>${comment}`, "top");
+						var shape = d.info.shapeText ? ("<br><i>" + d.info.shapeText + "</i>") : ""; // what it carries, i.e. array[8] of bus[2]
+						showPopOver(this, true, `<h5>${name}</h5>${comment}${shape}`, "top");
 					}
                         
                 })
@@ -3135,25 +3173,7 @@ RED.view = (function() {
             d.svgPath.line2 = l.append("svg:path").attr("class","link_path link_line2");
             d.svgPath.line3 = l.append("svg:path").attr("class","link_path link_line3");
 
-            if (d.style == undefined) d.style = {};
-            if (d.style.line1 == undefined) d.style.line1 = {};
-            if (d.style.line2 == undefined) d.style.line2 = {};
-            if (d.style.line3 == undefined) d.style.line3 = {};
-
-            if (d.style.line2.enabled == undefined) d.style.line2.enabled = false;
-            if (d.style.line3.enabled == undefined) d.style.line3.enabled = false;
-            
-            if (d.style.line1.width != undefined) {
-                d.svgPath.line.style("stroke-width", d.style.line1.width);
-                d.svgPath.outline.style("stroke-width", d.style.line1.width + 2);
-                if (d.style.line2.enabled == true) d.svgPath.line2.style("stroke-width", d.style.line1.width);
-                if (d.style.line3.enabled == true) d.svgPath.line3.style("stroke-width", d.style.line1.width);
-            }
-            if (d.style.line2.dasharray != undefined) d.svgPath.line2.style("stroke-dasharray", d.style.line2.dasharray);
-            if (d.style.line3.dasharray != undefined) d.svgPath.line3.style("stroke-dasharray", d.style.line3.dasharray);
-            if (d.style.line1.color != undefined) d.svgPath.line.style("stroke", d.style.line1.color);
-            if (d.style.line2.color != undefined) d.svgPath.line2.style("stroke", d.style.line2.color);
-            if (d.style.line3.color != undefined) d.svgPath.line3.style("stroke", d.style.line3.color);
+            applyLinkStyle(d);
 
             //console.log("do this happen???");
             /*if (d.info.isBus == true) {
@@ -3197,6 +3217,87 @@ RED.view = (function() {
      * @param {REDLink[]} links 
      * @returns 
      */
+    /**
+     * Applies the user style of a link (line width, colors and the extra dashed lines) to its svg paths.
+     * @param {REDLink} d
+     */
+    function applyLinkStyle(d) {
+        if (d.style == undefined) d.style = {};
+        if (d.style.line1 == undefined) d.style.line1 = {};
+        if (d.style.line2 == undefined) d.style.line2 = {};
+        if (d.style.line3 == undefined) d.style.line3 = {};
+
+        if (d.style.line2.enabled == undefined) d.style.line2.enabled = false;
+        if (d.style.line3.enabled == undefined) d.style.line3.enabled = false;
+        
+        if (d.style.line1.width != undefined) {
+            d.svgPath.line.style("stroke-width", d.style.line1.width);
+            d.svgPath.outline.style("stroke-width", d.style.line1.width + 2);
+            if (d.style.line2.enabled == true) d.svgPath.line2.style("stroke-width", d.style.line1.width);
+            if (d.style.line3.enabled == true) d.svgPath.line3.style("stroke-width", d.style.line1.width);
+        }
+        if (d.style.line2.dasharray != undefined) d.svgPath.line2.style("stroke-dasharray", d.style.line2.dasharray);
+        if (d.style.line3.dasharray != undefined) d.svgPath.line3.style("stroke-dasharray", d.style.line3.dasharray);
+        if (d.style.line1.color != undefined) d.svgPath.line.style("stroke", d.style.line1.color);
+        if (d.style.line2.color != undefined) d.svgPath.line2.style("stroke", d.style.line2.color);
+        if (d.style.line3.color != undefined) d.svgPath.line3.style("stroke", d.style.line3.color);
+    }
+
+    /**
+     * Draws a read-only copy of a node that looks exactly the same, used by an expanded group instance (RED.view.groupInstance).
+     * The copy is drawn from a proxy object that reads everything from the node but have its own position and svg,
+     * so the node itself is not changed, the copy don't react on the mouse (the container should have pointer-events none).
+     * @param {*} container d3 selection of the svg group to draw in
+     * @param {REDNode} node
+     * @param {Number} x the position of the copy in the container (the same kind of position as node.x, see posMode)
+     * @param {Number} y
+     * @returns {REDNode} the proxy (used as the ends of the link copies)
+     */
+    function drawNodeCopy(container, node, x, y) {
+        var proxy = Object.create(node);
+        proxy.x = x;
+        proxy.y = y;
+        proxy.selected = false;
+        proxy.highlighted = false;
+        proxy.dirty = true;
+        proxy.resize = true;
+        proxy.inputlist = [];
+        proxy.ports = [];
+        proxy._ports = undefined;
+        proxy._inPortLabels = undefined;
+        proxy._portLabels = undefined;
+        var nodeRect = container.append("svg:g").attr("class", "node node_copy").datum(proxy); // not .nodegroup, that is how the view finds the real nodes
+        if (node.type.startsWith("Junction")) nodeRect.classed("red-ui-flow-junction", true);
+        proxy.svgRect = nodeRect;
+        initNodeSvg(nodeRect, proxy);
+        redraw_node(proxy);
+        return proxy;
+    }
+
+    /**
+     * Draws a read-only copy of a link between two node copies (see drawNodeCopy), it looks exactly the same.
+     * @param {*} container d3 selection of the svg group to draw in
+     * @param {REDLink} link
+     * @param {REDNode} source the copy of the source node
+     * @param {REDNode} target the copy of the target node
+     */
+    function drawLinkCopy(container, link, source, target) {
+        var proxy = Object.create(link);
+        proxy.source = source;
+        proxy.target = target;
+        proxy.selected = false;
+        var l = container.append("svg:g").attr("class", "link").datum(proxy);
+        proxy.svgRoot = l;
+        proxy.svgPath = new REDLinkSvgPaths();
+        proxy.svgPath.background = l.append("svg:path").attr("class","link_background link_path");
+        proxy.svgPath.outline = l.append("svg:path").attr("class","link_path link_outline");
+        proxy.svgPath.line = l.append("svg:path").attr("class","link_path link_line");
+        proxy.svgPath.line2 = l.append("svg:path").attr("class","link_path link_line2");
+        proxy.svgPath.line3 = l.append("svg:path").attr("class","link_path link_line3");
+        applyLinkStyle(proxy);
+        l.selectAll(".link_path").attr("d", redraw_link(proxy));
+    }
+
 	function redraw_links(links)
 	{
         // this allows only a specific set of links to be redrawn
@@ -3207,6 +3308,8 @@ RED.view = (function() {
                 l.svgPath.background.attr("d", d);
                 l.svgPath.outline.attr("d", d);
                 l.svgPath.line.attr("d", d);
+                if (l.svgPath.line2 != undefined) l.svgPath.line2.attr("d", d);
+                if (l.svgPath.line3 != undefined) l.svgPath.line3.attr("d", d);
             }
             return;
         }
@@ -3227,11 +3330,13 @@ RED.view = (function() {
      * @param {REDLink} l 
      */
     function redraw_link_notation(l) {
-        if (l.info.isBus == true) {
+        // in the C++ export modes the color is the outer level of what the wire carries (l.info.shapeKind, see RED.nodes setLinkInfo)
+        var kind = (l.info.shapeKind != undefined) ? l.info.shapeKind : ((l.info.isBus == true) ? "bus" : ((l.source.isArray!=undefined) ? "array" : ""));
+        if (kind == "bus") {
             l.svgPath.outline.attr("class","link_path link_outline_bus"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line_bus" + ((l.info.valid==false)?" link_invalid":""));
         }
-        else if (l.source.isArray!=undefined) {
+        else if (kind == "array") {
             l.svgPath.outline.attr("class","link_path link_outline_array"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line_array" + ((l.info.valid==false)?" link_invalid":""));
         }
@@ -3239,6 +3344,11 @@ RED.view = (function() {
             l.svgPath.outline.attr("class","link_path link_outline"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line" + ((l.info.valid==false)?" link_invalid":""));
         }
+        // an array of buses (or a bus of arrays) is dashed with the bus color over the array color,
+        // on the second line, when it's not used by the user style of the wire (see applyLinkStyle)
+        var userLine2 = (l.style != undefined && l.style.line2 != undefined && l.style.line2.enabled == true);
+        if (l.svgPath.line2 != undefined && userLine2 == false)
+            l.svgPath.line2.attr("class", "link_path " + ((l.info.shapeMixed == true && l.info.valid != false) ? "link_line_mixed" : "link_line2"));
     }
     /**
      * 
@@ -3261,15 +3371,15 @@ RED.view = (function() {
 		
 		if (posMode === 2)
 		{
-			var ytarget = -((numInputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*targetPort;
-			var ysource = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort;
+			var ytarget = getPortCenterY(l.target, "In", targetPort, numInputs) - l.target.h/2;
+			var ysource = getPortCenterY(l.source, "Out", sourcePort, numOutputs) - l.source.h/2;
 			var dy = (l.target.y+ytarget)-(l.source.y+ysource);
 			var dx = (l.target.x-l.target.w/2)-(l.source.x+l.source.w/2);
 		}
 		else
 		{
-			var ytarget = -((numInputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*targetPort + l.target.h/2;
-			var ysource = -((numOutputs-1)/2)*node_def.pin_ydistance +node_def.pin_ydistance*sourcePort + l.source.h/2;
+			var ytarget = getPortCenterY(l.target, "In", targetPort, numInputs);
+			var ysource = getPortCenterY(l.source, "Out", sourcePort, numOutputs);
 			var dy = (l.target.y+ytarget)-(l.source.y+ysource);
 			if (l.target.type == "JunctionRL" && l.source.type == "JunctionRL") // Left Out to Right In
 				var dx = (l.source.x)-(l.target.x+l.target.w);
@@ -3693,31 +3803,7 @@ RED.view = (function() {
             d.svgRect = nodeRect;
 			//console.log("SET svgRect: " + d.name, nodeRect.classed != undefined);
 			nodeRect.attr("id",d.id);
-			if (d._def.uiObject == undefined)
-			{
-				
-				d.textSize = settings.nodeDefaultTextSize;
-				redraw_calcNewNodeSize(d);
-			}
-			
-			if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
-			{	
-				checkRequirements(d); // this update nodes that allready exist
-				if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
-				redraw_nodeReqError(nodeRect, d);
-				RED.palette.redraw_paletteNodesReqError(d);
-			}
-			nodeRect.attr("nodeType", d.type);
-
-			redraw_nodeMainRect_init(nodeRect, d);
-			
-			redraw_nodeInputs(nodeRect, d);
-            if (d._def.icon) redraw_nodeIcon_init(nodeRect, d);
-			redraw_nodeOutputs(nodeRect, d);
-			if (d.type != "JunctionLR" && d.type != "JunctionRL")
-				redraw_init_nodeLabel(nodeRect, d);
-			
-            nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
+			initNodeSvg(nodeRect, d);
 		
 		});
 		
@@ -3725,6 +3811,40 @@ RED.view = (function() {
 
 		return visNodesAll;
 	}
+	/**
+	 * Creates the svg contents of a node (used when a node enters the workspace, and for the copies in an expanded group instance)
+	 * @param {*} nodeRect the d3 selection of the svg group of the node
+	 * @param {REDNode} d
+	 */
+	function initNodeSvg(nodeRect, d)
+	{
+		if (d._def.uiObject == undefined)
+		{
+			
+			d.textSize = settings.nodeDefaultTextSize;
+			redraw_calcNewNodeSize(d);
+		}
+		
+		if (d._def.category != undefined && (d._def.category.startsWith("output") || d._def.category.startsWith("input"))) // only need to check I/O
+		{	
+			checkRequirements(d); // this update nodes that allready exist
+			if (d.requirementError) console.warn("@nodeEnter reqError on:" + d.name);
+			redraw_nodeReqError(nodeRect, d);
+			RED.palette.redraw_paletteNodesReqError(d);
+		}
+		nodeRect.attr("nodeType", d.type);
+
+		redraw_nodeMainRect_init(nodeRect, d);
+		
+		redraw_nodeInputs(nodeRect, d);
+        if (d._def.icon) redraw_nodeIcon_init(nodeRect, d);
+		redraw_nodeOutputs(nodeRect, d);
+		if (d.type != "JunctionLR" && d.type != "JunctionRL")
+			redraw_init_nodeLabel(nodeRect, d);
+		
+        nodeRect.append("image").attr("class","node_reqerror hidden").attr("xlink:href","icons/error.png").attr("x",0).attr("y",-12).attr("width",20).attr("height",20);
+	}
+
 	function redraw_nodes(fullUpdate,superUpdate) // fullUpdate means that it checks for removed/added nodes as well
 	{
 		if (fullUpdate != undefined && fullUpdate == true) {
@@ -3810,6 +3930,7 @@ RED.view = (function() {
         redraw_nodeRefresh(nodeRect, d);
         if (d.type != "JunctionLR" && d.type != "JunctionRL")
             redraw_update_label(nodeRect, d);
+        RED.view.groupInstance.redraw(nodeRect, d); // the contents of an expanded group instance
     }
 	/*********************************************************************************************************************************/
 	/*********************************************************************************************************************************/
@@ -4090,10 +4211,9 @@ function setNewCoords (lastX, lastY, arr) {
         else if (!data2 || (data2 == null) || node._def.defaults.inputs != undefined || node._def.defaults.outputs != undefined) // shows workspace user custom class io
 		{
 			// TODO: extract portinfo from class
-            var ws = RED.nodes.getWorkspaceFromClassName(nodeType);
-			if (ws)
+            var tabIOnode = getClassPortNode(node, portDir, index);
+			if (tabIOnode != undefined)
 			{
-                var tabIOnode = RED.nodes.getClassIOport(ws.id, portDir, index);
                 if (tabIOnode.isBus == true) {
                     if (tabIOnode.inputs > 1) {
                         portName += ": BusOutput(" + tabIOnode.inputs + "):<br>";
@@ -4108,7 +4228,7 @@ function setNewCoords (lastX, lastY, arr) {
                 }
                 else {
                     portName = portName + ": " + tabIOnode.name;
-                    if (tabIOnode.comment != "") portName += "(" + tabIOnode.comment + ")"
+                    if (tabIOnode.comment) portName += "(" + tabIOnode.comment + ")"
                 }
 			}
             else if (node._def.dynInputs != undefined && portDir == "In") {
@@ -4405,6 +4525,9 @@ function setNewCoords (lastX, lastY, arr) {
         set state(_state) {mouse_mode = _state;},
         get mousedown_node() {return mousedown_node;},
         get posMode() {return posMode;},
+        calcNodeSize: redraw_calcNewNodeSize,
+        drawNodeCopy,
+        drawLinkCopy,
         redraw_update_label,
         nodeMouseUp,
         nodeMouseDown,

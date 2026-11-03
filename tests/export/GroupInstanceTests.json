@@ -1,0 +1,292 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "GroupInstanceTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_InstMain",
+            "label": "InstMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 40,
+                    "y": 60,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_c_in1:0",
+                            "im_b:1",
+                            "im_c:0",
+                            "im_user:0"
+                        ]
+                    ],
+                    "id": "im_osc1",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc1"
+                },
+                {
+                    "comment": "",
+                    "x": 40,
+                    "y": 140,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_c_in2:0",
+                            "im_b:0",
+                            "im_c:1"
+                        ]
+                    ],
+                    "id": "im_osc2",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc2"
+                },
+                {
+                    "comment": "",
+                    "x": 150,
+                    "y": 40,
+                    "z": "ws_InstMain",
+                    "wires": [],
+                    "id": "im_chain",
+                    "type": "group",
+                    "name": "chain",
+                    "className": "GChain",
+                    "nodes": [
+                        "im_c_in1",
+                        "im_c_in2",
+                        "im_c_out",
+                        "im_c_mix"
+                    ],
+                    "inputs": 2,
+                    "outputs": 1,
+                    "ioNodeSize": 10,
+                    "ioNodeSpacing": 15,
+                    "individualListBoxMode": false,
+                    "border_color": "#999",
+                    "color": "#ddffbb",
+                    "tag": "",
+                    "textSize": 14,
+                    "w": 200,
+                    "h": 120
+                },
+                {
+                    "comment": "",
+                    "x": 145,
+                    "y": 120,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_c_mix:0"
+                        ]
+                    ],
+                    "id": "im_c_in1",
+                    "type": "JunctionLR",
+                    "name": "In1",
+                    "ClassIOtype": 1,
+                    "parentGroup": "im_chain",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 145,
+                    "y": 70,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_c_mix:1"
+                        ]
+                    ],
+                    "id": "im_c_in2",
+                    "type": "JunctionLR",
+                    "name": "In2",
+                    "ClassIOtype": 1,
+                    "parentGroup": "im_chain",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 345,
+                    "y": 95,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_mix:0"
+                        ]
+                    ],
+                    "id": "im_c_out",
+                    "type": "JunctionLR",
+                    "name": "Out1",
+                    "ClassIOtype": 0,
+                    "parentGroup": "im_chain",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 220,
+                    "y": 90,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_c_out:0"
+                        ]
+                    ],
+                    "id": "im_c_mix",
+                    "type": "AudioMixer4",
+                    "name": "mix",
+                    "parentGroup": "im_chain"
+                },
+                {
+                    "comment": "",
+                    "x": 150,
+                    "y": 220,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_mix:1"
+                        ]
+                    ],
+                    "id": "im_b",
+                    "type": "GChain",
+                    "name": "chainB"
+                },
+                {
+                    "comment": "",
+                    "x": 150,
+                    "y": 300,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_mix:2"
+                        ]
+                    ],
+                    "id": "im_c",
+                    "type": "GChain",
+                    "name": "chainC[2]"
+                },
+                {
+                    "comment": "",
+                    "x": 150,
+                    "y": 380,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_mix:4"
+                        ]
+                    ],
+                    "id": "im_user",
+                    "type": "UsesChain",
+                    "name": "user"
+                },
+                {
+                    "comment": "",
+                    "x": 450,
+                    "y": 100,
+                    "z": "ws_InstMain",
+                    "wires": [
+                        [
+                            "im_i2s:0"
+                        ]
+                    ],
+                    "id": "im_mix",
+                    "type": "AudioMixer",
+                    "name": "outMix",
+                    "inputs": 5
+                },
+                {
+                    "comment": "",
+                    "x": 600,
+                    "y": 100,
+                    "z": "ws_InstMain",
+                    "wires": [],
+                    "id": "im_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_UsesChain",
+            "label": "UsesChain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 40,
+                    "y": 80,
+                    "z": "ws_UsesChain",
+                    "wires": [
+                        [
+                            "uc_chain:0",
+                            "uc_chain:1"
+                        ]
+                    ],
+                    "id": "uc_in",
+                    "type": "TabInput",
+                    "name": "In"
+                },
+                {
+                    "comment": "",
+                    "x": 160,
+                    "y": 80,
+                    "z": "ws_UsesChain",
+                    "wires": [
+                        [
+                            "uc_out:0"
+                        ]
+                    ],
+                    "id": "uc_chain",
+                    "type": "GChain",
+                    "name": "inner"
+                },
+                {
+                    "comment": "",
+                    "x": 300,
+                    "y": 80,
+                    "z": "ws_UsesChain",
+                    "wires": [],
+                    "id": "uc_out",
+                    "type": "TabOutput",
+                    "name": "Out"
+                }
+            ]
+        }
+    ]
+}

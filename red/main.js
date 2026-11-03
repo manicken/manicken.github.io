@@ -769,6 +769,7 @@ RED.main = (function() {
         RED.arduino.export.init();
         //RED.arduino.export2.init();
         RED.exporter.main.init();
+        RED.groupClasses.init();
         RED.arduino.export.osc.init();
 
         //SetButtonPopOver("#btn-

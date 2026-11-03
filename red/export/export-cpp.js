@@ -64,13 +64,16 @@ RED.exporter.cpp = (function () {
 
     /**
      * the name as the user wrote it, keeps a constant in the array size, i.e. osc[NUM],
+     * a name without an array part gets the 'Array Size' setting (see graph.getArrayInfo), i.e. osc + 4 gives osc[4],
      * for a flattened object (inside class instances) the flat name, i.e. voices_2_osc[3]
      * @param {ResolvedObject} obj
      */
     function getDeclarationName(obj) {
+        const arrayPart = (obj.arrayLength != 0) ? ("[" + obj.arrayLength + "]") : "";
         if (obj.classPath.length != 0) // the constant used for the size is inside the class, so the size is used
-            return RED.exporter.flatten.getFlatName(obj.classPath, obj.node) + ((obj.arrayLength != 0) ? ("[" + obj.arrayLength + "]") : "");
-        return obj.node.name ? obj.node.name : obj.node.id;
+            return RED.exporter.flatten.getFlatName(obj.classPath, obj.node) + arrayPart;
+        const name = obj.node.name ? obj.node.name : obj.node.id;
+        return name.includes("[") ? name : (name + arrayPart);
     }
 
     /**

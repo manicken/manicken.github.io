@@ -90,11 +90,15 @@ these only forward the signal:
 
 | node | the signal continues from |
 |---|---|
-| junction | the junction input |
+| junction (1 input, 1 output) | the junction input |
 | class output | inside the class, what is connected to the TabOutput (lane by lane) |
 | class input | outside the class, what is connected to the class node input (pass through) |
-| BusJoin | input 0, then input 1, ... (each can itself be a bus or an array) |
-| BusSplit | output *k* is signal *k* of the bus on its input |
+| junction with more inputs (joins) | input 0, then input 1, ... (each can itself be a bus or an array) |
+| junction with more outputs (splits) | output *k* is part *k* of the wire on its input (see wire shapes below) |
+
+A junction either joins or splits, not both (the editor locks the other count to 1, the export reports it as an error),
+and the IO junctions of a class group don't show the counts. Older designs used BusJoin and BusSplit for this, they are converted into junctions when loaded
+(`convertOldBusNode` in `red/nodes.js`), and they are no longer in the palette.
 
 A wire can carry more than one signal (a bus):
 
@@ -104,11 +108,29 @@ A wire can carry more than one signal (a bus):
 | into a class input with N lanes (`TabInput` with N outputs) | lane *k* gets signal *k*, the wire must carry exactly N signals |
 | into a mixer (dyn inputs) | every signal gets its own input, after the signals of the wires on the inputs above |
 | into a normal object | the signals go to the inputs after each other, starting at the wire's input |
-| array → array | element *i* to element *i*, the sizes must match |
-| non array → array | to every element |
-| bus → array | signal *i* to element *i*, when the bus have as many signals as the array have elements and each element takes one signal (a normal object, or a class input with one lane); the opposite of array → non array |
+| into an array | spread over the elements, or to every element, see wire shapes below |
 
-**Class groups:** a group with *export as class* is a class defined inline, exactly like a class tab:
+**Wire shapes:** the signals of a wire are always in the same order, the *shape* tells how they are
+structured, the outer level first (`getWireShape` in `export-resolve.js`, shown when hovering a wire,
+and the wire color is the outer level: orange array, blue bus):
+
+| source | shape |
+|---|---|
+| `osc[4]` | array[4] |
+| a class output with 2 lanes | bus[2] |
+| `voices[4]` of a class with a 2 lane output | array[4] of bus[2] (8 signals: voices[0] lane 0, voices[0] lane 1, voices[1] lane 0 ...) |
+| a junction joining 4 single signals | bus[4] |
+| a junction joining 2 stereo buses | bus[2] of bus[2] (inputs with different shapes give one flat bus) |
+
+The shape decides how a wire can be split, the possible counts are the products of the outer levels,
+`array[4] of bus[2]` can be split into **4** parts (a bus[2] each) or **8** single signals (like a mixer numbers them):
+
+| target | rule |
+|---|---|
+| junction with M outputs | M must be one of the counts, output *k* gets part *k* (any other count is an error that tells the possible counts) |
+| array of N | when N is one of the counts the wire is spread, element *i* gets part *i*: an outer array level always (element to element), a bus level only if a part is what one element takes (a normal object 1 signal, a class input its lanes); otherwise the whole wire goes to every element (i.e. one signal to an array) |
+
+**Class groups:** a group with a class name is a class defined inline, exactly like a class tab:
 its `className` is the class (type) and its name is the instance (`voices` or `voices[8]`, an array of
 instances like any other array). Its IO junctions (`ClassIOtype` 1 = input, 0 = output) are the class
 ports, the wires outside of the group are connected directly to them. Everything inside the group belongs
@@ -116,7 +138,24 @@ to the class (also visual groups and other class groups inside it), so all the r
 (`getScopeNodes`/`getScopeLinks` in `export-graph.js` gives the nodes/wires of a tab or a class group).
 In `classes` every class name is written once (`<className>.h/.cpp`), so all groups with the same class
 name must have the same content (an error otherwise), and the flat modes flatten them like class tabs.
-A group without *export as class* is only visual, its IO junctions are just junctions.
+A group without a class name is only visual, its IO junctions are just junctions. The class name must be a C++ name
+that is not taken by a tab or an object type (`getClassGroupNameProblems`, the editor marks the group). Older designs
+with the *export as class* checkbox are converted when loaded (`convertOldGroupClassName` in `red/nodes.js`).
+
+**Group instances:** the first group with a class name is the *source* of that class (it's also an instance itself),
+it gets a type in the palette (`red/group-classes.js`), a node of that type is another instance of the class:
+`node._def.classGroup` is the source, its ports are the IO junctions of the source top to bottom
+(`getGroupPorts`, also `GroupScope.tabInputs/tabOutputs`), so the resolver handles it like a class tab node.
+Only the source is saved with the contents. An instance can be *expanded* (its edit dialog), then it looks like the
+source with read-only copies of its contents, drawn by the real drawing code, and its ports are where the IO junctions
+of the source are (`red/ui/view-groupinstance.js`, only drawn, it's still one node, so the export is the same).
+A source shows "class X · N instances" and an expanded instance "instance of X" in the bottom right corner.
+Class tab nodes can be expanded the same way (they show the tab contents, the ports are where the TabInput/TabOutput are).
+With *Expanded: audio objects only* only the nodes with audio inputs/outputs (and the groups around them) are shown. An instance whose source is gone (removed, or another class name)
+is an error (`getGroupInstanceProblem`). The editor keeps the classes valid: a source with instances can't be
+deleted, another group with the same class name but other contents is an error (`getClassNameConflict`), and
+older designs with copies of a class group are converted into instances when loaded (`convertCopiesToInstances`,
+not when the copy have loose wires).
 
 **Loose wires:** a wire can also go straight from an object inside a class group to an object outside of it
 (or the other way), without IO junctions. It belongs to the innermost class group that contains both ends
@@ -138,14 +177,14 @@ Every wire is checked (`validateWires` in `export-resolve.js`).
 
 **Errors** stop the export, an error report is shown instead:
 array sizes that don't match, a wire with a different number of signals than the class
-input has lanes, more signals than a BusSplit has outputs or an object has inputs, two
+input has lanes, a junction split that doesn't match the wire shape, more signals than an object has inputs, two
 wires (or two overlapping buses) into one input, a class port that doesn't exist, an
 AudioStreamObject without a Sub Type, classes that contain themselves.
 
 The Export Modes add their own errors, see the table at the top (`export-modes.js`).
 
 **Warnings** are exported as comments: wires to/from unsupported nodes (LinkIn/LinkOut),
-class outputs or BusJoin inputs that are not connected.
+class outputs or joining junction inputs that are not connected.
 
 **In the editor**, the selected *Export Mode* decides what is valid. In the C++ modes
 `RED.nodes.setLinkInfo` uses `RED.exporter.modes.getLinkErrors`, so the wires with errors are
@@ -153,7 +192,7 @@ drawn as invalid (red dashed) with the same text as the error report (hover the 
 nodes that break the mode rules (i.e. a class instance in `classic`) get a red dashed border and
 explain why when hovered (`RED.exporter.modes.getNodeProblems`, used in `RED.view.redraw_node`).
 In the OSC mode the old checks are still used, until the OSC export is moved to this system.
-As a wire can be valid or not because of things far away from it (the outputs of a BusSplit, the
+As a wire can be valid or not because of things far away from it (the outputs of a splitting junction, the
 lanes of a class input, a class in another tab), all wires are checked again after every change of the
 design (`scheduleExportCheck` in `RED.nodes`, a few ms even for big designs).
 
@@ -177,6 +216,9 @@ design (`scheduleExportCheck` in `RED.nodes`, a few ms even for big designs).
   amps[0] -> mixer:8, amps[1] -> mixer:9
   osc1 -> mixer:10, osc2 -> mixer:11                 the same bus into an array of a pass through class (thrus[2])
   ```
+- `ShapeTests.json` - wire shapes: `voices[4]` of `StereoOsc` (array[4] of bus[2]) split into 4 and 8,
+  spread over `amps8[8]` (one signal each) and `fx4[4]` (a stereo bus each), two stereo parts joined and split again,
+  and `bad3` (a split into 3, the only error).
 - `FlatTests.json` - the flat modes. `FlatMain` uses `Poly` (lfo, `voices[2]` of `Voice`, mix), and
   `Voice` has `osc[NUM]` (sized by a class constant), a mixer and an env:
   `flatclassic` must give one file with 14 connections (`poly_lfo -> poly_voices_0_osc[0]`, ...,

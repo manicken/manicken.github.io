@@ -6,28 +6,35 @@
  * THE RULE: every audio input has exactly one source, so every connection is found by
  * starting at a real audio object input and following the wire backwards until a real
  * audio object output is found. On the way back the following only forwards the signal:
- *   junction      - the wire continues from the junction input
+ *   junction      - (one input and one output) the wire continues from the junction input
  *   class output  - continues inside the class, from what is connected to the TabOutput
  *   class input   - continues outside the class, from what is connected to the class node input (pass through)
- *   BusJoin       - its output carries the signals of input 0, then input 1, ...
- *   BusSplit      - output k carries signal k of the bus on its input
+ *   joining node  - (a junction with more inputs, or BusJoin) its output carries the signals of input 0, then input 1, ...
+ *   splitting node- (a junction with more outputs, or BusSplit) output k carries part k of the wire on its input,
+ *                   it splits the outer level(s) of the wire shape (see WIRE SHAPES below)
  *
- * A class can be a workspace (tab) or a class group (a group with 'export as class', see export-graph.js),
+ * A class can be a workspace (tab) or a class group (a group with a class name, see export-graph.js),
  * the IO junctions of a class group are its ports: the wires outside of the group are connected directly
  * to them, so they are both the port and the instance input/output. A 'scope' is the nodes/wires of one
  * class: the nodes inside a class group belongs to the class group, not to the workspace it's drawn in.
  *
  * A wire can carry more than one signal (a bus):
  *   array into a non array          - one signal per element
- *   class output, BusJoin           - see above, buses can be nested
+ *   class output, joining node      - see above, buses can be nested
  *   class input with N lanes        - (TabInput.outputs = N) lane k gets signal k of the wire
  *   into a dyn input object (mixer) - every signal gets its own input, after the signals of the wires above
  *   into a normal object            - the signals go to the inputs after each other, starting at the wire input
- * and arrays:
- *   array to array      - element i to element i
- *   non array to array  - to every element
- *   bus to array        - signal i to element i, when the bus have as many signals as the array have elements
- *                         and the array takes one signal per element (a normal object or a class input with one lane)
+ *
+ * WIRE SHAPES: the signals of a wire are always in the same (flat) order, the shape tells how they are structured,
+ * the outer level first: an array of 8 class instances with a 2 lane output gives "array[8] of bus[2]" (16 signals,
+ * element 0 lane 0, element 0 lane 1, element 1 lane 0 ...), a joining node makes a new outer bus level of its inputs
+ * (4 stereo buses gives "bus[4] of bus[2]"). The shape decides how a wire can be split, the possible counts are the
+ * products of the outer levels (array[8] of bus[2] can be split into 8 parts of bus[2], or 16 single signals):
+ *   splitting node with M outputs - M must be one of the counts, output k gets part k
+ *   into an array of N            - when N is one of the counts the wire is spread, element i gets part i
+ *                                   (an outer array level is always spread element to element, a bus level only
+ *                                   if the part is what one element takes: a normal object 1, a class input its lanes),
+ *                                   otherwise the whole wire goes to every element (a single signal to an array)
  *
  * OWNERSHIP: a connection is made in the innermost workspace that contains both its ends.
  * A connection that only exists inside a class is the same for every instance of that class,
@@ -129,16 +136,13 @@ RED.exporter.resolve = (function () {
         const obj = new ResolvedObject(node);
         obj.typeName = (node.type == "AudioStreamObject") ? node.subType : graph.getClassName(node); // getClassName gives the node type for a normal object
         obj.isClass = graph.isClass(node);
-        if (obj.typeName == undefined || obj.typeName.length == 0) {
-            if (graph.isClassGroup(node)) rws.addProblem(new ResolvedProblem("error", "the class name of the group " + graph.getBaseName(node) + " is not set", undefined, node));
-            else rws.addProblem(new ResolvedProblem("error", "the Sub Type of " + node.type + " " + graph.getBaseName(node) + " is not set", undefined, node));
+        if (graph.isClassGroup(node)) { // a group name is free text, but a class group name is the instance name
+            for (const text of graph.getClassGroupNameProblems(node)) rws.addProblem(new ResolvedProblem("error", text, undefined, node));
         }
-        else if (graph.isClassGroup(node)) { // a group name is free text, but a class group name is the instance name
-            if (/^[A-Za-z_]\w*$/.test(obj.typeName) == false)
-                rws.addProblem(new ResolvedProblem("error", "the class name '" + obj.typeName + "' of the group " + node.name + " is not a valid C++ name", undefined, node));
-            if (/^[A-Za-z_]\w*(\[\s*\w+\s*\])?$/.test(node.name) == false)
-                rws.addProblem(new ResolvedProblem("error", "the group name '" + node.name + "' is not a valid C++ instance name (the name is the instance, i.e. voices or voices[8], the class name is set by the class name)", undefined, node));
-        }
+        else if (node._def.isGroupClass == true && graph.getGroupInstanceProblem(node) != undefined)
+            rws.addProblem(new ResolvedProblem("error", graph.getGroupInstanceProblem(node), undefined, node));
+        else if (obj.typeName == undefined || obj.typeName.length == 0)
+            rws.addProblem(new ResolvedProblem("error", "the Sub Type of " + node.type + " " + graph.getBaseName(node) + " is not set", undefined, node));
 
         const arrayInfo = graph.getArrayInfo(node);
         if (arrayInfo != undefined) obj.arrayLength = arrayInfo.length;
@@ -220,13 +224,10 @@ RED.exporter.resolve = (function () {
         }
         const sourceArray = crossing.sourceArray;
         const targetArray = crossing.targetArray;
+        const elementToElement = (sourceArray != undefined && targetArray != undefined && sourceArray.length == targetArray.length);
         let indexes = [undefined];
-        if (sourceArray != undefined) {
-            if (targetArray != undefined) // element to element
-                indexes = (targetIndex < sourceArray.length) ? [targetIndex] : []; // mismatch is reported by validateWires
-            else // all elements as a bus
-                indexes = range(sourceArray.length);
-        }
+        if (elementToElement) indexes = (targetIndex < sourceArray.length) ? [targetIndex] : [];
+        else if (sourceArray != undefined) indexes = range(sourceArray.length); // all elements
         const signals = [];
         for (const index of indexes) {
             const outputSignals = (crossing.crossed.length != 0)
@@ -236,9 +237,12 @@ RED.exporter.resolve = (function () {
                 signals.push(withLinks(signal, from.links));
             }
         }
-        if (isBusSplitIntoArray(wire, sourceArray, targetArray, signals.length) && targetIndex != undefined)
-            return [signals[targetIndex]]; // signal i to element i
-        return signals;
+        if (targetArray != undefined && targetIndex != undefined && elementToElement == false) {
+            const part = getSpreadPartSize(wire, getWireShape(wire), targetArray.length);
+            if (part != undefined) return signals.slice(targetIndex * part, (targetIndex + 1) * part); // part i to element i
+            if (sourceArray != undefined) return []; // the array sizes don't match, reported by validateWires
+        }
+        return signals; // the whole wire to every element (or not into an array)
     }
 
     /**
@@ -319,18 +323,20 @@ RED.exporter.resolve = (function () {
     }
 
     /**
-     * A bus (a wire with more than one signal, not from an array) into an array that takes one signal per element,
-     * with as many signals as the array have elements, is split: signal i goes to element i
-     * (the opposite of an array into a non array, that gives a bus with one signal per element).
+     * A wire into an array is spread over the elements when the array size is one of the split counts of the wire shape
+     * (see WIRE SHAPES at the top): an outer array level always (element to element), otherwise only if the part
+     * is what one element takes (a normal object 1 signal, a class input its lanes).
      * @param {REDLink} wire
-     * @param {ArrayInfo|undefined} sourceArray
-     * @param {ArrayInfo|undefined} targetArray
-     * @param {Number} signalCount
-     * @returns {Boolean}
+     * @param {WireShape} shape
+     * @param {Number} arrayLength
+     * @returns {Number|undefined} the number of signals each element gets, undefined if the wire is not spread
      */
-    function isBusSplitIntoArray(wire, sourceArray, targetArray, signalCount) {
-        return sourceArray == undefined && targetArray != undefined && signalCount > 1 &&
-               signalCount == targetArray.length && graph.takesOneSignal(wire);
+    function getSpreadPartSize(wire, shape, arrayLength) {
+        const level = getSplitLevel(shape, arrayLength);
+        if (level == -1) return undefined;
+        const part = getShapeSignalCount(shape) / arrayLength;
+        if (level == 1 && shape[0].kind == "array") return part;
+        return (graph.getTargetInputWidth(wire) == part) ? part : undefined;
     }
 
     /**
@@ -347,28 +353,41 @@ RED.exporter.resolve = (function () {
         if (graph.isClass(node))
             return getClassOutputSignals(ctx, step, port, report, depth);
 
-        if (node.type == "BusJoin") {
-            const signals = [];
-            for (let input = 0; input < Math.max(1, Number(node.inputs)); input++) {
-                const wires = graph.getLinksTo(node, input);
-                if (wires.length == 0) {
-                    report(new ResolvedProblem("warning", "BusJoin " + graph.getBaseName(node) + " input " + input + " is not connected"));
-                    signals.push(undefined);
-                }
-                else signals.push(...getWireSignals(ctx, wires[0], undefined, report, depth + 1));
-            }
-            return signals;
-        }
-        if (node.type == "BusSplit") {
-            const wires = graph.getLinksTo(node, 0);
-            if (wires.length == 0) return [undefined];
-            return [getWireSignals(ctx, wires[0], undefined, report, depth + 1)[port]]; // a mismatch is reported by validateWires
-        }
+        if (graph.isBusNode(node))
+            return getBusNodeSignals(ctx, node, port, report, depth);
         if (graph.isVirtual(node)) {
             report(new ResolvedProblem("warning", "wires from " + node.type + " are not supported by the export"));
             return [undefined];
         }
         return [{ path: [...ctx, step], port, links: [] }];
+    }
+
+    /**
+     * The signals of an output of a joining and/or splitting node (a junction with more inputs/outputs, BusJoin, BusSplit):
+     * the inputs are joined after each other, and output k gets part k of them (see WIRE SHAPES at the top).
+     * @param {ResolvedPathStep[]} ctx
+     * @param {REDNode} node
+     * @param {Number} port the output
+     * @param {Report} report
+     * @param {Number} depth
+     * @returns {WireSignal[]}
+     */
+    function getBusNodeSignals(ctx, node, port, report, depth) {
+        const joinCount = graph.getJoinInputCount(node);
+        const signals = [];
+        for (let input = 0; input < Math.max(1, joinCount); input++) {
+            const wires = graph.getLinksTo(node, input);
+            if (wires.length == 0) {
+                if (joinCount > 0) report(new ResolvedProblem("warning", getBusNodeText(node) + " input " + input + " is not connected"));
+                signals.push(undefined);
+            }
+            else signals.push(...getWireSignals(ctx, wires[0], undefined, report, depth + 1));
+        }
+        const splitCount = graph.getSplitOutputCount(node);
+        if (splitCount == 0) return signals;
+        const part = signals.length / splitCount;
+        if (Number.isInteger(part) == false) return [undefined]; // a mismatch is reported by validateWires
+        return signals.slice(port * part, (port + 1) * part);
     }
 
     /**
@@ -430,9 +449,9 @@ RED.exporter.resolve = (function () {
         if (ctx.length == 0) return OUTSIDE; // an input port of the workspace (or class group) being resolved
 
         const instance = ctx[ctx.length - 1];
-        const wires = graph.isGroupPort(portNode)
+        const wires = graph.isClassGroup(instance.node) // the class group itself, its input junction is also the instance input
             ? graph.getLinksTo(portNode)
-            : graph.getLinksTo(instance.node, graph.getClassInputIndex(instance.node, portNode));
+            : graph.getLinksTo(instance.node, graph.getClassInputIndex(instance.node, portNode)); // a class node or a group instance
         if (wires.length == 0) return undefined; // the class input is not connected
 
         const signals = getWireSignals(ctx.slice(0, -1), wires[0], instance.index, report, depth + 1);
@@ -501,19 +520,22 @@ RED.exporter.resolve = (function () {
         const crossing = getWireCrossing(wire, from);
         const sourceArray = crossing.sourceArray;
         const targetArray = crossing.targetArray;
-        if (sourceArray != undefined && targetArray != undefined && sourceArray.length != targetArray.length) {
-            report(new ResolvedProblem("error", "the array sizes don't match, " + sourceArray.name + " have " + sourceArray.length + " and " + targetArray.name + " have " + targetArray.length, wire));
+        if (sourceArray != undefined && targetArray != undefined && sourceArray.length != targetArray.length &&
+            getSpreadPartSize(wire, getWireShape(wire), targetArray.length) == undefined) {
+            const hint = (getWireShape(wire).length > 1) ? (" (the wire is " + getShapeText(getWireShape(wire)) + ", " + getSplitCountsText(getWireShape(wire), "it can be spread over an array of", "") + ")") : "";
+            report(new ResolvedProblem("error", "the array sizes don't match, " + sourceArray.name + " have " + sourceArray.length + " and " + targetArray.name + " have " + targetArray.length + hint, wire));
             return;
         }
         // the problems of the wires on the way that are in another scope are reported when that scope is checked
         const owner = graph.getLinkOwner(wire);
         const reportOwnScope = function (problem) { if (problem.link == undefined || graph.getLinkOwner(problem.link) === owner) report(problem); };
         const width = getWireSignals(getWireCtx(wire), wire, (targetArray != undefined) ? 0 : undefined, reportOwnScope, 0).length;
-        // a bus into an array that takes one signal per element is split one signal per element (see isBusSplitIntoArray),
+        // a bus into an array that takes one signal per element is spread one signal per element (see getSpreadPartSize),
         // when that don't happen, it's because the number of signals don't match, so tell that
         const arrayHint = (sourceArray == undefined && targetArray != undefined && width > 1 && graph.takesOneSignal(wire))
             ? " (a bus into the array " + targetArray.name + " gives one signal per element, so it must have " + targetArray.length + " signals)" : "";
-        const signalsText = width + " signal" + (width != 1 ? "s" : "");
+        const shape = (width > 1) ? getWireShape(wire) : [];
+        const signalsText = width + " signal" + (width != 1 ? "s" : "") + ((shape.length > 1) ? (" (" + getShapeText(shape) + ")") : "");
 
         if (graph.isClass(target) || (graph.isGroupPort(target) && graph.isClassInputPort(target))) {
             // a class node port, or the input junction of a class group (that is both the port and the instance input)
@@ -527,12 +549,21 @@ RED.exporter.resolve = (function () {
             if (width != lanes)
                 report(new ResolvedProblem("error", "the wire carries " + signalsText + " but " + graph.getClassName(instance) + " input " + getPortName(portNode) + " have " + lanes + " lane" + (lanes != 1 ? "s" : "") + arrayHint, wire));
         }
-        else if (target.type == "BusSplit") {
-            const outputs = Math.max(1, Number(target.outputs));
-            if (width != outputs)
-                report(new ResolvedProblem("error", "the wire carries " + signalsText + " but BusSplit " + graph.getBaseName(target) + " have " + outputs + " outputs", wire));
+        else if (graph.isBusNode(target)) { // joins any number of signals, a split must match the shape
+            const splitCount = graph.getSplitOutputCount(target);
+            const joinCount = graph.getJoinInputCount(target);
+            if (graph.isBusJunction(target) && splitCount > 0 && joinCount > 0) { // (the editor don't allow it, see RED.editor lockJunctionPortCounts)
+                if (port == 0) report(new ResolvedProblem("error", getBusNodeText(target) + " have " + joinCount + " inputs and " + splitCount + " outputs, a junction can only join (more inputs) or split (more outputs)", wire));
+                return;
+            }
+            if (splitCount > 0 && (joinCount == 0 || port == 0)) { // (a node that joins and splits is checked once)
+                const splitShape = getBusNodeInputShape(target, 0);
+                if (getSplitLevel(splitShape, splitCount) == -1)
+                    report(new ResolvedProblem("error", "the wire" + ((joinCount > 0) ? "s" : "") + " into " + getBusNodeText(target) + " is " +
+                        getShapeText(splitShape) + ", " + getSplitCountsText(splitShape, "it can be split into", " parts") + ", but it have " + splitCount + " outputs", wire));
+            }
         }
-        else if (target.type == "BusJoin" || graph.isClassOutputPort(target) || graph.hasDynInputs(target)) {
+        else if (graph.isClassOutputPort(target) || graph.hasDynInputs(target)) {
             // takes any number of signals
         }
         else {
@@ -540,6 +571,150 @@ RED.exporter.resolve = (function () {
             if (isNaN(inputCount) == false && port + width > inputCount)
                 report(new ResolvedProblem("error", "the wire carries " + signalsText + " into input " + port + " but " + graph.getBaseName(target) + " only have " + inputCount + " input" + (inputCount != 1 ? "s" : "") + arrayHint, wire));
         }
+    }
+
+    // ******************************************************************
+    // wire shapes (see WIRE SHAPES at the top)
+    // ******************************************************************
+
+    /**
+     * The structure of what a wire carries, the outer level first: [{kind:"array",size:8},{kind:"bus",size:2}] is
+     * "array[8] of bus[2]", [] is one signal. The number of signals is the product of the sizes.
+     * @typedef {{kind:String, size:Number}[]} WireShape
+     */
+
+    /**
+     * @param {REDLink} wire
+     * @param {Number} [depth]
+     * @returns {WireShape} what the wire carries into its target (the same as getWireSignals, but only the structure)
+     */
+    function getWireShape(wire, depth) {
+        if (depth == undefined) depth = 0;
+        if (depth > MAX_DEPTH) return [];
+        const from = graph.followJunctionsBackward(wire);
+        if (from == undefined) return [];
+        const crossing = getWireCrossing(wire, from);
+        const shape = [];
+        for (const group of crossing.crossed) { // a loose wire out of class group arrays
+            const arrayInfo = graph.getArrayInfo(group);
+            if (arrayInfo != undefined) shape.push({ kind: "array", size: arrayInfo.length });
+        }
+        return [...shape, ...getSourceShape(from, depth)];
+    }
+
+    /**
+     * @param {WireEnd} from
+     * @param {Number} depth
+     * @returns {WireShape} what an output gives
+     */
+    function getSourceShape(from, depth) {
+        const node = from.node;
+        if (graph.isClassInputPort(node)) return []; // inside a class, a lane is one signal
+        const arrayInfo = graph.getSourceArrayInfo(node);
+        const shape = (arrayInfo != undefined) ? [{ kind: "array", size: arrayInfo.length }] : [];
+        if (graph.isGroupPort(node)) return [...shape, ...getClassOutputShape(node, depth)];
+        if (graph.isClass(node)) {
+            const portNode = graph.getClassPort(graph.getClassWorkspace(node), "Out", from.port);
+            return [...shape, ...((portNode != undefined) ? getClassOutputShape(portNode, depth) : [])];
+        }
+        if (graph.isBusNode(node)) return [...shape, ...getBusNodeOutputShape(node, depth)];
+        return shape;
+    }
+
+    /**
+     * @param {REDNode} portNode a class output port (TabOutput or the output junction of a class group)
+     * @param {Number} depth
+     * @returns {WireShape} a bus of its lanes, a port with one lane gives what is connected to it inside the class
+     */
+    function getClassOutputShape(portNode, depth) {
+        const lanes = graph.getClassPortWidth(portNode);
+        if (lanes > 1) return [{ kind: "bus", size: lanes }];
+        const wires = graph.getLinksTo(portNode, 0);
+        return (wires.length != 0) ? getWireShape(wires[0], depth + 1) : [];
+    }
+
+    /**
+     * @param {REDNode} node a joining and/or splitting node
+     * @param {Number} depth
+     * @returns {WireShape} what it joins: a new outer bus level of its inputs (if they have the same shape,
+     *                      otherwise one bus of all their signals), or the wire on its only input
+     */
+    function getBusNodeInputShape(node, depth) {
+        const joinCount = graph.getJoinInputCount(node);
+        if (joinCount == 0) {
+            const wires = graph.getLinksTo(node, 0);
+            return (wires.length != 0) ? getWireShape(wires[0], depth + 1) : [];
+        }
+        const inputShapes = [];
+        for (let input = 0; input < joinCount; input++) {
+            const wires = graph.getLinksTo(node, input);
+            inputShapes.push((wires.length != 0) ? getWireShape(wires[0], depth + 1) : []);
+        }
+        const same = inputShapes.every(function (s) { return JSON.stringify(s) == JSON.stringify(inputShapes[0]); });
+        if (same) return [{ kind: "bus", size: joinCount }, ...inputShapes[0]];
+        const signalCount = inputShapes.reduce(function (sum, s) { return sum + getShapeSignalCount(s); }, 0);
+        return [{ kind: "bus", size: signalCount }];
+    }
+
+    /**
+     * @param {REDNode} node a joining and/or splitting node
+     * @param {Number} depth
+     * @returns {WireShape} what one of its outputs gives
+     */
+    function getBusNodeOutputShape(node, depth) {
+        const shape = getBusNodeInputShape(node, depth);
+        const splitCount = graph.getSplitOutputCount(node);
+        if (splitCount == 0) return shape;
+        const level = getSplitLevel(shape, splitCount);
+        return (level == -1) ? [] : shape.slice(level);
+    }
+
+    /** @param {REDNode} node a joining/splitting node @returns {String} i.e. "the junction split2" (or "BusSplit split2") */
+    function getBusNodeText(node) {
+        return (graph.isBusJunction(node) ? "the junction" : node.type) + " " + graph.getBaseName(node);
+    }
+
+    /** @param {WireShape} shape @returns {Number} the number of signals */
+    function getShapeSignalCount(shape) {
+        return shape.reduce(function (count, level) { return count * level.size; }, 1);
+    }
+
+    /** @param {WireShape} shape @returns {Number[]} the counts the wire can be split into: the products of the outer levels */
+    function getSplitCounts(shape) {
+        const counts = [];
+        let count = 1;
+        for (const level of shape) {
+            count *= level.size;
+            if (counts.includes(count) == false && count > 1) counts.push(count);
+        }
+        return counts;
+    }
+
+    /**
+     * @param {WireShape} shape
+     * @param {Number} count
+     * @returns {Number} how many outer levels a split into 'count' parts splits, -1 if it's not one of the split counts
+     */
+    function getSplitLevel(shape, count) {
+        let product = 1;
+        for (let level = 0; level < shape.length; level++) {
+            product *= shape[level].size;
+            if (product == count) return level + 1;
+        }
+        return -1;
+    }
+
+    /** @param {WireShape} shape @returns {String} i.e. "array[8] of bus[2]", or "1 signal" */
+    function getShapeText(shape) {
+        if (shape.length == 0) return "1 signal";
+        return shape.map(function (level) { return level.kind + "[" + level.size + "]"; }).join(" of ");
+    }
+
+    /** @returns {String} the possible split counts for an error, i.e. "it can be split into 8 or 16 parts" (or "it can't be split") */
+    function getSplitCountsText(shape, what, unit) {
+        const counts = getSplitCounts(shape);
+        if (counts.length == 0) return "it can't be split";
+        return what + " " + counts.join(" or ") + unit;
     }
 
     // ******************************************************************
@@ -674,5 +849,7 @@ RED.exporter.resolve = (function () {
         resolveDesign,
         resolveWorkspace,
         validateLink,
+        getWireShape,
+        getShapeText,
     };
 })();

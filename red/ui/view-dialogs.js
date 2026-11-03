@@ -42,15 +42,10 @@ RED.view.dialogs = (function() {
 		var nns = RED.nodes.createExportableNodeSet(RED.view.moving_set);
 		//$("#dialog-form").html(getForm("dialog-form", "export-clipboard-dialog"));
 		var frm = getForm("dialog-form", "export-clipboard-dialog", function (d, f) {
-			$("#node-input-export").val(JSON.stringify(nns)).focus(function() {
-				var textarea = $(this);
-				textarea.select();
-				textarea.mouseup(function() {
-						textarea.unbind("mouseup");
-						return false;
-				});
-			}).focus();
-		$( "#dialog" ).dialog("option","title","Export nodes to clipboard").dialog( "open" );
+			setExportDialogText(JSON.stringify(nns), undefined, "json");
+			exportDialogEditor.selectAll(); // ready to be copied
+			exportDialogEditor.focus();
+		$( "#dialog" ).dialog({ title: "Export nodes to clipboard", open: fitExportTextareaToDialog, resize: fitExportTextareaToDialog }).dialog( "open" );
 		});
 	}
 
@@ -472,16 +467,58 @@ RED.view.dialogs = (function() {
     }
 
     /**
-     * makes the export textarea fill the dialog height, without making the dialog scroll,
+     * makes the export text (the ace editor) fill the dialog height, without making the dialog scroll,
      * by subtracting the height of everything else in the dialog (label, tips, margins)
      */
     function fitExportTextareaToDialog() {
         var dialog = $("#dialog");
-        var textarea = $("#node-input-export");
-        var row = textarea.closest(".form-row");
-        var otherHeight = (row.outerHeight(true) - textarea.height()) // label, margins and the textarea border/padding
+        var editorElement = $("#export-dialog-ace");
+        var row = editorElement.closest(".form-row");
+        var otherHeight = (row.outerHeight(true) - editorElement.outerHeight()) // the label and margins
                         + $("#export-clipboard-dialog-tips").outerHeight(true);
-        textarea.height(Math.max(100, Math.floor(dialog.height() - otherHeight - 2))); // -2 for rounding
+        editorElement.height(Math.max(100, Math.floor(dialog.height() - otherHeight - 2))); // -2 for rounding
+        if (exportDialogEditor != undefined) { exportDialogEditor.resize(true); exportDialogEditor.renderer.updateFull(true); } // (the editor was made before the dialog got its size)
+    }
+
+    /** the ace editor of the export dialog (the template export-clipboard-dialog), see setExportDialogText */
+    var exportDialogEditor = undefined;
+
+    /**
+     * @param {String} [fileName]
+     * @returns {String} the ace mode for a file: json for .json files, otherwise c_cpp
+     */
+    function getExportDialogMode(fileName) {
+        if (fileName != undefined && fileName.toLowerCase().endsWith(".json")) return "json";
+        return "c_cpp";
+    }
+
+    /**
+     * Shows a text in the export dialog: a read-only ace editor that highlights the code and marks the selected word
+     * everywhere (that makes it easy to follow a name through the export).
+     * @param {String} text
+     * @param {String} [fileName] the language is taken from it, i.e. "Voice.h" (C++), "GUI_TOOL.json" (json)
+     * @param {String} [mode] the ace mode, overrides the file name: "c_cpp", "json" or "text"
+     */
+    function setExportDialogText(text, fileName, mode) {
+        if (mode == undefined) mode = getExportDialogMode(fileName);
+        $("#node-input-export").val(text); // (a copy of the text, for older code that reads it)
+        var element = document.getElementById("export-dialog-ace");
+        if (element == null) return;
+        if (exportDialogEditor == undefined || exportDialogEditor.container !== element) { // the dialog form is new every time it's opened
+            if (exportDialogEditor != undefined) exportDialogEditor.destroy();
+            exportDialogEditor = ace.edit(element);
+            exportDialogEditor.setTheme("ace/theme/" + RED.editor.settings.aceEditorTheme);
+            exportDialogEditor.setOptions({
+                readOnly: true,
+                showPrintMargin: false,
+                highlightSelectedWord: true,
+                fontSize: "12px",
+                tabSize: RED.arduino.settings.CodeIndentations,
+            });
+        }
+        exportDialogEditor.session.setMode("ace/mode/" + mode);
+        exportDialogEditor.session.setValue(text);
+        exportDialogEditor.clearSelection();
     }
 
     function getExportDialogFileTabButtonHtml(text, value, active)
@@ -526,19 +563,13 @@ RED.view.dialogs = (function() {
                 $("#export-clipboard-dialog-textarea-label").text(textareaLabel);
                 if (overrides.tips != undefined)
                     $("#export-clipboard-dialog-tips").text(overrides.tips);
-            $("#node-input-export").val(text).focus(function () {
-                var textarea = $(this);
-
-                //textarea.select();
-                //console.error(textarea.height());
-                //var textareaNewHeight = float2int((box.clientHeight - 220) / 20) * 20;// 20 is the calculated text line height @ 12px textsize, 220 is the offset
-                //textarea.height(textareaNewHeight);
-
-                textarea.mouseup(function () {
-                    textarea.unbind("mouseup");
-                    return false;
-                });
-            }).focus();
+            // the language: json and the error report/other texts are shown as they are, otherwise C++
+            var label = (textareaLabel != undefined) ? textareaLabel : "";
+            var mode = /json/i.test(label) ? "json" : ((/error|history|messages|list/i.test(label + title)) ? "text" : "c_cpp");
+            if (fileListOptions != undefined && fileListOptions.files != undefined && fileListOptions.files.length != 0)
+                mode = getExportDialogMode(fileListOptions.files[0]);
+            setExportDialogText(text, undefined, mode);
+            exportDialogEditor.focus();
             
 
 
@@ -580,6 +611,7 @@ RED.view.dialogs = (function() {
         getOtherMain,
         getForm,
         showExportDialog,
+        setExportDialogText,
         showExportNodesDialog,
         showExportNodesLibraryDialog,
         showImportNodesDialog,

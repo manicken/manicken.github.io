@@ -138,7 +138,7 @@ var AudioTypeBase = {
     /** @type {String}  the icon file used, found in icons folder*/
     icon: "arrow-in.png"
 };
-var arraySize_Help = "(not in use yet, as there is a lot of dependencies on the old style)<br>selects the array size,<br>a value of 0 or 1 mean no array<br>the max value is 255";
+var arraySize_Help = "selects the array size (used when the name don't define it, a name like osc[4] defines it),<br>a value of 0 or 1 mean no array<br>the max value is 255<br>note. the OSC export don't use it yet";
 
 var AudioTypeArrayBase = {
     ...AudioTypeBase,
@@ -170,6 +170,11 @@ var CodeObjectBase = {
 function getClassNodeDefinition(shortName, inputCount, outputCount, ws) {
     return {
         ...AudioTypeArrayBase,
+        defaults: {
+            ...AudioTypeArrayBase.defaults,
+            expanded: { value: false, editor: { label: "Expanded", type: "boolean", help: "shows the contents of the class (read-only), see RED.view.groupInstance" } },
+            expandedAudioOnly: { value: false, editor: { label: "Expanded: audio objects only", type: "boolean", help: "the expanded view only shows the audio objects and their wires (no code, comments or ui objects), tidier for prints and screenshots" } },
+        },
         shortName: shortName,
         /** @type {REDWorkspace} */
         classWs: ws,
@@ -219,8 +224,8 @@ var JunctionTypeBase = {
         color:{editor:{type:"color"},value:"#dddddd"},
         size:{value:10, editor:{help:"sets the base size of the junction (note this is currently overridden if the junction is a class IO port of a group and if either spacing,size or if the group is resized)"}},
         ClassIOtype: {value:undefined, noEdit: "" },
-        inputs: { value: 1, maxval: 255, minval: 2, type: "int" },
-        outputs: { value: 1, maxval: 255, minval: 2, type: "int" }
+        inputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { help: "more than one input joins the inputs into one bus (input 0 first)" } },
+        outputs: { value: 1, maxval: 255, minval: 1, type: "int", editor: { help: "more than one output splits the wire: an array/bus into its elements, the outer level first (an array of 8 stereo buses can be split into 8 stereo buses or 16 signals)" } }
     },
     inputTypes: {"n":"any"}, // TODO have Junction mirror the input type from the output if the output is connected first
     outputTypes: {"n":"any"}, // TODO have Junction mirror the input type to the output if the input is connected first
@@ -328,8 +333,8 @@ var NodeDefinitions = {
             TabOutput: { ...NonAudioObjectBase, editorhelp:TabOutput_help, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
             TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, outputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
-            BusJoin: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch_back.png", help: "not implemented yet" },
-            BusSplit: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusSplit", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch.png", align: "right", iconXadj:-6 },
+            BusJoin: { ...NonAudioObjectBase, dontShowInPalette: true, /* replaced by junctions with more inputs (converted when loaded) */ defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch_back.png", help: "not implemented yet" },
+            BusSplit: { ...NonAudioObjectBase, dontShowInPalette: true, /* replaced by junctions with more outputs (converted when loaded) */ defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusSplit", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch.png", align: "right", iconXadj:-6 },
             
             AudioStreamObject: {
                 shortName: "userStreamObject", dynInputs: {}, inputs: 0, outputs: 0, color: "#ddffbb", icon: "debug.png",
@@ -378,8 +383,7 @@ var NodeDefinitions = {
                     color: { value: "#ddffbb" },
                     border_color: { value: "#999" },
                     individualListBoxMode: { value: "false" },
-                    exportAsClass: { value: "false" },
-                    className: {value: "ClassTypeName", type: "c_cpp_name"},
+                    className: { value: "", type: "c_cpp_name_no_array" }, // a group with a class name is a class (the group name is the instance name), without it's only visual
                     ioNodeSize: { value: 10 },
                     ioNodeSpacing: { value: 15 }, // the gap between the IO junctions, at least ioNodeSize is used (so the junction hitboxes don't overlap)
                     inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
