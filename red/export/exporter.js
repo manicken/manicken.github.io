@@ -254,7 +254,7 @@ RED.exporter.main = (function () {
         for (const rws of design.workspaces) {
             const json = (rws === jsonWorkspace) ? jsonString : undefined;
             if (rws === rootRws) {
-                workspaceFiles.push(...getHelperClassFiles(rws, options, mixerVariants, json));
+                workspaceFiles.push(...getFlatHelperFiles(rws, options, mixerVariants, json));
             }
             else if (isMainWorkspace(rws.ws)) {
                 workspaceFiles.push(newWorkspaceFile(getFileName(rws.ws), (options.oscAudio ? RED.exporter.oscCpp : RED.exporter.cpp).writeMainFile(rws, options),
@@ -404,9 +404,9 @@ RED.exporter.main = (function () {
      * @param {String|undefined} json
      * @returns {ExportFile[]}
      */
-    function getHelperClassFiles(rws, options, mixerVariants, json) {
-        const parts = RED.exporter.cpp.writeHelperClass(rws, options);
-        const className = RED.exporter.cpp.getHelperClassName(rws);
+    function getFlatHelperFiles(rws, options, mixerVariants, json) {
+        const parts = RED.exporter.cpp.writeFlatHelperClass(rws, options);
+        const className = RED.exporter.cpp.getFlatHelperClassName(rws);
         const isMain = isMainWorkspace(rws.ws);
         const tabFileName = isMain ? getFileName(rws.ws) : (rws.ws.label + ".h");
         if (options.splitClassFiles == false)

@@ -6,7 +6,7 @@
  *
  * Four layouts:
  *   writeClassicFile     - the current workspace as global objects (Export Modes 'classic' and 'flatclassic')
- *   writeHelperClass     - the current (flattened) workspace as one helper class with one instance (Export Mode 'flathelper')
+ *   writeFlatHelperClass - the current (flattened) workspace as one helper class with one instance (Export Mode 'flathelper')
  *   writeClass           - a workspace as a C++ class, and writeClassSource for its .cpp file (Export Mode 'classes')
  *   writeMainFile        - the main workspace (.ino/.cpp) as global objects (Export Mode 'classes')
  */
@@ -16,7 +16,7 @@ RED.exporter.cpp = (function () {
     const graph = RED.exporter.graph;
 
     /** the name of the one instance of the helper class (Export Mode 'flathelper') */
-    const HELPER_INSTANCE_NAME = "design";
+    const FLAT_HELPER_INSTANCE_NAME = "design";
 
     /**
      * @typedef {Object} CppOptions
@@ -195,7 +195,7 @@ RED.exporter.cpp = (function () {
 
     /**
      * The (flattened) workspace as one helper class that contains all objects and makes the connections
-     * in its constructor, with one instance (HELPER_INSTANCE_NAME), used by the Export Mode 'flathelper'.
+     * in its constructor, with one instance (FLAT_HELPER_INSTANCE_NAME), used by the Export Mode 'flathelper'.
      * The code of the workspace stays outside of the class, so it uses the objects through the instance (design.amp).
      *
      * With options.splitClassFiles the helper class is written as three texts:
@@ -207,9 +207,9 @@ RED.exporter.cpp = (function () {
      * @param {CppOptions} options
      * @returns {{header:String, source:String, code:String}}
      */
-    function writeHelperClass(rws, options) {
+    function writeFlatHelperClass(rws, options) {
         const code = rws.userCode;
-        const className = getHelperClassName(rws);
+        const className = getFlatHelperClassName(rws);
         const typeWidth = Math.max(options.minTypeWidth, "AudioConnection".length) + 1;
         const split = options.splitClassFiles;
         const instanceComment = " // all audio objects and connections of the design";
@@ -228,13 +228,13 @@ RED.exporter.cpp = (function () {
         h.blank();
         writeConstructor(h, rws, options, className, split ? "declaration" : "inline", true);
         h.endBlock("};");
-        if (split) h.line("extern " + className + " " + HELPER_INSTANCE_NAME + ";" + instanceComment + " (see " + className + ".cpp)");
-        else h.line(className.padEnd(typeWidth, " ") + HELPER_INSTANCE_NAME + ";" + instanceComment);
+        if (split) h.line("extern " + className + " " + FLAT_HELPER_INSTANCE_NAME + ";" + instanceComment + " (see " + className + ".cpp)");
+        else h.line(className.padEnd(typeWidth, " ") + FLAT_HELPER_INSTANCE_NAME + ";" + instanceComment);
 
         const s = new CodeWriter(options.indent);
         if (split) {
             writeConstructor(s, rws, options, className, "definition", true);
-            s.line(className.padEnd(typeWidth, " ") + HELPER_INSTANCE_NAME + ";" + instanceComment);
+            s.line(className.padEnd(typeWidth, " ") + FLAT_HELPER_INSTANCE_NAME + ";" + instanceComment);
         }
 
         const c = split ? new CodeWriter(options.indent) : h;
@@ -246,7 +246,7 @@ RED.exporter.cpp = (function () {
     }
 
     /** @param {ResolvedWorkspace} rws @returns {String} the name of the helper class (Export Mode 'flathelper') */
-    function getHelperClassName(rws) {
+    function getFlatHelperClassName(rws) {
         return rws.name + "Design";
     }
 
@@ -407,10 +407,10 @@ RED.exporter.cpp = (function () {
         getDefaultOptions,
         getTypeName,
         getEndpointText,
-        HELPER_INSTANCE_NAME,
-        getHelperClassName,
+        FLAT_HELPER_INSTANCE_NAME,
+        getFlatHelperClassName,
         writeClassicFile,
-        writeHelperClass,
+        writeFlatHelperClass,
         writeMainFile,
         writeClass,
         writeClassSource,

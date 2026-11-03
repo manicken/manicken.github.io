@@ -157,7 +157,7 @@ RED.exporter.modes = (function () {
      * @param {ResolvedWorkspace} rws
      */
     function warnAboutCodeNotUsingHelperInstance(rws) {
-        const instance = RED.exporter.cpp.HELPER_INSTANCE_NAME;
+        const instance = RED.exporter.cpp.FLAT_HELPER_INSTANCE_NAME;
         const code = [...rws.userCode.functions, ...rws.userCode.variables].filter(function (t) { return t != undefined; }).join("\n");
         for (const node of rws.ws.nodes) {
             if (graph.isVirtual(node) || graph.isClass(node)) continue; // class instances are warned about by RED.exporter.flatten

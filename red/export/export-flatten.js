@@ -116,7 +116,7 @@ RED.exporter.flatten = (function () {
             if (usage.test(texts)) {
                 rws.addProblem(new ResolvedProblem("warning", "the code in this tab uses " + name + " (" + graph.getClassName(instance.node) + "), but in a flat export the objects inside it are named " +
                     name + ((instance.arrayLength != 0) ? "_0" : "") + "_..., update the code to use those names" +
-                    " (in the Export Mode 'flathelper' through the helper instance, " + RED.exporter.cpp.HELPER_INSTANCE_NAME + "." + name + "_...)", undefined, instance.node));
+                    " (in the Export Mode 'flathelper' through the helper instance, " + RED.exporter.cpp.FLAT_HELPER_INSTANCE_NAME + "." + name + "_...)", undefined, instance.node));
             }
         }
     }
