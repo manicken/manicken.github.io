@@ -1,0 +1,79 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "OscErrorTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_OscErrors",
+            "label": "OscErrors",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_OscErrors",
+                    "wires": [
+                        [
+                            "oe_custom:0"
+                        ]
+                    ],
+                    "id": "oe_osc",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_OscErrors",
+                    "wires": [
+                        [
+                            "oe_i2s:0"
+                        ]
+                    ],
+                    "id": "oe_custom",
+                    "type": "AudioStreamObject",
+                    "name": "custom",
+                    "subType": "MyEffect",
+                    "includeFile": "<MyEffect.h>",
+                    "inputs": 1,
+                    "outputs": 1
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_OscErrors",
+                    "wires": [],
+                    "id": "oe_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                }
+            ]
+        }
+    ]
+}

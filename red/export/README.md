@@ -9,10 +9,14 @@ and which wires the editor shows as invalid:
 | `classic` | the current tab as one file with global objects, original-style design | class instances |
 | `flatclassic` | the current tab as one file, the class instances are converted into flat objects: `voices[2].env` → `voices_2_env`, an array inside a class stays an array (`voices_2_osc[3]`) | classes with code (Function, Variables, Constructor/Destructor/EndOfFile code, PointerArray) or extra class declarations; flat names that collide |
 | `flathelper` | flattened like `flatclassic`, but all objects and connections are put into **one** helper class (`<Tab>Design`) that makes the connections in its constructor, with one instance `design`; the code of the tab stays global and uses `design.amp`; mixer code and code files are in their own files (COMPOSITE shows all in one text) | same as `flatclassic` |
-| `classes` | all exported tabs as classes, each in its own file; **Export to zip** is only available in this mode | - |
-| `osc` | Open Sound Control, not yet moved to this system (the OSC menu is used) | |
+| `classes` | all exported tabs as classes, each in its own file; **Export to zip** is available in this mode and in `osc_class_cpp` | - |
+| `osc_simple_cpp` | like `flatclassic`, as OSC objects (h4yn0nnym0u5e OSCAudio library), see *Open Sound Control* below | same as `flatclassic`, objects without an OSC version |
+| `osc_class_cpp` | like `classes`, every class is an OSC group (`class X : public OSCAudioGroup`) | objects without an OSC version |
+| `osc_simple_msg` | the current tab flattened, as OSC messages that creates it on a Teensy (shown in the export dialog, **Send** sends them) | same as `osc_simple_cpp` |
+| `osc_class_msg` | the current tab as OSC messages, its class instances as OSC groups | objects without an OSC version |
+| `osc` | the old Open Sound Control export (the OSC menu, and the OSC live update) | |
 
-In `classic`, `flatclassic` and `flathelper` the current tab is the top of the design, so it can't
+In `classic`, `flatclassic`, `flathelper`, `osc_simple_cpp`, `osc_simple_msg` and `osc_class_msg` the current tab is the top of the design, so it can't
 be a class itself (have TabInput/TabOutput). In `flatclassic` and `flathelper`, code in the current
 tab that uses a class instance (`poly.mix.gain()`) is a warning, as it must be changed to use the flat
 names, and in `flathelper` also code that uses an object directly (`amp.gain()` instead of `design.amp.gain()`).
@@ -30,6 +34,32 @@ non-inline things are in the .cpp files. The code from Function nodes inside a c
 body in the .h file (it's written for the class body, and that makes it implicitly inline, so it's safe).
 note. a CodeFile node with a .h name must itself be safe to include from many files.
 With the setting off everything is in the .h files (header only), as before.
+
+**Open Sound Control** (`export-osc.js`, `export-osc-cpp.js`, `export-osc-messages.js`): the OSC modes use the
+same resolved design as the C++ modes, and build the same OSC tree, so a design gets the same OSC addresses
+whether it's compiled or sent: a class instance is an OSC group, an array (`osc[4]`) is a group `osc` with the
+elements `i0` ... `i3`, a connection is created in the group of the class instance that owns it and is named
+`<source>_<port>_<target>_<port>` with the paths from that group (`voices_i0_env_0_mixer_2`).
+
+| | C++ (`osc_*_cpp`) | messages (`osc_*_msg`) |
+|---|---|---|
+| object | `OSCAudioSynthWaveform osc{"osc"};` (in a class `osc(*new OSCAudioSynthWaveform{"osc", *this})`) | `crOb "AudioSynthWaveform" "osc" [groupPath]` |
+| array | `OSCAudioGroup oscs_group{"oscs"}; OSCAudioSynthWaveform oscs[2]{{"i0", oscs_group}, ...}` (in a class pointers created in the constructor) | `crGrp "oscs" "/"`, `crOb "AudioSynthWaveform" "i0" "/oscs"` ... |
+| class instance | `Voice voice{"voice"};` (in a class `voice(*new Voice{"voice", this})`) | `crGrp "voice" "/"` and the contents of the class in `/voice` |
+| connection | `OSCAudioConnection patchCord1{"osc_0_mixer_0", osc, 0, mixer, 0};` (in a class `new OSCAudioConnection{..., *this, ...}`) | `crCo "osc_0_mixer_0" [groupPath]`, `/audio/[groupPath/]osc_0_mixer_0/co "/osc" 0 "/mixer" 0` |
+| mixer (any inputs) | `OSCAudioMixer mixer{"mixer", 6};` | `crOb "AudioMixer" "mixer" 6` |
+
+- In a class everything is created with `new`, an OSC group deletes its members when it's deleted. A class have the
+  constructors `X(const char* _name, OSCAudioGroup* parent)` and `X(const char* _name)` (the root), the user code
+  creates the top instance (`SynthMain synth{"synth"};`), so in `osc_class_cpp` the addresses start with that name
+  (`/synth/voices/i0/env`), in `osc_class_msg` the current tab is the root (`/voices/i0/env`).
+- `AudioMixer`/`AudioMixerStereo` (any number of inputs) and the constructor values of AudioEffectDelayExternal
+  (when *Make Constructor* is set) only exist in the Dynamic Audio Objects library (h4yn0nnym0u5e's forks of the
+  Teensy core and the Audio library), `AudioMixerStereo` also needs `MULTI_CENTRED`.
+- The messages: with the OSC setting *Wildcard Array Objects* the contents of the elements of a class array are
+  created once in `/voices/i*`, the connections are always made one by one. The code of the design is not sent (a warning).
+- Tested by compiling every generated file against OSCAudio and the dynamic forks (TD 1.59, USB type with audio,
+  as the library has `OSCAudioInputUSB`), see `tests/export/OscTests.json` and `OscErrorTests.json`.
 
 The design JSON is written into **one** file only: the main file (.ino), else the 'audio main'
 tab, else the top-level class (and once at the top of the COMPOSITE view). A zip contains

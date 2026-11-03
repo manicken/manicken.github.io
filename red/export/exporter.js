@@ -5,6 +5,8 @@
  *
  * This file only puts the generated code into files and delivers them:
  *   export dialog, the IDE webserver extension (http POST) or a zip file.
+ * The OSC modes use export-osc-cpp.js for the code (CppOptions.oscAudio), and export-osc-messages.js
+ * for the messages that are shown in the export dialog and sent to the Teensy.
  */
 RED.exporter.main = (function () {
     'use strict';
@@ -22,12 +24,20 @@ RED.exporter.main = (function () {
         RED.main.SetPopOver("#btn-exporter-zip", "Exports all tabs as classes<br>to separate files in a zip file<br><br>(only in the Export Mode 'Classes')", "left");
     }
     $('#btn-exporter').click(function () { RED.arduino.export.showIOcheckWarning(exportInSelectedMode); });
+    /** @returns {Boolean} true for the modes that writes every class to its own file (zip only makes sense then) */
+    function isClassFilesMode() {
+        const mode = RED.arduino.settings.ExportMode;
+        return mode == RED.arduino.EXPORT_MODE.CLASSES || mode == RED.arduino.EXPORT_MODE.OSC_CLASS_CPP;
+    }
     $('#btn-exporter-zip').click(function () {
-        if (RED.arduino.settings.ExportMode != RED.arduino.EXPORT_MODE.CLASSES) return false; // the menu item is disabled
-        RED.arduino.export.showIOcheckWarning(function () { exportClassBased(true); });
+        if (isClassFilesMode() == false) return false; // the menu item is disabled
+        RED.arduino.export.showIOcheckWarning(function () {
+            if (RED.arduino.settings.ExportMode == RED.arduino.EXPORT_MODE.OSC_CLASS_CPP) exportOscClassCpp(true);
+            else exportClassBased(true);
+        });
     });
-    $('#btn-exporter-options').click(function () { // zip only makes sense when every class is in its own file
-        $('#btn-exporter-zip').parent().toggleClass("disabled", RED.arduino.settings.ExportMode != RED.arduino.EXPORT_MODE.CLASSES);
+    $('#btn-exporter-options').click(function () {
+        $('#btn-exporter-zip').parent().toggleClass("disabled", isClassFilesMode() == false);
     });
 
     /** exports in the mode selected by the 'Export Mode' selector */
@@ -38,7 +48,11 @@ RED.exporter.main = (function () {
         else if (mode == EXPORT_MODE.FLAT_CLASSIC) exportFlatClassic();
         else if (mode == EXPORT_MODE.FLAT_HELPER) exportFlatHelper();
         else if (mode == EXPORT_MODE.CLASSES) exportClassBased(false);
-        else RED.notify("The OSC export is not yet moved to the new export,<br>use the OSC menu for now", "warning", null, 4000);
+        else if (mode == EXPORT_MODE.OSC_SIMPLE_CPP) exportOscSimpleCpp();
+        else if (mode == EXPORT_MODE.OSC_CLASS_CPP) exportOscClassCpp(false);
+        else if (mode == EXPORT_MODE.OSC_SIMPLE_MSG) exportOscMessages(false);
+        else if (mode == EXPORT_MODE.OSC_CLASS_MSG) exportOscMessages(true);
+        else RED.notify("The Export Mode 'Open Sound Control (old export)' uses the OSC menu", "warning", null, 4000);
     }
 
     /** @returns {CppOptions} */
@@ -48,6 +62,7 @@ RED.exporter.main = (function () {
         options.useMixerTemplate = RED.arduino.settings.UseAudioMixerTemplate;
         options.endOfClassComment = (generateZip == false); // each class is in it's own file in a zip, so no need to mark the end
         options.splitClassFiles = (RED.arduino.settings.SplitClassFiles != false);
+        options.oscAudio = false;
         return options;
     }
 
@@ -92,6 +107,7 @@ RED.exporter.main = (function () {
         const t0 = performance.now();
         const jsonString = RED.storage.getData();
         const includes = rws.usedClasses.map(function (c) { return '#include "' + c + '.h"'; });
+        if (options.oscAudio) includes.unshift(RED.exporter.osc.LIBRARY_INCLUDE);
         includes.push(...getUserIncludes(rws));
 
         let cpp = getCppHeader(jsonString, includes);
@@ -103,7 +119,7 @@ RED.exporter.main = (function () {
         for (const codeFile of rws.userCode.codeFiles) {
             cpp += "\n" + codeFile.contents + "\n";
         }
-        cpp += "\n" + RED.exporter.cpp.writeClassicFile(rws, options) + "\n";
+        cpp += "\n" + (options.oscAudio ? RED.exporter.oscCpp.writeFlatFile(rws, options) : RED.exporter.cpp.writeClassicFile(rws, options)) + "\n";
         cpp += getCppFooter();
 
         const files = [
@@ -241,14 +257,14 @@ RED.exporter.main = (function () {
                 workspaceFiles.push(...getHelperClassFiles(rws, options, mixerVariants, json));
             }
             else if (isMainWorkspace(rws.ws)) {
-                workspaceFiles.push(newWorkspaceFile(getFileName(rws.ws), RED.exporter.cpp.writeMainFile(rws, options),
-                    getCppHeader(json, getIncludes(rws, mixerVariants)), { isMain: true, isTop: true, className: rws.name, depends: rws.usedClasses }));
+                workspaceFiles.push(newWorkspaceFile(getFileName(rws.ws), (options.oscAudio ? RED.exporter.oscCpp : RED.exporter.cpp).writeMainFile(rws, options),
+                    getCppHeader(json, getIncludes(rws, mixerVariants, options)), { isMain: true, isTop: true, className: rws.name, depends: rws.usedClasses }));
             }
             else {
-                workspaceFiles.push(newWorkspaceFile(rws.name + ".h", RED.exporter.cpp.writeClass(rws, options),
-                    "#pragma once\n" + getCppHeader(json, getIncludes(rws, mixerVariants)), { className: rws.name, depends: rws.usedClasses }));
+                workspaceFiles.push(newWorkspaceFile(rws.name + ".h", (options.oscAudio ? RED.exporter.oscCpp : RED.exporter.cpp).writeClass(rws, options),
+                    "#pragma once\n" + getCppHeader(json, getIncludes(rws, mixerVariants, options)), { className: rws.name, depends: rws.usedClasses }));
                 keywords.push({ token: rws.name, type: "KEYWORD2" });
-                const source = options.splitClassFiles ? RED.exporter.cpp.writeClassSource(rws, options) : "";
+                const source = options.splitClassFiles ? (options.oscAudio ? RED.exporter.oscCpp : RED.exporter.cpp).writeClassSource(rws, options) : "";
                 if (source.length != 0)
                     workspaceFiles.push(newWorkspaceFile(rws.name + ".cpp", source, getCppSourceHeader(rws.name + ".h"), { className: rws.name, depends: rws.usedClasses }));
             }
@@ -270,6 +286,92 @@ RED.exporter.main = (function () {
         }
         console.log('exporter ' + title + ' took: ' + (performance.now() - t0) + ' milliseconds.');
         return files;
+    }
+
+    // ******************************************************************
+    // Open Sound Control (Export Modes 'osc_simple_cpp', 'osc_class_cpp', 'osc_simple_msg', 'osc_class_msg')
+    // ******************************************************************
+
+    /**
+     * The current tab flattened to one file with global OSC objects (Export Mode 'osc_simple_cpp')
+     * @returns {ExportFile[]} the exported files (also used by tests)
+     */
+    function exportOscSimpleCpp() {
+        RED.storage.update();
+        const rws = RED.exporter.flatten.flattenWorkspace(RED.nodes.currentWorkspace);
+        RED.exporter.modes.addWorkspaceProblems(rws, RED.arduino.EXPORT_MODE.OSC_SIMPLE_CPP);
+        RED.exporter.osc.addProblems(rws, false);
+        if (showErrorReport([rws])) return [];
+        const options = getCppOptions(false);
+        options.flattenClasses = true;
+        options.oscAudio = true;
+        return exportOneFile(rws, options, "OSC Simple Export to Arduino");
+    }
+
+    /**
+     * All exported tabs as classes that are OSC groups, each in its own file (Export Mode 'osc_class_cpp')
+     * @param {Boolean} generateZip
+     * @returns {ExportFile[]} the exported files (also used by tests)
+     */
+    function exportOscClassCpp(generateZip) {
+        RED.storage.update();
+        const workspaces = getWorkspacesToExport();
+        const classGroups = getClassGroupScopes(workspaces);
+        const design = RED.exporter.resolve.resolveDesign([...workspaces, ...classGroups.scopes]);
+        for (const p of classGroups.problems) design.workspaces[0].addProblem(p);
+        for (const rws of design.workspaces) {
+            RED.exporter.modes.addWorkspaceProblems(rws, RED.arduino.EXPORT_MODE.OSC_CLASS_CPP);
+            RED.exporter.osc.addProblems(rws, false);
+        }
+        if (showErrorReport(design.workspaces)) return [];
+        const options = getCppOptions(generateZip);
+        options.oscAudio = true;
+        return exportFiles(design, undefined, options, generateZip, "OSC Class Export to Arduino");
+    }
+
+    /** @type {OscMessage[]} the messages of the last OSC message export */
+    let lastMessages = [];
+
+    /**
+     * The current tab as OSC messages that creates it on a Teensy (Export Modes 'osc_simple_msg' and 'osc_class_msg'),
+     * shown in the export dialog, 'Send' sends them (or they are sent directly with the OSC setting 'Direct Export').
+     * @param {Boolean} classTree false: flattened ('osc_simple_msg'), true: the class instances as OSC groups ('osc_class_msg')
+     * @returns {OscMessage[]} the messages (also used by tests)
+     */
+    function exportOscMessages(classTree) {
+        RED.storage.update();
+        const M = RED.arduino.EXPORT_MODE;
+        const ws = RED.nodes.currentWorkspace;
+        const rws = classTree ? RED.exporter.resolve.resolveWorkspace(ws) : RED.exporter.flatten.flattenWorkspace(ws);
+        RED.exporter.modes.addWorkspaceProblems(rws, classTree ? M.OSC_CLASS_MSG : M.OSC_SIMPLE_MSG);
+        RED.exporter.osc.addProblems(rws, true);
+        RED.exporter.oscMessages.addNotCreatedWarnings(rws);
+
+        let messages;
+        if (classTree) {
+            const result = RED.exporter.oscMessages.getTreeMessages(rws);
+            messages = result.messages;
+            for (const crws of result.classes) { // the problems inside the classes
+                for (const p of crws.problems) rws.addProblem(new ResolvedProblem(p.severity, "in class " + crws.name + ": " + p.text, p.link, p.node));
+            }
+        }
+        else messages = RED.exporter.oscMessages.getFlatMessages(rws);
+        if (showErrorReport([rws])) return [];
+
+        lastMessages = messages;
+        const objectCount = messages.filter(function (m) { return m.address == OSC.GetCreateObjectAddr(); }).length;
+        const connectionCount = messages.filter(function (m) { return m.address == OSC.GetCreateConnectionAddr(); }).length;
+        let text = "// " + objectCount + " objects, " + connectionCount + " connections, " + messages.length + " messages\n";
+        for (const p of rws.warnings) text += "// warning: " + p.text + "\n";
+        text += RED.exporter.oscMessages.getText(messages);
+        lastFiles = [new ExportFile(ws.label + ".osc.txt", text)];
+        lastCompositeText = text;
+
+        const send = function () { OSC.SendData(OSC.CreateBundleData(RED.exporter.oscMessages.getBundle(lastMessages))); };
+        if (RED.OSC.settings.DirectExport == true) send();
+        else RED.view.dialogs.showExportDialog("OSC messages to the Teensy", text, " OSC messages:",
+            { okText: "Send", tips: "Send creates the design on the Teensy (the current design on the Teensy is removed first)" }, send);
+        return messages;
     }
 
     /**
@@ -364,10 +466,12 @@ RED.exporter.main = (function () {
     /**
      * @param {ResolvedWorkspace} rws
      * @param {Number[]} mixerVariants
+     * @param {CppOptions} [options]
      * @returns {String[]} the include lines of a workspace file
      */
-    function getIncludes(rws, mixerVariants) {
+    function getIncludes(rws, mixerVariants, options) {
         const includes = rws.usedClasses.map(function (c) { return '#include "' + c + '.h"'; });
+        if (options != undefined && options.oscAudio) includes.unshift(RED.exporter.osc.LIBRARY_INCLUDE);
         if (mixerVariants.length != 0 && rws.dynMixers.some(function (m) { return m.type == "AudioMixer" && m.count != 4; }))
             includes.push('#include "mixers.h"');
         includes.push(...getUserIncludes(rws));
@@ -424,6 +528,7 @@ RED.exporter.main = (function () {
     function collectMixerVariants(workspaces, options) {
         const variants = [];
         if (options.useMixerTemplate) return variants; // the template version handles all sizes
+        if (options.oscAudio) return variants; // the OSCAudio library (dynamic audio objects) have mixers with any number of inputs
         for (const rws of workspaces) {
             for (const mixer of rws.dynMixers) {
                 if (mixer.type != "AudioMixer") continue; // there is no generated code for AudioMixerStereo yet
@@ -576,6 +681,10 @@ RED.exporter.main = (function () {
         exportFlatClassic,
         exportFlatHelper,
         exportClassBased,
+        exportOscSimpleCpp,
+        exportOscClassCpp,
+        exportOscMessages,
         get lastFiles() { return lastFiles; },
+        get lastMessages() { return lastMessages; },
     };
 })();

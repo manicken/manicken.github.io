@@ -10,8 +10,10 @@
  *   flathelper   - same as flatclassic (it's flattened the same way, but into one helper class),
  *                  and the code in the tab should use the objects through the helper instance (design.amp)
  *   classes      - anything
- * In classic, flatclassic and flathelper the exported tab is the top of the design,
- * so it can't be a class itself (have TabInput/TabOutput), that is only checked when exporting.
+ *   osc_simple_cpp, osc_simple_msg - the same as flatclassic, and only OSC objects (see export-osc.js)
+ *   osc_class_cpp, osc_class_msg   - the same as classes, and only OSC objects
+ * In classic, flatclassic, flathelper, osc_simple_cpp, osc_simple_msg and osc_class_msg the exported tab is the
+ * top of the design, so it can't be a class itself (have TabInput/TabOutput), that is only checked when exporting.
  */
 RED.exporter.modes = (function () {
     'use strict';
@@ -29,7 +31,25 @@ RED.exporter.modes = (function () {
     /** @param {String} mode @returns {Boolean} true for the modes that export one tab as the top of the design */
     function isSingleTabMode(mode) {
         const M = RED.arduino.EXPORT_MODE;
-        return mode == M.CLASSIC || mode == M.FLAT_CLASSIC || mode == M.FLAT_HELPER;
+        return mode == M.CLASSIC || mode == M.FLAT_CLASSIC || mode == M.FLAT_HELPER || mode == M.OSC_SIMPLE_CPP || mode == M.OSC_SIMPLE_MSG || mode == M.OSC_CLASS_MSG;
+    }
+
+    /** @param {String} mode @returns {Boolean} true for the modes that flattens the class instances */
+    function isFlatMode(mode) {
+        const M = RED.arduino.EXPORT_MODE;
+        return mode == M.FLAT_CLASSIC || mode == M.FLAT_HELPER || mode == M.OSC_SIMPLE_CPP || mode == M.OSC_SIMPLE_MSG;
+    }
+
+    /** @param {String} mode @returns {Boolean} true for the Open Sound Control modes of the new export (see export-osc.js) */
+    function isOscMode(mode) {
+        const M = RED.arduino.EXPORT_MODE;
+        return mode == M.OSC_SIMPLE_CPP || mode == M.OSC_CLASS_CPP || mode == M.OSC_SIMPLE_MSG || mode == M.OSC_CLASS_MSG;
+    }
+
+    /** @param {String} mode @returns {Boolean} true for the modes that sends OSC messages instead of making C++ code */
+    function isOscMessageMode(mode) {
+        const M = RED.arduino.EXPORT_MODE;
+        return mode == M.OSC_SIMPLE_MSG || mode == M.OSC_CLASS_MSG;
     }
 
     /**
@@ -45,6 +65,10 @@ RED.exporter.modes = (function () {
             const instanceProblem = graph.getGroupInstanceProblem(node);
             if (instanceProblem != undefined) return [new ResolvedProblem("error", instanceProblem, undefined, node)];
         }
+        if (isOscMode(mode) && graph.isClass(node) == false && graph.isVirtual(node) == false && graph.hasAudioIO(node)) {
+            const noOscVersion = RED.exporter.osc.getNoOscVersionProblem(node);
+            if (noOscVersion != undefined) return [noOscVersion];
+        }
         if (graph.isClass(node) == false) return [];
 
         if (graph.isClassGroup(node)) { // in every mode
@@ -58,11 +82,11 @@ RED.exporter.modes = (function () {
             return [new ResolvedProblem("error", name + " is an instance of the class " + graph.getClassName(node) +
                 ", the Export Mode 'classic' can't contain classes (use 'flatclassic', 'flathelper' or 'classes')", undefined, node)];
         }
-        if (mode == M.FLAT_CLASSIC || mode == M.FLAT_HELPER) {
+        if (isFlatMode(mode)) {
             const reasons = getReasonsClassCantBeFlattened(graph.getClassWorkspace(node), new Set());
             if (reasons.length != 0)
                 return [new ResolvedProblem("error", name + " (class " + graph.getClassName(node) + ") can't be flattened (Export Mode '" + mode + "'), " + reasons.join(", ") +
-                    " (use 'classes')", undefined, node)];
+                    " (use '" + (isOscMode(mode) ? ((mode == M.OSC_SIMPLE_MSG) ? "osc_class_msg" : "osc_class_cpp") : "classes") + "')", undefined, node)];
         }
         return [];
     }
@@ -147,6 +171,9 @@ RED.exporter.modes = (function () {
     return {
         CODE_NODE_TYPES,
         isSingleTabMode,
+        isFlatMode,
+        isOscMode,
+        isOscMessageMode,
         getNodeProblems,
         getLinkErrors,
         addWorkspaceProblems,

@@ -32,8 +32,16 @@ RED.arduino = (function() {
         FLAT_HELPER: "flathelper",
         /** exports all tabs as classes, zip possible */
         CLASSES: "classes",
-        /** Open Sound Control */
+        /** Open Sound Control, the old OSC export (and the OSC live update) */
         OSC: "osc",
+        /** OSC C++ code (h4yn0nnym0u5e OSCAudio library), the current tab flattened like flatclassic */
+        OSC_SIMPLE_CPP: "osc_simple_cpp",
+        /** OSC C++ code, all tabs as classes that are OSC groups, like classes */
+        OSC_CLASS_CPP: "osc_class_cpp",
+        /** OSC messages that creates the design on a Teensy (dynamic audio objects), the current tab flattened */
+        OSC_SIMPLE_MSG: "osc_simple_msg",
+        /** OSC messages, the current tab with its class instances as OSC groups */
+        OSC_CLASS_MSG: "osc_class_msg",
     });
     /** before the names, the export mode was saved as a number (2 was 'Class based zip', zip is now an export option) */
     var OLD_EXPORT_MODE_NUMBERS = [EXPORT_MODE.CLASSIC, EXPORT_MODE.CLASSES, EXPORT_MODE.CLASSES, EXPORT_MODE.OSC];
@@ -53,7 +61,7 @@ RED.arduino = (function() {
         return EXPORT_MODE.CLASSIC;
     }
 
-    /** @returns {Boolean} true when the selected export mode is OSC (all other modes are handled by RED.exporter) */
+    /** @returns {Boolean} true when the selected export mode is the old OSC export (all other modes, also the new osc_* modes, are handled by RED.exporter) */
     function isOscExportMode() {
         return settings.ExportMode == EXPORT_MODE.OSC;
     }

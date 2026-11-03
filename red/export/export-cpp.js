@@ -414,5 +414,10 @@ RED.exporter.cpp = (function () {
         writeMainFile,
         writeClass,
         writeClassSource,
+        // the parts, also used by the OSC writer (export-osc-cpp.js)
+        writeConstants,
+        writeUserCode,
+        writeProblems,
+        writeClassComment,
     };
 })();

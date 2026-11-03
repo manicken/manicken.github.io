@@ -1,0 +1,383 @@
+{
+    "version": 1,
+    "settings": {
+        "main": {},
+        "arduino": {
+            "ProjectName": "OscTests",
+            "IOcheckAtExport": false,
+            "Board": {
+                "Platform": "",
+                "Board": "",
+                "Options": ""
+            }
+        },
+        "workspaces": {}
+    },
+    "workspaces": [
+        {
+            "type": "tab",
+            "id": "ws_OscMain",
+            "label": "OscMain",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": true,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_mixer:0"
+                        ]
+                    ],
+                    "id": "om_osc",
+                    "type": "AudioSynthWaveform",
+                    "name": "osc"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 110,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_mixer:1"
+                        ]
+                    ],
+                    "id": "om_oscs",
+                    "type": "AudioSynthWaveform",
+                    "name": "oscs[2]"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 160,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_mixer:2"
+                        ]
+                    ],
+                    "id": "om_voice",
+                    "type": "OscVoice",
+                    "name": "voice"
+                },
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 210,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_mixer:3"
+                        ]
+                    ],
+                    "id": "om_voices",
+                    "type": "OscVoice",
+                    "name": "voices[2]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 110,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_delay:0"
+                        ]
+                    ],
+                    "id": "om_mixer",
+                    "type": "AudioMixer",
+                    "name": "mixer",
+                    "inputs": 6
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 110,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_fx_in:0"
+                        ]
+                    ],
+                    "id": "om_delay",
+                    "type": "AudioEffectDelayExternal",
+                    "name": "delayExt",
+                    "memtype": 0,
+                    "maxDelay": "1000.0",
+                    "useMakeConstructor": true
+                },
+                {
+                    "comment": "",
+                    "x": 500,
+                    "y": 40,
+                    "z": "ws_OscMain",
+                    "wires": [],
+                    "id": "om_fx",
+                    "type": "group",
+                    "name": "fx",
+                    "className": "OscFx",
+                    "nodes": [
+                        "om_fx_in",
+                        "om_fx_out",
+                        "om_fx_amp"
+                    ],
+                    "inputs": 1,
+                    "outputs": 1,
+                    "ioNodeSize": 10,
+                    "ioNodeSpacing": 15,
+                    "individualListBoxMode": false,
+                    "border_color": "#999",
+                    "color": "#ddffbb",
+                    "tag": "",
+                    "textSize": 14,
+                    "w": 200,
+                    "h": 80
+                },
+                {
+                    "comment": "",
+                    "x": 495,
+                    "y": 75,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_fx_amp:0"
+                        ]
+                    ],
+                    "id": "om_fx_in",
+                    "type": "JunctionLR",
+                    "name": "In1",
+                    "ClassIOtype": 1,
+                    "parentGroup": "om_fx",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 695,
+                    "y": 75,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_i2s:0",
+                            "om_i2s:1"
+                        ]
+                    ],
+                    "id": "om_fx_out",
+                    "type": "JunctionLR",
+                    "name": "Out1",
+                    "ClassIOtype": 0,
+                    "parentGroup": "om_fx",
+                    "locked": true,
+                    "size": 10
+                },
+                {
+                    "comment": "",
+                    "x": 560,
+                    "y": 60,
+                    "z": "ws_OscMain",
+                    "wires": [
+                        [
+                            "om_fx_out:0"
+                        ]
+                    ],
+                    "id": "om_fx_amp",
+                    "type": "AudioAmplifier",
+                    "name": "amp",
+                    "parentGroup": "om_fx"
+                },
+                {
+                    "comment": "",
+                    "x": 800,
+                    "y": 60,
+                    "z": "ws_OscMain",
+                    "wires": [],
+                    "id": "om_i2s",
+                    "type": "AudioOutputI2S",
+                    "name": "i2s"
+                },
+                {
+                    "comment": "",
+                    "x": 800,
+                    "y": 160,
+                    "z": "ws_OscMain",
+                    "wires": [],
+                    "id": "om_sgtl",
+                    "type": "AudioControlSGTL5000",
+                    "name": "sgtl"
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_OscVoice",
+            "label": "OscVoice",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_OscVoice",
+                    "wires": [
+                        [
+                            "ov_lfoMix:0"
+                        ]
+                    ],
+                    "id": "ov_lfos",
+                    "type": "AudioSynthWaveform",
+                    "name": "lfos[2]"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_OscVoice",
+                    "wires": [
+                        [
+                            "ov_wave:0"
+                        ]
+                    ],
+                    "id": "ov_lfoMix",
+                    "type": "AudioMixer",
+                    "name": "lfoMix",
+                    "inputs": 2
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_OscVoice",
+                    "wires": [
+                        [
+                            "ov_env:0"
+                        ]
+                    ],
+                    "id": "ov_wave",
+                    "type": "AudioSynthWaveformModulated",
+                    "name": "wave"
+                },
+                {
+                    "comment": "",
+                    "x": 550,
+                    "y": 60,
+                    "z": "ws_OscVoice",
+                    "wires": [
+                        [
+                            "ov_filt:0"
+                        ]
+                    ],
+                    "id": "ov_env",
+                    "type": "AudioEffectEnvelope",
+                    "name": "env"
+                },
+                {
+                    "comment": "",
+                    "x": 700,
+                    "y": 60,
+                    "z": "ws_OscVoice",
+                    "wires": [
+                        [
+                            "ov_out:0"
+                        ]
+                    ],
+                    "id": "ov_filt",
+                    "type": "OscFilter",
+                    "name": "filt"
+                },
+                {
+                    "comment": "",
+                    "x": 850,
+                    "y": 60,
+                    "z": "ws_OscVoice",
+                    "wires": [],
+                    "id": "ov_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                }
+            ]
+        },
+        {
+            "type": "tab",
+            "id": "ws_OscFilter",
+            "label": "OscFilter",
+            "inputs": 0,
+            "outputs": 0,
+            "export": true,
+            "isMain": false,
+            "mainNameType": "tabName",
+            "mainNameExt": ".ino",
+            "isAudioMain": false,
+            "generateCppDestructor": false,
+            "extraClassDeclarations": "",
+            "settings": {
+                "useCenterBasedPositions": false
+            },
+            "nodes": [
+                {
+                    "comment": "",
+                    "x": 100,
+                    "y": 60,
+                    "z": "ws_OscFilter",
+                    "wires": [
+                        [
+                            "of_filter:0"
+                        ]
+                    ],
+                    "id": "of_in",
+                    "type": "TabInput",
+                    "name": "In"
+                },
+                {
+                    "comment": "",
+                    "x": 250,
+                    "y": 60,
+                    "z": "ws_OscFilter",
+                    "wires": [
+                        [
+                            "of_out:0"
+                        ]
+                    ],
+                    "id": "of_filter",
+                    "type": "AudioFilterStateVariable",
+                    "name": "filter"
+                },
+                {
+                    "comment": "",
+                    "x": 400,
+                    "y": 60,
+                    "z": "ws_OscFilter",
+                    "wires": [],
+                    "id": "of_out",
+                    "type": "TabOutput",
+                    "name": "Out",
+                    "inputs": 1
+                }
+            ]
+        }
+    ]
+}
