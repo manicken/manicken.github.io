@@ -16,6 +16,11 @@
  * more inputs than it was created with (the inputs are never reduced, as a smaller mixer is not needed and
  * recreating it would loose its gains). All connections to a recreated item are recreated too, as reconnecting an existing
  * OSCAudioConnection adds it to the lists of its groups once more (it's never removed from them).
+ *
+ * The inputs of AudioMixer/AudioMixerStereo: the export packs the wires into the inputs (see addConnectionsInto in
+ * export-resolve.js), so removing a wire would move all the later ones to other inputs, and their gains would belong to
+ * other signals. So here every signal keeps the input it got on the Teensy (keepMixerInputs), a removed wire leaves a gap,
+ * and a new signal gets the first free input (a gap, or after the last one).
  */
 RED.exporter.oscLive = (function () {
     'use strict';
@@ -217,18 +222,92 @@ RED.exporter.oscLive = (function () {
         return renames;
     }
 
+    /** @param {OscLiveConnection} c @returns {String} the connection without its target input (the same signal into the same object) */
+    function getSignalKey(c) {
+        return c.owner + "|" + c.source + ":" + c.sourcePort + ">" + c.target;
+    }
+
+    /** @param {OscLiveItem|undefined} item @returns {Boolean} true for AudioMixer/AudioMixerStereo */
+    function hasDynInputs(item) {
+        return item != undefined && item.kind == "object" && item.inputs != undefined;
+    }
+
+    /**
+     * The new model with the inputs of the mixers that are on the Teensy kept: the signals that are already connected keep
+     * their input, the new signals get the first free input, the mixer gets the inputs it needs for that
+     * @param {OscLiveModel} old what is on the Teensy (after the renames)
+     * @param {OscLiveModel} next the design
+     * @returns {OscLiveModel} a copy of next with the mixer inputs changed
+     */
+    function keepMixerInputs(old, next) {
+        const result = { items: new Map(next.items), connections: new Map() };
+        const intoMixers = new Map(); // mixer path -> the connections into it
+        for (const c of next.connections.values()) {
+            if (hasDynInputs(next.items.get(c.target)) == false) {
+                result.connections.set(getConnectionKey(c), c);
+                continue;
+            }
+            if (intoMixers.has(c.target) == false) intoMixers.set(c.target, []);
+            intoMixers.get(c.target).push(c);
+        }
+        for (const [target, connections] of intoMixers) {
+            const mixer = next.items.get(target);
+            const oldMixer = old.items.get(target);
+            const usedPorts = new Map(); // signal -> the inputs it have on the Teensy
+            if (hasDynInputs(oldMixer) && oldMixer.typeName == mixer.typeName && JSON.stringify(oldMixer.extra) == JSON.stringify(mixer.extra)) {
+                for (const oc of old.connections.values()) {
+                    if (oc.target != target) continue;
+                    const key = getSignalKey(oc);
+                    if (usedPorts.has(key) == false) usedPorts.set(key, []);
+                    usedPorts.get(key).push(oc.targetPort);
+                }
+            } // else it's a new mixer (or it's recreated), packed as the export does
+
+            const taken = new Set();
+            const placed = [];
+            const waiting = [];
+            const toPort = function (c, port) { // the name ends with the target input (see osc.getConnectionName)
+                return { ...c, targetPort: port, name: c.name.replace(/_\d+$/, "_" + port) };
+            };
+            for (const c of connections.sort(function (a, b) { return a.targetPort - b.targetPort; })) {
+                const ports = usedPorts.get(getSignalKey(c));
+                if (ports != undefined && ports.length != 0) {
+                    const port = ports.shift();
+                    taken.add(port);
+                    placed.push(toPort(c, port));
+                }
+                else waiting.push(c);
+            }
+            if (usedPorts.size == 0) { // nothing to keep
+                placed.push(...waiting);
+                waiting.length = 0;
+                for (const c of placed) taken.add(c.targetPort);
+            }
+            for (const c of waiting) {
+                let port = 0;
+                while (taken.has(port)) port++;
+                taken.add(port);
+                placed.push(toPort(c, port));
+            }
+            for (const c of placed) result.connections.set(getConnectionKey(c), c);
+            result.items.set(target, { ...mixer, inputs: Math.max(1, ...[...taken].map(function (p) { return p + 1; })) });
+        }
+        return result;
+    }
+
     /**
      * @param {OscLiveModel} oldModel what is on the Teensy (not changed)
      * @param {OscLiveModel} newModel the design
      * @returns {{messages:OscMessage[], model:OscLiveModel}} the messages, and the model of the Teensy after them
      *          (the design, with the names and input counts it really have on the Teensy)
      */
-    function getChanges(oldModel, newModel) {
+    function getChanges(oldModel, designModel) {
         const old = copyModel(oldModel);
         const messages = [];
         const message = function (address, types, ...values) { messages.push({ address, types, values }); };
 
-        for (const r of applyRenames(old, newModel)) message(OSC.GetRenameObjectAddr(), "ss", r.from, r.name);
+        for (const r of applyRenames(old, designModel)) message(OSC.GetRenameObjectAddr(), "ss", r.from, r.name);
+        const newModel = keepMixerInputs(old, designModel);
 
         // the items to remove (recreated items too)
         const removed = new Set();
