@@ -129,7 +129,12 @@ var OSC = (function() {
 
         readUntilClosed();
         RED.notify("serial port opened", "info", null, 3000);
+        RED.events.emit("OSC:connected");
     });
+    /** @returns {Boolean} true when the serial port is open */
+    function IsConnected() {
+        return available != false && port != undefined && port.writable != undefined;
+    }
     $('#btn-disConnectSerial').click(async function() { 
         // User clicked a button to close the serial port.
         keepReading = false;
@@ -368,13 +373,36 @@ var OSC = (function() {
         delete b.addPackets;
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
             AddLineToLog(GetBundleCompactForm(b,RED.OSC.settings.RedirectDebugToConsole == false), undefined, getCurrentTxLogStyle());
+        addWaitingForReply(b.packets);
         SendData(CreateBundleData(b, true));
     }
     var oscOptions = {metadata:true};
     function SendPacket(p) {
         if (RED.OSC.settings.ShowOutputOscTxDecoded == true)
             AddLineToLog(GetPacketCompactForm(p,RED.OSC.settings.RedirectDebugToConsole == false), undefined, getCurrentTxLogStyle());
+        addWaitingForReply([p]);
         SendData(osc.writePacket(p,oscOptions));
+    }
+
+    // the Teensy replies every packet with one /reply bundle, that have one reply message for every message
+    // (the address of the message, some info, the error code last), so the replies can be matched with what was sent
+    var waitingForReply = []; // the messages of the packets that are sent, oldest first
+    var MAX_WAITING_FOR_REPLY = 20;
+    function addWaitingForReply(packets) {
+        if (IsConnected() == false) return; // nothing is sent
+        waitingForReply.push(packets.filter(function (p) { return p.address != undefined && p.address.startsWith("//") == false; }));
+        if (waitingForReply.length > MAX_WAITING_FOR_REPLY) waitingForReply.shift();
+    }
+    /**
+     * @param {String} replyAddress the address in the first reply message
+     * @returns {Object[]|undefined} the sent messages that the reply belongs to (and the older ones without a reply are dropped)
+     */
+    function takeRepliedMessages(replyAddress) {
+        var index = waitingForReply.findIndex(function (packets) { return packets.length != 0 && packets[0].address == replyAddress; });
+        if (index == -1) return undefined;
+        var packets = waitingForReply[index];
+        waitingForReply.splice(0, index + 1);
+        return packets;
     }
     function SendMessage(address, valueTypes, ...values) {
         SendPacket(CreatePacket(address, valueTypes, ...values));
@@ -465,35 +493,30 @@ var OSC = (function() {
             RED.bottombar.info.addLine("ERROR: reply don't contain any arguments");
             return;
         }
-        var args = oscBundle.packets[0].args; // simplify usage
-        if (args[args.length-1].type != "i") {
-            RED.bottombar.info.addLine("ERROR: reply last argument is not a fault code type");
-            return;
-        }
-        var faultCode = args[args.length-1].value;
-        if (faultCode < 0) {
-            RED.bottombar.info.addLine("ERROR: reply last argument fault code value cannot be less than zero");
-            return;
-        }
-        if (faultCode < OSC_REPLY_CODES.length) {
-            var oscReplyType = OSC_REPLY_CODES[faultCode];
-            if (oscReplyType == "OK") {
-                if (RED.OSC.settings.RedirectDebugToConsole == true) {
-                    console.log("OK");
-                }
-                else {
-                    RED.bottombar.info.addLine("OK");
-                }
-                return;
+        var firstArgs = oscBundle.packets[0].args;
+        var sent = takeRepliedMessages((firstArgs[0] != undefined) ? firstArgs[0].value : undefined);
+        if (sent != undefined && sent.length != oscBundle.packets.length) sent = undefined; // can't be matched one by one
+
+        var okCount = 0;
+        var errors = [];
+        for (var i = 0; i < oscBundle.packets.length; i++) {
+            var args = oscBundle.packets[i].args || [];
+            var last = args[args.length-1];
+            var info = args.slice(0, -1).map(function (a) { return a.value; }).join(", ");
+            if (last == undefined || last.type != "i" || last.value < 0) {
+                errors.push("reply without an error code: " + info);
+                continue;
             }
-            if (RED.OSC.settings.DebugOscRxDecodedReplies)
-                RED.bottombar.info.addLine(OSC_REPLY_CODES[faultCode]);
-            return;
+            if (last.value == 0) { okCount++; continue; }
+            var codeName = (last.value < OSC_REPLY_CODES.length) ? OSC_REPLY_CODES[last.value] : ("unknown error code " + last.value);
+            errors.push(codeName + ": " + ((sent != undefined) ? (GetPacketCompactForm(sent[i]) + " ") : "") + "(" + info + ")");
         }
-        else
-        {
-            RED.bottombar.info.addLine("WARNING: unknown fault code: " + faultCode);
-            return;
+        for (var ei = 0; ei < errors.length; ei++)
+            AddLineToLog("Teensy reply " + errors[ei], "warning");
+        if (errors.length != 0) RED.events.emit("OSC:replyErrors", errors);
+        else if (RED.OSC.settings.DebugOscRxDecodedReplies) {
+            if (RED.OSC.settings.RedirectDebugToConsole == true) console.log("OK (" + okCount + ")");
+            else RED.bottombar.info.addLine("OK (" + okCount + ")");
         }
     }
 
@@ -625,6 +648,7 @@ var OSC = (function() {
         CreateBundleData, // simplifies from osc.writeBundle(bundle)
         SendBundle,
         SendMessage,
+        IsConnected,
         SendPacket,
         AddLineToLog, // simplifies usage of RED.bottombar.info.addLine(text);
         SetLog,

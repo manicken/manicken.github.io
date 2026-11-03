@@ -720,7 +720,7 @@ RED.main = (function() {
 	//$('#btn-guiEditMode').click(function() { RED.view.settings.guiEditMode = true; });
 	//$('#btn-guiRunMode').click(function() { RED.view.settings.guiEditMode = false; });
 	$('#btn-guiRunEditMode').click(function() { RED.view.settings.guiEditMode = !$('#btn-guiRunEditMode').prop('checked'); });
-    $('#btn-oscLiveUpdateMode').click(function() { RED.OSC.settings.LiveUpdate = $('#btn-oscLiveUpdateMode').prop('checked'); });
+    $('#btn-oscLiveUpdateMode').click(function() { OSC.LiveUpdate.setEnabled($('#btn-oscLiveUpdateMode').prop('checked')); });
     $('#option-export-mode').change(function() {
         RED.arduino.settings.ExportMode = $('#option-export-mode').val();
         RED.nodes.refreshLinksInfo(); // what is a valid wire depends on the export mode

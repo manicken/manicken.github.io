@@ -367,7 +367,10 @@ RED.exporter.main = (function () {
         lastFiles = [new ExportFile(ws.label + ".osc.txt", text)];
         lastCompositeText = text;
 
-        const send = function () { OSC.SendData(OSC.CreateBundleData(RED.exporter.oscMessages.getBundle(lastMessages))); };
+        const send = function () {
+            OSC.SendBundle(RED.exporter.oscMessages.getBundle(lastMessages));
+            if (classTree) OSC.LiveUpdate.setBaseline(ws); // the live update continues from this design (the same OSC tree)
+        };
         if (RED.OSC.settings.DirectExport == true) send();
         else RED.view.dialogs.showExportDialog("OSC messages to the Teensy", text, " OSC messages:",
             { okText: "Send", tips: "Send creates the design on the Teensy (the current design on the Teensy is removed first)" }, send);
