@@ -1285,7 +1285,23 @@ RED.nodes = (function() {
             
             //delete n.wireNames;
         }
+        fitDynInputsToLinks(new_links);
         return [new_nodes,new_links];
+    }
+
+    /**
+     * A dynInputs object (AudioMixer, AudioMixerStereo) that was saved without its input count, or with fewer inputs
+     * than its wires use, gets the inputs that its wires need (the count is never reduced here)
+     * @param {REDLink[]} links the imported links
+     */
+    function fitDynInputsToLinks(links) {
+        for (var li = 0; li < links.length; li++) {
+            var target = links[li].target;
+            if (target._def.dynInputs == undefined) continue;
+            var needed = Number(links[li].targetPort) + 1;
+            var current = Number(target.inputs || target._def.inputs || 1);
+            target.inputs = Math.max(current, needed);
+        }
     }
 
     /**
