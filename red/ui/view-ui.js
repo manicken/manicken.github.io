@@ -80,6 +80,8 @@ RED.view.ui = (function() {
 			setUiSliderValueFromMouse(d, mouseX, mouseY);
 			//if (d.sendMode == "m") // don' work at the moment
 				RED.ControlGUI.sendUiSliderValue(d);
+		} else if (d.type == "UI_ListBox" && d._scrollDragging == true) {
+			scrollListBoxToMouse(d, mouseY);
 		}
 	}
 	
@@ -149,12 +151,25 @@ RED.view.ui = (function() {
 			//if (d.sendMode == "m") // don' work at the moment
                 RED.ControlGUI.sendUiSliderValue(d);
 		} else if (d.type == "UI_ListBox") {
+			var scrollbarPart = rect.attr("scrollbar");
+			if (scrollbarPart != undefined || d._scrollDragging == true) { // (while dragging, the mouse can be over the rows)
+				if (d._scrollDragging != true) {
+					var bar = getListBoxScrollbar(d);
+					// the thumb keeps where it was grabbed, a click on the track moves the middle of the thumb there
+					d._thumbGrab = (scrollbarPart == "thumb") ? (mouseY - bar.thumbY) : (bar.thumbH / 2);
+					d._scrollDragging = true;
+					// ends at the real release (moving between the parts of the list gives mouse up events while the button is down)
+					window.addEventListener("mouseup", function () { d._scrollDragging = false; }, { once: true });
+				}
+				scrollListBoxToMouse(d, mouseY);
+				return;
+			}
 			var newIndex = rect.attr("listItemIndex");
 			if (newIndex == undefined) {
 				console.warn("listbox title clicked");
 				return; // this happenns when click title bar
 			}
-			d.selectedIndex = parseInt(newIndex);
+			d.selectedIndex = getListBoxScrollOffset(d) + parseInt(newIndex); // newIndex is the row
 			d.dirty = true;
 			console.warn("ui_listBoxMouseDown " + d.sendCommand + " " + d.selectedIndex);
 			RED.ControlGUI.sendUiListBox(d);
@@ -271,9 +286,78 @@ RED.view.ui = (function() {
 				RED.view.redraw_node(d);
 				//d.dirty = true;
 				//RED.view.redraw_nodes(true);
-                
+
+			}
+		} else if (d.type == "UI_ListBox") {
+			var oldOffset = getListBoxScrollOffset(d);
+			d.scrollOffset = oldOffset + ((delta > 0) ? -1 : 1);
+			d.scrollOffset = getListBoxScrollOffset(d); // limited
+			if (d.scrollOffset != oldOffset) {
+				d.dirty = true; // redraw_node only redraws dirty nodes
+				RED.view.redraw_node(d);
 			}
 		}
+	}
+	var LISTBOX_SCROLLBAR_WIDTH = 12;
+	/** @returns {Boolean} true if a UI_ListBox shows a scrollbar (it's scrollable, the scrollbar is on, and not all items are shown) */
+	function hasListBoxScrollbar(n) {
+		var scrollable = (n.scrollable == true || n.scrollable == "true");
+		var scrollbar = (n.scrollbar != false && n.scrollbar != "false");
+		return scrollable && scrollbar && n.items.split("\n").length > getListBoxRowCount(n);
+	}
+	/** @returns {{x:Number, trackY:Number, trackH:Number, thumbY:Number, thumbH:Number, maxOffset:Number}} where the scrollbar of a UI_ListBox is */
+	function getListBoxScrollbar(n) {
+		var count = n.items.split("\n").length;
+		var rows = getListBoxRowCount(n);
+		var trackY = parseInt(n.headerHeight);
+		var trackH = n.h - trackY - 4;
+		var thumbH = Math.min(trackH, Math.max(16, trackH * rows / count));
+		var maxOffset = count - rows;
+		var thumbY = trackY + ((maxOffset > 0) ? (trackH - thumbH) * getListBoxScrollOffset(n) / maxOffset : 0);
+		return { x: n.w - 4 - LISTBOX_SCROLLBAR_WIDTH, trackY, trackH, thumbY, thumbH, maxOffset };
+	}
+	/**
+	 * Scrolls a UI_ListBox so its scrollbar thumb follows the mouse
+	 * @param {REDNode} d
+	 * @param {Number} mouseY in the coordinates of the node
+	 */
+	function scrollListBoxToMouse(d, mouseY) {
+		var bar = getListBoxScrollbar(d);
+		if (bar.trackH <= bar.thumbH) return;
+		var oldOffset = getListBoxScrollOffset(d);
+		d.scrollOffset = Math.round((mouseY - d._thumbGrab - bar.trackY) / (bar.trackH - bar.thumbH) * bar.maxOffset);
+		d.scrollOffset = getListBoxScrollOffset(d); // limited
+		if (d.scrollOffset != oldOffset) {
+			d.dirty = true;
+			RED.view.redraw_node(d);
+		}
+	}
+	/** @returns {Number} the number of items shown by a UI_ListBox (all, or visibleItems when it's scrollable) */
+	function getListBoxRowCount(n) {
+		var itemCount = n.items.split("\n").length;
+		var visible = parseInt(n.visibleItems);
+		var scrollable = (n.scrollable == true || n.scrollable == "true");
+		return (scrollable && visible > 0) ? Math.min(visible, itemCount) : itemCount;
+	}
+	/** @returns {Number} the index of the first item shown by a UI_ListBox (it's scrolled by the mouse wheel when not all items are shown) */
+	function getListBoxScrollOffset(n) {
+		var max = n.items.split("\n").length - getListBoxRowCount(n);
+		return Math.max(0, Math.min(max, parseInt(n.scrollOffset) || 0));
+	}
+	/**
+	 * Sets the items of a UI_ListBox (from a script)
+	 * @param {REDNode} node a UI_ListBox
+	 * @param {String[]} items
+	 * @param {Number} [selectedIndex] default: the first item, -1 for none
+	 */
+	function setListBoxItems(node, items, selectedIndex) {
+		node.items = items.join("\n");
+		node.selectedIndex = (selectedIndex != undefined) ? selectedIndex : 0;
+		node.scrollOffset = 0;
+		node.itemCountChanged = true;
+		node.anyItemChanged = true;
+		node.dirty = true;
+		RED.view.redraw();
 	}
 	function setRectFill(rect, setColor, initialColor)
 	{
@@ -592,12 +676,14 @@ RED.view.ui = (function() {
 	function redraw_init_UI_ListBox(nodeRect,n)
 	{
 		var items = n.items.split("\n");
+		var offset = getListBoxScrollOffset(n);
 
 		nodeRect.selectAll(".ui_listBox_item").remove();
 		nodeRect.selectAll(".node_label_uiListBoxItem").remove();
 		n.itemsTextDimensions = [];
+		n._rowCount = getListBoxRowCount(n);
 
-		for ( var i = 0; i < items.length; i++)
+		for ( var i = 0; i < n._rowCount; i++) // i is the row, the item is items[offset + i]
 		{
 			var item = nodeRect.append("rect")
 				.attr("class", "ui_listBox_item")
@@ -617,39 +703,69 @@ RED.view.ui = (function() {
 				.attr("class", "node_label_uiListBoxItem")
 				.attr("text-anchor", "start")
 				.attr("dy", "0.35em")
-				.text(items[i]);
+				.text(items[offset + i]);
 			if (n.itemTextSize == undefined) n.itemTextSize = 14;
-			n.itemsTextDimensions.push(RED.view.textsize.calculate(items[i], n.itemTextSize));
+			n.itemsTextDimensions.push(RED.view.textsize.calculate(items[offset + i], n.itemTextSize));
+		}
+
+		nodeRect.selectAll(".ui_listBox_scrollbar").remove();
+		n._hasScrollbar = hasListBoxScrollbar(n);
+		if (n._hasScrollbar) {
+			for (var part of ["track", "thumb"]) { // the thumb is drawn over the track
+				nodeRect.append("rect")
+					.attr("class", "ui_listBox_scrollbar ui_listBox_scroll" + part)
+					.attr("scrollbar", part)
+					.attr("rx", 4).attr("ry", 4)
+					.on("mouseup",  RED.view.nodeMouseUp)
+					.on("mousedown", RED.view.nodeMouseDown)
+					.on("mousemove", RED.view.nodeMouseMove)
+					.on("mouseover", RED.view.nodeMouseOver)
+					.on("mouseout", RED.view.nodeMouseOut);
+			}
 		}
 	}
 	function redraw_update_UI_ListBox(d)
 	{
         
 
-		if (d.itemCountChanged != undefined && d.itemCountChanged == true)
+		if ((d.itemCountChanged != undefined && d.itemCountChanged == true) || d._rowCount != getListBoxRowCount(d) || d._hasScrollbar != hasListBoxScrollbar(d))
 		{
 			d.itemCountChanged = false;
 			redraw_init_UI_ListBox(d.svgRect, d);
 		}
 		var updateTextDimensions = false;
-		if (d.anyItemChanged != undefined && d.anyItemChanged == true)
+		var offset = getListBoxScrollOffset(d);
+		if ((d.anyItemChanged != undefined && d.anyItemChanged == true) || d._drawnOffset != offset || d._drawnTextSize != d.itemTextSize)
 		{
 			d.anyItemChanged = false;
 			updateTextDimensions = true;
 		}
+		d._drawnOffset = offset;
+		d._drawnTextSize = d.itemTextSize;
 
-		var items = d.items.split("\n");
-        
+		var items = d.items.split("\n").slice(offset, offset + d._rowCount); // the items shown, one per row
+
 		d.headerHeight = parseInt(d.headerHeight)
 		var itemHeight = (d.h-d.headerHeight-4) / (items.length);
+		var rowWidth = d.w - 8 - (d._hasScrollbar ? (LISTBOX_SCROLLBAR_WIDTH + 2) : 0);
 		d.svgRect.selectAll(".node").attr("height", d.h+4)
 								.attr("fill", d.bgColor);
+
+		if (d._hasScrollbar) {
+			var bar = getListBoxScrollbar(d);
+			d.svgRect.selectAll(".ui_listBox_scrolltrack")
+				.attr("x", bar.x).attr("y", bar.trackY).attr("width", LISTBOX_SCROLLBAR_WIDTH).attr("height", bar.trackH)
+				.attr("fill", RED.color.subtractColor(d.itemBGcolor, "#181818"));
+			d.svgRect.selectAll(".ui_listBox_scrollthumb")
+				.attr("x", bar.x).attr("y", bar.thumbY).attr("width", LISTBOX_SCROLLBAR_WIDTH).attr("height", bar.thumbH)
+				.attr("fill", RED.color.subtractColor(d.itemBGcolor, "#606060"));
+		}
 
 		d.svgRect.selectAll('.ui_listBox_item').each(function(d,i) {
 
 			var li = d3.select(this);
 			li.attr('y', ((i)*itemHeight + d.headerHeight));
-			li.attr("width", d.w-8);
+			li.attr("width", rowWidth);
 			li.attr("x", 4);
             if (itemHeight < 0){
                 console.log("what the motherfuck", d);
@@ -658,7 +774,7 @@ RED.view.ui = (function() {
 			li.attr("height", itemHeight);
             
             
-			if (d.selectedIndex == i)
+			if (d.selectedIndex == offset + i)
 				li.attr("fill", RED.color.subtractColor(d.itemBGcolor, "#303030"));
 			else
 				li.attr("fill", d.itemBGcolor);
@@ -674,7 +790,7 @@ RED.view.ui = (function() {
 					ti.style({'font-size':d.itemTextSize+'px'});
 			}
 			var textDimension = d.itemsTextDimensions[i];
-			ti.attr('x', (d.w-textDimension.w)/2);
+			ti.attr('x', 4 + (rowWidth-textDimension.w)/2);
 			ti.attr('y', ((i)*itemHeight+itemHeight/2 + d.headerHeight));
 			
 			ti.text(items[i]);
@@ -717,6 +833,29 @@ RED.view.ui = (function() {
 			if (n.textSize == undefined) n.textSize = 14;
 			n.keysTextDimensions.push(RED.view.textsize.calculate(keyTexts[i],n.textSize));
 		}
+	}
+	/** @returns {Boolean} true if the key is lit by setPianoKeyLit */
+	function isPianoKeyLit(node, keyIndex) {
+		return node._litKeys != undefined && node._litKeys[keyIndex] > 0;
+	}
+	/**
+	 * Lights a key of a UI_Piano (i.e. the notes played by the MIDI player), a key can be lit by more than one note at a time
+	 * @param {REDNode} node a UI_Piano
+	 * @param {Number} keyIndex 0-11 (C to B)
+	 * @param {Boolean} lit
+	 */
+	function setPianoKeyLit(node, keyIndex, lit) {
+		if (node._litKeys == undefined) node._litKeys = {};
+		node._litKeys[keyIndex] = Math.max(0, (node._litKeys[keyIndex] || 0) + (lit ? 1 : -1));
+		if (node.svgRect == undefined) return; // not drawn (i.e. on another tab)
+		var isBlackKey = [1, 3, 6, 8, 10].indexOf(keyIndex) != -1;
+		node.svgRect.selectAll('.ui_piano_item').filter(function () { return d3.select(this).attr("keyIndex") == keyIndex; })
+			.attr("fill", isPianoKeyLit(node, keyIndex) ? node.pressedKeyColor : (isBlackKey ? node.blackKeysColor : node.whiteKeysColor));
+	}
+	/** @param {REDNode} node a UI_Piano, unlights all its keys */
+	function clearPianoKeys(node) {
+		node._litKeys = undefined;
+		node.dirty = true;
 	}
 	function redraw_update_UI_Piano(nodeRect, d)
 	{
@@ -762,7 +901,7 @@ RED.view.ui = (function() {
 				li.attr("stroke", d.blackKeysColor);
 				li.attr("width", keyWidth-d.blackKeysWidthDiff);
 			}
-			
+			if (isPianoKeyLit(d, li.attr("keyIndex"))) li.attr("fill", d.pressedKeyColor);
 		});
 
 		nodeRect.selectAll('text.node_label_uiPianoKey').each(function(d,i) {
@@ -1011,6 +1150,9 @@ RED.view.ui = (function() {
         currentUiObject:function() {return currentUiObject;},
         get_uiItemResizeBorderSize:function() { return uiItemResizeBorderSize;},
 
-        drawImageData
+        drawImageData,
+        setListBoxItems,
+        setPianoKeyLit,
+        clearPianoKeys,
     };
 })();

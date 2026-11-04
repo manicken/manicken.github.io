@@ -446,8 +446,11 @@ var NodeDefinitions = {
                 defaults: {
                     ...UiTypeBase.defaults,
                     //midiCh: { value: "0" }, midiId: { value: "0" },
-                    temTextSize: { value: 14 },
+                    itemTextSize: { value: 14, minval: 5, type: "int" },
                     items: { value: "item1\nitem2\nitem3" }, selectedIndex: { value: 0 }, selectedIndexOffset: { value: 0 }, headerHeight: { value: 30 },
+                    scrollable: { value: false }, // true: only visibleItems rows are shown, and the mouse wheel scrolls the items
+                    scrollbar: { value: true }, // shown when it's scrollable and not all items are shown
+                    visibleItems: { value: 10, minval: 1, type: "int" },
                     itemBGcolor: { value: "#F6F8BC" },
                     sendCommand: {}
 

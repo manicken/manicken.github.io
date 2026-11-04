@@ -39,8 +39,9 @@
         eval(d.sendCommand);
     }
 
-    function sendUiPiano(d) 
+    function sendUiPiano(d)
     {
+        d.keyDown = d.pressed ? 0x90 : 0x80; // the MIDI status (note on/off on channel 1), used by older piano scripts
         eval(d.sendCommand);
     }
 

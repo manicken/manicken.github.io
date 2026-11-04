@@ -20,6 +20,7 @@ var SerialCmdDecoder = (function() {
 
     var CB_decoded = undefined;
     var CB_UI_object_not_found = undefined;
+    var CB_line = undefined; // every received line (without the terminator), before it's decoded
 
     var foundUiObject = {};
 
@@ -41,7 +42,8 @@ var SerialCmdDecoder = (function() {
                 //else
                 //{
                     //if (rxCmdBuffer == cmdTerminator) continue; // empty cmd
-                    
+                    if (CB_line != undefined) CB_line(rxCmdBuffer.substring(0, rxCmdBuffer.length - cmdTerminator.length).replace(/\r$/, ""));
+
                     lastRxCmdParams = rxCmdBuffer.split(cmdParamDeliminator);
                     rxCmdBuffer = "";
                     lastRxCmd = lastRxCmdParams[0];
@@ -93,6 +95,7 @@ var SerialCmdDecoder = (function() {
     {
         CB_decoded = params.CB_decoded;
         CB_UI_object_not_found = params.CB_UI_object_not_found;
+        CB_line = params.CB_line;
         rawDataCmds = params.rawDataCmds;
         cmdTerminator = params.cmdTerminator;
         cmdParamDeliminator = params.cmdParamDeliminator;

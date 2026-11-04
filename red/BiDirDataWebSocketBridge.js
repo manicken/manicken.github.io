@@ -212,6 +212,7 @@ RED.BiDirDataWebSocketBridge = (function() {
         settingsEditor:settingsEditor,
         
 		StartWebSocketConnection:StartWebSocketBiDirData_Connection,
-        SendToWebSocket:SendToWebSocket
+        SendToWebSocket:SendToWebSocket,
+        setUiItemValue:setUiItemValue // also used by the direct MIDI input (RED.midi)
 	};
 })();

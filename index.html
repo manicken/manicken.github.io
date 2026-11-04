@@ -145,6 +145,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				</ul>
 			</div>
 			<div class="btn-group pull-left">
+				<a id="menu-midi" class="btn dropdown-toggle btn-danger" data-toggle="dropdown" href="#"><i class="fa fa-music"></i> MIDI <span class="caret"></span></a>
+				<ul id="menu-midi-list" class="dropdown-menu"></ul>
+			</div>
+			<div class="btn-group pull-left">
 				<a id="menu-ide" class="btn dropdown-toggle btn-info" data-toggle="dropdown" href="#"><i class="icon-download"></i> IDE <span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-verify-compile" class="btn" href="#"><i class="fa fa-refresh"></i> Verify/Compile</a></li>
@@ -717,6 +721,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="jquery/js/jquery.ui.touch-punch.min.js"></script>
 <script src="red/jszip.js"></script>
 <script src="red/FileSaver.js"></script>
+<!-- JZZ (MIDI file player) must be loaded before the orion editor, as it defines an AMD 'define' that JZZ would use instead of the global JZZ -->
+<script src="jzz/JZZ.js"></script>
+<script src="jzz/JZZ.midi.SMF.js"></script>
 <script src="orion/built-editor.min.js"></script>
 <script src="jscolor.js"></script>
 <script src="red/ui/ace/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -830,6 +837,9 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/NodeDefManager.js"></script>
 <script src="red/NodeHelpManager.js"></script>
 <script src="red/ControlGUI.js"></script>
+<script src="red/midi.js"></script>
+<script src="red/serial.js"></script>
+<script src="red/midi-player.js"></script>
 
 <script src="SerialCmdDecoder.js"></script>
 <script src="red/arduino/OSC-settings.js"></script>
@@ -1416,6 +1426,19 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			<div class="form-row-mid">
 				<label for="node-input-itemTextSize"><i class="fa fa-tag"></i> Item Text Size</label>
 				<a class="node-input-number"><input type="text" id="node-input-itemTextSize" placeholder="itemTextSize" autocomplete="off"/></a>
+			</div>
+			<div class="form-row-divider"></div>
+			<div class="form-row-mid">
+				<label for="node-input-scrollable"><i class="fa fa-tag"></i> Scrollable</label>
+				<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-scrollable" title="only show 'Visible Rows' rows, the mouse wheel scrolls the items (in gui run mode)">
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-visibleItems"><i class="fa fa-tag"></i> Visible Rows</label>
+				<a class="node-input-number"><input type="text" id="node-input-visibleItems" placeholder="visibleItems" autocomplete="off"/></a>
+			</div>
+			<div class="form-row-mid">
+				<label for="node-input-scrollbar"><i class="fa fa-tag"></i> Scrollbar</label>
+				<input style="margin: 5px; width:auto;" type="checkbox" id="node-input-scrollbar" title="show a scrollbar when it's scrollable and not all items are shown">
 			</div>
 			<div class="form-row-long">
 				<label style="width: 150px;" for="node-input-selectedIndexOffset"><i class="fa fa-tag"></i> Sel. Index Offset</label>

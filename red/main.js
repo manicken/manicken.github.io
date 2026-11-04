@@ -835,6 +835,8 @@ RED.main = (function() {
         RED.storage.dontSave = false;
         OSC.RegisterEvents();
         OSC.LiveUpdate.RegisterEvents();
+        RED.midi.init();
+        RED.serial.init();
 
         //RED.OCPview.init()
 

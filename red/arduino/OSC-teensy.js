@@ -105,7 +105,8 @@ var OSC = (function() {
 
             return false;
         }
-        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' ', CB_UI_object_not_found:UI_object_not_found});
+        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' ', CB_UI_object_not_found:UI_object_not_found,
+                               CB_line:function (line) { RED.events.emit("serial:line", line); }}); // for scripts, see RED.serial
 
         navigator.serial.addEventListener("connect", async (event) => {
             RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
