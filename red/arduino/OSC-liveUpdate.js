@@ -63,6 +63,21 @@ OSC.LiveUpdate = (function () {
         log("the root is the tab " + ws.label);
     }
 
+    /**
+     * Tells which objects the messages created on the Teensy (i.e. the live control inits them, see red/control)
+     * @param {OscMessage[]} messages that are sent
+     */
+    function emitCreated(messages) {
+        const paths = [];
+        for (const m of messages) {
+            if (m.address != OSC.GetCreateObjectAddr()) continue;
+            // the values: type, name, (the parent group path, only when not in the root), (inputs), (constructor values)
+            const parent = (m.types[2] == "s" && typeof m.values[2] == "string" && m.values[2].startsWith("/")) ? m.values[2] : "";
+            paths.push(parent + "/" + m.values[1]);
+        }
+        if (paths.length != 0) RED.events.emit("OSC:liveObjectsCreated", paths);
+    }
+
     /** Clears the Teensy and sends the whole design of the current tab, which becomes the root */
     function sync() {
         const ws = RED.nodes.currentWorkspace;
@@ -77,6 +92,7 @@ OSC.LiveUpdate = (function () {
         rootId = ws.id;
         teensyModel = result.model;
         log("synced the tab " + ws.label + " (" + result.messages.length + " messages)");
+        emitCreated(result.messages);
     }
 
     /** @param {Boolean} state */
@@ -118,6 +134,7 @@ OSC.LiveUpdate = (function () {
         OSC.SendBundle(RED.exporter.oscMessages.getBundle(changes.messages));
         teensyModel = changes.model;
         log(changes.messages.length + " message(s) sent");
+        emitCreated(changes.messages);
     }
 
     function replyErrors(errors) {
@@ -138,5 +155,7 @@ OSC.LiveUpdate = (function () {
         setEnabled,
         setBaseline,
         sync,
+        getRootId: function () { return rootId; },             // read only, for the live control (red/control)
+        getTeensyModel: function () { return teensyModel; },   // read only, don't change it
     };
 })();

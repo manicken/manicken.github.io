@@ -1581,7 +1581,8 @@ RED.view = (function() {
             RED.sidebar.info.clear();
             RED.nodes.selectNode("");
 		}
-        
+        RED.events.emit("view:selectionChanged", moving_set.map(function (ms) { return ms.n; })); // i.e. the live control tab
+
         var links = RED.nodes.cwsLinks;
         if (allSelected != undefined && allSelected == true) { // extreme improvement when selecting all nodes
             for (var li=0; li<links.length;li++) {
