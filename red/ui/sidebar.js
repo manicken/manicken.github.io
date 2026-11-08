@@ -44,7 +44,7 @@ RED.sidebar = (function() {
 		onremove: function(tab) {
 			$("#"+tab.id).remove();
         },
-        minimumActiveTabWidth: 90,
+        minimumActiveTabWidth: 70,
 	});
 	function addTab(title,content,closeable) {
 		$("#sidebar-content").append(content);

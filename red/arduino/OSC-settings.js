@@ -24,6 +24,7 @@ RED.OSC = (function() {
         HashLinkNames: false,
         HashLinkNamesHeader: "CON",
         LiveUpdate: false, // disabled by default, as it slows down the Tool alot
+        LiveShowControlTab: true, // the sidebar tab "live" is shown when an object is selected in live update mode (red/control/tab-live.js)
         DirectExport: false,
         WildcardArrayObjects: true,
         OnlyShowLastDebug: false,
@@ -45,6 +46,7 @@ RED.OSC = (function() {
         HashLinkNames: defSettings.HashLinkNames,
         HashLinkNamesHeader:defSettings.HashLinkNamesHeader,
         LiveUpdate: defSettings.LiveUpdate,
+        LiveShowControlTab: defSettings.LiveShowControlTab,
         DirectExport: defSettings.DirectExport,
         WildcardArrayObjects: defSettings.WildcardArrayObjects,
         OnlyShowLastDebug: defSettings.OnlyShowLastDebug,
@@ -75,6 +77,9 @@ RED.OSC = (function() {
             $('#btn-oscLiveUpdateMode').prop('checked', state);
             RED.storage.update();
         },
+
+        get LiveShowControlTab() { return _settings.LiveShowControlTab; },
+        set LiveShowControlTab(value) { _settings.LiveShowControlTab = value; RED.storage.update();},
 
         get HashLinkNames() { return _settings.HashLinkNames; },
         set HashLinkNames(value) { _settings.HashLinkNames = value; RED.storage.update();},
@@ -150,6 +155,11 @@ RED.OSC = (function() {
                 UseDebugLinkName:     {label:"Use debug link names", type:"boolean", popupText:"when enabled all linknames uses underscores to separate the names<br> i.e. sourceName_sourcePort_targetName_targetPort <br><br> when disabled the underscores are not included"},
                 HashLinkNames:        {label:"Hash link names", type:"boolean", popupText:"Enable experimental hashed short link names"},
                 HashLinkNamesHeader:  {label:"Hash link names header", type:"string", popupText:"Hashed short link names - 'header' i.e. what the connection names should begin with<br>note. if set to a empty string the default 'L' will be used as the header, as a OSC address cannot begin with a number?"},
+            }
+        },
+        liveControl:          {label:"Live control", expanded:false, bgColor:"#EEE",
+            items: {
+                LiveShowControlTab: {label:"Show the live tab on select", type:"boolean", popupText:"When the OSC live update is on and one object is selected,<br>the sidebar tab 'live' is shown (instead of the info tab)"},
             }
         },
         //ClearOutputLog:       {label:"Clear output log", type:"button", action: ClearOutputLog},

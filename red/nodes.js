@@ -702,6 +702,10 @@ RED.nodes = (function() {
 					node[d] = getNodesIds(n[d]);
                 else if (n._def.defaults[d].type!=undefined && n._def.defaults[d].type == "dontsave")
                     continue;
+                else if (n._def.defaults[d].dontSaveEmpty == true && (n[d] == undefined || n[d] === ""))
+                    continue; // i.e. liveBind, only saved for the GUI objects that have it
+                else if (n[d] != null && typeof n[d] == "object" && typeof n[d].toJSON == "function")
+                    node[d] = n[d].toJSON(); // an object with references saves itself with ids (i.e. liveBind, see red/control/control-gui.js)
 				else if (d != "color")
 					node[d] = n[d];
 			}
@@ -1280,6 +1284,9 @@ RED.nodes = (function() {
             {
                 nn.parentGroup = node_map[nn.parentGroup]; // convert id to ref
             }
+            // a GUI object bound to an audio object (red/control/control-gui.js), it follows a pasted audio object
+            if (nn.liveBind != undefined && nn.liveBind !== "" && RED.control != undefined && RED.control.gui != undefined)
+                nn.liveBind = RED.control.gui.importBind(nn.liveBind, node_map);
             
             delete nn.wires;
             

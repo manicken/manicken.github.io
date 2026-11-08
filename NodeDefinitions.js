@@ -401,7 +401,8 @@ var NodeDefinitions = {
                     //releaseAction: {}, repeatReleaseAction: { value: false },
                     //local: { value: false },
                     sendMode: {},
-                    sendCommand: {}
+                    sendCommand: {},
+                    liveBind: { dontSaveEmpty: true } // bound to a method of an audio object (red/control/control-gui.js)
                 }
             },
 
@@ -417,7 +418,8 @@ var NodeDefinitions = {
                     //autoReturn: { value: false }, returnValue: { value: "mid" },
                     barFGcolor: { value: "#F6F8BC" },
                     //sendFormat: {},
-                    sendCommand: { value: "" }
+                    sendCommand: { value: "" },
+                    liveBind: { dontSaveEmpty: true } // bound to a method of an audio object (red/control/control-gui.js)
                 }
             },
 
@@ -452,7 +454,8 @@ var NodeDefinitions = {
                     scrollbar: { value: true }, // shown when it's scrollable and not all items are shown
                     visibleItems: { value: 10, minval: 1, type: "int" },
                     itemBGcolor: { value: "#F6F8BC" },
-                    sendCommand: {}
+                    sendCommand: {},
+                    liveBind: { dontSaveEmpty: true } // bound to a method of an audio object (red/control/control-gui.js)
 
                 }
             },

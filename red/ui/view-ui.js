@@ -657,11 +657,14 @@ RED.view.ui = (function() {
 				
 
 				var nodeText = d.label ? d.label : "";
+				if (nodeText == "" && RED.control.gui.isBound(d)) nodeText = RED.control.gui.sliderText(d); // the value of the bound method (red/control)
+				else {
 				if (nodeText == "") 
 				if (nodeText.includes("#")) nodeText = nodeText.replace("#", "d.val");
 				try{nodeText = new String(eval(nodeText)); }
 				catch (e) { 
 					//nodeText = d.label;
+				}
 				}
 				ti.text(nodeText);
 			

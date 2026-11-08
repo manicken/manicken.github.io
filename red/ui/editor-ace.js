@@ -91,6 +91,7 @@ RED.editor.ace = (function() {
         if (node._def.useAceEditorCodeFieldName != undefined) {
             var value = node[node._def.useAceEditorCodeFieldName];
             if (value == undefined) value = new String("");
+            if (isLiveBound(node)) value = RED.control.gui.describe(node); // read only, not saved (see red/control/control-gui.js)
             aceEditor.setValue(value);
         }
            
@@ -101,7 +102,13 @@ RED.editor.ace = (function() {
             //aceEditor.setValue(node.comment);
         }
 		
+		aceEditor.setReadOnly(isLiveBound(node)); // the editor is shared, so it's set for every node
 		aceEditor.session.selection.clearSelection();
+	}
+
+	/** @returns {Boolean} true for a GUI object bound to an audio object, it have no script */
+	function isLiveBound(node) {
+		return node._def.useAceEditorCodeFieldName != undefined && RED.control != undefined && RED.control.gui != undefined && RED.control.gui.isBound(node);
 	}
 
 	function init_aceEditor_c_cpp_mode(aceEditor)

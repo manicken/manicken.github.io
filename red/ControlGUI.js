@@ -27,15 +27,18 @@
 		}
 		d.lastSentValue = d.val;
 
+        if (RED.control.gui.isBound(d)) { RED.control.gui.slider(d); return; } // bound to an audio object (red/control)
         eval(d.sendCommand);
 	}
     function sendUiButton(pressed, d)
     {
         d.pressed = pressed;
+        if (RED.control.gui.isBound(d)) { RED.control.gui.button(d, pressed); return; }
         eval(d.sendCommand);
     }
     function sendUiListBox(d)
     {
+        if (RED.control.gui.isBound(d)) { RED.control.gui.listBox(d); return; }
         eval(d.sendCommand);
     }
 

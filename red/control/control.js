@@ -43,28 +43,52 @@ RED.control.core = (function () {
     // targets
     // ******************************************************************
 
+    // the tree and the targets are cached, the cache is valid until the design changes (version) or another tree is used
+    const DESIGN_EVENTS = ["nodes:add", "nodes:remove", "nodes:change", "nodes:renamed", "nodes:inputsUpdated",
+        "links:add", "links:remove", "flows:add", "flows:remove", "flows:renamed", "flows:change"];
+    let version = 0;
+    let treeCache = { key: undefined, model: undefined, version: -1, tree: undefined };
+    const targetsCache = new Map(); // node id -> {tree, targets} for treeCache.tree
+
+    function designChanged() { version++; }
+    for (const e of DESIGN_EVENTS) RED.events.on(e, designChanged);
+
     /**
      * The design tree that is on the Teensy: the one the OSC live update keeps (it have the real input counts of the mixers),
-     * else the design of the current tab
+     * else the design of the current tab. The same object is returned until it changes (so it can be used as a cache key).
      * @returns {{ws:REDWorkspace, model:OscLiveModel, source:"live"|"design"}|undefined}
      */
     function getTree() {
         const live = (OSC.LiveUpdate != undefined && OSC.LiveUpdate.getRootId != undefined) ? OSC.LiveUpdate : undefined;
         if (live != undefined && RED.OSC.settings.LiveUpdate == true) {
+            const model = live.getTeensyModel(); // a new model object after every change that is sent
+            const key = "live|" + live.getRootId();
+            if (treeCache.key == key && treeCache.model === model && model != undefined) return treeCache.tree;
             const ws = RED.nodes.getWorkspace(live.getRootId());
-            const model = live.getTeensyModel();
-            if (ws != undefined && model != undefined) return { ws, model, source: "live" };
+            if (ws != undefined && model != undefined) return setTree(key, model, { ws, model, source: "live" });
         }
         const ws = RED.nodes.currentWorkspace;
         if (ws == undefined) return undefined;
+        const key = "ws|" + ws.id;
+        if (treeCache.key == key && treeCache.version == version) return treeCache.tree;
         try {
-            return { ws, model: RED.exporter.oscLive.getModel(ws).model, source: "design" };
+            const model = RED.exporter.oscLive.getModel(ws).model;
+            return setTree(key, model, { ws, model, source: "design" });
         }
         catch (err) {
             console.error(err);
             return undefined;
         }
     }
+
+    function setTree(key, model, tree) {
+        treeCache = { key, model, version, tree };
+        targetsCache.clear();
+        return tree;
+    }
+
+    /** @returns {Number} changed when the design is changed (the cached bindings are made again) */
+    function getVersion() { return version; }
 
     /** @param {OscLiveModel} model @param {OscLiveItem} item @returns {Object} the target of the object */
     function makeTarget(model, item) {
@@ -85,6 +109,8 @@ RED.control.core = (function () {
     function getTargets(node) {
         const tree = getTree();
         if (tree == undefined) return { tree, targets: [] };
+        const cached = targetsCache.get(node.id);
+        if (cached != undefined && cached.tree === tree) return cached;
         const model = tree.model;
         const targets = [];
         const add = function (item) {
@@ -99,11 +125,14 @@ RED.control.core = (function () {
                 if (element.parent == item.path && element.kind == "object") add(element);
         }
         targets.sort(function (a, b) { return a.path.localeCompare(b.path, undefined, { numeric: true }); });
-        return { tree, targets };
+        const result = { tree, targets };
+        targetsCache.set(node.id, result);
+        return result;
     }
 
-    /** @param {REDNode} node @param {Object} target @returns {Number} the channels of a perChannel method */
-    function getChannelCount(node, target) {
+    /** @param {REDNode} node @param {Object} target @param {Object} [method] @returns {Number} the channels of a perChannel method */
+    function getChannelCount(node, target, method) {
+        if (method != undefined && method.channels != undefined) return method.channels; // not the inputs (i.e. delay taps)
         if (target != undefined && target.inputs != undefined) return target.inputs; // DynMixer, as it is on the Teensy
         if (node.inputs != undefined && Number(node.inputs) > 0) return Number(node.inputs);
         const def = RED.nodes.getType(node.type);
@@ -154,9 +183,13 @@ RED.control.core = (function () {
      * Stores the values and sends them to all the targets (coalesced)
      * @param {REDNode} node @param {Object[]} targets @param {Object} method @param {Number|undefined} channel
      * @param {Array} argValues @param {Boolean} [send] false only stores them
+     * @param {Object} [source] what made the change (given to the control:valuesChanged listeners, so it can skip itself)
      */
-    function invoke(node, targets, method, channel, argValues, send) {
-        if (method.args != undefined) values.set(valueKey(node, method, channel), [...argValues]);
+    function invoke(node, targets, method, channel, argValues, send, source) {
+        if (method.args != undefined) {
+            values.set(valueKey(node, method, channel), [...argValues]);
+            RED.events.emit("control:valuesChanged", { node, method, channel, values: [...argValues], source });
+        }
         if (send == false) return;
         for (const target of targets) {
             pending.set(target.path + "|" + method.id + "|" + channel, createCommand(target, method, channel, argValues || []));
@@ -165,13 +198,14 @@ RED.control.core = (function () {
     }
 
     /**
+     * @param {Array} [argValues] the arguments of the read (i.e. the bin of fft.read(bin))
      * @returns {Promise<{target, value?, error?}[]>} the result of a "read" method, one per target
      */
-    function read(targets, method) {
+    function read(targets, method, argValues) {
         const adapter = getAdapter();
         return Promise.all(targets.map(function (target) {
             if (adapter == undefined || adapter.read == undefined) return Promise.resolve({ target, error: "the protocol can't read" });
-            return adapter.read(createCommand(target, method, undefined, []))
+            return adapter.read(createCommand(target, method, undefined, argValues || []))
                 .then(function (value) { return { target, value }; }, function (err) { return { target, error: String(err) }; });
         }));
     }
@@ -182,7 +216,7 @@ RED.control.core = (function () {
         let count = 0;
         for (const method of methods) {
             if (method.kind == "action" || method.kind == "read") continue;
-            const channels = method.perChannel ? [...Array(getChannelCount(node, targets[0])).keys()] : [undefined];
+            const channels = method.perChannel ? [...Array(getChannelCount(node, targets[0], method)).keys()] : [undefined];
             for (const channel of channels) {
                 if (hasValues(node, method, channel) == false) continue;
                 invoke(node, targets, method, channel, getValues(node, method, channel));
@@ -225,6 +259,7 @@ RED.control.core = (function () {
         setAdapter,
         getTree,
         getTargets,
+        getVersion,
         getChannelCount,
         getValues,
         hasValues,

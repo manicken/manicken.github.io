@@ -323,8 +323,8 @@ RED.editor = (function() {
 			var editor = ace.edit("aceEditor");
 			var value = editor.getValue();
             if (editing_node._def.useAceEditorCodeFieldName != undefined) {
-				
-				if (value != editing_node[editing_node._def.useAceEditorCodeFieldName]) {
+				var liveBound = RED.control != undefined && RED.control.gui != undefined && RED.control.gui.isBound(editing_node); // shows a text that is not saved
+				if (liveBound == false && value != editing_node[editing_node._def.useAceEditorCodeFieldName]) {
 					changed = true;
 					changes[editing_node._def.useAceEditorCodeFieldName] = value;
 					editing_node[editing_node._def.useAceEditorCodeFieldName] = value;

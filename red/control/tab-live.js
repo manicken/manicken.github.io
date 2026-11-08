@@ -1,6 +1,8 @@
 /**
  * Live control, the sidebar tab "live": the methods of the selected audio object, made from RED.control.methods,
  * sent with RED.control.core (so the protocol is chosen here, not in the controls).
+ * "+" creates bound GUI objects (RED.control.gui) for a method, "Create GUI" for all of them.
+ * Selecting a bound GUI object shows the audio object it controls.
  */
 RED.control = RED.control || {};
 RED.control.tab = (function () {
@@ -11,30 +13,34 @@ RED.control.tab = (function () {
 
     let content = undefined;
     let currentNode = undefined;
+    let selectedGui = undefined; // the bound GUI object that is selected (currentNode is what it controls)
     let targetChoice = "*"; // "*" all targets, else the path of one
     let refreshTimer = undefined;
 
     const CSS = `
 #tab-live { font-size: 12px; }
-#tab-live .live-head { margin: 4px 0 6px 0; }
+#tab-live .live-head { margin: 4px 0 6px 0; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 #tab-live .live-head b { font-size: 13px; }
-#tab-live .live-type { color: #888; margin-left: 6px; }
+#tab-live .live-type { color: #888; }
 #tab-live .live-bar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 4px; }
 #tab-live .live-bar select { width: auto; max-width: 100%; margin: 0; height: 24px; padding: 0 4px; font-size: 12px; }
 #tab-live .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #c33; margin-right: 3px; }
 #tab-live .live-dot.on { background: #3a3; }
 #tab-live .live-note { color: #888; margin: 2px 0 6px 0; }
+#tab-live .live-bound { background: #eef5ff; border: 1px solid #cddcf0; border-radius: 3px; padding: 3px 6px; margin-bottom: 6px; }
 #tab-live .live-method { border-top: 1px solid #ddd; padding: 4px 0; }
-#tab-live .live-method > .live-label { font-weight: bold; margin-bottom: 2px; }
+#tab-live .live-label { font-weight: bold; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
 #tab-live .live-row { display: flex; align-items: center; gap: 4px; margin: 2px 0; }
 #tab-live .live-row .live-name { flex: 0 0 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }
 #tab-live .live-row input[type=range] { flex: 1 1 auto; min-width: 60px; margin: 0; }
 #tab-live .live-row input[type=number] { flex: 0 0 70px; width: 70px; margin: 0; height: 22px; padding: 0 3px; font-size: 12px; }
+#tab-live .live-row input[type=text] { flex: 1 1 auto; margin: 0; height: 22px; padding: 0 3px; font-size: 12px; }
 #tab-live .live-row select { flex: 1 1 auto; margin: 0; height: 24px; padding: 0 4px; font-size: 12px; }
 #tab-live .live-unit { flex: 0 0 22px; color: #888; }
 #tab-live .live-result { margin-left: 6px; font-family: monospace; }
 #tab-live .live-result.err { color: #c33; }
 #tab-live button { font-size: 12px; padding: 1px 8px; margin: 0; }
+#tab-live button.live-add { padding: 0 5px; font-weight: normal; line-height: 16px; }
 `;
 
     function createTab() {
@@ -47,19 +53,41 @@ RED.control.tab = (function () {
         document.head.appendChild(style);
 
         RED.events.on("view:selectionChanged", function (nodes) {
-            const node = (nodes.length == 1) ? nodes[0] : undefined;
-            if (node === currentNode) return; // i.e. after a move
-            targetChoice = "*";
+            let node = (nodes.length == 1) ? nodes[0] : undefined;
+            let gui = undefined;
+            if (node != undefined && RED.control.gui.isBound(node)) { // show what it controls
+                const r = RED.control.gui.resolve(node, true);
+                gui = node;
+                node = (r != undefined) ? r.node : undefined;
+            }
+            showTabIfLive(node);
+            if (node === currentNode && gui === selectedGui) return; // i.e. after a move
+            const sameNode = node === currentNode;
             currentNode = node;
+            selectedGui = gui;
+            if (sameNode == false) {
+                const bind = (gui != undefined) ? RED.control.gui.getBind(gui) : undefined;
+                targetChoice = (bind != undefined && bind.path) ? bind.path : "*";
+            }
             render();
         });
-        const refreshLater = function () {
-            clearTimeout(refreshTimer);
-            refreshTimer = setTimeout(render, REFRESH_DELAY_MS);
-        };
         for (const e of ["OSC:connected", "nodes:inputsUpdated", "links:add", "links:remove", "nodes:renamed", "nodes:remove", "flows:change"])
             RED.events.on(e, refreshLater);
+        RED.events.on("control:valuesChanged", function (e) { // changed by a GUI object
+            if (e.source != undefined && e.node === currentNode) refreshLater();
+        });
         render();
+    }
+
+    /** shows this tab instead of the info tab (that is shown on select) when the OSC live update is on, an OSC setting */
+    function showTabIfLive(node) {
+        if (node == undefined || RED.OSC.settings.LiveUpdate != true || RED.OSC.settings.LiveShowControlTab != true) return;
+        RED.sidebar.show("live"); // for every object, the tab tells when a type have no live control yet
+    }
+
+    function refreshLater() {
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(render, REFRESH_DELAY_MS);
     }
 
     function el(tag, attrs, ...children) {
@@ -74,38 +102,59 @@ RED.control.tab = (function () {
     }
 
     function formatValue(arg, value) {
+        if (typeof value != "number") return String(value);
         if (arg.type == "int") return String(Math.round(value));
         const abs = Math.abs(value);
         return String(Number(value.toFixed(abs >= 100 ? 1 : abs >= 10 ? 2 : 3)));
+    }
+
+    function getSelectedTargets(all) {
+        return (targetChoice == "*") ? all : all.filter(function (t) { return t.path == targetChoice; });
     }
 
     function render() {
         if (content == undefined) return;
         content.innerHTML = "";
         const node = currentNode;
-        if (node == undefined || RED.nodes.node(node.id) == undefined) {
-            content.append(el("div", { class: "live-note" }, "Select one audio object to control it live on the Teensy."));
-            content.append(el("div", { class: "live-note" }, "Pilot types: " + Object.keys(RED.control.methods.types).join(", ")));
+        if (selectedGui != undefined && (node == undefined || RED.nodes.node(node.id) == undefined)) {
+            content.append(el("div", { class: "live-note" }, (selectedGui.name || selectedGui.id) + " is bound to an object that is removed."));
             return;
         }
+        if (node == undefined || RED.nodes.node(node.id) == undefined) {
+            content.append(el("div", { class: "live-note" }, "Select one audio object to control it live on the Teensy."));
+            content.append(el("div", { class: "live-note" }, "Types: " + Object.keys(RED.control.methods.types).sort().join(", ")));
+            return;
+        }
+        if (selectedGui != undefined) {
+            const bind = RED.control.gui.getBind(selectedGui);
+            content.append(el("div", { class: "live-bound" }, "GUI object ", el("b", {}, selectedGui.name || selectedGui.id),
+                " controls " + bind.methodId + ((bind.ch != null) ? (" (" + bind.ch + ")") : "") + " of:"));
+        }
         const methods = RED.control.methods.get(node.type);
-        content.append(el("div", { class: "live-head" }, el("b", {}, node.name || node.id), el("span", { class: "live-type" }, node.type)));
+        const head = el("div", { class: "live-head" }, el("b", {}, node.name || node.id), el("span", { class: "live-type" }, node.type));
+        content.append(head);
         if (methods == undefined) {
             content.append(el("div", { class: "live-note" }, "No live control for " + node.type + " yet."));
             return;
         }
         const found = RED.control.core.getTargets(node);
-        const allTargets = found.targets;
         renderBar(node, found);
-        if (allTargets.length == 0) {
+        if (found.targets.length == 0) {
             content.append(el("div", { class: "live-note" }, "The object is not in the design of the tab " +
                 ((found.tree != undefined) ? ('"' + found.tree.ws.label + '"') : "") + " (turn on OSC live update, or select the root tab)."));
             return;
         }
-        const targets = (targetChoice == "*") ? allTargets : allTargets.filter(function (t) { return t.path == targetChoice; });
+        const targets = getSelectedTargets(found.targets);
         if (targets.length == 0) { targetChoice = "*"; render(); return; }
 
+        head.append(el("button", { class: "live-add", title: "creates vertical sliders, list boxes and buttons for all the settings, bound to this object, in the current tab",
+            onclick: function () { createGui(node, methods); } }, "+ Create GUI"));
         for (const method of methods) content.append(renderMethod(node, targets, method));
+    }
+
+    function createGui(node, methods) {
+        const n = RED.control.gui.create(node, methods, (targetChoice == "*") ? "" : targetChoice);
+        if (n != 0) RED.notify("live: " + n + " GUI object(s) created", "info", null, 1500);
     }
 
     function renderBar(node, found) {
@@ -124,7 +173,7 @@ RED.control.tab = (function () {
         content.append(bar);
 
         if (found.targets.length > 1) {
-            const select = el("select", { title: "which object(s) on the Teensy", onchange: function () { targetChoice = this.value; render(); } });
+            const select = el("select", { title: "which object(s) on the Teensy (the GUI objects created get this too)", onchange: function () { targetChoice = this.value; render(); } });
             select.append(el("option", { value: "*" }, "all " + found.targets.length + " (instances / elements)"));
             for (const t of found.targets) {
                 const o = el("option", { value: t.path }, t.path);
@@ -136,9 +185,8 @@ RED.control.tab = (function () {
         else if (found.targets.length == 1) content.append(el("div", { class: "live-note" }, found.targets[0].path));
 
         if (found.tree != undefined) {
-            const resend = el("button", { title: "sends every value set here again (i.e. after the Teensy is restarted or synced)", onclick: function () {
-                const t = (targetChoice == "*") ? found.targets : found.targets.filter(function (x) { return x.path == targetChoice; });
-                const n = core.resend(node, t);
+            const resend = el("button", { title: "sends every value set here again (i.e. after the Teensy is restarted)", onclick: function () {
+                const n = core.resend(node, getSelectedTargets(found.targets));
                 RED.notify("live: " + n + " value(s) sent again", "info", null, 1500);
             } }, "Send all again");
             content.append(el("div", { class: "live-bar" }, resend, el("span", { class: "live-note" },
@@ -146,39 +194,51 @@ RED.control.tab = (function () {
         }
     }
 
+    function addButton(node, method) {
+        return el("button", { class: "live-add", title: "create GUI object(s) for " + (method.label || method.id) + " in the current tab",
+            onclick: function () { createGui(node, [method]); } }, "+");
+    }
+
     function renderMethod(node, targets, method) {
         const label = method.label || method.id;
+        const core = RED.control.core;
         const box = el("div", { class: "live-method" });
 
-        if (method.kind == "action") {
-            box.append(el("div", { class: "live-row" }, el("button", { onclick: function () {
-                RED.control.core.invoke(node, targets, method, undefined, []);
-            } }, label)));
-            return box;
-        }
-        if (method.kind == "read") {
+        if (method.kind == "action" || method.kind == "read") {
             const result = el("span", { class: "live-result" });
-            box.append(el("div", { class: "live-row" }, el("button", { onclick: function () {
+            const values = core.getValues(node, method, undefined);
+            const run = function () {
+                if (method.kind == "action") {
+                    core.invoke(node, targets, method, undefined, values);
+                    return;
+                }
+                if (method.args != undefined) core.invoke(node, targets, method, undefined, values, false); // keep the arguments
                 result.textContent = "…";
                 result.className = "live-result";
-                RED.control.core.read(targets, method).then(function (results) {
+                core.read(targets, method, values).then(function (results) {
                     const err = results.some(function (r) { return r.error != undefined; });
                     result.className = "live-result" + (err ? " err" : "");
                     result.textContent = results.map(function (r) {
-                        const v = (r.error != undefined) ? r.error : (typeof r.value == "number" ? formatValue({ type: method.returns }, r.value) : String(r.value));
+                        const v = (r.error != undefined) ? r.error : formatValue({ type: method.returns }, r.value);
                         return (results.length > 1) ? (r.target.path.split("/").slice(-2).join("/") + ": " + v) : v;
                     }).join("  ");
                 });
-            } }, label), result));
+            };
+            const row = el("div", { class: "live-row" }, el("button", { onclick: run }, label), result);
+            if (method.kind == "action") row.append(addButton(node, method));
+            box.append(row);
+            if (method.args != undefined) box.append(renderArgs(node, targets, method, undefined, undefined, values, false));
             return box;
         }
 
-        box.append(el("div", { class: "live-label" }, label));
+        const title = el("div", { class: "live-label" }, label, addButton(node, method));
+        box.append(title);
         if (method.perChannel) {
-            const count = RED.control.core.getChannelCount(node, targets[0]);
-            const labels = (targets.length == 1) ? targets[0].inputLabels : {};
+            const count = core.getChannelCount(node, targets[0], method);
+            const labels = (targets.length == 1 && method.channels == undefined) ? targets[0].inputLabels : {};
+            const channelName = method.channelName || "in";
             for (let ch = 0; ch < count; ch++) {
-                box.append(renderArgs(node, targets, method, ch, "in " + ch + (labels[ch] ? (" ← " + labels[ch]) : "")));
+                box.append(renderArgs(node, targets, method, ch, channelName + " " + ch + (labels[ch] ? (" ← " + labels[ch]) : "")));
             }
             if (count == 0) box.append(el("div", { class: "live-note" }, "no inputs"));
             return box;
@@ -187,14 +247,18 @@ RED.control.tab = (function () {
         return box;
     }
 
-    /** the controls of all the arguments of one call (one channel), a change sends all of them */
-    function renderArgs(node, targets, method, channel, rowLabel) {
+    /**
+     * the controls of all the arguments of one call (one channel), a change sends all of them
+     * @param {Array} [values] the values to change (default: the stored ones)
+     * @param {Boolean} [sendOnChange] false: a change is only stored (the arguments of an action / read)
+     */
+    function renderArgs(node, targets, method, channel, rowLabel, values, sendOnChange) {
         const methods = RED.control.methods;
         const core = RED.control.core;
-        const values = core.getValues(node, method, channel);
+        if (values == undefined) values = core.getValues(node, method, channel);
         const wrap = el("div", {});
         const send = function (argIndex) {
-            core.invoke(node, targets, method, channel, values, method.args[argIndex].send != false);
+            core.invoke(node, targets, method, channel, values, sendOnChange != false && method.args[argIndex].send != false);
         };
         method.args.forEach(function (arg, i) {
             const name = (method.args.length == 1 && rowLabel != undefined) ? rowLabel : ((rowLabel != undefined ? rowLabel + " " : "") + arg.name);
@@ -214,6 +278,12 @@ RED.control.tab = (function () {
                 const box = el("input", { type: "checkbox", onchange: function () { values[i] = this.checked; send(i); } });
                 box.checked = values[i] == true;
                 row.append(box);
+            }
+            else if (arg.type == "string") {
+                const text = el("input", { type: "text" });
+                text.value = values[i];
+                text.addEventListener("change", function () { values[i] = text.value; send(i); });
+                row.append(text);
             }
             else {
                 const hasRange = arg.min != undefined && arg.max != undefined;

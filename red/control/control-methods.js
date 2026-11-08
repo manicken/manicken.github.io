@@ -7,13 +7,16 @@
  *   call        the C++ function name, the id when not given
  *   label       shown in the UI, the id when not given
  *   kind        "set" (the default) sent when a value is changed
- *               "action" a button, the method have no arguments
- *               "read" a button, the result is shown (returns gives its type)
+ *               "action" a button (its arguments, if any, are set first and sent with it, i.e. karplus.noteOn(freq, velocity))
+ *               "read" a button, the result is shown (returns gives its type), arguments as for action
+ *   release     action only: the method (id) a created GUI button sends when it's released (envelope noteOn -> noteOff)
+ *   channels    perChannel only: the number of channels when it's not the inputs of the object (delay taps)
+ *   channelName perChannel only: shown instead of "in" (i.e. "tap")
  *   init        true: sent (without arguments) when the object is created on the Teensy, before the stored values
  *               (i.e. sgtl5000.enable(), see RED.control.core objectsCreated)
  *   perChannel  the first C++ argument is the channel, the UI shows one row per input of the object
  *   args        the arguments (after the channel):
- *                 type     "float" | "int" | "enum" | "bool"
+ *                 type     "float" | "int" | "enum" | "bool" | "string"
  *                 min max  the range of the slider (a value typed in the number box is not limited)
  *                 scale    "lin" (default) | "log" (min > 0) | "curve" (value = min + (max-min) * t^curve, used for times)
  *                 default  the value shown before anything is sent
@@ -41,7 +44,129 @@ RED.control.methods = (function () {
         { id: "offset", args: [{ name: "offset", type: "float", min: -1, max: 1, default: 0 }] },
     ];
 
+    const sineCommon = [
+        { id: "amplitude", args: [level(0)] },
+        { id: "frequency", args: [frequency(440)] },
+        { id: "phase", args: [{ name: "angle", type: "float", min: 0, max: 360, unit: "°", default: 0 }] },
+    ];
+    function biquad(id, label, third) {
+        const args = [{ name: "stage", type: "int", min: 0, max: 3, default: 0 }, frequency(1000)];
+        args.push(third || { name: "q", type: "float", min: 0.1, max: 10, scale: "log", default: 0.707 });
+        return { id, label, args };
+    }
+    function shelf(id, label) {
+        return { id, label, args: [{ name: "stage", type: "int", min: 0, max: 3, default: 0 }, frequency(1000),
+            { name: "gain", type: "float", min: -24, max: 24, unit: "dB", default: 0 },
+            { name: "slope", type: "float", min: 0.1, max: 1, default: 1 }] };
+    }
+    function reads(...ids) { return ids.map(function (id) { return { id, kind: "read", returns: (id == "available" || id.startsWith("is")) ? "bool" : "float" }; }); }
+
     const types = {
+        // ---- synths ----
+        AudioSynthWaveformSineModulated: [
+            { id: "amplitude", args: [level(0)] },
+            { id: "frequency", args: [frequency(440)] },
+            { id: "phase", args: [{ name: "angle", type: "float", min: 0, max: 360, unit: "°", default: 0 }] },
+        ],
+        AudioSynthWaveformSineHires: sineCommon,
+        AudioSynthWaveformPWM: [
+            { id: "amplitude", args: [level(0)] },
+            { id: "frequency", args: [frequency(440)] },
+        ],
+        AudioSynthNoiseWhite: [{ id: "amplitude", args: [level(0)] }],
+        AudioSynthNoisePink: [{ id: "amplitude", args: [level(0)] }],
+        AudioSynthSimpleDrum: [
+            { id: "noteOn", kind: "action" },
+            { id: "frequency", args: [frequency(60)] },
+            { id: "length", args: [{ name: "time", type: "int", min: 10, max: 2000, unit: "ms", default: 300 }] },
+            { id: "secondMix", label: "second mix", args: [level(0)] },
+            { id: "pitchMod", label: "pitch mod", args: [{ name: "depth", type: "float", min: 0, max: 1, default: 0.5 }] },
+        ],
+        AudioSynthKarplusStrong: [
+            { id: "noteOn", kind: "action", release: "noteOff", args: [frequency(220), { name: "velocity", type: "float", min: 0, max: 1, default: 0.8 }] },
+            { id: "noteOff", kind: "action", args: [{ name: "velocity", type: "float", min: 0, max: 1, default: 0 }] },
+        ],
+        AudioSynthToneSweep: [
+            { id: "play", kind: "action", args: [level(0.5),
+                { name: "from", type: "int", min: 10, max: 20000, scale: "log", unit: "Hz", default: 100 },
+                { name: "to", type: "int", min: 10, max: 20000, scale: "log", unit: "Hz", default: 5000 },
+                { name: "time", type: "float", min: 0.1, max: 20, unit: "s", default: 2 }] },
+            ...reads("isPlaying"),
+        ],
+        AudioPlaySdWav: [
+            { id: "play", kind: "action", args: [{ name: "file", type: "string", default: "SDTEST1.WAV" }] },
+            { id: "stop", kind: "action" },
+            { id: "togglePlayPause", label: "play/pause", kind: "action" },
+            { id: "isPlaying", kind: "read", returns: "bool" },
+            { id: "positionMillis", label: "position (ms)", kind: "read", returns: "int" },
+            { id: "lengthMillis", label: "length (ms)", kind: "read", returns: "int" },
+        ],
+        // ---- effects ----
+        AudioAmplifier: [{ id: "gain", args: [{ name: "gain", type: "float", min: 0, max: 4, default: 1 }] }],
+        AudioEffectFade: [
+            { id: "fadeIn", label: "fade in", kind: "action", args: [{ name: "time", type: "int", min: 1, max: 10000, scale: "log", unit: "ms", default: 500 }] },
+            { id: "fadeOut", label: "fade out", kind: "action", args: [{ name: "time", type: "int", min: 1, max: 10000, scale: "log", unit: "ms", default: 500 }] },
+        ],
+        AudioEffectDelay: [
+            { id: "delay", perChannel: true, channels: 8, channelName: "tap", args: [milliseconds("time", 0, 1400)] },
+            { id: "disable", kind: "action", args: [{ name: "tap", type: "int", min: 0, max: 7, default: 0 }] },
+        ],
+        AudioEffectBitcrusher: [
+            { id: "bits", args: [{ name: "bits", type: "int", min: 1, max: 16, default: 16 }] },
+            { id: "sampleRate", label: "sample rate", args: [{ name: "rate", type: "float", min: 100, max: 44100, scale: "log", unit: "Hz", default: 44100 }] },
+        ],
+        AudioEffectFreeverb: [
+            { id: "roomsize", label: "room size", args: [level(0.5)] },
+            { id: "damping", args: [level(0.5)] },
+        ],
+        AudioEffectFreeverbStereo: [
+            { id: "roomsize", label: "room size", args: [level(0.5)] },
+            { id: "damping", args: [level(0.5)] },
+        ],
+        AudioEffectReverb: [{ id: "reverbTime", label: "reverb time", args: [{ name: "time", type: "float", min: 0, max: 10, unit: "s", default: 5 }] }],
+        AudioEffectMidSide: [{ id: "encode", kind: "action" }, { id: "decode", kind: "action" }],
+        AudioEffectDigitalCombine: [{ id: "setCombineMode", label: "mode", args: [{ name: "mode", type: "enum", options: ["OR", "XOR", "AND", "MODULO"], default: 0 }] }],
+        // ---- filters ----
+        AudioFilterBiquad: [
+            biquad("setLowpass", "lowpass"),
+            biquad("setHighpass", "highpass"),
+            biquad("setBandpass", "bandpass", { name: "q", type: "float", min: 0.1, max: 10, scale: "log", default: 1 }),
+            biquad("setNotch", "notch", { name: "q", type: "float", min: 0.1, max: 10, scale: "log", default: 1 }),
+            shelf("setLowShelf", "low shelf"),
+            shelf("setHighShelf", "high shelf"),
+        ],
+        AudioFilterLadder: [
+            { id: "frequency", args: [frequency(1000)] },
+            { id: "resonance", args: [{ name: "res", type: "float", min: 0, max: 1.8, default: 0 }] },
+            { id: "octaveControl", label: "octave control", args: [{ name: "octaves", type: "float", min: 0, max: 7, default: 1 }] },
+            { id: "inputDrive", label: "input drive", args: [{ name: "drive", type: "float", min: 0, max: 4, default: 1 }] },
+            { id: "passbandGain", label: "passband gain", args: [{ name: "gain", type: "float", min: 0, max: 0.5, default: 0.5 }] },
+            { id: "interpolationMethod", label: "interpolation", args: [{ name: "method", type: "enum", options: ["LINEAR", "FIR_POLY"], default: 1 }] },
+        ],
+        // ---- analyze ----
+        AudioAnalyzePeak: reads("available", "read", "readPeakToPeak"),
+        AudioAnalyzeRMS: reads("available", "read"),
+        AudioAnalyzeToneDetect: [
+            { id: "frequency", args: [frequency(1000), { name: "cycles", type: "int", min: 1, max: 100, default: 10 }] },
+            { id: "threshold", args: [level(0.5)] },
+            ...reads("available", "read"),
+        ],
+        AudioAnalyzeNoteFrequency: [
+            { id: "begin", kind: "action", args: [{ name: "threshold", type: "float", min: 0, max: 1, default: 0.15 }] },
+            { id: "threshold", args: [{ name: "threshold", type: "float", min: 0, max: 1, default: 0.15 }] },
+            ...reads("available", "read", "probability"),
+        ],
+        AudioAnalyzeFFT256: [
+            { id: "averageTogether", label: "average", args: [{ name: "n", type: "int", min: 1, max: 255, default: 1 }] },
+            { id: "available", kind: "read", returns: "bool" },
+            { id: "read", label: "read bin", kind: "read", returns: "float", args: [{ name: "bin", type: "int", min: 0, max: 127, default: 0 }] },
+        ],
+        AudioAnalyzeFFT1024: [
+            { id: "averageTogether", label: "average", args: [{ name: "n", type: "int", min: 1, max: 255, default: 1 }] },
+            { id: "available", kind: "read", returns: "bool" },
+            { id: "read", label: "read bin", kind: "read", returns: "float", args: [{ name: "bin", type: "int", min: 0, max: 511, default: 0 }] },
+        ],
+        // ---- the pilot types ----
         AudioSynthWaveform: [
             ...waveformCommon,
             { id: "phase", args: [{ name: "angle", type: "float", min: 0, max: 360, unit: "°", default: 0 }] },
@@ -59,13 +184,15 @@ RED.control.methods = (function () {
         ],
         AudioSynthWaveformDc: [
             { id: "amplitude", args: [{ name: "level", type: "float", min: -1, max: 1, default: 0 }] },
-            { id: "amplitudeRamp", call: "amplitude", label: "amplitude (ramp)", args: [
-                { name: "level", type: "float", min: -1, max: 1, default: 0 },
-                { ...milliseconds("time", 100, 5000), send: false }] },
+            // amplitude(level, milliseconds) is not reachable in OSCAudio: the route "/a*" "f" is before "/a*" "ff", and
+            // validParams() don't reject extra arguments, so amplitude(level) is called (the ramp is lost). Add it again when it's fixed:
+            // { id: "amplitudeRamp", call: "amplitude", label: "amplitude (ramp)", args: [
+            //     { name: "level", type: "float", min: -1, max: 1, default: 0 },
+            //     { ...milliseconds("time", 100, 5000), send: false }] },
             { id: "read", kind: "read", returns: "float" },
         ],
         AudioEffectEnvelope: [
-            { id: "noteOn", kind: "action" },
+            { id: "noteOn", kind: "action", release: "noteOff" },
             { id: "noteOff", kind: "action" },
             { id: "delay", args: [milliseconds("time", 0, 2000)] },
             { id: "attack", args: [milliseconds("time", 10.5, 11880)] },
