@@ -1,0 +1,133 @@
+interpreter_dsp_factory float
+file_version 8
+Faust version 2.88.0
+compile_options -lang interp -fpga-mem-th 4 -ct 1 -es 1 -mcd 16 -mdd 1024 -mdy 33 -single -ftz 0 
+name echo
+sha_key 
+opt_level 6
+inputs 1 outputs 1
+int_heap_size 6 real_heap_size 131076 sr_offset 1 count_offset 2 iota_offset -1
+meta_block
+block_size 11
+meta key "delays.lib/name" value "Faust Delay Library"
+meta key "delays.lib/version" value "1.2.0"
+meta key "filename" value "echo.dsp"
+meta key "maths.lib/author" value "GRAME"
+meta key "maths.lib/copyright" value "GRAME"
+meta key "maths.lib/license" value "LicenseRef-LGPL-2.1-or-later-with-Faust-exception"
+meta key "maths.lib/name" value "Faust Math Library"
+meta key "maths.lib/version" value "2.9.0"
+meta key "name" value "echo"
+meta key "platform.lib/name" value "Generic Platform Library"
+meta key "platform.lib/version" value "1.3.0"
+user_interface_block
+block_size 5
+opcode 280 kOpenVerticalBox offset -1 label "echo" key "" value "" init 0 min 0 max 0 step 0
+opcode 292 kDeclare offset 0 label "" key "unit" value "ms" init 0 min 0 max 0 step 0
+opcode 286 kAddHorizontalSlider offset 0 label "delay" key "" value "" init 250 min 1 max 1000 step 1
+opcode 286 kAddHorizontalSlider offset 2 label "feedback" key "" value "" init 0.4 min 0 max 0.95 step 0.01
+opcode 283 kCloseBox offset -1 label "" key "" value "" init 0 min 0 max 0 step 0
+static_init_block
+block_size 1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+constants_block
+block_size 10
+opcode 0 kRealValue int 0 real 0.001 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 1 offset2 0 name fSampleRate
+opcode 26 kCastReal int 0 real 0 offset1 -1 offset2 -1
+opcode 0 kRealValue int 0 real 1 offset1 -1 offset2 -1
+opcode 239 kMaxf int 0 real 0 offset1 -1 offset2 -1
+opcode 0 kRealValue int 0 real 192000 offset1 -1 offset2 -1
+opcode 241 kMinf int 0 real 0 offset1 -1 offset2 -1
+opcode 36 kMultReal int 0 real 0 offset1 -1 offset2 -1
+opcode 6 kStoreReal int 0 real 0 offset1 1 offset2 0 name fConst0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+reset_ui
+block_size 5
+opcode 0 kRealValue int 0 real 250 offset1 -1 offset2 -1
+opcode 6 kStoreReal int 0 real 0 offset1 0 offset2 0 name fHslider0
+opcode 0 kRealValue int 0 real 0.4 offset1 -1 offset2 -1
+opcode 6 kStoreReal int 0 real 0 offset1 2 offset2 0 name fHslider1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+clear_block
+block_size 4
+opcode 1 kInt32Value int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 0 offset2 0 name IOTA0
+opcode 274 kLoop int 32 real 0 offset1 0 offset2 0
+block_size 3
+opcode 1 kInt32Value int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 3 offset2 0 name l0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+block_size 12
+opcode 0 kRealValue int 0 real 0 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 3 offset2 0 name l0
+opcode 12 kStoreIndexedReal int 0 real 0 offset1 3 offset2 131072 name fRec0
+opcode 3 kLoadInt int 0 real 0 offset1 3 offset2 0 name l0
+opcode 1 kInt32Value int 1 real 0 offset1 -1 offset2 -1
+opcode 33 kAddInt int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 3 offset2 0 name l0
+opcode 1 kInt32Value int 131072 real 0 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 3 offset2 0 name l0
+opcode 46 kLTInt int 0 real 0 offset1 -1 offset2 -1
+opcode 279 kCondBranch int 0 real 0 offset1 0 offset2 0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+control_block
+block_size 14
+opcode 2 kLoadReal int 0 real 0 offset1 1 offset2 0 name fConst0
+opcode 2 kLoadReal int 0 real 0 offset1 0 offset2 0 name fHslider0
+opcode 36 kMultReal int 0 real 0 offset1 -1 offset2 -1
+opcode 0 kRealValue int 0 real 0 offset1 -1 offset2 -1
+opcode 239 kMaxf int 0 real 0 offset1 -1 offset2 -1
+opcode 0 kRealValue int 0 real 65536 offset1 -1 offset2 -1
+opcode 241 kMinf int 0 real 0 offset1 -1 offset2 -1
+opcode 27 kCastInt int 0 real 0 offset1 -1 offset2 -1
+opcode 1 kInt32Value int 1 real 0 offset1 -1 offset2 -1
+opcode 33 kAddInt int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 4 offset2 0 name iSlow0
+opcode 2 kLoadReal int 0 real 0 offset1 2 offset2 0 name fHslider1
+opcode 6 kStoreReal int 0 real 0 offset1 131075 offset2 0 name fSlow1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+dsp_block
+block_size 2
+opcode 274 kLoop int 32 real 0 offset1 0 offset2 0
+block_size 3
+opcode 1 kInt32Value int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 5 offset2 0 name i0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+block_size 34
+opcode 2 kLoadReal int 0 real 0 offset1 131075 offset2 0 name fSlow1
+opcode 3 kLoadInt int 0 real 0 offset1 4 offset2 0 name iSlow0
+opcode 3 kLoadInt int 0 real 0 offset1 0 offset2 0 name IOTA0
+opcode 35 kSubInt int 0 real 0 offset1 -1 offset2 -1
+opcode 1 kInt32Value int 131071 real 0 offset1 -1 offset2 -1
+opcode 57 kANDInt int 0 real 0 offset1 -1 offset2 -1
+opcode 10 kLoadIndexedReal int 0 real 0 offset1 3 offset2 131072 name fRec0
+opcode 36 kMultReal int 0 real 0 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 5 offset2 0 name i0
+opcode 24 kLoadInput int 0 real 0 offset1 0 offset2 0
+opcode 32 kAddReal int 0 real 0 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 0 offset2 0 name IOTA0
+opcode 1 kInt32Value int 131071 real 0 offset1 -1 offset2 -1
+opcode 57 kANDInt int 0 real 0 offset1 -1 offset2 -1
+opcode 12 kStoreIndexedReal int 0 real 0 offset1 3 offset2 131072 name fRec0
+opcode 3 kLoadInt int 0 real 0 offset1 0 offset2 0 name IOTA0
+opcode 1 kInt32Value int 131071 real 0 offset1 -1 offset2 -1
+opcode 57 kANDInt int 0 real 0 offset1 -1 offset2 -1
+opcode 10 kLoadIndexedReal int 0 real 0 offset1 3 offset2 131072 name fRec0
+opcode 3 kLoadInt int 0 real 0 offset1 5 offset2 0 name i0
+opcode 25 kStoreOutput int 0 real 0 offset1 0 offset2 0
+opcode 3 kLoadInt int 0 real 0 offset1 0 offset2 0 name IOTA0
+opcode 1 kInt32Value int 1 real 0 offset1 -1 offset2 -1
+opcode 33 kAddInt int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 0 offset2 0 name IOTA0
+opcode 3 kLoadInt int 0 real 0 offset1 5 offset2 0 name i0
+opcode 1 kInt32Value int 1 real 0 offset1 -1 offset2 -1
+opcode 33 kAddInt int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 5 offset2 0 name i0
+opcode 3 kLoadInt int 0 real 0 offset1 2 offset2 0 name count
+opcode 3 kLoadInt int 0 real 0 offset1 5 offset2 0 name i0
+opcode 46 kLTInt int 0 real 0 offset1 -1 offset2 -1
+opcode 279 kCondBranch int 0 real 0 offset1 0 offset2 0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
