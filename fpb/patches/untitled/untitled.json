@@ -1,0 +1,204 @@
+{
+  "type": "patch",
+  "name": "untitled",
+  "origin": "faustide",
+  "time": 1794397751376,
+  "inputs": 0,
+  "outputs": 2,
+  "sampleRate": 44117,
+  "params": [
+    {
+      "index": 0,
+      "label": "Damp",
+      "path": "Damp",
+      "widget": "VerticalSlider",
+      "min": 0,
+      "max": 1,
+      "step": 0.025,
+      "def": 0.5,
+      "meta": {
+        "0": "",
+        "style": "knob",
+        "tooltip": "Somehow control the         density of the reverb."
+      }
+    },
+    {
+      "index": 1,
+      "label": "RoomSize",
+      "path": "RoomSize",
+      "widget": "VerticalSlider",
+      "min": 0,
+      "max": 1,
+      "step": 0.025,
+      "def": 0.5,
+      "meta": {
+        "1": "",
+        "style": "knob",
+        "tooltip": "The room size         between 0 and 1 with 1 for the largest room."
+      }
+    },
+    {
+      "index": 2,
+      "label": "Stereo Spread",
+      "path": "Stereo Spread",
+      "widget": "VerticalSlider",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "def": 0.5,
+      "meta": {
+        "2": "",
+        "style": "knob",
+        "tooltip": "Spatial         spread between 0 and 1 with 1 for maximum spread."
+      }
+    },
+    {
+      "index": 3,
+      "label": "Wet",
+      "path": "Wet",
+      "widget": "VerticalSlider",
+      "min": 0,
+      "max": 1,
+      "step": 0.025,
+      "def": 0.33329999446868896,
+      "meta": {
+        "1": "",
+        "tooltip": "The amount of reverb applied to the signal         between 0 and 1 with 1 for the maximum amount of reverb."
+      }
+    }
+  ],
+  "stats": {
+    "fbcControl": 114,
+    "fbcSample": 1620,
+    "blk": 38,
+    "smp": 404,
+    "fSlots": 286,
+    "iSlots": 64,
+    "arrays": [
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 1024,
+        "tier": "fast"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 8192,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      },
+      {
+        "type": "f",
+        "len": 2048,
+        "tier": "any"
+      }
+    ],
+    "arrayBytesFast": 4096,
+    "arrayBytesBig": 581632,
+    "bytes": 4570
+  },
+  "warnings": []
+}

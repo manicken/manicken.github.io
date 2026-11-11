@@ -41,10 +41,11 @@
              console.warn("RED.events.emit",evt,args);
          }
          if (handlers[evt] != undefined) {
-             for (var i=0;i<handlers[evt].length;i++) {
+             var list = handlers[evt].slice(); // a copy: a handler may remove itself (off) while this runs
+             for (var i=0;i<list.length;i++) {
                  try {
-                     //console.warn(typeof handlers[evt][i]);
-                     handlers[evt][i].apply(null, args);
+                     //console.warn(typeof list[i]);
+                     list[i].apply(null, args);
                  } catch(err) {
                      console.warn("RED.events.emit error: ["+evt+"] "+(err.toString()));
                      console.warn(err);

@@ -35,7 +35,8 @@
     FPB_OP(17, eq,       "i=ff",  PURE) \
     FPB_OP(18, ne,       "i=ff",  PURE) \
     FPB_OP(19, copysign, "f=ff",  PURE) \
-    FPB_RES(20) FPB_RES(21) FPB_RES(22) FPB_RES(23) FPB_RES(24) FPB_RES(25) \
+    FPB_OP(20, mov2,     "ff=ff", PURE) \
+    FPB_RES(21) FPB_RES(22) FPB_RES(23) FPB_RES(24) FPB_RES(25) \
     FPB_RES(26) FPB_RES(27) FPB_RES(28) FPB_RES(29) FPB_RES(30) FPB_RES(31) \
     /* ---- math 32..63 ---- */ \
     FPB_OP(32, floor,    "f=f",   PURE) \
@@ -95,7 +96,10 @@
     FPB_OP(97, wrf,      "=aif",  ARRAY | STATEFUL) \
     FPB_OP(98, rdi,      "i=ai",  ARRAY) \
     FPB_OP(99, wri,      "=aii",  ARRAY | STATEFUL) \
-    FPB_RES(100) FPB_RES(101) FPB_RES(102) FPB_RES(103) FPB_RES(104) FPB_RES(105) \
+    FPB_OP(100, dlyrd,   "f=aii", ARRAY) \
+    FPB_OP(101, rdfm,    "f=ai",  ARRAY) \
+    FPB_OP(102, wrfm,    "=aif",  ARRAY | STATEFUL) \
+    FPB_RES(103) FPB_RES(104) FPB_RES(105) \
     FPB_RES(106) FPB_RES(107) FPB_RES(108) FPB_RES(109) FPB_RES(110) FPB_RES(111) \
     FPB_RES(112) FPB_RES(113) FPB_RES(114) FPB_RES(115) FPB_RES(116) FPB_RES(117) \
     FPB_RES(118) FPB_RES(119) FPB_RES(120) FPB_RES(121) FPB_RES(122) FPB_RES(123) \

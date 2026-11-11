@@ -162,6 +162,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 					<li><a id="btn-disConnectSerial" class="btn" href="#"><i id="btn-icn-deploy" class="icon-upload"></i>&nbsp;Disconnect serial</a></li>
 				</ul>
 			</div>
+            <div class="btn-group pull-left"><a id="lbl-io-status" href="#"></a></div>
 
             <div class="btn-group pull-left">
 				<label style="color:white;" id="lbl-export-mode">Export Mode:
@@ -339,6 +340,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
         <div id="bottombar-controls">
             <div class="btn-group">
                 <!--<a class="btn btn-mini" id="lbl-zoom-level">1.0</a>-->
+                <a class="btn btn-mini" id="btn-split-log" href="#" title="the Teensy debug port log, beside this one (through the bridge server)"><i class="fa fa-columns"></i></a>
                 <a class="btn btn-mini" id="btn-clear-log" href="#"><i class="fa fa-trash"></i></a>
                 
             </div>
@@ -822,6 +824,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/ui/sidebar-palette.js"></script>
 <script src="red/ui/bottombar.js"></script>
 <script src="red/ui/tab-bottom-info.js"></script>
+<script src="red/ui/tab-bottom-debug.js"></script>
 <script src="red/ui/palette.js"></script>
 <script src="red/ui/tab-info.js"></script>
 <!--<script src="red/ui/tab-config.js"></script>-->
@@ -851,6 +854,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/control/control-osc.js"></script>
 <script src="red/control/control-gui.js"></script>
 <script src="red/control/tab-live.js"></script>
+<script src="red/fpb/fpb-bridge.js"></script>
+<script src="red/backend-io.js"></script>
 <script src="red/arduino/DynMixerHppCode.js"></script>
 <script src="red/arduino/DynMixerCppCode.js"></script>
 <script src="red/arduino/Mixers-export.js"></script>

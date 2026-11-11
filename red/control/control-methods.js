@@ -22,6 +22,13 @@
  *                 default  the value shown before anything is sent
  *                 options  ["NAME", ...] for enum, the value is the index (or {label, value})
  *                 send     false: changing it don't send (i.e. the ramp time of dc.amplitude)
+ *   prefixArgs  fixed arguments sent first, not shown: [{type, value}] (i.e. the parameter index of AudioEffectFPB.setParam)
+ *   help        a tooltip for the method
+ *   hidden      not shown and no GUI object made (i.e. the release method of a button)
+ *   arg.wire    "float": the value is sent as a float whatever the type (an enum for AudioEffectFPB.setParam)
+ *
+ * Types whose methods depend on the object (AudioEffectFPB: the parameters of the loaded patch) register a provider:
+ * registerProvider(typeName, function (node) { return methods; }), then get/getMethod need the node.
  *
  * Pilot, only the types needed for simple tests are here.
  */
@@ -221,7 +228,11 @@ RED.control.methods = (function () {
         AudioControlSGTL5000: [ // init: "enable" is sent when the OSC live update / Sync creates it (the constructor don't enable it)
             { id: "enable", kind: "read", returns: "bool", init: true }, // shows if the codec answered
             { id: "volume", label: "headphone volume", args: [{ name: "level", type: "float", min: 0, max: 1, default: 0.5 }] },
-            { id: "headphoneSelect", label: "headphone source", args: [{ name: "source", type: "enum", options: ["DAC", "LINEIN"], default: 0 }] },
+            // The Audio library's headphoneSelect() is reversed: AUDIO_HEADPHONE_DAC (0) sets CHIP_ANA_CTRL bit 6, which is
+            // SELECT_HP = LINEIN in the SGTL5000 datasheet (enable() leaves it 0 = DAC). So the values sent are swapped here,
+            // the labels say what is heard. If the library is fixed, swap them back.
+            { id: "headphoneSelect", label: "headphone source", help: "the Teensy Audio library has the two values reversed, this sends what the label says",
+              args: [{ name: "source", type: "enum", options: [{ label: "DAC", value: 1 }, { label: "LINEIN", value: 0 }], default: 1 }] },
             { id: "muteHeadphone", label: "mute headphone", kind: "action" },
             { id: "unmuteHeadphone", label: "unmute headphone", kind: "action" },
             { id: "lineOutLevel", label: "line out level", args: [{ name: "level", type: "int", min: 13, max: 31, default: 29 }] },
@@ -248,14 +259,26 @@ RED.control.methods = (function () {
         ],
     };
 
-    /** @param {String} typeName @returns {Object[]|undefined} the methods of the type */
-    function get(typeName) {
+    /** typeName -> function (node) returning the methods of that node */
+    const providers = {};
+
+    /** @param {String} typeName @param {Function} fn (node) -> methods (an empty array when there are none yet) */
+    function registerProvider(typeName, fn) {
+        providers[typeName] = fn;
+    }
+
+    /**
+     * @param {String} typeName @param {REDNode} [node] needed for the types with a provider
+     * @returns {Object[]|undefined} the methods of the type (undefined: no live control for it)
+     */
+    function get(typeName, node) {
+        if (providers[typeName] != undefined) return (node != undefined) ? (providers[typeName](node) || []) : [];
         return types[typeName];
     }
 
-    /** @param {String} typeName @param {String} id @returns {Object|undefined} */
-    function getMethod(typeName, id) {
-        const methods = types[typeName];
+    /** @param {String} typeName @param {String} id @param {REDNode} [node] @returns {Object|undefined} */
+    function getMethod(typeName, id, node) {
+        const methods = get(typeName, node);
         return (methods == undefined) ? undefined : methods.find(function (m) { return m.id == id; });
     }
 
@@ -287,6 +310,7 @@ RED.control.methods = (function () {
     return {
         WAVEFORM_TYPES,
         types,
+        registerProvider,
         get,
         getMethod,
         getDefault,

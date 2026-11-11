@@ -39,9 +39,21 @@ void AudioEffectFPB::swapIn(FPB_Program* p) {
     AudioNoInterrupts();
     FPB_Program* old = program;
     program = p;
+    overloaded = false;          // a new patch gets a new chance
+    overCount = 0;
+    cyclesLast = cyclesMax = 0;
     AudioInterrupts();
     delete old;
 }
+
+float AudioEffectFPB::cyclesToPercent(uint32_t c) const {
+    // one block lasts AUDIO_BLOCK_SAMPLES / AUDIO_SAMPLE_RATE_EXACT seconds = that many CPU cycles * F_CPU_ACTUAL
+    const float blockCycles = (float)F_CPU_ACTUAL * (float)AUDIO_BLOCK_SAMPLES / AUDIO_SAMPLE_RATE_EXACT;
+    return 100.0f * (float)c / blockCycles;
+}
+
+float AudioEffectFPB::cpuUsage() const    { return cyclesToPercent(cyclesLast); }
+float AudioEffectFPB::cpuUsageMax() const { return cyclesToPercent(cyclesMax); }
 
 bool AudioEffectFPB::setParam(uint16_t index, float value) {
     FPB_Program* p = program;
@@ -65,7 +77,7 @@ size_t AudioEffectFPB::memoryUsed(uint8_t tier) const {
 
 void AudioEffectFPB::update(void) {
     FPB_Program* p = program;
-    if (!p) {
+    if (!p || overloaded) {
         for (int c = 0; c < FPB_MAX_INPUTS; c++) {
             audio_block_t* b = receiveReadOnly(c);
             if (b) release(b);
@@ -87,7 +99,14 @@ void AudioEffectFPB::update(void) {
     }
     for (int c = 0; c < nOut; c++) out[c] = outBuf[c];
 
+    const uint32_t t0 = ARM_DWT_CYCCNT;
     p->process(in, out, AUDIO_BLOCK_SAMPLES);
+    const uint32_t cycles = ARM_DWT_CYCCNT - t0;
+    cyclesLast = cycles;
+    if (cycles > cyclesMax) cyclesMax = cycles;
+    if (cpuLimitPercent > 0.0f && cyclesToPercent(cycles) > cpuLimitPercent) {
+        if (++overCount >= FPB_OVERLOAD_BLOCKS) overloaded = true;   // stopped from the next block on
+    } else overCount = 0;
 
     for (int c = 0; c < nOut; c++) {
         audio_block_t* b = allocate();

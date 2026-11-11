@@ -28,7 +28,7 @@ RED.control.oscAdapter = (function () {
         let types = "";
         const values = [];
         for (const arg of command.args) {
-            if (arg.type == "float") { types += "f"; values.push(Number(arg.value)); }
+            if (arg.type == "float" || arg.wire == "float") { types += "f"; values.push(Number(arg.value)); } // wire: an enum sent as a float
             else if (arg.type == "string") { types += "s"; values.push(String(arg.value)); }
             else if (arg.type == "bool") { types += arg.value ? "T" : "F"; values.push(0); } // CreatePacket absorbs a value for T/F
             else { types += "i"; values.push(Math.round(Number(arg.value))); } // int, enum, the channel

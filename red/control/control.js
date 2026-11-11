@@ -114,7 +114,7 @@ RED.control.core = (function () {
         const model = tree.model;
         const targets = [];
         const add = function (item) {
-            if (RED.control.methods.get(item.typeName) == undefined) return;
+            if (RED.control.methods.get(item.typeName, node) == undefined) return;
             targets.push(makeTarget(model, item));
         };
         const suffix = "|" + node.id;
@@ -143,19 +143,36 @@ RED.control.core = (function () {
     // values
     // ******************************************************************
 
+    // A node can be many objects on the Teensy (an array, a class group array: /voices/i0/osc, /voices/i1/osc ...).
+    // values: node|method|channel -> { all: the values set for all of them, paths: Map(path -> the values set for one) }
+
     function valueKey(node, method, channel) {
         return node.id + "|" + method.id + "|" + ((channel == undefined) ? "" : channel);
     }
 
-    /** @returns {Array} the values of the arguments (the defaults until something is sent) */
-    function getValues(node, method, channel) {
-        const stored = values.get(valueKey(node, method, channel));
-        if (stored != undefined) return [...stored];
+    /**
+     * @param {String} [path] one object on the Teensy; without it: the values of all of them
+     * @returns {Array} the values of the arguments (that object's own, else the ones for all, else the defaults)
+     */
+    function getValues(node, method, channel, path) {
+        const e = values.get(valueKey(node, method, channel));
+        if (e != undefined) {
+            if (path && e.paths.has(path)) return [...e.paths.get(path)];
+            if (e.all != undefined) return [...e.all];
+        }
         return (method.args || []).map(RED.control.methods.getDefault);
     }
 
-    function hasValues(node, method, channel) {
-        return values.has(valueKey(node, method, channel));
+    function hasValues(node, method, channel, path) {
+        const e = values.get(valueKey(node, method, channel));
+        return e != undefined && (e.all != undefined || (!!path && e.paths.has(path)));
+    }
+
+    /** @returns {String[]|null} the paths when only some of the node's objects are targets, null for all of them */
+    function scopeOf(node, targets) {
+        const all = getTargets(node).targets;
+        if (all.length <= 1 || targets.length >= all.length) return null;
+        return targets.map(function (t) { return t.path; });
     }
 
     // ******************************************************************
@@ -164,8 +181,9 @@ RED.control.core = (function () {
 
     function createCommand(target, method, channel, argValues) {
         const args = [];
+        (method.prefixArgs || []).forEach(function (arg) { args.push({ type: arg.type, value: arg.value }); });
         if (method.perChannel) args.push({ type: "int", value: channel });
-        (method.args || []).forEach(function (arg, i) { args.push({ type: arg.type, value: argValues[i] }); });
+        (method.args || []).forEach(function (arg, i) { args.push({ type: arg.type, value: argValues[i], wire: arg.wire }); });
         return { path: target.path, typeName: target.typeName, method, call: method.call || method.id, args };
     }
 
@@ -187,10 +205,21 @@ RED.control.core = (function () {
      */
     function invoke(node, targets, method, channel, argValues, send, source) {
         if (method.args != undefined) {
-            values.set(valueKey(node, method, channel), [...argValues]);
-            RED.events.emit("control:valuesChanged", { node, method, channel, values: [...argValues], source });
+            const key = valueKey(node, method, channel);
+            const e = values.get(key) || { all: undefined, paths: new Map() };
+            const paths = scopeOf(node, targets);
+            if (paths == null) { e.all = [...argValues]; e.paths.clear(); }          // all of them: their own values are replaced
+            else for (const p of paths) e.paths.set(p, [...argValues]);
+            values.set(key, e);
+            // paths: the objects that changed, null = all (see RED.control.gui valuesChanged)
+            RED.events.emit("control:valuesChanged", { node, method, channel, values: [...argValues], source, paths });
         }
         if (send == false) return;
+        queue(targets, method, channel, argValues);
+    }
+
+    /** sends without storing (coalesced) */
+    function queue(targets, method, channel, argValues) {
         for (const target of targets) {
             pending.set(target.path + "|" + method.id + "|" + channel, createCommand(target, method, channel, argValues || []));
         }
@@ -212,15 +241,17 @@ RED.control.core = (function () {
 
     /** Sends every stored value of the node (i.e. after the Teensy is restarted or synced) @returns {Number} the commands sent */
     function resend(node, targets) {
-        const methods = RED.control.methods.get(node.type) || [];
+        const methods = RED.control.methods.get(node.type, node) || [];
         let count = 0;
         for (const method of methods) {
             if (method.kind == "action" || method.kind == "read") continue;
             const channels = method.perChannel ? [...Array(getChannelCount(node, targets[0], method)).keys()] : [undefined];
             for (const channel of channels) {
-                if (hasValues(node, method, channel) == false) continue;
-                invoke(node, targets, method, channel, getValues(node, method, channel));
-                count++;
+                for (const target of targets) {   // each object its own values (or the ones for all)
+                    if (hasValues(node, method, channel, target.path) == false) continue;
+                    queue([target], method, channel, getValues(node, method, channel, target.path));
+                    count++;
+                }
             }
         }
         return count;
@@ -238,12 +269,12 @@ RED.control.core = (function () {
         for (const path of paths) {
             const item = model.items.get(path);
             if (item == undefined || item.kind != "object") continue;
-            const methods = RED.control.methods.get(item.typeName);
-            if (methods == undefined) continue;
             // the node: the identity ends with its id, for an array element it's the identity of the array (the parent group)
             let node = RED.nodes.node(item.identity.split("|").pop());
             if (node == undefined && model.items.has(item.parent)) node = RED.nodes.node(model.items.get(item.parent).identity.split("|").pop());
             if (node == undefined) continue;
+            const methods = RED.control.methods.get(item.typeName, node);
+            if (methods == undefined) continue;
             const target = makeTarget(model, item);
             for (const method of methods) if (method.init == true) invoke(node, [target], method, undefined, []);
             resend(node, [target]);

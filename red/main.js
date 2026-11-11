@@ -837,7 +837,7 @@ RED.main = (function() {
         OSC.LiveUpdate.RegisterEvents();
         RED.control.oscAdapter.init();
         RED.control.gui.init();
-        RED.control.tab.createTab();
+        RED.control.tab.createTab(); RED.backendIO.init(); RED.fpb.bridge.init();
         RED.midi.init();
         RED.serial.init();
 

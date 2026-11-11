@@ -30,6 +30,7 @@ OPFN(reserved) { (void)s; return nullptr; }         // never runs: the loader re
 
 // ---- core ----
 OPFN(mov)      { F(0) = F(1);                      NEXT(2); }
+OPFN(mov2)     { F(0) = F(2); F(1) = F(3);         NEXT(4); }   // two movs in order (d1 = s1, then d2 = s2)
 OPFN(add)      { F(0) = F(1) + F(2);               NEXT(3); }
 OPFN(sub)      { F(0) = F(1) - F(2);               NEXT(3); }
 OPFN(mul)      { F(0) = F(1) * F(2);               NEXT(3); }
@@ -108,6 +109,14 @@ OPFN(rdf) { const FPB_ArrayRef& a = A(1); uint32_t k = (uint32_t)I(2);
 OPFN(wrf) { const FPB_ArrayRef& a = A(0); uint32_t k = (uint32_t)I(1);
             if (k < a.len) ((float*)a.base)[k] = F(2);
             NEXT(3); }
+// delay lines: the index is masked with the array's mask (len - 1, the compiler uses these only for power-of-two
+// lengths; for another length the mask is 0, so it stays in range)
+OPFN(dlyrd) { const FPB_ArrayRef& a = A(1);                      // arr[(i - d) & mask]
+              F(0) = ((const float*)a.base)[((uint32_t)I(2) - (uint32_t)I(3)) & a.mask]; NEXT(4); }
+OPFN(rdfm)  { const FPB_ArrayRef& a = A(1);                      // arr[i & mask]
+              F(0) = ((const float*)a.base)[(uint32_t)I(2) & a.mask]; NEXT(3); }
+OPFN(wrfm)  { const FPB_ArrayRef& a = A(0);                      // arr[i & mask] = v
+              ((float*)a.base)[(uint32_t)I(1) & a.mask] = F(2); NEXT(3); }
 OPFN(rdi) { const FPB_ArrayRef& a = A(1); uint32_t k = (uint32_t)I(2);
             I(0) = (k < a.len) ? ((const int32_t*)a.base)[k] : 0;      NEXT(3); }
 OPFN(wri) { const FPB_ArrayRef& a = A(0); uint32_t k = (uint32_t)I(1);

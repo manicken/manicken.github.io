@@ -26,7 +26,7 @@ RED.exporter.osc = (function () {
     const graph = RED.exporter.graph;
 
     /** the types with an OSC version that are not in the official node definitions */
-    const EXTRA_OSC_TYPES = ["AudioMixer", "AudioMixerStereo"];
+    const EXTRA_OSC_TYPES = ["AudioMixer", "AudioMixerStereo", "AudioEffectFPB"];
 
     /** the library include of the C++ modes */
     const LIBRARY_INCLUDE = "#include <OSCAudioBase.h>";

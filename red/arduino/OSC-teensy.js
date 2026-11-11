@@ -83,30 +83,43 @@ var OSC = (function() {
         }
     }
 
+    // ------------------------------------------------------------------ backend transport
+    // When the bridge server (fpb/server) has the Teensy's OSC port open, the bytes go through it (see red/backend-io.js)
+    // instead of Web Serial: any browser, and the port reconnects by itself. Nothing to choose: it's used when it's there.
+    var backend = null; // { isOpen(), write(Uint8Array), label }
+
+    function SetBackendTransport(transport) { backend = transport; }
+    function UsingBackend() { return backend != null && backend.isOpen(); }
+
+    /** bytes from the OSC serial port (Web Serial or the backend) */
+    function ReceiveRaw(bytes) {
+        if (RED.OSC.settings.Encoding == 1) slipDecoder.decode(bytes);
+        else if (RED.OSC.settings.Encoding == 0) SerialCmdDecoder.decode(bytes);
+    }
+
+    /** the OSC buttons that need a serial transport (Web Serial or the backend) */
+    var SERIAL_BUTTONS = ["#btn-osc-clearAll", "#btn-connectSerial", "#btn-disConnectSerial", "#btn-export-osc",
+                          "#btn-save-osc-sd", "#btn-load-osc-sd", "#btn-save-json-sd", "#btn-load-json-sd"];
+    function EnableSerialButtons(enable) {
+        for (var i = 0; i < SERIAL_BUTTONS.length; i++) $(SERIAL_BUTTONS[i]).toggleClass("disabled", !enable);
+    }
+
     function Init() {
-    
+        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' ', CB_UI_object_not_found:UI_object_not_found,
+                               CB_line:function (line) { RED.events.emit("serial:line", line); }}); // for scripts, see RED.serial
+
         if (navigator.serial == undefined) {
             console.warn("Web Serial API not availabe on this browser!")
             available = false;
 
-            var a = "Currently not available at the current browser<br>as this functionality currently is implemented using the Web Serial API<br>in the future WebSockets will be supported that will then enable this functionality.<br><br>"
-        
-            $("#btn-osc-clearAll").addClass("disabled");
-            $("#btn-connectSerial").addClass("disabled");
-            $("#btn-disConnectSerial").addClass("disabled");
-            $("#btn-export-osc").addClass("disabled");
-            $("#btn-save-osc-sd").addClass("disabled");
-            $("#btn-load-osc-sd").addClass("disabled");
-            $("#btn-save-json-sd").addClass("disabled");
-            $("#btn-load-json-sd").addClass("disabled");
-            $("#btn-osc-clearAll").addClass("disabled");
+            var a = "This browser has no Web Serial API (use Chrome or Edge),<br>or start the bridge server (fpb/server: npm start),<br>then the serial port goes through it in any browser.<br><br>"
+
+            EnableSerialButtons(false); // enabled again when the backend has the port (red/backend-io.js)
             RED.main.SetPopOver("#btn-connectSerial", a);
             RED.main.SetPopOver("#btn-disConnectSerial", a);
 
             return false;
         }
-        SerialCmdDecoder.init({CB_decoded:SerialCmdDecoded, rawDataCmds:["imgM","imgGP"], cmdTerminator:'\n', cmdParamDeliminator:' ', CB_UI_object_not_found:UI_object_not_found,
-                               CB_line:function (line) { RED.events.emit("serial:line", line); }}); // for scripts, see RED.serial
 
         navigator.serial.addEventListener("connect", async (event) => {
             RED.notify("Serial port automatically reconnected ,<br> but you still have to manually connect it anyway", "info", null, 5000);
@@ -122,7 +135,8 @@ var OSC = (function() {
       $('#btn-osc-clearAll').click(function() { SendMessage(GetClearAllAddr()); });
     var port;
     //const serialLEDController = new SerialLEDController();
-    $('#btn-connectSerial').click(async function() { 
+    $('#btn-connectSerial').click(async function() {
+        if (UsingBackend()) { RED.notify("The serial port is already open through the bridge server (" + backend.label + ")", "info", null, 3000); return; }
         port = await navigator.serial.requestPort();
         console.warn("connection "+new Date().toISOString());
         await port.open({baudRate:115200, bufferSize:1024});
@@ -134,6 +148,7 @@ var OSC = (function() {
     });
     /** @returns {Boolean} true when the serial port is open */
     function IsConnected() {
+        if (UsingBackend()) return true;
         return available != false && port != undefined && port.writable != undefined;
     }
     $('#btn-disConnectSerial').click(async function() { 
@@ -317,7 +332,8 @@ var OSC = (function() {
     var dataIndex = 0;
 
     async function SendRawToSerial(data) {
-        if (available == false){ 
+        if (UsingBackend()) { backend.write(data); return true; }
+        if (available == false){
             AddLineToLog("[Web Serial API not availabe]", "warning");
             return false;
         }
@@ -360,7 +376,7 @@ var OSC = (function() {
         }
         
         var dataSent = false;
-        if (RED.OSC.settings.TransportLayer == 0) // Web Serial API
+        if (UsingBackend() || RED.OSC.settings.TransportLayer == 0) // the bridge server, else Web Serial API
             dataSent = SendRawToSerial(data);
         else {
             AddLineToLog("(WARNING) Try to use Transport Layer NIY "+RED.OSC.LayerOptionTexts[RED.OSC.settings.TransportLayer] + "<brPlease select annother transport layer", "warning");
@@ -512,6 +528,9 @@ var OSC = (function() {
             var codeName = (last.value < OSC_REPLY_CODES.length) ? OSC_REPLY_CODES[last.value] : ("unknown error code " + last.value);
             errors.push(codeName + ": " + ((sent != undefined) ? (GetPacketCompactForm(sent[i]) + " ") : "") + "(" + info + ")");
         }
+        // for the senders that wait for the result (i.e. Sync): the address of the first message the reply is for
+        RED.events.emit("OSC:reply", { address: (firstArgs[0] != undefined) ? firstArgs[0].value : undefined,
+                                       count: oscBundle.packets.length, ok: okCount, errors: errors });
         for (var ei = 0; ei < errors.length; ei++)
             AddLineToLog("Teensy reply " + errors[ei], "warning");
         if (errors.length != 0) RED.events.emit("OSC:replyErrors", errors);
@@ -650,6 +669,10 @@ var OSC = (function() {
         SendBundle,
         SendMessage,
         IsConnected,
+        SetBackendTransport, // the bridge server's serial port, see red/backend-io.js
+        UsingBackend,
+        ReceiveRaw,
+        EnableSerialButtons,
         SendPacket,
         AddLineToLog, // simplifies usage of RED.bottombar.info.addLine(text);
         SetLog,

@@ -88,11 +88,41 @@ OSC.LiveUpdate = (function () {
             return;
         }
         const result = RED.exporter.oscLive.getCreateMessages(model);
+        if (result.messages.length != 0) waitForSyncReply(ws.label, result.messages[0].address, result.messages.length);
         OSC.SendBundle(RED.exporter.oscMessages.getBundle(result.messages));
         rootId = ws.id;
         teensyModel = result.model;
-        log("synced the tab " + ws.label + " (" + result.messages.length + " messages)");
+        log("synced the tab " + ws.label + " (" + result.messages.length + " messages), waiting for the Teensy ...");
         emitCreated(result.messages);
+    }
+
+    const SYNC_REPLY_TIMEOUT_MS = 2000;
+
+    /**
+     * Tells if the Teensy got the sync: its reply (one /reply bundle for the sent bundle, see OSC-teensy.js "OSC:reply"),
+     * or that no reply came (the wrong port, the firmware not running ...)
+     */
+    function waitForSyncReply(tabLabel, firstAddress, count) {
+        let timer;
+        const handler = function (r) {
+            if (r.address != firstAddress) return;
+            clearTimeout(timer);
+            RED.events.off("OSC:reply", handler);
+            if (r.errors.length == 0) {
+                OSC.AddLineToLog("live update: the Teensy got the tab " + tabLabel + ": " + r.ok + " of " + count + " messages OK", undefined, "background-color:#dff0d8;");
+                RED.notify("Sync: the Teensy got " + tabLabel + " (" + r.ok + " messages OK)", "info", null, 2000);
+            } else {
+                logWarning("the Teensy got the tab " + tabLabel + " with " + r.errors.length + " error(s) of " + count + " messages (see the replies above)");
+                RED.notify("Sync: " + r.errors.length + " error(s) from the Teensy, see the log", "warning", null, 4000);
+            }
+        };
+        timer = setTimeout(function () {
+            RED.events.off("OSC:reply", handler);
+            logWarning("no reply from the Teensy to the sync of " + tabLabel + " within " + (SYNC_REPLY_TIMEOUT_MS / 1000) + " s " +
+                "(is it the OSC port of the Teensy? is the firmware running?)");
+            RED.notify("Sync: no reply from the Teensy (the right port? the firmware running?)", "error", null, 5000);
+        }, SYNC_REPLY_TIMEOUT_MS);
+        RED.events.on("OSC:reply", handler);
     }
 
     /** @param {Boolean} state */

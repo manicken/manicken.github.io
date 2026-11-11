@@ -108,6 +108,9 @@ RED.control.tab = (function () {
         return String(Number(value.toFixed(abs >= 100 ? 1 : abs >= 10 ? 2 : 3)));
     }
 
+    /** @returns {String|undefined} the path when one object is chosen (its own values are shown) */
+    function onePath(targets) { return (targets.length == 1) ? targets[0].path : undefined; }
+
     function getSelectedTargets(all) {
         return (targetChoice == "*") ? all : all.filter(function (t) { return t.path == targetChoice; });
     }
@@ -126,13 +129,29 @@ RED.control.tab = (function () {
             return;
         }
         if (selectedGui != undefined) {
-            const bind = RED.control.gui.getBind(selectedGui);
-            content.append(el("div", { class: "live-bound" }, "GUI object ", el("b", {}, selectedGui.name || selectedGui.id),
-                " controls " + bind.methodId + ((bind.ch != null) ? (" (" + bind.ch + ")") : "") + " of:"));
+            const gui = RED.control.gui, d = selectedGui;
+            const bind = gui.getBind(d);
+            const box = el("div", { class: "live-bound" }, "GUI object ", el("b", {}, d.name || d.id),
+                " controls " + bind.methodId + ((bind.ch != null) ? (" (" + bind.ch + ")") : "") + " of:");
+            // which instance it controls: the instances of the same array (or all, for one bound to all)
+            const paths = gui.siblingPaths(d);
+            if (paths.length > 1 || bind.path == "") {
+                const select = el("select", { title: "the object (array instance) this GUI object controls", onchange: function () {
+                    gui.setPath(d, this.value);
+                    targetChoice = this.value || "*";
+                    render();
+                } });
+                if (bind.path == "") select.append(el("option", { value: "" }, "all " + paths.length));
+                for (const p of paths) select.append(el("option", { value: p }, p));
+                select.value = bind.path;
+                box.append(el("div", { class: "live-bar" }, select));
+            }
+            content.append(box);
         }
-        const methods = RED.control.methods.get(node.type);
+        const methods = RED.control.methods.get(node.type, node);
         const head = el("div", { class: "live-head" }, el("b", {}, node.name || node.id), el("span", { class: "live-type" }, node.type));
         content.append(head);
+        if (node.type == "AudioEffectFPB" && RED.fpb != undefined && RED.fpb.bridge != undefined) content.append(RED.fpb.bridge.renderLive(node, el));
         if (methods == undefined) {
             content.append(el("div", { class: "live-note" }, "No live control for " + node.type + " yet."));
             return;
@@ -148,8 +167,8 @@ RED.control.tab = (function () {
         if (targets.length == 0) { targetChoice = "*"; render(); return; }
 
         head.append(el("button", { class: "live-add", title: "creates vertical sliders, list boxes and buttons for all the settings, bound to this object, in the current tab",
-            onclick: function () { createGui(node, methods); } }, "+ Create GUI"));
-        for (const method of methods) content.append(renderMethod(node, targets, method));
+            onclick: function () { createGui(node, methods.filter(function (m) { return !m.hidden; })); } }, "+ Create GUI"));
+        for (const method of methods) if (!method.hidden) content.append(renderMethod(node, targets, method));
     }
 
     function createGui(node, methods) {
@@ -206,7 +225,7 @@ RED.control.tab = (function () {
 
         if (method.kind == "action" || method.kind == "read") {
             const result = el("span", { class: "live-result" });
-            const values = core.getValues(node, method, undefined);
+            const values = core.getValues(node, method, undefined, onePath(targets));
             const run = function () {
                 if (method.kind == "action") {
                     core.invoke(node, targets, method, undefined, values);
@@ -224,14 +243,22 @@ RED.control.tab = (function () {
                     }).join("  ");
                 });
             };
-            const row = el("div", { class: "live-row" }, el("button", { onclick: run }, label), result);
+            let button;
+            if (method.kind == "action" && method.release != undefined) { // pressed / released (i.e. a Faust button: 1 then 0)
+                const release = RED.control.methods.getMethod(node.type, method.release, node);
+                let down = false;
+                const up = function () { if (!down) return; down = false; if (release != undefined) core.invoke(node, targets, release, undefined, core.getValues(node, release, undefined, onePath(targets))); };
+                button = el("button", { title: method.help || "", onpointerdown: function () { down = true; run(); }, onpointerup: up, onpointerleave: up }, label);
+            }
+            else button = el("button", { title: method.help || "", onclick: run }, label);
+            const row = el("div", { class: "live-row" }, button, result);
             if (method.kind == "action") row.append(addButton(node, method));
             box.append(row);
             if (method.args != undefined) box.append(renderArgs(node, targets, method, undefined, undefined, values, false));
             return box;
         }
 
-        const title = el("div", { class: "live-label" }, label, addButton(node, method));
+        const title = el("div", { class: "live-label", title: method.help || "" }, label, addButton(node, method));
         box.append(title);
         if (method.perChannel) {
             const count = core.getChannelCount(node, targets[0], method);
@@ -255,7 +282,7 @@ RED.control.tab = (function () {
     function renderArgs(node, targets, method, channel, rowLabel, values, sendOnChange) {
         const methods = RED.control.methods;
         const core = RED.control.core;
-        if (values == undefined) values = core.getValues(node, method, channel);
+        if (values == undefined) values = core.getValues(node, method, channel, onePath(targets));
         const wrap = el("div", {});
         const send = function (argIndex) {
             core.invoke(node, targets, method, channel, values, sendOnChange != false && method.args[argIndex].send != false);

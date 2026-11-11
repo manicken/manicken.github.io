@@ -1755,3 +1755,19 @@ input[type=checkbox]
     stroke-width: 1;
     fill: #fff;
 }
+  /* the second log in the bottom panel: the Teensy debug port (red/ui/tab-bottom-debug.js) */
+  #tab-output.split #messages { right: 50%; }
+  #debug-pane { display: none; position: absolute; top: 0; bottom: 0; left: 50%; right: 0; flex-direction: column;
+      border-left: 1px solid #ccc; background: #fbfbf6; font-family: monospace; font-size: 12px; }
+  #tab-output.split #debug-pane { display: flex; }
+  #debug-pane .dbg-head { display: flex; justify-content: space-between; padding: 1px 6px; background: #eee; color: #555; font-size: 11px; }
+  #debug-pane pre { flex: 1; margin: 0; padding: 2px 6px; overflow-y: auto; white-space: pre-wrap; background: none; border: 0; border-radius: 0; font-size: 12px; }
+  #debug-pane input { width: 100%; box-sizing: border-box; height: 22px; margin: 0; border: 0; border-top: 1px solid #ddd; border-radius: 0; font-family: monospace; font-size: 12px; }
+  #btn-split-log.active { background: #ddd; }
+  /* serial / MIDI through the bridge server (red/backend-io.js) */
+  #lbl-io-status { display: inline-block; margin: 6px 8px 0 6px; color: #fff; font-size: 12px; text-decoration: none; white-space: nowrap; }
+  #lbl-io-status .io-dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; margin-right: 5px; background: #999; }
+  #lbl-io-status .io-dot.on { background: #5c5; }
+  #lbl-io-status .io-on { color: #9f9; }
+  #lbl-io-status .io-err { color: #f99; }
+  #lbl-io-status .io-off { color: #bbb; }

@@ -338,9 +338,17 @@ RED.editor = (function() {
 					editing_node.comment = value;
 				}
 
-			    
+
 			}
-                
+
+		}
+		// a GUI object bound to an audio object (red/control): which object it controls and its range
+		if (RED.control != undefined && RED.control.gui != undefined && RED.control.gui.isBound(editing_node)) {
+			var oldBind = RED.control.gui.editorSave(editing_node);
+			if (oldBind != undefined) {
+				changed = true;
+				changes["liveBind"] = oldBind; // undo puts the binding before back
+			}
 		}
 
 		editing_node.bgColor = $("#node-input-color").val();
@@ -613,6 +621,8 @@ RED.editor = (function() {
                 console.warn("have no own property:" + d);
             }
 		}
+		if (RED.control != undefined && RED.control.gui != undefined && RED.control.gui.isBound(node))
+			RED.control.gui.editorPrepare(node); // "Live bind": the object it controls, the range
 	}
 
 	function showEditDialog(node) {
@@ -654,6 +664,10 @@ RED.editor = (function() {
 				if (node.ClassIOtype != undefined && (typeof node.ClassIOtype == "number") && (d == "anchor" || d == "locked" || d == "inputs" || d == "outputs")) { console.warn("edit disabled for " + node.type + " " + d + " because it's a ClassIO type"); continue;}
                 data += GetEditorLine_Input(propEditor, d);
             }
+            // a code editor (the hand-written templates have their own <pre id="aceEditor">)
+            if (node._def.useAceEditor != undefined)
+                data += '<div class="form-row-long"><label><i class="fa fa-code"></i> ' + (node._def.aceEditorLabel || "Code") + '</label>' +
+                        '<pre id="aceEditor" style="height:' + (node._def.aceEditorHeight || 300) + 'px"></pre></div>';
             var form = $("#dialog-form");
 			$(form).html(data);
             prepareEditDialog(node, "node-input");

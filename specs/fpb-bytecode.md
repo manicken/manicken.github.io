@@ -273,10 +273,10 @@ These ops cover every FBC instruction that can appear in a scalar-mode `control_
 | range | group | ops |
 |---|---|---|
 | 0 | — | reserved (invalid) |
-| 1–19 | core | `mov f=f`, `add sub mul div f=ff`, `neg f=f`, `madd f=fff` (a·b + c), `msub f=fff` (c − a·b), `min max f=ff` (as `std::min/max`), `abs f=f`, `select f=iff`, `lt le gt ge eq ne i=ff`, `copysign f=ff` |
+| 1–20 | core | `mov f=f`, `add sub mul div f=ff`, `neg f=f`, `madd f=fff` (a·b + c), `msub f=fff` (c − a·b), `min max f=ff` (as `std::min/max`), `abs f=f`, `select f=iff`, `lt le gt ge eq ne i=ff`, `copysign f=ff`, `mov2 ff=ff` (d1 = s1, then d2 = s2) |
 | 32–54 | math | `floor ceil round rint sqrt sin cos tan asin acos atan f=f`, `atan2 f=ff`, `exp log log10 f=f`, `pow fmod f=ff`, `sinh cosh tanh asinh acosh atanh f=f` |
 | 64–87 | int | `imov i=i`, `iadd isub imul idiv irem iand ior ixor ishl ishr iushr imin imax i=ii`, `iabs i=i`, `iselect i=iii`, `ilt ile igt ige ieq ine i=ii`, `ftoi i=f`, `itof f=i` |
-| 96–99 | arrays | `rdf f=ai`, `wrf =aif`, `rdi i=ai`, `wri =aii` |
+| 96–102 | arrays | `rdf f=ai`, `wrf =aif`, `rdi i=ai`, `wri =aii`, `dlyrd f=aii` (arr[(a − b) & mask]), `rdfm f=ai` (arr[i & mask]), `wrfm =aif` (arr[i & mask] = v); mask = len − 1 for a power-of-two length, else 0 |
 | 128–159 | fused | reserved for super-instructions |
 
 **Int ops never have undefined behaviour:**
@@ -287,8 +287,16 @@ These ops cover every FBC instruction that can appear in a scalar-mode `control_
 
 **Array ops check the index:** a read out of range gives 0, and a write out of range is dropped.
 
+The compiler uses the newer ops (`mov2`, `dlyrd`, `rdfm`, `wrfm`) only when the op table it compiles for has them. A firmware from before they were added keeps working.
+
+**The compiler's optimisations (FBC front end):**
+- **Delay-line accesses** (`arr[(IOTA - d) & mask]`) become one op instead of three.
+- **One-sample copies** (`fRec[1] = fRec[0]`) are removed when the next sample can read the source slot directly.
+- **The remaining movs** are paired into `mov2`.
+
+With djembe + freeverb this takes the per-sample code from 404 to 278 steps.
+
 Still to come, in the free slots:
-- `dlyrd`/`dlywr` (delay read and write with IOTA and mask), which today are `isub` + `iand` + `rdf`;
 - `tblrdl` (a table read with linear interpolation);
 - super-instructions in 128–.
 

@@ -45,6 +45,7 @@ RED.view.textsize = (function() {
         var height = 0;
         for (var i=0;i<str.length;i++) {
             var ccs = tsc[str[i]]; // ccs = current char size
+            if (ccs == undefined) ccs = tsc[str[i]] = _calculate(str[i], size); // a char outside the list (° µ å ä ö ...), measured once
             width += ccs.w;
             if (height < ccs.h) height = ccs.h;
         }

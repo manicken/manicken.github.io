@@ -10,6 +10,9 @@
 #ifndef FPB_MAX_OUTPUTS
 #define FPB_MAX_OUTPUTS 4
 #endif
+#ifndef FPB_OVERLOAD_BLOCKS
+#define FPB_OVERLOAD_BLOCKS 4      // blocks in a row over the CPU limit before the patch is stopped
+#endif
 
 class AudioEffectFPB : public AudioStream {
 public:
@@ -39,13 +42,27 @@ public:
     uint32_t lastErrorIndex() const { return loader.errorIndex(); }
     size_t   memoryUsed(uint8_t tier) const;
 
+    // CPU guard: a patch that needs too much time per audio block would starve loop() (no USB, no OSC: the Teensy
+    // looks dead). When the patch takes more than the limit (percent of one block) for FPB_OVERLOAD_BLOCKS blocks
+    // in a row, it is stopped (silence) until a patch is loaded again. 0 turns the guard off.
+    void  setCpuLimit(float percent) { cpuLimitPercent = percent; }
+    float cpuLimit() const { return cpuLimitPercent; }
+    float cpuUsage() const;            // percent of one block, the last block
+    float cpuUsageMax() const;         // percent, the highest since the patch was loaded
+    bool  isOverloaded() const { return overloaded; }
+
     virtual void update(void);
 
 private:
     void swapIn(FPB_Program* p);
+    float cyclesToPercent(uint32_t c) const;
 
     audio_block_t* inputQueueArray[FPB_MAX_INPUTS];
     FPB_Program* volatile program = nullptr;
+    volatile bool overloaded = false;
+    volatile uint32_t cyclesLast = 0, cyclesMax = 0;
+    uint8_t overCount = 0;
+    float cpuLimitPercent = 70.0f;
     FPB_Loader loader;
     float inBuf[FPB_MAX_INPUTS][AUDIO_BLOCK_SAMPLES];
     float outBuf[FPB_MAX_OUTPUTS][AUDIO_BLOCK_SAMPLES];

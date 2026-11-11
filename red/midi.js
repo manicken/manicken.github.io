@@ -15,6 +15,23 @@ RED.midi = (function () {
     let access = undefined;  // MIDIAccess
     let output = undefined;  // the selected MIDIOutput
     let noOutputNotified = false;
+    // the bridge server's MIDI (red/backend-io.js): { outputs: [names], send(name, bytes) }, used instead of Web MIDI
+    let backend = null;
+
+    /** @param {Object|null} b the bridge server's MIDI, or null when it's gone */
+    function setBackend(b) {
+        const was = backend != null;
+        backend = b;
+        if (b != null && !was && access != undefined) {   // free the ports for the server (Windows opens MIDI ports exclusively)
+            for (const p of access.inputs.values()) { p.onmidimessage = null; p.close(); }
+            for (const p of access.outputs.values()) p.close();
+            output = undefined;
+        }
+        if (b == null && was && getSavedOutputName() != null && isAvailable()) requestAccess().then(function () { output = findOutput(getSavedOutputName()); }).catch(function () { });
+    }
+
+    /** a message from an input of the bridge server */
+    function receive(data) { onMessage({ data }); }
 
     function isAvailable() {
         return navigator.requestMIDIAccess != undefined;
@@ -53,6 +70,12 @@ RED.midi = (function () {
 
     /** @param {String|undefined} name undefined for none */
     function selectOutput(name) {
+        if (backend != null) {
+            saveOutputName(name);
+            noOutputNotified = false;
+            RED.notify("MIDI output: " + (name || "none") + " (via the bridge server)", "info", null, 2000);
+            return;
+        }
         output = (name == undefined) ? undefined : findOutput(name);
         saveOutputName(name);
         noOutputNotified = false;
@@ -95,6 +118,13 @@ RED.midi = (function () {
             console.warn("midiSend: invalid MIDI bytes", status, data1, data2);
             return false;
         }
+        if (backend != null) {
+            const name = getSavedOutputName();
+            if (name != null && backend.outputs.includes(name)) { backend.send(name, bytes); return true; }
+            if (noOutputNotified == false) RED.notify("MIDI: no output selected (or it's not connected), select one in the MIDI menu", "warning", null, 3000);
+            noOutputNotified = true;
+            return false;
+        }
         if (output == undefined) {
             if (noOutputNotified == false) RED.notify("MIDI: no output selected, select one in the MIDI menu", "warning", null, 3000);
             noOutputNotified = true;
@@ -124,8 +154,17 @@ RED.midi = (function () {
             addItem("Stop", player.stop);
         };
         list.empty();
+        if (backend != null) {
+            list.append($('<li class="nav-header"></li>').text("MIDI output (midiSend), via the bridge server"));
+            const saved = getSavedOutputName();
+            addItem("none", function () { selectOutput(undefined); }, saved == null);
+            for (const name of backend.outputs) addItem(name, function () { selectOutput(name); }, name == saved);
+            if (backend.outputs.length == 0) addItem("(no MIDI outputs)");
+            addPlayerItems();
+            return;
+        }
         if (isAvailable() == false) {
-            addItem("Web MIDI is not available in this browser (use Chrome or Edge)");
+            addItem("Web MIDI is not available in this browser (use Chrome or Edge, or start the bridge server: fpb/server npm start)");
             return;
         }
         try { await requestAccess(); }
@@ -155,6 +194,9 @@ RED.midi = (function () {
         isAvailable,
         send,
         selectOutput,
+        setBackend,
+        receive,
+        get usingBackend() { return backend != null; },
     };
 })();
 

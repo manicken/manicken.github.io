@@ -140,8 +140,12 @@ RED.fpb.core = (function () {
     function i2(fn) { return function (F, I, A, o) { I[o[0]] = fn(I[o[1]], I[o[2]]); }; }
     function icmp(fn) { return function (F, I, A, o) { I[o[0]] = fn(I[o[1]], I[o[2]]) ? 1 : 0; }; }
 
+    // FPB_ArrayRef.mask: len - 1 for a power-of-two length, else 0
+    function mask(a) { var n = a.length; return ((n & (n - 1)) === 0) ? n - 1 : 0; }
+
     var OP_IMPL = {
         mov: function (F, I, A, o) { F[o[0]] = F[o[1]]; },
+        mov2: function (F, I, A, o) { F[o[0]] = F[o[2]]; F[o[1]] = F[o[3]]; },
         add: f2(function (a, b) { return a + b; }),
         sub: f2(function (a, b) { return a - b; }),
         mul: f2(function (a, b) { return a * b; }),
@@ -194,6 +198,9 @@ RED.fpb.core = (function () {
 
         rdf: function (F, I, A, o) { var a = A[o[1]], k = I[o[2]] >>> 0; F[o[0]] = k < a.length ? a[k] : 0; },
         wrf: function (F, I, A, o) { var a = A[o[0]], k = I[o[1]] >>> 0; if (k < a.length) a[k] = F[o[2]]; },
+        dlyrd: function (F, I, A, o) { const a = A[o[1]]; F[o[0]] = a[((I[o[2]] - I[o[3]]) >>> 0) & mask(a)]; },
+        rdfm: function (F, I, A, o) { const a = A[o[1]]; F[o[0]] = a[(I[o[2]] >>> 0) & mask(a)]; },
+        wrfm: function (F, I, A, o) { const a = A[o[0]]; a[(I[o[1]] >>> 0) & mask(a)] = F[o[2]]; },
         rdi: function (F, I, A, o) { var a = A[o[1]], k = I[o[2]] >>> 0; I[o[0]] = k < a.length ? a[k] : 0; },
         wri: function (F, I, A, o) { var a = A[o[0]], k = I[o[1]] >>> 0; if (k < a.length) a[k] = I[o[2]]; }
     };

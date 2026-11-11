@@ -222,7 +222,7 @@ const cases = [
     ["E_OPCOUNT", "HEADER", 0, (b, d) => d.setUint16(8, table.count + 1, true)],
     ["E_CODE_SIZE", "HEADER", 0, (b, d) => d.setUint32(28, d.getUint32(28, true) + 1, true)],
     ["E_OP_INDEX", "USEDOPS", 1, b => { b[44] = 200; }],
-    ["E_OP_RESERVED", "USEDOPS", 0, b => { b[40] = 20; }],
+    ["E_OP_RESERVED", "USEDOPS", 0, b => { b[40] = 21; }],          // 21: still a reserved slot (20 is mov2)
     ["E_OP_ARITY", "USEDOPS", 2, b => { b[49] = 4; }],
     ["E_OP_FP", "USEDOPS", 1, b => { b[46] ^= 1; }],
     ["E_ARRAY", "ARRAYS", 0, b => { b[52] = 4; }],

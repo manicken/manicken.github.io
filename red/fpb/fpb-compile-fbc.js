@@ -245,8 +245,24 @@ RED.fpb.compileFBC = (function () {
     Gen.prototype.loc = function (t, off) {
         if (t === "f" && this.cls.paramOffsets[off] !== undefined) return { s: "f", kind: "param", n: this.cls.paramOffsets[off] };
         if (this.cls.inDynRegion(t, off)) throw CompileError("a scalar access inside an array region (offset " + off + ")");
+        var a = this.cls.alias[t + off];                 // a one-sample copy that was removed: the same slot as its source
+        if (a !== undefined) off = a;
         return { s: t, kind: "loc", key: t + off, off: off };
     };
+
+    /**
+     * a delay line access: idx = (x & mask) or ((a - b) & mask) with mask = len - 1 of a power-of-two array
+     * @returns {{x}|{a, b}|undefined}
+     */
+    function delayIndex(n, idx) {
+        if (n.t !== "f" || (n.size & (n.size - 1)) !== 0 || idx.k !== "op" || idx.op !== "iand") return undefined;
+        var mask = n.size - 1, x;
+        if (isC(idx.a[1]) && idx.a[1].v === mask) x = idx.a[0];
+        else if (isC(idx.a[0]) && idx.a[0].v === mask) x = idx.a[1];
+        else return undefined;
+        if (x.k === "op" && x.op === "isub") return { a: x.a[0], b: x.a[1] };
+        return { x: x };
+    }
     Gen.prototype.isDyn = function (n) { return !!this.cls.dyn[n.t + ":" + n.base + ":" + n.size]; };
     Gen.prototype.arr = function (n) { return { s: "a", kind: "arr", key: n.t + ":" + n.base + ":" + n.size }; };
     Gen.prototype.same = function (a, b) {
@@ -270,6 +286,19 @@ RED.fpb.compileFBC = (function () {
             case "count": throw CompileError("'count' is used as a value (not supported)");
             case "lx":
                 if (isC(n.idx) && !this.isDyn(n)) { r = this.loc(n.t, n.base + n.idx.v); break; }
+                var di = this.cls.delayOps ? delayIndex(n, n.idx) : undefined;
+                if (di !== undefined && di.a !== undefined) {           // arr[(a - b) & mask]: one op instead of three
+                    var da = this.gen(di.a), db = this.gen(di.b);
+                    d = dst || this.newTmp(n.t);
+                    this.emit("dlyrd", [d, this.arr(n), da, db]);
+                    return d;
+                }
+                if (di !== undefined) {                                  // arr[x & mask]
+                    var dx = this.gen(di.x);
+                    d = dst || this.newTmp(n.t);
+                    this.emit("rdfm", [d, this.arr(n), dx]);
+                    return d;
+                }
                 var ix = this.gen(n.idx);
                 d = dst || this.newTmp(n.t);
                 this.emit(n.t === "f" ? "rdf" : "rdi", [d, this.arr(n), ix]);
@@ -300,6 +329,12 @@ RED.fpb.compileFBC = (function () {
             case "st": this.gen(s.v, this.loc(s.t, s.off)); break;
             case "sx":
                 if (isC(s.idx) && !this.isDyn(s)) { this.gen(s.v, this.loc(s.t, s.base + s.idx.v)); break; }
+                var di = this.cls.delayOps ? delayIndex(s, s.idx) : undefined;
+                if (di !== undefined && di.x !== undefined) {           // arr[x & mask] = v
+                    var wx = this.gen(di.x), wv = this.gen(s.v);
+                    this.emit("wrfm", [this.arr(s), wx, wv]);
+                    break;
+                }
                 var ix = this.gen(s.idx), v = this.gen(s.v);
                 this.emit(s.t === "f" ? "wrf" : "wri", [this.arr(s), ix, v]);
                 break;
@@ -309,6 +344,89 @@ RED.fpb.compileFBC = (function () {
         }
     };
 
+    // ------------------------------------------------------------------ optimisations
+
+    /**
+     * Removes one-sample copies "B = A" (Faust's fRec[1] = fRec[0] at the end of the loop) by giving B the slot of A.
+     * Allowed when, in the sample code:
+     *   - B is written only by the copy, A only once (W), W comes before the copy, neither in the control code;
+     *   - B is not read between W and the copy (it would then see the new A);
+     *   - B and A start with the same value, and neither is a parameter.
+     * The next sample then reads A's slot where it read B, which holds the same value. Chains (fRec[2] = fRec[1];
+     * fRec[1] = fRec[0]) fail the "not read between" rule and stay; those become mov2 pairs.
+     * @returns {Object} alias: "t" + off -> off of the slot to use
+     */
+    function eliminateCopies(stm, cls, ref) {
+        var alias = {};
+        function resolve(t, off) { var k = t + off; while (alias[k] !== undefined) { off = alias[k]; k = t + off; } return off; }
+        function scalar(t, base, size, idx) { return isC(idx) && !cls.dyn[t + ":" + base + ":" + size] ? base + idx.v : undefined; }
+        function dest(s) {
+            if (s.k === "st") return { t: s.t, off: resolve(s.t, s.off) };
+            if (s.k === "sx") { var o = scalar(s.t, s.base, s.size, s.idx); if (o !== undefined) return { t: s.t, off: resolve(s.t, o) }; }
+            return undefined;
+        }
+        function source(v) {
+            if (v.k === "ld") return { t: v.t, off: resolve(v.t, v.off) };
+            if (v.k === "lx") { var o = scalar(v.t, v.base, v.size, v.idx); if (o !== undefined) return { t: v.t, off: resolve(v.t, o) }; }
+            return undefined;
+        }
+        function reads(n, t, off) {
+            switch (n.k) {
+                case "ld": return n.t === t && resolve(n.t, n.off) === off;
+                case "lx":
+                    var o = scalar(n.t, n.base, n.size, n.idx);
+                    if (o !== undefined && n.t === t && resolve(n.t, o) === off) return true;
+                    return reads(n.idx, t, off);
+                case "op": return n.a.some(function (a) { return reads(a, t, off); });
+                case "sel": return reads(n.c, t, off) || reads(n.a, t, off) || reads(n.b, t, off);
+            }
+            return false;
+        }
+        function stmReads(s, t, off) { return reads(s.v, t, off) || (s.idx !== undefined && reads(s.idx, t, off)); }
+        function sameInit(t, a, b) { var A = (t === "f") ? ref.R : ref.I; return Object.is(A[a], A[b]); }
+
+        var smp = stm.smp.slice(), removed = 0;
+        for (var si = 0; si < smp.length; si++) {
+            var S = smp[si], d = dest(S), src = (d !== undefined) ? source(S.v) : undefined;
+            if (src === undefined || src.t !== d.t) continue;
+            var t = d.t, B = d.off, A = src.off;
+            if (t === "f" && (cls.paramOffsets[B] !== undefined || cls.paramOffsets[A] !== undefined)) continue;
+            if (A === B) { smp.splice(si--, 1); removed++; continue; }
+            if (stm.blk.some(function (s) { var x = dest(s); return x !== undefined && x.t === t && (x.off === A || x.off === B); })) continue;
+            var wB = 0, wA = [];
+            smp.forEach(function (s, i) {
+                var x = dest(s);
+                if (x === undefined || x.t !== t) return;
+                if (x.off === B) wB++;
+                if (x.off === A) wA.push(i);
+            });
+            if (wB !== 1 || wA.length !== 1 || wA[0] >= si) continue;
+            var between = false;
+            for (var k = wA[0] + 1; k < si && !between; k++) between = stmReads(smp[k], t, B);
+            if (between || !sameInit(t, A, B)) continue;
+            alias[t + B] = A;
+            smp.splice(si--, 1);
+            removed++;
+        }
+        // resolve chains once, for Gen.loc
+        Object.keys(alias).forEach(function (k) { alias[k] = resolve(k.charAt(0), alias[k]); });
+        stm.smp = smp;
+        return { alias: alias, removed: removed };
+    }
+
+    /** two movs in a row -> mov2 (the same order of the copies, one dispatch instead of two) */
+    function pairMovs(code) {
+        var out = [];
+        for (var k = 0; k < code.length; k++) {
+            var a = code[k], b = code[k + 1];
+            if (a.op === "mov" && b !== undefined && b.op === "mov") {
+                out.push({ op: "mov2", ops: [a.ops[0], b.ops[0], a.ops[1], b.ops[1]] });
+                k++;
+            } else out.push(a);
+        }
+        return out;
+    }
+
     function floatBits(v) { var b = new DataView(new ArrayBuffer(4)); b.setFloat32(0, v); return b.getUint32(0); }
 
     // ------------------------------------------------------------------ parameters (UI)
@@ -317,7 +435,7 @@ RED.fpb.compileFBC = (function () {
         var params = [], path = [], declares = {};
         model.ui.forEach(function (u) {
             switch (u.op) {
-                case "kOpenVerticalBox": case "kOpenHorizontalBox": case "kOpenTabBox": path.push(u.label); break;
+                case "kOpenVerticalBox": case "kOpenHorizontalBox": case "kOpenTabBox": path.push(u.label); break;   // "0x00": anonymous
                 case "kCloseBox": path.pop(); break;
                 case "kDeclare":
                     if (u.offset >= 0) (declares[u.offset] = declares[u.offset] || {})[u.key] = u.value;
@@ -330,7 +448,8 @@ RED.fpb.compileFBC = (function () {
                     params.push({
                         index: params.length,
                         label: u.label,
-                        path: path.slice(1).concat([u.label]).join("/"),
+                        // the groups without the outermost (the patch) and without the anonymous ones, as Faust's own UIs do
+                        path: path.slice(1).filter(function (g) { return g != "" && g != "0x00"; }).concat([u.label]).join("/"),
                         widget: u.op.replace(/^kAdd/, ""),
                         offset: u.offset,
                         init: isButton ? 0 : u.init,
@@ -373,13 +492,18 @@ RED.fpb.compileFBC = (function () {
 
         // 3. classification
         var dynList = Object.keys(ctx.dyn).map(function (k) { return ctx.dyn[k]; });
+        var has = function (op) { return table.byName[op] !== undefined; };   // an older firmware may not have the newer ops
         var cls = {
             paramOffsets: paramOffsets,
             dyn: ctx.dyn,
+            alias: {},
+            delayOps: has("dlyrd") && has("rdfm") && has("wrfm"),
             inDynRegion: function (t, off) {
                 return dynList.some(function (r) { return r.t === t && off >= r.base && off < r.base + r.size; });
             }
         };
+        var opt = opts.optimize === false ? { removed: 0 } : eliminateCopies(stm, cls, ref);
+        if (opt.alias) cls.alias = opt.alias;
 
         // 4. code
         var gen = new Gen(cls);
@@ -388,6 +512,7 @@ RED.fpb.compileFBC = (function () {
         gen.code = [];
         stm.smp.forEach(function (s) { gen.statement(s); });
         var smpCode = gen.code;
+        if (opts.optimize !== false && has("mov2")) { blkCode = pairMovs(blkCode); smpCode = pairMovs(smpCode); }
 
         // 5. slots
         var nIn = model.inputs, nOut = model.outputs;
@@ -461,6 +586,7 @@ RED.fpb.compileFBC = (function () {
             fbcSample: RED.fpb.fbc.countInstr(body),
             blk: program.blk.length,
             smp: program.smp.length,
+            copiesRemoved: opt.removed,
             fSlots: fSlot, iSlots: iSlot,
             arrays: arrays.map(function (a) { return { type: a.type, len: a.len, tier: a.tier }; }),
             arrayBytesFast: memFast,

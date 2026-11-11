@@ -35,13 +35,16 @@ RED.control.gui = (function () {
     // ******************************************************************
 
     class LiveBind {
-        /** @param {{node:String|REDNode, method:String, ch?:Number|null, arg?:Number, path?:String}} data */
+        /** @param {{node:String|REDNode, method:String, ch?:Number|null, arg?:Number, path?:String, min?:Number, max?:Number}} data */
         constructor(data) {
             this.nodeId = (typeof data.node == "object") ? data.node.id : data.node;
             this.methodId = data.method;
             this.ch = (data.ch == undefined) ? null : data.ch;
             this.arg = data.arg || 0;
             this.path = data.path || "";
+            // a range of its own (a slider): instead of the method's (i.e. frequency 50 … 2000 Hz instead of 1 … 20000)
+            this.min = (data.min == undefined || data.min === "") ? undefined : Number(data.min);
+            this.max = (data.max == undefined || data.max === "") ? undefined : Number(data.max);
             this._node = (typeof data.node == "object") ? data.node : undefined; // a known reference (create / paste)
             this._resolved = undefined;
             this._version = -1;
@@ -63,7 +66,10 @@ RED.control.gui = (function () {
 
         /** what is saved, the references as ids */
         toJSON() {
-            return { node: this.nodeId, method: this.methodId, ch: this.ch, arg: this.arg, path: this.path };
+            const json = { node: this.nodeId, method: this.methodId, ch: this.ch, arg: this.arg, path: this.path };
+            if (this.min != undefined) json.min = this.min;
+            if (this.max != undefined) json.max = this.max;
+            return json;
         }
 
         /** the node is found again (once) after the design is changed (it can be removed, or the type changed) */
@@ -84,12 +90,14 @@ RED.control.gui = (function () {
             if (node == undefined) return undefined;
             const tree = RED.control.core.getTree(); // the same object until the tree is changed
             if (this._resolved != undefined && this._tree === tree) return this._resolved;
-            const method = RED.control.methods.getMethod(node.type, this.methodId);
+            const method = RED.control.methods.getMethod(node.type, this.methodId, node);
             if (method == undefined) return undefined;
             let targets = RED.control.core.getTargets(node).targets;
             const path = this.path;
             if (path != "") targets = targets.filter(function (t) { return t.path == path; });
-            const arg = (method.args != undefined) ? method.args[this.arg] : undefined;
+            let arg = (method.args != undefined) ? method.args[this.arg] : undefined;
+            if (arg != undefined && (this.min != undefined || this.max != undefined))
+                arg = Object.assign({}, arg, { min: (this.min != undefined) ? this.min : arg.min, max: (this.max != undefined) ? this.max : arg.max });
             const channel = (this.ch == null) ? undefined : this.ch;
             this._tree = tree;
             this._resolved = { bind: this, node, method, arg, channel, targets };
@@ -107,6 +115,129 @@ RED.control.gui = (function () {
     }
 
     function isBound(d) { return getBind(d) != undefined; }
+
+    /**
+     * The objects a GUI object can be switched to: the instances of the same array (the last /iN in its path),
+     * or all of them for a GUI object bound to all
+     * @param {REDNode} d a bound GUI object @returns {String[]} paths
+     */
+    function siblingPaths(d) {
+        const r = resolve(d, true);
+        const bind = getBind(d);
+        if (r == undefined || bind == undefined) return [];
+        const all = RED.control.core.getTargets(r.node).targets.map(function (t) { return t.path; });
+        if (bind.path == "") return all;
+        const re = /\/i\d+(?=\/|$)/g;
+        let m, last = null;
+        while ((m = re.exec(bind.path)) != null) last = m;
+        if (last == null) return [bind.path];
+        const esc = function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+        const same = new RegExp("^" + esc(bind.path.slice(0, last.index)) + "/i\\d+" + esc(bind.path.slice(last.index + last[0].length)) + "$");
+        return all.filter(function (p) { return same.test(p); });
+    }
+
+    // ******************************************************************
+    // the edit dialog of a bound GUI object (red/ui/editor.js calls these)
+    // ******************************************************************
+
+    function esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+
+    /**
+     * Adds a "Live bind" part to the dialog: which object it controls (the array instance) and, for a slider,
+     * its range in the value's own unit. The slider's Min/Max Value (the slider steps) are hidden.
+     */
+    function editorPrepare(d) {
+        const bind = getBind(d);
+        const r = resolve(d, true);
+        if (bind == undefined || r == undefined) return;
+        const paths = siblingPaths(d);
+        let html = '<div id="live-bind-form"><div class="form-row-divider"></div>' +
+            '<div class="form-row"><label style="width:150px"><i class="fa fa-link"></i> Controls</label>' +
+            '<select id="live-bind-path" style="width:auto" title="the object (array instance) this GUI object controls">';
+        if (bind.path == "" || paths.length == 0) html += '<option value="">all ' + paths.length + '</option>';
+        for (const p of paths) html += '<option value="' + esc(p) + '">' + esc(p) + '</option>';
+        html += '</select></div>';
+        const base = (r.method.args != undefined) ? r.method.args[bind.arg || 0] : undefined;   // the method's own range
+        const isRange = d.type == "UI_Slider" && base != undefined && (base.type == "float" || base.type == "int") && base.min != undefined;
+        if (isRange) {
+            const unit = base.unit ? " (" + esc(base.unit) + ")" : "";
+            html += '<div class="form-row"><label style="width:150px"><i class="fa fa-arrows-v"></i> Range min' + unit + '</label>' +
+                '<input type="text" id="live-bind-min" style="width:100px" placeholder="' + base.min + '" value="' + (bind.min != undefined ? bind.min : "") + '"></div>' +
+                '<div class="form-row"><label style="width:150px"><i class="fa fa-arrows-v"></i> Range max' + unit + '</label>' +
+                '<input type="text" id="live-bind-max" style="width:100px" placeholder="' + base.max + '" value="' + (bind.max != undefined ? bind.max : "") + '"></div>' +
+                '<div class="form-row" style="color:#888;font-size:11px">' + esc(r.method.label || r.method.id) + ": " + base.min + " … " + base.max +
+                (base.unit ? " " + esc(base.unit) : "") + ((base.scale && base.scale != "lin") ? ", " + base.scale : "") + " (empty: that)</div>";
+        }
+        html += "</div>";
+        const minRow = $("#node-input-minVal").closest("div[class^=form-row]"), maxRow = $("#node-input-maxVal").closest("div[class^=form-row]");
+        if (d.type == "UI_Slider" && maxRow.length != 0) {
+            maxRow.after(html);
+            minRow.hide(); maxRow.hide();   // the slider steps, set by the binding
+        } else {
+            const nameRow = $("#node-input-name").closest("div[class^=form-row]");
+            if (nameRow.length != 0) nameRow.after(html); else $("#dialog-form").prepend(html);
+        }
+        $("#live-bind-path").val(bind.path);
+    }
+
+    /**
+     * Reads the "Live bind" part of the dialog.
+     * @returns {LiveBind|undefined} the binding before (for undo) when something changed, else undefined
+     */
+    function editorSave(d) {
+        const old = getBind(d);
+        if (old == undefined || $("#live-bind-form").length == 0) return undefined;
+        const path = $("#live-bind-path").length ? String($("#live-bind-path").val() || "") : old.path;
+        const num = function (sel) {
+            const t = String($(sel).val() == undefined ? "" : $(sel).val()).trim();
+            if (t === "") return undefined;
+            const v = Number(t);
+            return isNaN(v) ? undefined : v;
+        };
+        let min = $("#live-bind-min").length ? num("#live-bind-min") : old.min;
+        let max = $("#live-bind-max").length ? num("#live-bind-max") : old.max;
+        const r = resolve(d, true);
+        const base = (r != undefined && r.method.args != undefined) ? r.method.args[old.arg || 0] : undefined;
+        if (base != undefined && base.min != undefined) {
+            const lo = (min != undefined) ? min : base.min, hi = (max != undefined) ? max : base.max;
+            if (!(hi > lo) || (base.scale == "log" && lo <= 0)) {
+                RED.notify("live: the range " + lo + " … " + hi + " can't be used" + (base.scale == "log" ? " (a log scale needs min > 0)" : "") + ", the range before is kept", "warning", null, 4000);
+                min = old.min; max = old.max;
+            }
+        }
+        if (path == old.path && min === old.min && max === old.max) return undefined;
+        const bind = new LiveBind({ node: old._node || old.nodeId, method: old.methodId, ch: old.ch, arg: old.arg, path, min, max });
+        bind.nodeId = old.nodeId;
+        d.liveBind = bind;
+        // the slider steps follow the range (a linear int slider uses the values directly), and it shows that object's value
+        const nr = resolve(d, true);
+        if (nr != undefined && nr.arg != undefined) {
+            if (d.type == "UI_Slider" && isDirectInt(nr.arg)) { d.minVal = nr.arg.min; d.maxVal = nr.arg.max; }
+            const value = RED.control.core.getValues(nr.node, nr.method, nr.channel, path)[bind.arg || 0];
+            if (d.type == "UI_Slider") d.val = valueToSlider(d, nr.arg, value);
+            else if (d.type == "UI_ListBox") d.selectedIndex = (nr.arg.options || []).findIndex(function (o, i) { return ((typeof o == "object") ? o.value : i) == value; });
+        }
+        return old;
+    }
+
+    /** binds a GUI object to another object of its node ("" = all of them), i.e. another instance of the array */
+    function setPath(d, path) {
+        const bind = getBind(d);
+        if (bind == undefined || bind.path == path) return;
+        bind.path = path;
+        bind._resolved = undefined;     // found again with the new path
+        const r = resolve(d, true);
+        if (r != undefined && r.arg != undefined) {   // show that object's value
+            const value = RED.control.core.getValues(r.node, r.method, r.channel, path)[bind.arg || 0];
+            if (d.type == "UI_Slider") d.val = valueToSlider(d, r.arg, value);
+            else if (d.type == "UI_ListBox") d.selectedIndex = (r.arg.options || []).findIndex(function (o, i) { return ((typeof o == "object") ? o.value : i) == value; });
+        }
+        d.changed = true;
+        d.dirty = true;
+        RED.nodes.dirty(true);
+        RED.storage.update();
+        if (d.z == RED.view.activeWorkspace) RED.view.redraw_node(d);
+    }
 
     /** @returns {{bind, node, method, arg, channel, targets}|undefined} what the GUI object controls (undefined if it's not there) */
     function resolve(d, quiet) {
@@ -206,7 +337,7 @@ RED.control.gui = (function () {
     function sliderText(d) {
         const r = resolve(d, true);
         if (r == undefined || r.arg == undefined) return "unbound";
-        const value = RED.control.core.getValues(r.node, r.method, r.channel)[r.bind.arg || 0];
+        const value = RED.control.core.getValues(r.node, r.method, r.channel, r.bind.path)[r.bind.arg || 0];
         return formatValue(r.arg, value) + (r.arg.unit ? (" " + r.arg.unit) : "");
     }
 
@@ -215,7 +346,7 @@ RED.control.gui = (function () {
     // ******************************************************************
 
     function setArg(r, value, source) {
-        const values = RED.control.core.getValues(r.node, r.method, r.channel);
+        const values = RED.control.core.getValues(r.node, r.method, r.channel, r.bind.path);
         values[r.bind.arg || 0] = value;
         // the arguments of an action (i.e. the frequency of karplus.noteOn) are only stored, its button sends them
         const isSet = r.method.kind == undefined || r.method.kind == "set";
@@ -241,12 +372,12 @@ RED.control.gui = (function () {
         if (r == undefined) return;
         const core = RED.control.core;
         if (pressed) {
-            core.invoke(r.node, r.targets, r.method, r.channel, core.getValues(r.node, r.method, r.channel), true, d);
+            core.invoke(r.node, r.targets, r.method, r.channel, core.getValues(r.node, r.method, r.channel, r.bind.path), true, d);
             return;
         }
         if (r.method.release == undefined) return;
-        const release = RED.control.methods.getMethod(r.node.type, r.method.release);
-        if (release != undefined) core.invoke(r.node, r.targets, release, r.channel, core.getValues(r.node, release, r.channel), true, d);
+        const release = RED.control.methods.getMethod(r.node.type, r.method.release, r.node);
+        if (release != undefined) core.invoke(r.node, r.targets, release, r.channel, core.getValues(r.node, release, r.channel, r.bind.path), true, d);
     }
 
     // ******************************************************************
@@ -259,7 +390,10 @@ RED.control.gui = (function () {
             const bind = getBind(n);
             if (bind == undefined || bind.nodeId != e.node.id || bind.methodId != e.method.id) return;
             if (((bind.ch == null) ? undefined : bind.ch) !== e.channel) return;
-            const arg = e.method.args[bind.arg || 0];
+            // e.paths null: all the objects changed; else only those (a GUI object bound to all of them is not one of them)
+            if (e.paths != null && (bind.path == "" || e.paths.includes(bind.path) == false)) return;
+            const resolved = bind.resolve();
+            const arg = (resolved != undefined && resolved.arg != undefined) ? resolved.arg : e.method.args[bind.arg || 0]; // its own range
             const value = e.values[bind.arg || 0];
             if (n.type == "UI_Slider") n.val = valueToSlider(n, arg, value);
             else if (n.type == "UI_ListBox") n.selectedIndex = (arg.options || []).findIndex(function (o, i) { return ((typeof o == "object") ? o.value : i) == value; });
@@ -297,7 +431,7 @@ RED.control.gui = (function () {
     function controlsForArg(node, method, channel, argIndex, path, label) {
         const arg = method.args[argIndex];
         const liveBind = new LiveBind({ node, method: method.id, ch: (channel == undefined) ? null : channel, arg: argIndex, path: path || "" });
-        const value = RED.control.core.getValues(node, method, channel)[argIndex];
+        const value = RED.control.core.getValues(node, method, channel, path)[argIndex];
         const common = { name: label, tag: node.name, liveBind, sendCommand: "" };
         if (arg.type == "enum") {
             const rows = Math.min(LISTBOX_ROWS, arg.options.length);
@@ -388,6 +522,10 @@ RED.control.gui = (function () {
         LiveBind,
         getBind,
         isBound,
+        siblingPaths,
+        setPath,
+        editorPrepare,
+        editorSave,
         resolve,
         importBind,
         describe,

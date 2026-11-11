@@ -1,0 +1,18 @@
+{
+  "name": "fpb-faust-server",
+  "version": "0.2.0",
+  "private": true,
+  "description": "The FPB bridge for the Design Tool++: Faust compiler service, ASDT++ host, and serial / MIDI for ASDT++ (no Web Serial / Web MIDI needed)",
+  "main": "fpb-faust-server.js",
+  "scripts": {
+    "prestart": "npm install --no-audit --no-fund --loglevel=error",
+    "start": "node fpb-faust-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@julusian/midi": "^3.8.1",
+    "serialport": "^13.0.0"
+  }
+}
