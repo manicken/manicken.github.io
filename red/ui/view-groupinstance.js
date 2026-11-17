@@ -205,10 +205,16 @@ RED.view.groupInstance = (function () {
         const groups = source.contents.filter(function (n) { return n.type == "group"; }).sort(function (a, b) { return getDepth(a) - getDepth(b); });
         for (const g of groups) RED.view.groupbox.drawGroupCopy(groupLayer, g, g.x - origin.x, g.y - origin.y);
 
+        // the IO junctions of a class group are where the instance has its own (real) ports, so their copies are not shown
+        // (else a junction with lanes looks like more ports above/below the instance port), the copy is still made
+        // as the end of the wires inside (a wire end is calculated from the copy, not from what is drawn)
+        const portJunctions = new Set([...source.ports.In, ...source.ports.Out].filter(function (n) { return n.type.startsWith("Junction"); }));
         const copies = new Map(); // node -> its copy (used as the ends of the wire copies)
         for (const n of source.contents) {
             if (n.type == "group") continue;
-            copies.set(n, RED.view.drawNodeCopy(nodeLayer, n, n.x - origin.x, n.y - origin.y));
+            const copy = RED.view.drawNodeCopy(nodeLayer, n, n.x - origin.x, n.y - origin.y);
+            if (portJunctions.has(n)) copy.svgRect.style("display", "none");
+            copies.set(n, copy);
         }
         for (const l of source.ws.links) {
             if (copies.has(l.source) && copies.has(l.target)) RED.view.drawLinkCopy(linkLayer, l, copies.get(l.source), copies.get(l.target));

@@ -692,8 +692,13 @@ RED.view.groupbox = (function() {
 		var existing = group.nodes.filter(function (n) { return isIOnodeOfType(n, type); });
 		var step = Number(group.ioNodeSize) + getIOnodeGap(group);
 		var xPos = getIOnodeX(group, type);
-		// below the lowest existing junction of that side
-		var yPos = (existing.length != 0) ? (Math.max.apply(null, existing.map(function (n) { return n.y; })) + step) : group.y;
+		// below the lowest existing junction of that side (its bottom, a bus port is taller)
+		var yPos = group.y;
+		if (existing.length != 0) {
+			var CenterBasedPositions = RED.view.settings.useCenterBasedPositions;
+			var bottom = Math.max.apply(null, existing.map(function (n) { return getIOnodeTopBottom(group, n).bottom; }));
+			yPos = bottom + getIOnodeGap(group) + ((CenterBasedPositions == true) ? Number(group.ioNodeSize)/2 : 0);
+		}
 		var c = existing.length;
 		var fits = true;
 		while (count > 0) {
@@ -713,31 +718,57 @@ RED.view.groupbox = (function() {
 		if (existing.length == 0 || fits == false) RearrangeIONodes(group, type); // the first ones, or no space left: spread evenly
 		RED.view.redraw_links();
 	}
+	/**
+	 * The height of an IO junction of the group: the junction size, or taller when it's a bus port with more lanes
+	 * (the same as RED.view redraw_calcNewNodeSize calculates for a junction, but with the size of the group,
+	 * so it's right before the junction is redrawn)
+	 */
+	function getIOnodeHeight(group, node) {
+		var ports = Math.max(Number(node.inputs) || 1, Number(node.outputs) || 1);
+		if (ports == 1) return Number(group.ioNodeSize);
+		return Math.max(Number(group.ioNodeSize), ports * RED.view.node_def.pin_ydistance);
+	}
+
+	/** @returns {{top:Number, bottom:Number}} where an IO junction is (y is its top, or its center when CenterBasedPositions) */
+	function getIOnodeTopBottom(group, node) {
+		var h = getIOnodeHeight(group, node);
+		var top = (RED.view.settings.useCenterBasedPositions == true) ? (node.y - h/2) : node.y;
+		return { top: top, bottom: top + h };
+	}
+
+	/** @returns {Boolean} true when two IO junctions of the side overlap (a port got more lanes, so it's taller) */
+	function IOnodesOverlap(group, type) {
+		var spans = group.nodes.filter(function (n) { return isIOnodeOfType(n, type); })
+			.map(function (n) { return getIOnodeTopBottom(group, n); })
+			.sort(function (a, b) { return a.top - b.top; });
+		for (var i = 1; i < spans.length; i++)
+			if (spans[i].top < spans[i-1].bottom) return true;
+		return false;
+	}
+
+	/**
+	 * Spreads the IO junctions of one side evenly around the middle of the group, keeping their top to bottom order (the port order),
+	 * each one takes its own height (a bus port with more lanes is taller) plus the gap.
+	 */
 	function RearrangeIONodes(group, type) {
-		var spacing = Number(group.ioNodeSize)+getIOnodeGap(group);
 		var CenterBasedPositions = RED.view.settings.useCenterBasedPositions;
-		if (type == 0) var totalCount = group.outputs;
-		else var totalCount = group.inputs;
-		var c = 0;
-		var yOffset = group.y + group.h/2 - (spacing*(totalCount-1))/2;
-		if (CenterBasedPositions == true) {
-			yOffset -= group.h/2;
-		}
-		var PosModeCorrection_Xpos = (CenterBasedPositions == true)?0:(group.ioNodeSize/2);
-		var xPos = ((type == 0)?(group.x+group.w):(group.x)) - PosModeCorrection_Xpos;
-		if (CenterBasedPositions == true)
-			xPos -= group.w/2;
-		var nextYpos = yOffset;
-		for (var ni=0;ni<group.nodes.length;ni++) {
-			var node = group.nodes[ni];
-			if (isIOnodeOfType(node, type) == false) continue;
-			var yPos = nextYpos;//yOffset + c*spacing;
-			
-			node.y = yPos;
+		var gap = getIOnodeGap(group);
+		// in the order they are now (top to bottom is the port order, see RED.exporter.graph getGroupPorts),
+		// so spreading them never changes which wire goes to which port
+		var ioNodes = group.nodes.filter(function (n) { return isIOnodeOfType(n, type); })
+			.sort(function (a, b) { return (a.y - b.y) || (a.x - b.x) || (a.id < b.id ? -1 : 1); });
+		var heights = ioNodes.map(function (n) { return getIOnodeHeight(group, n); });
+		var totalHeight = heights.reduce(function (sum, h) { return sum + h; }, 0) + gap * Math.max(0, ioNodes.length - 1);
+		// y is the top of a node, or its center when CenterBasedPositions
+		var top = group.y + group.h/2 - totalHeight/2;
+		if (CenterBasedPositions == true) top -= group.h/2;
+		var xPos = getIOnodeX(group, type);
+		for (var i = 0; i < ioNodes.length; i++) {
+			var node = ioNodes[i];
+			node.y = (CenterBasedPositions == true) ? (top + heights[i]/2) : top;
 			node.x = xPos;
 			node.size = group.ioNodeSize;
-			c++;
-			nextYpos = yPos + Number(group.ioNodeSize) + getIOnodeGap(group);
+			top += heights[i] + gap;
 			RED.view.redraw_node(node);
 		}
 	}
@@ -755,6 +786,15 @@ RED.view.groupbox = (function() {
 		RED.view.redraw_links();
 	}
 	function NodeChanged(node, changes) {
+		// the lanes of a group port changed (see RED.editor), a taller junction can overlap the next one,
+		// then the side is spread again (otherwise the user positions are kept)
+		if (isIOnode(node) && node.parentGroup != undefined && changes != undefined && (changes.inputs != undefined || changes.outputs != undefined)) {
+			if (IOnodesOverlap(node.parentGroup, node.ClassIOtype)) {
+				RearrangeIONodes(node.parentGroup, node.ClassIOtype);
+				RED.view.redraw_links();
+			}
+			return;
+		}
 		if (node.type != "group") return;
 		var group = node; // make the code easier to read
 		if (changes == undefined) return;

@@ -208,9 +208,8 @@ var followingNotImplementedYet = {
         }
     }
 }
-var TabOutput_help = "note. setting the inputs to anything other than 1 (i.e. Bus wire) is only supported on OSC exports";
 var TabIoCommon_Defaults = {
-    isBus: {value: false, editor:{type:"boolean"}},
+    //isBus: {value: false, editor:{type:"boolean"}},
     portNames: {value: "", editor:{type:"multiline"}}
 }
 var TabIO_PortCount_Default = {
@@ -349,8 +348,8 @@ var NodeDefinitions = {
             auto_subcat_test1: { ...AudioTypeBase, shortName: "auto_subcat_test2", outputs: 2, category: "newSubCat" },
             auto_subcat_test2: { ...AudioTypeBase, shortName: "auto_subcat_test3", outputs: 2, category: "" }, // this don't define the category and this item will be placed into the unsorted category
             */
-            TabOutput: { ...NonAudioObjectBase, editorhelp:TabOutput_help, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
-            TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}},...followingNotImplementedYet, outputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
+            TabOutput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}}, inputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "Out", inputs: 1, outputs: 0, color: "#cce6ff", icon: "arrow-in.png" },
+            TabInput: { ...NonAudioObjectBase, defaults: { ...NonAudioObjectBase.defaults, color:{type:"color",editor:{type:"color"}}, outputs: { ...TabIO_PortCount_Default }, ...TabIoCommon_Defaults }, editor: "autogen", shortName: "In", inputs: 0, outputs: 1, color: "#cce6ff", icon: "arrow-in.png", align: "right" },
 
             BusJoin: { ...NonAudioObjectBase, dontShowInPalette: true, /* replaced by junctions with more inputs (converted when loaded) */ defaults: { ...NonAudioObjectBase.defaults, inputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusJoin", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch_back.png", help: "not implemented yet" },
             BusSplit: { ...NonAudioObjectBase, dontShowInPalette: true, /* replaced by junctions with more outputs (converted when loaded) */ defaults: { ...NonAudioObjectBase.defaults, outputs: { value: 1, maxval: 255, minval: 2, type: "int" } }, editor: "autogen", shortName: "BusSplit", inputs: 1, outputs: 1, color: "#cce6ff", icon: "switch.png", align: "right", iconXadj:-6 },

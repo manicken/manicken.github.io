@@ -2395,7 +2395,7 @@ RED.nodes = (function() {
                     (RED.exporter.graph.getJoinInputCount(l.source) > 0 || RED.exporter.graph.getSplitOutputCount(l.target) > 0);
 
         if (isCppExportMode()) { // the C++ export checks the wires itself (for the selected Export Mode), so show exactly what it would report
-            var shape = RED.exporter.resolve.getWireShape(l); // the wire color is the outer level (see RED.view redraw_link_notation)
+            var shape = RED.exporter.resolve.getWireShapeAtTarget(l); // the wire color is the outer level (see RED.view redraw_link_notation), as the target takes it (spread over an array: array[N] of ...)
             l.info.shapeKind = (shape.length != 0) ? shape[0].kind : "";
             l.info.shapeText = (shape.length != 0) ? RED.exporter.resolve.getShapeText(shape) : "";
             l.info.shapeMixed = shape.some(function (s) { return s.kind == "array"; }) && shape.some(function (s) { return s.kind == "bus"; }); // i.e. array[8] of bus[2]

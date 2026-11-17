@@ -440,6 +440,34 @@ RED.main = (function() {
         }
 
     }
+    /**
+     * The test designs (tests/export/*.js, included by index.html) add themselves to globalThis.TestDesigns:
+     * { name, description, design } where design is the same as a saved design (.json),
+     * they are listed in the menu under Test designs and loaded the same way as an example.
+     */
+    function addTestDesignsToMenu()
+    {
+        var menuName = "menu-test-designs";
+        $("#" + menuName).empty();
+        var designs = (globalThis.TestDesigns || []).slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+        if (designs.length == 0) {
+            $("#" + menuName).append('<li class="disabled"><a tabindex="-1" href="#">no test designs included</a></li>');
+            return;
+        }
+        for (var ti = 0; ti < designs.length; ti++) {
+            var testDesign = designs[ti];
+            var item = { label: testDesign.name, description: testDesign.description || testDesign.name };
+            addMenuItem(menuName, testDesign.name, "fa fa-flask", item, function (id) {
+                var found = designs.find(function (d) { return d.name == id; });
+                verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(id), function (okPressed) {
+                    if (okPressed == false) return;
+                    console.warn("load test design " + id);
+                    saveToFile(RED.arduino.settings.ProjectName + ".json");
+                    RED.storage.loadContents(JSON.stringify(found.design)); // loadContents takes the text of a saved design
+                });
+            });
+        }
+    }
     function updateProjectsMenu()
     {
         RED.IndexedDBfiles.listFiles("projects", function(items) {
@@ -763,6 +791,7 @@ RED.main = (function() {
         }
 
         addDemoFlowsToMenu();
+        addTestDesignsToMenu();
         RED.view.init();
 
         RED.export.init();

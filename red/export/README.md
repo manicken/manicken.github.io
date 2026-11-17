@@ -59,7 +59,7 @@ elements `i0` ... `i3`, a connection is created in the group of the class instan
 - The messages: with the OSC setting *Wildcard Array Objects* the contents of the elements of a class array are
   created once in `/voices/i*`, the connections are always made one by one. The code of the design is not sent (a warning).
 - Tested by compiling every generated file against OSCAudio and the dynamic forks (TD 1.59, USB type with audio,
-  as the library has `OSCAudioInputUSB`), see `tests/export/OscTests.json` and `OscErrorTests.json`.
+  as the library has `OSCAudioInputUSB`), see `tests/export/OscTests.js` and `OscErrorTests.js`.
 
 The design JSON is written into **one** file only: the main file (.ino), else the 'audio main'
 tab, else the top-level class (and once at the top of the COMPOSITE view). A zip contains
@@ -228,9 +228,13 @@ design (`scheduleExportCheck` in `RED.nodes`, a few ms even for big designs).
 
 ## Tests
 
-`tests/export/` has designs made for testing the export (open them with Import):
+`tests/export/` has designs made for testing the export, one `.js` file each. A file adds itself to the global list
+`globalThis.TestDesigns` (`{ name, description, design }`, the design is the same as a saved `.json`), index.html
+includes them all and they are listed in the menu (top right) under **Test designs**. A new test design is added
+by making a file like the others and a `<script>` line for it in index.html. In node they can be loaded with `require`.
 
-- `BusAndThruTests.json` - one example of each bus/pass-through case, must export
+
+- `BusAndThruTests.js` - one example of each bus/pass-through case, must export
   (and compile) with these 23 connections in `BusAndThruTests` and none in the classes:
   ```
   osc1 -> fx.ampL:0, osc2 -> fx.ampR:0               BusJoin into a 2 lane class input
@@ -246,10 +250,10 @@ design (`scheduleExportCheck` in `RED.nodes`, a few ms even for big designs).
   amps[0] -> mixer:8, amps[1] -> mixer:9
   osc1 -> mixer:10, osc2 -> mixer:11                 the same bus into an array of a pass through class (thrus[2])
   ```
-- `ShapeTests.json` - wire shapes: `voices[4]` of `StereoOsc` (array[4] of bus[2]) split into 4 and 8,
+- `ShapeTests.js` - wire shapes: `voices[4]` of `StereoOsc` (array[4] of bus[2]) split into 4 and 8,
   spread over `amps8[8]` (one signal each) and `fx4[4]` (a stereo bus each), two stereo parts joined and split again,
   and `bad3` (a split into 3, the only error).
-- `FlatTests.json` - the flat modes. `FlatMain` uses `Poly` (lfo, `voices[2]` of `Voice`, mix), and
+- `FlatTests.js` - the flat modes. `FlatMain` uses `Poly` (lfo, `voices[2]` of `Voice`, mix), and
   `Voice` has `osc[NUM]` (sized by a class constant), a mixer and an env:
   `flatclassic` must give one file with 14 connections (`poly_lfo -> poly_voices_0_osc[0]`, ...,
   `poly_mix -> i2s:0`), `flathelper` the same 14 connections in the constructor of `FlatMainDesign`
@@ -259,15 +263,31 @@ design (`scheduleExportCheck` in `RED.nodes`, a few ms even for big designs).
   `FlatCodeUse` has code that uses `poly.mix` and `amp` directly: warnings (it doesn't compile until the code is changed).
   `FlatHelperCode` has code that uses `design.outMix`, `design.poly_mix` and `design.dc[i]` (a tab array sized by a
   tab constant): must compile in `flathelper`.
-- `GroupTests.json` - class groups: `GroupMain` has `voices[2]` (class `GVoice`, osc -> env -> a nested
+- `GroupTests.js` - class groups: `GroupMain` has `voices[2]` (class `GVoice`, osc -> env -> a nested
   class group `filt` (class `GFilter`)), a visual only group with a `dc`, and a second `GFilter` group `filt2`.
   In `classes` it must give `GVoice.h/.cpp` and `GFilter.h` (once), with `lfo -> voices[0].osc`,
   `voices[0].filt.amp -> mixer:0`, `voices[1].filt.amp -> mixer:1`, `dc -> mixer:2` in `GroupMain`;
   in `flatclassic` the same connections with flat names (`voices_0_filt_amp`); in `classic` an error.
   `GroupCode` has a class group with code: fine in `classes`, an error in the flat modes.
-- `GroupErrorTests.json` - two groups with the same class name but different content (error in `classes`),
+- `GroupErrorTests.js` - two groups with the same class name but different content (error in `classes`),
   and `osc[3]` into a group array `a[2]` (array sizes don't match).
-- `ErrorTests.json` - one of each error, the export must stop with a report of 7 errors
+- `GroupInstanceTests.js` - instances of the class group `GChain` from the palette: `chainB`, `chainC[2]`, and `inner`
+  inside the class tab `UsesChain` (In2 is above In1 in the group, so In2 is port 0).
+- `BusPortTests.js` - group ports with lanes (bus ports, set as *Lanes* in the edit dialog of a group IO junction):
+  the class group `stereo` (`GStereo`, 2 lanes in and out), `pairs[2]` of it fed by two stereo buses joined
+  (bus[2] of bus[2], one stereo bus per element) and a plain group `plain` where the ports split/join like junctions.
+  No problems, 17 connections:
+  ```
+  osc1 -> stereo.ampL:0, osc2 -> stereo.ampR:0           2 lane class group input
+  stereo.ampL -> i2s:0, stereo.ampR -> i2s:1             2 lane class group output
+  osc1 -> pairs[0].ampL:0, osc2 -> pairs[0].ampR:0       bus[2] of bus[2] spread over pairs[2]
+  osc2 -> pairs[1].ampL:0, osc1 -> pairs[1].ampR:0
+  pairs[0].ampL -> outMix:0 ... pairs[1].ampR -> outMix:3
+  osc1 -> pA:0, osc2 -> pB:0                             plain group input splits
+  pA -> outMix:4, pB -> outMix:5                         plain group output joins
+  outMix -> rms:0
+  ```
+- `ErrorTests.js` - one of each error, the export must stop with a report of 7 errors
   (both wires into `amp:0` are reported, and a 3 signal bus into the array `c[2]`) and 1 warning,
   and in a C++ Export Mode exactly those 7 wires are shown as invalid in the editor.
 

@@ -193,6 +193,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
                         <ul id="menu-projects" class="dropdown-menu"> </ul>
                     </li>
                     <li class="divider"></li>
+                    <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#">&nbsp;&nbsp;<i class="fa fa-flask"></i>&nbsp;&nbsp;Test designs</a>
+                        <ul id="menu-test-designs" class="dropdown-menu"> </ul>
+                    </li>
+                    <li class="divider"></li>
                     <li class="dropdown-submenu pull-left"><a tabindex="-1" href="#">&nbsp;&nbsp;<i class="fa fa-th-large"></i>&nbsp;&nbsp;Workspaces</a>
                         <ul id="workspace-menu-list" class="dropdown-menu">
                             <li><a id="btn-workspace-add" tabindex="-1" href="#"><i class="fa fa-plus"></i> Add</a></li>
@@ -788,6 +792,18 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/export/export-osc-messages.js"></script>
 <script src="red/export/export-osc-live.js"></script>
 <script src="red/export/exporter.js"></script>
+
+<!-- test designs for the export (each one adds itself to globalThis.TestDesigns), listed in the menu under Test designs -->
+<script src="tests/export/BusAndThruTests.js"></script>
+<script src="tests/export/BusPortTests.js"></script>
+<script src="tests/export/ErrorTests.js"></script>
+<script src="tests/export/FlatTests.js"></script>
+<script src="tests/export/GroupErrorTests.js"></script>
+<script src="tests/export/GroupInstanceTests.js"></script>
+<script src="tests/export/GroupTests.js"></script>
+<script src="tests/export/OscErrorTests.js"></script>
+<script src="tests/export/OscTests.js"></script>
+<script src="tests/export/ShapeTests.js"></script>
 
 <script src="red/arduino/arduino-board.js"></script>
 <script src="red/BiDirDataWebSocketBridge.js"></script>

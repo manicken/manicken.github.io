@@ -29,12 +29,20 @@ the toolbar can be hidden in the settings<br>
 
 note. the UI items are never sorted<br>
 
-* Simple export is used for "classic" exports.<br>
-At the moment it only supports exporting of the current "tab"<br>
-and is only meant to be used when doing small and simple projects<br>
-it currently have no support for arrays and subclasses<br>
-however it exports:<br>
-IncludeDef, Variables, CodeFile, Function, AudioStreamObject and DontRemoveCodeFiles node-types.<br>
+* Export (new) together with the Export Mode selector in the toolbar<br>
+The Export Mode decides what is exported, and the editor shows the wires that the selected mode can't export as invalid (red dashed, with the reason in the tooltip):<br>
+  - `classic` - the current tab as one file, with global objects (the original style)
+  - `flatclassic` - the current tab as one file, class instances are converted into flat objects (`voices[2].env` becomes `voices_2_env`)
+  - `flathelper` - flattened like `flatclassic`, but all objects and connections are in one helper class
+  - `classes` - every exported tab (and class group) as a class in its own file, also as a zip
+  - `osc_simple_cpp`, `osc_class_cpp` - the same as `flatclassic`/`classes`, but as OSC objects (h4yn0nnym0u5e's OSCAudio library)
+  - `osc_simple_msg`, `osc_class_msg` - the current tab as OSC messages that create it on a running Teensy
+  - `osc` - the old OSC export
+
+The export resolves arrays, buses (wires that carry more than one signal), junctions that join/split, pass-through classes and nested classes down to plain connections.<br>
+How it works, and the rules for arrays and buses: [red/export/README.md](red/export/README.md)<br>
+
+The older Simple and Class-based exports are still in the Export menu.<br>
 
 * save/load the whole design to/from a JSON file<br>
 
@@ -59,6 +67,16 @@ example how the autocomplete looks:<br>
 ![Autocomplete_MultiLevel](/helpImgs/Autocomplete_MultiLevel.png)
 
 Code is edited in CodeFile and Function node types.<br>
+
+* Bridge server (`fpb/server`, start with `npm start` in that folder)<br>
+a local server that serves the "Tool" at http://127.0.0.1:8088/ and carries the serial port and MIDI for it:<br>
+  - finds the Teensy by itself: with Dual Serial one port is used for OSC and the other for debug output
+  - OSC goes through the bridge instead of Web Serial, so it works in any browser
+  - the debug output is shown in a second log beside the output log (and a typed line is sent to the port)
+  - MIDI in and out, used by the UI objects (instead of Web MIDI or the Arduino IDE plugin below)
+  - it's also the Faust bridge (see Faust below)
+
+More info: [fpb/README.md](fpb/README.md)<br>
 
 * Arduino IDE plugin/extension<br>
 https://github.com/manicken/arduinoAPIwebserver<br>
@@ -87,7 +105,8 @@ the parameter --enable-proposed-api JannikSvensson.api-webserver<br>
 (yes proposed-api is available in the standard version, even if microsoft say it's not)<br>
 the information of doing so is available at the VSCODE extension github page.<br>
 
-Only the Arduino IDE extension is supporting the "midi to websocket bridge"<br>
+MIDI and serial now also go through the bridge server above, which works with any browser and IDE.<br>
+Of the IDE extensions, only the Arduino IDE extension is supporting the "midi to websocket bridge"<br>
 that is used by "UI item node" midiSend commands.<br>
 This is because midi is not native in Node.js, and the node-midi (https://www.npmjs.com/package/midi)<br>
 had some version compatibility problems in VSCODE.<br>
@@ -119,8 +138,14 @@ the group act like a lasso-selection (but it uses a node-list to determite which
 the group can have label that is placed inside it at the top center<br>
 (in a future version it should be user placeable like in the "node-red"-group)<br>
 
-I plan to use the group like a exportable class/(seperate object) so that it can be used like a array.<br>
-so the checkbox "Export as class" have no function yet.<br>
+A group with a *Class name* is a class (a class group):<br>
+  - the group name is the instance name, `voices[8]` makes it an array of 8 instances
+  - the IO junctions on the edges of the group are its ports, a port can have more than one lane (a bus port: set *Lanes* in the edit dialog of the junction)
+  - the class is added to the palette (category tabs), so more instances of it can be placed, also in other tabs
+  - an instance can be expanded (in its edit dialog) to show what is inside of it, read only
+  - the class is exported like a class tab (in `classes` as its own class, in the flat modes as flat objects)
+
+A group without a class name is only visual, its IO junctions works like normal junctions.<br>
 
 example of grouped listboxes:<br>
 ![GroupedListBoxes](/helpImgs/GroupedListBoxes.png)
@@ -177,8 +202,7 @@ It can also be used for a custom export for custom structures.<br>
 + automatic close of other than current selected<br>
 + input and output have sub categories sorted by "device"(don't know what to call it)<br>
 + used category which contains all AudioObject-types used (to make it easier to make copies of used objects)<br>
-+ 3 new categories:<br>
-1. tabs (contains class IO nodes + all class nodes)<br>
++ the category tabs, that contains the class IO nodes (TabInput/TabOutput) + all class nodes (class tabs and class groups)<br>
 
 * print function at right menu/(ctrl+p) that only uses the workspace-area as the print source<br>
 
@@ -188,9 +212,37 @@ save notification that shows when the design is saved<br>
 * Junction Nodes (used to split many signals and to make the design easier to follow)<br>
 have two variants one that goes in normal direction L-R<br>
 and one that goes in the reverse direction<br>
+a junction with more inputs joins them into one bus wire, and a junction with more outputs splits a bus/array wire<br>
+(the old BusJoin/BusSplit objects are converted to junctions when a design is loaded)<br>
+
+* Wire colors (in the C++ Export Modes) show what a wire carries:<br>
+orange for an array, blue for a bus, and a mixed wire (i.e. array[2] of bus[2]) is the outer color with dashes in the inner color.<br>
+The tooltip of a wire shows what it carries.<br>
 
 example of R-L junction usage:<br>
 ![ReverseJunction](/helpImgs/ReverseJunction.png)
+
+* OSC live update (the toolbar button)<br>
+changes the design on a Teensy running h4yn0nnym0u5e's OSCAudio library with the Dynamic Audio Objects, while it's edited:<br>
+objects, wires, junctions, classes (all instances), arrays, class groups, paste and undo/redo are sent as they happen.<br>
+Sync clears the Teensy and sends the whole design of the current tab.<br>
+Used to prototype a design before it's made into fixed firmware.<br>
+
+* Live tab (right sidebar)<br>
+controls the audio objects on the Teensy live: it shows the functions of the selected audio object<br>
+(i.e. frequency, amplitude, gain of each mixer channel) as sliders, lists and buttons.<br>
+For an object in a class or an array, it can control all instances or one of them.<br>
+"+" (or "Create GUI" for all of them) creates UI objects (sliders, list boxes, buttons) that are bound to the audio object,<br>
+so a control panel can be made beside the design. Only OSC is supported for now.<br>
+
+* Faust (AudioEffectFPB)<br>
+a Faust patch can be written in the Faust IDE or in the "Tool" (the edit dialog of an AudioEffectFPB object),<br>
+the bridge server compiles it into FPB (float patch bytecode) and the "Tool" sends it to the Teensy over OSC,<br>
+where it's loaded and run without compiling the firmware again. The Faust parameters show up in the Live tab.<br>
+How to set it up: [fpb/README.md](fpb/README.md), how FPB works on the Teensy: [fpb/teensy/FPB/README.md](fpb/teensy/FPB/README.md)<br>
+
+* Test designs (rightmost menu -> Test designs)<br>
+designs made for testing the export (`tests/export/*.js`), see [red/export/README.md](red/export/README.md) (Tests) for what each one must export.<br>
 
 I tried my best to make the embedded documentation as clear as possible,<br>
 but contributions is appreciated.<br>
@@ -206,10 +258,7 @@ so buffering of the textDimensions is needed for all labels/texts<br>
 * Make a very simple sequencer with the help of piano as guide and group with lines for the sequence part<br>
 the notes/actions should be done with the UI_Button (because it have both pressed(enter) and released(leave) actions)<br>
 
-* make group export as class<br>
-I have included two proposed designs into the html<br>
-it's available at the rightmost menu -> Examples -> GroupBasedDesign (this contains two tabs with each design)<br>
-
-* "exploded" export where a design can be defined in tabs but then exported as "classic"-export<br>
-
 * multitab code editor<br>
+
+Done from the earlier list: group export as class (class groups, see group above),<br>
+and the "exploded" export where a design is defined in tabs but exported as one file (the Export Modes `flatclassic` and `flathelper`).<br>

@@ -661,7 +661,14 @@ RED.editor = (function() {
                 
                 if (node._def.defaults[d].noEdit != undefined) { console.warn("edit disabled for " + node.type + " " + d); continue; }// edit disabled
 				//console.log(typeof node.ClassIOtype);
-				if (node.ClassIOtype != undefined && (typeof node.ClassIOtype == "number") && (d == "anchor" || d == "locked" || d == "inputs" || d == "outputs")) { console.warn("edit disabled for " + node.type + " " + d + " because it's a ClassIO type"); continue;}
+				// an IO junction of a group (ClassIOtype 1 = input, 0 = output): the side facing out of the group is one port,
+				// the side facing into the group is its lanes (a bus port, like TabInput.outputs/TabOutput.inputs)
+				var isIOjunction = (typeof node.ClassIOtype == "number");
+				if (isIOjunction && (d == "anchor" || d == "locked")) continue;
+				if (isIOjunction && d == "inputs" && node.ClassIOtype != 0) continue;
+				if (isIOjunction && d == "outputs" && node.ClassIOtype != 1) continue;
+				if (isIOjunction && (d == "inputs" || d == "outputs"))
+					propEditor = { ...propEditor, label: "Lanes" }; // its help is set below (setGroupPortLanesHelp)
                 data += GetEditorLine_Input(propEditor, d);
             }
             // a code editor (the hand-written templates have their own <pre id="aceEditor">)
@@ -672,6 +679,7 @@ RED.editor = (function() {
 			$(form).html(data);
             prepareEditDialog(node, "node-input");
             setInputPopupTexts(node);
+            setGroupPortLanesHelp(node);
             lockJunctionPortCounts(node);
 
 			
@@ -730,6 +738,20 @@ RED.editor = (function() {
         inputs.on("input change", update);
         outputs.on("input change", update);
         update();
+    }
+    /**
+     * The lanes of an IO junction of a group (the inputs of an output port, the outputs of an input port, see the autogen editor)
+     * have their own help instead of the join/split help of a normal junction.
+     * @param {REDNode} node
+     */
+    function setGroupPortLanesHelp(node) {
+        if (node.ClassIOtype !== 0 && node.ClassIOtype !== 1) return;
+        var isInput = (node.ClassIOtype == 1);
+        RED.main.SetPopOver("#node-input-" + (isInput ? "outputs" : "inputs"),
+            "the lanes (signals) of this group port, more than 1 makes it a bus port (like TabInput/TabOutput):<br>" +
+            (isInput ? "lane k inside of the group gets signal k of the wire connected to the port"
+                     : "lane k inside of the group is signal k of the wire out of the port") +
+            "<br>(a group that isn't a class works the same, the port then splits/joins like a junction)", "right");
     }
     function setInputPopupTexts(node) {
         for (var d in node._def.defaults) {

@@ -401,6 +401,13 @@
     transition: transform .1s;
   }
 
+  /* the read-only copy of a class in an expanded instance (see red/ui/view-groupinstance.js) never reacts on the mouse,
+     not even the parts that sets their own pointer-events (the junction hitbox, the junction ports on hover),
+     else a copied junction (an IO junction of the class group) could be hovered and wired like the real one */
+  .group_instance_mirror, .group_instance_mirror * {
+    pointer-events: none !important;
+  }
+
   /* the invisible area around a junction that reacts on the mouse (see RED.view redraw_nodeMainRect_init) */
   .junction_hitbox {
     fill: transparent;
@@ -1153,13 +1160,17 @@
     border: 1px solid #ccc;
     border-radius: 4px;
   }
-  /* an array of buses, the bus color dashed over the array color (see RED.view redraw_link_notation) */
+  /* a mixed shape: the inner level's color dashed over the outer level's color (see RED.view redraw_link_notation)
+     an array of buses: blue (bus) dashes over orange; a bus of arrays: orange (array) dashes over blue */
   .link_line_mixed {
     stroke: #22B2F8;
     stroke-width: 6;
     stroke-dasharray: 12, 12;
     fill: none;
     pointer-events: none;
+  }
+  .link_line_mixed.link_line_mixed_array {
+    stroke: #ffbf00;
   }
   .link_outline_array {
     stroke:#ffebb0;

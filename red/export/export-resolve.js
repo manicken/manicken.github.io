@@ -21,7 +21,7 @@
  * A wire can carry more than one signal (a bus):
  *   array into a non array          - one signal per element
  *   class output, joining node      - see above, buses can be nested
- *   class input with N lanes        - (TabInput.outputs = N) lane k gets signal k of the wire
+ *   class input with N lanes        - (TabInput.outputs = N, or the outputs of a class group input junction) lane k gets signal k of the wire
  *   into a dyn input object (mixer) - every signal gets its own input, after the signals of the wires above
  *   into a normal object            - the signals go to the inputs after each other, starting at the wire input
  *
@@ -603,6 +603,28 @@ RED.exporter.resolve = (function () {
     }
 
     /**
+     * The shape of a wire as its target takes it, used to show the wire (color and tooltip, see RED.nodes setLinkInfo),
+     * the export uses getWireShape. When the wire is spread over an array (see getSpreadPartSize) the outer levels
+     * that are split are one element each, so they are shown as an array of the target: two stereo buses joined
+     * (bus[2] of bus[2]) into pairs[2] is array[2] of bus[2], and a bus[4] into amps[4] is array[4].
+     * @param {REDLink} wire
+     * @returns {WireShape}
+     */
+    function getWireShapeAtTarget(wire) {
+        const shape = getWireShape(wire);
+        if (shape.length == 0) return shape;
+        const from = graph.followJunctionsBackward(wire);
+        if (from == undefined) return shape;
+        const crossing = getWireCrossing(wire, from);
+        const targetArray = crossing.targetArray;
+        if (targetArray == undefined) return shape;
+        if (crossing.sourceArray != undefined && crossing.sourceArray.length == targetArray.length) return shape; // element to element, already array[N]
+        if (getSpreadPartSize(wire, shape, targetArray.length) == undefined) return shape; // not spread: the whole wire to every element
+        const level = getSplitLevel(shape, targetArray.length);
+        return [{ kind: "array", size: targetArray.length }, ...shape.slice(level)];
+    }
+
+    /**
      * @param {WireEnd} from
      * @param {Number} depth
      * @returns {WireShape} what an output gives
@@ -850,6 +872,7 @@ RED.exporter.resolve = (function () {
         resolveWorkspace,
         validateLink,
         getWireShape,
+        getWireShapeAtTarget,
         getShapeText,
     };
 })();

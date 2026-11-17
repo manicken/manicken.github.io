@@ -2416,7 +2416,7 @@ RED.view = (function() {
 			if (nextFreeInputIndex == -1) {
 				if (d._def.dynInputs == undefined || RED.main.settings.DynInputAutoExpandOnLinkDrop == false)
 					return;
-				// a junction that splits can't join too, and the inputs of a class group IO junction are its lanes (see RED.editor lockJunctionPortCounts)
+				// a junction that splits can't join too, and the inputs of a class group IO junction are its lanes (set in its edit dialog, see RED.editor)
 				if (d.type.startsWith("Junction") && (Number(d.outputs) > 1 || d.ClassIOtype === 0 || d.ClassIOtype === 1))
 					return;
 
@@ -2543,7 +2543,72 @@ RED.view = (function() {
 	{
 		var y = RED.view.groupInstance.getPortY(d, portDir, index);
 		if (y != undefined) return y;
-		return (d.h/2) - ((count-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*index;
+		var lanes = getPortLaneList(d, portDir, count);
+		if (lanes == undefined) // only normal ports (one lane each): evenly spaced around the middle
+			return (d.h/2) - ((count-1)/2)*node_def.pin_ydistance + node_def.pin_ydistance*index;
+		// a bus port takes the space of its lanes, so the ports are stacked by their heights (with the normal gap between)
+		var total = 0;
+		for (var i = 0; i < lanes.length; i++) total += getPortHeightOfLanes(lanes[i]) + ((i != 0) ? node_def.pin_ypadding : 0);
+		var top = (d.h/2) - total/2;
+		for (var i = 0; i < index; i++) top += getPortHeightOfLanes(lanes[i]) + node_def.pin_ypadding;
+		return top + getPortHeightOfLanes(lanes[index])/2;
+	}
+
+	/**
+	 * The number of lanes (signals) of a port, as it's drawn: a port with lanes of an expanded class instance
+	 * (class tab node or group instance, see RED.view.groupInstance) is drawn as a
+	 * bus port (TabInput.outputs/TabOutput.inputs, or the lanes of a class group IO junction, see RED.exporter.graph getClassPortWidth),
+	 * every other port has one lane.
+	 * @param {REDNode} d
+	 * @param {String} portDir "In" or "Out"
+	 * @param {Number} index
+	 * @returns {Number}
+	 */
+	function getPortLanes(d, portDir, index)
+	{
+		if (d._def == undefined || (d._def.classWs == undefined && d._def.classGroup == undefined)) return 1;
+		if (RED.view.groupInstance.isExpanded(d) == false) return 1; // a collapsed instance has normal ports, only the expanded view shows the lanes
+		var graph = RED.exporter.graph;
+		var classWs = graph.getClassWorkspace(d);
+		if (classWs == undefined) return 1;
+		var portNode = graph.getClassPort(classWs, portDir, index);
+		return (portNode != undefined) ? graph.getClassPortWidth(portNode) : 1;
+	}
+
+	/**
+	 * @returns {Number[]|undefined} the lanes of each port of the side, undefined when all ports have one lane (the normal case)
+	 */
+	function getPortLaneList(d, portDir, count)
+	{
+		if (d._def == undefined || (d._def.classWs == undefined && d._def.classGroup == undefined)) return undefined;
+		if (RED.view.groupInstance.isExpanded(d) == false) return undefined; // (see getPortLanes)
+		var lanes = [];
+		var anyBus = false;
+		for (var i = 0; i < count; i++) {
+			lanes.push(getPortLanes(d, portDir, i));
+			if (lanes[i] > 1) anyBus = true;
+		}
+		return anyBus ? lanes : undefined;
+	}
+
+	/** @returns {Number} the height of a port with that many lanes: the lanes as normal ports, with the gaps between them filled */
+	function getPortHeightOfLanes(lanes)
+	{
+		return lanes*node_def.pin_ysize + (lanes-1)*node_def.pin_ypadding;
+	}
+
+	/** @returns {Number} the height of the port rect (a bus port is taller, see getPortLanes) */
+	function getPortHeight(d, portDir, index)
+	{
+		return getPortHeightOfLanes(getPortLanes(d, portDir, index));
+	}
+
+	/** @returns {Number} how many normal ports the ports of the side take (a bus port takes one per lane), used for the node height */
+	function getPortSlotCount(d, portDir, count)
+	{
+		var lanes = getPortLaneList(d, portDir, count);
+		if (lanes == undefined) return count;
+		return lanes.reduce(function (sum, n) { return sum + n; }, 0);
 	}
 	function redraw_calcNewNodeSize(d)
 	{
@@ -2567,7 +2632,8 @@ RED.view = (function() {
 
 		var inputCount = d.inputs||d._def.inputs||0;
 		var outputCount = d.outputs||d._def.outputs||0;
-		var maxIOcount = Math.max(inputCount, outputCount);
+		// a bus port of a class instance takes the space of its lanes (see getPortLanes)
+		var maxIOcount = Math.max(getPortSlotCount(d, "In", inputCount), getPortSlotCount(d, "Out", outputCount));
 		//console.log("inputCount:"+inputCount+"outputCount:"+outputCount+"maxIOcount:"+maxIOcount);
 		
 		d.textDimensions = RED.view.textsize.calculate(l, d.textSize);
@@ -2848,12 +2914,13 @@ RED.view = (function() {
 		for (var n=0; n < numInputs; n++) {
 			
 			
-			var y = getPortCenterY(d, "In", n, numInputs)-node_def.pin_ysize/2;// allways divide by 2
+			var portHeight = getPortHeight(d, "In", n); // a bus port is taller
+			var y = getPortCenterY(d, "In", n, numInputs)-portHeight/2;// allways divide by 2
 
 			var rect = nodeRect.append("rect");
 			inputlist[n] = rect;
 			rect.attr("class","port port_input "+junctionPortClass).attr("rx",node_def.pin_rx).attr("ry",node_def.pin_ry)
-				.attr("y",y).attr("width",node_def.pin_xsize).attr("height",node_def.pin_ysize).attr("index",n);
+				.attr("y",y).attr("width",node_def.pin_xsize).attr("height",portHeight).attr("index",n);
 
 			if (d.type == "JunctionRL")
 				rect.attr("x",d.w - node_def.pin_ysize/2 - 5);// allways divide by 2
@@ -2893,7 +2960,8 @@ RED.view = (function() {
 			if (d.inputs) numInputs = d.inputs;
 			else numInputs = d._def.inputs;
 				
-			port.attr("y",getPortCenterY(d, "In", i, numInputs)-node_def.pin_ysize/2);// allways divide by 2
+			var portHeight = getPortHeight(d, "In", i); // a bus port is taller
+			port.attr("y",getPortCenterY(d, "In", i, numInputs)-portHeight/2).attr("height",portHeight);// allways divide by 2
 		});
 
         if (d.type != "JunctionRL" && d.type != "JunctionLR" && d._def.uiObject == undefined && settings.showIOlabels) {
@@ -2996,8 +3064,9 @@ RED.view = (function() {
 			var node = d; // (d is the port index inside each)
 			d._ports.each(function(d,i) {
 				var port = d3.select(this);
-				port.attr("y",getPortCenterY(node, "Out", i, numOutputs)-node_def.pin_ysize/2);// allways divide by 2 (local space)
-				
+				var portHeight = getPortHeight(node, "Out", i); // a bus port is taller
+				port.attr("y",getPortCenterY(node, "Out", i, numOutputs)-portHeight/2).attr("height",portHeight);// allways divide by 2 (local space)
+
 				port.attr("x",x);
 			});
 		}
@@ -3341,11 +3410,14 @@ RED.view = (function() {
             l.svgPath.outline.attr("class","link_path link_outline"/* + ((l.info.valid==false)?" link_invalid":"")*/);
             l.svgPath.line.attr("class","link_path link_line" + ((l.info.valid==false)?" link_invalid":""));
         }
-        // an array of buses (or a bus of arrays) is dashed with the bus color over the array color,
-        // on the second line, when it's not used by the user style of the wire (see applyLinkStyle)
+        // a mixed shape (an array of buses, or a bus of arrays): the solid color is the outer level, and the second
+        // line is dashed in the color of the inner level (blue bus dashes over an array, orange array dashes over
+        // a bus), when that line is not used by the user style of the wire (see applyLinkStyle)
         var userLine2 = (l.style != undefined && l.style.line2 != undefined && l.style.line2.enabled == true);
-        if (l.svgPath.line2 != undefined && userLine2 == false)
-            l.svgPath.line2.attr("class", "link_path " + ((l.info.shapeMixed == true && l.info.valid != false) ? "link_line_mixed" : "link_line2"));
+        if (l.svgPath.line2 != undefined && userLine2 == false) {
+            var mixed = (l.info.shapeMixed == true && l.info.valid != false);
+            l.svgPath.line2.attr("class", "link_path " + (mixed ? ("link_line_mixed" + ((kind == "bus") ? " link_line_mixed_array" : "")) : "link_line2"));
+        }
     }
     /**
      * 
