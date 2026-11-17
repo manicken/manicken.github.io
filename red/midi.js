@@ -13,6 +13,7 @@ RED.midi = (function () {
 
     const STORAGE_KEY = "midiOutputName";
     let access = undefined;  // MIDIAccess
+    let accessRequest = undefined; // the pending requestMIDIAccess (the permission prompt is shown), see requestAccess
     let output = undefined;  // the selected MIDIOutput
     let noOutputNotified = false;
     // the bridge server's MIDI (red/backend-io.js): { outputs: [names], send(name, bytes) }, used instead of Web MIDI
@@ -27,7 +28,29 @@ RED.midi = (function () {
             for (const p of access.outputs.values()) p.close();
             output = undefined;
         }
-        if (b == null && was && getSavedOutputName() != null && isAvailable()) requestAccess().then(function () { output = findOutput(getSavedOutputName()); }).catch(function () { });
+        if (b == null && was && getSavedOutputName() != null) openIfAlreadyAllowed(); // back to Web MIDI, but no permission prompt here
+    }
+
+    /**
+     * @returns {Promise<Boolean>} true when the browser already have given this page the MIDI permission,
+     *          checked without showing the permission prompt (false if it can't be checked)
+     */
+    async function isAlreadyAllowed() {
+        if (isAvailable() == false || navigator.permissions == undefined) return false;
+        try { return (await navigator.permissions.query({ name: "midi" })).state == "granted"; }
+        catch (e) { return false; }
+    }
+
+    /**
+     * Opens Web MIDI without asking: only when the permission is already given (so the saved output and the
+     * MIDI inputs for the UI objects work directly), else the permission is asked the first time Web MIDI is used
+     * (the MIDI menu or midiSend, see requestAccess).
+     */
+    function openIfAlreadyAllowed() {
+        isAlreadyAllowed().then(function (allowed) {
+            if (allowed == false || backend != null) return;
+            requestAccess().catch(function (err) { console.warn("MIDI: " + err); });
+        });
     }
 
     /** a message from an input of the bridge server */
@@ -51,14 +74,18 @@ RED.midi = (function () {
     }
 
     /** @returns {Promise<MIDIAccess>} asks for the permission the first time */
-    async function requestAccess() {
-        if (access != undefined) return access;
-        access = await navigator.requestMIDIAccess();
-        access.onstatechange = onStateChange;
-        listenToInputs();
-        const savedName = getSavedOutputName();
-        if (savedName != null) output = findOutput(savedName);
-        return access;
+    function requestAccess() {
+        if (access != undefined) return Promise.resolve(access);
+        if (accessRequest != undefined) return accessRequest; // already asked (i.e. many midiSend while the prompt is shown)
+        accessRequest = navigator.requestMIDIAccess().then(function (a) {
+            access = a;
+            access.onstatechange = onStateChange;
+            listenToInputs();
+            const savedName = getSavedOutputName();
+            if (savedName != null) output = findOutput(savedName);
+            return access;
+        }).finally(function () { accessRequest = undefined; }); // (denied: it can be asked again later)
+        return accessRequest;
     }
 
     /** @param {String} name @returns {MIDIOutput|undefined} */
@@ -125,6 +152,13 @@ RED.midi = (function () {
             noOutputNotified = true;
             return false;
         }
+        if (output == undefined && access == undefined && isAvailable() && getSavedOutputName() != null) {
+            // Web MIDI is not opened yet (it's only opened when it's used): ask for the permission now,
+            // and send this message when the saved output is found
+            requestAccess().then(function () { if (output != undefined) output.send(bytes); })
+                .catch(function (err) { RED.notify("MIDI access was denied: " + err, "warning", null, 3000); });
+            return true;
+        }
         if (output == undefined) {
             if (noOutputNotified == false) RED.notify("MIDI: no output selected, select one in the MIDI menu", "warning", null, 3000);
             noOutputNotified = true;
@@ -185,8 +219,7 @@ RED.midi = (function () {
 
     function init() {
         $('#menu-midi').click(fillMenu);
-        if (isAvailable() && getSavedOutputName() != null) // used before, so the permission is most likely given
-            requestAccess().catch(function (err) { console.warn("MIDI: " + err); });
+        if (getSavedOutputName() != null) openIfAlreadyAllowed(); // used before: open it directly, but never show the permission prompt when the page is loaded
     }
 
     return {
