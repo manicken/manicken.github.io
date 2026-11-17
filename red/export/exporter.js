@@ -154,7 +154,9 @@ RED.exporter.main = (function () {
         const design = RED.exporter.resolve.resolveDesign([...workspaces, ...classGroups.scopes]);
         for (const p of classGroups.problems) design.workspaces[0].addProblem(p);
         if (showErrorReport(design.workspaces)) return [];
-        return exportFiles(design, undefined, getCppOptions(generateZip), generateZip, "Class Export to Arduino");
+        const options = getCppOptions(generateZip);
+        options.connectionLoops = true; // only in this mode: connections in a row that only differ by a counter become a for loop
+        return exportFiles(design, undefined, options, generateZip, "Class Export to Arduino");
     }
 
     /**

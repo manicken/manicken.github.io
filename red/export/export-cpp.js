@@ -29,6 +29,8 @@ RED.exporter.cpp = (function () {
      *                                   (used with RED.exporter.flatten, Export Modes 'flatclassic' and 'flathelper')
      * @property {Boolean} splitClassFiles true: a class is written as a .h file (declarations) and a .cpp file (constructor/destructor
      *                                    definitions, global instances), false: everything in the .h file
+     * @property {Boolean} connectionLoops true: connections in a row that only differ by a counter are written as a for loop
+     *                                    (see getConnectionRuns), only used by the Export Mode 'classes'
      */
     /** @returns {CppOptions} */
     function getDefaultOptions() {
@@ -40,6 +42,7 @@ RED.exporter.cpp = (function () {
             endOfClassComment: true,
             flattenClasses: false,
             splitClassFiles: true,
+            connectionLoops: false,
         };
     }
 
@@ -94,6 +97,177 @@ RED.exporter.cpp = (function () {
     /** @param {ResolvedConnection} c @param {CppOptions} options */
     function getConnectionArgs(c, options) {
         return getEndpointText(c.source, options) + ", " + c.source.port + ", " + getEndpointText(c.target, options) + ", " + c.target.port;
+    }
+
+    // ******************************************************************
+    // connection loops (options.connectionLoops)
+    //
+    // A connection is written as a pattern with numbers in it: the array indexes (the ones written as [n]) and the two ports,
+    //   voices[3].env, 0, mixVoices, 3   ->   pattern "voices[#].env, #, mixVoices, #"  numbers [3, 0, 3]
+    // Connections in a row with the same pattern, where every number changes by the same amount from one to the next,
+    // are one run, written as a for loop where each number is start + i*step:
+    //   for (int i = 0; i < 40; i++) {
+    //       patchCord[pci++].connect(voices[i].env, 0, mixVoices, i);
+    //   }
+    // A block of connections that is repeated is one loop with one line per connection in the block:
+    //   for (int i = 0; i < 40; i++) {
+    //       patchCord[pci++].connect(array1[i].waveformMod3, 0, mixer, 2*i);
+    //       patchCord[pci++].connect(array1[i].waveformMod7, 0, mixer, 2*i + 1);
+    //   }
+    // A loop is only made when it's repeated at least MIN_LOOP_RUN times.
+    // The order of the connections is never changed, only runs that already are in a row are found
+    // (so the patchCord indexes are the same as without loops).
+    // ******************************************************************
+
+    /** a run needs at least this many connections, shorter ones are written one by one */
+    const MIN_LOOP_RUN = 3;
+
+    /**
+     * @typedef {Object} ConnectionPattern
+     * @property {String[]} texts the text between the numbers (one more than the numbers)
+     * @property {Number[]} numbers the array indexes and ports
+     * @property {String} key the texts joined, connections with the same key only differ by their numbers
+     */
+
+    /** @param {ResolvedEndpoint} endpoint @param {CppOptions} options @param {ConnectionPattern} p adds the endpoint to p */
+    function addEndpointPattern(endpoint, options, p) {
+        const addText = function (t) { p.texts[p.texts.length - 1] += t; };
+        const addNumber = function (n) { p.numbers.push(n); p.texts.push(""); };
+        const steps = options.flattenClasses
+            ? [{ name: RED.exporter.flatten.getFlatName(endpoint.path.slice(0, -1), endpoint.node), index: endpoint.path[endpoint.path.length - 1].index }]
+            : endpoint.path.map(function (step) { return { name: graph.getBaseName(step.node), index: step.index }; });
+        steps.forEach(function (step, i) {
+            addText((i != 0 ? "." : "") + step.name);
+            if (step.index != undefined) { addText("["); addNumber(step.index); addText("]"); }
+        });
+        addText(", ");
+        addNumber(endpoint.port);
+    }
+
+    /** @param {ResolvedConnection} c @param {CppOptions} options @returns {ConnectionPattern} */
+    function getConnectionPattern(c, options) {
+        const p = { texts: [""], numbers: [], key: "" };
+        addEndpointPattern(c.source, options, p);
+        p.texts[p.texts.length - 1] += ", ";
+        addEndpointPattern(c.target, options, p);
+        p.key = p.texts.join("#");
+        return p;
+    }
+
+    /** the most connections in the body of one loop (a block, see getConnectionRuns) */
+    const MAX_LOOP_BLOCK = 8;
+
+    /**
+     * A run is a block of connections (the loop body) repeated 'count' times, a connection that is not in a run is
+     * a run of 1 (a block of 1, count 1).
+     * @typedef {Object} ConnectionRun
+     * @property {ConnectionPattern[]} block the patterns of the first repetition, one per line in the loop body
+     * @property {Number[][]} steps per line: how much each number changes from one repetition to the next
+     * @property {Number} count how many times the block is repeated
+     */
+
+    /**
+     * Splits the connections into runs. A block of B connections in a row that is repeated (the line at position p
+     * in every repetition have the same pattern, and its numbers change by the same steps each time) is one run:
+     *   array1[0].waveformMod3 -> mixer 0, array1[0].waveformMod7 -> mixer 1, array1[1].waveformMod3 -> mixer 2, ...
+     * is a block of 2 repeated 40 times. A loop needs at least MIN_LOOP_RUN repetitions. From each place the block
+     * size that covers the most connections is used, the smallest one when they cover the same (so a simple run is
+     * always a block of 1).
+     * @param {ResolvedConnection[]} connections
+     * @param {CppOptions} options
+     * @returns {ConnectionRun[]}
+     */
+    function getConnectionRuns(connections, options) {
+        const patterns = connections.map(function (c) { return getConnectionPattern(c, options); });
+        const getSteps = function (a, b) { return b.numbers.map(function (n, k) { return n - a.numbers[k]; }); };
+        const sameSteps = function (a, b) { return a.every(function (s, k) { return s == b[k]; }); };
+        const isZero = function (steps) { return steps.every(function (s) { return s == 0; }); };
+
+        /** @returns {ConnectionRun|undefined} the run of the block size at start, undefined if it's not repeated at all */
+        const tryBlock = function (start, size) {
+            if (start + size * 2 > patterns.length) return undefined;
+            const steps = [];
+            for (let p = 0; p < size; p++) {
+                const a = patterns[start + p], b = patterns[start + size + p];
+                if (a.key != b.key) return undefined;
+                steps.push(getSteps(a, b));
+            }
+            if (steps.every(isZero)) return undefined; // (the same connections again is never a run)
+            let count = 2;
+            for (;;) {
+                const next = start + size * count;
+                if (next + size > patterns.length) break;
+                let same = true;
+                for (let p = 0; p < size && same; p++) {
+                    const prev = patterns[next - size + p], cur = patterns[next + p];
+                    same = (cur.key == prev.key) && sameSteps(getSteps(prev, cur), steps[p]);
+                }
+                if (same == false) break;
+                count++;
+            }
+            return { block: patterns.slice(start, start + size), steps, count };
+        };
+
+        const runs = [];
+        let i = 0;
+        while (i < patterns.length) {
+            let best = undefined;
+            for (let size = 1; size <= MAX_LOOP_BLOCK; size++) {
+                const run = tryBlock(i, size);
+                if (run == undefined || run.count < MIN_LOOP_RUN) continue;
+                if (best == undefined || run.count * size > best.count * best.block.length) best = run; // a tie keeps the smaller block
+            }
+            if (best == undefined) best = { block: [patterns[i]], steps: [[]], count: 1 };
+            runs.push(best);
+            i += best.count * best.block.length;
+        }
+        return runs;
+    }
+
+    /** @param {Number} start @param {Number} step @returns {String} start + i*step, as short as possible: "i", "i + 8", "2*i + 1", "7 - i" */
+    function getLoopExpression(start, step) {
+        if (step == 0) return String(start);
+        const sign = (step < 0) ? "-" : "+";
+        const term = ((Math.abs(step) == 1) ? "" : (Math.abs(step) + "*")) + "i";
+        if (start == 0) return ((step < 0) ? "-" : "") + term;
+        if (step > 0) return term + " + " + start;
+        return start + " " + sign + " " + term;
+    }
+
+    /** @param {ConnectionPattern} p @param {Number[]|undefined} steps undefined: the numbers as they are @returns {String} the connect arguments */
+    function getPatternArgs(p, steps) {
+        let text = p.texts[0];
+        for (let k = 0; k < p.numbers.length; k++) {
+            text += ((steps != undefined) ? getLoopExpression(p.numbers[k], steps[k]) : String(p.numbers[k])) + p.texts[k + 1];
+        }
+        return text;
+    }
+
+    /**
+     * The connections in the constructor, as runs with for loops when options.connectionLoops, else one line each.
+     * @param {CodeWriter} w
+     * @param {ResolvedConnection[]} connections
+     * @param {CppOptions} options
+     */
+    function writeConstructorConnections(w, connections, options) {
+        const makeLine = function (args) {
+            return options.dynamicConnections ? ("patchCord[pci++].connect(" + args + ");") : ("patchCord[pci++] = new AudioConnection(" + args + ");");
+        };
+        if (options.connectionLoops != true) {
+            for (const c of connections) w.line(makeLine(getConnectionArgs(c, options)));
+            return;
+        }
+        for (const run of getConnectionRuns(connections, options)) {
+            if (run.count == 1) {
+                for (const p of run.block) w.line(makeLine(getPatternArgs(p, undefined)));
+                continue;
+            }
+            w.line("for (int i = 0; i < " + run.count + "; i++) {");
+            w.indent();
+            run.block.forEach(function (p, k) { w.line(makeLine(getPatternArgs(p, run.steps[k]))); });
+            w.dedent();
+            w.line("}");
+        }
     }
 
 
@@ -362,10 +536,7 @@ RED.exporter.cpp = (function () {
         }
         if (rws.connections.length != 0) {
             w.line("int pci = 0; // used only for adding new patchcords");
-            for (const c of rws.connections) {
-                if (options.dynamicConnections) w.line("patchCord[pci++].connect(" + getConnectionArgs(c, options) + ");");
-                else w.line("patchCord[pci++] = new AudioConnection(" + getConnectionArgs(c, options) + ");");
-            }
+            writeConstructorConnections(w, rws.connections, options);
         }
         w.blank();
         writeProblems(w, rws.warnings);
