@@ -75,8 +75,14 @@ size_t AudioEffectFPB::memoryUsed(uint8_t tier) const {
     return p ? p->memoryUsed(tier) : 0;
 }
 
+// Called by the audio library's interrupt for every block (128 samples, about every 2.9 ms):
+//   1. the input blocks (int16) become floats in -1 .. 1 (inBuf), a missing input block is silence
+//   2. the patch runs on them (FPB_Program::process), and the time it takes is measured (the CPU guard)
+//   3. the outputs (floats) become int16 blocks again, clipped to the int16 range, and are transmitted
+// Without a patch, or when the CPU guard stopped it, the inputs are only released and nothing is sent
+// (the objects after it get silence).
 void AudioEffectFPB::update(void) {
-    FPB_Program* p = program;
+    FPB_Program* p = program;          // read once: swapIn() may replace it between two blocks
     if (!p || overloaded) {
         for (int c = 0; c < FPB_MAX_INPUTS; c++) {
             audio_block_t* b = receiveReadOnly(c);
@@ -86,6 +92,7 @@ void AudioEffectFPB::update(void) {
     }
     const int nIn = p->numInputs(), nOut = p->numOutputs();
 
+    // 1. inputs: every connected input is received (and released), only the patch's own are converted
     const float* in[FPB_MAX_INPUTS];
     float* out[FPB_MAX_OUTPUTS];
     for (int c = 0; c < FPB_MAX_INPUTS; c++) {
@@ -99,6 +106,8 @@ void AudioEffectFPB::update(void) {
     }
     for (int c = 0; c < nOut; c++) out[c] = outBuf[c];
 
+    // 2. run the patch, timed with the CPU cycle counter. A patch over the limit (percent of one block)
+    //    for FPB_OVERLOAD_BLOCKS blocks in a row is stopped, so it can't starve loop() (USB, OSC)
     const uint32_t t0 = ARM_DWT_CYCCNT;
     p->process(in, out, AUDIO_BLOCK_SAMPLES);
     const uint32_t cycles = ARM_DWT_CYCCNT - t0;
@@ -108,9 +117,10 @@ void AudioEffectFPB::update(void) {
         if (++overCount >= FPB_OVERLOAD_BLOCKS) overloaded = true;   // stopped from the next block on
     } else overCount = 0;
 
+    // 3. outputs: float -> int16 (scaled by 32767, clipped), one new block per output
     for (int c = 0; c < nOut; c++) {
         audio_block_t* b = allocate();
-        if (!b) continue;
+        if (!b) continue;                // out of audio memory: this output is silent this block
         for (int k = 0; k < AUDIO_BLOCK_SAMPLES; k++) {
             float v = outBuf[c][k] * 32767.0f;
             b->data[k] = (int16_t)(v > 32767.0f ? 32767 : v < -32768.0f ? -32768 : (int)v);

@@ -593,7 +593,43 @@ RED.fpb.compileFBC = (function () {
             arrayBytesBig: memBig,
             bytes: bytes.length
         };
-        return { bytes: bytes, program: program, params: params, stats: stats, warnings: warnings, sampleRate: sampleRate };
+        return { bytes: bytes, program: program, params: params, stats: stats, warnings: warnings, sampleRate: sampleRate,
+                 debug: slotNames() };
+
+        /** what every slot is, with the Faust names (for a disassembly; not in the container) */
+        function slotNames() {
+            var heapName = {}, regions = [];
+            (function walk(blocks) {
+                blocks.forEach(function (b) {
+                    b.forEach(function (ins) {
+                        if (ins.name !== undefined) {
+                            var t = /Int/.test(ins.op) ? "i" : "f";
+                            if (/Indexed/.test(ins.op)) regions.push({ t: t, base: ins.o1, size: ins.o2, name: ins.name });
+                            else if (/^k(Load|Store)(Real|Int)$/.test(ins.op)) heapName[t + ins.o1] = ins.name;
+                        }
+                        if (ins.sub) walk(ins.sub);
+                    });
+                });
+            })(Object.keys(model.blocks).map(function (k) { return model.blocks[k]; }));
+            function nameOf(t, off) {
+                if (heapName[t + off]) return heapName[t + off];
+                var r = regions.find(function (g) { return g.t === t && off >= g.base && off < g.base + g.size; });
+                return r ? r.name + "[" + (off - r.base) + "]" : t + "heap" + off;
+            }
+            var f = [], i = [], k;
+            for (k = 0; k < nIn; k++) f[k] = "in" + k;
+            for (k = 0; k < nOut; k++) f[nIn + k] = "out" + k;
+            params.forEach(function (p) { f[nIn + nOut + p.index] = "param " + p.path; });
+            Object.keys(fLoc).forEach(function (key) { f[fLoc[key]] = nameOf("f", +key.substring(1)); });
+            Object.keys(iLoc).forEach(function (key) { i[iLoc[key]] = nameOf("i", +key.substring(1)); });
+            Object.keys(fConst).forEach(function (bits) { var v = new DataView(new ArrayBuffer(4)); v.setUint32(0, +bits); f[fConst[bits]] = "const " + v.getFloat32(0); });
+            Object.keys(iConst).forEach(function (v) { i[iConst[v]] = "const " + v; });
+            for (k = 0; k < ctx.hazards; k++) { f[fH + k] = "saved" + k; i[iH + k] = "saved" + k; }
+            for (k = 0; k < gen.maxTmp.f; k++) f[fT + k] = "tmp" + k;
+            for (k = 0; k < gen.maxTmp.i; k++) i[iT + k] = "itmp" + k;
+            var a = arrays.map(function (arr) { var b = +arr.key.split(":")[1]; return nameOf(arr.type, b).replace(/\[0\]$/, "") + "[" + arr.len + "]"; });
+            return { f: f, i: i, arrays: a };
+        }
     }
 
     return compile;

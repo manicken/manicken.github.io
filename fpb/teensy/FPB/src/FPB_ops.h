@@ -13,12 +13,31 @@
 struct FPB_Step;
 typedef const FPB_Step* (*FPB_StepFn)(const FPB_Step*);
 
-// One executable step: the function, followed by one pointer per operand (count = arity of the op).
-// Steps are packed one after the other; each fn returns the next step (nullptr = end of section).
+// One executable step: one operation of the patch, made by the loader from one instruction.
+//
+//   fn    the operation (fpb_add, fpb_madd ... in FPB_ops.cpp)
+//   p[]   one pointer per operand, as many as the operation has (its "arity", from its signature):
+//           'f' / 'i'  -> a float / int slot (FPB_Program::f[] / i[]): the value is read or written there
+//           'a'        -> an FPB_ArrayRef (a delay line or a table)
+//           'c'        -> no pointer: the number itself (a small constant, i.e. a channel)
+//
+// The steps of a section (blk or smp) are packed one after the other in one block of memory, so their
+// size varies (an add is fn + 3 pointers, a madd fn + 4). No step stores where the next one is: each fn
+// knows its own operand count and returns the address right after its last pointer, which is where the
+// loader put the next step (see NEXT in FPB_ops.cpp). The last step of a section is fpb_end, which
+// returns nullptr. So running a section is:
+//
+//     for (const FPB_Step* s = first; s != nullptr; s = s->fn(s)) {}
+//
+// The pointers point at fixed places that are set up when the patch is loaded, so a step needs no
+// lookups or index arithmetic while it runs: p[2] is "the address in the step + 12", a constant offset.
 struct FPB_Step {
     FPB_StepFn fn;
-    void* p[];
+    void* p[];      // a "flexible array member": not a pointer, just a name for the memory right after fn
 };
+// The loader writes the steps itself (fn, then the operand pointers right after it), so p must start
+// exactly where fn ends: no padding between them. True on 32-bit ARM and on 64-bit PCs; checked here.
+static_assert(offsetof(FPB_Step, p) == sizeof(FPB_StepFn), "FPB_Step: padding between fn and p");
 
 struct FPB_ArrayRef {
     void*    base;

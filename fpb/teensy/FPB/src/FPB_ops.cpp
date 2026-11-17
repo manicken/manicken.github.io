@@ -10,6 +10,26 @@
 #include <math.h>
 #include <string.h>
 
+// How an operation is written (see FPB_Step in FPB_ops.h):
+//
+//   OPFN(madd) { F(0) = F(1) * F(2) + F(3); NEXT(4); }
+//
+// expands to
+//
+//   static const FPB_Step* fpb_madd(const FPB_Step* s) {
+//       *(float*)s->p[0] = *(float*)s->p[1] * *(float*)s->p[2] + *(float*)s->p[3];
+//       return (const FPB_Step*)&s->p[4];
+//   }
+//
+//   s        the step being run
+//   F(k)     the float that operand k points at (a slot in FPB_Program::f[]), read or written
+//   I(k)     the same for an int slot, A(k) for an array (FPB_ArrayRef)
+//   NEXT(n)  ends the operation and returns the next step: the address right after this step's n operand
+//            pointers. n must be the operation's operand count (its signature in FPB_oplist.h), because the
+//            loader packed the next step exactly there. On the Teensy NEXT(4) is one "add 20" instruction.
+//
+// Operand 0 is the result when the signature has one ("f=ff": p[0] is written, p[1] and p[2] are read).
+// All operands are read before the result is written, so the result may be one of the inputs.
 #define F(k)    (*(float*)s->p[k])
 #define I(k)    (*(int32_t*)s->p[k])
 #define A(k)    (*(const FPB_ArrayRef*)s->p[k])
@@ -25,6 +45,7 @@ static inline int32_t f2i(float x) {
     return (int32_t)x;                              // truncates toward zero
 }
 
+// The last step of every section: returning nullptr ends the loop that runs the section.
 const FPB_Step* fpb_end(const FPB_Step*) { return nullptr; }
 OPFN(reserved) { (void)s; return nullptr; }         // never runs: the loader rejects reserved ops
 

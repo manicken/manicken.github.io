@@ -91,6 +91,20 @@ static inline float    rdf32(const uint8_t* b) { uint32_t u = rd32(b); float f; 
 static inline size_t align8(size_t n) { return (n + 7) & ~(size_t)7; }
 
 // ---------------------------------------------------------------- program
+//
+// A loaded patch (made by FPB_Loader). Its memory, all allocated once when it was loaded:
+//
+//   the fast block (block[0]), one allocation, in this order:
+//     blk steps   the code run once per audio block (the coefficients from the parameters)
+//     smp steps   the code run for every sample
+//     ArrayRef[]  base / length / mask of each array
+//     f[]         the float slots: inputs, outputs, parameters, state, constants, temporaries
+//     i[]         the int slots
+//     paramSlot[] parameter index -> its slot in f[]
+//   block[1 + tier]  the arrays (delay lines, tables) of each memory tier (RAM, DMA RAM, PSRAM)
+//
+// The pointers in the steps point into f[], i[] and ArrayRef[], so nothing is looked up while it runs.
+// The slots are numbered by the compiler: f[0 .. nIn-1] are the inputs, f[nIn .. nIn+nOut-1] the outputs.
 
 FPB_Program::~FPB_Program() {
     for (int k = 0; k < 5; k++)
@@ -107,17 +121,58 @@ float FPB_Program::getParam(uint16_t index) const {
     return (index < nParam) ? f[paramSlot[index]] : 0.0f;
 }
 
+// Runs one audio block of n samples (AudioEffectFPB::update calls it with n = 128).
+//   in[c]  the samples of input c  (n floats), not used when the patch has no inputs
+//   out[c] where output c is written (n floats)
+//
+// Why one sample at a time: a patch almost always feeds back one sample (a filter uses its own previous
+// output, an oscillator its previous phase), so sample k needs the whole program done for sample k-1.
+// Faust's own C++ has the same loop.
 void FPB_Program::process(const float* const* in, float* const* out, int n) {
-    for (const FPB_Step* s = blk; s; s = s->fn(s)) {}
-    float* fo = f + nIn;
+    // 1. The blk section, once per block: it turns the parameters into coefficients
+    //    (i.e. tan(pi * cutoff / SR)), so a parameter set with setParam() takes effect here.
+    const FPB_Step* s = blk;
+    while (s != nullptr)
+        s = s->fn(s);          // run the step; it returns the next one, fpb_end returns nullptr
+
+    float* outSlots = f + nIn; // the output slots come right after the input slots
+
+    // 2. The smp section, once per sample
     for (int k = 0; k < n; k++) {
-        for (int c = 0; c < nIn; c++) f[c] = in[c][k];
-        for (const FPB_Step* s = smp; s; s = s->fn(s)) {}
-        for (int c = 0; c < nOut; c++) out[c][k] = fo[c];
+        for (int c = 0; c < nIn; c++)
+            f[c] = in[c][k];             // sample k of each input -> its input slot
+
+        s = smp;
+        while (s != nullptr)
+            s = s->fn(s);                // the whole program for this sample
+
+        for (int c = 0; c < nOut; c++)
+            out[c][k] = outSlots[c];     // each output slot -> sample k of that output
     }
 }
 
 // ---------------------------------------------------------------- loader
+//
+// FPB_Loader reads a container (specs/fpb-bytecode.md) given in pieces of any size, i.e. as it arrives
+// over OSC (/feed blobs), from a file or from flash, and builds an FPB_Program from it:
+//
+//   begin()              start
+//   feed(bytes, len)     any number of times; every byte is checked as it comes
+//   finish()             after the last byte: the program, or nullptr (error() tells why)
+//
+// It never keeps the container. The sections are read in order:
+//
+//   header      sizes of everything -> allocFast() allocates the fast block right away
+//   used ops    the operations the code uses, each checked against this firmware's op table
+//   arrays      length / tier of each array -> allocArrays() when the last one is read
+//   fconst      initial values of float slots (the constants)   -> written into f[]
+//   iconst      initial values of int slots                     -> written into i[]
+//   params      parameter slot + default value                  -> written into f[], paramSlot[]
+//   code        the instructions, each turned into a step at once (onCode)
+//   data        initial contents of arrays (i.e. a sine table), copied straight into the array memory
+//
+// The CRC of everything after the header is checked at the end, before the program is handed out.
+// Small records (header, used ops ...) are collected in buf until they are complete (need / got).
 
 void FPB_Loader::reset() {
     delete prog;
@@ -164,17 +219,20 @@ int FPB_Loader::fail(int e) {
     return e;
 }
 
+// Takes the next len bytes of the container. sec is the section being read; each pass of the loop
+// consumes some of the bytes, and when a record is complete it is handled (onHeader / onRecord), which
+// may move on to the next section (nextSection).
 int FPB_Loader::feed(const uint8_t* d, size_t len) {
     if (sec == S_ERROR) return err ? err : FPB_E_STATE;
     while (len) {
         if (sec == S_DONE) return fail(FPB_E_TRAILING);
-        if (sec == S_HEADER_SKIP) {
+        if (sec == S_HEADER_SKIP) {             // a longer header from a newer version: skip the rest
             size_t t = len < skipLeft ? len : skipLeft;
             d += t; len -= t; skipLeft -= t;
             if (!skipLeft) { int e = nextSection(); if (e) return e; }
             continue;
         }
-        if (sec == S_DATA) {
+        if (sec == S_DATA) {                    // array contents: copied straight into the array, no buffer
             FPB_ArrayRef& a = arrays[dataArr];
             size_t bytes = (size_t)a.len * 4;
             size_t t = bytes - dataOff;
@@ -186,6 +244,7 @@ int FPB_Loader::feed(const uint8_t* d, size_t len) {
             if (!dataLeft) { int e = nextSection(); if (e) return e; }
             continue;
         }
+        // a record: collect bytes in buf until it has `need` of them, then handle it
         size_t t = need - got;
         if (t > len) t = len;
         memcpy(buf + got, d, t);
@@ -209,6 +268,8 @@ FPB_Program* FPB_Loader::finish() {
     return p;
 }
 
+// The 40-byte header: reads the sizes (little-endian), checks that they make sense and that this firmware
+// has the ops the code was compiled for (opCount), then allocates the fast block.
 int FPB_Loader::onHeader() {
     const uint8_t* b = buf;
     if (b[0] != 'F' || b[1] != 'P' || b[2] != 'B' || b[3] != 0) return fail(FPB_E_MAGIC);
@@ -250,7 +311,12 @@ int FPB_Loader::onHeader() {
     return nextSection();
 }
 
-// fast block: [steps][array refs][f slots][i slots][param slots][array tiers]
+// Allocates the fast block: [steps][array refs][f slots][i slots][param slots][array tiers], each part
+// starting on an 8-byte boundary. Everything is known from the header, so it is one allocation of the
+// exact size:
+//   an instruction in the container is 2 bytes (op, operand count) + 2 bytes per operand, so
+//   operands = (codeBytes - 2 * instructions) / 2;
+//   a step is one function pointer + one pointer per operand, plus one fpb_end step for blk and one for smp.
 int FPB_Loader::allocFast() {
     uint32_t nInstr = (uint32_t)hdr.nBlkInstr + hdr.nSmpInstr;
     uint32_t nOperands = (hdr.codeBytes - 2 * nInstr) / 2;
@@ -285,6 +351,8 @@ int FPB_Loader::allocFast() {
     return FPB_OK;
 }
 
+// After the last array record: one zeroed block per memory tier, holding all the arrays of that tier one
+// after the other, and each ArrayRef gets its base address. Called once even when there are no arrays.
 int FPB_Loader::allocArrays() {
     if (dataExpected != hdr.dataBytes) return fail(FPB_E_DATA_SIZE);
     uint64_t sum[4] = { 0, 0, 0, 0 };
@@ -316,6 +384,9 @@ static uint8_t recordSize(uint8_t sec) {
     return 1;
 }
 
+// Moves to the next section of the container (and on past empty ones), setting how many records it has
+// (recCount) and the size of one record (need). Some steps happen on the way: the arrays are allocated
+// after the arrays section, the code starts (beginCode), and the CRC is checked at the very end.
 int FPB_Loader::nextSection() {
     for (;;) {
         switch (sec) {
@@ -359,6 +430,8 @@ void FPB_Loader::nextDataArray() {
     while (dataArr < hdr.nArr && !(arrTier[dataArr] & 0x80)) dataArr++;
 }
 
+// The code section starts: the steps are written from the start of the fast block (stepCursor), the blk
+// section first. A section without instructions is just its fpb_end step.
 void FPB_Loader::beginCode() {
     codeLeft = hdr.codeBytes;
     instrLeftBlk = hdr.nBlkInstr;
@@ -370,16 +443,20 @@ void FPB_Loader::beginCode() {
     if (!instrLeftBlk && !instrLeftSmp) emitEnd();
 }
 
+// Writes the fpb_end step that ends a section (a function pointer only, no operands).
 void FPB_Loader::emitEnd() {
     FPB_StepFn fn = fpb_end;
     memcpy(stepCursor, &fn, sizeof(fn));
     stepCursor += sizeof(fn);
 }
 
+// One complete record of the current section is in buf: check it and put it where it belongs.
 int FPB_Loader::onRecord() {
     const uint8_t* b = buf;
     switch (sec) {
         case S_USEDOPS: {
+            // op index, operand count, fingerprint (name + signature): must match this firmware's op table,
+            // so a container made for another table (a reordered or changed op) is refused, never misread
             uint8_t op = b[0], arity = b[1];
             uint16_t fp = rd16(b + 2);
             if (op >= hdr.opCount) return fail(FPB_E_OP_INDEX);
@@ -442,8 +519,14 @@ int FPB_Loader::onRecord() {
     return FPB_OK;
 }
 
-// returns with codeHdrDone = false and need raised when the operands are still to come,
-// or with codeHdrDone = true when the whole instruction has been turned into a step
+// One instruction of the code section -> one step.
+// An instruction is read in two parts: first its 2-byte head (op, operand count), then, now that the
+// size is known, its operands (2 bytes each). Returns with codeHdrDone = false and need raised when the
+// operands are still to come, or with codeHdrDone = true when the whole instruction has become a step.
+//
+// The step: the op's function pointer from the op table, then each operand turned from a slot number into
+// a pointer, following the op's signature ("f=fff": the first operand is a written float slot, the other
+// three read float slots). So "madd 17 11 5 16" becomes [fpb_madd, &f[17], &f[11], &f[5], &f[16]].
 int FPB_Loader::onCode() {
     if (need == 2) {
         // instruction head: op, n
@@ -486,12 +569,14 @@ int FPB_Loader::onCode() {
         }
         k++;
     }
+    // write the step and move on to where the next one goes (that is where NEXT(curN) in the op will point)
     FPB_StepFn fn = def.fn;
     memcpy(stepCursor, &fn, sizeof(fn));
     memcpy(stepCursor + sizeof(fn), ptrs, (size_t)curN * sizeof(void*));
     stepCursor += stepSize;
     codeLeft -= 2u + 2u * curN;
 
+    // the end of blk: its fpb_end step, and smp starts right after it; the end of smp: its fpb_end step
     if (!inSmp) {
         if (--instrLeftBlk == 0) {
             emitEnd();

@@ -9,7 +9,7 @@ This is a first working model of FPB, the float patch bytecode. Patches are comp
 | `red/fpb/fpb-compile-fbc.js` | FBC → FPB compiler |
 | `red/fpb/fpb-format.js` | container encoder and decoder; the decoder runs the same checks as the firmware loader |
 | `red/fpb/fpb-vm.js` | verifier VM: runs a container in JS exactly like the firmware |
-| `fpb/teensy/FPB/` | Arduino library: `FPB_oplist.h` (the op table), `FPB.cpp` (push-parser loader, program), `FPB_ops.cpp`, `AudioEffectFPB` |
+| `fpb/teensy/FPB/` | Arduino library: `FPB_oplist.h` (the op table), `FPB.cpp` (push-parser loader, program), `FPB_ops.cpp`, `AudioEffectFPB`. **[How it works](teensy/FPB/README.md)**: loading, memory layout, the steps, running |
 | `fpb/tools/fpbc.js` | command line compiler: `.fbc` → `.fpb` and a C header |
 | `fpb/server/fpb-faust-server.js` | the Faust bridge: a local Faust export server for the Faust IDE, and a WebSocket backend for ASDT++ |
 | `red/fpb/fpb-bridge.js` | the ASDT++ side of the bridge: the `AudioEffectFPB` node gets its patch, sends it over OSC, and exposes its parameters in the live tab |
