@@ -396,49 +396,63 @@ RED.main = (function() {
 
 	function addDemoFlowsToMenu()
 	{
+        // the examples (examples/*.js, included by index.html) add themselves to globalThis.ExampleDesigns:
+        // { name, label, description, dividerAfter, design }, listed in the order they are included
         var menuName = "menu-demo-flows";
-        var data = JSON.parse($("script[data-container-name|='ExamplesList']").html());
-        var names = Object.getOwnPropertyNames(data);
-        //console.log(names);
+        var examples = globalThis.ExampleDesigns || [];
         $("#"+menuName).empty();
-        for(var mi = 0; mi < names.length; mi++)
+        if (examples.length == 0) {
+            $("#" + menuName).append('<li class="disabled"><a tabindex="-1" href="#">no examples included</a></li>');
+            return;
+        }
+        for (var mi = 0; mi < examples.length; mi++)
         {
-            var name = names[mi];
-            var item = data[name];
-            addMenuItem(menuName, name, "fa fa-file", item, function(id,lbl,url) {
-                verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(id), function(okPressed) { 
+            var example = examples[mi];
+            var item = { label: example.label || example.name, description: example.description || "", dividerAfter: example.dividerAfter };
+            addMenuItem(menuName, example.name, "fa fa-file", item, function(id) {
+                var found = examples.find(function (e) { return e.name == id; });
+                verifyDialog("Confirm Load", "!!!WARNING!!!", getConfirmLoadDemoText(found.label || id), function(okPressed) {
                     if (okPressed == false) return;
-                    if (url != undefined) {
-                        RED.notify("downloading JSON " + url, "info", null, 3000);
-                        RED.main.httpDownloadAsync(url, 
-                            function(data) {
-                                saveToFile(RED.arduino.settings.ProjectName + ".json");
-                                RED.storage.loadContents(data);
-                            }
-                            , 
-                            function(err) {
-                                RED.notify("could not download json" + err, "info", null, 3000);
-                            }
-                        ,20000);
-                        return;
-                    }
-                    var contents = $("script[data-container-name|='"+id+"']").html();
-                    var parsedContents = JSON.parse(contents);
-                    // failsafe checks before loading data
-                    if (parsedContents == undefined || contents == undefined) {
-                        RED.notify("Error could not read example " + id, "danger", null, 10000);
-                        return;
-                    }
-            
-                    console.warn("load " + id);
-                    //console.log("newFlowData:" + contents);
+                    console.warn("load example " + id);
                     saveToFile(RED.arduino.settings.ProjectName + ".json");
-                    RED.storage.loadContents(contents);
-                    
+                    RED.storage.loadContents(JSON.stringify(found.design)); // loadContents takes the text of a saved design
                 });
 			});
         }
-
+    }
+    /**
+     * The components (components/*.js, included by index.html) add themselves to globalThis.ComponentDesigns:
+     * { name, label, description, design }, a design with the classes of the component (class tabs and/or class groups).
+     * A component is added to the open design (RED.designMerge), a class name that is taken is renamed.
+     */
+    function addComponentsToMenu()
+    {
+        var menuName = "menu-components";
+        var components = (globalThis.ComponentDesigns || []).slice().sort(function (a, b) { return (a.label || a.name).localeCompare(b.label || b.name); });
+        $("#" + menuName).empty();
+        if (components.length == 0) {
+            $("#" + menuName).append('<li class="disabled"><a tabindex="-1" href="#">no components included</a></li>');
+            return;
+        }
+        for (var ci = 0; ci < components.length; ci++) {
+            var component = components[ci];
+            var item = { label: component.label || component.name, description: (component.description || "") + "<br><br><i>adds its tabs to the open design</i>" };
+            addMenuItem(menuName, component.name, "fa fa-puzzle-piece", item, function (id) {
+                var found = components.find(function (c) { return c.name == id; });
+                try {
+                    var result = RED.designMerge.merge(found.design);
+                    var text = "<strong>" + (found.label || id) + "</strong> added: " + result.tabs.join(", ");
+                    if (result.renamed.length != 0)
+                        text += "<br><br>renamed, as the names were taken:<br>" + result.renamed.map(function (r) { return r.from + " &rarr; " + r.to; }).join("<br>") +
+                                "<br>(names in code are not changed)";
+                    RED.notify(text, "info", null, (result.renamed.length != 0) ? 8000 : 4000);
+                }
+                catch (err) {
+                    console.error(err);
+                    RED.notify("<strong>Could not add " + (found.label || id) + "</strong>: " + err, "error", null, 10000);
+                }
+            });
+        }
     }
     /**
      * The test designs (tests/export/*.js, included by index.html) add themselves to globalThis.TestDesigns:
@@ -791,6 +805,7 @@ RED.main = (function() {
         }
 
         addDemoFlowsToMenu();
+        addComponentsToMenu();
         addTestDesignsToMenu();
         RED.view.init();
 

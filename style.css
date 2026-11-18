@@ -1554,6 +1554,19 @@
   .leftButton {
       margin-right: 200px !important;
   }
+  /* Workspace/Tab properties: Delete and Export as JSON to the left, Ok and Cancel to the right
+     (a flex row, so it never wraps to a second row, see RED.view.dialogs) */
+  .workspace-properties-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+      float: none;
+      display: flex;
+      align-items: center;
+  }
+  .workspace-properties-dialog .ui-dialog-buttonpane .leftButton {
+      margin-right: 0.4em !important;
+  }
+  .workspace-properties-dialog .ui-dialog-buttonpane .exportJsonButton {
+      margin-right: auto !important;
+  }
   #node-help {
       width: 700px;
   }

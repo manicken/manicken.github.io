@@ -241,6 +241,14 @@ the bridge server compiles it into FPB (float patch bytecode) and the "Tool" sen
 where it's loaded and run without compiling the firmware again. The Faust parameters show up in the Live tab.<br>
 How to set it up: [fpb/README.md](fpb/README.md), how FPB works on the Teensy: [fpb/teensy/FPB/README.md](fpb/teensy/FPB/README.md)<br>
 
+* Examples and Components (rightmost menu)<br>
+every example is a file in `examples/` and every component a file in `components/`, a .js file that adds itself to a list<br>
+(`ExampleDesigns`/`ComponentDesigns`), so a new one is a new file + a `<script>` line for it in index.html.<br>
+They are included directly, so they also work when index.html is opened as a file (no server needed).<br>
+An example replaces the open design, a component is added to it: its tabs (class tabs and class groups) are added as new tabs,<br>
+and a class name that is already taken is renamed (StereoAmp -> StereoAmp1, the instances inside the component follow,<br>
+names used in code are not changed).<br>
+
 * Test designs (rightmost menu -> Test designs)<br>
 designs made for testing the export (`tests/export/*.js`), see [red/export/README.md](red/export/README.md) (Tests) for what each one must export.<br>
 

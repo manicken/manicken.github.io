@@ -37,15 +37,43 @@ RED.view.dialogs = (function() {
 	$('#btn-export-library').click(function() {showExportNodesLibraryDialog();});
     
 	function showExportNodesDialog() {
+		var nns = RED.nodes.createExportableNodeSet(RED.view.moving_set);
+		showJsonExportDialog("Export nodes to clipboard", nns);
+	}
+
+	/**
+	 * The current tab as JSON (button 'Export as JSON' in Workspace/Tab properties): a design with only this tab,
+	 * { version, workspaces: [tab] }, the same as a saved design, so it can be used as an example or a component
+	 * (examples/*.js, components/*.js) or be loaded. The settings of the project are not included.
+	 * @param {REDWorkspace} ws
+	 */
+	function showExportWorkspaceJsonDialog(ws) {
+		var project = RED.nodes.createCompleteNodeSet({newVer:true});
+		var jsonWs = project.workspaces.find(function (w) { return w.id == ws.id; });
+		if (jsonWs == undefined) { RED.notify("could not export the tab " + ws.label, "warning", null, 3000); return; }
+		showJsonExportDialog("Export tab " + ws.label + " as JSON", { version: project.version, workspaces: [jsonWs] });
+	}
+
+	/**
+	 * Shows a JSON in the export dialog: on one line in a plain text box (selected, ready to be copied), and indented
+	 * in the ace editor below to be read (ace cuts a line over 10000 characters on the screen, so the one line JSON
+	 * is not shown there).
+	 * @param {String} title
+	 * @param {Object} obj
+	 */
+	function showJsonExportDialog(title, obj) {
 		RED.editor.init_edit_dialog();
 		RED.view.state = RED.state.EXPORT;
-		var nns = RED.nodes.createExportableNodeSet(RED.view.moving_set);
-		//$("#dialog-form").html(getForm("dialog-form", "export-clipboard-dialog"));
-		var frm = getForm("dialog-form", "export-clipboard-dialog", function (d, f) {
-			setExportDialogText(JSON.stringify(nns), undefined, "json");
-			exportDialogEditor.selectAll(); // ready to be copied
-			exportDialogEditor.focus();
-		$( "#dialog" ).dialog({ title: "Export nodes to clipboard", open: fitExportTextareaToDialog, resize: fitExportTextareaToDialog }).dialog( "open" );
+		getForm("dialog-form", "export-clipboard-dialog", function (d, f) {
+			$("#export-dialog-oneline-row").show();
+			$("#export-dialog-oneline").val(JSON.stringify(obj));
+			$("#export-clipboard-dialog-textarea-label").html('<i class="icon-share"></i> JSON (indented, to read):');
+			$("#export-clipboard-dialog-tips").text("Click in the one line text box and copy it with Ctrl-A Ctrl-C, it's the same JSON as below.");
+			setExportDialogText(JSON.stringify(obj, null, 4), undefined, "json");
+			$( "#dialog" ).dialog({ title: title, open: function () {
+					fitExportTextareaToDialog();
+					$("#export-dialog-oneline").focus().select(); // ready to be copied
+				}, resize: fitExportTextareaToDialog }).dialog( "open" );
 		});
 	}
 
@@ -301,6 +329,7 @@ RED.view.dialogs = (function() {
 		autoOpen: false,
 		width: 500,
 		title: "Workspace/Tab properties",
+		dialogClass: "workspace-properties-dialog", // the buttons: Delete and Export as JSON to the left, Ok and Cancel to the right (see style.css)
 		buttons: [
 			{
 				class: 'leftButton',
@@ -309,6 +338,15 @@ RED.view.dialogs = (function() {
 					var workspace = $(this).dialog('option','workspace');
 					$( this ).dialog( "close" );
 					RED.view.deleteWorkspace(workspace.id);
+				}
+			},
+			{
+				class: 'exportJsonButton',
+				text: "Export as JSON",
+				click: function() {
+					var workspace = $(this).dialog('option','workspace');
+					$( this ).dialog( "close" );
+					showExportWorkspaceJsonDialog(workspace);
 				}
 			},
 			{
@@ -475,7 +513,8 @@ RED.view.dialogs = (function() {
         var editorElement = $("#export-dialog-ace");
         var row = editorElement.closest(".form-row");
         var otherHeight = (row.outerHeight(true) - editorElement.outerHeight()) // the label and margins
-                        + $("#export-clipboard-dialog-tips").outerHeight(true);
+                        + $("#export-clipboard-dialog-tips").outerHeight(true)
+                        + ($("#export-dialog-oneline-row").is(":visible") ? $("#export-dialog-oneline-row").outerHeight(true) : 0);
         editorElement.height(Math.max(100, Math.floor(dialog.height() - otherHeight - 2))); // -2 for rounding
         if (exportDialogEditor != undefined) { exportDialogEditor.resize(true); exportDialogEditor.renderer.updateFull(true); } // (the editor was made before the dialog got its size)
     }
