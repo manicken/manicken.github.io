@@ -307,16 +307,22 @@ async function compileIn(dir, name, origin) {
     const model = RED.fpb.fbc.parse(fbcText);
     const res = RED.fpb.compileFBC(model, table, { sampleRate: SR });
     verify(model, res);
+    // A firmware built before the super-instructions (op table 128-) rejects them with E_OP_RESERVED: the bridge then
+    // sends the container compiled without them, which goes along when it differs.
+    const plain = RED.fpb.compileFBC(model, table, { sampleRate: SR, fuse: false });
+    const hasPlain = Buffer.compare(Buffer.from(plain.bytes), Buffer.from(res.bytes)) !== 0;
+    if (hasPlain) verify(model, plain);
     const msg = {
         type: "patch", name, origin, time: Date.now(),
         inputs: model.inputs, outputs: model.outputs, sampleRate: SR,
         params: res.params.map(p => ({ index: p.index, label: p.label, path: p.path, widget: p.widget,
                                        min: p.min, max: p.max, step: p.step, def: p.def, meta: p.meta })),
         stats: res.stats, warnings: res.warnings,
-        fpb: Buffer.from(res.bytes).toString("base64")
+        fpb: Buffer.from(res.bytes).toString("base64"),
+        fpbPlain: hasPlain ? Buffer.from(plain.bytes).toString("base64") : undefined
     };
     fs.writeFileSync(path.join(dir, name + ".fpb"), res.bytes);
-    fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(Object.assign({}, msg, { fpb: undefined }), null, 2));
+    fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(Object.assign({}, msg, { fpb: undefined, fpbPlain: undefined }), null, 2));
     fs.writeFileSync(path.join(dir, name + "_fpb.h"), cHeader(name, res, model));
     patches.set(name, msg);
     return msg;

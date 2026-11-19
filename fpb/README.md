@@ -117,6 +117,10 @@ ASDT++ AudioEffectFPB node ── "Compile code" (its Faust code) ────�
 - The sketch must `#include <AudioEffectFPB.h>`, as `examples/OSCAudioUseFS` does.
 - With PlatformIO, OSCAudio's `depends=OSC,Audio` limits its include paths, so `platformio.ini` also needs `-I .../fpb/teensy/FPB/src` in `build_flags`.
 
+## Super-instructions and older firmwares
+
+The compiler fuses the most frequent pairs of ops into one (op table 128–139, see the spec): about a quarter fewer steps per sample, bit-exact with the pairs. A Teensy firmware built before them rejects such a patch with `E_OP_RESERVED`; the bridge then sends the same patch compiled without them, with a warning. Rebuild the firmware with this FPB library to get the faster version.
+
 ## Compiling a Faust patch
 
 ```

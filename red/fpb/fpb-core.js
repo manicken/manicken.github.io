@@ -212,7 +212,22 @@ RED.fpb.core = (function () {
         rdfm: function (F, I, A, o) { const a = A[o[1]]; F[o[0]] = a[(I[o[2]] >>> 0) & mask(a)]; },
         wrfm: function (F, I, A, o) { const a = A[o[0]]; a[(I[o[1]] >>> 0) & mask(a)] = F[o[2]]; },
         rdi: function (F, I, A, o) { var a = A[o[1]], k = I[o[2]] >>> 0; I[o[0]] = k < a.length ? a[k] : 0; },
-        wri: function (F, I, A, o) { var a = A[o[0]], k = I[o[1]] >>> 0; if (k < a.length) a[k] = I[o[2]]; }
+        wri: function (F, I, A, o) { var a = A[o[0]], k = I[o[1]] >>> 0; if (k < a.length) a[k] = I[o[2]]; },
+
+        // fused (super-instructions, FPB_ops.cpp): every intermediate result is rounded to float32 (fround), as the two
+        // separate ops would; the final one is rounded by the store into the Float32Array
+        mulsub: function (F, I, A, o) { F[o[0]] = fround(F[o[1]] * F[o[2]]) - F[o[3]]; },
+        add3: function (F, I, A, o) { F[o[0]] = F[o[1]] + fround(F[o[2]] + F[o[3]]); },
+        dot2: function (F, I, A, o) { F[o[0]] = fround(F[o[1]] * F[o[2]]) + fround(F[o[3]] * F[o[4]]); },
+        smadd: function (F, I, A, o) { F[o[0]] = fround(F[o[1]] * fround(F[o[2]] - F[o[3]])) + F[o[4]]; },
+        submadd: function (F, I, A, o) { F[o[0]] = F[o[1]] - fround(fround(F[o[2]] * F[o[3]]) + F[o[4]]); },
+        mulmadd: function (F, I, A, o) { F[o[0]] = F[o[1]] * fround(fround(F[o[2]] * F[o[3]]) + F[o[4]]); },
+        madd2: function (F, I, A, o) { F[o[0]] = fround(F[o[1]] * F[o[2]]) + fround(fround(F[o[3]] * F[o[4]]) + F[o[5]]); },
+        smul: function (F, I, A, o) { F[o[0]] = F[o[1]] * fround(F[o[2]] - F[o[3]]); },
+        mul3: function (F, I, A, o) { F[o[0]] = F[o[1]] * fround(F[o[2]] * F[o[3]]); },
+        amul: function (F, I, A, o) { F[o[0]] = F[o[1]] * fround(F[o[2]] + F[o[3]]); },
+        selgt: function (F, I, A, o) { F[o[0]] = (F[o[1]] > F[o[2]]) ? F[o[3]] : F[o[4]]; },
+        wrfmadd: function (F, I, A, o) { const a = A[o[0]]; a[(I[o[1]] >>> 0) & mask(a)] = fround(F[o[2]] * F[o[3]]) + F[o[4]]; }
     };
 
     return {

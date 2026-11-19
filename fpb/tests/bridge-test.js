@@ -169,6 +169,27 @@ server.stderr.on("data", d => serverLog += d);
         teensyReply(fx + "/end", -19);
         await wait(50);
         check(notes.some(n => n.type === "error" && /E_CRC/.test(n.text)), "the Teensy refused the patch: " + (notes.find(n => /E_CRC/.test(n.text)) || {}).text);
+
+        console.log("\n== a firmware without super-instructions (E_OP_RESERVED): the patch is sent again without them");
+        const usesFused = b64 => RED.fpb.format.decode(Uint8Array.from(Buffer.from(b64, "base64")), table).smp.some(i => i.op.index >= 128);
+        check(!!node.fpbPlainData && usesFused(node.fpbData) && !usesFused(node.fpbPlainData),
+            "the node keeps both containers: with super-instructions, and without (for an older firmware)");
+        sent.length = 0;
+        RED.fpb.bridge.upload(node);
+        teensyReply(fx + "/end", -6);
+        await until(() => sent.filter(s => s.address === fx + "/end").length >= 2, 1000, "upload without super-instructions");
+        const second = sent.slice(sent.map(s => s.address).lastIndexOf(fx + "/begin"));
+        const blob2 = Buffer.concat(second.filter(s => s.address === fx + "/feed").map(f => Buffer.from(f.values[0])));
+        check(blob2.equals(Buffer.from(node.fpbPlainData, "base64")), `then the container without them is sent (${blob2.length} bytes)`);
+        check(notes.some(n => n.type === "warning" && /super-instructions/.test(n.text)), "with a warning: " + (notes.find(n => /super-instructions/.test(n.text)) || {}).text);
+        const oldFw = core => core.parseOpList(fs.readFileSync(path.join(ROOT, "fpb", "teensy", "FPB", "src", "FPB_oplist.h"), "utf8")
+            .replace(/FPB_OP\((1[2-5]\d), (\w+),\s*"[^"]*",\s*[\w |]+\)/g, "FPB_RES($1)"));
+        const oldTable = oldFw(RED.fpb.core);
+        check(RED.fpb.format.decode(Uint8Array.from(Buffer.from(node.fpbData, "base64")), oldTable).errorName === "E_OP_RESERVED" &&
+              RED.fpb.format.decode(Uint8Array.from(blob2), oldTable).error === 0,
+            "an op table without the fused ops (older firmware) rejects the first one (E_OP_RESERVED) and loads the second");
+        teensyReply(fx + "/end", 0);
+        await wait(50);
         RED.fpb.bridge.upload(node);
         teensyReply(fx + "/end", 0, 8);
         await wait(50);
