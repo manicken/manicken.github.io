@@ -128,7 +128,17 @@ RED.fpb.core = (function () {
         irem: function (a, b) { if (b === 0 || b === -1) return 0; return (a % b) | 0; },
         fmin: function (a, b) { return (b < a) ? b : a; },     // std::min(a, b)
         fmax: function (a, b) { return (a < b) ? b : a; },     // std::max(a, b)
-        fmodf: function (a, b) { return fround(a % b); }
+        fmodf: function (a, b) { return fround(a % b); },
+        // C remainderf: x - n*y with n = x/y rounded to the nearest integer, ties to even (as glibc e_remainderf.c).
+        // Every step is exact in double for float32 inputs, and so is the result.
+        remainderf: function (x, y) {
+            if (x !== x || y !== y || !isFinite(x) || y === 0) return NaN;
+            if (!isFinite(y)) return x;
+            var sx = (x < 0 || Object.is(x, -0)) ? -1 : 1, p = Math.abs(y);
+            var a = Math.abs(x) % (p + p);              // now a < 2p
+            if (a + a > p) { a -= p; if (a + a >= p) a -= p; }
+            return sx * a;                              // the sign of x, as remainderf (also for a zero result)
+        }
     };
 
     // ------------------------------------------------------------------ op semantics (for the verifier VM)
@@ -168,7 +178,7 @@ RED.fpb.core = (function () {
         floor: f1(Math.floor), ceil: f1(Math.ceil), round: f1(m.roundf), rint: f1(m.rintf), sqrt: f1(Math.sqrt),
         sin: f1(Math.sin), cos: f1(Math.cos), tan: f1(Math.tan), asin: f1(Math.asin), acos: f1(Math.acos),
         atan: f1(Math.atan), atan2: f2(Math.atan2), exp: f1(Math.exp), log: f1(Math.log), log10: f1(Math.log10),
-        pow: f2(Math.pow), fmod: f2(function (a, b) { return a % b; }), sinh: f1(Math.sinh), cosh: f1(Math.cosh),
+        pow: f2(Math.pow), fmod: f2(function (a, b) { return a % b; }), rem: f2(m.remainderf), sinh: f1(Math.sinh), cosh: f1(Math.cosh),
         tanh: f1(Math.tanh), asinh: f1(Math.asinh), acosh: f1(Math.acosh), atanh: f1(Math.atanh),
 
         imov: function (F, I, A, o) { I[o[0]] = I[o[1]]; },

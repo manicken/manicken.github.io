@@ -274,7 +274,7 @@ These ops cover every FBC instruction that can appear in a scalar-mode `control_
 |---|---|---|
 | 0 | — | reserved (invalid) |
 | 1–20 | core | `mov f=f`, `add sub mul div f=ff`, `neg f=f`, `madd f=fff` (a·b + c), `msub f=fff` (c − a·b), `min max f=ff` (as `std::min/max`), `abs f=f`, `select f=iff`, `lt le gt ge eq ne i=ff`, `copysign f=ff`, `mov2 ff=ff` (d1 = s1, then d2 = s2) |
-| 32–54 | math | `floor ceil round rint sqrt sin cos tan asin acos atan f=f`, `atan2 f=ff`, `exp log log10 f=f`, `pow fmod f=ff`, `sinh cosh tanh asinh acosh atanh f=f` |
+| 32–55 | math | `floor ceil round rint sqrt sin cos tan asin acos atan f=f`, `atan2 f=ff`, `exp log log10 f=f`, `pow fmod f=ff`, `sinh cosh tanh asinh acosh atanh f=f`, `rem f=ff` (55: C `remainderf`, x − n·y with n = x/y rounded to even; Faust's `remainder`, FBC `kRemReal`. `fmod` is Faust's `%`, FBC `kFmodf`) |
 | 64–87 | int | `imov i=i`, `iadd isub imul idiv irem iand ior ixor ishl ishr iushr imin imax i=ii`, `iabs i=i`, `iselect i=iii`, `ilt ile igt ige ieq ine i=ii`, `ftoi i=f`, `itof f=i` |
 | 96–102 | arrays | `rdf f=ai`, `wrf =aif`, `rdi i=ai`, `wri =aii`, `dlyrd f=aii` (arr[(a − b) & mask]), `rdfm f=ai` (arr[i & mask]), `wrfm =aif` (arr[i & mask] = v); mask = len − 1 for a power-of-two length, else 0 |
 | 128–159 | fused | reserved for super-instructions |

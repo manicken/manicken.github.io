@@ -20,7 +20,7 @@ RED.fpb.compileFBC = (function () {
 
     var core = RED.fpb.core, fround = Math.fround;
 
-    var BIN_F = { kAddReal: "add", kSubReal: "sub", kMultReal: "mul", kDivReal: "div", kRemReal: "fmod", kFmodf: "fmod",
+    var BIN_F = { kAddReal: "add", kSubReal: "sub", kMultReal: "mul", kDivReal: "div", kRemReal: "rem", kFmodf: "fmod",
                   kPowf: "pow", kAtan2f: "atan2", kMaxf: "max", kMinf: "min", kCopysignf: "copysign" };
     var CMP_F = { kGTReal: "gt", kLTReal: "lt", kGEReal: "ge", kLEReal: "le", kEQReal: "eq", kNEReal: "ne" };
     var BIN_I = { kAddInt: "iadd", kSubInt: "isub", kMultInt: "imul", kDivInt: "idiv", kRemInt: "irem", kLshInt: "ishl",
@@ -191,7 +191,11 @@ RED.fpb.compileFBC = (function () {
                 }
                 case "kLoop": throw CompileError("loops are only supported as the dsp_block sample loop (compile Faust in scalar mode)");
                 default:
-                    if (BIN_F[op]) { a = pop(); b = pop(); st.push(mkOp("f", BIN_F[op], [a, b])); break; }
+                    if (BIN_F[op]) {
+                        if (OP_SIG[BIN_F[op]] === undefined)        // an older firmware (e.g. no "rem" for kRemReal)
+                            throw CompileError("FBC instruction " + op + " needs the op '" + BIN_F[op] + "', which the op table does not have");
+                        a = pop(); b = pop(); st.push(mkOp("f", BIN_F[op], [a, b])); break;
+                    }
                     if (CMP_F[op]) { a = pop(); b = pop(); st.push(mkOp("i", CMP_F[op], [a, b])); break; }
                     if (BIN_I[op]) { a = pop(); b = pop(); st.push(mkOp("i", BIN_I[op], [a, b])); break; }
                     if (UN_F[op]) { st.push(mkOp("f", UN_F[op], [pop()])); break; }

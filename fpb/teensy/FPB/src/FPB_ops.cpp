@@ -88,7 +88,8 @@ OPFN(exp)      { F(0) = expf(F(1));                NEXT(2); }
 OPFN(log)      { F(0) = logf(F(1));                NEXT(2); }
 OPFN(log10)    { F(0) = log10f(F(1));              NEXT(2); }
 OPFN(pow)      { F(0) = powf(F(1), F(2));          NEXT(3); }
-OPFN(fmod)     { F(0) = fmodf(F(1), F(2));         NEXT(3); }
+OPFN(fmod)     { F(0) = fmodf(F(1), F(2));         NEXT(3); }   // Faust's % on reals (kFmodf)
+OPFN(rem)      { F(0) = remainderf(F(1), F(2));    NEXT(3); }   // Faust's remainder (kRemReal): x - n*y, n = x/y rounded to even
 OPFN(sinh)     { F(0) = sinhf(F(1));               NEXT(2); }
 OPFN(cosh)     { F(0) = coshf(F(1));               NEXT(2); }
 OPFN(tanh)     { F(0) = tanhf(F(1));               NEXT(2); }
