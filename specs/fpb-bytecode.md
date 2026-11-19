@@ -315,6 +315,7 @@ Still to come, in the free slots:
   - `clear_block` becomes zero-initialised memory.
 - **State and arrays:**
   - A constant-index array access (`fRec0[1]`) becomes a plain float slot. The shift at the end of the loop becomes `mov`.
+  - The FBC move instructions that shift short delay lines (`kBlockShiftReal/Int`, `kMoveReal/Int`, `kPairMoveReal/Int`, `kBlockPairMoveReal/Int`) become one `mov`/`imov` per moved element (up to 256 for a block), in the interpreter's order. Like other stores, they are refused inside a select branch.
   - `arr[(IOTA - d) & mask]` becomes `dlyrd`, and `IOTA = IOTA + 1` becomes `iinc`.
 - **Inputs and outputs:** `kLoadInput` and `kStoreOutput` become the input and output slots (5.2).
 - **Size:** `fi.resonlp` has 47 FBC instructions per sample and comes to about 10 FPB instructions.

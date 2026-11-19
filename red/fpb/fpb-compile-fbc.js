@@ -138,12 +138,17 @@ RED.fpb.compileFBC = (function () {
         this.stmts.push({ k: "sx", t: t, base: base, size: size, idx: idx, v: v });
     };
 
+    // heap[dst] = heap[src], as a load then a store (so the store's hazard handling applies)
+    Sym.prototype.move = function (st, t, dst, src) { this.store(st, t, dst, this.load(t, src)); };
+
+    var MOVES = /^k(Store|Move|PairMove|BlockPairMove|BlockShift)/, MAX_BLOCK_MOVES = 256;
+
     Sym.prototype.exec = function (block, st, inSelect) {
-        var ctx = this.ctx, model = ctx.model, a, b, idx, v;
+        var ctx = this.ctx, model = ctx.model, a, b, idx, v, t, k;
         function pop() { if (!st.length) throw CompileError("stack underflow"); return st.pop(); }
         for (var pc = 0; pc < block.length; pc++) {
             var ins = block[pc], op = ins.op;
-            if (inSelect && /^kStore/.test(op)) throw CompileError("a select branch with a store is not supported yet");
+            if (inSelect && MOVES.test(op)) throw CompileError("a select branch with a store is not supported yet");
             switch (op) {
                 case "kRealValue": st.push(C("f", ins.r)); break;
                 case "kInt32Value": st.push(C("i", ins.i)); break;
@@ -161,6 +166,25 @@ RED.fpb.compileFBC = (function () {
                     break;
                 case "kStoreRealValue": this.store(st, "f", ins.o1, C("f", ins.r)); break;
                 case "kStoreIntValue": this.store(st, "i", ins.o1, C("i", ins.i)); break;
+                // the move instructions (FBC's short delay lines), expanded into one store per moved element
+                case "kMoveReal": case "kMoveInt":                      // heap[o1] = heap[o2]
+                    this.move(st, op === "kMoveReal" ? "f" : "i", ins.o1, ins.o2);
+                    break;
+                case "kPairMoveReal": case "kPairMoveInt":              // heap[o1] = heap[o1-1]; heap[o2] = heap[o2-1]
+                    t = op === "kPairMoveReal" ? "f" : "i";
+                    this.move(st, t, ins.o1, ins.o1 - 1);
+                    this.move(st, t, ins.o2, ins.o2 - 1);
+                    break;
+                case "kBlockPairMoveReal": case "kBlockPairMoveInt":    // for (i = o1; i < o2; i += 2) heap[i+1] = heap[i]
+                    t = op === "kBlockPairMoveReal" ? "f" : "i";
+                    if ((ins.o2 - ins.o1) / 2 > MAX_BLOCK_MOVES) throw CompileError(op + " of more than " + MAX_BLOCK_MOVES + " elements");
+                    for (k = ins.o1; k < ins.o2; k += 2) this.move(st, t, k + 1, k);
+                    break;
+                case "kBlockShiftReal": case "kBlockShiftInt":          // for (i = o1; i > o2; i--) heap[i] = heap[i-1]
+                    t = op === "kBlockShiftReal" ? "f" : "i";
+                    if (ins.o1 - ins.o2 > MAX_BLOCK_MOVES) throw CompileError(op + " of more than " + MAX_BLOCK_MOVES + " elements");
+                    for (k = ins.o1; k > ins.o2; k--) this.move(st, t, k, k - 1);
+                    break;
                 case "kLoadIndexedReal": idx = pop(); st.push(this.loadx("f", ins.o1, ins.o2, idx)); break;
                 case "kLoadIndexedInt": idx = pop(); st.push(this.loadx("i", ins.o1, ins.o2, idx)); break;
                 case "kStoreIndexedReal": idx = pop(); v = pop(); this.storex(st, "f", ins.o1, ins.o2, idx, v); break;
@@ -184,7 +208,7 @@ RED.fpb.compileFBC = (function () {
                     break;
                 case "kReturn": return;
                 case "kSelectReal": case "kSelectInt": {
-                    var c = pop(), t = op === "kSelectReal" ? "f" : "i";
+                    var c = pop(); t = op === "kSelectReal" ? "f" : "i";
                     var x = this.branch(ins.sub[0]), y = this.branch(ins.sub[1]);
                     if (isC(c)) st.push(c.v ? x : y);
                     else st.push({ k: "sel", t: t, c: c, a: x, b: y });

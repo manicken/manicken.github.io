@@ -205,6 +205,93 @@ const p0 = RED.fpb.format.encode(P0, table);
     (want.every((w, k) => o[0][k] === w) ? ok : fail)("vm: out = in * p^2 + arr[2] -> " + Array.from(o[0]).join(" "));
 }
 
+// ------------------------------------------------------------------ FBC move instructions (short delay lines)
+
+// A hand-written FBC sample loop with every move instruction: kBlockShift (heap[i] = heap[i-1] for i = o1 down to
+// o2+1), kBlockPairMove (heap[i+1] = heap[i] for i = o1, o1+2, .. < o2), kPairMove (heap[o1] = heap[o1-1],
+// heap[o2] = heap[o2-1]) and kMove (heap[o1] = heap[o2]), Real and Int. Values pushed before a block shift read the
+// shifted slots (they must be saved first), and a kMoveReal is a one-sample copy that eliminateCopies removes.
+console.log("\n== FBC move instructions");
+{
+    // real heap: 0..3 shifted line, 4..9 pair moves, 10..13 pair move, 14 move, 16 recursion, 17 its one-sample copy
+    // int heap:  0 sr, 1 count, 2 loop var, 3..5 shifted line, 6..9 pair moves, 10..13 pair move, 14 move
+    const I = (op, o1 = -1, o2 = -1, i = 0, r = 0) => `opcode 0 ${op} int ${i} real ${r} offset1 ${o1} offset2 ${o2}`;
+    const ld = o => I("kLoadReal", o), sto = o => I("kStoreReal", o), ldi = o => I("kLoadInt", o), stoi = o => I("kStoreInt", o);
+    const rv = r => I("kRealValue", -1, -1, 0, r), iv = i => I("kInt32Value", -1, -1, i);
+    const blk = lines => [`block_size ${lines.length}`].concat(lines);
+    const sumR = offs => offs.flatMap(o => [ld(o), I("kAddReal")]);
+    const sumI = offs => offs.flatMap(o => [ldi(o), I("kCastReal"), I("kAddReal")]);
+    const body = [
+        ldi(2), I("kLoadInput", 0), sto(0),                                        // R0 = in
+        ...[[4, 2], [6, 3], [8, 4], [10, 5], [12, 6]].flatMap(([o, k]) => [rv(k), ld(0), I("kMultReal"), sto(o)]),
+        ld(17), rv(0.5), ld(0), I("kMultReal"), I("kAddReal"), sto(16),            // R16 = R0 * 0.5 + R17
+        rv(100), ld(0), I("kMultReal"), I("kCastInt"), stoi(3),                    // I3 = int(R0 * 100)
+        ...[[6, 1], [8, 2], [10, 3], [12, 4]].flatMap(([o, k]) => [iv(k), ldi(3), I("kAddInt"), stoi(o)]),
+        ld(3), ldi(5), I("kCastReal"),                                              // old R3, old I5: still on the stack
+        I("kBlockShiftReal", 3, 0), I("kBlockShiftInt", 5, 3),
+        I("kAddReal"), ...sumR([1, 2, 3]),
+        I("kBlockPairMoveReal", 4, 9), I("kPairMoveReal", 11, 13), I("kMoveReal", 14, 0),
+        I("kBlockPairMoveInt", 6, 9), I("kPairMoveInt", 11, 13), I("kMoveInt", 14, 3),
+        ...sumR([5, 7, 9, 11, 13, 14, 16]), ...sumI([4, 7, 9, 11, 13, 14]),
+        rv(0.01), I("kMultReal"), ldi(2), I("kStoreOutput", 0),
+        I("kMoveReal", 17, 16),                                                     // fRec[1] = fRec[0]
+        ldi(2), iv(1), I("kAddInt"), stoi(2), ldi(1), ldi(2), I("kLTInt"), I("kCondBranch"), I("kReturn")
+    ];
+    const ret = blk([I("kReturn")]);
+    const fbcText = (sampleBody, subLines = 0) => [      // subLines: lines of sub-blocks, not counted in block_size
+        "interpreter_dsp_factory float", "file_version 8", "Faust version 2.94.1", "name moves", "opt_level 6",
+        "inputs 1 outputs 1", "int_heap_size 16 real_heap_size 18 sr_offset 0 count_offset 1 iota_offset -1",
+        "meta_block", "block_size 0", "user_interface_block", "block_size 0",
+        "static_init_block", ...ret, "constants_block", ...ret, "reset_ui", ...ret, "clear_block", ...ret, "control_block", ...ret,
+        "dsp_block", "block_size 2", I("kLoop"), ...blk([iv(0), stoi(2), I("kReturn")]),
+        `block_size ${sampleBody.length - subLines}`, ...sampleBody, I("kReturn")
+    ].join("\n") + "\n";
+    const model = RED.fpb.fbc.parse(fbcText(body));
+
+    // structure, unoptimised: the shifts are one mov per element, top down, after the saves of the stacked values
+    const r0 = RED.fpb.compileFBC(model, table, { sampleRate: SR, optimize: false, fuse: false });
+    const dis = r0.program.smp.map(ins => {
+        const names = r0.debug[table.byName[ins.op].sig[0] === "i" ? "i" : "f"];
+        return ins.op + " " + ins.ops.map((s, j) => j === 0 ? names[s] : (/^i/.test(ins.op) ? r0.debug.i : r0.debug.f)[s]).join(" ");
+    });
+    const at = dis.indexOf("mov fheap3 fheap2");
+    const wantR = ["mov saved0 fheap3", "mov fheap3 fheap2", "mov fheap2 fheap1", "mov fheap1 fheap0",
+                   "itof saved1 iheap5", "imov iheap5 iheap4", "imov iheap4 iheap3"];
+    const gotR = dis.slice(at - 1, at + 6);
+    (JSON.stringify(gotR) === JSON.stringify(wantR) ? ok : fail)("block shifts -> " + gotR.join(", "));
+    const wantP = ["mov fheap5 fheap4", "mov fheap7 fheap6", "mov fheap9 fheap8", "mov fheap11 fheap10", "mov fheap13 fheap12",
+                   "mov fheap14 fheap0", "imov iheap7 iheap6", "imov iheap9 iheap8", "imov iheap11 iheap10", "imov iheap13 iheap12",
+                   "imov iheap14 iheap3"];
+    const atP = dis.indexOf(wantP[0]), gotP = dis.slice(atP, atP + wantP.length);
+    (JSON.stringify(gotP) === JSON.stringify(wantP) ? ok : fail)("pair moves and moves -> " + gotP.join(", "));
+
+    // results, unoptimised and optimised (the kMoveReal recursion copy removed), against the FBC reference
+    const ins = makeInput(1).map(x => x.subarray(0, N * 8)), NB = 8;
+    const ref = new RED.fpb.fbc.Interp(model);
+    ref.init(SR);
+    const refOut = [new Float32Array(N * NB)];
+    for (let b = 0; b < NB; b++) ref.compute(N, [ins[0].subarray(b * N, (b + 1) * N)], [refOut[0].subarray(b * N, (b + 1) * N)]);
+    const r1 = RED.fpb.compileFBC(model, table, { sampleRate: SR });
+    [["unoptimised", r0], ["optimised", r1]].forEach(([what, r]) => {
+        const vm = RED.fpb.vm.load(r.bytes, table), o = [new Float32Array(N * NB)];
+        vm.process(ins, o, N * NB);
+        const d = compare(refOut, o).max;
+        (d <= 1e-6 && refOut[0].some(x => x !== 0) ? ok : fail)(
+            `vm vs ref ${what}: max diff ${d.toExponential(2)} (${r.stats.smp} steps, ${r.stats.copiesRemoved} copies removed)`);
+    });
+    (r1.stats.copiesRemoved >= 1 ? ok : fail)("the kMoveReal one-sample copy is removed by eliminateCopies");
+
+    // a move in a select branch is a store there: refused, like the other stores
+    const sel = [rv(1), ld(0), I("kGTReal"), I("kSelectReal")];
+    const selBody = body.slice();
+    const k = selBody.indexOf(I("kBlockShiftReal", 3, 0)), branches = [...blk([I("kBlockShiftReal", 3, 0), rv(1)]), ...blk([rv(2)])];
+    selBody.splice(k, 1, ...sel, ...branches, I("kAddReal"));
+    let msg = null;
+    try { RED.fpb.compileFBC(RED.fpb.fbc.parse(fbcText(selBody, branches.length)), table, { sampleRate: SR }); }
+    catch (e) { msg = e.message; }
+    (msg && /select branch with a store/.test(msg) ? ok : fail)("block shift in a select branch: " + msg);
+}
+
 // ------------------------------------------------------------------ rem (Faust's remainder, FBC kRemReal)
 
 // rem is C remainderf (x - n*y, n = x/y rounded to the nearest integer, ties to even), not fmod (Faust's %).
