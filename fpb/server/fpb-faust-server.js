@@ -9,6 +9,16 @@
 //                                       [--faustlib path/to/share/faust] [--sr 44117] [--www dir | --no-www]
 //                                       [--keep dir | --no-keep]   every compile is kept in <dir>/<name>/ (default fpb/patches)
 //                                       [--osc-port COMx|off] [--debug-port COMy|off] [--no-io]   serial / MIDI (io.js)
+//                                       [--allow-origin https://example.org[,...]] [--allow-file-origin]   see "who may use it"
+//
+// Who may use it (a page on any web site could otherwise reach 127.0.0.1 and send serial/MIDI to the Teensy):
+//   a browser sends the Origin of the page with every WebSocket and every cross-site request, only these are accepted:
+//     loopback pages (http://127.0.0.1:*, localhost, [::1]: this server's own ASDT++, a local Faust IDE build),
+//     https://manicken.github.io (ASDT++), https://faustide.grame.fr and https://fausteditor.grame.fr (the Faust IDE),
+//     and the ones given with --allow-origin.
+//   Origin "null" (index.html opened as a file) only with --allow-file-origin: a sandboxed iframe on any site is "null" too.
+//   No Origin (curl, the tests, a page navigation) is accepted. When it listens on loopback the Host header must be a
+//   loopback name too, that stops DNS rebinding (a site that resolves its own name to 127.0.0.1).
 //
 // One port for everything:
 //   /            ASDT++ itself (static files of this repo, or --www dir), so http://127.0.0.1:8088/ is the tool
@@ -67,6 +77,56 @@ const API = "/faust";
 const WWW = argv.includes("--no-www") ? null : path.resolve(opt("--www", ROOT));
 const ARCH_ZIP = "fpb-zip";       // the same, but binary.zip is the files
 const TARGETS = { source: ["cplusplus"], [PLATFORM]: [ARCH, ARCH_ZIP] };
+
+// ------------------------------------------------------------------ who may use it (see the top of this file)
+
+/** @returns {String[]} every value of an option that can be given more than once, also comma separated */
+function optAll(name) {
+    const values = [];
+    for (let i = 0; i < argv.length - 1; i++) if (argv[i] === name) values.push(...argv[i + 1].split(",").map(s => s.trim()).filter(Boolean));
+    return values;
+}
+const ALLOWED_ORIGINS = new Set([
+    "https://manicken.github.io",
+    "https://faustide.grame.fr",
+    "https://fausteditor.grame.fr",
+    ...optAll("--allow-origin").map(o => o.replace(/\/+$/, "")),
+]);
+if (argv.includes("--allow-file-origin")) ALLOWED_ORIGINS.add("null");
+
+function isLoopbackName(hostname) {
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+}
+
+/** @param {String|undefined} origin the Origin header @returns {Boolean} */
+function originAllowed(origin) {
+    if (origin === undefined) return true;   // not a cross-site browser request (curl, the tests, a navigation, a same-origin GET)
+    if (ALLOWED_ORIGINS.has(origin)) return true;
+    try {
+        const u = new URL(origin);
+        return (u.protocol === "http:" || u.protocol === "https:") && isLoopbackName(u.hostname);
+    } catch (e) { return false; }
+}
+
+/** @param {String|undefined} hostHeader @returns {Boolean} false: DNS rebinding (a site name that points to 127.0.0.1) */
+function hostAllowed(hostHeader) {
+    if (!isLoopbackName(HOST)) return true;  // it listens on the network (--host): any name is fine
+    if (!hostHeader) return false;
+    try { return isLoopbackName(new URL("http://" + hostHeader).hostname); }
+    catch (e) { return false; }
+}
+
+const refusedLogged = new Set();
+/** @returns {String|null} why the request is refused, null when it's allowed */
+function refusal(req) {
+    if (!hostAllowed(req.headers.host)) return "host " + req.headers.host + " is not a loopback name";
+    const origin = req.headers.origin;
+    if (!originAllowed(origin)) {
+        if (!refusedLogged.has(origin)) { refusedLogged.add(origin); log("refused a page from " + origin + " (start with --allow-origin " + origin + " to allow it)"); }
+        return "the origin " + origin + " is not allowed (fpb-faust-server --allow-origin)";
+    }
+    return null;
+}
 
 // ------------------------------------------------------------------ finding faust
 
@@ -392,6 +452,8 @@ const clients = new Set();
 function wsAccept(req, socket) {
     const key = req.headers["sec-websocket-key"];
     if (!key) { socket.destroy(); return; }
+    const refused = refusal(req);   // (a browser always sends the Origin of the page with a WebSocket)
+    if (refused) { socket.end("HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n" + refused); return; }
     const accept = crypto.createHash("sha1").update(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest("base64");
     socket.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + accept + "\r\n\r\n");
     const client = { socket, buf: Buffer.alloc(0), frag: [], name: req.socket.remoteAddress };
@@ -480,8 +542,11 @@ async function onClientMessage(client, msg) {
 
 // ------------------------------------------------------------------ HTTP
 
-function cors(res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+/** @param {String|undefined} origin an allowed Origin (see refusal), undefined: no CORS headers are needed */
+function cors(res, origin) {
+    if (origin === undefined) return;
+    res.setHeader("Access-Control-Allow-Origin", origin);   // only the page that asked, never "*"
+    res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "*");
     res.setHeader("Access-Control-Allow-Private-Network", "true");   // a https page (faustide.grame.fr) calling localhost
@@ -567,7 +632,9 @@ function serveStatic(req, res, pathname) {
 }
 
 async function handle(req, res) {
-    cors(res);
+    const refused = refusal(req);
+    if (refused) return reply(res, 403, refused);
+    cors(res, req.headers.origin);
     if (req.method === "OPTIONS") { res.writeHead(204); res.end(); return; }
     const url = new URL(req.url, "http://localhost");
     const api = apiPath(url.pathname);

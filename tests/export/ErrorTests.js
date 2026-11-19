@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "ErrorTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -81,7 +81,8 @@
                         ],
                         "id": "e_a",
                         "type": "AudioAmplifier",
-                        "name": "a[4]"
+                        "name": "a",
+                        "arraySize": 4
                     },
                     {
                         "comment": "",
@@ -91,7 +92,8 @@
                         "wires": [],
                         "id": "e_b",
                         "type": "AudioAmplifier",
-                        "name": "b[2]"
+                        "name": "b",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",
@@ -105,7 +107,8 @@
                         ],
                         "id": "e_three",
                         "type": "AudioSynthWaveform",
-                        "name": "three[3]"
+                        "name": "three",
+                        "arraySize": 3
                     },
                     {
                         "comment": "",
@@ -186,7 +189,8 @@
                         "wires": [],
                         "id": "e_c",
                         "type": "AudioAmplifier",
-                        "name": "c[2]"
+                        "name": "c",
+                        "arraySize": 2
                     }
                 ]
             },

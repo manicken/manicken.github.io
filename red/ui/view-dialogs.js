@@ -531,6 +531,52 @@ RED.view.dialogs = (function() {
         return "c_cpp";
     }
 
+    var JSON_COMPACT_STORAGE_KEY = "exportDialogJsonCompact";
+    /** @returns {Boolean} the checkbox 'one node per line' of the export dialog (remembered in this browser) */
+    function getJsonCompactSetting() {
+        try { return localStorage.getItem(JSON_COMPACT_STORAGE_KEY) == "true"; }
+        catch (e) { return false; }
+    }
+    function setJsonCompactSetting(state) {
+        try { localStorage.setItem(JSON_COMPACT_STORAGE_KEY, state ? "true" : "false"); }
+        catch (e) { /* only not remembered */ }
+    }
+
+    /**
+     * JSON with one node per line: smaller than fully indented, but not one long line (the same format as examples/*.js).
+     *   a design { version, settings, workspaces: [...] }: every top level key on one line, a tab on one line with
+     *   its nodes one per line after it
+     *   an array of nodes (Export nodes to clipboard, an old design): one node per line
+     * Anything else is fully indented.
+     * @param {*} value the parsed JSON
+     * @returns {String}
+     */
+    function formatJsonNodePerLine(value) {
+        var IND = "    ";
+        var pad = function (level) { return IND.repeat(level); };
+        var isObject = function (v) { return v != null && typeof v == "object" && !Array.isArray(v); };
+        var isObjectArray = function (v) { return Array.isArray(v) && v.length != 0 && v.every(isObject); };
+        // an element of an array of objects: a tab with its nodes after it, anything else on one line
+        // (a group node have "nodes" too, but that's a list of ids, so a group is one line)
+        var item = function (v, level) {
+            if (isObject(v) && isObjectArray(v.nodes)) { // the keys in the same order as before, only the nodes on lines of their own
+                return pad(level) + "{" + Object.keys(v).map(function (k) {
+                    return JSON.stringify(k) + ":" + ((k == "nodes") ? list(v.nodes, level) : JSON.stringify(v[k]));
+                }).join(",") + "}";
+            }
+            return pad(level) + JSON.stringify(v);
+        };
+        var list = function (a, level) {
+            return "[\n" + a.map(function (x) { return item(x, level + 1); }).join(",\n") + "\n" + pad(level) + "]";
+        };
+        if (isObjectArray(value)) return list(value, 0);
+        if (isObject(value) == false) return JSON.stringify(value, null, 4);
+        return "{\n" + Object.keys(value).map(function (k) {
+            var v = value[k];
+            return pad(1) + JSON.stringify(k) + ": " + (isObjectArray(v) ? list(v, 1) : JSON.stringify(v));
+        }).join(",\n") + "\n}";
+    }
+
     /**
      * Shows a text in the export dialog: a read-only ace editor that highlights the code and marks the selected word
      * everywhere (that makes it easy to follow a name through the export).
@@ -543,6 +589,24 @@ RED.view.dialogs = (function() {
         $("#node-input-export").val(text); // (a copy of the text, for older code that reads it)
         var element = document.getElementById("export-dialog-ace");
         if (element == null) return;
+        // JSON is shown fully indented, or one node per line when the checkbox is checked (it's remembered)
+        var formatRow = $("#export-dialog-json-format-row");
+        var compactBox = $("#export-dialog-json-compact");
+        if (mode == "json") {
+            var parsed = undefined;
+            try { parsed = JSON.parse(text); } catch (e) { /* not JSON after all, shown as it is */ }
+            if (parsed !== undefined) {
+                formatRow.show();
+                compactBox.prop("checked", getJsonCompactSetting());
+                compactBox.off("change").on("change", function () {
+                    setJsonCompactSetting(compactBox.prop("checked"));
+                    setExportDialogText(text, fileName, mode); // the same text again, in the other format
+                });
+                text = compactBox.prop("checked") ? formatJsonNodePerLine(parsed) : JSON.stringify(parsed, null, 4);
+            }
+            else formatRow.hide();
+        }
+        else formatRow.hide();
         if (exportDialogEditor == undefined || exportDialogEditor.container !== element) { // the dialog form is new every time it's opened
             if (exportDialogEditor != undefined) exportDialogEditor.destroy();
             exportDialogEditor = ace.edit(element);
@@ -652,6 +716,7 @@ RED.view.dialogs = (function() {
         showExportDialog,
         setExportDialogText,
         showExportNodesDialog,
+        showJsonExportDialog,
         showExportNodesLibraryDialog,
         showImportNodesDialog,
         showRenameWorkspaceDialog,

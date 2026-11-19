@@ -568,7 +568,7 @@ RED.view.groupbox = (function() {
 			.attr("style", "stroke:" + d.border_color + ";");
 			//.attr("stroke", d.border_color);
 
-		var groupLabel = groupRect.selectAll('text.node_label').text(d.name);
+		var groupLabel = groupRect.selectAll('text.node_label').text(RED.nodes.getNameWithArraySize(d)); // an array of groups: voices[8]
 
 		RED.view.redraw_update_label(groupRect, d);
 		//RED.view.redraw_nodeInputs(groupRect, d);

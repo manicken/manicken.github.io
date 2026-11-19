@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "ShapeTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -53,7 +53,8 @@
                         ],
                         "id": "sm_voices",
                         "type": "StereoOsc",
-                        "name": "voices[4]"
+                        "name": "voices",
+                        "arraySize": 4
                     },
                     {
                         "comment": "",
@@ -169,7 +170,8 @@
                         "wires": [],
                         "id": "sm_amps8",
                         "type": "AudioAmplifier",
-                        "name": "amps8[8]"
+                        "name": "amps8",
+                        "arraySize": 8
                     },
                     {
                         "comment": "",
@@ -179,7 +181,8 @@
                         "wires": [],
                         "id": "sm_fx4",
                         "type": "StereoFx",
-                        "name": "fx4[4]"
+                        "name": "fx4",
+                        "arraySize": 4
                     },
                     {
                         "comment": "",

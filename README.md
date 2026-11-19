@@ -139,7 +139,7 @@ the group can have label that is placed inside it at the top center<br>
 (in a future version it should be user placeable like in the "node-red"-group)<br>
 
 A group with a *Class name* is a class (a class group):<br>
-  - the group name is the instance name, `voices[8]` makes it an array of 8 instances
+  - the group name is the instance name, the *Array Size* setting makes it an array (`voices` with Array Size 8 is `voices[8]`)
   - the IO junctions on the edges of the group are its ports, a port can have more than one lane (a bus port: set *Lanes* in the edit dialog of the junction)
   - the class is added to the palette (category tabs), so more instances of it can be placed, also in other tabs
   - an instance can be expanded (in its edit dialog) to show what is inside of it, read only

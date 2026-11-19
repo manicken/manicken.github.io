@@ -678,6 +678,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 			</div>
 			<div class="form-row">
 				<label id="export-clipboard-dialog-textarea-label" for="export-dialog-ace" style="display: block; width:100%;"><i class="icon-share"></i>  Source Code:</label>
+				<!-- only shown for JSON (see RED.view.dialogs.setExportDialogText): one node per line instead of fully indented -->
+				<div id="export-dialog-json-format-row" style="display:none; margin-bottom:4px;">
+					<label style="display:inline; width:auto; font-weight:normal; cursor:pointer;"><input type="checkbox" id="export-dialog-json-compact" style="margin:0 4px 2px 0;">one node per line (compact, not one line and not fully indented)</label>
+				</div>
 				<!-- an ace editor (read-only) that shows the text, see RED.view.dialogs.setExportDialogText -->
 				<div id="export-dialog-ace" class="export-dialog-ace"></div>
 				<textarea readonly style="display:none;" id="node-input-export"></textarea>
@@ -796,6 +800,7 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="tests/export/GroupInstanceTests.js"></script>
 <script src="tests/export/GroupTests.js"></script>
 <script src="tests/export/OscErrorTests.js"></script>
+<script src="tests/export/OldStyleArrayNamesTests.js"></script>
 <script src="tests/export/OscTests.js"></script>
 <script src="tests/export/ShapeTests.js"></script>
 
@@ -803,10 +808,15 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="examples/EmptyNewProject.js"></script>
 <script src="examples/ManickenPolySynth.js"></script>
 <script src="examples/GroupBasedDesign.js"></script>
+<script src="examples/GroupBasedDesignGroupIO.js"></script>
+<script src="examples/HelloWorldBlinkLed.js"></script>
+<script src="examples/MostSimpleSynth.js"></script>
+<script src="examples/SimplePolySynth.js"></script>
 <script src="examples/SimpleNonAudioExample.js"></script>
 <script src="examples/DemoFlowA.js"></script>
 <script src="examples/DemoFlowB.js"></script>
 <script src="examples/FlowOriginal.js"></script>
+<script src="examples/GroupExampleStereo2.js"></script>
 
 <!-- components (each one adds itself to globalThis.ComponentDesigns), listed in the menu under Components,
      added to the open design (see red/design-merge.js) -->
@@ -1746,6 +1756,10 @@ span.mainfunction {color: #993300; font-weight: bolder}
 	<div class="form-row"> 
 		<label for="node-input-outputs"><i class="fa fa-tag"></i> Outputs</label>
 		<input type="text" id="node-input-outputs" placeholder="outputs" autocomplete="off">
+	</div>
+	<div class="form-row"> 
+		<label for="node-input-arraySize"><i class="fa fa-tag"></i> Array Size</label>
+		<input type="text" id="node-input-arraySize" placeholder="arraySize" autocomplete="off">
 	</div>
 </script>
 

@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "GroupInstanceTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -193,7 +193,8 @@
                         ],
                         "id": "im_c",
                         "type": "GChain",
-                        "name": "chainC[2]"
+                        "name": "chainC",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",

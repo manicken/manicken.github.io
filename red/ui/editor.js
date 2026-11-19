@@ -119,9 +119,87 @@ RED.editor = (function() {
             else if (definition[property].type == "hexdec" && isNaN(parseInt(value, 16))) valid = false;
             else if (definition[property].type == "c_cpp_name" && isVarName(value,node) == false) valid = false;
             else if (definition[property].type == "c_cpp_name_no_array" && isVarName(value,node,true) == false) valid = false;
+            else if (definition[property].type == "array_size" && isArraySize(value,node) == false) valid = false;
+            else if (definition[property].type == "text_no_array" && isTextWithoutArray(value) == false) valid = false;
 		}
 		return valid;
 	}
+
+    /** @param {*} value @returns {Number|String} the 'Array Size' as it's saved: a number, or the name of a constant */
+    function toArraySize(value) {
+        var text = (value == undefined) ? "" : String(value).trim();
+        if (text == "") return 1;
+        return isNaN(text) ? text : Number(text);
+    }
+
+    /**
+     * The 'Array Size' setting: a number 1-255 (1 = not an array), or the name of a ConstValue in the same tab
+     * that have an integer value of at least 2 (the export writes it as osc[NUM])
+     * @param {*} value
+     * @param {REDNode} node
+     * @returns {Boolean}
+     */
+    function isArraySize(value, node) {
+        var text = (value == undefined) ? "" : String(value).trim();
+        if (text == "") return true; // the same as 1
+        if (isNaN(text) == false) {
+            var size = Number(text);
+            if (Number.isInteger(size) == false || size < 1 || size > 255) {
+                RED.notify("the array size must be a whole number 1-255 (1 = not an array), or the name of a constant: " + text, "warning", null, 5000);
+                return false;
+            }
+            return true;
+        }
+        return isArraySizeConstant(text, node);
+    }
+
+    /** @param {String} text a group name (it can be any text, but not have an array part, that is the 'Array Size') */
+    function isTextWithoutArray(text) {
+        if (typeof text == "string" && (text.includes("[") || text.includes("]"))) {
+            RED.notify("the name cannot have [ ], an array is defined by the 'Array Size' setting", "warning", null, 5000);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param {String} constName the array size given as a constant
+     * @param {REDNode} node the array
+     * @returns {Boolean} true when it's a ConstValue in the same tab with an integer value of at least 2
+     */
+    function isArraySizeConstant(constName, node) {
+        if (constName.includes('.') || constName.includes(',')) {
+            RED.notify("array size def cannot contain '.'(dot) or ','(comma)", "warning", null, 5000);
+            return false;
+        }
+        if (isValidC_Cpp_name(constName) == false) {
+            RED.notify(">>> "+constName+" <<< is not a valid 'array size def.' - const name", "warning", null, 5000);
+            return false;
+        }
+        var anyConst = RED.nodes.namedNode(constName, undefined, node.z);
+        if (anyConst == undefined) {
+            RED.notify("array size def const value >>> " + constName + " <<< not found @ " + node.z, "warning", null, 5000);
+            return false;
+        }
+        if (anyConst.type != "ConstValue") {
+            RED.notify("array size def. const value node >>> " + constName + " <<< is not a ConstValue", "warning", null, 5000);
+            return false;
+        }
+        var constValue = String(anyConst.value);
+        if (constValue.includes('.') || constValue.includes(',')) {
+            RED.notify("array size def. const value >>> " + constValue + " <<< cannot contain '.'(dot) or ','(comma)", "warning", null, 5000);
+            return false;
+        }
+        if (isNaN(Number(constValue))) {
+            RED.notify("array size def. const value >>> " + constValue + " <<< is not a int value", "warning", null, 5000);
+            return false;
+        }
+        if (Number(constValue) < 2) {
+            RED.notify("the const value is less than 2, there is no point defining a array size less than 2", "warning", null, 5000);
+            return false;
+        }
+        return true;
+    }
     function isVarName(str,node,noArray) {
         if (noArray == undefined) noArray = false;
         if (typeof str !== 'string') {
@@ -141,7 +219,7 @@ RED.editor = (function() {
         //console.error(splitEnding);
         
         if (noArray == true && (splitStarting.length > 1 || splitEnding.length > 1)) {
-            RED.notify("this cannot be defined as an array", "warning", null, 4000);
+            RED.notify("the name cannot have [ ], an array is defined by the 'Array Size' setting (a number or a constant)", "warning", null, 5000);
             return false;
         }
 
@@ -172,34 +250,7 @@ RED.editor = (function() {
             }
             var isNumber = !isNaN(Number(arraySizeDef));
             if (isNumber == false) {
-                if (isValidC_Cpp_name(arraySizeDef) == false) {
-                    RED.notify(">>> "+arraySizeDef+" <<< is not a valid 'array size def.' - const name", "warning", null, 5000);
-                    return false;
-                }
-                var anyConst = RED.nodes.namedNode(arraySizeDef, undefined, node.z);
-                if (anyConst == undefined) {
-                    console.trace();
-                    RED.notify("array size def const value >>> " + arraySizeDef + " <<< not found @ " + node.z, "warning", null, 5000);
-                    return false;
-                }
-                if (anyConst.type != "ConstValue") {
-                    RED.notify("array size def. const value node >>> " + arraySizeDef + " <<< is not a ConstValue", "warning", null, 5000);
-                    return false;
-                }
-                var constValue = anyConst.value;
-                if (constValue.includes('.') || constValue.includes(',')) {
-                    RED.notify("array size def. const value >>> " + constValue + " <<< cannot contain '.'(dot) or ','(comma)", "warning", null, 5000);
-                    return false;
-                }
-                var constIsNumber = !isNaN(Number(constValue));
-                if (constIsNumber == false) {
-                    RED.notify("array size def. const value >>> " + constValue + " <<< is not a int value", "warning", null, 5000);
-                    return false;
-                }
-                if (Number(constValue) < 2) {
-                    RED.notify("the const value is less than 2, there is no point defining a array size less than 2", "warning", null, 5000);
-                    return false;
-                }
+                if (isArraySizeConstant(arraySizeDef, node) == false) return false;
             }
             else {
                 if (Number(arraySizeDef) < 2) {
@@ -305,7 +356,9 @@ RED.editor = (function() {
                     if (d == "color")
                         editing_node.bgColor = newValue;
 					changes[d] = editing_node[d];
-					if (typeof editing_node[d] == "number")
+					if (editing_node._def.defaults[d] != undefined && editing_node._def.defaults[d].type == "array_size")
+						newValue = toArraySize(newValue); // a number, or the name of a constant (kept as text)
+					else if (typeof editing_node[d] == "number")
 						newValue = parseFloat(newValue);
                     editing_node[d] = newValue;
                     //console.warn(d, "changed ses");

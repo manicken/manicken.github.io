@@ -19,8 +19,9 @@
  *   loose wire   - a wire straight from an object inside a class group to an object outside of it (or the other way),
  *                  without IO junctions, it belongs to the outside, see getLinkOwner
  *   bus port     - a class port with more than one lane (TabOutput.inputs > 1 or TabInput.outputs > 1)
- *   array node   - a node with a name like "osc[4]" or "osc[NUM]" (NUM being a ConstValue node),
- *                  or a name without an array part and the 'Array Size' setting (node.arraySize) above 1
+ *   array node   - a node with the 'Array Size' setting (node.arraySize) above 1, or the name of a ConstValue node
+ *                  (written as osc[NUM] in C++), the name itself never have an array part (an older design with
+ *                  "osc[4]" in the name is converted when it's loaded, see RED.nodes convertNameArrayToArraySize)
  *   junction     - a virtual node with one input and one output that only forwards wires (JunctionLR, JunctionRL)
  *   bus node     - a junction with more inputs joins them into one bus wire, with more outputs it splits a wire,
  *                  see getJoinInputCount/getSplitOutputCount (older designs used BusJoin and BusSplit, they are
@@ -323,8 +324,8 @@ RED.exporter.graph = (function () {
 
     /**
      * @typedef {Object} ArrayInfo
-     * @property {String} name   the name without the array part, "osc[NUM]" gives "osc"
-     * @property {Number} length the array size, "osc[NUM]" gives the value of the ConstValue node NUM
+     * @property {String} name   the name (it never have an array part)
+     * @property {Number} length the array size, an 'Array Size' NUM gives the value of the ConstValue node NUM
      */
     /**
      * @param {REDNode} node
@@ -333,12 +334,10 @@ RED.exporter.graph = (function () {
     function getArrayInfo(node) {
         if (isVirtual(node)) return undefined;
         if (node.name == undefined) return undefined;
-        const arrayDef = RED.export.isNameDeclarationArray(node.name, node.z, true);
-        if (arrayDef != undefined) return { name: arrayDef.name, length: arrayDef.arrayLength };
-        // the 'Array Size' setting, when the name don't have an array part (the view shows it as name[arraySize])
-        const arraySize = Number(node.arraySize);
-        if (arraySize > 1 && node.name.includes("[") == false) return { name: node.name, length: arraySize };
-        return undefined;
+        // the 'Array Size' setting: a number, or the name of a ConstValue (see RED.nodes getNameWithArraySize)
+        if (RED.nodes.hasArraySize(node) == false) return undefined;
+        const arrayDef = RED.export.isNameDeclarationArray(RED.nodes.getNameWithArraySize(node), node.z, true);
+        return { name: node.name, length: arrayDef.arrayLength };
     }
 
     /** @param {REDNode} node @returns {String} the name without any array part */

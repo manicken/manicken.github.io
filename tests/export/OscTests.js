@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "OscTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -63,7 +63,8 @@
                         ],
                         "id": "om_oscs",
                         "type": "AudioSynthWaveform",
-                        "name": "oscs[2]"
+                        "name": "oscs",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",
@@ -91,7 +92,8 @@
                         ],
                         "id": "om_voices",
                         "type": "OscVoice",
-                        "name": "voices[2]"
+                        "name": "voices",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",
@@ -255,7 +257,8 @@
                         ],
                         "id": "ov_lfos",
                         "type": "AudioSynthWaveform",
-                        "name": "lfos[2]"
+                        "name": "lfos",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",

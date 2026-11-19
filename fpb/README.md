@@ -70,7 +70,14 @@ ASDT++ AudioEffectFPB node ── "Compile code" (its Faust code) ────�
    | `http://127.0.0.1:8088/faust` | the Faust API; put this in the Faust IDE's export dialog; `/faust/` shows the status |
    | `ws://127.0.0.1:8088/asdt` | the WebSocket for ASDT++ |
 
-   `--faustlib` defaults to `<faust>/../share/faust`. The server only listens on 127.0.0.1, it needs no npm packages, and it serves no dot files (`.git`). Web Serial works on `http://127.0.0.1`, because the browser treats it as a secure context.
+   `--faustlib` defaults to `<faust>/../share/faust`. The server only listens on 127.0.0.1, it needs no npm packages, and it serves no dot files (`.git`).
+
+   **Who may use it.** Any page in the browser can reach 127.0.0.1, so the server only accepts pages from these origins (the browser sends the page's origin with every WebSocket and every request to another site):
+   - loopback pages (`http://127.0.0.1:*`, `localhost`, `[::1]`): ASDT++ served by the bridge, or a local Faust IDE build;
+   - `https://manicken.github.io` (ASDT++), `https://faustide.grame.fr` and `https://fausteditor.grame.fr` (the Faust IDE);
+   - the ones given with `--allow-origin https://example.org` (more than once, or comma separated).
+
+   `index.html` opened as a file has the origin `null`, which a sandboxed iframe on any site also has, so it's only accepted with `--allow-file-origin`. With the bridge running, open `http://127.0.0.1:8088/` instead. A refused page gets 403, and the server logs it once with the `--allow-origin` to use. The Host header must also be a loopback name, which stops DNS rebinding. Web Serial works on `http://127.0.0.1`, because the browser treats it as a secure context.
 
    Every compile is kept in `fpb/patches/<name>/` (`--keep <dir>` for another place, `--no-keep` to turn it off). `<name>` is the export name in the Faust IDE, or the patch name in ASDT++. The folder holds:
    - the sources: the `.dsp` and the project's own `.lib` files;

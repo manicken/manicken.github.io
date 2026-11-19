@@ -240,6 +240,67 @@ RED.nodes = (function() {
 		}
 		return undefined;
 	}
+    // ******************************************************************
+    // arrays
+    //
+    // An object (also a class instance and a group) is an array when its 'Array Size' (node.arraySize) is a number
+    // above 1, or the name of a ConstValue in its tab (then the value of the constant is the size, and the export keeps
+    // the name of the constant: AudioSynthWaveform osc[NUM];). The name never has an array part.
+    // Older designs had it in the name ("osc[4]", "osc[NUM]"), that is moved to arraySize when a design is loaded or
+    // pasted (convertNameArrayToArraySize).
+    // Only the types that have an 'Array Size' setting can be arrays (canBeArray), the others (AudioTypeBase,
+    // comments, code, constants ...) are never changed, also when their name have [ ] in it.
+    // ******************************************************************
+
+    /** @param {REDNode} node @returns {Boolean} true for the types that have the 'Array Size' setting */
+    function canBeArray(node) {
+        return node._def != undefined && node._def.defaults != undefined && node._def.defaults.arraySize != undefined;
+    }
+
+    /** @param {REDNode} node @returns {Boolean} true when the 'Array Size' makes it an array (a number above 1, or a constant name) */
+    function hasArraySize(node) {
+        if (canBeArray(node) == false) return false;
+        var size = (node.arraySize == undefined) ? "" : String(node.arraySize).trim();
+        if (size == "") return false;
+        return isNaN(size) ? true : (Number(size) > 1);
+    }
+
+    /**
+     * @param {REDNode} node
+     * @returns {String} the name with the array part, as it's written in C++ and shown in the view: osc[4], osc[NUM], or only osc
+     */
+    function getNameWithArraySize(node) {
+        var name = (node.name != undefined) ? node.name : "";
+        if (hasArraySize(node) == false) return name;
+        return name + "[" + String(node.arraySize).trim() + "]";
+    }
+
+    /**
+     * An older design had the array size in the name, "osc[4]" or "osc[NUM]": the part between [ ] is moved to the
+     * 'Array Size' setting (a number, or the name of a constant) and removed from the name.
+     * @param {REDNode} node
+     */
+    function convertNameArrayToArraySize(node) {
+        if (canBeArray(node) == false || typeof node.name != "string") return;
+        var start = node.name.indexOf("[");
+        if (start == -1) return;
+        var end = node.name.indexOf("]", start);
+        if (end == -1) return;
+        var size = node.name.substring(start + 1, end).trim();
+        node.name = node.name.substring(0, start);
+        if (size != "") node.arraySize = isNaN(size) ? size : Number(size);
+    }
+
+    /**
+     * node.isArray, used by the old exports (arduino-export*.js, export-links.js): the array info of the name with the
+     * array part (see getNameWithArraySize), undefined when it's not an array
+     * @param {REDNode} node
+     */
+    function updateIsArray(node) {
+        if (hasArraySize(node) == false) { node.isArray = undefined; return; } // (no lookup of the name, see RED.export.isNameDeclarationArray)
+        node.isArray = RED.export.isNameDeclarationArray(getNameWithArraySize(node), node.z, true);
+    }
+
     function getArrayName(name) {
         var si = name.indexOf("[");
         if (si == -1) return name;
@@ -934,8 +995,12 @@ RED.nodes = (function() {
 
                 if (newVersion == true)
                     ws.nodes.push(convertNode(node, undefined, true));
-                else
-				    nns.push(convertNode(node)); 
+                else {
+                    // the old structure is only used by the old exports, they read an array from the name: osc[4], osc[NUM]
+                    var oldNode = convertNode(node);
+                    if (canBeArray(node)) oldNode.name = getNameWithArraySize(node);
+				    nns.push(oldNode);
+                }
             }
 		}
         if (newVersion == true) {
@@ -1410,6 +1475,8 @@ RED.nodes = (function() {
             if (converted.name != nn.name) node.name = converted.name; // an old "Type instance" name was split
         }
 
+        convertNameArrayToArraySize(node); // an older design: "osc[4]" -> name "osc", arraySize 4
+
         node.outputs = nn.outputs?nn.outputs:node._def.outputs?node._def.outputs:0;
 
         /*node.outputs_ = 0;
@@ -1775,7 +1842,7 @@ RED.nodes = (function() {
 				data = summary +"<br>"+ notes;
 			}
 			
-			var name = getArrayDeclarationWithoutSizeSyntax(n.name);
+			var name = getArrayDeclarationWithoutSizeSyntax(getNameWithArraySize(n)); // an array gets name[] (filled in as a snippet)
 			if (name.endsWith("]"))
 				items.push({ name:name, snippet:name.replace("[]","[${1}]"), value:name, type:n.type, html: data, meta: n.type, score:(1000)  });
 			else
@@ -2125,23 +2192,23 @@ RED.nodes = (function() {
      * @param {REDNNode} node 
      * @param {String} oldName 
      */
+    /** @returns {REDNode[]} the objects of the tab whose 'Array Size' is the constant with that name */
+    function getArraySizeUsers(wsId, constName) {
+        return getWorkspace(wsId).nodes.filter(function (n) {
+            return canBeArray(n) && n.arraySize != undefined && String(n.arraySize).trim() == constName;
+        });
+    }
+
     function NodeRenamed(node, oldName) {
-        node.isArray = RED.export.isNameDeclarationArray(node.name, node.z, true);
-        if (node.isArray != undefined) node.arraySize = node.isArray.arrayLength;
+        updateIsArray(node);
 
         if (node.type == "ConstValue") {
-            var findConstUsage = "[" + oldName + "]";
-            var ws = getWorkspace(node.z); // consts allways on the same workspace/tab, in the same class 
-            for (var ni=0;ni<ws.nodes.length;ni++) {
-                if (ws.nodes[ni].z != node.z) continue;
-                if (ws.nodes[ni].name.includes(findConstUsage)) {
-                    //RED.events.emit("nodes:renamed", nodes[ni], nodes[ni].name);
-                    ws.nodes[ni].name = ws.nodes[ni].name.replace(findConstUsage, "[" + node.name + "]");
-                    ws.nodes[ni].isArray = RED.export.isNameDeclarationArray(ws.nodes[ni].name, ws.nodes[ni].z, true);
-                    if (ws.nodes[ni].isArray != undefined) ws.nodes[ni].arraySize = ws.nodes[ni].isArray.arrayLength;
-
-                    RED.view.redraw_node(ws.nodes[ni]);
-                }
+            // the objects that use the constant as their array size follows the new name
+            var users = getArraySizeUsers(node.z, oldName); // consts allways on the same workspace/tab, in the same class
+            for (var ni=0;ni<users.length;ni++) {
+                users[ni].arraySize = node.name;
+                updateIsArray(users[ni]);
+                RED.view.redraw_node(users[ni]);
             }
         }else {
             console.warn("######### node renamed - refreshLinksInfo");
@@ -2159,20 +2226,11 @@ RED.nodes = (function() {
      */
     function NodeChanged(node, changes) {
         if (node.type == "ConstValue" && changes.value != undefined) {
-            var findConstUsage = "[" + node.name + "]";
-            var ws = getWorkspace(node.z);
-            for (var ni=0;ni<ws.nodes.length;ni++) {
-                if (ws.nodes[ni].z != node.z) continue;
-                if (ws.nodes[ni].name.includes(findConstUsage)) {
-                
-                    ws.nodes[ni].isArray = RED.export.isNameDeclarationArray(ws.nodes[ni].name, ws.nodes[ni].z, true);
-                    if (ws.nodes[ni].isArray != undefined) ws.nodes[ni].arraySize = ws.nodes[ni].isArray.arrayLength;
-
-                    console.warn("found ", ws.nodes[ni], " applying new const value");
-                    //RED.view.redraw_node(nodes[ni]);
-                }
-            }
+            // the objects that use the constant as their array size get the new size (in the old exports)
+            var users = getArraySizeUsers(node.z, node.name);
+            for (var ni=0;ni<users.length;ni++) updateIsArray(users[ni]);
         }
+        if (changes.arraySize != undefined && canBeArray(node)) updateIsArray(node); // the 'Array Size' was changed
         //console.warn("node changed:", node, changes);
     }
     /**
@@ -2181,18 +2239,12 @@ RED.nodes = (function() {
      */
     function NodeRemoved(node) {
         if (node.type == "ConstValue") {
-            var findConstUsage = "[" + node.name + "]";
-            var ws = getWorkspace(node.z);
-            for (var ni=0;ni<ws.nodes.length;ni++) {
-                if (ws.nodes[ni].z != node.z) continue;
-                if (ws.nodes[ni].name.includes(findConstUsage)) {
-                    ws.nodes[ni].name = ws.nodes[ni].name.replace(findConstUsage, "[" + node.value + "]");
-                    ws.nodes[ni].isArray = RED.export.isNameDeclarationArray(ws.nodes[ni].name, ws.nodes[ni].z, true);
-                    if (ws.nodes[ni].isArray != undefined) ws.nodes[ni].arraySize = ws.nodes[ni].isArray.arrayLength;
-                    
-                    console.warn("found ", ws.nodes[ni], " applying new const value");
-                    RED.view.redraw_node(ws.nodes[ni]);
-                }
+            // the objects that used the removed constant as their array size get its value as a number
+            var users = getArraySizeUsers(node.z, node.name);
+            for (var ni=0;ni<users.length;ni++) {
+                users[ni].arraySize = Number(node.value);
+                updateIsArray(users[ni]);
+                RED.view.redraw_node(users[ni]);
             }
         }
         else if (node.type == "TabOutput" || node.type == "TabInput")
@@ -2451,9 +2503,8 @@ RED.nodes = (function() {
              * @param {REDWorkspace} ws 
              */
             function(n,ws) {
-            if (n._def.nonObject != undefined) return; // skip 'non objects'(AudioObjects) 
-            n.isArray = RED.export.isNameDeclarationArray(n.name, ws.id, true);
-            if (n.isArray != undefined) n.arraySize = n.isArray.arrayLength;
+            if (n._def.nonObject != undefined) return; // skip 'non objects'(AudioObjects)
+            updateIsArray(n); // (for the old exports, from the 'Array Size', see getNameWithArraySize)
         });
     }
     function getNodeInstancesOfType(type) {
@@ -2616,6 +2667,10 @@ RED.nodes = (function() {
 		getWorkspaceNodesAsCompletions,
 		getAllFunctionNodeFunctions,
 		getArrayDeclarationWithoutSizeSyntax,
+        canBeArray,
+        hasArraySize,
+        getNameWithArraySize,
+        convertNameArrayToArraySize,
 		updateClassTypes: function () {addClassTabsToPalette(); refreshClassNodes(); /*console.warn("@updateClassTypes");*/},
 		addUsedNodeTypesToPalette,
 		addClassTabsToPalette,

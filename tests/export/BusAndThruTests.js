@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "BusAndThruTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -85,7 +85,8 @@
                         ],
                         "id": "m_oscs",
                         "type": "AudioSynthWaveform",
-                        "name": "oscs[2]"
+                        "name": "oscs",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",
@@ -331,7 +332,8 @@
                         ],
                         "id": "m_amps",
                         "type": "AudioAmplifier",
-                        "name": "amps[2]"
+                        "name": "amps",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",
@@ -345,7 +347,8 @@
                         ],
                         "id": "m_thrus",
                         "type": "Thru",
-                        "name": "thrus[2]"
+                        "name": "thrus",
+                        "arraySize": 2
                     }
                 ]
             },

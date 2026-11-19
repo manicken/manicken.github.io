@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "GroupTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -59,7 +59,8 @@
                         "wires": [],
                         "id": "gm_voice",
                         "type": "group",
-                        "name": "voices[2]",
+                        "name": "voices",
+                        "arraySize": 2,
                         "className": "GVoice",
                         "exportAsClass": true,
                         "nodes": [

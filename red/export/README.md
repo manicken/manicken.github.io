@@ -161,8 +161,16 @@ The shape decides how a wire can be split, the possible counts are the products 
 | array of N | when N is one of the counts the wire is spread, element *i* gets part *i*: an outer array level always (element to element), a bus level only if a part is what one element takes (a normal object 1 signal, a class input its lanes); otherwise the whole wire goes to every element (i.e. one signal to an array) |
 
 **Class groups:** a group with a class name is a class defined inline, exactly like a class tab:
-its `className` is the class (type) and its name is the instance (`voices` or `voices[8]`, an array of
-instances like any other array). Its IO junctions (`ClassIOtype` 1 = input, 0 = output) are the class
+its `className` is the class (type) and its name is the instance (`voices`, with the *Array Size* 8 it's
+`voices[8]`, an array of instances like any other array).
+
+**Arrays** are defined by the *Array Size* setting (`node.arraySize`) of an object, a class instance or a group:
+a number above 1, or the name of a ConstValue in the same tab (`osc` with Array Size `NUM` is declared
+`osc[NUM]`). The name itself never have the array part; an older design with `osc[4]` or `osc[NUM]` in the name
+is converted when it's loaded or pasted (`RED.nodes.convertNameArrayToArraySize`). The text `osc[4]` in this
+file means an object `osc` with the Array Size 4. The old exports still get the name with the array part
+(`RED.export.isNameDeclarationArray` looks up the object when it's asked with a plain name).
+`OldStyleArrayNamesTests.js` (FlatTests + GroupTests with the array size in the names) checks the conversion. Its IO junctions (`ClassIOtype` 1 = input, 0 = output) are the class
 ports, the wires outside of the group are connected directly to them. Everything inside the group belongs
 to the class (also visual groups and other class groups inside it), so all the rules above work the same way
 (`getScopeNodes`/`getScopeLinks` in `export-graph.js` gives the nodes/wires of a tab or a class group).

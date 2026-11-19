@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "FlatTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -309,7 +309,8 @@
                         ],
                         "id": "fh_dc",
                         "type": "AudioSynthWaveformDc",
-                        "name": "dc[COUNT]"
+                        "name": "dc",
+                        "arraySize": "COUNT"
                     },
                     {
                         "comment": "",
@@ -403,7 +404,8 @@
                         ],
                         "id": "v_osc",
                         "type": "AudioSynthWaveformModulated",
-                        "name": "osc[NUM]"
+                        "name": "osc",
+                        "arraySize": "NUM"
                     },
                     {
                         "comment": "",
@@ -489,7 +491,8 @@
                         ],
                         "id": "p_voices",
                         "type": "Voice",
-                        "name": "voices[2]"
+                        "name": "voices",
+                        "arraySize": 2
                     },
                     {
                         "comment": "",

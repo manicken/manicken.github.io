@@ -63,7 +63,15 @@ RED.export = (function () {
 		var value = 0;
 		//console.warn("isNameDeclarationArray: " + name + " @ " + wsId);
 		var startIndex = name.indexOf("[");
-		if (startIndex == -1) return undefined;
+		if (startIndex == -1) {
+			// the array size is the 'Array Size' setting now, not a part of the name: the old exports (and the dyn input
+			// mixer sizes in the editor) asks with the name of an object, so the object is looked up by its name in the tab
+			// (names are unique in a tab) and its size is used (see RED.nodes getNameWithArraySize)
+			var node = (wsId != undefined && RED.nodes.namedNode != undefined) ? RED.nodes.namedNode(name, undefined, wsId) : undefined;
+			if (node == undefined || RED.nodes.hasArraySize(node) == false) return undefined;
+			name = RED.nodes.getNameWithArraySize(node);
+			startIndex = name.indexOf("[");
+		}
 		var endIndex = name.indexOf("]");
 		if (endIndex == -1){ console.log("isNameDeclarationArray: missing end ] in " + name); return undefined;}
 		var arrayDef = name.substring(startIndex,endIndex+1); // this includes the []
@@ -266,9 +274,12 @@ RED.export = (function () {
     }
 
     $('#btn-export-singleLineJson').click(function () { exportSingleLineJSON(); });
+    /**
+     * The whole project as JSON: on one line in the text box at the top (to share, i.e. on a forum),
+     * and below it fully indented or one node per line (see RED.view.dialogs.showJsonExportDialog)
+     */
     function exportSingleLineJSON() {
-        var json = localStorage.getItem("audio_library_guitool");
-        RED.view.dialogs.showExportDialog("Single line JSON", json, " JSON:");
+        RED.view.dialogs.showJsonExportDialog("Export project as JSON", RED.nodes.createCompleteNodeSet({newVer:true}));
     }
 
     return {

@@ -387,6 +387,7 @@ RED.groupClasses = (function () {
         const nn = { id: RED.nodes.getNewUID(), type: className, name: group.name, x: group.x, y: group.y, z: group.z,
                      bgColor: def.color, outputs: def.outputs, wires: [] };
         const instance = new REDNode(nn, def);
+        if (group.arraySize != undefined) instance.arraySize = group.arraySize; // an array of groups is an array of instances (voices[8])
         for (const d in def.defaults) { if (instance[d] == undefined && def.defaults[d].value != undefined) instance[d] = def.defaults[d].value; }
         delete instance.wires;
 

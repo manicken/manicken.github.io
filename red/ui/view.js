@@ -2626,8 +2626,8 @@ RED.view = (function() {
 		{
 			l = d.name + " (" + d.valueType + ")=" + d.value;
 		}
-        if (d.arraySize != undefined && d.arraySize > 1 && d.name.includes('[') == false)
-            l = d.name ? (d.name + '['+d.arraySize+']'): "";
+        if (RED.nodes.hasArraySize(d)) // an array is shown as name[size], i.e. osc[4] or osc[NUM]
+            l = d.name ? RED.nodes.getNameWithArraySize(d) : "";
 
 
 		var inputCount = d.inputs||d._def.inputs||0;
@@ -2820,8 +2820,8 @@ RED.view = (function() {
 				
 				return nodeText + "";
 			}
-            if (d.arraySize != undefined && d.arraySize > 1 && d.name.includes('[') == false) {
-                nodeText = d.name ? (d.name + '['+d.arraySize+']'): "";
+            if (RED.nodes.hasArraySize(d)) { // an array is shown as name[size], i.e. osc[4] or osc[NUM]
+                nodeText = d.name ? RED.nodes.getNameWithArraySize(d) : "";
             }
             else
 			    nodeText = d.name ? d.name : "";// d.id;

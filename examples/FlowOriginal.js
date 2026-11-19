@@ -4,6 +4,7 @@
     name: "FlowOriginal",
     label: "Original Flow",
     description: "this is the original design that Demo Flow A & B is based on<br>made by kd5rxt-mark @ pjrc forum",
+    dividerAfter: true,
     design: {
         "version": 1,
         "settings": {"main":{},"OSC":{},"arduino":{"ProjectName":"FlowOriginal","Board":{"Platform":"","Board":"","Options":""}},"BiDirDataWebSocketBridge":{},"workspaces":{},"sidebar":{},"palette":{},"editor":{},"devTest":{},"IndexedDBfiles":{"testFileNames":"testFile.txt"},"NodeDefGenerator":{},"NodeDefManager":{},"NodeHelpManager":{}},

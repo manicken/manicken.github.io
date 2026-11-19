@@ -8,7 +8,7 @@
         "settings": {
             "main": {},
             "arduino": {
-                "ExportMode":"classes",
+                "ExportMode": "classes",
                 "ProjectName": "GroupErrorTests",
                 "IOcheckAtExport": false,
                 "Board": {
@@ -49,7 +49,8 @@
                         ],
                         "id": "ge_osc",
                         "type": "AudioSynthWaveform",
-                        "name": "osc[3]"
+                        "name": "osc",
+                        "arraySize": 3
                     },
                     {
                         "comment": "",
@@ -59,7 +60,8 @@
                         "wires": [],
                         "id": "ge_a",
                         "type": "group",
-                        "name": "a[2]",
+                        "name": "a",
+                        "arraySize": 2,
                         "className": "GSame",
                         "exportAsClass": true,
                         "nodes": [

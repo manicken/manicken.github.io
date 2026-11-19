@@ -38,6 +38,22 @@ async function waitForServer() {
 }
 
 // a client like ASDT++: collects messages, can wait for one
+const WS_UPGRADE = { "Connection": "Upgrade", "Upgrade": "websocket", "Sec-WebSocket-Version": "13", "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==" };
+
+/**
+ * A request with any headers (fetch and WebSocket can't set Origin/Host), a WebSocket upgrade gives status 101 and is closed again.
+ * @returns {Promise<{status:Number, headers:Object}>}
+ */
+function raw(method, urlPath, headers) {
+    return new Promise(function (resolve, reject) {
+        const req = require("http").request({ host: "127.0.0.1", port: PORT, method, path: urlPath, headers });
+        req.on("upgrade", function (res, socket) { socket.destroy(); resolve({ status: res.statusCode, headers: res.headers }); });
+        req.on("response", function (res) { res.resume(); res.on("end", function () { resolve({ status: res.statusCode, headers: res.headers }); }); });
+        req.on("error", reject);
+        req.end();
+    });
+}
+
 function connect() {
     const ws = new WebSocket("ws://127.0.0.1:" + PORT + "/asdt");
     const got = [], waiters = [];
@@ -84,8 +100,23 @@ function checkPatch(m, name, wantParams) {
         console.log("\n== Faust IDE export protocol");
         const targets = await (await fetch(BASE + "/targets")).json();
         check(JSON.stringify(targets) === '{"source":["cplusplus"],"teensy":["fpb","fpb-zip"]}', "GET /targets " + JSON.stringify(targets) + " (source/cplusplus is the IDE's default)");
-        const pre = await fetch(BASE + "/targets", { method: "OPTIONS", headers: { "Access-Control-Request-Private-Network": "true" } });
-        check(pre.status === 204 && pre.headers.get("access-control-allow-private-network") === "true", "CORS / private network preflight");
+        const pre = await raw("OPTIONS", "/faust/targets", { "Origin": "https://faustide.grame.fr", "Access-Control-Request-Private-Network": "true" });
+        check(pre.status === 204 && pre.headers["access-control-allow-private-network"] === "true" && pre.headers["access-control-allow-origin"] === "https://faustide.grame.fr",
+            "CORS / private network preflight from the Faust IDE (its origin, not *)");
+
+        console.log("\n== who may use it (a page on any site could otherwise reach 127.0.0.1)");
+        const evilGet = await raw("GET", "/faust/targets", { "Origin": "https://evil.example" });
+        check(evilGet.status === 403 && evilGet.headers["access-control-allow-origin"] === undefined, "a request from another site is refused (403, no CORS headers)");
+        const evilWs = await raw("GET", "/asdt", Object.assign({ "Origin": "https://evil.example" }, WS_UPGRADE));
+        check(evilWs.status === 403, "a WebSocket from another site is refused (" + evilWs.status + ")");
+        const nullWs = await raw("GET", "/asdt", Object.assign({ "Origin": "null" }, WS_UPGRADE));
+        check(nullWs.status === 403, "Origin null (a file, or a sandboxed iframe on any site) is refused without --allow-file-origin");
+        const pagesWs = await raw("GET", "/asdt", Object.assign({ "Origin": "https://manicken.github.io" }, WS_UPGRADE));
+        check(pagesWs.status === 101, "a WebSocket from https://manicken.github.io is accepted (" + pagesWs.status + ")");
+        const localWs = await raw("GET", "/asdt", Object.assign({ "Origin": "http://localhost:5173" }, WS_UPGRADE));
+        check(localWs.status === 101, "a WebSocket from a loopback page (i.e. a local Faust IDE build) is accepted (" + localWs.status + ")");
+        const rebind = await raw("GET", "/faust/targets", { "Host": "evil.example:" + PORT });
+        check(rebind.status === 403, "DNS rebinding (Host is a site name) is refused (" + rebind.status + ")");
 
         const asdt = connect();
         await asdt.open;

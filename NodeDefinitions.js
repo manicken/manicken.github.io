@@ -50,7 +50,11 @@ var DEFAULTS_VALUE_TYPE = {
     float: "float",
     hexdec: "hexdec",
     c_cpp_name: "c_cpp_name",
-    c_cpp_name_no_array: "c_cpp_name_no_array"
+    c_cpp_name_no_array: "c_cpp_name_no_array",
+    /** the 'Array Size': a number 1-255, or the name of a ConstValue in the same tab (see RED.nodes getNameWithArraySize) */
+    array_size: "array_size",
+    /** any text, but not [ ] (i.e. the name of a group, its array size is the 'Array Size' setting) */
+    text_no_array: "text_no_array"
 }
 
 //InputOutputCompatibilityMetadata is at end of this file
@@ -138,15 +142,17 @@ var AudioTypeBase = {
     /** @type {String}  the icon file used, found in icons folder*/
     icon: "arrow-in.png"
 };
-var arraySize_Help = "selects the array size (used when the name don't define it, a name like osc[4] defines it),<br>a value of 0 or 1 mean no array<br>the max value is 255<br>note. the OSC export don't use it yet";
+var arraySize_Help = "makes it an array: a number 2-255, or the name of a ConstValue in the same tab (exported as osc[NUM]),<br>" +
+                     "1 means no array, the max value is 255<br>" +
+                     "note. the name can't have the array part any more (osc[4]), older designs are converted when they are loaded";
 
 var AudioTypeArrayBase = {
     ...AudioTypeBase,
     defaults: {
         ...AudioTypeBase.defaults,
-        name: { type: DEFAULTS_VALUE_TYPE.c_cpp_name },
+        name: { type: DEFAULTS_VALUE_TYPE.c_cpp_name_no_array },
         arraySize: {
-            value: 1, maxval: 255, minval: 1, type: DEFAULTS_VALUE_TYPE.int,
+            value: 1, type: DEFAULTS_VALUE_TYPE.array_size,
             editor: {
                 label: "Array Size",
                 help: arraySize_Help
@@ -406,6 +412,14 @@ var NodeDefinitions = {
                     ioNodeSpacing: { value: 15 }, // the gap between the IO junctions, at least ioNodeSize is used (so the junction hitboxes don't overlap)
                     inputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio inputs the class have." } },
                     outputs: { value: "0", maxval: 255, minval: 0, type: "int", editor: { help: "how many audio outputs the class have." } },
+                    name: { value: "", type: DEFAULTS_VALUE_TYPE.text_no_array }, // any text (a visual group), the array size is arraySize
+                    arraySize: {
+                        value: 1, type: DEFAULTS_VALUE_TYPE.array_size,
+                        editor: {
+                            label: "Array Size",
+                            help: arraySize_Help
+                        }
+                    },
                     test: { value: [{name:"1"},{name:"2"},{name:"3"}]}
                 }
             },
