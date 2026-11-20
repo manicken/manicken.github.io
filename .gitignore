@@ -3,3 +3,6 @@ node_modules/
 # the backend's own settings (copy backend/settings.example.json) and everything it writes: projects, Faust temp and kept compiles
 backend/settings.json
 backend_sandbox/
+
+# the Teensy Dynamic Audio package build output (teensy-dynamic/build.js)
+teensy-dynamic/out/

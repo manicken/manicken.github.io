@@ -1,0 +1,73 @@
+# Builds, tests and publishes the unofficial "Teensy Dynamic Audio" Boards Manager package
+# (see teensy-dynamic/README.md). Run it by hand: Actions → Teensy Dynamic Audio package → Run workflow.
+name: Teensy Dynamic Audio package
+
+on:
+  workflow_dispatch:
+    inputs:
+      teensyduino:
+        description: "Teensyduino version (empty: the one in teensy-dynamic/config.json)"
+        required: false
+        default: ""
+      publish:
+        description: "Publish: make the release and update the package index (unchecked: build and test only)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write          # to create the release and commit the index
+
+concurrency:
+  group: teensy-dynamic    # one build at a time, so two runs never get the same version
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: arduino/setup-arduino-cli@v2
+
+      # downloads PJRC's platform (checked against PJRC's index) and the forks, swaps them in,
+      # writes out/: the archive, the index with the new version, the release notes
+      - name: Build
+        id: build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TD: ${{ inputs.teensyduino }}
+        run: node teensy-dynamic/build.js --out out --release-repo "$GITHUB_REPOSITORY" ${TD:+--td "$TD"}
+
+      # installs the package with arduino-cli from its index, as a user would, and compiles the test sketch
+      - name: Test
+        run: node teensy-dynamic/test.js --out out --work "$RUNNER_TEMP/teensy-dynamic-test"
+
+      - name: Keep the build (not published)
+        if: ${{ !inputs.publish }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.tag }}
+          path: |
+            out/*.tar.zst
+            out/*.json
+            out/release-notes.md
+
+      - name: Publish
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.build.outputs.tag }}
+          VERSION: ${{ steps.build.outputs.version }}
+          ARCHIVE: ${{ steps.build.outputs.archive }}
+        run: |
+          gh release create "$TAG" "out/$ARCHIVE" --title "Teensy Dynamic Audio $VERSION (unofficial)" --notes-file out/release-notes.md
+          cp out/package_teensy_dynamic_index.json teensy-dynamic/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add teensy-dynamic/package_teensy_dynamic_index.json
+          git commit -m "teensy-dynamic: package $VERSION"
+          git push

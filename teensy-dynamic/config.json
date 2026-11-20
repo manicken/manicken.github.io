@@ -1,0 +1,20 @@
+{
+    "teensyduino": "1.62.0",
+    "pjrcIndex": "https://www.pjrc.com/teensy/package_teensy_index.json",
+    "sources": {
+        "cores":    { "repo": "h4yn0nnym0u5e/cores",    "ref": "feature/Audio/dynamic-updates", "into": "cores" },
+        "Audio":    { "repo": "h4yn0nnym0u5e/Audio",    "ref": "features/dynamic-updates",      "into": "libraries/Audio" },
+        "OSCAudio": { "repo": "h4yn0nnym0u5e/OSCAudio", "ref": "trunk",                         "into": "libraries/OSCAudio" },
+        "OSC":      { "repo": "h4yn0nnym0u5e/OSC",      "ref": "master",                        "into": "libraries/OSC" }
+    },
+    "package": {
+        "name": "teensy-dynamic",
+        "maintainer": "Audio System Design Tool++ (unofficial, not from PJRC)",
+        "websiteURL": "https://github.com/h4yn0nnym0u5e/Audio/tree/features/dynamic-updates",
+        "platformName": "Teensy Dynamic Audio (unofficial)",
+        "boardSuffix": " (Dynamic Audio)"
+    },
+    "indexFile": "package_teensy_dynamic_index.json",
+    "testSketches": ["test/DynamicOscTest"],
+    "testBoard": "teensy41:usb=serialmidiaudio"
+}
