@@ -131,7 +131,7 @@ RED.fpb.fbc = (function () {
     var BIN_REAL = {
         kAddReal: function (a, b) { return a + b; }, kSubReal: function (a, b) { return a - b; },
         kMultReal: function (a, b) { return a * b; }, kDivReal: function (a, b) { return a / b; },
-        kRemReal: function (a, b) { return a % b; }, kFmodf: function (a, b) { return a % b; },
+        kRemReal: m.remainderf, kFmodf: function (a, b) { return a % b; },   // remainder vs fmod (Faust's %)
         kPowf: Math.pow, kAtan2f: Math.atan2, kMaxf: m.fmax, kMinf: m.fmin,
         kCopysignf: function (a, b) { return Math.abs(a) * ((b < 0 || Object.is(b, -0)) ? -1 : 1); }
     };

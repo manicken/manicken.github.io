@@ -1,0 +1,65 @@
+interpreter_dsp_factory float
+file_version 9
+Faust version 2.94.1
+compile_options -lang interp -fpga-mem-th 4 -ct 1 -es 1 -mcd 16 -mdd 1024 -mdy 33 -single -ftz 0 
+name rem
+sha_key 
+opt_level 6
+inputs 1 outputs 2
+int_heap_size 3 real_heap_size 1 sr_offset 0 count_offset 1 iota_offset -1
+meta_block
+block_size 2
+meta key "filename" value "rem.dsp"
+meta key "name" value "rem"
+user_interface_block
+block_size 2
+opcode 280 kOpenVerticalBox offset -1 label "rem" key "" value "" init 0 min 0 max 0 step 0
+opcode 283 kCloseBox offset -1 label "" key "" value "" init 0 min 0 max 0 step 0
+static_init_block
+block_size 1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+constants_block
+block_size 1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+reset_ui
+block_size 1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+clear_block
+block_size 1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+control_block
+block_size 1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+dsp_block
+block_size 2
+opcode 274 kLoop int 32 real 0 offset1 0 offset2 0
+block_size 3
+opcode 1 kInt32Value int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+block_size 24
+opcode 0 kRealValue int 0 real 4 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 24 kLoadInput int 0 real 0 offset1 0 offset2 0
+opcode 36 kMultReal int 0 real 0 offset1 -1 offset2 -1
+opcode 6 kStoreReal int 0 real 0 offset1 0 offset2 0 name fTemp0
+opcode 0 kRealValue int 0 real 0.37 offset1 -1 offset2 -1
+opcode 2 kLoadReal int 0 real 0 offset1 0 offset2 0 name fTemp0
+opcode 40 kRemReal int 0 real 0 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 25 kStoreOutput int 0 real 0 offset1 0 offset2 0
+opcode 0 kRealValue int 0 real 0.37 offset1 -1 offset2 -1
+opcode 2 kLoadReal int 0 real 0 offset1 0 offset2 0 name fTemp0
+opcode 236 kFmodf int 0 real 0 offset1 -1 offset2 -1
+opcode 3 kLoadInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 25 kStoreOutput int 0 real 0 offset1 1 offset2 0
+opcode 3 kLoadInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 1 kInt32Value int 1 real 0 offset1 -1 offset2 -1
+opcode 33 kAddInt int 0 real 0 offset1 -1 offset2 -1
+opcode 7 kStoreInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 3 kLoadInt int 0 real 0 offset1 1 offset2 0 name count
+opcode 3 kLoadInt int 0 real 0 offset1 2 offset2 0 name i0
+opcode 46 kLTInt int 0 real 0 offset1 -1 offset2 -1
+opcode 279 kCondBranch int 0 real 0 offset1 0 offset2 0
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1
+opcode 275 kReturn int 0 real 0 offset1 -1 offset2 -1

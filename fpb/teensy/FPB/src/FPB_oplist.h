@@ -62,7 +62,8 @@
     FPB_OP(52, asinh,    "f=f",   PURE) \
     FPB_OP(53, acosh,    "f=f",   PURE) \
     FPB_OP(54, atanh,    "f=f",   PURE) \
-    FPB_RES(55) FPB_RES(56) FPB_RES(57) FPB_RES(58) FPB_RES(59) \
+    FPB_OP(55, rem,      "f=ff",  PURE) \
+    FPB_RES(56) FPB_RES(57) FPB_RES(58) FPB_RES(59) \
     FPB_RES(60) FPB_RES(61) FPB_RES(62) FPB_RES(63) \
     /* ---- int 64..95 ---- */ \
     FPB_OP(64, imov,     "i=i",   PURE) \

@@ -205,6 +205,58 @@ const p0 = RED.fpb.format.encode(P0, table);
     (want.every((w, k) => o[0][k] === w) ? ok : fail)("vm: out = in * p^2 + arr[2] -> " + Array.from(o[0]).join(" "));
 }
 
+// ------------------------------------------------------------------ rem (Faust's remainder, FBC kRemReal)
+
+// rem is C remainderf (x - n*y, n = x/y rounded to the nearest integer, ties to even), not fmod (Faust's %).
+// The VM (fpb-core.js m.remainderf) must give the same bits as the firmware code (libm remainderf) on edge values:
+// exact ties, signed zeros, negative values and widely varying exponents.
+console.log("\n== rem (remainder, not fmod)");
+{
+    const xs = [], ys = [];
+    const push = (x, y) => { xs.push(Math.fround(x)); ys.push(Math.fround(y)); };
+    for (const y of [2, 3, 0.5, 1.5, -2, -3])
+        for (let k = -6; k <= 6; k++) push((k + 0.5) * y, y);          // exact ties: n is rounded to even
+    for (const [x, y] of [[0, 1], [-0, 1], [4, 2], [-4, 2], [5.5, 2], [-5.5, 2], [1, 0.37], [-1, 0.37], [1e-30, 3], [3, 1e-30]])
+        push(x, y);
+    let seed = 24680;
+    const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+    while (xs.length < N * 4) {
+        const ex = Math.floor(rnd() * 40) - 20, ey = Math.floor(rnd() * 40) - 20;
+        push((rnd() - 0.5) * Math.pow(2, ex), (rnd() - 0.5 || 0.25) * Math.pow(2, ey));
+    }
+    const ins = [Float32Array.from(xs), Float32Array.from(ys)], NB = xs.length / N;
+    const PR = { nIn: 2, nOut: 1, fSlots: 3, iSlots: 0, arrays: [], fconsts: [], iconsts: [], params: [], blk: [],
+                 smp: [{ op: "rem", ops: [2, 0, 1] }] };
+    const pr = RED.fpb.format.encode(PR, table);
+    const vm = RED.fpb.vm.load(pr, table), vo = [new Float32Array(xs.length)];
+    vm.process(ins, vo, xs.length);
+    const bits = a => new Uint32Array(a.buffer, a.byteOffset, a.length);
+    // the classic difference with fmod, checked in the VM alone: remainder(5.5, 2) = -0.5, fmod(5.5, 2) = 1.5
+    const k55 = xs.findIndex((x, i) => x === 5.5 && ys[i] === 2);
+    (vo[0][k55] === -0.5 ? ok : fail)(`vm: rem(5.5, 2) = ${vo[0][k55]} (fmod would give 1.5)`);
+    if (gpp) {
+        const f = path.join(BUILD, "rem.fpb"), inF = path.join(BUILD, "rem.in.f32"), outF = path.join(BUILD, "rem.out.f32");
+        fs.writeFileSync(f, pr);
+        writePlanar(inF, ins);
+        const r = spawnSync(hostRun, [f, String(NB), inF, outF, "-"], { encoding: "utf8" });
+        if (r.status !== 0) fail("host: " + r.stdout + r.stderr);
+        else {
+            const ho = readPlanar(outF, 1)[0], hb = bits(ho), vb = bits(vo[0]);
+            let bad = -1;
+            for (let k = 0; k < hb.length; k++) if (hb[k] !== vb[k]) { bad = k; break; }
+            (bad < 0 ? ok : fail)(`host rem on ${xs.length} values (ties, signed zeros, exponents -20..20): ` +
+                (bad < 0 ? "same bits as the VM" : `differs at rem(${xs[bad]}, ${ys[bad]}): C ${ho[bad]}, VM ${vo[0][bad]}`));
+        }
+    } else console.log("  C++ comparison skipped (g++ not found)");
+    // an op table without rem (an older firmware): kRemReal must not compile, rather than turn into fmod
+    const opListText = fs.readFileSync(path.join(LIB, "FPB_oplist.h"), "utf8");
+    const oldTable = core.parseOpList(opListText.replace(/FPB_OP\(55, rem,\s*"f=ff",\s*PURE\)/, "FPB_RES(55)"));
+    let msg = null;
+    try { RED.fpb.compileFBC(RED.fpb.fbc.parse(fs.readFileSync(path.join(FAUST_DIR, "rem.fbc"), "utf8")), oldTable, { sampleRate: SR }); }
+    catch (e) { msg = e.message; }
+    (msg && /needs the op 'rem'/.test(msg) && oldTable.byName.rem === undefined ? ok : fail)("op table without rem: " + msg);
+}
+
 // ------------------------------------------------------------------ broken containers
 
 console.log("\n== broken containers (JS decoder and C loader must agree)");
