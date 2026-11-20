@@ -1,5 +1,5 @@
 /**
- * Serial and MIDI through the bridge server (fpb/server/io.js), used by itself when the server is connected:
+ * Serial and MIDI through the backend (backend/io.js), used by itself when the server is connected:
  *   - the Teensy's OSC port: OSC (red/arduino/OSC-teensy.js) sends and receives through the server instead of Web Serial
  *   - the Teensy's debug port: the second log in the bottom panel (red/ui/tab-bottom-debug.js)
  *   - MIDI: RED.midi uses the server's ports instead of Web MIDI
@@ -51,7 +51,7 @@ RED.backendIO = (function () {
         if (lbl.length == 0) return;
         if (!connected) {
             lbl.html('<span class="io-dot"></span>' + (navigator.serial != undefined ? "Web Serial" : "no serial"))
-                .attr("title", "Serial and MIDI go through the bridge server when it's connected (fpb/server: npm start).\nClick to connect to it.");
+                .attr("title", "Serial and MIDI go through the backend when it's connected (backend: npm start).\nClick to connect to it.");
             return;
         }
         const part = function (name, r) {

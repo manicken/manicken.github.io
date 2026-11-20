@@ -88,6 +88,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 				<a id="btn-exporter-options" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a id="btn-exporter-zip" class="btn" href="#"><i class="fa fa-file-zip-o"></i> Export to zip (new)</a></li>
+					<li><a id="btn-exporter-project" class="btn" href="#"><i class="fa fa-folder-open-o"></i> Export to project (backend)</a></li>
+					<li><a id="btn-exporter-choose-project" class="btn" href="#"><i class="fa fa-folder-o"></i> Choose project (backend)...</a></li>
 					<li class="divider"></li>
 					<li><a id="btn-export-simple1" class="btn" href="#"><i class="fa fa-ellipsis-v"></i> Simple (old)</a></li>
                     <li class="divider"></li>
@@ -722,7 +724,6 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="jquery/js/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="jquery/js/jquery.ui.touch-punch.min.js"></script>
-<script src="red/jszip.js"></script>
 <script src="red/FileSaver.js"></script>
 <!-- JZZ (MIDI file player) must be loaded before the orion editor, as it defines an AMD 'define' that JZZ would use instead of the global JZZ -->
 <script src="jzz/JZZ.js"></script>
@@ -737,6 +738,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/d3/d3.v3.min.js"></script>
 <script src="objectExtensions.js"></script>
 <script src="red/main.js"></script> <!-- main must be first because it defines Root var: RED -->
+<script src="red/zip.js"></script> <!-- RED.zip: zip read/write with the browser's own deflate -->
+
 <script src="red/settings.js"></script>
 <script src="red/settings-editor.js"></script>
 <script src="osc-browser.js"></script>
@@ -890,6 +893,8 @@ span.mainfunction {color: #993300; font-weight: bolder}
 <script src="red/control/tab-live.js"></script>
 <script src="red/fpb/fpb-bridge.js"></script>
 <script src="red/backend-io.js"></script>
+<script src="red/backend-project.js"></script> <!-- the project on disk through the backend: design saved as you work, export to src/asdt/ -->
+
 <script src="red/arduino/DynMixerHppCode.js"></script>
 <script src="red/arduino/DynMixerCppCode.js"></script>
 <script src="red/arduino/Mixers-export.js"></script>

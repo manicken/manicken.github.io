@@ -198,7 +198,7 @@ RED.midi = (function () {
             return;
         }
         if (isAvailable() == false) {
-            addItem("Web MIDI is not available in this browser (use Chrome or Edge, or start the bridge server: fpb/server npm start)");
+            addItem("Web MIDI is not available in this browser (use Chrome or Edge, or start the backend: npm start in backend/)");
             return;
         }
         try { await requestAccess(); }

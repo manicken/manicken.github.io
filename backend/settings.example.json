@@ -1,0 +1,12 @@
+{
+    "port": 8088,
+    "host": "127.0.0.1",
+
+    "projects": "",
+    "projectSearchDepth": 3,
+    "backups": 10,
+
+    "faust": "",
+    "allowOrigin": [],
+    "allowAdmin": false
+}

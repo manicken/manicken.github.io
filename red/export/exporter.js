@@ -40,19 +40,75 @@ RED.exporter.main = (function () {
         $('#btn-exporter-zip').parent().toggleClass("disabled", isClassFilesMode() == false);
     });
 
-    /** exports in the mode selected by the 'Export Mode' selector */
+    /**
+     * exports in the mode selected by the 'Export Mode' selector
+     * @returns {ExportFile[]|undefined} the files (empty when the error report was shown), undefined for the message modes
+     */
     function exportInSelectedMode() {
         const EXPORT_MODE = RED.arduino.EXPORT_MODE;
         const mode = RED.arduino.settings.ExportMode;
-        if (mode == EXPORT_MODE.CLASSIC) exportClassic();
-        else if (mode == EXPORT_MODE.FLAT_CLASSIC) exportFlatClassic();
-        else if (mode == EXPORT_MODE.FLAT_HELPER) exportFlatHelper();
-        else if (mode == EXPORT_MODE.CLASSES) exportClassBased(false);
-        else if (mode == EXPORT_MODE.OSC_SIMPLE_CPP) exportOscSimpleCpp();
-        else if (mode == EXPORT_MODE.OSC_CLASS_CPP) exportOscClassCpp(false);
+        if (mode == EXPORT_MODE.CLASSIC) return exportClassic();
+        else if (mode == EXPORT_MODE.FLAT_CLASSIC) return exportFlatClassic();
+        else if (mode == EXPORT_MODE.FLAT_HELPER) return exportFlatHelper();
+        else if (mode == EXPORT_MODE.CLASSES) return exportClassBased(false);
+        else if (mode == EXPORT_MODE.OSC_SIMPLE_CPP) return exportOscSimpleCpp();
+        else if (mode == EXPORT_MODE.OSC_CLASS_CPP) return exportOscClassCpp(false);
         else if (mode == EXPORT_MODE.OSC_SIMPLE_MSG) exportOscMessages(false);
         else if (mode == EXPORT_MODE.OSC_CLASS_MSG) exportOscMessages(true);
         else RED.notify("The Export Mode 'Open Sound Control (old export)' uses the OSC menu", "warning", null, 4000);
+        return undefined;
+    }
+
+    // ******************************************************************
+    // Export to a project through the backend (red/backend-project.js)
+    // ******************************************************************
+
+    /** @type {{classOf: function(REDNode): (String|undefined)}|null} set while an export for a project runs */
+    let projectExport = null;
+
+    /** @returns {Boolean} true when the selected Export Mode writes C++ (the message modes and the old OSC export don't) */
+    function isCppMode() {
+        const EXPORT_MODE = RED.arduino.EXPORT_MODE;
+        return [EXPORT_MODE.CLASSIC, EXPORT_MODE.FLAT_CLASSIC, EXPORT_MODE.FLAT_HELPER, EXPORT_MODE.CLASSES,
+                EXPORT_MODE.OSC_SIMPLE_CPP, EXPORT_MODE.OSC_CLASS_CPP].includes(RED.arduino.settings.ExportMode);
+    }
+
+    /**
+     * Exports in the selected mode for a project: the files are only returned (not shown, posted or zipped), and the
+     * AudioEffectFPB objects that classOf gives a class for are exported as that (native Faust) class.
+     * @param {function(REDNode): (String|undefined)} classOf  the native Faust class of an AudioEffectFPB node
+     * @returns {ExportFile[]|undefined} undefined: not a C++ mode; empty: the error report was shown
+     */
+    function exportForProject(classOf) {
+        if (isCppMode() == false) return undefined;
+        projectExport = { classOf };
+        try { return exportInSelectedMode(); }
+        finally { projectExport = null; }
+    }
+
+    /**
+     * In an export for a project: the AudioEffectFPB objects become their native Faust class. Only the model changes
+     * (obj.typeName, rws.faustClasses), never the editor nodes.
+     * Not in the OSC modes: there the objects are made by OSCAudio, and an AudioEffectFPB stays the runtime (FPB) object.
+     * @param {ResolvedWorkspace[]} workspaces
+     * @param {CppOptions} options
+     */
+    function applyNativeFaust(workspaces, options) {
+        if (projectExport == null || options.oscAudio) return;
+        for (const rws of workspaces) {
+            for (const obj of [...rws.audioObjects, ...rws.controlObjects]) {
+                if (obj.node == undefined || obj.node.type != "AudioEffectFPB") continue;
+                const cls = projectExport.classOf(obj.node);
+                if (cls == undefined) continue;
+                obj.typeName = cls;
+                if (rws.faustClasses.includes(cls) == false) rws.faustClasses.push(cls);
+            }
+        }
+    }
+
+    /** @param {ResolvedWorkspace} rws @returns {String[]} */
+    function getFaustIncludes(rws) {
+        return rws.faustClasses.map(function (c) { return '#include "faust/' + c + '.h"'; });
     }
 
     /** @returns {CppOptions} */
@@ -106,8 +162,10 @@ RED.exporter.main = (function () {
     function exportOneFile(rws, options, title) {
         const t0 = performance.now();
         const jsonString = RED.storage.getData();
+        applyNativeFaust([rws], options);
         const includes = rws.usedClasses.map(function (c) { return '#include "' + c + '.h"'; });
         if (options.oscAudio) includes.unshift(RED.exporter.osc.LIBRARY_INCLUDE);
+        includes.push(...getFaustIncludes(rws));
         includes.push(...getUserIncludes(rws));
 
         let cpp = getCppHeader(jsonString, includes);
@@ -129,6 +187,7 @@ RED.exporter.main = (function () {
         files.forEach(function (f) { f.finalize(); });
         lastFiles = files;
         lastCompositeText = cpp;
+        if (projectExport != null) return files; // the project export delivers them
 
         RED.arduino.httpPostAsync(JSON.stringify(getPostObject(files, [])));
         if (shouldShowDialog(false))
@@ -229,6 +288,7 @@ RED.exporter.main = (function () {
     function exportFiles(design, rootRws, options, generateZip, title) {
         const t0 = performance.now();
         const jsonString = RED.storage.getData();
+        applyNativeFaust(design.workspaces, options);
         const files = [new ExportFile("GUI_TOOL.json", JSON.stringify(JSON.parse(jsonString), null, 4))];
         const globalFiles = []; // files that is put first in the composite view of the export dialog
         const keywords = [];
@@ -276,6 +336,7 @@ RED.exporter.main = (function () {
         files.forEach(function (f) { f.finalize(); });
         lastFiles = files;
         lastCompositeText = getCompositeText(jsonString, globalFiles, sortByDependencies(workspaceFiles), design);
+        if (projectExport != null) return files; // the project export delivers them
 
         if (generateZip)
             saveAsZip(files);
@@ -479,6 +540,7 @@ RED.exporter.main = (function () {
         if (options != undefined && options.oscAudio) includes.unshift(RED.exporter.osc.LIBRARY_INCLUDE);
         if (mixerVariants.length != 0 && rws.dynMixers.some(function (m) { return m.type == "AudioMixer" && m.count != 4; }))
             includes.push('#include "mixers.h"');
+        includes.push(...getFaustIncludes(rws));
         includes.push(...getUserIncludes(rws));
         return includes;
     }
@@ -667,14 +729,11 @@ RED.exporter.main = (function () {
 
     /** @param {ExportFile[]} files */
     function saveAsZip(files) {
-        const zip = new JSZip();
         const subFolder = RED.arduino.settings.ZipExportUseSubFolder ? (RED.arduino.settings.ProjectName + "/") : "";
-        for (const file of files) {
-            if (file.overwrite_file == false) continue; // only a placeholder for a file that already exists in the target project
-            zip.file(subFolder + file.name, file.contents);
-        }
-        const compression = (RED.arduino.settings.ZipExportCompress == true) ? "DEFLATE" : "STORE";
-        zip.generateAsync({ type: "blob", compression }).then(function (blob) {
+        const entries = files
+            .filter(function (file) { return file.overwrite_file != false; }) // false: only a placeholder for a file that already exists in the target project
+            .map(function (file) { return { name: subFolder + file.name, data: file.contents }; });
+        RED.zip.writeBlob(entries, { compress: RED.arduino.settings.ZipExportCompress == true }).then(function (blob) {
             RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); }); // saveAs is from FileSaver.js
         });
     }
@@ -682,6 +741,8 @@ RED.exporter.main = (function () {
     return {
         init,
         exportInSelectedMode,
+        exportForProject,
+        isCppMode,
         exportClassic,
         exportFlatClassic,
         exportFlatHelper,

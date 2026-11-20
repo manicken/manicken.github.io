@@ -1,5 +1,5 @@
 /**
- * FPB Faust bridge, the ASDT++ side: connects to fpb/server/fpb-faust-server.js over WebSocket, receives compiled
+ * FPB Faust bridge, the ASDT++ side: connects to the backend (backend/server.js) over WebSocket, receives compiled
  * patches (from the Faust IDE export or from the code of an AudioEffectFPB node), keeps them in the node
  * (saved with the project) and sends them to the Teensy over OSC (OSCAudioEffectFPB: /begin, /feed b, /end).
  *
@@ -29,7 +29,7 @@ RED.FaustBridge = (function () {
         set ChunkSize(v) { _settings.ChunkSize = Math.max(64, parseInt(v) || defSettings.ChunkSize); RED.storage.update(); },
     };
     const settingsCategory = { label: "Faust bridge (FPB)", expanded: false, bgColor: "#DDD",
-        popupText: "Connection to the FPB Faust bridge (fpb/server/fpb-faust-server.js), that compiles Faust code for AudioEffectFPB objects" };
+        popupText: "Connection to the FPB Faust bridge (the ASDT++ backend, backend/server.js), that compiles Faust code for AudioEffectFPB objects" };
     const settingsEditor = {
         Enabled: { label: "Connect", type: "boolean", popupText: "connect to the bridge (and reconnect when it's restarted)" },
         ServerUrl: { label: "Server", type: "string", popupText: "the WebSocket address of the bridge<br>empty: the bridge that serves this page (http://127.0.0.1:8088/), else ws://127.0.0.1:8088/asdt" },
@@ -65,7 +65,7 @@ RED.fpb.bridge = (function () {
     const DEFAULT_URL = "ws://127.0.0.1:8088/asdt";
     let sameOrigin = null;        // the bridge's WebSocket when this page is served by the bridge itself
 
-    /** is this page served by fpb-faust-server? @returns {Promise<String|null>} its WebSocket address */
+    /** is this page served by the backend? @returns {Promise<String|null>} its WebSocket address */
     function probeSameOrigin() {
         if (typeof location == "undefined" || !/^https?:$/.test(location.protocol) || typeof fetch == "undefined") return Promise.resolve(null);
         return fetch(location.origin + "/faust/bridge.json", { cache: "no-store" })
@@ -117,7 +117,7 @@ RED.fpb.bridge = (function () {
         if (was == "connected") RED.events.emit("backend:disconnected");
     }
 
-    /** @param {Uint8Array} bytes a binary frame (the first byte is the channel, see fpb/server/io.js) */
+    /** @param {Uint8Array} bytes a binary frame (the first byte is the channel, see backend/io.js) */
     function sendBinary(bytes) {
         if (state != "connected") return false;
         ws.send(bytes);
@@ -389,7 +389,7 @@ RED.fpb.bridge = (function () {
     // ------------------------------------------------------------------ actions
 
     function compile(node) {
-        if (state != "connected") { RED.notify("the Faust bridge is not connected (start fpb/server/fpb-faust-server.js)", "warning", null, 3000); return; }
+        if (state != "connected") { RED.notify("the Faust bridge is not connected (start the backend: npm start in backend/)", "warning", null, 3000); return; }
         const id = nextId++;
         pending.set(id, node.id);
         send({ type: "compile", id, name: patchName(node), code: node.dsp || "" });
@@ -447,6 +447,12 @@ RED.fpb.bridge = (function () {
         });
     }
 
-    return { init, settingsChanged, connect, disconnect, upload, compile, methods, info, renderLive, send, sendBinary,
+    /** @returns {String} the http(s) address of the backend (the same server as the WebSocket), i.e. http://127.0.0.1:8088 */
+    function httpBase() {
+        const u = new URL(serverUrl());
+        return (u.protocol == "wss:" ? "https:" : "http:") + "//" + u.host;
+    }
+
+    return { init, settingsChanged, connect, disconnect, upload, compile, methods, info, renderLive, send, sendBinary, httpBase,
              get state() { return state; }, get server() { return server; } };
 })();

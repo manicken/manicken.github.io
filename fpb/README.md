@@ -11,7 +11,7 @@ This is a first working model of FPB, the float patch bytecode. Patches are comp
 | `red/fpb/fpb-vm.js` | verifier VM: runs a container in JS exactly like the firmware |
 | `fpb/teensy/FPB/` | Arduino library: `FPB_oplist.h` (the op table), `FPB.cpp` (push-parser loader, program), `FPB_ops.cpp`, `AudioEffectFPB`. **[How it works](teensy/FPB/README.md)**: loading, memory layout, the steps, running |
 | `fpb/tools/fpbc.js` | command line compiler: `.fbc` → `.fpb` and a C header |
-| `fpb/server/fpb-faust-server.js` | the Faust bridge: a local Faust export server for the Faust IDE, and a WebSocket backend for ASDT++ |
+| `backend/server.js` | the ASDT++ backend, which is also the Faust bridge: a local Faust export server for the Faust IDE, and a WebSocket backend for ASDT++ (see `specs/asdt-backend.md` for its project API) |
 | `red/fpb/fpb-bridge.js` | the ASDT++ side of the bridge: the `AudioEffectFPB` node gets its patch, sends it over OSC, and exposes its parameters in the live tab |
 | `fpb/tests/` | test runners, host C++ harnesses, Faust test patches, a fake `faust` for the server tests |
 
@@ -21,7 +21,7 @@ Of the `red/fpb` files, only `fpb-bridge.js` is loaded by `index.html`, because 
 
 ```
 Faust IDE  ── Export (server http://127.0.0.1:8088/faust, teensy/fpb)┐
-                                                                    ├─> fpb-faust-server: faust -lang interp -> FBC -> FPB
+                                                                    ├─> backend/server.js: faust -lang interp -> FBC -> FPB
 ASDT++ AudioEffectFPB node ── "Compile code" (its Faust code) ──────┘        │ WebSocket ws://127.0.0.1:8088/asdt
                                                                              v
                      ASDT++: the node stores the patch (saved in the project), ports = the patch's in/outs,
@@ -33,10 +33,10 @@ ASDT++ AudioEffectFPB node ── "Compile code" (its Faust code) ────�
 
 1. **Start the bridge:**
    ```
-   cd fpb/server
+   cd backend
    npm start
    ```
-   `npm start` installs the packages first: `serialport` and `@julusian/midi`, which have prebuilt binaries for Windows, macOS and Linux. `node_modules` is in `.gitignore`. Arguments go after `--`, e.g. `npm start -- --port 9000`. Without the packages (plain `node fpb-faust-server.js`), everything works except serial and MIDI.
+   `npm start` installs the packages first: `serialport` and `@julusian/midi`, which have prebuilt binaries for Windows, macOS and Linux. `node_modules` is in `.gitignore`. Arguments go after `--`, e.g. `npm start -- --port 9000`. Without the packages (plain `node server.js`), everything works except serial and MIDI.
 
    **Serial and MIDI through the bridge.** When ASDT++ is connected to the bridge, the bridge carries the serial port and MIDI. There is nothing to select:
    - **Ports:** the bridge finds the Teensy (USB vendor 16C0) by itself. With Dual Serial, interface 2 (`SerialUSB1`) is the **OSC port** and interface 0 (`Serial`) is the **debug port**. With one serial port, it is the OSC port. `--osc-port COMx|off` and `--debug-port COMy|off` override this.
@@ -61,7 +61,7 @@ ASDT++ AudioEffectFPB node ── "Compile code" (its Faust code) ────�
 
    The libraries come from `faust --libdir`, else from `<faust>/../share/faust`.
 
-   `node fpb/server/fpb-faust-server.js --find-faust` shows what it finds and where it looked, then exits.
+   `node backend/server.js --find-faust` shows what it finds and where it looked, then exits.
    One port (8088) serves everything:
 
    | address | what |
@@ -79,7 +79,7 @@ ASDT++ AudioEffectFPB node ── "Compile code" (its Faust code) ────�
 
    `index.html` opened as a file has the origin `null`, which a sandboxed iframe on any site also has, so it's only accepted with `--allow-file-origin`. With the bridge running, open `http://127.0.0.1:8088/` instead. A refused page gets 403, and the server logs it once with the `--allow-origin` to use. The Host header must also be a loopback name, which stops DNS rebinding. Web Serial works on `http://127.0.0.1`, because the browser treats it as a secure context.
 
-   Every compile is kept in `fpb/patches/<name>/` (`--keep <dir>` for another place, `--no-keep` to turn it off). `<name>` is the export name in the Faust IDE, or the patch name in ASDT++. The folder holds:
+   Every compile is kept in `backend_sandbox/fpb_patches/<name>/` (`--keep <dir>` for another place, `--no-keep` to turn it off). `<name>` is the export name in the Faust IDE, or the patch name in ASDT++. The folder holds:
    - the sources: the `.dsp` and the project's own `.lib` files;
    - the `.fbc`, `.fpb`, `.json` and `_fpb.h`;
    - `<name>.error.txt` when the compile failed.

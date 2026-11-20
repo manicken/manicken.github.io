@@ -288,7 +288,7 @@ RED.IndexedDBfiles = (function() {
     function downloadAll(showNameSelectDialog) {
         timeStart = performance.now();
         var dirs = ['codeFiles', 'images', 'otherFiles', 'projects'];
-        var zip = new JSZip();
+        var zip = []; // RED.zip entries: { name, data }
         getFiles(dirs[0], function(files) {
             addFilesToZip(zip, files, dirs[0]);
             getFiles(dirs[1], function(files) {
@@ -297,7 +297,7 @@ RED.IndexedDBfiles = (function() {
                     addFilesToZip(zip, files, dirs[2]);
                     getFiles(dirs[3], function(files) {
                         addFilesToZip(zip, files, dirs[3]);
-                        zip.generateAsync({ type: "blob"}).then(function (blob) {
+                        RED.zip.writeBlob(zip).then(function (blob) {
                             
                             if (showNameSelectDialog != undefined && showNameSelectDialog == true) {
                                 timeMid = performance.now();
@@ -316,7 +316,7 @@ RED.IndexedDBfiles = (function() {
     }
     function addFilesToZip(zip, files, dir) {
         for (var i = 0; i < files.length; i++) {
-            zip.file(dir + "/" + files[i].name.split('/').join("_").split(':').join('_'), files[i].data);
+            zip.push({ name: dir + "/" + files[i].name.split('/').join("_").split(':').join('_'), data: files[i].data });
         }
     }
 

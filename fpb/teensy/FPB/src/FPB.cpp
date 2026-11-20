@@ -48,7 +48,17 @@ const char* fpb_error_name(int e) {
 static void* default_alloc(size_t bytes, uint8_t tier, void*) {
 #if defined(__IMXRT1062__)
     // On Teensy 4 the malloc heap is in RAM2 (OCRAM). DTCM has no heap, so "fast" is RAM2 for now.
-    if (tier == FPB_TIER_EXT || tier == FPB_TIER_ANY) return extmem_malloc(bytes);   // falls back to malloc
+    if (tier == FPB_TIER_EXT) return extmem_malloc(bytes);   // PSRAM (extmem_malloc falls back to malloc without PSRAM)
+    if (tier == FPB_TIER_ANY) {
+        // RAM2 first, PSRAM only when it don't fit: PSRAM is external (QSPI), a read at a new place is a cache miss
+        // of a hundred cycles or more, so delay lines and tables read at spread out places are much slower there.
+        // Measured on a Teensy 4.1: virtual_analog_oscillator (384 KB of tables) went from ~95 % of an audio block
+        // (stopped by the CPU guard) to 69 % when its arrays are in RAM2.
+        // note. all the arrays of a tier are one block (allocArrays), so a patch with more than RAM2 have free
+        //       (i.e. 581 KB of delay lines) still gets all of them in PSRAM.
+        void* p = malloc(bytes);
+        return (p != nullptr) ? p : extmem_malloc(bytes);
+    }
     return malloc(bytes);
 #else
     (void)tier;

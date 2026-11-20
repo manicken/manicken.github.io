@@ -1,9 +1,9 @@
-// Tests fpb/server/io.js (serial / MIDI for ASDT++) with fake serialport and MIDI modules, no hardware.
+// Tests backend/io.js (serial / MIDI for ASDT++) with fake serialport and MIDI modules, no hardware.
 //
 //   node fpb/tests/io-test.js
 "use strict";
 const path = require("path");
-const createIO = require(path.join(__dirname, "..", "server", "io.js"));
+const createIO = require(path.join(__dirname, "..", "..", "backend", "io.js"));
 
 let failures = 0;
 function check(cond, msg) { console.log((cond ? "  ok   " : "  FAIL ") + msg); if (!cond) failures++; }

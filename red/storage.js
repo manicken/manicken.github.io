@@ -28,6 +28,7 @@ RED.storage = (function() {
             var JSON_string = JSON.stringify(nns);
             localStorage.setItem(STORAGE_ITEM_NAME, JSON_string);
             RED.IndexedDBfiles.fileWrite("projects", RED.arduino.settings.ProjectName + ".json", JSON_string);
+            if (RED.backendProject != undefined) RED.backendProject.designChanged(JSON_string); // the project on disk (backend), when one is chosen
             //console.trace("localStorage write");
             RED.notify("<strong>Saved..</strong>", "success", null, 2000, 70);
 		}

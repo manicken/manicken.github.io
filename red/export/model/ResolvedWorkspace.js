@@ -48,6 +48,11 @@ class ResolvedWorkspace
      * @type {{type:String, count:Number}[]} */
     dynMixers = [];
 
+    /** the native Faust classes used in this workspace (AudioEffectFPB objects exported as real objects to a project
+     * through the backend, i.e. Faust_lp), for the includes ("faust/Faust_lp.h"); set by the exporter
+     * @type {String[]} */
+    faustClasses = [];
+
     /** wire -> connections lookup
      * @type {Map<REDLink, ResolvedConnection[]>} */
     #connectionsByLink = new Map();

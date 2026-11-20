@@ -508,21 +508,20 @@ RED.arduino.export2 = (function () {
     {
         
         const t1 = performance.now();
-        var zip = new JSZip();
+        var zip = []; // RED.zip entries: { name, data }
         let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
         let subFolder = /*(mainFileName != "") ? mainFileName : */RED.arduino.settings.ProjectName;
         for (var i = 0; i < ce.allFiles.length; i++) {
             var file = ce.allFiles[i];
 
             if (file.overwrite_file == false) continue; // don't include in zip as it's only a placeholder for existing files
-            
+
             if (useSubfolder == false)
-                zip.file(file.name, file.contents);
+                zip.push({ name: file.name, data: file.contents });
             else
-                zip.file(subFolder + "\\" + file.name, file.contents);
+                zip.push({ name: subFolder + "/" + file.name, data: file.contents });
         }
-        var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
-        zip.generateAsync({ type: "blob", compression}).then(function (blob) {
+        RED.zip.writeBlob(zip, { compress: RED.arduino.settings.ZipExportCompress == true }).then(function (blob) {
             const t2 = performance.now();
             console.log('arduino-export-toZip took: ' + (t2 - t1) + ' milliseconds.');
             RED.main.showSelectNameDialog(RED.arduino.settings.ProjectName + ".zip", function (fileName) { saveAs(blob, fileName); }); // saveAs is from FileSaver.js

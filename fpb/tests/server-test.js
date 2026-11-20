@@ -1,4 +1,4 @@
-// End-to-end test of fpb/server/fpb-faust-server.js with fake-faust.js (no faust install needed).
+// End-to-end test of backend/server.js with fake-faust.js (no faust install needed).
 //
 //   node fpb/tests/server-test.js
 //
@@ -12,7 +12,7 @@ const { spawn } = require("child_process");
 const ROOT = path.resolve(__dirname, "..", "..");
 const PORT = 18088;
 const HOST = "http://127.0.0.1:" + PORT;
-const KEEP = path.join(__dirname, "build", "patches");    // where the server keeps every compile (default fpb/patches)
+const KEEP = path.join(__dirname, "build", "patches");    // where the server keeps every compile (default backend_sandbox/fpb_patches)
 fs.rmSync(KEEP, { recursive: true, force: true });
 const BASE = HOST + "/faust";         // what goes in the Faust IDE export dialog
 let failures = 0;
@@ -22,7 +22,7 @@ global.RED = {};
 ["fpb-core", "fpb-fbc", "fpb-format", "fpb-vm"].forEach(f => require(path.join(ROOT, "red", "fpb", f + ".js")));
 const table = RED.fpb.core.parseOpList(fs.readFileSync(path.join(ROOT, "fpb", "teensy", "FPB", "src", "FPB_oplist.h"), "utf8"));
 
-const server = spawn(process.execPath, [path.join(ROOT, "fpb", "server", "fpb-faust-server.js"), "--port", String(PORT),
+const server = spawn(process.execPath, [path.join(ROOT, "backend", "server.js"), "--port", String(PORT),
     "--faust", path.join(__dirname, "fake-faust.js"), "--keep", KEEP, "--no-io"], { stdio: ["ignore", "pipe", "pipe"] });
 let serverLog = "";
 server.stdout.on("data", d => serverLog += d);
@@ -88,7 +88,7 @@ function checkPatch(m, name, wantParams) {
 (async function main() {
     try {
         console.log("== finding faust");
-        const serverJs = path.join(ROOT, "fpb", "server", "fpb-faust-server.js");
+        const serverJs = path.join(ROOT, "backend", "server.js");
         const viaEnv = require("child_process").spawnSync(process.execPath, [serverJs, "--find-faust"],
             { encoding: "utf8", env: Object.assign({}, process.env, { FAUST: path.join(__dirname, "fake-faust.js") }) });
         check(viaEnv.status === 0 && /0\.0\.0-fake.*\$FAUST/.test(viaEnv.stdout), "--find-faust with $FAUST: " + (viaEnv.stdout.split("\n")[1] || "").trim());

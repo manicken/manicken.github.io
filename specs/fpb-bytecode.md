@@ -216,7 +216,7 @@ ext : [tier-2 arrays]            only available with PSRAM (extmem_malloc)
 
 Step memory can be computed in advance: for each instruction, `4 + 4 × arity` bytes, plus two `end` steps.
 
-**Teensy 4:** the malloc heap is in RAM2 (OCRAM), and DTCM has no heap. Until a static DTCM pool exists, the fast tier is therefore RAM2 as well. Tiers `ext` and `any` use `extmem_malloc`, which falls back to RAM2 when there is no PSRAM.
+**Teensy 4:** the malloc heap is in RAM2 (OCRAM), and DTCM has no heap. Until a static DTCM pool exists, the fast tier is therefore RAM2 as well. Tier `ext` uses `extmem_malloc` (PSRAM), which falls back to RAM2 when there is no PSRAM. Tier `any` tries RAM2 first and uses PSRAM only when the block doesn't fit: PSRAM is external, and delay lines and tables read at spread out places are much slower there (on a Teensy 4.1, `virtual_analog_oscillator` with 384 KB of tables went from about 95 % of an audio block to 69 % with its arrays in RAM2). All arrays of a tier are one block, so a patch whose arrays are bigger than the free RAM2 still gets all of them in PSRAM.
 
 ### 5.5 Floating point
 

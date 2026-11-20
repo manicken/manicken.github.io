@@ -323,20 +323,17 @@ RED.main = (function() {
         var reader = new FileReader();
 		reader.onload = function(e) {
             var rawContents = e.target.result;
-            var zip = new JSZip();
-            zip.loadAsync(rawContents).then(function(contents) {
-                //console.log(contents.files);
-                Object.keys(contents.files).forEach(function(filename) {
-
-                    if (filename.toLowerCase().endsWith("gui_tool.json")) {
-                        zip.file(filename).async('string').then(function(content) {
-                            //console.warn(content);
-                            RED.storage.loadContents(content);
-                        });
-                    }
-                });
+            var zip;
+            try { zip = RED.zip.read(rawContents); }
+            catch (err) { RED.notify("<strong>Error</strong>: " + err.message, "error"); return; }
+            zip.names().forEach(function(filename) {
+                if (filename.toLowerCase().endsWith("gui_tool.json")) {
+                    zip.readText(filename).then(function(content) {
+                        RED.storage.loadContents(content);
+                    }).catch(function(err) { RED.notify("<strong>Error</strong>: " + err.message, "error"); });
+                }
             });
-            
+
 		};
         reader.readAsArrayBuffer(file);
     }

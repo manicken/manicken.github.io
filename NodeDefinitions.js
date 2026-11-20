@@ -319,7 +319,7 @@ var NodeDefinitions = {
             AudioEffectFPB: { ...AudioTypeArrayBase, ...EffectCategory, shortName: "fpb", inputs: 1, outputs: 1, color: "#E6E0F8",
                 useAceEditor: "c_cpp", useAceEditorCodeFieldName: "dsp", aceEditorLabel: "Faust code", aceEditorHeight: 320, aceEditorOffsetHeight: 420,
                 editorhelp: "Runs a patch loaded at runtime (FPB, float patch bytecode), i.e. Faust code.<br><br>" +
-                    "The patch comes from the FPB Faust bridge (fpb/server/fpb-faust-server.js): either an export from the Faust IDE " +
+                    "The patch comes from the FPB Faust bridge (the ASDT++ backend, backend/server.js): either an export from the Faust IDE " +
                     "(Export, server http://127.0.0.1:8088/faust, platform teensy, architecture fpb) with the same name as <b>Patch</b>, " +
                     "or the Faust code of this object compiled from the live tab.<br><br>" +
                     "With the OSC live update on, the patch is sent to the Teensy when it arrives and when the object is created, " +

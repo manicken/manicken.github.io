@@ -1,15 +1,19 @@
 #!/usr/bin/env node
-// FPB Faust bridge: a local Faust compile service that closes the loop
+// The ASDT++ local backend (specs/asdt-backend.md): the project API (export into a Teensy project, with backups), and
+// the FPB Faust bridge, a local Faust compile service that closes the loop
 //
 //   Faust IDE (export, server = http://127.0.0.1:8088)  ─┐
 //                                                        ├─> faust -lang interp -> FBC -> FPB  ─> ASDT++ (WebSocket)
 //   ASDT++ (compile the code of an AudioEffectFPB node) ─┘                                         └─> Teensy (OSC)
 //
-//   node fpb/server/fpb-faust-server.js [--port 8088] [--host 127.0.0.1] [--faust path/to/faust(.exe)] [--find-faust]
-//                                       [--faustlib path/to/share/faust] [--sr 44117] [--www dir | --no-www]
-//                                       [--keep dir | --no-keep]   every compile is kept in <dir>/<name>/ (default fpb/patches)
-//                                       [--osc-port COMx|off] [--debug-port COMy|off] [--no-io]   serial / MIDI (io.js)
-//                                       [--allow-origin https://example.org[,...]] [--allow-file-origin]   see "who may use it"
+//   node backend/server.js [--port 8088] [--host 127.0.0.1] [--faust path/to/faust(.exe)] [--find-faust]
+//                          [--faustlib path/to/share/faust] [--sr 44117] [--www dir | --no-www]
+//                          [--keep dir | --no-keep]   every compile is kept in <dir>/<name>/ (default backend_sandbox/fpb_patches)
+//                          [--osc-port COMx|off] [--debug-port COMy|off] [--no-io]   serial / MIDI (io.js)
+//                          [--allow-origin https://example.org[,...]] [--allow-file-origin]   see "who may use it"
+//                          [--projects dir] [--project-search-depth 3] [--backups 10] [--allow-admin]   the project API
+//                          [--settings file]   default backend/settings.json: the same options in camelCase
+//                                              (see settings.example.json); the command line wins
 //
 // Who may use it (a page on any web site could otherwise reach 127.0.0.1 and send serial/MIDI to the Teensy):
 //   a browser sends the Origin of the page with every WebSocket and every cross-site request, only these are accepted:
@@ -24,6 +28,7 @@
 //   /            ASDT++ itself (static files of this repo, or --www dir), so http://127.0.0.1:8088/ is the tool
 //   /asdt        the WebSocket for ASDT++
 //   /faust/...   the Faust API below (Faust IDE: Export -> Server http://127.0.0.1:8088/faust)
+//   /api/...     the project API (projects.js, faust-native.js), only for ASDT++ pages: specs/asdt-backend.md section 7
 //                (/targets, /filepost and /<sha>/... also work without /faust, they don't clash with the repo)
 //
 // HTTP, the faustservice API used by the Faust IDE export dialog (under /faust):
@@ -45,32 +50,40 @@
 //   client -> server  {type:"compile", id, name, code}     compile Faust code (the reply goes to that client only)
 //                     {type:"get", name}                   the last compiled patch with that name
 //
-// No npm packages: the WebSocket, multipart and zip code is in this file. Listens on 127.0.0.1 by default.
+// Folders: backend_sandbox/ (in .gitignore) holds projects/ (the default projects folder), fpb_temp/ and fpb_patches/.
+// No npm packages: the WebSocket and multipart code is in this file, zip is red/zip.js. Listens on 127.0.0.1 by default.
 "use strict";
 const http = require("http");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
-const zlib = require("zlib");
 const { spawn, spawnSync } = require("child_process");
 
-const ROOT = path.resolve(__dirname, "..", "..");
+const ROOT = path.resolve(__dirname, "..");
+const SANDBOX = path.join(ROOT, "backend_sandbox");
 const OPLIST = path.join(ROOT, "fpb", "teensy", "FPB", "src", "FPB_oplist.h");
 
 global.RED = global.RED || {};
 ["fpb-core", "fpb-fbc", "fpb-format", "fpb-vm", "fpb-compile-fbc"].forEach(f => require(path.join(ROOT, "red", "fpb", f + ".js")));
+require(path.join(ROOT, "red", "zip.js"));
 
 // ------------------------------------------------------------------ options
 
 const argv = process.argv.slice(2);
-function opt(name, def) { const i = argv.indexOf(name); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : def; }
+const { loadSettings, expandHome } = require("./settings.js");
+const SETTINGS = loadSettings(argv, path.join(__dirname, "settings.json"));
+const opt = SETTINGS.opt;          // the command line, else settings.json
+const optAll = SETTINGS.optAll;
 const PORT = parseInt(opt("--port", "8088"), 10);
 const HOST = opt("--host", "127.0.0.1");
 const SR = parseInt(opt("--sr", "44117"), 10);
 let FAUSTLIB = opt("--faustlib", process.env.FAUSTLIB || "");
-const WORK = path.join(os.tmpdir(), "fpb-faust-server");
-const OUT = argv.includes("--no-keep") ? null : path.resolve(opt("--keep", path.join(ROOT, "fpb", "patches")));   // a folder per patch
+const WORK = path.join(SANDBOX, "fpb_temp");
+const OUT = argv.includes("--no-keep") ? null : path.resolve(opt("--keep", path.join(SANDBOX, "fpb_patches")));   // a folder per patch
+const PROJECTS = path.resolve(expandHome(opt("--projects", "") || path.join(SANDBOX, "projects")));
+const PROJECT_SEARCH_DEPTH = Math.max(1, parseInt(opt("--project-search-depth", "3"), 10) || 3);
+const BACKUPS = Math.max(1, parseInt(opt("--backups", "10"), 10) || 10);
 const MAX_UPLOAD = 32 * 1024 * 1024;
 const PLATFORM = "teensy", ARCH = "fpb";
 const API = "/faust";
@@ -80,28 +93,26 @@ const TARGETS = { source: ["cplusplus"], [PLATFORM]: [ARCH, ARCH_ZIP] };
 
 // ------------------------------------------------------------------ who may use it (see the top of this file)
 
-/** @returns {String[]} every value of an option that can be given more than once, also comma separated */
-function optAll(name) {
-    const values = [];
-    for (let i = 0; i < argv.length - 1; i++) if (argv[i] === name) values.push(...argv[i + 1].split(",").map(s => s.trim()).filter(Boolean));
-    return values;
-}
-const ALLOWED_ORIGINS = new Set([
+// /api (projects on disk) is only for ASDT++: the Faust IDE origins may use /faust and the WebSocket, not /api
+const ASDT_ORIGINS = new Set([
     "https://manicken.github.io",
-    "https://faustide.grame.fr",
-    "https://fausteditor.grame.fr",
     ...optAll("--allow-origin").map(o => o.replace(/\/+$/, "")),
 ]);
-if (argv.includes("--allow-file-origin")) ALLOWED_ORIGINS.add("null");
+const ALLOWED_ORIGINS = new Set([
+    ...ASDT_ORIGINS,
+    "https://faustide.grame.fr",
+    "https://fausteditor.grame.fr",
+]);
+if (SETTINGS.flag("--allow-file-origin")) { ALLOWED_ORIGINS.add("null"); ASDT_ORIGINS.add("null"); }
 
 function isLoopbackName(hostname) {
     return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
 }
 
-/** @param {String|undefined} origin the Origin header @returns {Boolean} */
-function originAllowed(origin) {
+/** @param {String|undefined} origin the Origin header @param {Set<String>} [allowed] @returns {Boolean} */
+function originAllowed(origin, allowed) {
     if (origin === undefined) return true;   // not a cross-site browser request (curl, the tests, a navigation, a same-origin GET)
-    if (ALLOWED_ORIGINS.has(origin)) return true;
+    if ((allowed || ALLOWED_ORIGINS).has(origin)) return true;
     try {
         const u = new URL(origin);
         return (u.protocol === "http:" || u.protocol === "https:") && isLoopbackName(u.hostname);
@@ -123,7 +134,7 @@ function refusal(req) {
     const origin = req.headers.origin;
     if (!originAllowed(origin)) {
         if (!refusedLogged.has(origin)) { refusedLogged.add(origin); log("refused a page from " + origin + " (start with --allow-origin " + origin + " to allow it)"); }
-        return "the origin " + origin + " is not allowed (fpb-faust-server --allow-origin)";
+        return "the origin " + origin + " is not allowed (backend/server.js --allow-origin)";
     }
     return null;
 }
@@ -235,6 +246,43 @@ fs.mkdirSync(WORK, { recursive: true });
 const table = RED.fpb.core.parseOpList(fs.readFileSync(OPLIST, "utf8"));
 
 function log(...a) { console.log(new Date().toISOString().substring(11, 19), ...a); }
+
+// ------------------------------------------------------------------ not as administrator (as WebScope)
+
+/** @returns {Boolean} true when this process runs as root / an elevated administrator */
+function isAdmin() {
+    if (typeof process.getuid === "function") return process.getuid() === 0;
+    if (process.platform !== "win32") return false;
+    // "net session" only works elevated
+    try { return spawnSync("net", ["session"], { stdio: "ignore", windowsHide: true, timeout: 10000 }).status === 0; }
+    catch (e) { return false; }
+}
+if (isAdmin()) {
+    if (!SETTINGS.flag("--allow-admin")) {
+        console.error("Refusing to run as root/administrator: a path check can then be raced with a symlink to a file only");
+        console.error("the administrator may write. Run it as a normal user, or start with --allow-admin.");
+        process.exit(1);
+    }
+    log("warning: running as root/administrator (--allow-admin)");
+}
+
+// ------------------------------------------------------------------ projects (the project API) and native Faust objects
+
+for (const d of [SANDBOX, path.join(SANDBOX, "projects"), WORK]) fs.mkdirSync(d, { recursive: true });
+if (!fs.existsSync(PROJECTS) || !fs.statSync(PROJECTS).isDirectory()) {
+    console.error("the projects folder " + PROJECTS + " doesn't exist (--projects, or \"projects\" in settings.json)");
+    process.exit(1);
+}
+const { createPaths, isInside } = require("./paths.js");
+const projectPaths = createPaths(PROJECTS);
+const PROJECTS_IN_SANDBOX = isInside(fs.realpathSync.native(SANDBOX), projectPaths.BASE);
+const projectApi = require("./projects.js").createProjects({
+    paths: projectPaths, backups: BACKUPS, searchDepth: PROJECT_SEARCH_DEPTH, maxTotal: MAX_UPLOAD, zip: RED.zip, log,
+    broadcast: m => broadcast(m)
+});
+const faustNative = require("./faust-native.js").createFaustNative({
+    runFaust: (a, cwd) => runFaust(a, cwd), faustlib: FAUSTLIB, work: WORK, patches: OUT, log
+});
 
 // ------------------------------------------------------------------ compile
 
@@ -348,7 +396,7 @@ function verify(model, res) {
 
 function cHeader(name, res, model) {
     const sym = name + "_fpb", L = [];
-    L.push(`// ${name}_fpb.h: compiled by fpb-faust-server from ${name}.dsp (FPB, see AudioEffectFPB::load)`);
+    L.push(`// ${name}_fpb.h: compiled by the ASDT++ backend from ${name}.dsp (FPB, see AudioEffectFPB::load)`);
     L.push(`// inputs ${model.inputs}, outputs ${model.outputs}, sample rate ${SR}, ${res.bytes.length} bytes`);
     res.params.forEach(p => L.push(`//   param ${p.index}: ${p.path}  ${p.min}..${p.max}  default ${+(+p.def).toPrecision(7)}`));
     L.push("#pragma once", "#include <stdint.h>", "#ifndef PROGMEM", "#define PROGMEM", "#endif");
@@ -360,61 +408,15 @@ function cHeader(name, res, model) {
     return L.join("\n");
 }
 
-// ------------------------------------------------------------------ zip (store / deflate read, store write)
+// ------------------------------------------------------------------ zip
+// red/zip.js (RED.zip), the same zip code as the browser side of ASDT++
 
-function unzip(buf) {
-    let eocd = -1;
-    for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
-    if (eocd < 0) throw new Error("not a zip file");
-    const count = buf.readUInt16LE(eocd + 10);
-    let p = buf.readUInt32LE(eocd + 16);
-    const files = [];
-    let total = 0;
-    for (let k = 0; k < count; k++) {
-        if (buf.readUInt32LE(p) !== 0x02014b50) throw new Error("bad zip central directory");
-        const method = buf.readUInt16LE(p + 10), csize = buf.readUInt32LE(p + 20), usize = buf.readUInt32LE(p + 24);
-        const nlen = buf.readUInt16LE(p + 28), elen = buf.readUInt16LE(p + 30), clen = buf.readUInt16LE(p + 32);
-        const local = buf.readUInt32LE(p + 42);
-        const name = buf.toString("utf8", p + 46, p + 46 + nlen);
-        p += 46 + nlen + elen + clen;
-        if (name.endsWith("/")) continue;
-        if (buf.readUInt32LE(local) !== 0x04034b50) throw new Error("bad zip local header");
-        const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
-        const raw = buf.subarray(start, start + csize);
-        let data;
-        if (method === 0) data = Buffer.from(raw);
-        else if (method === 8) data = zlib.inflateRawSync(raw);
-        else throw new Error("zip compression method " + method + " is not supported");
-        if (data.length !== usize) throw new Error("zip: bad size for " + name);
-        total += data.length;
-        if (total > MAX_UPLOAD) throw new Error("zip: too big");
-        files.push({ name, data });
-    }
-    return files;
+async function unzip(buf) {
+    return (await RED.zip.readAll(buf, { maxTotal: MAX_UPLOAD })).map(f => ({ name: f.name, data: Buffer.from(f.data.buffer, f.data.byteOffset, f.data.length) }));
 }
 
-function zipStore(files) {
-    const parts = [], central = [];
-    let offset = 0;
-    for (const f of files) {
-        const name = Buffer.from(f.name, "utf8"), data = Buffer.from(f.data);
-        const crc = RED.fpb.core.crc32(data);
-        const h = Buffer.alloc(30);
-        h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt16LE(0x0800, 6);
-        h.writeUInt32LE(crc, 14); h.writeUInt32LE(data.length, 18); h.writeUInt32LE(data.length, 22); h.writeUInt16LE(name.length, 26);
-        const c = Buffer.alloc(46);
-        c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt16LE(0x0800, 8);
-        c.writeUInt32LE(crc, 16); c.writeUInt32LE(data.length, 20); c.writeUInt32LE(data.length, 24); c.writeUInt16LE(name.length, 28);
-        c.writeUInt32LE(offset, 42);
-        parts.push(h, name, data);
-        central.push(c, name);
-        offset += 30 + name.length + data.length;
-    }
-    const cd = Buffer.concat(central);
-    const e = Buffer.alloc(22);
-    e.writeUInt32LE(0x06054b50, 0); e.writeUInt16LE(files.length, 8); e.writeUInt16LE(files.length, 10);
-    e.writeUInt32LE(cd.length, 12); e.writeUInt32LE(offset, 16);
-    return Buffer.concat([...parts, cd, e]);
+async function zipFiles(files) {
+    return Buffer.from(await RED.zip.write(files));
 }
 
 // writes the files of a zip under dir, refusing paths that leave it
@@ -553,7 +555,7 @@ function cors(res, origin) {
     if (origin === undefined) return;
     res.setHeader("Access-Control-Allow-Origin", origin);   // only the page that asked, never "*"
     res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "*");
     res.setHeader("Access-Control-Allow-Private-Network", "true");   // a https page (faustide.grame.fr) calling localhost
     res.setHeader("Access-Control-Expose-Headers", "Location");
@@ -616,13 +618,16 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; cha
     ".ttf": "font/ttf", ".eot": "application/vnd.ms-fontobject", ".txt": "text/plain; charset=utf-8", ".md": "text/plain; charset=utf-8",
     ".h": "text/plain; charset=utf-8", ".wasm": "application/wasm", ".zip": "application/zip", ".map": "application/json" };
 
-/** serves the files of WWW (ASDT++); no dot files / dot folders (.git) */
+// never served as static files: the backend itself (settings.json) and everything it writes (the projects)
+const NOT_SERVED = new Set(["backend", "backend_sandbox", "node_modules"]);
+
+/** serves the files of WWW (ASDT++); no dot files / dot folders (.git), nothing of NOT_SERVED */
 function serveStatic(req, res, pathname) {
     if (WWW == null || (req.method !== "GET" && req.method !== "HEAD")) return reply(res, 404, "not found");
     let rel;
     try { rel = decodeURIComponent(pathname); } catch (e) { return reply(res, 400, "bad path"); }
     if (rel.endsWith("/")) rel += "index.html";
-    if (rel.split("/").some(seg => seg.startsWith("."))) return reply(res, 404, "not found");
+    if (rel.split(/[/\\]/).some(seg => seg.startsWith(".") || NOT_SERVED.has(seg.toLowerCase()))) return reply(res, 404, "not found");
     const file = path.resolve(WWW, "." + rel);
     if (file !== WWW && !file.startsWith(WWW + path.sep)) return reply(res, 404, "not found");
     fs.stat(file, function (err, st) {
@@ -643,6 +648,7 @@ async function handle(req, res) {
     cors(res, req.headers.origin);
     if (req.method === "OPTIONS") { res.writeHead(204); res.end(); return; }
     const url = new URL(req.url, "http://localhost");
+    if (url.pathname === "/api" || url.pathname.startsWith("/api/")) return handleApi(req, res, url);
     const api = apiPath(url.pathname);
     if (api == null) return serveStatic(req, res, url.pathname);
     const parts = api.split("/").filter(Boolean);
@@ -661,7 +667,7 @@ async function handle(req, res) {
             if (!projects.has(sha)) {
                 fs.rmSync(dir, { recursive: true, force: true });
                 fs.mkdirSync(dir, { recursive: true });
-                const files = unzip(file.data);
+                const files = await unzip(file.data);
                 extractTo(files, dir);
                 // the IDE names the main file after the project; use the only .dsp otherwise
                 let main = name;
@@ -686,7 +692,7 @@ async function handle(req, res) {
                     const files = [p.name + ".cpp", p.name + ".dsp"].filter(f => fs.existsSync(path.join(p.dir, f)))
                         .map(f => ({ name: f, data: fs.readFileSync(path.join(p.dir, f)) }));
                     res.writeHead(200, { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${p.name}-cpp.zip"` });
-                    res.end(zipStore(files));
+                    res.end(await zipFiles(files));
                     return;
                 }
                 return reply(res, 404, "not found");
@@ -716,13 +722,71 @@ async function handle(req, res) {
                     .filter(f => fs.existsSync(path.join(p.dir, f)))
                     .map(f => ({ name: f, data: fs.readFileSync(path.join(p.dir, f)) }));
                 res.writeHead(200, { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${n}-fpb.zip"` });
-                res.end(zipStore(files));
+                res.end(await zipFiles(files));
                 return;
             }
         }
         reply(res, 404, "not found");
     } catch (e) {
         reply(res, 500, e.message);
+    }
+}
+
+// ------------------------------------------------------------------ the project API (/api), specs/asdt-backend.md section 7
+
+function replyJson(res, code, obj) {
+    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(JSON.stringify(obj));
+}
+
+/** the JSON body of a POST / PUT; it must be sent as application/json (that forces a CORS preflight) */
+async function jsonBody(req) {
+    if (!/^application\/json\b/i.test(req.headers["content-type"] || ""))
+        throw Object.assign(new Error("the body must be application/json"), { status: 415, code: "E_TYPE" });
+    try { return JSON.parse((await readBody(req)).toString("utf8")); }
+    catch (e) { throw Object.assign(new Error(e.message === "upload too big" ? e.message : "bad JSON"), { status: e.message === "upload too big" ? 413 : 400, code: "E_ARG" }); }
+}
+
+async function handleApi(req, res, url) {
+    const origin = req.headers.origin;
+    if (!originAllowed(origin, ASDT_ORIGINS)) return replyJson(res, 403, { error: "the origin " + origin + " may not use /api (only ASDT++)", code: "E_ORIGIN" });
+    const route = req.method + " " + url.pathname.replace(/\/+$/, "");
+    const q = name => url.searchParams.get(name) || "";
+    try {
+        let out;
+        switch (route) {
+            case "GET /api/info":
+                out = { version: 1, sandbox: PROJECTS_IN_SANDBOX, owned: [projectApi.EXPORT_DIR, projectApi.STATE_DIR], backups: BACKUPS,
+                        projectSearchDepth: PROJECT_SEARCH_DEPTH, faust: FAUST_VERSION };
+                break;
+            case "GET /api/projects": out = projectApi.list(); break;
+            case "POST /api/projects": out = projectApi.create(await jsonBody(req)); break;
+            case "GET /api/project": out = projectApi.get(q("path")); break;
+            case "PUT /api/design": out = projectApi.putDesign(await jsonBody(req)); break;
+            case "POST /api/export": out = await projectApi.doExport(await jsonBody(req)); break;
+            case "GET /api/backups": out = projectApi.backups(q("path")); break;
+            case "GET /api/backup": out = await projectApi.backupDesign(q("path"), q("backup")); break;
+            case "POST /api/restore": out = await projectApi.restore(await jsonBody(req)); break;
+            case "POST /api/faust/native": {
+                const body = await jsonBody(req);
+                if (!FAUST_VERSION) return replyJson(res, 503, { error: "the faust compiler was not found (start the backend with --faust <path>)", code: "E_FAUST" });
+                const items = Array.isArray(body.items) ? body.items : [];
+                if (items.length > 200) return replyJson(res, 413, { error: "too many Faust objects", code: "E_TOO_BIG" });
+                const results = [];
+                for (const item of items) {
+                    try { results.push(await faustNative.compile(item)); }
+                    catch (e) { return replyJson(res, 422, { error: e.message, code: "E_FAUST", className: item && item.className }); }
+                }
+                out = { results };
+                break;
+            }
+            default: return replyJson(res, 404, { error: "no " + route, code: "E_NOT_FOUND" });
+        }
+        replyJson(res, 200, out);
+    } catch (e) {
+        if (!e.status) log("api " + route + ": " + (e.stack || e.message));
+        else if (e.code === "E_PATH") log("api " + route + ": refused, " + e.message);
+        replyJson(res, e.status || 500, { error: e.message, code: e.code || "E_INTERNAL" });
     }
 }
 
@@ -748,13 +812,17 @@ const server = http.createServer(function (req, res) { handle(req, res); });
 server.on("upgrade", function (req, socket) { wsAccept(req, socket); });
 server.listen(PORT, HOST, function () {
     if (io) io.start();
-    log(`FPB Faust bridge on http://${HOST}:${PORT}`);
+    log(`ASDT++ backend on http://${HOST}:${PORT}`);
     log(`  ASDT++:              ${WWW ? `http://${HOST}:${PORT}/  (${WWW})` : "not served (--no-www)"}`);
     log(`  Faust IDE server:    http://${HOST}:${PORT}${API}   (Export -> platform ${PLATFORM}, architecture ${ARCH})`);
     log(`  WebSocket (ASDT++):  ws://${HOST}:${PORT}/asdt`);
     log("  compiled patches:    " + (OUT ? OUT + path.sep + "<name>" : "not kept (--no-keep)"));
+    log("  projects:            " + projectPaths.BASE + "  (searched " + PROJECT_SEARCH_DEPTH + " levels deep, " + BACKUPS + " backups kept)" +
+        (SETTINGS.file ? ", settings " + SETTINGS.file : ""));
+    if (!PROJECTS_IN_SANDBOX)
+        log("  NOTE: the projects folder is outside backend_sandbox: ASDT++ can write src/asdt/ and .asdt/ in any project in it");
     log("faust: " + (FAUST_VERSION ? FAUST_VERSION + " (" + FAUST + ")" : "NOT FOUND (" + FAUST + "), use --faust <path>") +
         (FAUSTLIB ? ", libraries " + FAUSTLIB : ""));
 });
 
-module.exports = { server, unzip, zipStore, multipartFile };
+module.exports = { server, unzip, zipFiles, multipartFile };

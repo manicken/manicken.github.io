@@ -64,7 +64,7 @@ The container arrives in pieces, e.g. 4 KB OSC blobs. The loader is a *push pars
 
 1. **Header.** Everything's size is known from the first 40 bytes, so the loader allocates **one block of exactly the right size** right away: the *fast block*.
 2. **Used ops.** Every op is checked against **this firmware's own op table**: it must exist, its operand count must match, and its fingerprint must match. A container made for a different table is refused with an error code, never misread.
-3. **Arrays.** One zeroed block per memory tier (RAM, DMA RAM or PSRAM), holding all the arrays of that tier.
+3. **Arrays.** One zeroed block per memory tier (RAM, DMA RAM or PSRAM), holding all the arrays of that tier. On a Teensy 4.1 the `any` block goes in RAM2 when it fits and in PSRAM only when it does not, because spread out reads in PSRAM are much slower.
 4. **Constants and parameters** are written straight into their slots.
 5. **Code.** Each instruction becomes a **step**, written straight after the previous one in the fast block:
    ```

@@ -1,4 +1,4 @@
-// A pretend Teensy for fpb-faust-server.js --fake-io (tests only): fake "serialport" and "@julusian/midi" modules.
+// A pretend Teensy for backend/server.js --fake-io (tests only): fake "serialport" and "@julusian/midi" modules.
 //   COM101 (interface 0) = the debug port: says hello when opened, and "processing!" for every OSC packet
 //   COM102 (interface 2) = the OSC port: answers every SLIP packet with a /reply bundle, one reply message per
 //                          message (address, "fake", 0 = OK), like the OSCAudio firmware

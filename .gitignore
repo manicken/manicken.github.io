@@ -1,2 +1,5 @@
-# the bridge server's npm packages (fpb/server: npm install / npm start)
+# the backend's npm packages (backend: npm install / npm start)
 node_modules/
+# the backend's own settings (copy backend/settings.example.json) and everything it writes: projects, Faust temp and kept compiles
+backend/settings.json
+backend_sandbox/

@@ -31,7 +31,7 @@ module.exports = function createIO(options) {
     const sp = options.serialport !== undefined ? options.serialport : tryRequire("serialport");       // injectable for the tests
     const midi = options.midi !== undefined ? options.midi : tryRequire("@julusian/midi");
     if (!sp || !midi) log("serial / MIDI for ASDT++: " + (sp ? "" : "serialport ") + (midi ? "" : "@julusian/midi ") +
-        "not installed, run 'npm install' in fpb/server (or start with 'npm start' there)");
+        "not installed, run 'npm install' in backend (or start with 'npm start' there)");
 
     // ------------------------------------------------------------------ serial
 

@@ -84,7 +84,7 @@ var OSC = (function() {
     }
 
     // ------------------------------------------------------------------ backend transport
-    // When the bridge server (fpb/server) has the Teensy's OSC port open, the bytes go through it (see red/backend-io.js)
+    // When the backend (backend/) has the Teensy's OSC port open, the bytes go through it (see red/backend-io.js)
     // instead of Web Serial: any browser, and the port reconnects by itself. Nothing to choose: it's used when it's there.
     var backend = null; // { isOpen(), write(Uint8Array), label }
 
@@ -112,7 +112,7 @@ var OSC = (function() {
             console.warn("Web Serial API not availabe on this browser!")
             available = false;
 
-            var a = "This browser has no Web Serial API (use Chrome or Edge),<br>or start the bridge server (fpb/server: npm start),<br>then the serial port goes through it in any browser.<br><br>"
+            var a = "This browser has no Web Serial API (use Chrome or Edge),<br>or start the backend (backend: npm start),<br>then the serial port goes through it in any browser.<br><br>"
 
             EnableSerialButtons(false); // enabled again when the backend has the port (red/backend-io.js)
             RED.main.SetPopOver("#btn-connectSerial", a);

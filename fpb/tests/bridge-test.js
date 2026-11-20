@@ -1,6 +1,6 @@
 // Integration test of the ASDT++ side of the Faust bridge, in Node:
 //   the real red/control (methods, core, OSC adapter) + red/fpb/fpb-bridge.js
-//   against the real fpb-faust-server.js (with fake-faust.js),
+//   against the real backend/server.js (with fake-faust.js),
 //   with stubs only for the editor (RED.nodes ...) and the serial port (OSC.Send*).
 // What would go to the Teensy is collected; the reassembled container is then loaded by the firmware loader
 // built for the PC (fpb/tests/build/host_run, made by run-tests.js) when it's there.
@@ -76,7 +76,7 @@ function teensyReply(address, result, code) {
 
 // ------------------------------------------------------------------ run
 
-const server = spawn(process.execPath, [path.join(ROOT, "fpb", "server", "fpb-faust-server.js"), "--port", String(PORT),
+const server = spawn(process.execPath, [path.join(ROOT, "backend", "server.js"), "--port", String(PORT),
     "--faust", path.join(__dirname, "fake-faust.js"), "--no-keep", "--no-io"], { stdio: ["ignore", "pipe", "pipe"] });
 let serverLog = "";
 server.stdout.on("data", d => serverLog += d);

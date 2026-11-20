@@ -951,7 +951,7 @@ RED.arduino.export = (function () {
         console.log('arduino-export-save2 took: ' + (t1 - t0) + ' milliseconds.');
 
         if (generateZip == true) {
-            var zip = new JSZip();
+            var zip = []; // RED.zip entries: { name, data }
             let useSubfolder = RED.arduino.settings.ZipExportUseSubFolder;
             let subFolder = mainFileName != "" ? mainFileName : RED.arduino.settings.ProjectName;
             for (var i = 0; i < wsCppFiles.length; i++) {
@@ -959,12 +959,11 @@ RED.arduino.export = (function () {
 
                 if (wsCppfile.overwrite_file == false) continue; // don't include in zip as it's only a placeholder for existing files
                 if (useSubfolder == false)
-                    zip.file(wsCppfile.name, wsCppfile.contents);
+                    zip.push({ name: wsCppfile.name, data: wsCppfile.contents });
                 else
-                    zip.file(subFolder + "/" + wsCppfile.name, wsCppfile.contents);
+                    zip.push({ name: subFolder + "/" + wsCppfile.name, data: wsCppfile.contents });
             }
-            var compression = (RED.arduino.settings.ZipExportCompress==true)?"DEFLATE":"STORE";
-            zip.generateAsync({ type: "blob", compression}).then(function (blob) {
+            RED.zip.writeBlob(zip, { compress: RED.arduino.settings.ZipExportCompress == true }).then(function (blob) {
                 const t2 = performance.now();
                 console.log('arduino-export-toZip took: ' + (t2 - t1) + ' milliseconds.');
                 //console.log("typeof:" + typeof content);

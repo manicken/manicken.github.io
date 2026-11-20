@@ -68,13 +68,17 @@ example how the autocomplete looks:<br>
 
 Code is edited in CodeFile and Function node types.<br>
 
-* Bridge server (`fpb/server`, start with `npm start` in that folder)<br>
+* Backend (`backend`, start with `npm start` in that folder)<br>
 a local server that serves the "Tool" at http://127.0.0.1:8088/ and carries the serial port and MIDI for it:<br>
   - finds the Teensy by itself: with Dual Serial one port is used for OSC and the other for debug output
   - OSC goes through the bridge instead of Web Serial, so it works in any browser
   - the debug output is shown in a second log beside the output log (and a typed line is sent to the port)
   - MIDI in and out, used by the UI objects (instead of Web MIDI or the Arduino IDE plugin below)
   - it's also the Faust bridge (see Faust below)
+  - projects on disk: the design is saved in the project as you work, and **Export to project** writes the export into the project's `src/asdt/` folder
+    (owned by ASDT++, replaced on every export, the last 10 versions are kept as zips in `.asdt/backup/`),
+    with the Faust objects (AudioEffectFPB) as real compiled Teensy objects with a setter per parameter, see [specs/asdt-backend.md](specs/asdt-backend.md)
+  - its settings: `backend/settings.json` (copy `backend/settings.example.json`), e.g. `"projects"`, the folder with your projects (default `backend_sandbox/projects`)
 
 More info: [fpb/README.md](fpb/README.md)<br>
 
