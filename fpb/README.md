@@ -163,7 +163,7 @@ Each Faust patch in `fpb/tests/faust` runs through four paths:
 - the firmware code built for the PC with g++;
 - the C++ that Faust generated itself.
 
-The runner compares the outputs. It also checks 26 broken containers, for which the JS decoder and the C loader (fed 1, 7 and 4096 bytes at a time) must report the same error, section and record index.
+The runner compares the outputs. A hand-written FBC checks that the move instructions (`kBlockShift`, `kMove`, `kPairMove`, `kBlockPairMove`) become the right movs. It also checks 26 broken containers, for which the JS decoder and the C loader (fed 1, 7 and 4096 bytes at a time) must report the same error, section and record index.
 
 Current results:
 
@@ -172,3 +172,4 @@ Current results:
 | `fi.resonlp` | 47 → 8 | 42 → 15 | bit-exact | bit-exact | 5e-6 (FBC prints constants with 6 digits) |
 | feedback echo | 34 → 9 | 14 → 6 | bit-exact | bit-exact | bit-exact |
 | `os.osc` | 53 → 14 | 7 → 2 | bit-exact | bit-exact | bit-exact |
+| `dm.virtual_analog_oscillator_demo` (kBlockShift) | 3390 → 910 | 101 → 25 | bit-exact | 2e-7 | 2e-5 (FBC prints constants with 6 digits) |

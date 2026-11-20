@@ -187,7 +187,7 @@ RED.fpb.fbc = (function () {
     Interp.prototype.run = function (block) { this.exec(block, []); };
 
     Interp.prototype.exec = function (block, st) {
-        var R = this.R, I = this.I, a, b, idx, fn;
+        var R = this.R, I = this.I, a, b, idx, fn, k;
         for (var pc = 0; pc < block.length; pc++) {
             var ins = block[pc], op = ins.op;
             switch (op) {
@@ -199,6 +199,14 @@ RED.fpb.fbc = (function () {
                 case "kStoreInt": I[ins.o1] = st.pop(); break;
                 case "kStoreRealValue": R[ins.o1] = ins.r; break;
                 case "kStoreIntValue": I[ins.o1] = ins.i; break;
+                case "kMoveReal": R[ins.o1] = R[ins.o2]; break;
+                case "kMoveInt": I[ins.o1] = I[ins.o2]; break;
+                case "kPairMoveReal": R[ins.o1] = R[ins.o1 - 1]; R[ins.o2] = R[ins.o2 - 1]; break;
+                case "kPairMoveInt": I[ins.o1] = I[ins.o1 - 1]; I[ins.o2] = I[ins.o2 - 1]; break;
+                case "kBlockPairMoveReal": for (k = ins.o1; k < ins.o2; k += 2) R[k + 1] = R[k]; break;
+                case "kBlockPairMoveInt": for (k = ins.o1; k < ins.o2; k += 2) I[k + 1] = I[k]; break;
+                case "kBlockShiftReal": for (k = ins.o1; k > ins.o2; k--) R[k] = R[k - 1]; break;
+                case "kBlockShiftInt": for (k = ins.o1; k > ins.o2; k--) I[k] = I[k - 1]; break;
                 case "kLoadIndexedReal": idx = st.pop(); this.check(ins, idx); st.push(R[ins.o1 + idx]); break;
                 case "kLoadIndexedInt": idx = st.pop(); this.check(ins, idx); st.push(I[ins.o1 + idx]); break;
                 case "kStoreIndexedReal": idx = st.pop(); this.check(ins, idx); R[ins.o1 + idx] = st.pop(); break;
