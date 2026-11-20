@@ -105,9 +105,19 @@
     FPB_RES(112) FPB_RES(113) FPB_RES(114) FPB_RES(115) FPB_RES(116) FPB_RES(117) \
     FPB_RES(118) FPB_RES(119) FPB_RES(120) FPB_RES(121) FPB_RES(122) FPB_RES(123) \
     FPB_RES(124) FPB_RES(125) FPB_RES(126) FPB_RES(127) \
-    /* ---- fused 128..159 (super-instructions, none yet) ---- */ \
-    FPB_RES(128) FPB_RES(129) FPB_RES(130) FPB_RES(131) FPB_RES(132) FPB_RES(133) \
-    FPB_RES(134) FPB_RES(135) FPB_RES(136) FPB_RES(137) FPB_RES(138) FPB_RES(139) \
+    /* ---- fused 128..159 (super-instructions: a pair of ops through a temporary, see FPB_ops.cpp) ---- */ \
+    FPB_OP(128, mulsub,  "f=fff",   PURE) \
+    FPB_OP(129, add3,    "f=fff",   PURE) \
+    FPB_OP(130, dot2,    "f=ffff",  PURE) \
+    FPB_OP(131, smadd,   "f=ffff",  PURE) \
+    FPB_OP(132, submadd, "f=ffff",  PURE) \
+    FPB_OP(133, mulmadd, "f=ffff",  PURE) \
+    FPB_OP(134, madd2,   "f=fffff", PURE) \
+    FPB_OP(135, smul,    "f=fff",   PURE) \
+    FPB_OP(136, mul3,    "f=fff",   PURE) \
+    FPB_OP(137, amul,    "f=fff",   PURE) \
+    FPB_OP(138, selgt,   "f=ffff",  PURE) \
+    FPB_OP(139, wrfmadd, "=aifff",  ARRAY | STATEFUL) \
     FPB_RES(140) FPB_RES(141) FPB_RES(142) FPB_RES(143) FPB_RES(144) FPB_RES(145) \
     FPB_RES(146) FPB_RES(147) FPB_RES(148) FPB_RES(149) FPB_RES(150) FPB_RES(151) \
     FPB_RES(152) FPB_RES(153) FPB_RES(154) FPB_RES(155) FPB_RES(156) FPB_RES(157) \

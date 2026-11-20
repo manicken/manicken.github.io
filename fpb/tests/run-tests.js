@@ -257,6 +257,78 @@ console.log("\n== rem (remainder, not fmod)");
     (msg && /needs the op 'rem'/.test(msg) && oldTable.byName.rem === undefined ? ok : fail)("op table without rem: " + msg);
 }
 
+// ------------------------------------------------------------------ super-instructions
+
+// For every fusion rule: a program with the pair (a writes a temporary, b reads it) and the same program with the
+// fused op must give bit-identical outputs, in the VM and in the firmware code built with g++, on inputs whose
+// exponents vary a lot (rounding of every intermediate result matters there).
+console.log("\n== super-instructions (fused op == the pair it replaces)");
+{
+    const FUSE_RULES = RED.fpb.compileFBC.FUSE_RULES;
+    const NB = 8, NIN = 4;
+    let seed = 987654321;
+    const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+    const ins = [];
+    for (let c = 0; c < NIN; c++) {
+        const x = new Float32Array(N * NB);
+        for (let k = 0; k < x.length; k++) x[k] = (rnd() - 0.5) * Math.pow(2, Math.floor(rnd() * 40) - 20);
+        ins.push(x);
+    }
+    const inF = path.join(BUILD, "fuse.in.f32");
+    if (gpp) writePlanar(inF, ins);
+    const OUT = NIN, TMP = NIN + 1;             // float slots: 0..3 inputs, 4 output, 5 temporary
+    const covered = new Set();
+    for (const rule of FUSE_RULES) {
+        const sa = table.byName[rule.a].sig, sb = table.byName[rule.b].sig;
+        const tmp = sa[0] === "f" ? TMP : 1;    // int slots: 0 the array index (constant 3), 1 the temporary (gt)
+        const A = [tmp], aReads = sa.slice(sa.indexOf("=") + 1);
+        for (let j = 0; j < aReads.length; j++) A.push(j % NIN);
+        const B = [], wb = sb.indexOf("="), bReads = sb.slice(wb + 1);
+        for (let j = 0; j < wb; j++) B.push(OUT);
+        for (let j = 0, c = 0; j < bReads.length; j++) {
+            if (j === rule.p) B.push(tmp);
+            else if (bReads[j] === "f") B.push(NIN - 1 - (c++ % NIN));   // inputs 3, 2, 1, ...
+            else B.push(0);                     // "a": array 0, "i": the index slot
+        }
+        const observe = wb === 0 ? [{ op: "rdfm", ops: [OUT, 0, 0] }] : [];   // a store: read the cell back
+        const base = { nIn: NIN, nOut: 1, fSlots: TMP + 1, iSlots: 2, params: [], fconsts: [], iconsts: [{ slot: 0, value: 3 }],
+                       arrays: [{ tier: "fast", type: "f", len: 8, data: null }], blk: [] };
+        const pair = RED.fpb.format.encode(Object.assign({}, base, { smp: [{ op: rule.a, ops: A }, { op: rule.b, ops: B }].concat(observe) }), table);
+        const fused = RED.fpb.format.encode(Object.assign({}, base, { smp: [{ op: rule.op, ops: rule.build(A, B) }].concat(observe) }), table);
+        const runVM = bytes => { const v = RED.fpb.vm.load(bytes, table); const o = [new Float32Array(N * NB)]; v.process(ins, o, N * NB); return o; };
+        const vp = runVM(pair), vf = runVM(fused);
+        let msg = `${(rule.a + "→" + rule.b + "@" + rule.p).padEnd(16)} ${rule.op.padEnd(8)}`;
+        let good = compare(vp, vf).max === 0 && vp[0].some(x => x !== 0);
+        if (!good) msg += "  VM: fused differs from the pair";
+        if (gpp) {
+            const f = path.join(BUILD, "fuse.fpb"), o = path.join(BUILD, "fuse.out.f32");
+            fs.writeFileSync(f, fused);
+            const r = spawnSync(hostRun, [f, String(NB), inF, o, "-"], { encoding: "utf8" });
+            if (r.status !== 0) { good = false; msg += "  host: " + r.stdout + r.stderr; }
+            else {
+                const d = compare(vf, readPlanar(o, 1)).max;
+                if (d !== 0) { good = false; msg += `  host: differs by ${d}`; }
+                else msg += "  identical in the VM and the firmware code";
+            }
+        }
+        covered.add(rule.op);
+        (good ? ok : fail)(msg);
+    }
+    const fusedOps = table.ops.filter(op => op.index >= 128 && !(op.flags & (core.FLAGS.RESERVED | core.FLAGS.REMOVED))).map(op => op.name);
+    const missing = fusedOps.filter(n => !covered.has(n));
+    (missing.length === 0 ? ok : fail)(`every fused op of the table has a rule (${fusedOps.length})` + (missing.length ? ": missing " + missing.join(", ") : ""));
+    // an op table without the fused ops (an older firmware) gets the unfused code, which is also what fuse: false gives
+    const opListText = fs.readFileSync(path.join(LIB, "FPB_oplist.h"), "utf8");
+    const oldTable = core.parseOpList(opListText.replace(/FPB_OP\((1[2-5]\d), (\w+),\s*"[^"]*",\s*[\w |]+\)/g, "FPB_RES($1)"));
+    const text = fs.readFileSync(path.join(FAUST_DIR, "djembe_verb.fbc"), "utf8");
+    const rOld = RED.fpb.compileFBC(RED.fpb.fbc.parse(text), oldTable, { sampleRate: SR });
+    const rNoFuse = RED.fpb.compileFBC(RED.fpb.fbc.parse(text), table, { sampleRate: SR, fuse: false });
+    const rFuse = RED.fpb.compileFBC(RED.fpb.fbc.parse(text), table, { sampleRate: SR });
+    const sameCode = JSON.stringify(rOld.program.smp) === JSON.stringify(rNoFuse.program.smp);
+    (sameCode && !rOld.program.smp.some(i => FUSE_RULES.some(r => r.op === i.op)) ? ok : fail)(
+        `old op table: unfused code (djembe_verb ${rOld.stats.smp} steps; with the fused ops ${rFuse.stats.smp})`);
+}
+
 // ------------------------------------------------------------------ broken containers
 
 console.log("\n== broken containers (JS decoder and C loader must agree)");

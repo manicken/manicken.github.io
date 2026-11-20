@@ -1,9 +1,17 @@
 // FPB op implementations and the op table.
 // Semantics must match red/fpb/fpb-core.js (OP_IMPL), which the tool uses to verify compiled patches.
 
-// No fused multiply-add contraction: madd/msub round the product and the sum separately, exactly as
-// the verifier VM and the Faust reference do. (GCC would otherwise emit vfma on the Cortex-M7.)
-#pragma GCC optimize ("fp-contract=off")
+// No fused multiply-add contraction: madd/msub (and the fused ops) round the product and the sum separately,
+// exactly as the verifier VM and the Faust reference do. Compilers would otherwise fuse F(1) * F(2) + F(3) into
+// one FMA wherever the target has one (vfma on the Cortex-M7, fmadd on ARM64, vfmadd on x86 with FMA).
+//  - GCC (the Teensy toolchain) takes "#pragma GCC optimize";
+//  - clang ignores it (and contracts by default), so it needs its own pragma: this matters for the host build of
+//    the tests (fpb/tests, g++ is clang on macOS), which compare this code with the VM bit for bit.
+#if defined(__clang__)
+  #pragma clang fp contract(off)
+#elif defined(__GNUC__)
+  #pragma GCC optimize ("fp-contract=off")
+#endif
 
 #include "FPB_ops.h"
 #include "FPB_oplist.h"
@@ -144,6 +152,25 @@ OPFN(rdi) { const FPB_ArrayRef& a = A(1); uint32_t k = (uint32_t)I(2);
 OPFN(wri) { const FPB_ArrayRef& a = A(0); uint32_t k = (uint32_t)I(1);
             if (k < a.len) ((int32_t*)a.base)[k] = I(2);
             NEXT(3); }
+
+// ---- fused (super-instructions) ----
+// Each one is a pair of ops where the first one's result goes only to the second one (a temporary), chosen from
+// the pairs that occur most in compiled Faust code (bench/faust). Every intermediate result is rounded to float
+// exactly as the two separate ops would (no contraction, see the top of this file), so they are bit-exact with the
+// unfused pair, and with core.js. The comment shows the pair: t is the temporary.
+OPFN(mulsub)   { F(0) = F(1) * F(2) - F(3);                   NEXT(4); }   // t = a*b; d = t - c
+OPFN(add3)     { F(0) = F(1) + (F(2) + F(3));                 NEXT(4); }   // t = a+b; d = x + t
+OPFN(dot2)     { F(0) = F(1) * F(2) + F(3) * F(4);            NEXT(5); }   // t = a*b; d = x*y + t
+OPFN(smadd)    { F(0) = F(1) * (F(2) - F(3)) + F(4);          NEXT(5); }   // t = a-b; d = x*t + y
+OPFN(submadd)  { F(0) = F(1) - (F(2) * F(3) + F(4));          NEXT(5); }   // t = a*b+c; d = x - t
+OPFN(mulmadd)  { F(0) = F(1) * (F(2) * F(3) + F(4));          NEXT(5); }   // t = a*b+c; d = x * t
+OPFN(madd2)    { F(0) = F(1) * F(2) + (F(3) * F(4) + F(5));   NEXT(6); }   // t = a*b+c; d = x*y + t
+OPFN(smul)     { F(0) = F(1) * (F(2) - F(3));                 NEXT(4); }   // t = a-b; d = x * t
+OPFN(mul3)     { F(0) = F(1) * (F(2) * F(3));                 NEXT(4); }   // t = a*b; d = x * t
+OPFN(amul)     { F(0) = F(1) * (F(2) + F(3));                 NEXT(4); }   // t = a+b; d = x * t
+OPFN(selgt)    { F(0) = (F(1) > F(2)) ? F(3) : F(4);          NEXT(5); }   // t = a > b; d = t ? x : y
+OPFN(wrfmadd)  { const FPB_ArrayRef& a = A(0);                                 // t = a*b+c; arr[i & mask] = t
+                 ((float*)a.base)[(uint32_t)I(1) & a.mask] = F(2) * F(3) + F(4); NEXT(5); }
 
 // ---- the table ----
 #define PURE     FPB_PURE

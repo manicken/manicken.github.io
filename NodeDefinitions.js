@@ -332,6 +332,7 @@ var NodeDefinitions = {
                     outputs: { value: 1, minval: 0, maxval: 4, type: "int", editor: { label: "Outputs", readonly: true, help: "set by the loaded patch" } },
                     dsp: { value: 'import("stdfaust.lib");\n\ncutoff = hslider("cutoff[unit:Hz][scale:log]", 1000, 20, 20000, 1);\nq = hslider("q", 0.707, 0.1, 10, 0.01);\n\nprocess = fi.resonlp(cutoff, q, 1);\n', noEdit: "" },
                     fpbData: { value: "", noEdit: "", dontSaveEmpty: true },
+                    fpbPlainData: { value: "", noEdit: "", dontSaveEmpty: true },   // the patch without super-instructions, for an older firmware
                     fpbInfo: { value: "", noEdit: "", dontSaveEmpty: true },
                 }
             },

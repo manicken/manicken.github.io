@@ -258,7 +258,7 @@ The loader runs the checks in this order. The first one that fails stops the loa
 
 ## 8. Open questions
 
-- Should fused super-instructions be chosen by the tool from a fixed list (group 128–) or be described per firmware?
+- Super-instructions: version 1 has a fixed list chosen from measured pairs (128–139). Should a firmware be able to describe its own, and should the tool pick them per patch?
 - Carrying state over when an instance is swapped, for instances with the same layout.
 - Sample rates other than the fixed `AUDIO_SAMPLE_RATE_EXACT`. Today the constants are folded in the tool.
 - Branches with sub-blocks (Faust `kSelectReal` with side effects). Version 1 only has a `select` op that evaluates both sides.
@@ -277,7 +277,8 @@ These ops cover every FBC instruction that can appear in a scalar-mode `control_
 | 32–55 | math | `floor ceil round rint sqrt sin cos tan asin acos atan f=f`, `atan2 f=ff`, `exp log log10 f=f`, `pow fmod f=ff`, `sinh cosh tanh asinh acosh atanh f=f`, `rem f=ff` (55: C `remainderf`, x − n·y with n = x/y rounded to even; Faust's `remainder`, FBC `kRemReal`. `fmod` is Faust's `%`, FBC `kFmodf`) |
 | 64–87 | int | `imov i=i`, `iadd isub imul idiv irem iand ior ixor ishl ishr iushr imin imax i=ii`, `iabs i=i`, `iselect i=iii`, `ilt ile igt ige ieq ine i=ii`, `ftoi i=f`, `itof f=i` |
 | 96–102 | arrays | `rdf f=ai`, `wrf =aif`, `rdi i=ai`, `wri =aii`, `dlyrd f=aii` (arr[(a − b) & mask]), `rdfm f=ai` (arr[i & mask]), `wrfm =aif` (arr[i & mask] = v); mask = len − 1 for a power-of-two length, else 0 |
-| 128–159 | fused | reserved for super-instructions |
+| 128–139 | fused | `mulsub f=fff` (a·b − c), `add3 f=fff` (x + (a + b)), `dot2 f=ffff` (x·y + a·b), `smadd f=ffff` (x·(a − b) + y), `submadd f=ffff` (x − (a·b + c)), `mulmadd f=ffff` (x·(a·b + c)), `madd2 f=fffff` (x·y + (a·b + c)), `smul f=fff` (x·(a − b)), `mul3 f=fff` (x·(a·b)), `amul f=fff` (x·(a + b)), `selgt f=ffff` ((a > b) ? x : y), `wrfmadd =aifff` (arr[i & mask] = a·b + c) |
+| 140–159 | fused | reserved for more super-instructions |
 
 **Int ops never have undefined behaviour:**
 - arithmetic wraps;
@@ -296,9 +297,13 @@ The compiler uses the newer ops (`mov2`, `dlyrd`, `rdfm`, `wrfm`) only when the 
 
 With djembe + freeverb this takes the per-sample code from 404 to 278 steps.
 
+**Super-instructions (128–139).** Each one replaces two ops where the first one writes a temporary that only the second one reads, chosen from the pairs that occur most in compiled Faust code (`mul→sub`, `add→add`, `mul→madd`, ...). Every intermediate result is rounded to float32 in the same order as the pair, so a fused op is bit-exact with the pair it replaces (`fpb/tests/run-tests.js` checks each rule in the VM and in the firmware code). On 14 Faust patches they remove 27 % of the per-sample steps; on a desktop CPU that made the runtime 1.4× faster on average (measured in faust-fpb); the gain on a Teensy is still to be measured.
+
+The tool fuses only the ops its op table has (`compileFBC(..., { fuse: false })` turns fusion off). As the bridge compiles with the table of this repository, not the one of the firmware on the Teensy, a firmware built before the super-instructions rejects a fused patch with `E_OP_RESERVED`; the bridge server therefore also sends the patch compiled without them (`fpbPlain`), and the bridge sends that one to an object that answers `E_OP_RESERVED`.
+
 Still to come, in the free slots:
 - `tblrdl` (a table read with linear interpolation);
-- super-instructions in 128–.
+- more super-instructions in 140–.
 
 ## Appendix B: notes on the FBC front end
 

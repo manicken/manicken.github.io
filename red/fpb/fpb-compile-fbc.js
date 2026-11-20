@@ -3,7 +3,8 @@
 // RED.fpb.compileFBC(model, table, opts) -> { bytes, program, params, stats, warnings }
 //   model: RED.fpb.fbc.parse(text)
 //   table: RED.fpb.core.parseOpList(...) or the table read from the firmware
-//   opts:  { sampleRate (default 44117, the int Faust gets on a Teensy), bigArrayTier ("any"), fastArrayMax (1024) }
+//   opts:  { sampleRate (default 44117, the int Faust gets on a Teensy), bigArrayTier ("any"), fastArrayMax (1024),
+//            fuse (default true: super-instructions, when the op table has them) }
 //
 // How it works:
 //  1. The FBC reference interpreter runs static_init, constants, reset_ui and clear at the given sample rate.
@@ -431,7 +432,81 @@ RED.fpb.compileFBC = (function () {
         return out;
     }
 
-    function floatBits(v) { var b = new DataView(new ArrayBuffer(4)); b.setFloat32(0, v); return b.getUint32(0); }
+    /**
+     * Super-instructions: two consecutive ops where the first one writes a temporary that only the second one reads
+     * become one fused op (group 128- of the op table). Rules, from the pairs that occur most in compiled Faust code:
+     *   a, b   the first and the second op
+     *   p      which read operand of b is the temporary (0 = first read operand)
+     *   op     the fused op; build(A, B) gives its operands from a's (A[0] is the temporary) and b's
+     * A rule for a commutative position of b (add, mul, the two factors of madd) is listed twice; IEEE + and * are
+     * commutative, so the result is the same. The fused ops round every intermediate result like the pair does.
+     */
+    var FUSE_RULES = [
+        { a: "mul",  b: "sub",    p: 0, op: "mulsub",  build: function (A, B) { return [B[0], A[1], A[2], B[2]]; } },
+        { a: "add",  b: "add",    p: 1, op: "add3",    build: function (A, B) { return [B[0], B[1], A[1], A[2]]; } },
+        { a: "add",  b: "add",    p: 0, op: "add3",    build: function (A, B) { return [B[0], B[2], A[1], A[2]]; } },
+        { a: "mul",  b: "madd",   p: 2, op: "dot2",    build: function (A, B) { return [B[0], B[1], B[2], A[1], A[2]]; } },
+        { a: "sub",  b: "madd",   p: 1, op: "smadd",   build: function (A, B) { return [B[0], B[1], A[1], A[2], B[3]]; } },
+        { a: "sub",  b: "madd",   p: 0, op: "smadd",   build: function (A, B) { return [B[0], B[2], A[1], A[2], B[3]]; } },
+        { a: "madd", b: "sub",    p: 1, op: "submadd", build: function (A, B) { return [B[0], B[1], A[1], A[2], A[3]]; } },
+        { a: "madd", b: "mul",    p: 1, op: "mulmadd", build: function (A, B) { return [B[0], B[1], A[1], A[2], A[3]]; } },
+        { a: "madd", b: "mul",    p: 0, op: "mulmadd", build: function (A, B) { return [B[0], B[2], A[1], A[2], A[3]]; } },
+        { a: "madd", b: "madd",   p: 2, op: "madd2",   build: function (A, B) { return [B[0], B[1], B[2], A[1], A[2], A[3]]; } },
+        { a: "sub",  b: "mul",    p: 1, op: "smul",    build: function (A, B) { return [B[0], B[1], A[1], A[2]]; } },
+        { a: "sub",  b: "mul",    p: 0, op: "smul",    build: function (A, B) { return [B[0], B[2], A[1], A[2]]; } },
+        { a: "mul",  b: "mul",    p: 1, op: "mul3",    build: function (A, B) { return [B[0], B[1], A[1], A[2]]; } },
+        { a: "mul",  b: "mul",    p: 0, op: "mul3",    build: function (A, B) { return [B[0], B[2], A[1], A[2]]; } },
+        { a: "add",  b: "mul",    p: 1, op: "amul",    build: function (A, B) { return [B[0], B[1], A[1], A[2]]; } },
+        { a: "add",  b: "mul",    p: 0, op: "amul",    build: function (A, B) { return [B[0], B[2], A[1], A[2]]; } },
+        { a: "gt",   b: "select", p: 0, op: "selgt",   build: function (A, B) { return [B[0], A[1], A[2], B[2], B[3]]; } },
+        { a: "madd", b: "wrfm",   p: 2, op: "wrfmadd", build: function (A, B) { return [B[0], B[1], A[1], A[2], A[3]]; } }
+    ];
+
+    function fuseOps(code, table) {
+        var rules = FUSE_RULES.filter(function (r) { return table.byName[r.op] !== undefined; });
+        if (!rules.length) return code;
+        function nWritten(op) { var sig = table.byName[op].sig; return sig.indexOf("="); }
+        function sameTmp(x, t) { return x !== null && typeof x === "object" && x.kind === "tmp" && x.s === t.s && x.n === t.n; }
+        function readsTmp(ins, t) {
+            var w = nWritten(ins.op);
+            for (var j = w; j < ins.ops.length; j++) if (sameTmp(ins.ops[j], t)) return true;
+            return false;
+        }
+        function writesTmp(ins, t) {
+            var w = nWritten(ins.op);
+            for (var j = 0; j < w; j++) if (sameTmp(ins.ops[j], t)) return true;
+            return false;
+        }
+        // the temporary is not read again after b (before it is written again; temporaries are reused per statement)
+        function deadAfter(k, t) {
+            for (var j = k; j < code.length; j++) {
+                if (readsTmp(code[j], t)) return false;
+                if (writesTmp(code[j], t)) return true;
+            }
+            return true;
+        }
+        var out = [];
+        for (var k = 0; k < code.length; k++) {
+            var a = code[k], b = code[k + 1], done = false;
+            if (b !== undefined && a.ops[0] && a.ops[0].kind === "tmp" && nWritten(a.op) === 1) {
+                var t = a.ops[0], wb = nWritten(b.op);
+                for (var r = 0; r < rules.length && !done; r++) {
+                    var rule = rules[r];
+                    if (rule.a !== a.op || rule.b !== b.op || !sameTmp(b.ops[wb + rule.p], t)) continue;
+                    var uses = 0;
+                    for (var j = wb; j < b.ops.length; j++) if (sameTmp(b.ops[j], t)) uses++;
+                    if (uses !== 1 || writesTmp(b, t) || !deadAfter(k + 2, t)) continue;
+                    out.push({ op: rule.op, ops: rule.build(a.ops, b.ops) });
+                    k++;
+                    done = true;
+                }
+            }
+            if (!done) out.push(a);
+        }
+        return out;
+    }
+
+function floatBits(v) { var b = new DataView(new ArrayBuffer(4)); b.setFloat32(0, v); return b.getUint32(0); }
 
     // ------------------------------------------------------------------ parameters (UI)
 
@@ -517,6 +592,9 @@ RED.fpb.compileFBC = (function () {
         stm.smp.forEach(function (s) { gen.statement(s); });
         var smpCode = gen.code;
         if (opts.optimize !== false && has("mov2")) { blkCode = pairMovs(blkCode); smpCode = pairMovs(smpCode); }
+        // super-instructions, only those the op table has (an older firmware gets the unfused pairs)
+        var unfused = smpCode.length;
+        if (opts.optimize !== false && opts.fuse !== false) { blkCode = fuseOps(blkCode, table); smpCode = fuseOps(smpCode, table); }
 
         // 5. slots
         var nIn = model.inputs, nOut = model.outputs;
@@ -591,6 +669,7 @@ RED.fpb.compileFBC = (function () {
             blk: program.blk.length,
             smp: program.smp.length,
             copiesRemoved: opt.removed,
+            fused: unfused - smpCode.length,          // smp steps saved by super-instructions
             fSlots: fSlot, iSlots: iSlot,
             arrays: arrays.map(function (a) { return { type: a.type, len: a.len, tier: a.tier }; }),
             arrayBytesFast: memFast,
@@ -636,5 +715,6 @@ RED.fpb.compileFBC = (function () {
         }
     }
 
+    compile.FUSE_RULES = FUSE_RULES;     // for the tests
     return compile;
 })();

@@ -182,6 +182,7 @@ RED.fpb.bridge = (function () {
         const info = { name: m.name, origin: m.origin, time: m.time, inputs: m.inputs, outputs: m.outputs, sampleRate: m.sampleRate,
                        params: m.params, stats: m.stats, warnings: m.warnings || [] };
         node.fpbData = m.fpb;
+        node.fpbPlainData = m.fpbPlain || "";   // without super-instructions, for an older firmware
         node.fpbInfo = JSON.stringify(info);
         if (node.patch == "" && node.name != m.name) node.patch = m.name;
         node.inputs = m.inputs;
@@ -279,10 +280,13 @@ RED.fpb.bridge = (function () {
     /**
      * Sends the patch of the node to its objects on the Teensy: /begin, /feed (chunks), /end; then the stored
      * parameter values again.
+     * When the Teensy answers E_OP_RESERVED, its firmware predates the super-instructions (op table 128-): the
+     * container compiled without them (node.fpbPlainData) is sent to that object instead.
      * @param {REDNode} node @param {Object[]} [targets] {path, typeName}, default: all the objects of the node
      * @param {Boolean} [quiet] no notification when it can't be sent
+     * @param {Boolean} [plain] send the container without super-instructions
      */
-    function upload(node, targets, quiet) {
+    function upload(node, targets, quiet, plain) {
         if (!node.fpbData) { if (!quiet) RED.notify("no patch in " + node.name + " yet", "warning", null, 2000); return 0; }
         if (typeof OSC == "undefined" || OSC.IsConnected() == false) { if (!quiet) RED.notify("the Teensy is not connected (OSC)", "warning", null, 2000); return 0; }
         targets = targets || RED.control.core.getTargets(node).targets;
@@ -290,7 +294,7 @@ RED.fpb.bridge = (function () {
             if (!quiet) RED.notify(node.name + " is not on the Teensy (turn on the OSC live update)", "warning", null, 3000);
             return 0;
         }
-        const bytes = base64ToBytes(node.fpbData);
+        const bytes = base64ToBytes(plain ? node.fpbPlainData : node.fpbData);
         const chunk = RED.FaustBridge.settings.ChunkSize;
         for (const t of targets) {
             const base = RED.OSC.settings.RootAddress + "/audio" + t.path;
@@ -299,8 +303,15 @@ RED.fpb.bridge = (function () {
                 OSC.SendData(osc.writePacket({ address: base + "/feed", args: [{ type: "b", value: bytes.subarray(off, off + chunk) }] }, { metadata: true }));
             const endAddress = base + "/end";
             waitReply(endAddress, END_TIMEOUT_MS).then(function (result) {
+                if (result == -6 && !plain && node.fpbPlainData) {   // E_OP_RESERVED: no super-instructions in this firmware
+                    RED.notify(t.path + ": the Teensy firmware has no FPB super-instructions, the patch is sent without them " +
+                        "(rebuild the firmware with this FPB library for the faster version)", "warning", null, 5000);
+                    upload(node, [t], quiet, true);
+                    return;
+                }
                 if (result == 0) {
-                    status.set(node.id, { text: "on the Teensy: " + t.path + " (" + bytes.length + " bytes)" });
+                    status.set(node.id, { text: "on the Teensy: " + t.path + " (" + bytes.length + " bytes" +
+                        (plain ? ", without super-instructions: rebuild the firmware for the faster version" : "") + ")" });
                     RED.control.core.resend(node, [t]);
                     setTimeout(function () { checkCpu(node, t); }, CPU_CHECK_MS);
                 } else {
