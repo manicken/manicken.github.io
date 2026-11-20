@@ -1,0 +1,84 @@
+{
+  "packages": [
+    {
+      "name": "teensy-dynamic",
+      "maintainer": "Audio System Design Tool++ (unofficial, not from PJRC)",
+      "websiteURL": "https://github.com/h4yn0nnym0u5e/Audio/tree/features/dynamic-updates",
+      "help": {
+        "online": "https://forum.pjrc.com/"
+      },
+      "platforms": [
+        {
+          "name": "Teensy Dynamic Audio (unofficial)",
+          "architecture": "avr",
+          "version": "1.62.0-dyn.1",
+          "category": "Contributed",
+          "help": {
+            "online": "https://github.com/manicken/manicken.github.io/releases/tag/teensy-dynamic-1.62.0-dyn.1"
+          },
+          "url": "https://github.com/manicken/manicken.github.io/releases/download/teensy-dynamic-1.62.0-dyn.1/teensy-dynamic-1.62.0-dyn.1.tar.zst",
+          "archiveFileName": "teensy-dynamic-1.62.0-dyn.1.tar.zst",
+          "checksum": "SHA-256:d2cf7ebfd82779cbbf33cd64674b69827330ca9ad952fc56c41854163a60ca79",
+          "size": "29425717",
+          "boards": [
+            {
+              "name": "Teensy 4.1 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy MicroMod (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy 4.0 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy 3.6 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy 3.5 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy 3.2 / 3.1 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy 3.0 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy LC (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy++ 2.0 (Dynamic Audio)"
+            },
+            {
+              "name": "Teensy 2.0 (Dynamic Audio)"
+            }
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "teensy",
+              "name": "teensy-tools",
+              "version": "1.62.0"
+            },
+            {
+              "packager": "teensy",
+              "name": "teensy-compile",
+              "version": "15.2.1"
+            }
+          ],
+          "discoveryDependencies": [
+            {
+              "packager": "teensy",
+              "name": "teensy-discovery"
+            }
+          ],
+          "monitorDependencies": [
+            {
+              "packager": "teensy",
+              "name": "teensy-monitor"
+            }
+          ]
+        }
+      ],
+      "tools": []
+    }
+  ]
+}
